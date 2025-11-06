@@ -2,8 +2,6 @@ rootProject.name = "BusyStatusBar"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {
-    includeBuild("build-logic")
-
     repositories {
         google {
             mavenContent {
@@ -31,49 +29,50 @@ dependencyResolutionManagement {
 }
 
 include(
-    ":principal:api",
-    ":principal:impl",
+    ":components:principal:api",
+    ":components:principal:impl",
 )
-include(":di")
-include(":log")
-include(":ktx")
+include(":components:di")
+include(":components:buildkonfig")
+include(":components:log")
+include(":components:ktx")
 include(
-    ":device:bridge:config:api",
-    ":device:bridge:config:impl",
-    ":device:bridge:connectionbuilder:api",
-    ":device:bridge:connectionbuilder:impl",
-    ":device:bridge:device:common:api",
-    ":device:bridge:device:bsb:api",
-    ":device:bridge:device:bsb:impl",
-    ":device:bridge:orchestrator:api",
-    ":device:bridge:orchestrator:impl",
-    ":device:bridge:service:api",
-    ":device:bridge:service:impl",
-    ":device:bridge:transport:mock:api",
-    ":device:bridge:transport:mock:impl",
-    ":device:bridge:transport:common:api",
-    ":device:bridge:transport:common:impl",
-    ":device:bridge:transport:ble:api",
-    ":device:bridge:transport:ble:impl",
-    ":device:bridge:transportconfigbuilder:api",
-    ":device:bridge:transportconfigbuilder:impl",
-    ":device:bridge:feature:common:api",
-    ":device:bridge:feature:provider:api",
-    ":device:bridge:feature:provider:impl",
-    ":device:bridge:feature:rpc:api",
-    ":device:bridge:feature:rpc:impl",
-    ":device:bridge:feature:info:api",
-    ":device:bridge:feature:info:impl",
-    ":device:bridge:feature:wifi:api",
-    ":device:bridge:feature:wifi:impl",
-    ":device:bridge:feature:link:api",
-    ":device:bridge:feature:link:impl",
-    ":device:bridge:feature:sync:impl",
-    ":device:bridge:feature:battery:api",
-    ":device:bridge:feature:battery:impl",
-    ":device:bridge:feature:screen-streaming:api",
-    ":device:bridge:feature:screen-streaming:impl",
-    ":device:bridge:feature:screen-streaming:compose",
-    ":device:bridge:feature:firmware-update:api",
-    ":device:bridge:feature:firmware-update:impl",
+    ":components:bridge:config:api",
+    ":components:bridge:config:impl",
+    ":components:bridge:connectionbuilder:api",
+    ":components:bridge:connectionbuilder:impl",
+    ":components:bridge:device:common:api",
+    ":components:bridge:device:bsb:api",
+    ":components:bridge:device:bsb:impl",
+    ":components:bridge:orchestrator:api",
+    ":components:bridge:orchestrator:impl",
+    ":components:bridge:service:api",
+    ":components:bridge:service:impl",
+    ":components:bridge:transport:mock:api",
+    ":components:bridge:transport:mock:impl",
+    ":components:bridge:transport:common:api",
+    ":components:bridge:transport:common:impl",
+    ":components:bridge:transport:ble:api",
+    ":components:bridge:transport:ble:impl",
+    ":components:bridge:transportconfigbuilder:api",
+    ":components:bridge:transportconfigbuilder:impl",
+    ":components:bridge:feature:common:api",
+    ":components:bridge:feature:provider:api",
+    ":components:bridge:feature:provider:impl",
+    ":components:bridge:feature:rpc:api",
+    ":components:bridge:feature:rpc:impl",
+    ":components:bridge:feature:info:api",
+    ":components:bridge:feature:info:impl",
+    ":components:bridge:feature:wifi:api",
+    ":components:bridge:feature:wifi:impl",
+    ":components:bridge:feature:link:api",
+    ":components:bridge:feature:link:impl",
+    ":components:bridge:feature:sync:impl",
+    ":components:bridge:feature:battery:api",
+    ":components:bridge:feature:battery:impl",
+    ":components:bridge:feature:screen-streaming:api",
+    ":components:bridge:feature:screen-streaming:impl",
+    ":components:bridge:feature:screen-streaming:compose",
+    ":components:bridge:feature:firmware-update:api",
+    ":components:bridge:feature:firmware-update:impl",
 )
