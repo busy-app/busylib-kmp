@@ -1,7 +1,6 @@
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import ru.astrainteractive.gradleplugin.property.extension.ModelPropertyValueExt.hierarchyGroup
-import ru.astrainteractive.gradleplugin.property.extension.ModelPropertyValueExt.requireProjectInfo
 
 plugins {
     // this is necessary to avoid the plugins to be loaded multiple times
@@ -88,15 +87,17 @@ val Project.hierarchyGroup: String
             currentParent == null -> ""
             else -> {
                 val parentGroup = currentParent.hierarchyGroup
-                if (parentGroup.isNotBlank()) "${parentGroup}.${name}"
-                else name
+                if (parentGroup.isNotBlank()) {
+                    "$parentGroup.$name"
+                } else {
+                    name
+                }
             }
         }
         return group
             .replace(".", "-")
             .lowercase()
     }
-
 
 subprojects.forEach { subProject ->
     subProject.beforeEvaluate {
