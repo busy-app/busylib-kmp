@@ -1,5 +1,7 @@
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import ru.astrainteractive.gradleplugin.property.extension.ModelPropertyValueExt.hierarchyGroup
+import ru.astrainteractive.gradleplugin.property.extension.ModelPropertyValueExt.requireProjectInfo
 
 plugins {
     // this is necessary to avoid the plugins to be loaded multiple times
@@ -30,7 +32,6 @@ plugins {
     alias(libs.plugins.klibs.gradle.android.namespace) apply false
 }
 
-apply(plugin = "ru.astrainteractive.gradleplugin.root.info")
 apply(plugin = "ru.astrainteractive.gradleplugin.detekt")
 
 subprojects.forEach { subProject ->
@@ -75,5 +76,30 @@ subprojects.forEach { subProject ->
                     optIn.addAll(optIns)
                 }
             }
+    }
+}
+
+// todo fix publish group
+val Project.hierarchyGroup: String
+    get() {
+        val currentParent = parent
+        val group = when {
+            project == rootProject -> ""
+            currentParent == null -> ""
+            else -> {
+                val parentGroup = currentParent.hierarchyGroup
+                if (parentGroup.isNotBlank()) "${parentGroup}.${name}"
+                else name
+            }
+        }
+        return group
+            .replace(".", "-")
+            .lowercase()
+    }
+
+
+subprojects.forEach { subProject ->
+    subProject.beforeEvaluate {
+        subProject.group = subProject.hierarchyGroup
     }
 }
