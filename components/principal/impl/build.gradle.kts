@@ -6,12 +6,10 @@ plugins {
 }
 
 commonDependencies {
-    implementation(projects.components.bsb.auth.principal.api)
+    implementation(projects.components.principal.api)
 
-    implementation(projects.components.core.di)
-    implementation(projects.components.core.log)
-
-    implementation(projects.components.bsb.preference.api)
+    implementation(projects.components.di)
+    implementation(projects.components.log)
 
     implementation(libs.kotlin.coroutines)
     implementation(libs.kotlin.serialization.json)

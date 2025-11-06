@@ -4,9 +4,9 @@ plugins {
 }
 
 commonDependencies {
-    implementation(projects.components.bsb.device.bridge.device.common.api)
-    implementation(projects.components.bsb.device.bridge.feature.common.api)
-    implementation(projects.components.bsb.device.bridge.transport.common.api)
+    implementation(projects.components.device.bridge.device.common.api)
+    implementation(projects.components.device.bridge.feature.common.api)
+    implementation(projects.components.device.bridge.transport.common.api)
 
     implementation(libs.kotlin.coroutines)
 }

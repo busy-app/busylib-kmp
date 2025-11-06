@@ -5,13 +5,13 @@ plugins {
 }
 
 androidDependencies {
-    implementation(projects.components.bsb.device.bridge.transport.common.api)
-    implementation(projects.components.bsb.device.bridge.transport.common.impl)
-    implementation(projects.components.bsb.device.bridge.transport.ble.api)
+    implementation(projects.components.device.bridge.transport.common.api)
+    implementation(projects.components.device.bridge.transport.common.impl)
+    implementation(projects.components.device.bridge.transport.ble.api)
 
-    implementation(projects.components.core.log)
-    implementation(projects.components.core.di)
-    implementation(projects.components.core.ktx)
+    implementation(projects.components.log)
+    implementation(projects.components.di)
+    implementation(projects.components.ktx)
 
     implementation(libs.kotlin.coroutines)
     implementation(libs.kotlin.immutable)

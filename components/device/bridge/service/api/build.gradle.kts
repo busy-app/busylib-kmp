@@ -4,8 +4,8 @@ plugins {
 }
 
 commonDependencies {
-    implementation(projects.components.bsb.device.bridge.orchestrator.api)
-    implementation(projects.components.bsb.device.bridge.config.api)
+    implementation(projects.components.device.bridge.orchestrator.api)
+    implementation(projects.components.device.bridge.config.api)
 
     implementation(libs.kotlin.coroutines)
 }

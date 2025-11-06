@@ -3,6 +3,7 @@
 .kotlin
 .gradle
 local.properties
+build
 # Components
 components/device/bridge/config/api/build
 components/device/bridge/config/impl/build
@@ -48,6 +49,10 @@ components/device/bridge/feature/sync/api/build
 components/device/bridge/feature/sync/impl/build
 components/device/bridge/feature/wifi/api/build
 components/device/bridge/feature/wifi/impl/build
+
+components/di/build
+components/ktx/build
+components/log/build
 
 components/principal/api/build
 components/principal/impl/build

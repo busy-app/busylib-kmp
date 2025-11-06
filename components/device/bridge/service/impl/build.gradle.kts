@@ -5,13 +5,13 @@ plugins {
 }
 
 commonDependencies {
-    implementation(projects.components.core.ktx)
-    implementation(projects.components.core.log)
-    implementation(projects.components.core.di)
+    implementation(projects.components.ktx)
+    implementation(projects.components.log)
+    implementation(projects.components.di)
 
-    implementation(projects.components.bsb.device.bridge.service.api)
-    implementation(projects.components.bsb.device.bridge.orchestrator.api)
-    implementation(projects.components.bsb.device.bridge.config.api)
+    implementation(projects.components.device.bridge.service.api)
+    implementation(projects.components.device.bridge.orchestrator.api)
+    implementation(projects.components.device.bridge.config.api)
 
     implementation(libs.kotlin.coroutines)
 }

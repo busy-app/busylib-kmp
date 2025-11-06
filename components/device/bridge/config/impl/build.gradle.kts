@@ -5,10 +5,10 @@ plugins {
     id("kotlinx-serialization")
 }
 commonDependencies {
-    implementation(projects.components.bsb.device.bridge.config.api)
+    implementation(projects.components.device.bridge.config.api)
 
-    implementation(projects.components.core.log)
-    implementation(projects.components.core.di)
+    implementation(projects.components.log)
+    implementation(projects.components.di)
 
     implementation(libs.kotlin.coroutines)
     implementation(libs.kotlin.serialization.json)

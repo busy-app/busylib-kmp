@@ -5,16 +5,16 @@ plugins {
 }
 
 commonDependencies {
-    implementation(projects.components.bsb.device.bridge.feature.info.api)
+    implementation(projects.components.device.bridge.feature.info.api)
 
-    implementation(projects.components.core.di)
-    implementation(projects.components.core.ktx)
-    implementation(projects.components.core.log)
+    implementation(projects.components.di)
+    implementation(projects.components.ktx)
+    implementation(projects.components.log)
 
-    implementation(projects.components.bsb.device.bridge.feature.common.api)
-    implementation(projects.components.bsb.device.bridge.transport.common.api)
+    implementation(projects.components.device.bridge.feature.common.api)
+    implementation(projects.components.device.bridge.transport.common.api)
 
-    implementation(projects.components.bsb.device.bridge.feature.rpc.api)
+    implementation(projects.components.device.bridge.feature.rpc.api)
 
     implementation(libs.kotlin.coroutines)
 }

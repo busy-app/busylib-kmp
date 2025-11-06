@@ -4,10 +4,10 @@ plugins {
 }
 
 commonDependencies {
-    implementation(projects.components.bsb.device.bridge.feature.screenStreaming.api)
+    implementation(projects.components.device.bridge.feature.screenStreaming.api)
 
-    implementation(projects.components.core.ktx)
-    implementation(projects.components.core.log)
+    implementation(projects.components.ktx)
+    implementation(projects.components.log)
 
     implementation(libs.kotlin.coroutines)
 }
