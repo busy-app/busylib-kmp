@@ -27,5 +27,4 @@ kotlin {
 
         implementation(libs.fastutil)
     }
-
 }

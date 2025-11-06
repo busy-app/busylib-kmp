@@ -9,7 +9,6 @@ kotlin {
     applyDefaultHierarchyTemplate()
 }
 
-
 kotlin {
     sourceSets.commonMain.dependencies {
         implementation(projects.components.log)

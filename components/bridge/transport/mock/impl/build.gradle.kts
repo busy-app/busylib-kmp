@@ -22,5 +22,4 @@ kotlin {
         implementation(libs.ktor.client.core)
         implementation(libs.ktor.client.mock)
     }
-
 }

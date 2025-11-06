@@ -23,5 +23,4 @@ kotlin {
 
         implementation(libs.kotlin.immutable)
     }
-
 }

@@ -14,5 +14,4 @@ kotlin {
         implementation(projects.components.bridge.transport.common.api)
         implementation(projects.components.bridge.config.api)
     }
-
 }

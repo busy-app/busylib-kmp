@@ -1,9 +1,15 @@
 package com.flipperdevices.core.ktx.common
 
+import android.os.Build
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asCoroutineDispatcher
 import java.util.concurrent.Executors
 
 internal actual fun getDispatcher(): CoroutineDispatcher {
-    return Executors.newWorkStealingPool().asCoroutineDispatcher()
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+        Executors.newWorkStealingPool().asCoroutineDispatcher()
+    } else {
+        Dispatchers.Default
+    }
 }

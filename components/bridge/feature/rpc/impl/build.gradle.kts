@@ -28,5 +28,4 @@ kotlin {
         implementation(libs.ktor.serialization)
         implementation(libs.kotlin.serialization.json)
     }
-
 }

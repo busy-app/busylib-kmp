@@ -32,6 +32,7 @@ plugins {
 }
 
 apply(plugin = "ru.astrainteractive.gradleplugin.root.info")
+apply(plugin = "ru.astrainteractive.gradleplugin.detekt")
 
 subprojects.forEach { subProject ->
     subProject.apply(plugin = "ru.astrainteractive.gradleplugin.publication")

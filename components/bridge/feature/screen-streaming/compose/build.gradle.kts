@@ -23,5 +23,4 @@ kotlin {
         implementation(kotlin.compose.runtime)
         implementation(kotlin.compose.ui)
     }
-
 }

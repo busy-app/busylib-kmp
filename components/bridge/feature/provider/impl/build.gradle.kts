@@ -27,5 +27,4 @@ kotlin {
         implementation(libs.kotlin.immutable)
         implementation(libs.kotlin.coroutines)
     }
-
 }

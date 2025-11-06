@@ -19,5 +19,4 @@ kotlin {
         implementation(libs.kotlin.immutable)
         implementation(libs.kotlin.serialization.json)
     }
-
 }

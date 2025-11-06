@@ -16,5 +16,4 @@ kotlin {
 
         implementation(libs.kotlin.coroutines)
     }
-
 }

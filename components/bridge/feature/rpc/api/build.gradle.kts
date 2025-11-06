@@ -20,5 +20,4 @@ kotlin {
 
         implementation(libs.ktor.client.core)
     }
-
 }

@@ -14,5 +14,4 @@ kotlin {
         implementation(projects.components.bridge.feature.common.api)
         implementation(libs.kotlin.coroutines)
     }
-
 }
