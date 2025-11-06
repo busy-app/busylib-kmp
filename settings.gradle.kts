@@ -32,10 +32,14 @@ include(
     ":components:principal:api",
     ":components:principal:impl",
 )
+
 include(":components:di")
 include(":components:buildkonfig")
 include(":components:log")
 include(":components:ktx")
+
+include(":sample:shared")
+
 include(
     ":components:bridge:config:api",
     ":components:bridge:config:impl",
@@ -44,6 +48,8 @@ include(
     ":components:bridge:device:common:api",
     ":components:bridge:device:bsb:api",
     ":components:bridge:device:bsb:impl",
+    ":components:bridge:device:firstpair:connection:api",
+    ":components:bridge:device:firstpair:connection:impl",
     ":components:bridge:orchestrator:api",
     ":components:bridge:orchestrator:impl",
     ":components:bridge:service:api",

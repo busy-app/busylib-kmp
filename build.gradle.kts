@@ -1,6 +1,6 @@
+import com.android.build.gradle.BaseExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import ru.astrainteractive.gradleplugin.property.extension.ModelPropertyValueExt.hierarchyGroup
 
 plugins {
     // this is necessary to avoid the plugins to be loaded multiple times
@@ -34,13 +34,19 @@ plugins {
 apply(plugin = "ru.astrainteractive.gradleplugin.detekt")
 
 subprojects.forEach { subProject ->
-    subProject.apply(plugin = "ru.astrainteractive.gradleplugin.publication")
-    subProject.plugins.withId("org.jetbrains.kotlin.jvm") {
-        subProject.apply(plugin = "ru.astrainteractive.gradleplugin.java.core")
-    }
     subProject.plugins.withId("com.android.library") {
-        subProject.apply(plugin = "ru.astrainteractive.gradleplugin.android.core")
-        subProject.apply(plugin = "ru.astrainteractive.gradleplugin.android.namespace")
+        subProject.configure<BaseExtension> {
+            namespace = "com.flipperdevices.${
+                subProject.path
+                    .removePrefix(":components:")
+                    .replace(":", ".")
+                    .replace("-", "")
+            }"
+            compileSdkVersion(36)
+            defaultConfig {
+                minSdk = 21
+            }
+        }
     }
 }
 val optIns = listOf(
@@ -79,28 +85,28 @@ subprojects.forEach { subProject ->
 }
 
 // todo fix publish group
-val Project.hierarchyGroup: String
-    get() {
-        val currentParent = parent
-        val group = when {
-            project == rootProject -> ""
-            currentParent == null -> ""
-            else -> {
-                val parentGroup = currentParent.hierarchyGroup
-                if (parentGroup.isNotBlank()) {
-                    "$parentGroup.$name"
-                } else {
-                    name
-                }
-            }
-        }
-        return group
-            .replace(".", "-")
-            .lowercase()
-    }
-
-subprojects.forEach { subProject ->
-    subProject.beforeEvaluate {
-        subProject.group = subProject.hierarchyGroup
-    }
-}
+// val Project.hierarchyGroup: String
+//    get() {
+//        val currentParent = parent
+//        val group = when {
+//            project == rootProject -> ""
+//            currentParent == null -> ""
+//            else -> {
+//                val parentGroup = currentParent.hierarchyGroup
+//                if (parentGroup.isNotBlank()) {
+//                    "$parentGroup.$name"
+//                } else {
+//                    name
+//                }
+//            }
+//        }
+//        return group
+//            .replace(".", "-")
+//            .lowercase()
+//    }
+//
+// subprojects.forEach { subProject ->
+//    subProject.beforeEvaluate {
+//        subProject.group = subProject.hierarchyGroup
+//    }
+// }

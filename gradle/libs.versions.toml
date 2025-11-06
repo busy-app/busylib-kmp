@@ -1,9 +1,10 @@
 [versions]
+androidx-activityCompose = "1.11.0"
 agp = "8.12.0"
 androidx-core = "1.17.0"
 google-services = "4.4.4"
 compose-plugin = "1.9.2"
-kotlin = "2.2.21"
+kotlin = "2.2.20"
 kotlin-coroutines = "1.10.2"
 kotlin-coroutines-gplayservices = "1.10.2"
 kotlin-serialization-runtime = "1.9.0"
@@ -11,6 +12,8 @@ kotlin-datetime = "0.7.1" # https://github.com/Kotlin/kotlinx-datetime/releases
 kotlin-immutable = "0.4.0"
 kotlin-io = "0.8.0"
 klibs-gradleplugin = "1.11.0" # https://github.com/makeevrserg/gradle-plugin# Exposed
+decompose = "3.4.0"
+appcompat = "1.7.1" # https://developer.android.com/jetpack/androidx/releases/appcompat
 # The update will break AssistedInject
 # https://flipper.atlassian.net/browse/MOB-1948
 metro = "0.6.8"
@@ -65,7 +68,14 @@ encoding-hash-md = { module = "org.kotlincrypto.hash:md", version.ref = "encodin
 
 # BLE
 ble-client = { module = "no.nordicsemi.kotlin.ble:client-android", version.ref = "ble" }
+ble-client-mock = { module = "no.nordicsemi.kotlin.ble:client-android-mock", version.ref = "ble" }
 fastutil = { module = "it.unimi.dsi:fastutil", version.ref = "fastutil" }
+
+androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
+decompose = { module = "com.arkivanov.decompose:decompose", version.ref = "decompose" }
+decompose-composeExtension = { module = "com.arkivanov.decompose:extensions-compose", version.ref = "decompose" }
+decompose-experimental = { module = "com.arkivanov.decompose:extensions-compose-experimental", version.ref = "decompose" }
+appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
