@@ -23,7 +23,6 @@ kotlin {
 
     sourceSets.androidMain.dependencies {
         implementation(libs.androidx.core.ktx)
-        implementation(libs.androidx.browser)
     }
 
     sourceSets.commonTest.dependencies {
