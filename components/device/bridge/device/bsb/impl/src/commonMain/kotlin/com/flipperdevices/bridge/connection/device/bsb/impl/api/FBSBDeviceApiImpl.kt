@@ -1,0 +1,126 @@
+package com.flipperdevices.bridge.connection.device.bsb.impl.api
+
+import com.flipperdevices.bridge.connection.device.bsb.api.FBSBDeviceApi
+import com.flipperdevices.bridge.connection.device.bsb.impl.utils.FZeroFeatureClassToEnumMapper
+import com.flipperdevices.bridge.connection.feature.common.api.FDeviceFeature
+import com.flipperdevices.bridge.connection.feature.common.api.FDeviceFeatureApi
+import com.flipperdevices.bridge.connection.feature.common.api.FOnDeviceReadyFeatureApi
+import com.flipperdevices.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
+import com.flipperdevices.bridge.connection.transport.common.api.FConnectedDeviceApi
+import com.flipperdevices.core.buildkonfig.BuildKonfig
+import com.flipperdevices.core.di.AppGraph
+import com.flipperdevices.core.log.LogTagProvider
+import com.flipperdevices.core.log.error
+import com.flipperdevices.core.log.info
+import dev.zacsweers.metro.Assisted
+import dev.zacsweers.metro.AssistedFactory
+import dev.zacsweers.metro.ContributesBinding
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.binding
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import java.util.EnumMap
+import kotlin.reflect.KClass
+
+@Inject
+class FBSBDeviceApiImpl(
+    @Assisted private val scope: CoroutineScope,
+    @Assisted private val connectedDevice: FConnectedDeviceApi,
+    onReadyFeaturesApiFactories: Set<FOnDeviceReadyFeatureApi.Factory>,
+    private val factories: Map<FDeviceFeature, FDeviceFeatureApi.Factory>
+) : FBSBDeviceApi, FUnsafeDeviceFeatureApi, LogTagProvider {
+    override val TAG = "FZeroDeviceApi"
+
+    private val features =
+        EnumMap<FDeviceFeature, Deferred<FDeviceFeatureApi?>>(FDeviceFeature::class.java)
+    private val mutex = Mutex()
+
+    init {
+        if (BuildKonfig.CRASH_APP_ON_FAILED_CHECKS) {
+            FDeviceFeature.entries.forEach { key ->
+                checkNotNull(factories[key]) { "Not found factory for $key" }
+            }
+        }
+
+        scope.launch {
+            callAllOnReadyDeviceFeatures(onReadyFeaturesApiFactories)
+        }
+    }
+
+    override suspend fun <T : FDeviceFeatureApi> get(clazz: KClass<T>): Deferred<T?>? =
+        mutex.withLock {
+            return@withLock getUnsafe(clazz)
+        }
+
+    override suspend fun <T : FDeviceFeatureApi> getUnsafe(clazz: KClass<T>): Deferred<T?>? {
+        val deviceFeature = FZeroFeatureClassToEnumMapper.get(clazz) ?: return null
+        val deferredFeatureApi = getFeatureApi(deviceFeature)
+        return scope.async {
+            val featureApi = deferredFeatureApi?.await()
+            if (!clazz.isInstance(featureApi)) {
+                null
+            } else {
+                featureApi as? T
+            }
+        }
+    }
+
+    private suspend fun getFeatureApi(feature: FDeviceFeature): Deferred<FDeviceFeatureApi?>? {
+        var featureApiFlow: Deferred<FDeviceFeatureApi?>? = features[feature]
+        if (featureApiFlow != null) {
+            return featureApiFlow
+        }
+        val factory = factories[feature]
+        if (factory == null) {
+            error { "Fail to find factory for feature $feature" }
+            return null
+        }
+        info { "$feature feature start creation..." }
+        featureApiFlow = scope.async {
+            val featureApi = factory(
+                unsafeFeatureDeviceApi = this@FBSBDeviceApiImpl,
+                scope = scope,
+                connectedDevice = connectedDevice
+            )
+            if (featureApi == null) {
+                error { "Fail to create $feature!" }
+            } else {
+                info { "$feature feature creation successful!" }
+            }
+            featureApi
+        }
+
+        features[feature] = featureApiFlow
+        return featureApiFlow
+    }
+
+    private suspend fun callAllOnReadyDeviceFeatures(
+        factories: Set<FOnDeviceReadyFeatureApi.Factory>
+    ) = mutex.withLock {
+        for (factory in factories) {
+            try {
+                val featureApi = factory(
+                    unsafeFeatureDeviceApi = this,
+                    scope = scope,
+                    connectedDevice = connectedDevice
+                )
+                featureApi?.onReady()
+            } catch (e: Throwable) {
+                error(e) { "Failed init on ready device factory $factory" }
+            }
+        }
+    }
+
+    @AssistedFactory
+    @ContributesBinding(AppGraph::class, binding<FBSBDeviceApi.Factory>())
+    interface Factory : FBSBDeviceApi.Factory {
+        override fun invoke(
+            scope: CoroutineScope,
+            connectedDevice: FConnectedDeviceApi,
+        ): FBSBDeviceApiImpl
+    }
+}
