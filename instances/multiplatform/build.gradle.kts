@@ -1,3 +1,4 @@
+import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import ru.astrainteractive.gradleplugin.property.baseGradleProperty
 import ru.astrainteractive.gradleplugin.property.extension.ModelPropertyValueExt.requireProjectInfo
 import ru.astrainteractive.gradleplugin.property.extension.PrimitivePropertyValueExt.requireInt
@@ -16,7 +17,7 @@ plugins {
 }
 
 kotlin {
-    jvm()
+    jvm("desktop")
     androidTarget()
 
     applyDefaultHierarchyTemplate()
@@ -63,6 +64,12 @@ kotlin {
         implementation(libs.androidx.activity.compose)
         implementation(libs.appcompat)
     }
+    sourceSets {
+        val desktopMain by getting
+        desktopMain.dependencies {
+            implementation(compose.desktop.currentOs)
+        }
+    }
 }
 
 android {
@@ -93,5 +100,17 @@ android {
     lint {
         abortOnError = false
         checkReleaseBuilds = true
+    }
+}
+
+compose.desktop {
+    application {
+        mainClass = "com.flipperdevices.bridge.connection.AppKt"
+
+        nativeDistributions {
+            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
+            packageName = "BUSYLib"
+            packageVersion = "1.0.0"
+        }
     }
 }
