@@ -41,7 +41,7 @@ include(
 )
 
 include(":instances:multiplatform")
-include(":instances:shadow")
+include(":instances:shadow-aar")
 
 include(
     ":components:bridge:config:api",
