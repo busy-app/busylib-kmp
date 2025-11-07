@@ -42,6 +42,7 @@ include(
 
 include(":instances:multiplatform")
 include(":instances:shadow-aar")
+include(":instances:shadow-fatjar")
 
 include(
     ":components:bridge:config:api",
