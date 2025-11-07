@@ -5,10 +5,10 @@ import com.flipperdevices.bridge.connection.feature.rpc.api.critical.FRpcCritica
 import com.flipperdevices.bridge.connection.feature.rpc.api.model.RpcLinkedAccountInfo
 import com.flipperdevices.bsb.auth.principal.api.BsbUserPrincipal
 import com.flipperdevices.bsb.auth.principal.api.BsbUserPrincipalApi
-import com.flipperdevices.core.ktx.common.SingleJobMode
-import com.flipperdevices.core.ktx.common.asSingleJobScope
-import com.flipperdevices.core.ktx.common.exponentialRetry
-import com.flipperdevices.core.log.LogTagProvider
+import com.flipperdevices.core.busylib.ktx.common.SingleJobMode
+import com.flipperdevices.core.busylib.ktx.common.asSingleJobScope
+import com.flipperdevices.core.busylib.ktx.common.exponentialRetry
+import com.flipperdevices.core.busylib.log.LogTagProvider
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.Inject

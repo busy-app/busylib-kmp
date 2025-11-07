@@ -1,8 +1,8 @@
 package com.flipperdevices.bridge.connection.transport.mock.impl.api.http.serial
 
-import com.flipperdevices.core.ktx.common.FlipperDispatchers
-import com.flipperdevices.core.log.LogTagProvider
-import com.flipperdevices.core.log.info
+import com.flipperdevices.core.busylib.ktx.common.FlipperDispatchers
+import com.flipperdevices.core.busylib.log.LogTagProvider
+import com.flipperdevices.core.busylib.log.info
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.InternalAPI
 import io.ktor.utils.io.core.remaining

@@ -16,8 +16,8 @@ import com.flipperdevices.bridge.connection.transport.mock.impl.exception.Failed
 import com.flipperdevices.bridge.connection.transport.mock.impl.exception.NoFoundDeviceException
 import com.flipperdevices.bridge.connection.transport.mock.impl.utils.BleConstants
 import com.flipperdevices.busylib.core.di.BusyLibGraph
-import com.flipperdevices.core.log.LogTagProvider
-import com.flipperdevices.core.log.info
+import com.flipperdevices.core.busylib.log.LogTagProvider
+import com.flipperdevices.core.busylib.log.info
 import dev.zacsweers.metro.ClassKey
 import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.Inject

@@ -9,9 +9,9 @@ import com.flipperdevices.bridge.connection.feature.provider.api.getSync
 import com.flipperdevices.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import com.flipperdevices.bridge.connection.orchestrator.api.FDeviceOrchestrator
 import com.flipperdevices.bridge.connection.screens.decompose.DecomposeViewModel
-import com.flipperdevices.core.log.LogTagProvider
-import com.flipperdevices.core.log.error
-import com.flipperdevices.core.log.info
+import com.flipperdevices.core.busylib.log.LogTagProvider
+import com.flipperdevices.core.busylib.log.error
+import com.flipperdevices.core.busylib.log.info
 import dev.zacsweers.metro.Inject
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.ExperimentalCoroutinesApi

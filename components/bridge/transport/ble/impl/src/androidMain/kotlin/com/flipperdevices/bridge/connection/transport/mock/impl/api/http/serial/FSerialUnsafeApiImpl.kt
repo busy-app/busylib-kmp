@@ -4,9 +4,9 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import com.flipperdevices.bridge.connection.transport.mock.impl.exception.BLEConnectionPermissionException
-import com.flipperdevices.core.log.LogTagProvider
-import com.flipperdevices.core.log.error
-import com.flipperdevices.core.log.info
+import com.flipperdevices.core.busylib.log.LogTagProvider
+import com.flipperdevices.core.busylib.log.error
+import com.flipperdevices.core.busylib.log.info
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.Inject

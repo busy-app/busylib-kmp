@@ -1,6 +1,6 @@
 package com.flipperdevices.bridge.connection.feature.rpc.impl.util
 
-import com.flipperdevices.core.log.info
+import com.flipperdevices.core.busylib.log.info
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation

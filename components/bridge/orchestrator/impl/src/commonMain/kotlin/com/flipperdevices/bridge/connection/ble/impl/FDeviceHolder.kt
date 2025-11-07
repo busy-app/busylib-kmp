@@ -4,9 +4,9 @@ import com.flipperdevices.bridge.connection.connectionbuilder.api.FDeviceConfigT
 import com.flipperdevices.bridge.connection.transport.common.api.FConnectedDeviceApi
 import com.flipperdevices.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import com.flipperdevices.bridge.connection.transport.common.api.FTransportConnectionStatusListener
-import com.flipperdevices.core.ktx.common.FlipperDispatchers
-import com.flipperdevices.core.log.LogTagProvider
-import com.flipperdevices.core.log.info
+import com.flipperdevices.core.busylib.ktx.common.FlipperDispatchers
+import com.flipperdevices.core.busylib.log.LogTagProvider
+import com.flipperdevices.core.busylib.log.info
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope

@@ -10,9 +10,9 @@ import com.flipperdevices.bridge.connection.feature.rpc.api.model.ConnectRequest
 import com.flipperdevices.bridge.connection.feature.rpc.api.model.NetworkResponse
 import com.flipperdevices.bridge.connection.feature.rpc.api.model.SuccessResponse
 import com.flipperdevices.bridge.connection.feature.rpc.api.model.WifiStatusResponse
-import com.flipperdevices.core.ktx.common.FlipperDispatchers
-import com.flipperdevices.core.ktx.common.runSuspendCatching
-import com.flipperdevices.core.log.LogTagProvider
+import com.flipperdevices.core.busylib.ktx.common.FlipperDispatchers
+import com.flipperdevices.core.busylib.ktx.common.runSuspendCatching
+import com.flipperdevices.core.busylib.log.LogTagProvider
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.Inject

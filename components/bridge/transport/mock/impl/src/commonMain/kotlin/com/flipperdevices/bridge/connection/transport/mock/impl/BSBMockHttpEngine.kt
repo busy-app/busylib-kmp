@@ -9,8 +9,8 @@ import com.flipperdevices.bridge.connection.transport.mock.impl.model.ApiWifiCon
 import com.flipperdevices.bridge.connection.transport.mock.impl.model.ApiWifiDisconnectResponse
 import com.flipperdevices.bridge.connection.transport.mock.impl.model.ApiWifiNetworksResponse
 import com.flipperdevices.bridge.connection.transport.mock.impl.model.ApiWifiStatusResponse
-import com.flipperdevices.core.log.TaggedLogger
-import com.flipperdevices.core.log.info
+import com.flipperdevices.core.busylib.log.TaggedLogger
+import com.flipperdevices.core.busylib.log.info
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.http.HttpHeaders

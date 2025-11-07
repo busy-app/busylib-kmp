@@ -6,9 +6,9 @@ import com.flipperdevices.bridge.connection.orchestrator.api.model.DisconnectSta
 import com.flipperdevices.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
 import com.flipperdevices.bridge.connection.service.api.FConnectionService
 import com.flipperdevices.busylib.core.di.BusyLibGraph
-import com.flipperdevices.core.ktx.common.FlipperDispatchers
-import com.flipperdevices.core.log.LogTagProvider
-import com.flipperdevices.core.log.warn
+import com.flipperdevices.core.busylib.ktx.common.FlipperDispatchers
+import com.flipperdevices.core.busylib.log.LogTagProvider
+import com.flipperdevices.core.busylib.log.warn
 import dev.zacsweers.metro.ContributesBinding
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn

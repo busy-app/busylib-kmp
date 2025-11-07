@@ -4,9 +4,9 @@ import android.annotation.SuppressLint
 import com.flipperdevices.bridge.connection.transport.ble.api.GATTCharacteristicAddress
 import com.flipperdevices.bridge.connection.transport.common.api.meta.FTransportMetaInfoApi
 import com.flipperdevices.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
-import com.flipperdevices.core.log.LogTagProvider
-import com.flipperdevices.core.log.info
-import com.flipperdevices.core.log.warn
+import com.flipperdevices.core.busylib.log.LogTagProvider
+import com.flipperdevices.core.busylib.log.info
+import com.flipperdevices.core.busylib.log.warn
 import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow

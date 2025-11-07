@@ -6,7 +6,7 @@ import com.flipperdevices.bridge.connection.feature.rpc.api.exposed.FRpcFeatureA
 import com.flipperdevices.bridge.connection.feature.rpc.api.model.PowerState
 import com.flipperdevices.bridge.connection.transport.common.api.meta.FTransportMetaInfoApi
 import com.flipperdevices.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
-import com.flipperdevices.core.ktx.common.orEmpty
+import com.flipperdevices.core.busylib.ktx.common.orEmpty
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.Inject

@@ -1,7 +1,7 @@
 package com.flipperdevices.bridge.connection.transport.mock.impl.api.http.serial
 
-import com.flipperdevices.core.ktx.common.FlipperDispatchers
-import com.flipperdevices.core.log.LogTagProvider
+import com.flipperdevices.core.busylib.ktx.common.FlipperDispatchers
+import com.flipperdevices.core.busylib.log.LogTagProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach

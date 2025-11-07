@@ -1,7 +1,7 @@
 package com.flipperdevices.bridge.connection.transport.mock.impl.api.http.serial
 
 import com.flipperdevices.bridge.connection.transport.ble.api.FBleDeviceSerialConfig
-import com.flipperdevices.core.log.LogTagProvider
+import com.flipperdevices.core.busylib.log.LogTagProvider
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow

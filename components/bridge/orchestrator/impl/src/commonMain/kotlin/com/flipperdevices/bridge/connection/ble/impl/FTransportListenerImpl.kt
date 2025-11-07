@@ -5,8 +5,8 @@ import com.flipperdevices.bridge.connection.orchestrator.api.model.ConnectingSta
 import com.flipperdevices.bridge.connection.orchestrator.api.model.DisconnectStatus
 import com.flipperdevices.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
 import com.flipperdevices.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
-import com.flipperdevices.core.log.LogTagProvider
-import com.flipperdevices.core.log.error
+import com.flipperdevices.core.busylib.log.LogTagProvider
+import com.flipperdevices.core.busylib.log.error
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update

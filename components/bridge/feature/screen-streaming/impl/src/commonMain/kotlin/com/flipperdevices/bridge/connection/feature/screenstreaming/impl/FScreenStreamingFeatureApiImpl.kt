@@ -3,7 +3,7 @@ package com.flipperdevices.bridge.connection.feature.screenstreaming.impl
 import com.flipperdevices.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import com.flipperdevices.bridge.connection.feature.screenstreaming.api.FScreenStreamingFeatureApi
 import com.flipperdevices.bridge.connection.feature.screenstreaming.model.BusyImageFormat
-import com.flipperdevices.core.log.LogTagProvider
+import com.flipperdevices.core.busylib.log.LogTagProvider
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.Inject

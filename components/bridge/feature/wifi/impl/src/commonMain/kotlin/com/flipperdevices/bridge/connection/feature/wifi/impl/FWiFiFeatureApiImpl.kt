@@ -9,8 +9,8 @@ import com.flipperdevices.bridge.connection.feature.rpc.api.model.WifiSecurityMe
 import com.flipperdevices.bridge.connection.feature.wifi.api.FWiFiFeatureApi
 import com.flipperdevices.bridge.connection.feature.wifi.api.model.WiFiNetwork
 import com.flipperdevices.bridge.connection.feature.wifi.api.model.WiFiSecurity
-import com.flipperdevices.core.log.LogTagProvider
-import com.flipperdevices.core.log.error
+import com.flipperdevices.core.busylib.log.LogTagProvider
+import com.flipperdevices.core.busylib.log.error
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.Inject

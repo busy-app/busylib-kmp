@@ -1,7 +1,7 @@
 package com.flipperdevices.bridge.connection.feature.link.check.onready.api
 
 import com.flipperdevices.bridge.connection.feature.link.check.ondemand.api.FLinkedInfoOnDemandFeatureApi
-import com.flipperdevices.core.log.LogTagProvider
+import com.flipperdevices.core.busylib.log.LogTagProvider
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.Inject

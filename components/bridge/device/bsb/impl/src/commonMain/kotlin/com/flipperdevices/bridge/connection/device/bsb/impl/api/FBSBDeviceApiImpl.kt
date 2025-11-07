@@ -9,9 +9,9 @@ import com.flipperdevices.bridge.connection.feature.common.api.FUnsafeDeviceFeat
 import com.flipperdevices.bridge.connection.transport.common.api.FConnectedDeviceApi
 import com.flipperdevices.busylib.core.buildkonfig.BuildKonfigBusyBle
 import com.flipperdevices.busylib.core.di.BusyLibGraph
-import com.flipperdevices.core.log.LogTagProvider
-import com.flipperdevices.core.log.error
-import com.flipperdevices.core.log.info
+import com.flipperdevices.core.busylib.log.LogTagProvider
+import com.flipperdevices.core.busylib.log.error
+import com.flipperdevices.core.busylib.log.info
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.ContributesBinding

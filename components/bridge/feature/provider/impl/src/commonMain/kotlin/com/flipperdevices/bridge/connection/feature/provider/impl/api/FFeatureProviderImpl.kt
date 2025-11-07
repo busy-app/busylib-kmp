@@ -8,7 +8,7 @@ import com.flipperdevices.bridge.connection.feature.provider.impl.utils.FDeviceC
 import com.flipperdevices.bridge.connection.orchestrator.api.FDeviceOrchestrator
 import com.flipperdevices.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
 import com.flipperdevices.busylib.core.di.BusyLibGraph
-import com.flipperdevices.core.ktx.common.FlipperDispatchers
+import com.flipperdevices.core.busylib.ktx.common.FlipperDispatchers
 import dev.zacsweers.metro.ContributesBinding
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn

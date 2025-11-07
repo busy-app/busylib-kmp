@@ -3,9 +3,9 @@ package com.flipperdevices.bridge.connection.transport.mock.impl.api.http
 import com.flipperdevices.bridge.connection.transport.common.utils.toRawHttpRequestString
 import com.flipperdevices.bridge.connection.transport.mock.impl.api.http.serial.FSerialBleApi
 import com.flipperdevices.bridge.connection.transport.mock.impl.exception.BadHttpResponseException
-import com.flipperdevices.core.ktx.common.withLockResult
-import com.flipperdevices.core.log.LogTagProvider
-import com.flipperdevices.core.log.info
+import com.flipperdevices.core.busylib.ktx.common.withLockResult
+import com.flipperdevices.core.busylib.log.LogTagProvider
+import com.flipperdevices.core.busylib.log.info
 import io.ktor.client.engine.HttpClientEngineBase
 import io.ktor.client.engine.HttpClientEngineConfig
 import io.ktor.client.engine.callContext
