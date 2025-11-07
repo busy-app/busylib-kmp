@@ -23,7 +23,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import java.util.EnumMap
 import kotlin.reflect.KClass
 
 @Inject
@@ -35,8 +34,8 @@ class FBSBDeviceApiImpl(
 ) : FBSBDeviceApi, FUnsafeDeviceFeatureApi, LogTagProvider {
     override val TAG = "FZeroDeviceApi"
 
-    private val features =
-        EnumMap<FDeviceFeature, Deferred<FDeviceFeatureApi?>>(FDeviceFeature::class.java)
+    // todo Hi, @Programistich you've had fix for that
+    private val features = mutableMapOf<FDeviceFeature, Deferred<FDeviceFeatureApi?>>()
     private val mutex = Mutex()
 
     init {
