@@ -57,10 +57,21 @@ subprojects.forEach { subProject ->
             ?.all {
                 optIns.onEach(languageSettings::optIn)
             }
+        // This is required because we have submodules
+        // Due to this, *.kotlin_module files have same names
+        // For example, api.kotlin_module
+        // Here we are changing it
         tasks
             .withType<KotlinCompile>()
             .configureEach {
                 compilerOptions {
+                    freeCompilerArgs.addAll(
+                        "-module-name",
+                        this@afterEvaluate
+                            .path
+                            .replace(":", ".")
+                            .replace("-", ".")
+                    )
                     optIn.addAll(optIns)
                 }
             }

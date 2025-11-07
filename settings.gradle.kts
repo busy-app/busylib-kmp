@@ -41,6 +41,7 @@ include(
 )
 
 include(":instances:multiplatform")
+include(":instances:shadow")
 
 include(
     ":components:bridge:config:api",
