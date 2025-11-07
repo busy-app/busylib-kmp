@@ -88,16 +88,12 @@ class BLEDeviceConnectionApiImpl(
             scope = scope
         )
         val bleApi = FBleApiImpl(
-            onDisconnect = device::disconnect,
+            peripheral = device,
+            scope = scope,
             services = services,
             serialApi = serialApi,
-            config = config
-        )
-        listener.onStatusUpdate(
-            FInternalTransportConnectionStatus.Connected(
-                scope,
-                bleApi
-            )
+            config = config,
+            listener = listener
         )
         return bleApi
     }
