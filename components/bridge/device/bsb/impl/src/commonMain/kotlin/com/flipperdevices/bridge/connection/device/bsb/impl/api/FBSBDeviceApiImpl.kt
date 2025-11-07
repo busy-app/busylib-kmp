@@ -7,7 +7,7 @@ import com.flipperdevices.bridge.connection.feature.common.api.FDeviceFeatureApi
 import com.flipperdevices.bridge.connection.feature.common.api.FOnDeviceReadyFeatureApi
 import com.flipperdevices.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import com.flipperdevices.bridge.connection.transport.common.api.FConnectedDeviceApi
-import com.flipperdevices.core.buildkonfig.BuildKonfig
+import com.flipperdevices.core.buildkonfig.BuildKonfigBusyBle
 import com.flipperdevices.core.di.AppGraph
 import com.flipperdevices.core.log.LogTagProvider
 import com.flipperdevices.core.log.error
@@ -39,7 +39,7 @@ class FBSBDeviceApiImpl(
     private val mutex = Mutex()
 
     init {
-        if (BuildKonfig.CRASH_APP_ON_FAILED_CHECKS) {
+        if (BuildKonfigBusyBle.CRASH_APP_ON_FAILED_CHECKS) {
             FDeviceFeature.entries.forEach { key ->
                 checkNotNull(factories[key]) { "Not found factory for $key" }
             }
