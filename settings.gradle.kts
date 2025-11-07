@@ -33,12 +33,14 @@ include(
     ":components:principal:impl",
 )
 
-include(":components:di")
-include(":components:buildkonfig")
-include(":components:log")
-include(":components:ktx")
+include(
+    ":components:di",
+    ":components:buildkonfig",
+    ":components:log",
+    ":components:ktx"
+)
 
-include(":sample:shared")
+include(":instances:multiplatform")
 
 include(
     ":components:bridge:config:api",

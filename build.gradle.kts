@@ -14,7 +14,6 @@ plugins {
     alias(libs.plugins.googleServices) apply false
     alias(libs.plugins.metro) apply false
 
-    // klibs - core
     alias(libs.plugins.klibs.gradle.detekt) apply false
     alias(libs.plugins.klibs.gradle.detekt.compose) apply false
     alias(libs.plugins.klibs.gradle.dokka.root) apply false
@@ -22,7 +21,6 @@ plugins {
     alias(libs.plugins.klibs.gradle.java.core) apply false
     alias(libs.plugins.klibs.gradle.publication) apply false
     alias(libs.plugins.klibs.gradle.rootinfo) apply false
-    // klibs - android
     alias(libs.plugins.klibs.gradle.android.core) apply false
     alias(libs.plugins.klibs.gradle.android.compose) apply false
     alias(libs.plugins.klibs.gradle.android.apk.sign) apply false
@@ -66,30 +64,3 @@ subprojects.forEach { subProject ->
             }
     }
 }
-
-// todo fix publish group
-// val Project.hierarchyGroup: String
-//    get() {
-//        val currentParent = parent
-//        val group = when {
-//            project == rootProject -> ""
-//            currentParent == null -> ""
-//            else -> {
-//                val parentGroup = currentParent.hierarchyGroup
-//                if (parentGroup.isNotBlank()) {
-//                    "$parentGroup.$name"
-//                } else {
-//                    name
-//                }
-//            }
-//        }
-//        return group
-//            .replace(".", "-")
-//            .lowercase()
-//    }
-//
-// subprojects.forEach { subProject ->
-//    subProject.beforeEvaluate {
-//        subProject.group = subProject.hierarchyGroup
-//    }
-// }
