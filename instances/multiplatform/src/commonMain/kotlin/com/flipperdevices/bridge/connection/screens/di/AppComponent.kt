@@ -1,4 +1,4 @@
-package com.flipperdevices.bridge.connection.di
+package com.flipperdevices.bridge.connection.screens.di
 
 import com.flipperdevices.bridge.connection.screens.ConnectionRootDecomposeComponent
 import com.flipperdevices.core.di.AppGraph

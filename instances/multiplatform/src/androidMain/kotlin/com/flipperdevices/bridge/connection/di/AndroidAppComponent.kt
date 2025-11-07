@@ -1,6 +1,7 @@
 package com.flipperdevices.bridge.connection.di
 
 import android.content.Context
+import com.flipperdevices.bridge.connection.screens.di.AppComponent
 import com.flipperdevices.bridge.connection.service.api.FConnectionService
 import com.flipperdevices.core.di.AppGraph
 import com.russhwolf.settings.ObservableSettings
