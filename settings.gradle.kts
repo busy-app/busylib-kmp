@@ -1,4 +1,4 @@
-rootProject.name = "KmpBusyLib"
+rootProject.name = "BusyLibKmp"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {
