@@ -5,6 +5,7 @@ import ru.astrainteractive.gradleplugin.property.extension.PrimitivePropertyValu
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
+    id("ru.astrainteractive.gradleplugin.java.core")
     id("com.android.application")
     id("org.jetbrains.compose")
     id("org.jetbrains.kotlin.plugin.compose")
