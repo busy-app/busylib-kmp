@@ -10,5 +10,5 @@ interface FRpcClientModeApi {
 
     val httpClientModeFlow: StateFlow<HttpClientMode>
 
-    fun updateClientMode(info: RpcLinkedAccountInfo, userId: String?)
+    fun updateClientMode(info: RpcLinkedAccountInfo, email: String?)
 }

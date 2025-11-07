@@ -31,6 +31,7 @@ dependencyResolutionManagement {
 include(
     ":components:principal:api",
     ":components:principal:impl",
+    ":components:cloud:api",
 )
 
 include(

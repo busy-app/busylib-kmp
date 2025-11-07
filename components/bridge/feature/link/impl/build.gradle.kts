@@ -24,6 +24,7 @@ kotlin {
         implementation(projects.components.bridge.feature.link.api)
 
         implementation(projects.components.principal.api)
+        implementation(projects.components.cloud.api)
 
         implementation(projects.components.di)
         implementation(projects.components.ktx)

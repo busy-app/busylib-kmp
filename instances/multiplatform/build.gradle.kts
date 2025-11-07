@@ -31,6 +31,7 @@ kotlin {
         implementation(projects.components.log)
         implementation(projects.components.principal.api)
         implementation(projects.components.principal.impl)
+        implementation(projects.components.cloud.api)
 
         implementation(kotlin.compose.runtime)
         implementation(kotlin.compose.ui)
