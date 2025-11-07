@@ -13,17 +13,29 @@ import androidx.compose.material.lightColors
 import androidx.compose.ui.Modifier
 import com.arkivanov.decompose.defaultComponentContext
 import com.flipperdevices.bridge.connection.screens.di.getRootDecomposeComponent
+import com.flipperdevices.bridge.connection.screens.search.SampleBLESearchViewModel
+import com.flipperdevices.bridge.connection.utils.PermissionCheckerImpl
 
 class ConnectionTestActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val busyLib = (application as ConnectionTestApplication).busyLib
+        val persistedStorage = (application as ConnectionTestApplication).persistedStorage
 
         enableEdgeToEdge()
 
         val root = getRootDecomposeComponent(
             componentContext = defaultComponentContext(),
+            busyLib = busyLib,
+            permissionChecker = PermissionCheckerImpl(this),
+            persistedStorage = persistedStorage,
+            searchViewModelProvider = {
+                SampleBLESearchViewModel(
+                    persistedStorage,
+                    busyLib.flipperScanner
+                )
+            }
         )
 
         setContent {

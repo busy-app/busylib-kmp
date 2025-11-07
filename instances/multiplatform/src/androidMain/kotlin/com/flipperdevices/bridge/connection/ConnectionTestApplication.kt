@@ -10,19 +10,22 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 
 class ConnectionTestApplication : Application() {
+    val persistedStorage by lazy {
+        FDevicePersistedStorageImpl(
+            SharedPreferencesSettings(
+                baseContext.getSharedPreferences(
+                    "settings",
+                    MODE_PRIVATE
+                )
+            )
+        )
+    }
     val busyLib: BUSYLibAndroid by lazy {
         BUSYLibAndroid.build(
             CoroutineScope(SupervisorJob()),
             principalApi = UserPrincipalApiNoop(),
             bsbBarsApi = BSBBarsApiNoop(),
-            persistedStorage = FDevicePersistedStorageImpl(
-                SharedPreferencesSettings(
-                    baseContext.getSharedPreferences(
-                        "settings",
-                        MODE_PRIVATE
-                    )
-                )
-            ),
+            persistedStorage = persistedStorage,
             context = this
         )
     }
