@@ -3,13 +3,13 @@ package com.flipperdevices.transport.ble.impl
 import com.flipperdevices.bridge.connection.transport.ble.api.FBleApi
 import com.flipperdevices.bridge.connection.transport.ble.api.FBleDeviceConnectionConfig
 import com.flipperdevices.bridge.connection.transport.ble.api.FSerialBleApi
-import com.flipperdevices.bridge.connection.transport.ble.html.FHttpBLEEngine
+import com.flipperdevices.bridge.connection.transport.ble.http.FHttpBLEEngine
 import com.flipperdevices.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import com.flipperdevices.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import com.flipperdevices.bridge.connection.transport.common.api.meta.FTransportMetaInfoApi
 import com.flipperdevices.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
 import com.flipperdevices.bridge.connection.transport.common.api.serial.FHTTPDeviceApi
-import com.flipperdevices.core.ktx.common.FlipperDispatchers
+import com.flipperdevices.core.busylib.ktx.common.FlipperDispatchers
 import com.flipperdevices.transport.ble.impl.cb.FPeripheralApi
 import com.flipperdevices.transport.ble.impl.cb.FPeripheralState
 import kotlinx.coroutines.CoroutineScope

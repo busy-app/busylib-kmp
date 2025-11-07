@@ -1,15 +1,12 @@
 package com.flipperdevices.transport.ble.impl.cb
 
 import com.flipperdevices.bridge.connection.transport.ble.api.FBleDeviceConnectionConfig
-import com.flipperdevices.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
-import com.flipperdevices.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import com.flipperdevices.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
-import com.flipperdevices.core.ktx.common.FlipperDispatchers
-import com.flipperdevices.core.log.LogTagProvider
-import com.flipperdevices.core.log.debug
-import com.flipperdevices.core.log.error
-import com.flipperdevices.core.log.info
-import com.flipperdevices.core.log.warn
+import com.flipperdevices.core.busylib.log.LogTagProvider
+import com.flipperdevices.core.busylib.log.debug
+import com.flipperdevices.core.busylib.log.error
+import com.flipperdevices.core.busylib.log.info
+import com.flipperdevices.core.busylib.log.warn
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.ObjCSignatureOverride
 import kotlinx.coroutines.CoroutineScope
@@ -20,11 +17,8 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.plus
 import platform.CoreBluetooth.CBCharacteristic
 import platform.CoreBluetooth.CBPeripheral
 import platform.CoreBluetooth.CBPeripheralDelegateProtocol
@@ -36,7 +30,6 @@ import platform.Foundation.NSString
 import platform.Foundation.NSUTF8StringEncoding
 import platform.Foundation.NSUUID
 import platform.Foundation.dataUsingEncoding
-import platform.GameKit.create
 import platform.darwin.NSObject
 
 interface FPeripheralApi {
@@ -57,14 +50,62 @@ interface FPeripheralApi {
 }
 
 @OptIn(ExperimentalForeignApi::class)
+private class FPeripheralDelegate(
+    private val peripheral: FPeripheral,
+    private val scope: CoroutineScope
+) : NSObject(), CBPeripheralDelegateProtocol {
+
+    override fun peripheralDidUpdateName(peripheral: CBPeripheral) {
+        this.peripheral.updateName(peripheral)
+    }
+
+    override fun peripheral(
+        peripheral: CBPeripheral,
+        didDiscoverServices: NSError?
+    ) {
+        this.peripheral.handleDidDiscoverServices(peripheral, didDiscoverServices)
+    }
+
+    override fun peripheral(
+        peripheral: CBPeripheral,
+        didDiscoverCharacteristicsForService: CBService,
+        error: NSError?
+    ) {
+        scope.launch {
+            this@FPeripheralDelegate.peripheral.didDiscoverCharacteristics(
+                service = didDiscoverCharacteristicsForService,
+                characteristics = didDiscoverCharacteristicsForService.characteristics?.map { it as CBCharacteristic } ?: emptyList()
+            )
+        }
+    }
+
+    @ObjCSignatureOverride
+    override fun peripheral(
+        peripheral: CBPeripheral,
+        didUpdateValueForCharacteristic: CBCharacteristic,
+        error: NSError?
+    ) {
+        scope.launch {
+            this@FPeripheralDelegate.peripheral.didUpdateValue(characteristic = didUpdateValueForCharacteristic, error = error)
+        }
+    }
+
+    @ObjCSignatureOverride
+    override fun peripheral(
+        peripheral: CBPeripheral,
+        didWriteValueForCharacteristic: CBCharacteristic,
+        error: NSError?
+    ) {
+        this.peripheral.handleDidWriteValue(didWriteValueForCharacteristic, error)
+    }
+}
+
+@OptIn(ExperimentalForeignApi::class)
 class FPeripheral(
     private val peripheral: CBPeripheral,
     private val config: FBleDeviceConnectionConfig,
     private val scope: CoroutineScope
-) : FPeripheralApi,
-    NSObject(),
-    CBPeripheralDelegateProtocol,
-    LogTagProvider {
+) : FPeripheralApi, LogTagProvider {
 
     override val TAG: String = "FPeripheral"
 
@@ -87,8 +128,10 @@ class FPeripheral(
     private var serialWrite: CBCharacteristic? = null
     private var statusJob: Job? = null
 
+    private val delegate = FPeripheralDelegate(this, scope)
+
     init {
-        peripheral.delegate = this
+        peripheral.delegate = delegate
         updateName(peripheral)
     }
 
@@ -157,12 +200,7 @@ class FPeripheral(
         )
     }
 
-    // CBPeripheralDelegateProtocol methods
-    override fun peripheralDidUpdateName(peripheral: CBPeripheral) {
-        updateName(peripheral)
-    }
-
-    private fun updateName(peripheral: CBPeripheral) {
+    internal fun updateName(peripheral: CBPeripheral) {
         debug { "Peripheral name updated: ${peripheral.name}" }
         val name = peripheral.name ?: return
 
@@ -176,7 +214,7 @@ class FPeripheral(
         }
     }
 
-    override fun peripheral(
+    internal fun handleDidDiscoverServices(
         peripheral: CBPeripheral,
         didDiscoverServices: NSError?
     ) {
@@ -186,22 +224,7 @@ class FPeripheral(
         }
     }
 
-    override fun peripheral(
-        peripheral: CBPeripheral,
-        didDiscoverCharacteristicsForService: CBService,
-        error: NSError?
-    ) {
-        val characteristics = didDiscoverCharacteristicsForService.characteristics ?: return
-
-        scope.launch {
-            didDiscoverCharacteristics(
-                service = didDiscoverCharacteristicsForService,
-                characteristics = characteristics.map { it as CBCharacteristic }
-            )
-        }
-    }
-
-    private fun didDiscoverCharacteristics(
+    internal suspend fun didDiscoverCharacteristics(
         service: CBService,
         characteristics: List<CBCharacteristic>
     ) {
@@ -259,18 +282,7 @@ class FPeripheral(
         }
     }
 
-    @ObjCSignatureOverride
-    override fun peripheral(
-        peripheral: CBPeripheral,
-        didUpdateValueForCharacteristic: CBCharacteristic,
-        error: NSError?
-    ) {
-        scope.launch {
-            didUpdateValue(characteristic = didUpdateValueForCharacteristic, error = error)
-        }
-    }
-
-    private suspend fun didUpdateValue(characteristic: CBCharacteristic, error: NSError?) {
+    internal suspend fun didUpdateValue(characteristic: CBCharacteristic, error: NSError?) {
         val uuid = characteristic.UUID.UUIDString.lowercase()
         val data = characteristic.value
 
@@ -307,9 +319,7 @@ class FPeripheral(
         }
     }
 
-    @ObjCSignatureOverride
-    override fun peripheral(
-        peripheral: CBPeripheral,
+    internal fun handleDidWriteValue(
         didWriteValueForCharacteristic: CBCharacteristic,
         error: NSError?
     ) {

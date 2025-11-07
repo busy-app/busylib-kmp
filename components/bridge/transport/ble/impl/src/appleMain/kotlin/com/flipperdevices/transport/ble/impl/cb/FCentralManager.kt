@@ -1,10 +1,10 @@
 package com.flipperdevices.transport.ble.impl.cb
 
 import com.flipperdevices.bridge.connection.transport.ble.api.FBleDeviceConnectionConfig
-import com.flipperdevices.core.log.LogTagProvider
-import com.flipperdevices.core.log.error
-import com.flipperdevices.core.log.info
-import com.flipperdevices.core.log.warn
+import com.flipperdevices.core.busylib.log.LogTagProvider
+import com.flipperdevices.core.busylib.log.error
+import com.flipperdevices.core.busylib.log.info
+import com.flipperdevices.core.busylib.log.warn
 import kotlinx.cinterop.ObjCSignatureOverride
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -30,12 +30,43 @@ interface FCentralManagerApi {
     suspend fun stopScan()
 }
 
+private class FCentralManagerDelegate(
+    private val onStateUpdate: (CBManagerState) -> Unit,
+    private val onDidConnect: (CBPeripheral) -> Unit,
+    private val onDidDisconnect: (CBPeripheral, NSError?) -> Unit,
+    private val onDidFailToConnect: (CBPeripheral, NSError?) -> Unit
+) : NSObject(), CBCentralManagerDelegateProtocol {
+
+    override fun centralManagerDidUpdateState(central: CBCentralManager) {
+        onStateUpdate(central.state)
+    }
+
+    override fun centralManager(central: CBCentralManager, didConnectPeripheral: CBPeripheral) {
+        onDidConnect(didConnectPeripheral)
+    }
+
+    @ObjCSignatureOverride
+    override fun centralManager(
+        central: CBCentralManager,
+        didDisconnectPeripheral: CBPeripheral,
+        error: NSError?
+    ) {
+        onDidDisconnect(didDisconnectPeripheral, error)
+    }
+
+    @ObjCSignatureOverride
+    override fun centralManager(
+        central: CBCentralManager,
+        didFailToConnectPeripheral: CBPeripheral,
+        error: NSError?
+    ) {
+        onDidFailToConnect(didFailToConnectPeripheral, error)
+    }
+}
+
 class FCentralManager(
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.Main),
-) : FCentralManagerApi,
-    NSObject(),
-    CBCentralManagerDelegateProtocol,
-    LogTagProvider {
+) : FCentralManagerApi, LogTagProvider {
 
     override val TAG: String
         get() = "FCentralManager"
@@ -51,8 +82,15 @@ class FCentralManager(
 
     private val manager: CBCentralManager = CBCentralManager()
 
+    private val delegate = FCentralManagerDelegate(
+        onStateUpdate = { state -> scope.launch { updateBLEStatus(state) } },
+        onDidConnect = { peripheral -> scope.launch { didConnect(peripheral) } },
+        onDidDisconnect = { peripheral, error -> scope.launch { didDisconnect(peripheral, error) } },
+        onDidFailToConnect = { peripheral, error -> scope.launch { didFailToConnect(peripheral, error) } }
+    )
+
     init {
-        manager.delegate = this
+        manager.delegate = delegate
     }
 
     override suspend fun connect(config: FBleDeviceConnectionConfig) {
@@ -112,11 +150,6 @@ class FCentralManager(
         }
     }
 
-    override fun centralManagerDidUpdateState(central: CBCentralManager) {
-        val state = central.state
-        scope.launch { updateBLEStatus(state) }
-    }
-
     private suspend fun updateBLEStatus(state: CBManagerState) {
         val newStatus = FBLEStatus.from(state)
         _bleStatusStream.emit(newStatus)
@@ -135,12 +168,6 @@ class FCentralManager(
         }
     }
 
-    override fun centralManager(central: CBCentralManager, didConnectPeripheral: CBPeripheral) {
-        scope.launch {
-            didConnect(didConnectPeripheral)
-        }
-    }
-
     private suspend fun didConnect(peripheral: CBPeripheral) {
         info { "didConnect" }
         val device = _connectedStream.value[peripheral.identifier] ?: run {
@@ -152,17 +179,6 @@ class FCentralManager(
         _connectedStream.emit(current + (peripheral.identifier to device))
         device.onConnect()
         info { "CB didConnect id=${peripheral.identifier}" }
-    }
-
-    @ObjCSignatureOverride
-    override fun centralManager(
-        central: CBCentralManager,
-        didDisconnectPeripheral: CBPeripheral,
-        error: NSError?
-    ) {
-        scope.launch {
-            didDisconnect(didDisconnectPeripheral, error)
-        }
     }
 
     private suspend fun didDisconnect(
@@ -183,17 +199,6 @@ class FCentralManager(
             warn { "CB didDisconnect id=${peripheral.identifier} error=$error" }
         } else {
             info { "CB didDisconnect id=${peripheral.identifier}" }
-        }
-    }
-
-    @ObjCSignatureOverride
-    override fun centralManager(
-        central: CBCentralManager,
-        didFailToConnectPeripheral: CBPeripheral,
-        error: NSError?
-    ) {
-        scope.launch {
-            didFailToConnect(didFailToConnectPeripheral, error)
         }
     }
 
