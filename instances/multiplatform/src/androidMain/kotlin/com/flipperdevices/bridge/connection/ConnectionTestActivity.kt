@@ -12,7 +12,7 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.lightColors
 import androidx.compose.ui.Modifier
 import com.arkivanov.decompose.defaultComponentContext
-import com.flipperdevices.bridge.connection.di.AppComponent
+import com.flipperdevices.bridge.connection.screens.di.AppComponent
 import com.flipperdevices.busylib.core.di.BusyLibComponentHolder
 
 class ConnectionTestActivity : AppCompatActivity() {
