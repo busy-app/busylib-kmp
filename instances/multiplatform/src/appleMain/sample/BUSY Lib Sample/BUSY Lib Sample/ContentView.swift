@@ -1,9 +1,4 @@
-//
-//  ContentView.swift
-//  BUSY Lib Sample
-//
-//  Created by Programistich on 07.11.2025.
-//
+import BridgeConnection
 
 import SwiftUI
 
@@ -16,6 +11,10 @@ struct ContentView: View {
             Text("Hello, world!")
         }
         .padding()
+    }
+
+    func test() {
+        
     }
 }
 
