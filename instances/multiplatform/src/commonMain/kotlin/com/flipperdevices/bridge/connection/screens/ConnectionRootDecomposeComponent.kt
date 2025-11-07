@@ -12,13 +12,9 @@ import com.flipperdevices.bridge.connection.screens.models.ConnectionRootConfig
 import com.flipperdevices.bridge.connection.screens.nopermission.ConnectionNoPermissionDecomposeComponent
 import com.flipperdevices.bridge.connection.screens.search.ConnectionSearchDecomposeComponent
 import com.flipperdevices.bridge.connection.screens.utils.PermissionChecker
-import dev.zacsweers.metro.Assisted
-import dev.zacsweers.metro.AssistedFactory
-import dev.zacsweers.metro.Inject
 
-@Inject
 class ConnectionRootDecomposeComponent(
-    @Assisted componentContext: ComponentContext,
+    componentContext: ComponentContext,
     permissionChecker: PermissionChecker,
     private val searchDecomposeFactory: ConnectionSearchDecomposeComponent.Factory,
     private val connectionDeviceScreenDecomposeComponentFactory: ConnectionDeviceScreenDecomposeComponent.Factory
@@ -39,7 +35,7 @@ class ConnectionRootDecomposeComponent(
         config: ConnectionRootConfig,
         componentContext: ComponentContext
     ): DecomposeComponent = when (config) {
-        is ConnectionRootConfig.Search -> searchDecomposeFactory(
+        is ConnectionRootConfig.Search -> searchDecomposeFactory.invoke(
             componentContext = componentContext,
             onBack = navigation::pop
         )
@@ -56,10 +52,20 @@ class ConnectionRootDecomposeComponent(
         ConnectionRootConfig.FileManager -> TODO()
     }
 
-    @AssistedFactory
-    fun interface Factory {
-        operator fun invoke(
+    class Factory(
+        private val permissionChecker: PermissionChecker,
+        private val searchDecomposeFactory: ConnectionSearchDecomposeComponent.Factory,
+        private val connectionDeviceScreenDecomposeComponentFactory: ConnectionDeviceScreenDecomposeComponent.Factory
+    ) {
+        fun invoke(
             componentContext: ComponentContext
-        ): ConnectionRootDecomposeComponent
+        ): ConnectionRootDecomposeComponent {
+            return ConnectionRootDecomposeComponent(
+                componentContext,
+                permissionChecker,
+                searchDecomposeFactory,
+                connectionDeviceScreenDecomposeComponentFactory
+            )
+        }
     }
 }

@@ -30,7 +30,6 @@ dependencyResolutionManagement {
 
 include(
     ":components:principal:api",
-    ":components:principal:impl",
     ":components:cloud:api",
 )
 
@@ -41,11 +40,11 @@ include(
     ":components:ktx"
 )
 
+include(":entrypoint")
 include(":instances:multiplatform")
 
 include(
     ":components:bridge:config:api",
-    ":components:bridge:config:impl",
     ":components:bridge:connectionbuilder:api",
     ":components:bridge:connectionbuilder:impl",
     ":components:bridge:device:common:api",

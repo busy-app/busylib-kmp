@@ -12,18 +12,17 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.lightColors
 import androidx.compose.ui.Modifier
 import com.arkivanov.decompose.defaultComponentContext
-import com.flipperdevices.bridge.connection.screens.di.AppComponent
-import com.flipperdevices.busylib.core.di.BusyLibComponentHolder
+import com.flipperdevices.bridge.connection.screens.di.getRootDecomposeComponent
 
 class ConnectionTestActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val rootComponentFactory = BusyLibComponentHolder.component<AppComponent>().rootComponentFactory
+        val busyLib = (application as ConnectionTestApplication).busyLib
 
         enableEdgeToEdge()
 
-        val root = rootComponentFactory(
+        val root = getRootDecomposeComponent(
             componentContext = defaultComponentContext(),
         )
 

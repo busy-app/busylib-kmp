@@ -1,35 +1,35 @@
 package com.flipperdevices.bridge.connection
 
 import android.app.Application
-import com.flipperdevices.bridge.connection.di.AndroidAppComponent
-import com.flipperdevices.busylib.core.di.BusyLibComponentHolder
+import com.flipperdevices.bridge.connection.utils.cloud.BSBBarsApiNoop
+import com.flipperdevices.bridge.connection.utils.config.impl.FDevicePersistedStorageImpl
+import com.flipperdevices.bridge.connection.utils.principal.impl.UserPrincipalApiNoop
+import com.flipperdevices.busylib.BUSYLibAndroid
 import com.russhwolf.settings.SharedPreferencesSettings
-import dev.zacsweers.metro.createGraphFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
-import timber.log.Timber
 
 class ConnectionTestApplication : Application() {
-    private val androidAppComponent by lazy {
-        createGraphFactory<AndroidAppComponent.Factory>().create(
-            observableSettings = SharedPreferencesSettings(
-                baseContext.getSharedPreferences(
-                    "settings",
-                    MODE_PRIVATE
+    val busyLib: BUSYLibAndroid by lazy {
+        BUSYLibAndroid.build(
+            CoroutineScope(SupervisorJob()),
+            principalApi = UserPrincipalApiNoop(),
+            bsbBarsApi = BSBBarsApiNoop(),
+            persistedStorage = FDevicePersistedStorageImpl(
+                SharedPreferencesSettings(
+                    baseContext.getSharedPreferences(
+                        "settings",
+                        MODE_PRIVATE
+                    )
                 )
             ),
-            scope = CoroutineScope(SupervisorJob()),
-            context = this,
+            context = this
         )
     }
 
     override fun onCreate() {
         super.onCreate()
 
-        BusyLibComponentHolder.components += androidAppComponent
-
-        Timber.plant(Timber.DebugTree())
-
-        BusyLibComponentHolder.component<AndroidAppComponent>().connectionService.onApplicationInit()
+        busyLib.connectionService.onApplicationInit()
     }
 }

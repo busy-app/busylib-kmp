@@ -24,16 +24,11 @@ import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.instancekeeper.getOrCreate
 import com.flipperdevices.bridge.connection.screens.decompose.DecomposeOnBackParameter
 import com.flipperdevices.bridge.connection.screens.decompose.ScreenDecomposeComponent
-import dev.zacsweers.metro.Assisted
-import dev.zacsweers.metro.AssistedFactory
-import dev.zacsweers.metro.Inject
-import dev.zacsweers.metro.Provider
 
-@Inject
 class ConnectionSearchDecomposeComponent(
-    @Assisted componentContext: ComponentContext,
-    @Assisted private val onBack: DecomposeOnBackParameter,
-    private val searchViewModelProvider: Provider<ConnectionSearchViewModel>
+    componentContext: ComponentContext,
+    private val onBack: DecomposeOnBackParameter,
+    private val searchViewModelProvider: () -> ConnectionSearchViewModel
 ) : ScreenDecomposeComponent(componentContext) {
     private val searchViewModel = instanceKeeper.getOrCreate {
         searchViewModelProvider.invoke()
@@ -96,11 +91,18 @@ class ConnectionSearchDecomposeComponent(
         }
     }
 
-    @AssistedFactory
-    interface Factory {
-        operator fun invoke(
+    class Factory(
+        private val searchViewModelProvider: () -> ConnectionSearchViewModel
+    ) {
+        fun invoke(
             componentContext: ComponentContext,
             onBack: DecomposeOnBackParameter
-        ): ConnectionSearchDecomposeComponent
+        ): ConnectionSearchDecomposeComponent {
+            return ConnectionSearchDecomposeComponent(
+                componentContext,
+                onBack,
+                searchViewModelProvider
+            )
+        }
     }
 }

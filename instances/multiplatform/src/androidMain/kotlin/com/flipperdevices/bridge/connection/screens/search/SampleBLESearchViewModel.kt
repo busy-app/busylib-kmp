@@ -6,10 +6,6 @@ import com.flipperdevices.bridge.api.scanner.FlipperScanner
 import com.flipperdevices.bridge.api.utils.Constants.UNKNOWN_NAME
 import com.flipperdevices.bridge.connection.config.api.FDevicePersistedStorage
 import com.flipperdevices.bridge.connection.config.api.model.FDeviceBaseModel
-import com.flipperdevices.busylib.core.di.BusyLibGraph
-import dev.zacsweers.metro.ContributesBinding
-import dev.zacsweers.metro.Inject
-import dev.zacsweers.metro.binding
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
@@ -19,9 +15,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
-@Inject
 @SuppressLint("MissingPermission")
-@ContributesBinding(BusyLibGraph::class, binding<ConnectionSearchViewModel>())
 class SampleBLESearchViewModel(
     persistedStorage: FDevicePersistedStorage,
     flipperScanner: FlipperScanner

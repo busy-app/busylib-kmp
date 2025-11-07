@@ -12,7 +12,6 @@ import com.flipperdevices.bridge.connection.screens.decompose.DecomposeViewModel
 import com.flipperdevices.core.busylib.log.LogTagProvider
 import com.flipperdevices.core.busylib.log.error
 import com.flipperdevices.core.busylib.log.info
-import dev.zacsweers.metro.Inject
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,7 +21,6 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-@Inject
 @OptIn(ExperimentalCoroutinesApi::class)
 class PingViewModel(
     private val featureProvider: FFeatureProvider,

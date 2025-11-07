@@ -3,7 +3,6 @@ package com.flipperdevices.bridge.connection.screens.device.viewmodel
 import com.flipperdevices.bridge.connection.config.api.FDevicePersistedStorage
 import com.flipperdevices.bridge.connection.config.api.model.FDeviceBaseModel
 import com.flipperdevices.bridge.connection.screens.decompose.DecomposeViewModel
-import dev.zacsweers.metro.Inject
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
@@ -19,7 +18,6 @@ data class DevicesDropdownState(
     val devices: ImmutableList<FDeviceBaseModel>
 )
 
-@Inject
 class FDevicesViewModel(
     private val devicePersistedStorage: FDevicePersistedStorage
 ) : DecomposeViewModel() {
