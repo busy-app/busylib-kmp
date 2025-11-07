@@ -61,15 +61,17 @@ class BLEDeviceConnectionApiImpl(
         val device = withTimeout(BleConstants.CONNECT_TIME) {
             centralManager.getPeripheralById(config.macAddress)
         } ?: throw NoFoundDeviceException()
-        info { "Find device" }
-        centralManager.connect(
-            device,
-            CentralManager.ConnectionOptions.Direct(
-                timeout = BleConstants.CONNECT_TIME,
-                preferredPhy = listOf(Phy.PHY_LE_2M),
-                automaticallyRequestHighestValueLength = false
+        info { "Device found (${device.address}/$device), try to connect..." }
+        withTimeout(BleConstants.CONNECT_TIME) {
+            centralManager.connect(
+                device,
+                CentralManager.ConnectionOptions.Direct(
+                    timeout = BleConstants.CONNECT_TIME,
+                    preferredPhy = listOf(Phy.PHY_LE_2M),
+                    automaticallyRequestHighestValueLength = false
+                )
             )
-        )
+        }
         if (!device.isConnected) {
             info { "Device failed to connect, so throw exception" }
             throw FailedConnectToDeviceException()
@@ -87,6 +89,7 @@ class BLEDeviceConnectionApiImpl(
             services = services,
             scope = scope
         )
+
         val bleApi = FBleApiImpl(
             peripheral = device,
             scope = scope,

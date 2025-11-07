@@ -11,8 +11,10 @@ data class RpcLinkedAccountInfo(
     @SerialName("email")
     val email: String? = null,
     @SerialName("id")
-    val id: Uuid? = null
+    val id: String? = null
 ) {
+    val uuid: Uuid? = id?.let { Uuid.parse(it) }
+
     @Serializable
     enum class State {
         @SerialName("not_linked")

@@ -9,8 +9,8 @@ import com.flipperdevices.bridge.connection.transport.common.api.serial.FHTTPDev
 import com.flipperdevices.bridge.connection.transport.mock.impl.api.http.FHttpBLEEngine
 import com.flipperdevices.bridge.connection.transport.mock.impl.api.http.serial.FSerialBleApi
 import com.flipperdevices.bridge.connection.transport.mock.impl.meta.FTransportMetaInfoApiImpl
-import com.flipperdevices.core.log.LogTagProvider
-import com.flipperdevices.core.log.info
+import com.flipperdevices.core.busylib.log.LogTagProvider
+import com.flipperdevices.core.busylib.log.info
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
