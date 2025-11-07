@@ -60,8 +60,12 @@ include(
     ":components:bridge:transport:mock:impl",
     ":components:bridge:transport:common:api",
     ":components:bridge:transport:common:impl",
+
     ":components:bridge:transport:ble:api",
     ":components:bridge:transport:ble:impl",
+    ":components:bridge:transport:ble:common",
+    ":components:bridge:transport:ble:http",
+
     ":components:bridge:transportconfigbuilder:api",
     ":components:bridge:transportconfigbuilder:impl",
     ":components:bridge:feature:common:api",

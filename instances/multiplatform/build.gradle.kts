@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
+import org.jetbrains.kotlin.konan.target.Family
 import ru.astrainteractive.gradleplugin.property.baseGradleProperty
 import ru.astrainteractive.gradleplugin.property.extension.ModelPropertyValueExt.requireProjectInfo
 import ru.astrainteractive.gradleplugin.property.extension.PrimitivePropertyValueExt.requireInt
@@ -19,7 +21,45 @@ kotlin {
     jvm()
     androidTarget()
 
+    iosArm64()
+    iosSimulatorArm64()
+    iosX64()
+
     applyDefaultHierarchyTemplate()
+
+    targets
+        .filterIsInstance<KotlinNativeTarget>()
+        .filter { it.konanTarget.family == Family.IOS || it.konanTarget.family == Family.OSX }
+        .forEach {
+            it.binaries.framework {
+                baseName = "BridgeConnection"
+                isStatic = true
+
+                export(libs.decompose)
+
+                export(projects.components.bridge.config.api)
+                export(projects.components.bridge.connectionbuilder.api)
+                export(projects.components.bridge.device.bsb.api)
+                export(projects.components.bridge.device.common.api)
+                export(projects.components.bridge.device.firstpair.connection.api)
+                export(projects.components.bridge.feature.battery.api)
+                export(projects.components.bridge.feature.common.api)
+                export(projects.components.bridge.feature.firmwareUpdate.api)
+                export(projects.components.bridge.feature.info.api)
+                export(projects.components.bridge.feature.link.api)
+                export(projects.components.bridge.feature.provider.api)
+                export(projects.components.bridge.feature.rpc.api)
+                export(projects.components.bridge.feature.screenStreaming.api)
+                export(projects.components.bridge.feature.wifi.api)
+                export(projects.components.bridge.orchestrator.api)
+                export(projects.components.bridge.service.api)
+
+                export(projects.components.bridge.transport.ble.api)
+                export(projects.components.bridge.transport.common.api)
+                export(projects.components.bridge.transport.mock.api)
+                export(projects.components.bridge.transportconfigbuilder.api)
+            }
+        }
 }
 
 kotlin {
@@ -62,6 +102,10 @@ kotlin {
         implementation(libs.ble.client)
         implementation(libs.androidx.activity.compose)
         implementation(libs.appcompat)
+    }
+
+    sourceSets.appleMain.dependencies {
+        implementation(projects.components.bridge.transport.ble.impl)
     }
 }
 

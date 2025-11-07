@@ -4,6 +4,7 @@ plugins {
     id("com.android.library")
     id("ru.astrainteractive.gradleplugin.android.namespace")
     id("ru.astrainteractive.gradleplugin.android.core")
+    id("dev.zacsweers.metro")
 }
 
 kotlin {
@@ -19,10 +20,10 @@ kotlin {
 }
 kotlin {
     sourceSets.commonMain.dependencies {
-        implementation(projects.components.bridge.transport.common.api)
-        implementation(projects.components.bridge.transport.ble.common)
+        implementation(projects.components.log)
+        implementation(projects.components.ktx)
 
         implementation(libs.kotlin.coroutines)
-        implementation(libs.kotlin.immutable)
+        implementation(libs.ktor.client.core)
     }
 }

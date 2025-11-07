@@ -19,10 +19,12 @@ kotlin {
     applyDefaultHierarchyTemplate()
 }
 kotlin {
-    sourceSets.androidMain.dependencies {
+    sourceSets.commonMain.dependencies {
         implementation(projects.components.bridge.transport.common.api)
-        implementation(projects.components.bridge.transport.common.impl)
+
         implementation(projects.components.bridge.transport.ble.api)
+        implementation(projects.components.bridge.transport.ble.common)
+        implementation(projects.components.bridge.transport.ble.http)
 
         implementation(projects.components.log)
         implementation(projects.components.di)
@@ -30,10 +32,12 @@ kotlin {
 
         implementation(libs.kotlin.coroutines)
         implementation(libs.kotlin.immutable)
-        implementation(libs.ble.client)
         implementation(libs.ktor.client.core)
         implementation(libs.ktor.client.cio)
+    }
 
+    sourceSets.androidMain.dependencies {
+        implementation(libs.ble.client)
         implementation(libs.fastutil)
     }
 }

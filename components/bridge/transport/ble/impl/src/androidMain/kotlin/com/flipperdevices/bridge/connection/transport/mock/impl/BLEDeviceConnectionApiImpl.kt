@@ -11,10 +11,10 @@ import com.flipperdevices.bridge.connection.transport.common.api.FInternalTransp
 import com.flipperdevices.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import com.flipperdevices.bridge.connection.transport.mock.impl.api.FBleApiImpl
 import com.flipperdevices.bridge.connection.transport.mock.impl.api.http.serial.SerialApiFactory
-import com.flipperdevices.bridge.connection.transport.mock.impl.exception.BLEConnectionPermissionException
-import com.flipperdevices.bridge.connection.transport.mock.impl.exception.FailedConnectToDeviceException
-import com.flipperdevices.bridge.connection.transport.mock.impl.exception.NoFoundDeviceException
-import com.flipperdevices.bridge.connection.transport.mock.impl.utils.BleConstants
+import com.flipperdevices.bridge.connection.transport.ble.common.exception.BLEConnectionPermissionException
+import com.flipperdevices.bridge.connection.transport.ble.common.exception.FailedConnectToDeviceException
+import com.flipperdevices.bridge.connection.transport.ble.common.exception.NoFoundDeviceException
+import com.flipperdevices.bridge.connection.transport.ble.common.BleConstants
 import com.flipperdevices.busylib.core.di.BusyLibGraph
 import com.flipperdevices.core.busylib.log.LogTagProvider
 import com.flipperdevices.core.busylib.log.info

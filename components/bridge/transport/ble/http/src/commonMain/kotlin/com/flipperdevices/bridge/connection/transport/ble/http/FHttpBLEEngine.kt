@@ -1,8 +1,8 @@
-package com.flipperdevices.bridge.connection.transport.mock.impl.api.http
+package com.flipperdevices.bridge.connection.transport.ble.http
 
+import com.flipperdevices.bridge.connection.transport.ble.api.FSerialBleApi
+import com.flipperdevices.bridge.connection.transport.ble.http.exception.BadHttpResponseException
 import com.flipperdevices.bridge.connection.transport.common.utils.toRawHttpRequestString
-import com.flipperdevices.bridge.connection.transport.mock.impl.api.http.serial.FSerialBleApi
-import com.flipperdevices.bridge.connection.transport.mock.impl.exception.BadHttpResponseException
 import com.flipperdevices.core.busylib.ktx.common.withLockResult
 import com.flipperdevices.core.busylib.log.LogTagProvider
 import com.flipperdevices.core.busylib.log.info

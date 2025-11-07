@@ -6,8 +6,6 @@ import com.flipperdevices.bridge.connection.transport.common.api.FInternalTransp
 import com.flipperdevices.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import com.flipperdevices.bridge.connection.transport.common.api.meta.FTransportMetaInfoApi
 import com.flipperdevices.bridge.connection.transport.common.api.serial.FHTTPDeviceApi
-import com.flipperdevices.bridge.connection.transport.mock.impl.api.http.FHttpBLEEngine
-import com.flipperdevices.bridge.connection.transport.mock.impl.api.http.serial.FSerialBleApi
 import com.flipperdevices.bridge.connection.transport.mock.impl.meta.FTransportMetaInfoApiImpl
 import com.flipperdevices.core.busylib.log.LogTagProvider
 import com.flipperdevices.core.busylib.log.info

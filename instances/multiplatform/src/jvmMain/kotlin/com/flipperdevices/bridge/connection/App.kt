@@ -13,7 +13,7 @@ import androidx.compose.ui.window.rememberWindowState
 import com.arkivanov.decompose.DefaultComponentContext
 import com.arkivanov.decompose.extensions.compose.lifecycle.LifecycleController
 import com.arkivanov.essenty.lifecycle.LifecycleRegistry
-import com.flipperdevices.bridge.connection.di.AppComponent
+import com.flipperdevices.bridge.connection.screens.di.AppComponent
 import com.flipperdevices.bridge.connection.utils.runOnUiThread
 
 fun launch(appComponent: AppComponent) {

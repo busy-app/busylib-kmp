@@ -1,4 +1,4 @@
-package com.flipperdevices.bridge.connection.transport.mock.impl.api.http.serial
+package com.flipperdevices.bridge.connection.transport.ble.common
 
 import com.flipperdevices.core.busylib.ktx.common.FlipperDispatchers
 import com.flipperdevices.core.busylib.log.LogTagProvider

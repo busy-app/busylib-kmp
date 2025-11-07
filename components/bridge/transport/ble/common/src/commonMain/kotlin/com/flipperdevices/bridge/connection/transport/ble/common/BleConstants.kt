@@ -1,4 +1,4 @@
-package com.flipperdevices.bridge.connection.transport.mock.impl.utils
+package com.flipperdevices.bridge.connection.transport.ble.common
 
 import kotlin.time.Duration.Companion.seconds
 

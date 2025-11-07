@@ -13,6 +13,7 @@ class FDeviceConnectStatusToDeviceApi(
     fun get(status: FDeviceConnectStatus.Connected): FDeviceApi {
         return when (status.device) {
             is FDeviceBaseModel.FDeviceBSBModelBLE,
+            is FDeviceBaseModel.FDeviceBSBModelBLEiOS,
             is FDeviceBaseModel.FDeviceBSBModelMock -> fBSBDeviceApiFactory(
                 scope = status.scope,
                 connectedDevice = status.deviceApi

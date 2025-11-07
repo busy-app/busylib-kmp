@@ -21,6 +21,14 @@ sealed interface FDeviceBaseModel {
     ) : FDeviceBaseModel
 
     @Serializable
+    data class FDeviceBSBModelBLEiOS(
+        @SerialName("address")
+        val uuid: String,
+        override val uniqueId: String = uuid,
+        override val humanReadableName: String,
+    ) : FDeviceBaseModel
+
+    @Serializable
     data class FDeviceBSBModelMock(
         override val uniqueId: String = Uuid.random().toString(),
         override val humanReadableName: String = "BUSY Bar"
