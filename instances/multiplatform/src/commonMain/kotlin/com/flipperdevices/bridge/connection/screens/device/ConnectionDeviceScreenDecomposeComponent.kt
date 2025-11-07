@@ -17,18 +17,13 @@ import com.flipperdevices.bridge.connection.screens.device.viewmodel.FCurrentDev
 import com.flipperdevices.bridge.connection.screens.device.viewmodel.FDevicesViewModel
 import com.flipperdevices.bridge.connection.screens.device.viewmodel.PingViewModel
 import com.flipperdevices.bridge.connection.screens.models.ConnectionRootConfig
-import dev.zacsweers.metro.Assisted
-import dev.zacsweers.metro.AssistedFactory
-import dev.zacsweers.metro.Inject
-import dev.zacsweers.metro.Provider
 
-@Inject
 class ConnectionDeviceScreenDecomposeComponent(
-    @Assisted componentContext: ComponentContext,
-    @Assisted private val navigation: StackNavigator<ConnectionRootConfig>,
-    private val devicesViewModelProvider: Provider<FDevicesViewModel>,
-    private val currentDeviceViewModelProvider: Provider<FCurrentDeviceViewModel>,
-    private val pingViewModelProvider: Provider<PingViewModel>
+    componentContext: ComponentContext,
+    private val navigation: StackNavigator<ConnectionRootConfig>,
+    private val devicesViewModelProvider: () -> FDevicesViewModel,
+    private val currentDeviceViewModelProvider: () -> FCurrentDeviceViewModel,
+    private val pingViewModelProvider: () -> PingViewModel
 ) : ScreenDecomposeComponent(componentContext) {
     private val devicesViewModel = instanceKeeper.getOrCreate {
         devicesViewModelProvider.invoke()
@@ -64,11 +59,22 @@ class ConnectionDeviceScreenDecomposeComponent(
         }
     }
 
-    @AssistedFactory
-    fun interface Factory {
+    class Factory(
+        private val devicesViewModelProvider: () -> FDevicesViewModel,
+        private val currentDeviceViewModelProvider: () -> FCurrentDeviceViewModel,
+        private val pingViewModelProvider: () -> PingViewModel
+    ) {
         operator fun invoke(
-            @Assisted componentContext: ComponentContext,
-            @Assisted navigation: StackNavigator<ConnectionRootConfig>
-        ): ConnectionDeviceScreenDecomposeComponent
+            componentContext: ComponentContext,
+            navigation: StackNavigator<ConnectionRootConfig>
+        ): ConnectionDeviceScreenDecomposeComponent {
+            return ConnectionDeviceScreenDecomposeComponent(
+                componentContext = componentContext,
+                navigation = navigation,
+                devicesViewModelProvider = devicesViewModelProvider,
+                currentDeviceViewModelProvider = currentDeviceViewModelProvider,
+                pingViewModelProvider = pingViewModelProvider
+            )
+        }
     }
 }
