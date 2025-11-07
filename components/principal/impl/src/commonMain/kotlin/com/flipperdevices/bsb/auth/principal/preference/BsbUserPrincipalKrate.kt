@@ -15,41 +15,44 @@ import ru.astrainteractive.klibs.kstorage.api.value.ValueFactory
 import ru.astrainteractive.klibs.kstorage.suspend.FlowMutableKrate
 import ru.astrainteractive.klibs.kstorage.suspend.impl.DefaultFlowMutableKrate
 
+interface BsbUserPrincipalKrate : FlowMutableKrate<BsbUserPrincipal>
+
 @Inject
-@ContributesBinding(AppGraph::class, binding = binding<FlowMutableKrate<BsbUserPrincipal>>())
-class BsbUserPrincipalKrate(
+@ContributesBinding(AppGraph::class, binding = binding<BsbUserPrincipalKrate>())
+class BsbUserPrincipalKrateImpl(
     observableSettings: ObservableSettings,
     json: Json = Json {
         isLenient = true
         ignoreUnknownKeys = true
         prettyPrint = false
     }
-) : FlowMutableKrate<BsbUserPrincipal> by DefaultFlowMutableKrate(
-    factory = { Factory.create() },
-    loader = {
-        observableSettings
-            .toFlowSettings()
-            .getStringOrNullFlow(KEY)
-            .map { stringValue ->
-                if (stringValue.isNullOrBlank()) {
-                    Factory.create()
-                } else {
-                    json.decodeFromString(Serializer, stringValue)
+) : BsbUserPrincipalKrate,
+    FlowMutableKrate<BsbUserPrincipal> by DefaultFlowMutableKrate(
+        factory = { Factory.create() },
+        loader = {
+            observableSettings
+                .toFlowSettings()
+                .getStringOrNullFlow(KEY)
+                .map { stringValue ->
+                    if (stringValue.isNullOrBlank()) {
+                        Factory.create()
+                    } else {
+                        json.decodeFromString(Serializer, stringValue)
+                    }
                 }
+                .catch { null }
+        },
+        saver = { newSettings ->
+            if (newSettings == BsbUserPrincipal.Empty) {
+                observableSettings.remove(KEY)
+            } else {
+                observableSettings.putString(
+                    KEY,
+                    json.encodeToString(Serializer, newSettings)
+                )
             }
-            .catch { null }
-    },
-    saver = { newSettings ->
-        if (newSettings == BsbUserPrincipal.Empty) {
-            observableSettings.remove(KEY)
-        } else {
-            observableSettings.putString(
-                KEY,
-                json.encodeToString(Serializer, newSettings)
-            )
         }
-    }
-) {
+    ) {
     companion object {
         private const val KEY = "preference_bsb_user_principal"
         private val Factory get() = ValueFactory { BsbUserPrincipal.Loading }

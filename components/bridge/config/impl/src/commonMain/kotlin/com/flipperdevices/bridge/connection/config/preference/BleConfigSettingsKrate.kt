@@ -14,41 +14,44 @@ import ru.astrainteractive.klibs.kstorage.api.value.ValueFactory
 import ru.astrainteractive.klibs.kstorage.suspend.FlowMutableKrate
 import ru.astrainteractive.klibs.kstorage.suspend.impl.DefaultFlowMutableKrate
 
+interface BleConfigSettingsKrate : FlowMutableKrate<BleConfigSettings>
+
 @Inject
-@ContributesBinding(AppGraph::class, binding = binding<FlowMutableKrate<BleConfigSettings>>())
-class BleConfigSettingsKrate(
+@ContributesBinding(AppGraph::class, binding = binding<BleConfigSettingsKrate>())
+class BleConfigSettingsKrateImpl(
     observableSettings: ObservableSettings,
     json: Json = Json {
         isLenient = true
         ignoreUnknownKeys = true
         prettyPrint = false
     }
-) : FlowMutableKrate<BleConfigSettings> by DefaultFlowMutableKrate(
-    factory = { Factory.create() },
-    loader = {
-        observableSettings
-            .toFlowSettings()
-            .getStringOrNullFlow(KEY)
-            .map { stringValue ->
-                if (stringValue.isNullOrBlank()) {
-                    Factory.create()
-                } else {
-                    json.decodeFromString(Serializer, stringValue)
+) : BleConfigSettingsKrate,
+    FlowMutableKrate<BleConfigSettings> by DefaultFlowMutableKrate(
+        factory = { Factory.create() },
+        loader = {
+            observableSettings
+                .toFlowSettings()
+                .getStringOrNullFlow(KEY)
+                .map { stringValue ->
+                    if (stringValue.isNullOrBlank()) {
+                        Factory.create()
+                    } else {
+                        json.decodeFromString(Serializer, stringValue)
+                    }
                 }
+                .catch { null }
+        },
+        saver = { newSettings ->
+            if (newSettings == null) {
+                observableSettings.remove(KEY)
+            } else {
+                observableSettings.putString(
+                    KEY,
+                    json.encodeToString(Serializer, newSettings)
+                )
             }
-            .catch { null }
-    },
-    saver = { newSettings ->
-        if (newSettings == null) {
-            observableSettings.remove(KEY)
-        } else {
-            observableSettings.putString(
-                KEY,
-                json.encodeToString(Serializer, newSettings)
-            )
         }
-    }
-) {
+    ) {
     companion object {
         private const val KEY = "ble_config"
         private val Factory get() = ValueFactory { BleConfigSettings() }

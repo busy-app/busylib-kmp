@@ -30,10 +30,6 @@ class ConnectionTestApplication : Application() {
 
         Timber.plant(Timber.DebugTree())
 
-        println("rootComponentFactory -> ${ComponentHolder.components}")
-//        ComponentHolder.component<AppComponent>().rootComponentFactory
-        println("connectionService -> ${ComponentHolder.components}")
-//        ComponentHolder.component<AppComponent>().connectionService.onApplicationInit()
-//        ComponentHolder.component<AppComponent>().connectionService.onApplicationInit()
+        ComponentHolder.component<AndroidAppComponent>().connectionService.onApplicationInit()
     }
 }

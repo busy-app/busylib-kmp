@@ -25,7 +25,7 @@ class ConnectionNoPermissionDecomposeComponent(
         ) {
             Text(
                 text = "Need permission for connect to device",
-                color = MaterialTheme.colors.onPrimary
+                color = MaterialTheme.colors.onBackground
             )
         }
     }

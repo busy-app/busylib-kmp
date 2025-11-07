@@ -2,6 +2,7 @@ package com.flipperdevices.bridge.connection.screens.device.composable
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -14,8 +15,14 @@ fun FCurrentDeviceComposable(
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.padding(16.dp)) {
-        Text("State: ${deviceConnectStatus.getHumanReadableName()}")
-        Text("Name: ${deviceConnectStatus.currentDevice()?.humanReadableName}")
+        Text(
+            text = "State: ${deviceConnectStatus.getHumanReadableName()}",
+            color = MaterialTheme.colors.onBackground
+        )
+        Text(
+            text = "Name: ${deviceConnectStatus.currentDevice()?.humanReadableName}",
+            color = MaterialTheme.colors.onBackground
+        )
     }
 }
 

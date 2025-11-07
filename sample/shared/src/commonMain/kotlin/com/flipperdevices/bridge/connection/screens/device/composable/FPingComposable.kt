@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.Button
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -32,7 +33,8 @@ fun FPingComposable(
             items(logs) {
                 Text(
                     modifier = Modifier.padding(4.dp),
-                    text = it
+                    text = it,
+                    color = MaterialTheme.colors.onBackground
                 )
             }
         }
@@ -40,19 +42,28 @@ fun FPingComposable(
             modifier = Modifier.fillMaxWidth(),
             onClick = onSendPing
         ) {
-            Text(text = "Send ping")
+            Text(
+                text = "Send ping",
+                color = MaterialTheme.colors.onBackground
+            )
         }
         Button(
             modifier = Modifier.fillMaxWidth(),
             onClick = invalidateRpcInfo
         ) {
-            Text(text = "Get device info")
+            Text(
+                text = "Get device info",
+                color = MaterialTheme.colors.onBackground
+            )
         }
         Button(
             modifier = Modifier.fillMaxWidth(),
             onClick = onOpenFM
         ) {
-            Text(text = "File Manager")
+            Text(
+                text = "File Manager",
+                color = MaterialTheme.colors.onBackground
+            )
         }
     }
 }

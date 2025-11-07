@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.lightColors
 import androidx.compose.ui.Modifier
 import com.arkivanov.decompose.defaultComponentContext
 import com.flipperdevices.bridge.connection.di.AppComponent
@@ -27,7 +28,7 @@ class ConnectionTestActivity : AppCompatActivity() {
         )
 
         setContent {
-            MaterialTheme {
+            MaterialTheme(lightColors()) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()

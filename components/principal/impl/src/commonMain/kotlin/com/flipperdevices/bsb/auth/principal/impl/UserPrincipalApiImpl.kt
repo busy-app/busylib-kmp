@@ -2,6 +2,7 @@ package com.flipperdevices.bsb.auth.principal.impl
 
 import com.flipperdevices.bsb.auth.principal.api.BsbUserPrincipal
 import com.flipperdevices.bsb.auth.principal.api.BsbUserPrincipalApi
+import com.flipperdevices.bsb.auth.principal.preference.BsbUserPrincipalKrate
 import com.flipperdevices.core.di.AppGraph
 import dev.zacsweers.metro.ContributesBinding
 import dev.zacsweers.metro.Inject
@@ -11,13 +12,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import ru.astrainteractive.klibs.kstorage.suspend.FlowMutableKrate
 
 @Inject
 @SingleIn(AppGraph::class)
 @ContributesBinding(AppGraph::class, binding<BsbUserPrincipalApi>())
 class UserPrincipalApiImpl(
-    private val bsbUserKrate: FlowMutableKrate<BsbUserPrincipal>,
+    private val bsbUserKrate: BsbUserPrincipalKrate,
     private val coroutineScope: CoroutineScope
 ) : BsbUserPrincipalApi {
 

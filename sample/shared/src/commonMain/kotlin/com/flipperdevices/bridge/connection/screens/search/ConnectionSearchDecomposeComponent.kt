@@ -52,13 +52,13 @@ class ConnectionSearchDecomposeComponent(
                         .size(24.dp),
                     painter = rememberVectorPainter(Icons.Default.Close),
                     contentDescription = null,
-                    tint = MaterialTheme.colors.onPrimary
+                    tint = MaterialTheme.colors.onBackground
                 )
                 Text(
                     modifier = Modifier.padding(16.dp),
                     text = "Search",
-                    style = MaterialTheme.typography.h3,
-                    color = MaterialTheme.colors.onPrimary
+                    style = MaterialTheme.typography.h5,
+                    color = MaterialTheme.colors.onBackground
                 )
             }
             LazyColumn {
@@ -72,7 +72,7 @@ class ConnectionSearchDecomposeComponent(
                                 .weight(1f)
                                 .padding(16.dp),
                             text = searchItem.deviceModel.humanReadableName,
-                            color = MaterialTheme.colors.onPrimary
+                            color = MaterialTheme.colors.onBackground
                         )
 
                         Icon(
@@ -88,7 +88,7 @@ class ConnectionSearchDecomposeComponent(
                                 }
                             ),
                             contentDescription = null,
-                            tint = MaterialTheme.colors.onPrimary
+                            tint = MaterialTheme.colors.onBackground
                         )
                     }
                 }

@@ -1,4 +1,3 @@
-import com.android.build.gradle.BaseExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
@@ -33,22 +32,6 @@ plugins {
 
 apply(plugin = "ru.astrainteractive.gradleplugin.detekt")
 
-subprojects.forEach { subProject ->
-    subProject.plugins.withId("com.android.library") {
-        subProject.configure<BaseExtension> {
-            namespace = "com.flipperdevices.${
-                subProject.path
-                    .removePrefix(":components:")
-                    .replace(":", ".")
-                    .replace("-", "")
-            }"
-            compileSdkVersion(36)
-            defaultConfig {
-                minSdk = 21
-            }
-        }
-    }
-}
 val optIns = listOf(
     "com.google.accompanist.pager.ExperimentalPagerApi",
     "androidx.compose.ui.ExperimentalComposeUiApi",

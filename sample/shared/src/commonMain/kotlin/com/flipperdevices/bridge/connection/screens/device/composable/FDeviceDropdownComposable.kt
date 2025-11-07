@@ -9,6 +9,7 @@ import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ExposedDropdownMenuBox
 import androidx.compose.material.Icon
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreHoriz
@@ -54,7 +55,8 @@ fun FDeviceDropdownComposable(
             Text(
                 text = devicesState.currentDevice
                     ?.humanReadableName
-                    ?: "unknown"
+                    ?: "unknown",
+                color = MaterialTheme.colors.onBackground
             )
             ExposedDropdownMenu(
                 expanded = expanded,
@@ -68,7 +70,10 @@ fun FDeviceDropdownComposable(
                             expanded = false
                         }
                     ) {
-                        Text(text = device.humanReadableName)
+                        Text(
+                            text = device.humanReadableName,
+                            color = MaterialTheme.colors.onBackground
+                        )
                     }
                 }
 
@@ -80,7 +85,10 @@ fun FDeviceDropdownComposable(
                             expanded = false
                         }
                     ) {
-                        Text(text = "Disconnect current device")
+                        Text(
+                            text = "Disconnect current device",
+                            color = MaterialTheme.colors.onBackground
+                        )
                     }
                 }
 
@@ -91,7 +99,10 @@ fun FDeviceDropdownComposable(
                         onOpenSearch()
                     }
                 ) {
-                    Text(text = "Click to add device")
+                    Text(
+                        text = "Click to add device",
+                        color = MaterialTheme.colors.onBackground
+                    )
                 }
             }
         }
@@ -99,7 +110,8 @@ fun FDeviceDropdownComposable(
         Icon(
             modifier = Modifier.padding(end = 16.dp),
             painter = rememberVectorPainter(Icons.Default.MoreHoriz),
-            contentDescription = null
+            contentDescription = null,
+            tint = MaterialTheme.colors.onBackground
         )
     }
 }
