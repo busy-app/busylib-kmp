@@ -3,6 +3,7 @@ package com.flipperdevices.busylib.di
 import com.flipperdevices.bridge.connection.config.api.FDevicePersistedStorage
 import com.flipperdevices.bsb.auth.principal.api.BsbUserPrincipalApi
 import com.flipperdevices.bsb.cloud.api.BSBBarsApi
+import com.flipperdevices.busylib.BUSYLibiOS
 import com.flipperdevices.busylib.core.di.BusyLibGraph
 import dev.zacsweers.metro.DependencyGraph
 import dev.zacsweers.metro.Provides

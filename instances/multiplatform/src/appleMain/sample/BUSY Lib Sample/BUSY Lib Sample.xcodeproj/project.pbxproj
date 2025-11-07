@@ -132,7 +132,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd ../../../../../../\npwd\nENABLE_USER_SCRIPT_SANDBOXING=NO\n./gradlew :instances:multiplatform:embedAndSignAppleFrameworkForXcode\n";
+			shellScript = "cd ../../../../../../ # FIX this\npwd\nENABLE_USER_SCRIPT_SANDBOXING=NO\n./gradlew :instances:multiplatform:embedAndSignAppleFrameworkForXcode\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

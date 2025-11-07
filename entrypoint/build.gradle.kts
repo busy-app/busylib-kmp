@@ -71,4 +71,8 @@ kotlin {
         implementation(projects.components.bridge.device.firstpair.connection.impl)
         implementation(projects.components.bridge.transport.ble.impl)
     }
+    sourceSets.appleMain.dependencies {
+        api(projects.components.bridge.device.firstpair.connection.api)
+        implementation(projects.components.bridge.transport.ble.impl)
+    }
 }
