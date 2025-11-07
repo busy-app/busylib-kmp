@@ -59,7 +59,7 @@ kotlin {
         implementation(compose.components.resources)
         implementation(compose.components.uiToolingPreview)
 
-        implementation(projects.entrypoint)
+        api(projects.entrypoint)
 
         implementation(libs.settings)
         implementation(libs.settings.observable)
@@ -67,7 +67,7 @@ kotlin {
         implementation(libs.kotlin.coroutines)
         implementation(libs.kotlin.immutable)
         implementation(libs.kotlin.serialization.json)
-        implementation(libs.decompose)
+        api(libs.decompose)
         implementation(libs.decompose.composeExtension)
         implementation(libs.klibs.kstorage)
     }
