@@ -1,3 +1,5 @@
+import com.vanniktech.maven.publish.MavenPublishBaseExtension
+import org.gradle.kotlin.dsl.findByType
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
@@ -63,4 +65,18 @@ subprojects.forEach { subProject ->
                 }
             }
     }
+}
+
+subprojects.forEach { subProject ->
+    if (!subProject.path.startsWith(":components")) return@forEach
+    subProject.apply(plugin = "ru.astrainteractive.gradleplugin.publication")
+    subProject
+        .extensions
+        .configure<MavenPublishBaseExtension> {
+            val artifactId = subProject.path
+                .replace(":components:", "")
+                .replace(":", "-")
+                .replace(".", "-")
+            coordinates(null, artifactId, null)
+        }
 }
