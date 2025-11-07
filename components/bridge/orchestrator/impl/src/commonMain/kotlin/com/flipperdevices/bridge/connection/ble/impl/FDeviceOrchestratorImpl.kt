@@ -3,7 +3,7 @@ package com.flipperdevices.bridge.connection.ble.impl
 import com.flipperdevices.bridge.connection.config.api.model.FDeviceBaseModel
 import com.flipperdevices.bridge.connection.configbuilder.api.FDeviceConnectionConfigMapper
 import com.flipperdevices.bridge.connection.orchestrator.api.FDeviceOrchestrator
-import com.flipperdevices.core.di.AppGraph
+import com.flipperdevices.busylib.core.di.BusyLibGraph
 import com.flipperdevices.core.ktx.common.withLock
 import com.flipperdevices.core.log.LogTagProvider
 import com.flipperdevices.core.log.error
@@ -16,8 +16,8 @@ import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.sync.Mutex
 
 @Inject
-@SingleIn(AppGraph::class)
-@ContributesBinding(AppGraph::class, binding<FDeviceOrchestrator>())
+@SingleIn(BusyLibGraph::class)
+@ContributesBinding(BusyLibGraph::class, binding<FDeviceOrchestrator>())
 class FDeviceOrchestratorImpl(
     private val deviceHolderFactory: FDeviceHolderFactory,
     private val deviceConnectionConfigMapper: FDeviceConnectionConfigMapper

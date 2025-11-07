@@ -1,4 +1,4 @@
-package com.flipperdevices.core.buildkonfig
+package com.flipperdevices.busylib.core.buildkonfig
 
 object BuildKonfigBusyBle {
     var IS_SENSITIVE_LOG_ENABLED: Boolean = false

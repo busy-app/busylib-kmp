@@ -1,6 +1,6 @@
 package com.flipperdevices.core.log
 
-import com.flipperdevices.core.buildkonfig.BuildKonfigBusyBle
+import com.flipperdevices.busylib.core.buildkonfig.BuildKonfigBusyBle
 
 @Suppress("PropertyName")
 interface LogTagProvider {

@@ -1,4 +1,4 @@
-package com.flipperdevices.core.di
+package com.flipperdevices.busylib.core.di
 
 /**
  * This is workaround for anvil components
@@ -10,7 +10,7 @@ package com.flipperdevices.core.di
  *
  * Yes, this is the runtime check for the compile-time framework.
  */
-object ComponentHolder {
+object BusyLibComponentHolder {
     val components = mutableSetOf<Any>()
 
     inline fun <reified T> component(): T = components

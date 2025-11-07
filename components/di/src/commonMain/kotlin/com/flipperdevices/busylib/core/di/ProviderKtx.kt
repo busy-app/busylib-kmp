@@ -1,4 +1,4 @@
-package com.flipperdevices.core.di
+package com.flipperdevices.busylib.core.di
 
 import kotlin.reflect.KProperty
 

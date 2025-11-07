@@ -15,7 +15,7 @@ import com.flipperdevices.bridge.connection.transport.mock.impl.exception.BLECon
 import com.flipperdevices.bridge.connection.transport.mock.impl.exception.FailedConnectToDeviceException
 import com.flipperdevices.bridge.connection.transport.mock.impl.exception.NoFoundDeviceException
 import com.flipperdevices.bridge.connection.transport.mock.impl.utils.BleConstants
-import com.flipperdevices.core.di.AppGraph
+import com.flipperdevices.busylib.core.di.BusyLibGraph
 import com.flipperdevices.core.log.LogTagProvider
 import com.flipperdevices.core.log.info
 import dev.zacsweers.metro.ClassKey
@@ -29,7 +29,7 @@ import no.nordicsemi.kotlin.ble.core.Phy
 
 @Inject
 @ClassKey(FBleDeviceConnectionConfig::class)
-@ContributesIntoMap(AppGraph::class, binding<DeviceConnectionApi<*, *>>())
+@ContributesIntoMap(BusyLibGraph::class, binding<DeviceConnectionApi<*, *>>())
 class BLEDeviceConnectionApiImpl(
     private val context: Context,
     private val centralManager: CentralManager,

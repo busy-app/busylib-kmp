@@ -1,7 +1,7 @@
 package com.flipperdevices.bsb.auth.principal.preference
 
 import com.flipperdevices.bsb.auth.principal.api.BsbUserPrincipal
-import com.flipperdevices.core.di.AppGraph
+import com.flipperdevices.busylib.core.di.BusyLibGraph
 import com.russhwolf.settings.ObservableSettings
 import com.russhwolf.settings.coroutines.toFlowSettings
 import dev.zacsweers.metro.ContributesBinding
@@ -9,7 +9,6 @@ import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.binding
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
-import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 import ru.astrainteractive.klibs.kstorage.api.value.ValueFactory
 import ru.astrainteractive.klibs.kstorage.suspend.FlowMutableKrate
@@ -18,7 +17,7 @@ import ru.astrainteractive.klibs.kstorage.suspend.impl.DefaultFlowMutableKrate
 interface BsbUserPrincipalKrate : FlowMutableKrate<BsbUserPrincipal>
 
 @Inject
-@ContributesBinding(AppGraph::class, binding = binding<BsbUserPrincipalKrate>())
+@ContributesBinding(BusyLibGraph::class, binding = binding<BsbUserPrincipalKrate>())
 class BsbUserPrincipalKrateImpl(
     observableSettings: ObservableSettings,
     json: Json = Json {

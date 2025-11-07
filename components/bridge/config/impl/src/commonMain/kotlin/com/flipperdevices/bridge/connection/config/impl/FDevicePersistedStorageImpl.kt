@@ -3,7 +3,7 @@ package com.flipperdevices.bridge.connection.config.impl
 import com.flipperdevices.bridge.connection.config.api.FDevicePersistedStorage
 import com.flipperdevices.bridge.connection.config.api.model.FDeviceBaseModel
 import com.flipperdevices.bridge.connection.config.preference.BleConfigSettingsKrate
-import com.flipperdevices.core.di.AppGraph
+import com.flipperdevices.busylib.core.di.BusyLibGraph
 import com.flipperdevices.core.log.LogTagProvider
 import com.flipperdevices.core.log.info
 import com.flipperdevices.core.log.warn
@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.map
 import ru.astrainteractive.klibs.kstorage.util.save
 
 @Inject
-@ContributesBinding(AppGraph::class, binding = binding<FDevicePersistedStorage>())
+@ContributesBinding(BusyLibGraph::class, binding = binding<FDevicePersistedStorage>())
 class FDevicePersistedStorageImpl(
     private val bleConfigKrate: BleConfigSettingsKrate
 ) : FDevicePersistedStorage, LogTagProvider {

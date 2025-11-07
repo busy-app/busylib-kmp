@@ -13,13 +13,13 @@ import androidx.compose.material.lightColors
 import androidx.compose.ui.Modifier
 import com.arkivanov.decompose.defaultComponentContext
 import com.flipperdevices.bridge.connection.di.AppComponent
-import com.flipperdevices.core.di.ComponentHolder
+import com.flipperdevices.busylib.core.di.BusyLibComponentHolder
 
 class ConnectionTestActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val rootComponentFactory = ComponentHolder.component<AppComponent>().rootComponentFactory
+        val rootComponentFactory = BusyLibComponentHolder.component<AppComponent>().rootComponentFactory
 
         enableEdgeToEdge()
 

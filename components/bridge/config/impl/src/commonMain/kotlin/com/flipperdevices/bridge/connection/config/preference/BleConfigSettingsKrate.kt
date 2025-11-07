@@ -1,7 +1,7 @@
 package com.flipperdevices.bridge.connection.config.preference
 
 import com.flipperdevices.bridge.connection.config.impl.BleConfigSettings
-import com.flipperdevices.core.di.AppGraph
+import com.flipperdevices.busylib.core.di.BusyLibGraph
 import com.russhwolf.settings.ObservableSettings
 import com.russhwolf.settings.coroutines.toFlowSettings
 import dev.zacsweers.metro.ContributesBinding
@@ -17,7 +17,7 @@ import ru.astrainteractive.klibs.kstorage.suspend.impl.DefaultFlowMutableKrate
 interface BleConfigSettingsKrate : FlowMutableKrate<BleConfigSettings>
 
 @Inject
-@ContributesBinding(AppGraph::class, binding = binding<BleConfigSettingsKrate>())
+@ContributesBinding(BusyLibGraph::class, binding = binding<BleConfigSettingsKrate>())
 class BleConfigSettingsKrateImpl(
     observableSettings: ObservableSettings,
     json: Json = Json {

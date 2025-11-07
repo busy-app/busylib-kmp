@@ -5,13 +5,13 @@ import com.flipperdevices.bridge.connection.configbuilder.api.FDeviceConnectionC
 import com.flipperdevices.bridge.connection.configbuilder.impl.builders.BUSYBarBLEBuilderConfig
 import com.flipperdevices.bridge.connection.configbuilder.impl.builders.BUSYBarMockBuilderConfig
 import com.flipperdevices.bridge.connection.transport.common.api.FDeviceConnectionConfig
-import com.flipperdevices.core.di.AppGraph
+import com.flipperdevices.busylib.core.di.BusyLibGraph
 import dev.zacsweers.metro.ContributesBinding
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.binding
 
 @Inject
-@ContributesBinding(AppGraph::class, binding<FDeviceConnectionConfigMapper>())
+@ContributesBinding(BusyLibGraph::class, binding<FDeviceConnectionConfigMapper>())
 class FDeviceConnectionConfigMapperImpl(
     private val mockBuilderConfig: BUSYBarMockBuilderConfig,
     private val bleBuilderConfig: BUSYBarBLEBuilderConfig

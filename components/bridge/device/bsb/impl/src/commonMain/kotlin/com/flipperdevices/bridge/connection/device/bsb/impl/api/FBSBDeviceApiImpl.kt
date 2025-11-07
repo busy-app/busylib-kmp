@@ -7,8 +7,8 @@ import com.flipperdevices.bridge.connection.feature.common.api.FDeviceFeatureApi
 import com.flipperdevices.bridge.connection.feature.common.api.FOnDeviceReadyFeatureApi
 import com.flipperdevices.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import com.flipperdevices.bridge.connection.transport.common.api.FConnectedDeviceApi
-import com.flipperdevices.core.buildkonfig.BuildKonfigBusyBle
-import com.flipperdevices.core.di.AppGraph
+import com.flipperdevices.busylib.core.buildkonfig.BuildKonfigBusyBle
+import com.flipperdevices.busylib.core.di.BusyLibGraph
 import com.flipperdevices.core.log.LogTagProvider
 import com.flipperdevices.core.log.error
 import com.flipperdevices.core.log.info
@@ -115,7 +115,7 @@ class FBSBDeviceApiImpl(
     }
 
     @AssistedFactory
-    @ContributesBinding(AppGraph::class, binding<FBSBDeviceApi.Factory>())
+    @ContributesBinding(BusyLibGraph::class, binding<FBSBDeviceApi.Factory>())
     interface Factory : FBSBDeviceApi.Factory {
         override fun invoke(
             scope: CoroutineScope,

@@ -5,7 +5,7 @@ import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.os.Build
 import androidx.core.content.ContextCompat
-import com.flipperdevices.core.di.AppGraph
+import com.flipperdevices.busylib.core.di.BusyLibGraph
 import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
@@ -13,10 +13,10 @@ import kotlinx.coroutines.CoroutineScope
 import no.nordicsemi.kotlin.ble.client.android.CentralManager
 import no.nordicsemi.kotlin.ble.client.android.native
 
-@ContributesTo(AppGraph::class)
+@ContributesTo(BusyLibGraph::class)
 interface NordicBleModule {
     @Provides
-    @SingleIn(AppGraph::class)
+    @SingleIn(BusyLibGraph::class)
     fun provideCentralManager(context: Context, scope: CoroutineScope): CentralManager {
         return CentralManager.Factory.native(context, scope)
     }

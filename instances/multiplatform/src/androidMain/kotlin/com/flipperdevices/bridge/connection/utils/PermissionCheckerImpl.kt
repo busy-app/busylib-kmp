@@ -5,13 +5,13 @@ import android.content.Context
 import android.content.pm.PackageManager
 import androidx.core.content.ContextCompat
 import com.flipperdevices.bridge.connection.screens.utils.PermissionChecker
-import com.flipperdevices.core.di.AppGraph
+import com.flipperdevices.busylib.core.di.BusyLibGraph
 import dev.zacsweers.metro.ContributesBinding
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.binding
 
 @Inject
-@ContributesBinding(AppGraph::class, binding<PermissionChecker>())
+@ContributesBinding(BusyLibGraph::class, binding<PermissionChecker>())
 class PermissionCheckerImpl(
     private val context: Context
 ) : PermissionChecker {

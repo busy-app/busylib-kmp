@@ -9,7 +9,7 @@ import com.flipperdevices.bridge.connection.feature.rpc.api.critical.FRpcCritica
 import com.flipperdevices.bridge.connection.feature.rpc.impl.util.getHttpClient
 import com.flipperdevices.bridge.connection.transport.common.api.FConnectedDeviceApi
 import com.flipperdevices.bridge.connection.transport.common.api.serial.FHTTPDeviceApi
-import com.flipperdevices.core.di.AppGraph
+import com.flipperdevices.busylib.core.di.BusyLibGraph
 import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.binding
@@ -18,7 +18,7 @@ import kotlinx.coroutines.flow.first
 
 @Inject
 @FDeviceFeatureQualifier(FDeviceFeature.RPC_EXPOSED)
-@ContributesIntoMap(AppGraph::class, binding<FDeviceFeatureApi.Factory>())
+@ContributesIntoMap(BusyLibGraph::class, binding<FDeviceFeatureApi.Factory>())
 class FRpcFeatureApiFactoryImpl(
     private val fRpcFeatureFactory: FRpcFeatureApiImpl.InternalFactory,
 ) : FDeviceFeatureApi.Factory {

@@ -28,7 +28,8 @@ class FRpcCriticalFeatureApiImpl(
     override suspend fun checkLinkedUser(userId: String?): Result<RpcLinkedAccountInfo> {
         return withContext(dispatcher) {
             return@withContext runSuspendCatching {
-                client.get("/api/account").body<RpcLinkedAccountInfo>()
+                RpcLinkedAccountInfo(RpcLinkedAccountInfo.State.NOT_LINKED)
+//                client.get("/api/account").body<RpcLinkedAccountInfo>()
             }.onSuccess { response -> clientModeApi.updateClientMode(response, userId) }
         }
     }

@@ -6,7 +6,7 @@ import com.flipperdevices.bridge.connection.feature.common.api.FDeviceFeatureQua
 import com.flipperdevices.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import com.flipperdevices.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import com.flipperdevices.bridge.connection.transport.common.api.FConnectedDeviceApi
-import com.flipperdevices.core.di.AppGraph
+import com.flipperdevices.busylib.core.di.BusyLibGraph
 import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.binding
@@ -14,7 +14,7 @@ import kotlinx.coroutines.CoroutineScope
 
 @Inject
 @FDeviceFeatureQualifier(FDeviceFeature.DEVICE_INFO)
-@ContributesIntoMap(AppGraph::class, binding<FDeviceFeatureApi.Factory>())
+@ContributesIntoMap(BusyLibGraph::class, binding<FDeviceFeatureApi.Factory>())
 class FDeviceInfoFeatureFactoryImpl(
     private val deviceInfoFeatureFactory: FDeviceInfoFeatureApiImpl.InternalFactory
 ) : FDeviceFeatureApi.Factory {

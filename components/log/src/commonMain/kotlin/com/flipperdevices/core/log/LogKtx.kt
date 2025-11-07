@@ -1,7 +1,7 @@
 package com.flipperdevices.core.log
 
-import com.flipperdevices.core.buildkonfig.BuildKonfigBusyBle
-import com.flipperdevices.core.buildkonfig.BuildKonfigBusyBle.IS_SENSITIVE_LOG_ENABLED
+import com.flipperdevices.busylib.core.buildkonfig.BuildKonfigBusyBle
+import com.flipperdevices.busylib.core.buildkonfig.BuildKonfigBusyBle.IS_SENSITIVE_LOG_ENABLED
 
 inline fun error(logMessage: () -> String) {
     if (BuildKonfigBusyBle.IS_LOG_ENABLED) {

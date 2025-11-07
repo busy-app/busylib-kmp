@@ -5,7 +5,7 @@ import com.flipperdevices.bridge.connection.transport.common.api.DeviceConnectio
 import com.flipperdevices.bridge.connection.transport.common.api.FConnectedDeviceApi
 import com.flipperdevices.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import com.flipperdevices.bridge.connection.transport.common.api.FTransportConnectionStatusListener
-import com.flipperdevices.core.di.AppGraph
+import com.flipperdevices.busylib.core.di.BusyLibGraph
 import dev.zacsweers.metro.ContributesBinding
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.binding
@@ -13,7 +13,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlin.reflect.KClass
 
 @Inject
-@ContributesBinding(AppGraph::class, binding<FDeviceConfigToConnection>())
+@ContributesBinding(BusyLibGraph::class, binding<FDeviceConfigToConnection>())
 class FDeviceConfigToConnectionImpl(
     private val configToConnectionMap: Map<KClass<*>, DeviceConnectionApi<*, *>>
 ) : FDeviceConfigToConnection {
