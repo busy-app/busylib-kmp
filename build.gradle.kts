@@ -81,7 +81,6 @@ subprojects.forEach { subProject ->
         .replace(":", "-")
         .replace(".", "-")
     val isEntryPoint = subProject.name == "entrypoint"
-    subProject.group = artifactId
     if (!isEntryPoint && !subProject.path.startsWith(":components")) return@forEach
     subProject.apply(plugin = "ru.astrainteractive.gradleplugin.publication")
     subProject
