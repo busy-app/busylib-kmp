@@ -1,14 +1,14 @@
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("ru.astrainteractive.gradleplugin.java.core")
-    id("com.android.library")
+    id("com.android.kotlin.multiplatform.library")
     id("ru.astrainteractive.gradleplugin.android.namespace")
     id("ru.astrainteractive.gradleplugin.android.core")
 }
 
 kotlin {
     jvm()
-    androidTarget()
+    androidLibrary {}
     iosX64()
     iosArm64()
     iosSimulatorArm64()

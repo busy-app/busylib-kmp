@@ -11,7 +11,7 @@ kotlin-serialization-runtime = "1.9.0"
 kotlin-datetime = "0.7.1" # https://github.com/Kotlin/kotlinx-datetime/releases
 kotlin-immutable = "0.4.0"
 kotlin-io = "0.8.0"
-klibs-gradleplugin = "1.11.0" # https://github.com/makeevrserg/gradle-plugin# Exposed
+klibs-gradleplugin = "1.11.2" # https://github.com/makeevrserg/gradle-plugin# Exposed
 decompose = "3.4.0"
 appcompat = "1.7.1" # https://developer.android.com/jetpack/androidx/releases/appcompat
 # The update will break AssistedInject
@@ -79,7 +79,7 @@ appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat"
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
-androidLibrary = { id = "com.android.library", version.ref = "agp" }
+androidLibrary = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
 jetbrainsCompose = { id = "org.jetbrains.compose", version.ref = "compose-plugin" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
