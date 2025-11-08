@@ -5,21 +5,18 @@ import com.flipperdevices.bsb.auth.principal.api.BsbUserPrincipalApi
 import com.flipperdevices.bsb.cloud.api.BSBBarsApi
 import com.flipperdevices.busylib.BUSYLibIOS
 import com.flipperdevices.busylib.core.di.BusyLibGraph
-import dev.zacsweers.metro.DependencyGraph
-import dev.zacsweers.metro.Provides
+import com.flipperdevices.busylib.core.di.SingleIn
+import com.r0adkll.kimchi.annotations.MergeComponent
 import kotlinx.coroutines.CoroutineScope
+import me.tatarka.inject.annotations.Provides
 
-@DependencyGraph(BusyLibGraph::class)
-interface BUSYLibGraphIOS {
-    val busyLib: BUSYLibIOS
-
-    @DependencyGraph.Factory
-    fun interface Factory {
-        fun create(
-            @Provides scope: CoroutineScope,
-            @Provides principalApi: BsbUserPrincipalApi,
-            @Provides bsbBarsApi: BSBBarsApi,
-            @Provides persistedStorage: FDevicePersistedStorage,
-        ): BUSYLibGraphIOS
-    }
+@SingleIn(BusyLibGraph::class)
+@MergeComponent(BusyLibGraph::class)
+abstract class BUSYLibGraphIOS(
+    @get:Provides protected val scope: CoroutineScope,
+    @get:Provides protected val principalApi: BsbUserPrincipalApi,
+    @get:Provides protected val bsbBarsApi: BSBBarsApi,
+    @get:Provides protected val persistedStorage: FDevicePersistedStorage,
+) {
+    abstract val busyLib: BUSYLibIOS
 }
