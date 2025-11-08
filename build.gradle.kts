@@ -65,8 +65,11 @@ subprojects.forEach { subProject ->
                         "-module-name",
                         this@afterEvaluate
                             .path
-                            .replace(":", ".")
-                            .replace("-", ".")
+                            .replace(":components:", "")
+                            .replace(":entrypoint", "entrypoint")
+                            .replace(":", "_")
+                            .replace("-", "_")
+                            .replace(".", "_")
                     )
                     optIn.addAll(optIns)
                 }
