@@ -1,0 +1,37 @@
+version: 2
+updates:
+  - package-ecosystem: "gradle"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+      day: "monday"
+      time: "08:00"
+      timezone: "Europe/Moscow"
+    rebase-strategy: "disabled"
+    groups:
+      versions:
+        dependency-type: production
+        applies-to: version-updates
+        update-types:
+          - major
+          - minor
+          - patch
+    open-pull-requests-limit: 1
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+      day: "monday"
+      time: "08:00"
+      timezone: "Europe/Moscow"
+    groups:
+      versions:
+        dependency-type: production
+        applies-to: version-updates
+        update-types:
+          - major
+          - minor
+          - patch
+    rebase-strategy: "disabled"
+    open-pull-requests-limit: 1
