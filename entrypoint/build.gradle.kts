@@ -1,24 +1,13 @@
 plugins {
-    id("org.jetbrains.kotlin.multiplatform")
+    id("flipper.multiplatform")
+    id("org.jetbrains.kotlin.plugin.serialization")
     id("ru.astrainteractive.gradleplugin.java.core")
-    id("com.android.kotlin.multiplatform.library")
     id("ru.astrainteractive.gradleplugin.android.namespace")
     id("ru.astrainteractive.gradleplugin.android.core")
-    id("org.jetbrains.kotlin.plugin.serialization")
     id("ru.astrainteractive.gradleplugin.publication")
 }
 
-kotlin {
-    jvm()
-    androidLibrary {}
-    iosX64()
-    iosArm64()
-    iosSimulatorArm64()
-    macosX64()
-    macosArm64()
 
-    applyDefaultHierarchyTemplate()
-}
 
 kotlin {
     sourceSets.commonMain.dependencies {
