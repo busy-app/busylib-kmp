@@ -1,0 +1,42 @@
+name: "Validate local publish"
+on:
+  workflow_call:
+    secrets:
+      ORG_GRADLE_PROJECT_MAVENCENTRALUSERNAME:
+        required: true
+      ORG_GRADLE_PROJECT_MAVENCENTRALPASSWORD:
+        required: true
+      ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEY:
+        required: true
+      ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEYID:
+        required: true
+      ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEYPASSWORD:
+        required: true
+
+jobs:
+  validate_publish:
+    strategy:
+      matrix:
+        target:
+          - "publishToMavenLocal"
+    name: "Validate local publish"
+    runs-on: macOS-latest
+    env:
+      ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.ORG_GRADLE_PROJECT_MAVENCENTRALUSERNAME }}
+      ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.ORG_GRADLE_PROJECT_MAVENCENTRALPASSWORD }}
+      ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEY }}
+      ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEYID }}
+      ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEYPASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 1.17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      - name: Give gradle permission
+        run: chmod +x gradlew
+      - name: Run publish
+        uses: gradle/gradle-build-action@v3
+        with:
+          arguments: ${{ matrix.target }} --stacktrace
