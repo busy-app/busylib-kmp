@@ -15,25 +15,26 @@ actual class ScannerModule(
     scope: CoroutineScope,
     private val context: Context
 ) {
-    private fun createBluetoothAdapter() = when {
+    fun getBluetoothManager(): BluetoothManager? {
+        return ContextCompat.getSystemService(context, BluetoothManager::class.java)
+    }
+
+    val bluetoothAdapter = when {
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ->
             @Suppress("DEPRECATION")
-            createBluetoothManager()?.adapter ?: BluetoothAdapter.getDefaultAdapter()
+            getBluetoothManager()?.adapter ?: BluetoothAdapter.getDefaultAdapter()
 
         else ->
             @Suppress("DEPRECATION")
             BluetoothAdapter.getDefaultAdapter()
     }
 
-    private fun createBluetoothManager(): BluetoothManager? {
-        return ContextCompat.getSystemService(context, BluetoothManager::class.java)
-    }
 
     val centralManager: CentralManager = CentralManager.Factory.native(context, scope)
 
     val flipperScanner: FlipperScanner = FlipperScannerImpl(
         centralManager = centralManager,
-        bluetoothAdapter = createBluetoothAdapter(),
+        bluetoothAdapter = bluetoothAdapter,
         context = context
     )
 }
