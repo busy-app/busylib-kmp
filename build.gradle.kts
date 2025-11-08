@@ -61,8 +61,32 @@ subprojects.forEach { subProject ->
             .withType<KotlinCompile>()
             .configureEach {
                 compilerOptions {
+                    freeCompilerArgs.addAll(
+                        "-module-name",
+                        this@afterEvaluate
+                            .path
+                            .replace(":", ".")
+                            .replace("-", ".")
+                    )
                     optIn.addAll(optIns)
                 }
             }
     }
+}
+
+subprojects.forEach { subProject ->
+    val artifactId = subProject.path
+        .replace(":components:", "")
+        .replace(":", "-")
+        .replace(".", "-")
+        .replaceFirst("-", "")
+    val isEntryPoint = subProject.name == "entrypoint"
+    subProject.group = artifactId
+    if (!isEntryPoint && !subProject.path.startsWith(":components")) return@forEach
+    subProject.apply(plugin = "ru.astrainteractive.gradleplugin.publication")
+    subProject
+        .extensions
+        .configure<MavenPublishBaseExtension> {
+            coordinates(null, artifactId, null)
+        }
 }
