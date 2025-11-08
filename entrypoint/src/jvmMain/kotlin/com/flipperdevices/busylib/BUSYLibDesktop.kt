@@ -8,7 +8,6 @@ import com.flipperdevices.bsb.auth.principal.api.BsbUserPrincipalApi
 import com.flipperdevices.bsb.cloud.api.BSBBarsApi
 import com.flipperdevices.busylib.di.BUSYLibGraphDesktop
 import me.tatarka.inject.annotations.Inject
-import dev.zacsweers.metro.createGraphFactory
 import kotlinx.coroutines.CoroutineScope
 
 @Inject
@@ -24,6 +23,8 @@ class BUSYLibDesktop(
             bsbBarsApi: BSBBarsApi,
             persistedStorage: FDevicePersistedStorage,
         ): BUSYLibDesktop {
+            TODO()
+            /*
             val graph = createGraphFactory<BUSYLibGraphDesktop.Factory>()
                 .create(
                     scope,
@@ -31,7 +32,7 @@ class BUSYLibDesktop(
                     bsbBarsApi,
                     persistedStorage
                 )
-            return graph.busyLib
+            return graph.busyLib*/
         }
     }
 }

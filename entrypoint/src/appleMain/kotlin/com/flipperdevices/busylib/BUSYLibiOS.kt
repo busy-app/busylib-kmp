@@ -24,6 +24,8 @@ class BUSYLibIOS(
             bsbBarsApi: BSBBarsApi,
             persistedStorage: FDevicePersistedStorage,
         ): BUSYLibIOS {
+            TODO()
+            /*
             val graph = createGraphFactory<BUSYLibGraphIOS.Factory>()
                 .create(
                     scope,
@@ -31,7 +33,7 @@ class BUSYLibIOS(
                     bsbBarsApi,
                     persistedStorage
                 )
-            return graph.busyLib
+            return graph.busyLib*/
         }
     }
 }

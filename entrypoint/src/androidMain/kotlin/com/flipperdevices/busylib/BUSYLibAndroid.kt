@@ -10,7 +10,6 @@ import com.flipperdevices.bsb.auth.principal.api.BsbUserPrincipalApi
 import com.flipperdevices.bsb.cloud.api.BSBBarsApi
 import com.flipperdevices.busylib.di.BUSYLibGraphAndroid
 import me.tatarka.inject.annotations.Inject
-import dev.zacsweers.metro.createGraphFactory
 import kotlinx.coroutines.CoroutineScope
 
 @Inject
@@ -29,7 +28,8 @@ class BUSYLibAndroid(
             // Android-specific factory
             context: Context,
         ): BUSYLibAndroid {
-            val graph = createGraphFactory<BUSYLibGraphAndroid.Factory>()
+            TODO()
+            /*val graph = createGraphFactory<BUSYLibGraphAndroid.Factory>()
                 .create(
                     scope,
                     principalApi,
@@ -37,7 +37,7 @@ class BUSYLibAndroid(
                     persistedStorage,
                     context
                 )
-            return graph.busyLib
+            return graph.busyLib*/
         }
     }
 }
