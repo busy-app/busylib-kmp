@@ -1,5 +1,6 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import ru.astrainteractive.gradleplugin.property.baseGradleProperty
+import ru.astrainteractive.gradleplugin.property.extension.AndroidModelPropertyValueExt.requireAndroidSdkInfo
 import ru.astrainteractive.gradleplugin.property.extension.ModelPropertyValueExt.requireProjectInfo
 import ru.astrainteractive.gradleplugin.property.extension.PrimitivePropertyValueExt.requireInt
 
@@ -78,6 +79,9 @@ android {
         applicationId = requireProjectInfo.group
         versionCode = baseGradleProperty("project.version.code").requireInt
         versionName = requireProjectInfo.versionString
+        compileSdk = requireAndroidSdkInfo.compile
+        targetSdk = requireAndroidSdkInfo.target
+        minSdk = requireAndroidSdkInfo.min
 
         multiDexEnabled = true
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
