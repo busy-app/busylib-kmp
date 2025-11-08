@@ -2,6 +2,7 @@ package com.flipperdevices.bridge.connection.connectionbuilder.impl
 
 import com.flipperdevices.bridge.connection.connectionbuilder.api.FDeviceConfigToConnection
 import com.flipperdevices.bridge.connection.transport.common.api.DeviceConnectionApi
+import com.flipperdevices.bridge.connection.transport.common.api.DeviceConnectionApiHolder
 import com.flipperdevices.bridge.connection.transport.common.api.FConnectedDeviceApi
 import com.flipperdevices.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import com.flipperdevices.bridge.connection.transport.common.api.FTransportConnectionStatusListener
@@ -15,7 +16,7 @@ import kotlin.reflect.KClass
 @Inject
 @ContributesBinding(BusyLibGraph::class, FDeviceConfigToConnection::class)
 class FDeviceConfigToConnectionImpl(
-    private val configToConnectionMap: Map<KClass<*>, DeviceConnectionApi<*, *>>
+    private val configToConnectionMap: Map<KClass<*>, DeviceConnectionApiHolder>
 ) : FDeviceConfigToConnection {
     override suspend fun <API : FConnectedDeviceApi, CONFIG : FDeviceConnectionConfig<API>> connect(
         scope: CoroutineScope,
@@ -30,7 +31,7 @@ class FDeviceConfigToConnectionImpl(
 
         @Suppress("UNCHECKED_CAST")
         val connectionApi =
-            connectionApiUntyped.value as? DeviceConnectionApi<API, CONFIG>
+            connectionApiUntyped.value.deviceConnectionApi as? DeviceConnectionApi<API, CONFIG>
                 ?: throw NotImplementedError("Can't map to connection api")
 
         connectionApi.connect(scope, config, listener).getOrThrow()

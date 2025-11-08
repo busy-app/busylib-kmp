@@ -9,17 +9,14 @@ import com.flipperdevices.bridge.connection.transport.mock.FMockDeviceConnection
 import com.flipperdevices.bridge.connection.transport.mock.MockDeviceConnectionApi
 import com.flipperdevices.bridge.connection.transport.mock.impl.meta.MockFTransportMetaInfoApiImpl
 import com.flipperdevices.busylib.core.di.BusyLibGraph
-import dev.zacsweers.metro.ClassKey
-import com.r0adkll.kimchi.annotations.ContributesMultibinding
+import com.r0adkll.kimchi.annotations.ContributesBinding
 import me.tatarka.inject.annotations.Inject
-
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.seconds
 
 @Inject
-@ClassKey(FMockDeviceConnectionConfig::class)
-@ContributesMultibinding(BusyLibGraph::class, DeviceConnectionApi<*, *>::class)
+@ContributesBinding(BusyLibGraph::class, MockDeviceConnectionApi::class)
 class MockDeviceConnectionApiImpl : MockDeviceConnectionApi {
     override suspend fun connect(
         scope: CoroutineScope,
