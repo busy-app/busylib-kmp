@@ -1,4 +1,4 @@
-package com.flipperdevices.busylib.principal.api
+package com.flipperdevices.bsb.auth.principal.api
 
 import kotlinx.serialization.Serializable
 

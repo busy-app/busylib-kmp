@@ -4,10 +4,7 @@ import android.app.Application
 import com.flipperdevices.bridge.connection.utils.cloud.BSBBarsApiNoop
 import com.flipperdevices.bridge.connection.utils.config.impl.FDevicePersistedStorageImpl
 import com.flipperdevices.bridge.connection.utils.principal.impl.UserPrincipalApiNoop
-import com.flipperdevices.busylib.di.AndroidFDeviceHolderFactoryModule
-import com.flipperdevices.busylib.di.PlatformModule
-import com.flipperdevices.busylib.di.RootModule
-import com.flipperdevices.busylib.di.ScannerModule
+import com.flipperdevices.busylib.BUSYLibAndroid
 import com.russhwolf.settings.SharedPreferencesSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
@@ -23,27 +20,19 @@ class ConnectionTestApplication : Application() {
             )
         )
     }
-    val rootModule: RootModule by lazy {
-        val scope = CoroutineScope(SupervisorJob())
-        val scannerModule = ScannerModule(
-            scope = scope,
-            context = applicationContext,
-        )
-        RootModule(
+    val busyLib: BUSYLibAndroid by lazy {
+        BUSYLibAndroid.build(
+            CoroutineScope(SupervisorJob()),
             principalApi = UserPrincipalApiNoop(),
             bsbBarsApi = BSBBarsApiNoop(),
             persistedStorage = persistedStorage,
-            scannerModule = scannerModule,
-            fDeviceHolderFactoryModule = AndroidFDeviceHolderFactoryModule(
-                scannerModule = scannerModule,
-                context = applicationContext
-            ),
+            context = this
         )
     }
 
     override fun onCreate() {
         super.onCreate()
 
-        rootModule.deviceModule.connectionService.onApplicationInit()
+        busyLib.connectionService.onApplicationInit()
     }
 }

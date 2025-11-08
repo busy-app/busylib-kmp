@@ -4,6 +4,7 @@ plugins {
     id("com.android.library")
     id("ru.astrainteractive.gradleplugin.android.namespace")
     id("ru.astrainteractive.gradleplugin.android.core")
+    id("dev.zacsweers.metro")
 }
 
 kotlin {
@@ -24,6 +25,7 @@ kotlin {
         implementation(projects.components.bridge.transport.ble.api)
 
         implementation(projects.components.log)
+        implementation(projects.components.di)
         implementation(projects.components.ktx)
 
         implementation(libs.kotlin.coroutines)

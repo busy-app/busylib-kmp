@@ -20,6 +20,7 @@ import com.flipperdevices.bridge.connection.utils.cloud.BSBBarsApiNoop
 import com.flipperdevices.bridge.connection.utils.config.impl.FDevicePersistedStorageImpl
 import com.flipperdevices.bridge.connection.utils.principal.impl.UserPrincipalApiNoop
 import com.flipperdevices.bridge.connection.utils.runOnUiThread
+import com.flipperdevices.busylib.BUSYLibDesktop
 import com.flipperdevices.core.busylib.ktx.common.FlipperDispatchers
 import com.russhwolf.settings.PreferencesSettings
 import kotlinx.coroutines.CoroutineScope
@@ -47,7 +48,7 @@ fun main() {
             componentContext = DefaultComponentContext(lifecycle = lifecycle),
             permissionChecker = PermissionCheckerNoop(),
             persistedStorage = persistedStorage,
-            rootModule = busyLib,
+            busyLib = busyLib,
             searchViewModelProvider = {
                 USBSearchViewModel(persistedStorage)
             }

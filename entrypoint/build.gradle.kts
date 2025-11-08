@@ -5,7 +5,7 @@ plugins {
     id("ru.astrainteractive.gradleplugin.android.namespace")
     id("ru.astrainteractive.gradleplugin.android.core")
     id("org.jetbrains.kotlin.plugin.serialization")
-    id("ru.astrainteractive.gradleplugin.publication")
+    id("dev.zacsweers.metro")
 }
 
 kotlin {
@@ -22,6 +22,7 @@ kotlin {
 
 kotlin {
     sourceSets.commonMain.dependencies {
+        implementation(projects.components.di)
         implementation(projects.components.ktx)
         implementation(projects.components.log)
         api(projects.components.principal.api)
@@ -64,13 +65,10 @@ kotlin {
         implementation(projects.components.bridge.transportconfigbuilder.api)
         implementation(projects.components.bridge.transportconfigbuilder.impl)
         implementation(libs.kotlin.coroutines)
-        implementation(libs.ktor.client.core)
     }
     sourceSets.androidMain.dependencies {
         api(projects.components.bridge.device.firstpair.connection.api)
         implementation(projects.components.bridge.device.firstpair.connection.impl)
         implementation(projects.components.bridge.transport.ble.impl)
-        implementation(libs.ble.client)
-        implementation(libs.appcompat)
     }
 }

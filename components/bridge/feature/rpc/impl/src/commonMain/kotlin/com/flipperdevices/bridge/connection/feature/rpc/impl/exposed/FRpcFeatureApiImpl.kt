@@ -13,6 +13,9 @@ import com.flipperdevices.bridge.connection.feature.rpc.api.model.WifiStatusResp
 import com.flipperdevices.core.busylib.ktx.common.FlipperDispatchers
 import com.flipperdevices.core.busylib.ktx.common.runSuspendCatching
 import com.flipperdevices.core.busylib.log.LogTagProvider
+import dev.zacsweers.metro.Assisted
+import dev.zacsweers.metro.AssistedFactory
+import dev.zacsweers.metro.Inject
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
@@ -27,10 +30,11 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 import kotlinx.coroutines.withContext
 
+@Inject
 @Suppress("TooManyFunctions")
 class FRpcFeatureApiImpl(
     @Suppress("UnusedPrivateProperty")
-    private val httpClient: HttpClient
+    @Assisted private val httpClient: HttpClient
 ) : FRpcFeatureApi, LogTagProvider {
     override val TAG = "FlipperRequestApi"
     private val dispatcher = FlipperDispatchers.default
@@ -103,6 +107,7 @@ class FRpcFeatureApiImpl(
         }
     }
 
+    @AssistedFactory
     fun interface InternalFactory {
         operator fun invoke(
             client: HttpClient

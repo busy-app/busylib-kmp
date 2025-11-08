@@ -8,8 +8,12 @@ import androidx.core.app.ActivityCompat
 import com.flipperdevices.bridge.api.scanner.DiscoveredBluetoothDevice
 import com.flipperdevices.bridge.api.scanner.FlipperScanner
 import com.flipperdevices.bridge.api.utils.Constants
+import com.flipperdevices.busylib.core.di.BusyLibGraph
 import com.flipperdevices.core.busylib.log.LogTagProvider
 import com.flipperdevices.core.busylib.log.info
+import dev.zacsweers.metro.ContributesBinding
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.binding
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.flowOf
@@ -22,6 +26,8 @@ import no.nordicsemi.kotlin.ble.client.distinctByPeripheral
 import kotlin.collections.map
 import kotlin.uuid.toKotlinUuid
 
+@Inject
+@ContributesBinding(BusyLibGraph::class, binding<FlipperScanner>())
 class FlipperScannerImpl(
     private val centralManager: CentralManager,
     private val bluetoothAdapter: BluetoothAdapter,

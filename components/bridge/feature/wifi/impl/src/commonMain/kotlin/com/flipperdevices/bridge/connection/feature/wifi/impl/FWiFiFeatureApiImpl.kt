@@ -11,6 +11,9 @@ import com.flipperdevices.bridge.connection.feature.wifi.api.model.WiFiNetwork
 import com.flipperdevices.bridge.connection.feature.wifi.api.model.WiFiSecurity
 import com.flipperdevices.core.busylib.log.LogTagProvider
 import com.flipperdevices.core.busylib.log.error
+import dev.zacsweers.metro.Assisted
+import dev.zacsweers.metro.AssistedFactory
+import dev.zacsweers.metro.Inject
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.delay
@@ -23,8 +26,9 @@ import kotlin.time.Duration.Companion.seconds
 
 private val POOLING_TIME = 3.seconds
 
+@Inject
 class FWiFiFeatureApiImpl(
-    private val rpcFeatureApi: FRpcFeatureApi
+    @Assisted private val rpcFeatureApi: FRpcFeatureApi
 ) : FWiFiFeatureApi, LogTagProvider {
     override val TAG = "FWiFiFeatureApi"
 
@@ -75,6 +79,7 @@ class FWiFiFeatureApiImpl(
         ).map { }
     }
 
+    @AssistedFactory
     interface InternalFactory {
         operator fun invoke(
             rpcFeatureApi: FRpcFeatureApi

@@ -7,7 +7,12 @@ import com.flipperdevices.bridge.connection.feature.provider.api.FFeatureStatus
 import com.flipperdevices.bridge.connection.feature.provider.impl.utils.FDeviceConnectStatusToDeviceApi
 import com.flipperdevices.bridge.connection.orchestrator.api.FDeviceOrchestrator
 import com.flipperdevices.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
+import com.flipperdevices.busylib.core.di.BusyLibGraph
 import com.flipperdevices.core.busylib.ktx.common.FlipperDispatchers
+import dev.zacsweers.metro.ContributesBinding
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
+import dev.zacsweers.metro.binding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,6 +26,9 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlin.reflect.KClass
 
+@Inject
+@SingleIn(BusyLibGraph::class)
+@ContributesBinding(BusyLibGraph::class, binding<FFeatureProvider>())
 class FFeatureProviderImpl(
     private val orchestrator: FDeviceOrchestrator,
     private val deviceApiMapper: FDeviceConnectStatusToDeviceApi
