@@ -1,7 +1,7 @@
 package com.flipperdevices.busylib.di
 
 import com.flipperdevices.bridge.connection.config.api.FDevicePersistedStorage
-import com.flipperdevices.bsb.auth.principal.api.BsbUserPrincipalApi
+import com.flipperdevices.busylib.principal.api.BsbUserPrincipalApi
 import com.flipperdevices.bsb.cloud.api.BSBBarsApi
 
 @Suppress("LongParameterList")

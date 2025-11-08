@@ -21,7 +21,7 @@ import com.flipperdevices.bridge.connection.feature.screenstreaming.impl.FScreen
 import com.flipperdevices.bridge.connection.feature.wifi.impl.FWiFiFeatureApiImpl
 import com.flipperdevices.bridge.connection.feature.wifi.impl.FWiFiFeatureFactoryImpl
 import com.flipperdevices.bridge.connection.transport.common.api.meta.FTransportMetaInfoApi
-import com.flipperdevices.bsb.auth.principal.api.BsbUserPrincipalApi
+import com.flipperdevices.busylib.principal.api.BsbUserPrincipalApi
 import com.flipperdevices.bsb.cloud.api.BSBBarsApi
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope
