@@ -4,8 +4,6 @@ import com.flipperdevices.bridge.connection.feature.rpc.api.exposed.FRpcFeatureA
 import com.flipperdevices.bridge.connection.feature.screenstreaming.api.FScreenStreamingFeatureApi
 import com.flipperdevices.bridge.connection.feature.screenstreaming.model.BusyImageFormat
 import com.flipperdevices.core.busylib.log.LogTagProvider
-
-
 import kotlin.io.encoding.Base64
 
 class FScreenStreamingFeatureApiImpl(

@@ -4,7 +4,6 @@ import com.flipperdevices.bridge.connection.feature.info.api.FDeviceInfoFeatureA
 import com.flipperdevices.bridge.connection.feature.info.api.model.BSBDeviceInfo
 import com.flipperdevices.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 
-
 class FDeviceInfoFeatureApiImpl(
     private val rpcFeatureApi: FRpcFeatureApi
 ) : FDeviceInfoFeatureApi {

@@ -7,8 +7,6 @@ import com.flipperdevices.bridge.connection.feature.rpc.api.model.PowerState
 import com.flipperdevices.bridge.connection.transport.common.api.meta.FTransportMetaInfoApi
 import com.flipperdevices.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
 import com.flipperdevices.core.busylib.ktx.common.orEmpty
-
-
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull

@@ -5,6 +5,7 @@ import com.flipperdevices.bsb.auth.principal.api.BsbUserPrincipalApi
 import com.flipperdevices.bsb.cloud.api.BSBBarsApi
 import kotlinx.coroutines.CoroutineScope
 
+@Suppress("LongParameterList")
 class RootModule(
     val scope: CoroutineScope,
     val bsbBarsApi: BSBBarsApi,

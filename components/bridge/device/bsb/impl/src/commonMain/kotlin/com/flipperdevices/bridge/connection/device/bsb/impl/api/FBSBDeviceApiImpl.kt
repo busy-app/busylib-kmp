@@ -11,8 +11,6 @@ import com.flipperdevices.busylib.core.buildkonfig.BuildKonfigBusyBle
 import com.flipperdevices.core.busylib.log.LogTagProvider
 import com.flipperdevices.core.busylib.log.error
 import com.flipperdevices.core.busylib.log.info
-
-
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
