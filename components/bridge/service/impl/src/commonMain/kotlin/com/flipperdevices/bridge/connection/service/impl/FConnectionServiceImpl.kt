@@ -10,7 +10,7 @@ import com.flipperdevices.core.busylib.ktx.common.FlipperDispatchers
 import com.flipperdevices.core.busylib.log.LogTagProvider
 import com.flipperdevices.core.busylib.log.warn
 import dev.zacsweers.metro.ContributesBinding
-import dev.zacsweers.metro.Inject
+import me.tatarka.inject.annotations.Inject
 import dev.zacsweers.metro.SingleIn
 import dev.zacsweers.metro.binding
 import kotlinx.coroutines.CoroutineScope

@@ -9,7 +9,7 @@ import com.flipperdevices.bridge.connection.service.api.FConnectionService
 import com.flipperdevices.bsb.auth.principal.api.BsbUserPrincipalApi
 import com.flipperdevices.bsb.cloud.api.BSBBarsApi
 import com.flipperdevices.busylib.di.BUSYLibGraphAndroid
-import dev.zacsweers.metro.Inject
+import me.tatarka.inject.annotations.Inject
 import dev.zacsweers.metro.createGraphFactory
 import kotlinx.coroutines.CoroutineScope
 

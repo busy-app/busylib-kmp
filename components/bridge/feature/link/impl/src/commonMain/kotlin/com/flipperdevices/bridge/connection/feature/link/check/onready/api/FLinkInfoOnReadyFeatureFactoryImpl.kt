@@ -6,7 +6,7 @@ import com.flipperdevices.bridge.connection.feature.link.check.ondemand.api.FLin
 import com.flipperdevices.bridge.connection.transport.common.api.FConnectedDeviceApi
 import com.flipperdevices.busylib.core.di.BusyLibGraph
 import dev.zacsweers.metro.ContributesIntoSet
-import dev.zacsweers.metro.Inject
+import me.tatarka.inject.annotations.Inject
 import dev.zacsweers.metro.binding
 import kotlinx.coroutines.CoroutineScope
 

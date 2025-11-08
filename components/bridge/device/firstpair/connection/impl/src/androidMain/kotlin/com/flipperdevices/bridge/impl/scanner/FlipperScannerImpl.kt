@@ -12,7 +12,7 @@ import com.flipperdevices.busylib.core.di.BusyLibGraph
 import com.flipperdevices.core.busylib.log.LogTagProvider
 import com.flipperdevices.core.busylib.log.info
 import dev.zacsweers.metro.ContributesBinding
-import dev.zacsweers.metro.Inject
+import me.tatarka.inject.annotations.Inject
 import dev.zacsweers.metro.binding
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow

@@ -6,7 +6,7 @@ import com.flipperdevices.bridge.connection.feature.screenstreaming.model.BusyIm
 import com.flipperdevices.core.busylib.log.LogTagProvider
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
-import dev.zacsweers.metro.Inject
+import me.tatarka.inject.annotations.Inject
 import kotlin.io.encoding.Base64
 
 @Inject

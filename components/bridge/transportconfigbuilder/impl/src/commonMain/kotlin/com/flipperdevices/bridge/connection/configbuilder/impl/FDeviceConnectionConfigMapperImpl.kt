@@ -7,7 +7,7 @@ import com.flipperdevices.bridge.connection.configbuilder.impl.builders.BUSYBarM
 import com.flipperdevices.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import com.flipperdevices.busylib.core.di.BusyLibGraph
 import dev.zacsweers.metro.ContributesBinding
-import dev.zacsweers.metro.Inject
+import me.tatarka.inject.annotations.Inject
 import dev.zacsweers.metro.binding
 
 @Inject

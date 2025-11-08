@@ -8,7 +8,7 @@ import com.flipperdevices.bridge.connection.feature.rpc.api.critical.FRpcCritica
 import com.flipperdevices.bridge.connection.transport.common.api.FConnectedDeviceApi
 import com.flipperdevices.busylib.core.di.BusyLibGraph
 import dev.zacsweers.metro.ContributesIntoMap
-import dev.zacsweers.metro.Inject
+import me.tatarka.inject.annotations.Inject
 import dev.zacsweers.metro.binding
 import kotlinx.coroutines.CoroutineScope
 

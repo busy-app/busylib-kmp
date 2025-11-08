@@ -9,7 +9,7 @@ import com.flipperdevices.bridge.connection.transport.common.api.meta.TransportM
 import com.flipperdevices.core.busylib.ktx.common.orEmpty
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
-import dev.zacsweers.metro.Inject
+import me.tatarka.inject.annotations.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull

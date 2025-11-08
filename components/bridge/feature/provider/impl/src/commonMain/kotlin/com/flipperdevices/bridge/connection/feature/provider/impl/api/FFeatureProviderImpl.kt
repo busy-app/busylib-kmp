@@ -10,7 +10,7 @@ import com.flipperdevices.bridge.connection.orchestrator.api.model.FDeviceConnec
 import com.flipperdevices.busylib.core.di.BusyLibGraph
 import com.flipperdevices.core.busylib.ktx.common.FlipperDispatchers
 import dev.zacsweers.metro.ContributesBinding
-import dev.zacsweers.metro.Inject
+import me.tatarka.inject.annotations.Inject
 import dev.zacsweers.metro.SingleIn
 import dev.zacsweers.metro.binding
 import kotlinx.coroutines.CoroutineScope

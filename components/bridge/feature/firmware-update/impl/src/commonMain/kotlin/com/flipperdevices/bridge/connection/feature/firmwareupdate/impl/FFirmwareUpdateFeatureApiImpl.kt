@@ -5,7 +5,7 @@ import com.flipperdevices.bridge.connection.feature.rpc.api.exposed.FRpcFeatureA
 import com.flipperdevices.core.busylib.log.LogTagProvider
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
-import dev.zacsweers.metro.Inject
+import me.tatarka.inject.annotations.Inject
 
 @Inject
 @Suppress("UnusedPrivateProperty")

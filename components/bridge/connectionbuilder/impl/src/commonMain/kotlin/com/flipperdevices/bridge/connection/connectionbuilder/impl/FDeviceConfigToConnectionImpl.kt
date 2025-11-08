@@ -7,7 +7,7 @@ import com.flipperdevices.bridge.connection.transport.common.api.FDeviceConnecti
 import com.flipperdevices.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import com.flipperdevices.busylib.core.di.BusyLibGraph
 import dev.zacsweers.metro.ContributesBinding
-import dev.zacsweers.metro.Inject
+import me.tatarka.inject.annotations.Inject
 import dev.zacsweers.metro.binding
 import kotlinx.coroutines.CoroutineScope
 import kotlin.reflect.KClass
