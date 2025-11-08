@@ -13,6 +13,7 @@ import kotlinx.coroutines.CoroutineScope
 @DependencyGraph(BusyLibGraph::class)
 interface BUSYLibGraphAndroid {
     val busyLib: BUSYLibAndroid
+
     @DependencyGraph.Factory
     fun interface Factory {
         fun create(
