@@ -11,11 +11,11 @@ plugins {
 kotlin {
     jvm()
     androidLibrary {}
-//    iosX64()
-//    iosArm64()
-//    iosSimulatorArm64()
-//    macosX64()
-//    macosArm64()
+    iosX64()
+    iosArm64()
+    iosSimulatorArm64()
+    macosX64()
+    macosArm64()
 
     applyDefaultHierarchyTemplate()
 }
