@@ -33,7 +33,6 @@ class FBSBDeviceApiImpl(
 ) : FBSBDeviceApi, FUnsafeDeviceFeatureApi, LogTagProvider {
     override val TAG = "FZeroDeviceApi"
 
-    // todo Hi, @Programistich you've had fix for that
     private val features = mutableMapOf<FDeviceFeature, Deferred<FDeviceFeatureApi?>>()
     private val mutex = Mutex()
 

@@ -15,6 +15,6 @@ kotlin {
 }
 
 dependencies {
-    add("kspCommonMainMetadata", libs.kotlin.inject.compiler)
-    add("kspCommonMainMetadata", libs.kotlin.inject.kimchi.compiler)
+    add("commonKsp", libs.kotlin.inject.compiler)
+    add("commonKsp", libs.kotlin.inject.kimchi.compiler)
 }

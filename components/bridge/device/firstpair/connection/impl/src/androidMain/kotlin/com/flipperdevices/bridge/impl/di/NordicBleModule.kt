@@ -18,11 +18,13 @@ interface NordicBleModule {
     @Provides
     @SingleIn(BusyLibGraph::class)
     fun provideCentralManager(context: Context, scope: CoroutineScope): CentralManager {
-        return CentralManager.Factory.native(context, scope)
+        return CentralManager.native(context, scope)
     }
 
     @Provides
-    fun provideBluetoothAdapter(bluetoothManager: BluetoothManager?): BluetoothAdapter {
+    fun provideBluetoothAdapter(
+        bluetoothManager: BluetoothManager?
+    ): BluetoothAdapter {
         return when {
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ->
                 @Suppress("DEPRECATION")

@@ -19,4 +19,6 @@ abstract class BUSYLibGraphDesktop(
     @get:Provides protected val persistedStorage: FDevicePersistedStorage,
 ) {
     abstract val busyLib: BUSYLibDesktop
+
+    companion object
 }

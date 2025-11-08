@@ -9,21 +9,17 @@ import com.flipperdevices.busylib.core.di.BusyLibGraph
 import com.flipperdevices.busylib.core.di.SingleIn
 import com.r0adkll.kimchi.annotations.MergeComponent
 import kotlinx.coroutines.CoroutineScope
+import me.tatarka.inject.annotations.Provides
 
 @MergeComponent(BusyLibGraph::class)
 @SingleIn(BusyLibGraph::class)
-interface BUSYLibGraphAndroid {
-    val busyLib: BUSYLibAndroid
-
-    @DependencyGraph.Factory
-    fun interface Factory {
-        fun create(
-            @Provides scope: CoroutineScope,
-            @Provides principalApi: BsbUserPrincipalApi,
-            @Provides bsbBarsApi: BSBBarsApi,
-            @Provides persistedStorage: FDevicePersistedStorage,
-            // Android-specific factory
-            @Provides context: Context,
-        ): BUSYLibGraphAndroid
-    }
+abstract class BUSYLibGraphAndroid(
+    @get:Provides protected val scope: CoroutineScope,
+    @get:Provides protected val principalApi: BsbUserPrincipalApi,
+    @get:Provides protected val bsbBarsApi: BSBBarsApi,
+    @get:Provides protected val persistedStorage: FDevicePersistedStorage,
+    // Android-specific factory
+    @get:Provides protected val context: Context,
+) {
+    abstract val busyLib: BUSYLibAndroid
 }
