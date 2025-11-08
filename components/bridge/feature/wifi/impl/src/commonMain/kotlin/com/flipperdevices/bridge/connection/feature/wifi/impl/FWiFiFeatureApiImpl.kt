@@ -80,7 +80,7 @@ class FWiFiFeatureApiImpl(
 
     @Inject
     class InternalFactory(
-        protected val factory: (FRpcFeatureApi) -> FWiFiFeatureApiImpl
+        private val factory: (FRpcFeatureApi) -> FWiFiFeatureApiImpl
     ) {
         operator fun invoke(
             rpcFeatureApi: FRpcFeatureApi

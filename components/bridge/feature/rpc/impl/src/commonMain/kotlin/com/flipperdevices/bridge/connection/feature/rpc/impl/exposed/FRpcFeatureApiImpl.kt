@@ -108,7 +108,7 @@ class FRpcFeatureApiImpl(
 
     @Inject
     class InternalFactory(
-        protected val factory: (HttpClient) -> FRpcFeatureApiImpl
+        private val factory: (HttpClient) -> FRpcFeatureApiImpl
     ) {
         operator fun invoke(
             client: HttpClient

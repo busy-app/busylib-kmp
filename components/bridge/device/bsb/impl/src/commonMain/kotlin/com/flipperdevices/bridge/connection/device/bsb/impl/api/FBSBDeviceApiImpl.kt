@@ -114,7 +114,7 @@ class FBSBDeviceApiImpl(
     @Inject
     @ContributesBinding(BusyLibGraph::class, FBSBDeviceApi.Factory::class)
     class Factory(
-        protected val factory: (CoroutineScope, FConnectedDeviceApi) -> FBSBDeviceApiImpl
+        private val factory: (CoroutineScope, FConnectedDeviceApi) -> FBSBDeviceApiImpl
     ) : FBSBDeviceApi.Factory {
         override fun invoke(
             scope: CoroutineScope,

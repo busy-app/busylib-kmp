@@ -20,7 +20,7 @@ class FDeviceInfoFeatureApiImpl(
 
     @Inject
     class InternalFactory(
-        protected val factory: (FRpcFeatureApi) -> FDeviceInfoFeatureApiImpl
+        private val factory: (FRpcFeatureApi) -> FDeviceInfoFeatureApiImpl
     ) {
         operator fun invoke(
             rpcFeatureApi: FRpcFeatureApi

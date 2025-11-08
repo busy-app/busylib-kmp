@@ -44,7 +44,7 @@ class FRpcCriticalFeatureApiImpl(
 
     @Inject
     class InternalFactory(
-        protected val factory: (HttpClient) -> FRpcCriticalFeatureApiImpl
+        private val factory: (HttpClient) -> FRpcCriticalFeatureApiImpl
     ) {
         operator fun invoke(
             client: HttpClient

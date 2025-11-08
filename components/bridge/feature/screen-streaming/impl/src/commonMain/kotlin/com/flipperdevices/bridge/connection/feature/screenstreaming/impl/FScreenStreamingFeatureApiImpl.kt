@@ -23,7 +23,7 @@ class FScreenStreamingFeatureApiImpl(
 
     @Inject
     class InternalFactory(
-        protected val factory: (FRpcFeatureApi) -> FScreenStreamingFeatureApiImpl
+        private val factory: (FRpcFeatureApi) -> FScreenStreamingFeatureApiImpl
     ) {
         operator fun invoke(
             rpcFeatureApi: FRpcFeatureApi

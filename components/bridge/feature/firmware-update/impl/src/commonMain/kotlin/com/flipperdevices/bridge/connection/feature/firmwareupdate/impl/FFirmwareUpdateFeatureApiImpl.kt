@@ -23,7 +23,7 @@ class FFirmwareUpdateFeatureApiImpl(
 
     @Inject
     class InternalFactory(
-        protected val factory: (FRpcFeatureApi) -> FFirmwareUpdateFeatureApiImpl
+        private val factory: (FRpcFeatureApi) -> FFirmwareUpdateFeatureApiImpl
     ) {
         operator fun invoke(
             rpcFeatureApi: FRpcFeatureApi

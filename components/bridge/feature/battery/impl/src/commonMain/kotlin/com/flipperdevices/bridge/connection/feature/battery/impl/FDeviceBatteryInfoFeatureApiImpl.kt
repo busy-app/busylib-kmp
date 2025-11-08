@@ -102,7 +102,7 @@ class FDeviceBatteryInfoFeatureApiImpl(
 
     @Inject
     class InternalFactory(
-        protected val factory: (FRpcFeatureApi, FTransportMetaInfoApi?) -> FDeviceBatteryInfoFeatureApiImpl
+        private val factory: (FRpcFeatureApi, FTransportMetaInfoApi?) -> FDeviceBatteryInfoFeatureApiImpl
     ) {
         operator fun invoke(
             rpcFeatureApi: FRpcFeatureApi,

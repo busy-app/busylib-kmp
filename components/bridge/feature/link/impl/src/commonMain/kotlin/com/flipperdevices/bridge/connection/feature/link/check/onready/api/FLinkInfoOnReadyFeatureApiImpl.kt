@@ -17,7 +17,7 @@ class FLinkInfoOnReadyFeatureApiImpl(
 
     @Inject
     class InternalFactory(
-        protected val factory: (FLinkedInfoOnDemandFeatureApi) -> FLinkInfoOnReadyFeatureApiImpl
+        private val factory: (FLinkedInfoOnDemandFeatureApi) -> FLinkInfoOnReadyFeatureApiImpl
     ) {
         operator fun invoke(
             fLinkedInfoOnDemandFeatureApi: FLinkedInfoOnDemandFeatureApi,
