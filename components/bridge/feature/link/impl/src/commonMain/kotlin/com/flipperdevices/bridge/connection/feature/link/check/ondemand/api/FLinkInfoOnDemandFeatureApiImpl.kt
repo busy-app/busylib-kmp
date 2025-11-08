@@ -105,7 +105,7 @@ class FLinkInfoOnDemandFeatureApiImpl(
     }
 
     @Inject
-    abstract class InternalFactory(
+    class InternalFactory(
         protected val factory: (FRpcCriticalFeatureApi, CoroutineScope) -> FLinkInfoOnDemandFeatureApiImpl
     ) {
         operator fun invoke(

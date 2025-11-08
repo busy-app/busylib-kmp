@@ -53,6 +53,7 @@ kotlin {
         implementation(projects.components.bridge.transportconfigbuilder.api)
         implementation(projects.components.bridge.transportconfigbuilder.impl)
         implementation(libs.kotlin.coroutines)
+        implementation(libs.ktor.client.core)
     }
     sourceSets.androidMain.dependencies {
         api(projects.components.bridge.device.firstpair.connection.api)

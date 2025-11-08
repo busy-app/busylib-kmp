@@ -16,7 +16,7 @@ class FLinkInfoOnReadyFeatureApiImpl(
     }
 
     @Inject
-    abstract class InternalFactory(
+    class InternalFactory(
         protected val factory: (FLinkedInfoOnDemandFeatureApi) -> FLinkInfoOnReadyFeatureApiImpl
     ) {
         operator fun invoke(

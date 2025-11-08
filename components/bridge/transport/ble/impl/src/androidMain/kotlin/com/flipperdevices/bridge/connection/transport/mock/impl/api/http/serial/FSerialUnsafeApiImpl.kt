@@ -88,7 +88,7 @@ class FSerialUnsafeApiImpl(
     }
 
     @Inject
-    abstract class Factory(
+    class Factory(
         protected val factory: (Flow<RemoteCharacteristic?>, Flow<RemoteCharacteristic?>, CoroutineScope) -> FSerialUnsafeApiImpl
     ) {
         operator fun invoke(

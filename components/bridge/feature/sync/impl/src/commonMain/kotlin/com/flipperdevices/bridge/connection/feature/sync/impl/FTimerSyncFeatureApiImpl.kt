@@ -15,7 +15,7 @@ class FTimerSyncFeatureApiImpl(
     }
 
     @Inject
-    abstract class InternalFactory(
+    class InternalFactory(
         protected val factory: (CoroutineScope) -> FTimerSyncFeatureApiImpl
     ) {
         operator fun invoke(
