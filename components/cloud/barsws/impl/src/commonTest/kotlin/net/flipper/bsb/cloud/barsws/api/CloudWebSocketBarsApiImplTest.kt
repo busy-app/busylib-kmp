@@ -212,6 +212,7 @@ class CloudWebSocketBarsApiImplTest {
 
         // Then - resources should be cleaned up
         assertTrue(job.isCancelled, "Job should be cancelled")
+        assertTrue(cleanupCalled.value, "WebSocket should be closed on scope cancellation")
     }
 
     @Test
@@ -846,6 +847,10 @@ class CloudWebSocketBarsApiImplTest {
 
             val webSocket = MockBSBWebSocket(onWebSocketClosed)
             lastCreatedWebSocket = webSocket
+            // Mirror production behavior: close websocket when scope is cancelled
+            scope.coroutineContext[Job]?.invokeOnCompletion {
+                webSocket.close()
+            }
             return webSocket
         }
 
