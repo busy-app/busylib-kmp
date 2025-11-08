@@ -3,8 +3,8 @@ package com.flipperdevices.bridge.connection.feature.link.check.ondemand.api
 import com.flipperdevices.bridge.connection.feature.link.model.LinkedAccountInfo
 import com.flipperdevices.bridge.connection.feature.rpc.api.critical.FRpcCriticalFeatureApi
 import com.flipperdevices.bridge.connection.feature.rpc.api.model.RpcLinkedAccountInfo
-import com.flipperdevices.bsb.auth.principal.api.BsbUserPrincipal
-import com.flipperdevices.bsb.auth.principal.api.BsbUserPrincipalApi
+import com.flipperdevices.busylib.principal.api.BsbUserPrincipal
+import com.flipperdevices.busylib.principal.api.BsbUserPrincipalApi
 import com.flipperdevices.bsb.cloud.api.BSBBarsApi
 import com.flipperdevices.core.busylib.ktx.common.SingleJobMode
 import com.flipperdevices.core.busylib.ktx.common.asSingleJobScope
