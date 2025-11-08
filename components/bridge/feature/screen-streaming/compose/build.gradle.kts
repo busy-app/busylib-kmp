@@ -1,18 +1,9 @@
 plugins {
-    id("org.jetbrains.kotlin.multiplatform")
+    id("flipper.multiplatform-compose")
     id("ru.astrainteractive.gradleplugin.java.core")
-    id("com.android.library")
     id("ru.astrainteractive.gradleplugin.android.namespace")
     id("ru.astrainteractive.gradleplugin.android.core")
-    id("org.jetbrains.compose")
-    id("org.jetbrains.kotlin.plugin.compose")
-}
-
-kotlin {
-    jvm()
-    androidTarget()
-
-    applyDefaultHierarchyTemplate()
+    id("ru.astrainteractive.gradleplugin.publication")
 }
 
 kotlin {
