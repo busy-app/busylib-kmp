@@ -1,6 +1,7 @@
 package com.flipperdevices.bridge.connection.feature.common.api
 
-import dev.zacsweers.metro.MapKey
+import com.r0adkll.kimchi.annotations.MapKey
+
 
 enum class FDeviceFeature {
     RPC_EXPOSED,

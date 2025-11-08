@@ -8,14 +8,14 @@ import com.flipperdevices.bridge.connection.feature.rpc.api.exposed.FRpcFeatureA
 import com.flipperdevices.bridge.connection.transport.common.api.FConnectedDeviceApi
 import com.flipperdevices.bridge.connection.transport.common.api.meta.FTransportMetaInfoApi
 import com.flipperdevices.busylib.core.di.BusyLibGraph
-import dev.zacsweers.metro.ContributesIntoMap
+import com.r0adkll.kimchi.annotations.ContributesMultibinding
 import me.tatarka.inject.annotations.Inject
 
 import kotlinx.coroutines.CoroutineScope
 
 @Inject
 @FDeviceFeatureQualifier(FDeviceFeature.BATTERY_INFO)
-@ContributesIntoMap(BusyLibGraph::class, binding<FDeviceFeatureApi.Factory>())
+@ContributesMultibinding(BusyLibGraph::class, FDeviceFeatureApi.Factory::class)
 class FDeviceBatteryInfoFeatureFactoryImpl(
     private val deviceInfoFeatureFactory: FDeviceBatteryInfoFeatureApiImpl.InternalFactory
 ) : FDeviceFeatureApi.Factory {

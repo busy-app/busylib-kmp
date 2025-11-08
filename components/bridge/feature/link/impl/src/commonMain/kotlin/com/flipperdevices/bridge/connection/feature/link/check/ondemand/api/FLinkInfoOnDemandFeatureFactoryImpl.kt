@@ -7,14 +7,14 @@ import com.flipperdevices.bridge.connection.feature.common.api.FUnsafeDeviceFeat
 import com.flipperdevices.bridge.connection.feature.rpc.api.critical.FRpcCriticalFeatureApi
 import com.flipperdevices.bridge.connection.transport.common.api.FConnectedDeviceApi
 import com.flipperdevices.busylib.core.di.BusyLibGraph
-import dev.zacsweers.metro.ContributesIntoMap
+import com.r0adkll.kimchi.annotations.ContributesMultibinding
 import me.tatarka.inject.annotations.Inject
 
 import kotlinx.coroutines.CoroutineScope
 
 @Inject
 @FDeviceFeatureQualifier(FDeviceFeature.LINKED_USER_STATUS)
-@ContributesIntoMap(BusyLibGraph::class, binding<FDeviceFeatureApi.Factory>())
+@ContributesMultibinding(BusyLibGraph::class, FDeviceFeatureApi.Factory::class)
 class FLinkInfoOnDemandFeatureFactoryImpl(
     private val linkedInfoFeatureFactory: FLinkInfoOnDemandFeatureApiImpl.InternalFactory
 ) : FDeviceFeatureApi.Factory {

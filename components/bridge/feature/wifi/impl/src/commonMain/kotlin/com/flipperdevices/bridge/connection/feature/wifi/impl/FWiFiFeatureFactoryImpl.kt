@@ -7,14 +7,14 @@ import com.flipperdevices.bridge.connection.feature.common.api.FUnsafeDeviceFeat
 import com.flipperdevices.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import com.flipperdevices.bridge.connection.transport.common.api.FConnectedDeviceApi
 import com.flipperdevices.busylib.core.di.BusyLibGraph
-import dev.zacsweers.metro.ContributesIntoMap
+import com.r0adkll.kimchi.annotations.ContributesMultibinding
 import me.tatarka.inject.annotations.Inject
 
 import kotlinx.coroutines.CoroutineScope
 
 @Inject
 @FDeviceFeatureQualifier(FDeviceFeature.WIFI)
-@ContributesIntoMap(BusyLibGraph::class, binding<FDeviceFeatureApi.Factory>())
+@ContributesMultibinding(BusyLibGraph::class, FDeviceFeatureApi.Factory::class)
 class FWiFiFeatureFactoryImpl(
     private val deviceInfoFeatureFactory: FWiFiFeatureApiImpl.InternalFactory
 ) : FDeviceFeatureApi.Factory {
