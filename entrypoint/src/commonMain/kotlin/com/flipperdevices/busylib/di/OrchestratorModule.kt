@@ -1,6 +1,5 @@
 package com.flipperdevices.busylib.di
 
-import com.flipperdevices.bridge.connection.ble.impl.FDeviceHolderFactory
 import com.flipperdevices.bridge.connection.ble.impl.FDeviceOrchestratorImpl
 import com.flipperdevices.bridge.connection.configbuilder.impl.FDeviceConnectionConfigMapperImpl
 import com.flipperdevices.bridge.connection.configbuilder.impl.builders.BUSYBarBLEBuilderConfig

@@ -11,8 +11,6 @@ import com.flipperdevices.bridge.connection.feature.wifi.api.model.WiFiNetwork
 import com.flipperdevices.bridge.connection.feature.wifi.api.model.WiFiSecurity
 import com.flipperdevices.core.busylib.log.LogTagProvider
 import com.flipperdevices.core.busylib.log.error
-
-
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.delay

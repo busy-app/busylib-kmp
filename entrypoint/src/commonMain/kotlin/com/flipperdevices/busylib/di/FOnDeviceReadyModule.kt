@@ -18,15 +18,16 @@ class FOnDeviceReadyModule {
         }
     )
 
-    private val fLinkInfoOnReadyFeatureFactoryImpl: FLinkInfoOnReadyFeatureFactoryImpl = FLinkInfoOnReadyFeatureFactoryImpl(
-        fLinkInfoOnReadyFeatureApiImpl = object : FLinkInfoOnReadyFeatureApiImpl.InternalFactory {
-            override fun invoke(
-                fLinkedInfoOnDemandFeatureApi: FLinkedInfoOnDemandFeatureApi
-            ): FLinkInfoOnReadyFeatureApiImpl {
-                return FLinkInfoOnReadyFeatureApiImpl(fLinkedInfoOnDemandFeatureApi)
+    private val fLinkInfoOnReadyFeatureFactoryImpl: FLinkInfoOnReadyFeatureFactoryImpl =
+        FLinkInfoOnReadyFeatureFactoryImpl(
+            fLinkInfoOnReadyFeatureApiImpl = object : FLinkInfoOnReadyFeatureApiImpl.InternalFactory {
+                override fun invoke(
+                    fLinkedInfoOnDemandFeatureApi: FLinkedInfoOnDemandFeatureApi
+                ): FLinkInfoOnReadyFeatureApiImpl {
+                    return FLinkInfoOnReadyFeatureApiImpl(fLinkedInfoOnDemandFeatureApi)
+                }
             }
-        }
-    )
+        )
 
     val onReadyFeaturesApiFactories = setOf(
         fTimerSyncFactoryImpl,

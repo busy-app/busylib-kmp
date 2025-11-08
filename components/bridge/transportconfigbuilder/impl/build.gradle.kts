@@ -22,7 +22,6 @@ kotlin {
     sourceSets.commonMain.dependencies {
         implementation(projects.components.bridge.transportconfigbuilder.api)
 
-
         implementation(projects.components.bridge.transport.common.api)
         implementation(projects.components.bridge.transport.mock.api)
         implementation(projects.components.bridge.transport.ble.api)

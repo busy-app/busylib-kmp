@@ -3,7 +3,6 @@ package com.flipperdevices.bridge.connection.feature.link.check.onready.api
 import com.flipperdevices.bridge.connection.feature.link.check.ondemand.api.FLinkedInfoOnDemandFeatureApi
 import com.flipperdevices.core.busylib.log.LogTagProvider
 
-
 class FLinkInfoOnReadyFeatureApiImpl(
     private val fLinkedInfoOnDemandFeatureApi: FLinkedInfoOnDemandFeatureApi,
 ) : FLinkedInfoOnReadyFeatureApi, LogTagProvider {
