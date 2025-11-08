@@ -1,8 +1,8 @@
 package com.flipperdevices.bridge.connection.feature.sync.impl
 
 import com.flipperdevices.bridge.connection.feature.common.api.FOnDeviceReadyFeatureApi
-import dev.zacsweers.metro.Assisted
-import dev.zacsweers.metro.AssistedFactory
+import me.tatarka.inject.annotations.Assisted
+import me.tatarka.inject.annotations.AssistedFactory
 import me.tatarka.inject.annotations.Inject
 import kotlinx.coroutines.CoroutineScope
 

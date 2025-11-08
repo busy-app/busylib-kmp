@@ -3,8 +3,8 @@ package com.flipperdevices.bridge.connection.feature.info.impl
 import com.flipperdevices.bridge.connection.feature.info.api.FDeviceInfoFeatureApi
 import com.flipperdevices.bridge.connection.feature.info.api.model.BSBDeviceInfo
 import com.flipperdevices.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
-import dev.zacsweers.metro.Assisted
-import dev.zacsweers.metro.AssistedFactory
+import me.tatarka.inject.annotations.Assisted
+import me.tatarka.inject.annotations.AssistedFactory
 import me.tatarka.inject.annotations.Inject
 
 @Inject

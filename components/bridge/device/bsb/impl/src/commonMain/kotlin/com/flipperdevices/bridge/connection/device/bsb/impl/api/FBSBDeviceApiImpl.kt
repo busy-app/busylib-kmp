@@ -12,8 +12,8 @@ import com.flipperdevices.busylib.core.di.BusyLibGraph
 import com.flipperdevices.core.busylib.log.LogTagProvider
 import com.flipperdevices.core.busylib.log.error
 import com.flipperdevices.core.busylib.log.info
-import dev.zacsweers.metro.Assisted
-import dev.zacsweers.metro.AssistedFactory
+import me.tatarka.inject.annotations.Assisted
+import me.tatarka.inject.annotations.AssistedFactory
 import dev.zacsweers.metro.ContributesBinding
 import me.tatarka.inject.annotations.Inject
 import dev.zacsweers.metro.binding

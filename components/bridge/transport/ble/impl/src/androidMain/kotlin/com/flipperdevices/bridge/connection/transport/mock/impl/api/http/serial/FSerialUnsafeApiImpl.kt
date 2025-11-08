@@ -7,8 +7,8 @@ import com.flipperdevices.bridge.connection.transport.mock.impl.exception.BLECon
 import com.flipperdevices.core.busylib.log.LogTagProvider
 import com.flipperdevices.core.busylib.log.error
 import com.flipperdevices.core.busylib.log.info
-import dev.zacsweers.metro.Assisted
-import dev.zacsweers.metro.AssistedFactory
+import me.tatarka.inject.annotations.Assisted
+import me.tatarka.inject.annotations.AssistedFactory
 import me.tatarka.inject.annotations.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel

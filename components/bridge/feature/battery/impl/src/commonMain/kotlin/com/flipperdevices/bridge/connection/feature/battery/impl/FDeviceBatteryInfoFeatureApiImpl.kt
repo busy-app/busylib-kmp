@@ -7,8 +7,8 @@ import com.flipperdevices.bridge.connection.feature.rpc.api.model.PowerState
 import com.flipperdevices.bridge.connection.transport.common.api.meta.FTransportMetaInfoApi
 import com.flipperdevices.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
 import com.flipperdevices.core.busylib.ktx.common.orEmpty
-import dev.zacsweers.metro.Assisted
-import dev.zacsweers.metro.AssistedFactory
+import me.tatarka.inject.annotations.Assisted
+import me.tatarka.inject.annotations.AssistedFactory
 import me.tatarka.inject.annotations.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine

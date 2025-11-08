@@ -8,8 +8,8 @@ import com.flipperdevices.bridge.connection.feature.rpc.impl.client.FRpcClientMo
 import com.flipperdevices.core.busylib.ktx.common.FlipperDispatchers
 import com.flipperdevices.core.busylib.ktx.common.runSuspendCatching
 import com.flipperdevices.core.busylib.log.LogTagProvider
-import dev.zacsweers.metro.Assisted
-import dev.zacsweers.metro.AssistedFactory
+import me.tatarka.inject.annotations.Assisted
+import me.tatarka.inject.annotations.AssistedFactory
 import me.tatarka.inject.annotations.Inject
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
