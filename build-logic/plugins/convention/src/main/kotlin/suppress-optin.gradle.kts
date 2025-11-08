@@ -51,6 +51,7 @@ afterEvaluate {
         extensions.configure<MavenPublishBaseExtension> {
             val artifactId = project.path
                 .replace(":components:", "")
+                .replace(":entrypoint", "entrypoint")
                 .replace(":", "-")
                 .replace(".", "-")
             coordinates(null, artifactId, null)
