@@ -4,7 +4,6 @@ plugins {
     id("com.android.kotlin.multiplatform.library")
     id("ru.astrainteractive.gradleplugin.android.namespace")
     id("ru.astrainteractive.gradleplugin.android.core")
-    id("dev.zacsweers.metro")
 }
 
 kotlin {
@@ -23,7 +22,6 @@ kotlin {
     sourceSets.androidMain.dependencies {
         implementation(projects.components.bridge.device.firstpair.connection.api)
 
-        implementation(projects.components.di)
         implementation(projects.components.log)
 
         implementation(libs.ble.client)

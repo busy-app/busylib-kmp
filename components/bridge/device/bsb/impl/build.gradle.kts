@@ -4,7 +4,6 @@ plugins {
     id("com.android.kotlin.multiplatform.library")
     id("ru.astrainteractive.gradleplugin.android.namespace")
     id("ru.astrainteractive.gradleplugin.android.core")
-    id("dev.zacsweers.metro")
 }
 
 kotlin {
@@ -22,7 +21,6 @@ kotlin {
     sourceSets.commonMain.dependencies {
         implementation(projects.components.bridge.device.bsb.api)
 
-        implementation(projects.components.di)
         implementation(projects.components.log)
         implementation(projects.components.buildkonfig)
 

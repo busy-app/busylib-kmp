@@ -2,13 +2,10 @@ package com.flipperdevices.bridge.connection.feature.link.check.onready.api
 
 import com.flipperdevices.bridge.connection.feature.link.check.ondemand.api.FLinkedInfoOnDemandFeatureApi
 import com.flipperdevices.core.busylib.log.LogTagProvider
-import dev.zacsweers.metro.Assisted
-import dev.zacsweers.metro.AssistedFactory
-import dev.zacsweers.metro.Inject
 
-@Inject
+
 class FLinkInfoOnReadyFeatureApiImpl(
-    @Assisted private val fLinkedInfoOnDemandFeatureApi: FLinkedInfoOnDemandFeatureApi,
+    private val fLinkedInfoOnDemandFeatureApi: FLinkedInfoOnDemandFeatureApi,
 ) : FLinkedInfoOnReadyFeatureApi, LogTagProvider {
     override val TAG = "FLinkedInfoOnReadyFeatureApi"
 
@@ -16,8 +13,7 @@ class FLinkInfoOnReadyFeatureApiImpl(
         fLinkedInfoOnDemandFeatureApi.tryCheckLinkedInfo()
     }
 
-    @AssistedFactory
-    interface InternalFactory {
+    fun interface InternalFactory {
         operator fun invoke(
             fLinkedInfoOnDemandFeatureApi: FLinkedInfoOnDemandFeatureApi,
         ): FLinkInfoOnReadyFeatureApiImpl
