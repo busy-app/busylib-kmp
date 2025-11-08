@@ -21,7 +21,7 @@ import com.flipperdevices.core.busylib.log.info
 import dev.zacsweers.metro.ClassKey
 import dev.zacsweers.metro.ContributesIntoMap
 import me.tatarka.inject.annotations.Inject
-import dev.zacsweers.metro.binding
+
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.withTimeout
 import no.nordicsemi.kotlin.ble.client.android.CentralManager

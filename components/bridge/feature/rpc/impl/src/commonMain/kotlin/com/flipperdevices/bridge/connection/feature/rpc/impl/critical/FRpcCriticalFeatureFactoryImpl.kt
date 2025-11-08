@@ -10,7 +10,7 @@ import com.flipperdevices.bridge.connection.transport.common.api.serial.FHTTPDev
 import com.flipperdevices.busylib.core.di.BusyLibGraph
 import dev.zacsweers.metro.ContributesIntoMap
 import me.tatarka.inject.annotations.Inject
-import dev.zacsweers.metro.binding
+
 import kotlinx.coroutines.CoroutineScope
 
 @Inject

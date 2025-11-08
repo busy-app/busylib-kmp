@@ -7,7 +7,7 @@ import com.flipperdevices.bridge.connection.transport.common.api.FConnectedDevic
 import com.flipperdevices.busylib.core.di.BusyLibGraph
 import dev.zacsweers.metro.ContributesIntoSet
 import me.tatarka.inject.annotations.Inject
-import dev.zacsweers.metro.binding
+
 import kotlinx.coroutines.CoroutineScope
 
 @Inject

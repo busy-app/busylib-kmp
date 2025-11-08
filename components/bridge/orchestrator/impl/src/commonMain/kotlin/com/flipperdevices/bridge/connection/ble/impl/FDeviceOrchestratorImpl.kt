@@ -8,10 +8,10 @@ import com.flipperdevices.core.busylib.ktx.common.withLock
 import com.flipperdevices.core.busylib.log.LogTagProvider
 import com.flipperdevices.core.busylib.log.error
 import com.flipperdevices.core.busylib.log.info
-import dev.zacsweers.metro.ContributesBinding
+import com.r0adkll.kimchi.annotations.ContributesBinding
 import me.tatarka.inject.annotations.Inject
 import dev.zacsweers.metro.SingleIn
-import dev.zacsweers.metro.binding
+
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.sync.Mutex
 
