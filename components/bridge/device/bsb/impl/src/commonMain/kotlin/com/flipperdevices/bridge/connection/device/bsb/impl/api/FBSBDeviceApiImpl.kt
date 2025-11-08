@@ -14,7 +14,6 @@ import com.flipperdevices.core.busylib.log.error
 import com.flipperdevices.core.busylib.log.info
 import com.r0adkll.kimchi.annotations.ContributesBinding
 import me.tatarka.inject.annotations.Assisted
-import me.tatarka.inject.annotations.AssistedFactory
 import me.tatarka.inject.annotations.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -112,12 +111,14 @@ class FBSBDeviceApiImpl(
         }
     }
 
-    @AssistedFactory
+    @Inject
     @ContributesBinding(BusyLibGraph::class, FBSBDeviceApi.Factory::class)
-    interface Factory : FBSBDeviceApi.Factory {
+    abstract class Factory(
+        protected val factory: (CoroutineScope, FConnectedDeviceApi) -> FBSBDeviceApiImpl
+    ) : FBSBDeviceApi.Factory {
         override fun invoke(
             scope: CoroutineScope,
             connectedDevice: FConnectedDeviceApi,
-        ): FBSBDeviceApiImpl
+        ): FBSBDeviceApiImpl = factory(scope, connectedDevice)
     }
 }

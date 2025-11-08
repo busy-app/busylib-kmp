@@ -12,7 +12,6 @@ import com.flipperdevices.bridge.connection.feature.wifi.api.model.WiFiSecurity
 import com.flipperdevices.core.busylib.log.LogTagProvider
 import com.flipperdevices.core.busylib.log.error
 import me.tatarka.inject.annotations.Assisted
-import me.tatarka.inject.annotations.AssistedFactory
 import me.tatarka.inject.annotations.Inject
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toPersistentList
@@ -79,11 +78,13 @@ class FWiFiFeatureApiImpl(
         ).map { }
     }
 
-    @AssistedFactory
-    interface InternalFactory {
+    @Inject
+    abstract class InternalFactory(
+        protected val factory: (FRpcFeatureApi) -> FWiFiFeatureApiImpl
+    ) {
         operator fun invoke(
             rpcFeatureApi: FRpcFeatureApi
-        ): FWiFiFeatureApiImpl
+        ): FWiFiFeatureApiImpl = factory(rpcFeatureApi)
     }
 }
 
