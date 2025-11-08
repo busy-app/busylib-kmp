@@ -77,9 +77,9 @@ subprojects.forEach { subProject ->
 subprojects.forEach { subProject ->
     val artifactId = subProject.path
         .replace(":components:", "")
+        .replace(":entrypoint", "entrypoint")
         .replace(":", "-")
         .replace(".", "-")
-        .replaceFirst("-", "")
     val isEntryPoint = subProject.name == "entrypoint"
     subProject.group = artifactId
     if (!isEntryPoint && !subProject.path.startsWith(":components")) return@forEach
