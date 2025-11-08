@@ -11,7 +11,7 @@ import com.flipperdevices.core.busylib.log.LogTagProvider
 import com.flipperdevices.core.busylib.log.warn
 import com.r0adkll.kimchi.annotations.ContributesBinding
 import me.tatarka.inject.annotations.Inject
-import dev.zacsweers.metro.SingleIn
+import com.flipperdevices.busylib.core.di.SingleIn
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job

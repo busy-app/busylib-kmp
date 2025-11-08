@@ -8,11 +8,10 @@ import com.flipperdevices.bridge.connection.feature.provider.impl.utils.FDeviceC
 import com.flipperdevices.bridge.connection.orchestrator.api.FDeviceOrchestrator
 import com.flipperdevices.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
 import com.flipperdevices.busylib.core.di.BusyLibGraph
+import com.flipperdevices.busylib.core.di.SingleIn
 import com.flipperdevices.core.busylib.ktx.common.FlipperDispatchers
 import com.r0adkll.kimchi.annotations.ContributesBinding
 import me.tatarka.inject.annotations.Inject
-import dev.zacsweers.metro.SingleIn
-
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow

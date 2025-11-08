@@ -16,7 +16,6 @@ import com.r0adkll.kimchi.annotations.ContributesBinding
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.AssistedFactory
 import me.tatarka.inject.annotations.Inject
-
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
