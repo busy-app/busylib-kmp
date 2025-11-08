@@ -66,17 +66,3 @@ subprojects.forEach { subProject ->
             }
     }
 }
-
-subprojects.forEach { subProject ->
-    if (!subProject.path.startsWith(":components")) return@forEach
-    subProject.apply(plugin = "ru.astrainteractive.gradleplugin.publication")
-    subProject
-        .extensions
-        .configure<MavenPublishBaseExtension> {
-            val artifactId = subProject.path
-                .replace(":components:", "")
-                .replace(":", "-")
-                .replace(".", "-")
-            coordinates(null, artifactId, null)
-        }
-}
