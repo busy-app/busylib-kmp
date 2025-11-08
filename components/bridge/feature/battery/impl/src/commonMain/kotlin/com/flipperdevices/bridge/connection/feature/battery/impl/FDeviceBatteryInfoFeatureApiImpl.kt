@@ -7,9 +7,8 @@ import com.flipperdevices.bridge.connection.feature.rpc.api.model.PowerState
 import com.flipperdevices.bridge.connection.transport.common.api.meta.FTransportMetaInfoApi
 import com.flipperdevices.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
 import com.flipperdevices.core.busylib.ktx.common.orEmpty
-import dev.zacsweers.metro.Assisted
-import dev.zacsweers.metro.AssistedFactory
-import dev.zacsweers.metro.Inject
+
+
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
@@ -19,10 +18,9 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlin.experimental.and
 
-@Inject
 class FDeviceBatteryInfoFeatureApiImpl(
-    @Assisted private val rpcFeatureApi: FRpcFeatureApi,
-    @Assisted private val metaInfoApi: FTransportMetaInfoApi?,
+    private val rpcFeatureApi: FRpcFeatureApi,
+    private val metaInfoApi: FTransportMetaInfoApi?,
 ) : FDeviceBatteryInfoFeatureApi {
 
     private fun getBatteryLevelFlow(): Flow<Int?> {
@@ -101,7 +99,6 @@ class FDeviceBatteryInfoFeatureApiImpl(
             }
     }
 
-    @AssistedFactory
     interface InternalFactory {
         operator fun invoke(
             rpcFeatureApi: FRpcFeatureApi,

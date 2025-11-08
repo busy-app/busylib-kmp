@@ -20,20 +20,20 @@ class ConnectionTestActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val busyLib = (application as ConnectionTestApplication).busyLib
+        val rootModule = (application as ConnectionTestApplication).rootModule
         val persistedStorage = (application as ConnectionTestApplication).persistedStorage
 
         enableEdgeToEdge()
 
         val root = getRootDecomposeComponent(
             componentContext = defaultComponentContext(),
-            busyLib = busyLib,
+            rootModule = rootModule,
             permissionChecker = PermissionCheckerImpl(this),
             persistedStorage = persistedStorage,
             searchViewModelProvider = {
                 SampleBLESearchViewModel(
-                    persistedStorage,
-                    busyLib.flipperScanner
+                    persistedStorage = persistedStorage,
+                    flipperScanner = rootModule.scannerModule.flipperScanner
                 )
             }
         )

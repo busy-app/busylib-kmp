@@ -1,16 +1,26 @@
 plugins {
-    id("flipper.multiplatform")
-    id("flipper.anvil-multiplatform")
-    id("org.jetbrains.kotlin.plugin.serialization")
+    id("org.jetbrains.kotlin.multiplatform")
     id("ru.astrainteractive.gradleplugin.java.core")
+    id("com.android.kotlin.multiplatform.library")
     id("ru.astrainteractive.gradleplugin.android.namespace")
     id("ru.astrainteractive.gradleplugin.android.core")
-    id("ru.astrainteractive.gradleplugin.publication")
+    id("org.jetbrains.kotlin.plugin.serialization")
+}
+
+kotlin {
+    jvm()
+    androidLibrary {}
+    iosX64()
+    iosArm64()
+    iosSimulatorArm64()
+    macosX64()
+    macosArm64()
+
+    applyDefaultHierarchyTemplate()
 }
 
 kotlin {
     sourceSets.commonMain.dependencies {
-        implementation(projects.components.di)
         implementation(projects.components.ktx)
         implementation(projects.components.log)
         api(projects.components.principal.api)
@@ -53,10 +63,13 @@ kotlin {
         implementation(projects.components.bridge.transportconfigbuilder.api)
         implementation(projects.components.bridge.transportconfigbuilder.impl)
         implementation(libs.kotlin.coroutines)
+        implementation(libs.ktor.client.core)
     }
     sourceSets.androidMain.dependencies {
         api(projects.components.bridge.device.firstpair.connection.api)
         implementation(projects.components.bridge.device.firstpair.connection.impl)
         implementation(projects.components.bridge.transport.ble.impl)
+        implementation(libs.ble.client)
+        implementation(libs.appcompat)
     }
 }

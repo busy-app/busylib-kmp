@@ -12,9 +12,8 @@ import com.flipperdevices.core.busylib.ktx.common.exponentialRetry
 import com.flipperdevices.core.busylib.log.LogTagProvider
 import com.flipperdevices.core.busylib.log.error
 import com.flipperdevices.core.busylib.log.info
-import dev.zacsweers.metro.Assisted
-import dev.zacsweers.metro.AssistedFactory
-import dev.zacsweers.metro.Inject
+
+
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,10 +25,9 @@ import kotlin.time.Duration.Companion.seconds
 
 private val ACCOUNT_PROVIDING_TIMEOUT = 3.seconds
 
-@Inject
 class FLinkInfoOnDemandFeatureApiImpl(
-    @Assisted private val rpcFeatureApi: FRpcCriticalFeatureApi,
-    @Assisted private val scope: CoroutineScope,
+    private val rpcFeatureApi: FRpcCriticalFeatureApi,
+    private val scope: CoroutineScope,
     private val bsbUserPrincipalApi: BsbUserPrincipalApi,
     private val bsbBarsApi: BSBBarsApi
 ) : FLinkedInfoOnDemandFeatureApi, LogTagProvider {
@@ -105,7 +103,6 @@ class FLinkInfoOnDemandFeatureApiImpl(
         info { "Completed authorization for BUSY Bar" }
     }
 
-    @AssistedFactory
     interface InternalFactory {
         operator fun invoke(
             rpcFeatureApi: FRpcCriticalFeatureApi,

@@ -7,7 +7,6 @@ import com.flipperdevices.bridge.connection.transport.common.api.FTransportConne
 import com.flipperdevices.core.busylib.ktx.common.FlipperDispatchers
 import com.flipperdevices.core.busylib.log.LogTagProvider
 import com.flipperdevices.core.busylib.log.info
-import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -17,7 +16,7 @@ import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 
 // Generics don't work with Anvil/Dagger
-@Inject
+
 class FDeviceHolderFactory(
     private val deviceConnectionHelper: FDeviceConfigToConnection
 ) {

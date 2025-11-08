@@ -4,14 +4,12 @@ import com.flipperdevices.bridge.connection.transport.ble.api.FBleDeviceConnecti
 import com.flipperdevices.bridge.connection.transport.ble.api.FBleDeviceSerialConfig
 import com.flipperdevices.bridge.connection.transport.ble.api.GATTCharacteristicAddress
 import com.flipperdevices.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
-import dev.zacsweers.metro.Inject
 import kotlinx.collections.immutable.persistentMapOf
 import kotlin.uuid.Uuid
 
 private val INFORMATION_SERVICE_UUID = Uuid.parse("0000180a-0000-1000-8000-00805f9b34fb")
 private val BATTERY_SERVICE_UUID = Uuid.parse("0000180f-0000-1000-8000-00805f9b34fb")
 
-@Inject
 class BUSYBarBLEBuilderConfig {
     fun build(
         address: String

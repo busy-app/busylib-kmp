@@ -8,15 +8,11 @@ import com.flipperdevices.bridge.connection.feature.common.api.FOnDeviceReadyFea
 import com.flipperdevices.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import com.flipperdevices.bridge.connection.transport.common.api.FConnectedDeviceApi
 import com.flipperdevices.busylib.core.buildkonfig.BuildKonfigBusyBle
-import com.flipperdevices.busylib.core.di.BusyLibGraph
 import com.flipperdevices.core.busylib.log.LogTagProvider
 import com.flipperdevices.core.busylib.log.error
 import com.flipperdevices.core.busylib.log.info
-import dev.zacsweers.metro.Assisted
-import dev.zacsweers.metro.AssistedFactory
-import dev.zacsweers.metro.ContributesBinding
-import dev.zacsweers.metro.Inject
-import dev.zacsweers.metro.binding
+
+
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
@@ -25,10 +21,9 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.reflect.KClass
 
-@Inject
 class FBSBDeviceApiImpl(
-    @Assisted private val scope: CoroutineScope,
-    @Assisted private val connectedDevice: FConnectedDeviceApi,
+    private val scope: CoroutineScope,
+    private val connectedDevice: FConnectedDeviceApi,
     onReadyFeaturesApiFactories: Set<FOnDeviceReadyFeatureApi.Factory>,
     private val factories: Map<FDeviceFeature, FDeviceFeatureApi.Factory>
 ) : FBSBDeviceApi, FUnsafeDeviceFeatureApi, LogTagProvider {
@@ -114,8 +109,6 @@ class FBSBDeviceApiImpl(
         }
     }
 
-    @AssistedFactory
-    @ContributesBinding(BusyLibGraph::class, binding<FBSBDeviceApi.Factory>())
     interface Factory : FBSBDeviceApi.Factory {
         override fun invoke(
             scope: CoroutineScope,

@@ -4,14 +4,8 @@ import com.flipperdevices.bridge.connection.feature.common.api.FOnDeviceReadyFea
 import com.flipperdevices.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import com.flipperdevices.bridge.connection.feature.link.check.ondemand.api.FLinkedInfoOnDemandFeatureApi
 import com.flipperdevices.bridge.connection.transport.common.api.FConnectedDeviceApi
-import com.flipperdevices.busylib.core.di.BusyLibGraph
-import dev.zacsweers.metro.ContributesIntoSet
-import dev.zacsweers.metro.Inject
-import dev.zacsweers.metro.binding
 import kotlinx.coroutines.CoroutineScope
 
-@Inject
-@ContributesIntoSet(BusyLibGraph::class, binding<FOnDeviceReadyFeatureApi.Factory>())
 class FLinkInfoOnReadyFeatureFactoryImpl(
     private val fLinkInfoOnReadyFeatureApiImpl: FLinkInfoOnReadyFeatureApiImpl.InternalFactory
 ) : FOnDeviceReadyFeatureApi.Factory {
