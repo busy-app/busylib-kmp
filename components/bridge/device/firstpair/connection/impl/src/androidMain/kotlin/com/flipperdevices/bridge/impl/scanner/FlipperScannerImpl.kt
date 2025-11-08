@@ -27,7 +27,7 @@ import kotlin.collections.map
 import kotlin.uuid.toKotlinUuid
 
 @Inject
-@ContributesBinding(BusyLibGraph::class, binding<FlipperScanner>())
+@ContributesBinding(BusyLibGraph::class, FlipperScanner::class)
 class FlipperScannerImpl(
     private val centralManager: CentralManager,
     private val bluetoothAdapter: BluetoothAdapter,

@@ -28,7 +28,7 @@ import kotlin.reflect.KClass
 
 @Inject
 @SingleIn(BusyLibGraph::class)
-@ContributesBinding(BusyLibGraph::class, binding<FFeatureProvider>())
+@ContributesBinding(BusyLibGraph::class, FFeatureProvider::class)
 class FFeatureProviderImpl(
     private val orchestrator: FDeviceOrchestrator,
     private val deviceApiMapper: FDeviceConnectStatusToDeviceApi

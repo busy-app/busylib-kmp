@@ -115,7 +115,7 @@ class FBSBDeviceApiImpl(
     }
 
     @AssistedFactory
-    @ContributesBinding(BusyLibGraph::class, binding<FBSBDeviceApi.Factory>())
+    @ContributesBinding(BusyLibGraph::class, FBSBDeviceApi.Factory::class)
     interface Factory : FBSBDeviceApi.Factory {
         override fun invoke(
             scope: CoroutineScope,

@@ -17,7 +17,7 @@ import kotlinx.coroutines.sync.Mutex
 
 @Inject
 @SingleIn(BusyLibGraph::class)
-@ContributesBinding(BusyLibGraph::class, binding<FDeviceOrchestrator>())
+@ContributesBinding(BusyLibGraph::class, FDeviceOrchestrator::class)
 class FDeviceOrchestratorImpl(
     private val deviceHolderFactory: FDeviceHolderFactory,
     private val deviceConnectionConfigMapper: FDeviceConnectionConfigMapper

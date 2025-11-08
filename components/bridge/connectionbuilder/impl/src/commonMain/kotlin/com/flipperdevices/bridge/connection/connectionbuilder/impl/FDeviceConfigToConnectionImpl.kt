@@ -13,7 +13,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlin.reflect.KClass
 
 @Inject
-@ContributesBinding(BusyLibGraph::class, binding<FDeviceConfigToConnection>())
+@ContributesBinding(BusyLibGraph::class, FDeviceConfigToConnection::class)
 class FDeviceConfigToConnectionImpl(
     private val configToConnectionMap: Map<KClass<*>, DeviceConnectionApi<*, *>>
 ) : FDeviceConfigToConnection {

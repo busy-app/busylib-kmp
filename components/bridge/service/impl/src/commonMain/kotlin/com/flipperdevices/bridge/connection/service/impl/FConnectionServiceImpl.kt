@@ -27,7 +27,7 @@ import kotlinx.coroutines.sync.withLock
 
 @SingleIn(BusyLibGraph::class)
 @Inject
-@ContributesBinding(BusyLibGraph::class, binding<FConnectionService>())
+@ContributesBinding(BusyLibGraph::class, FConnectionService::class)
 class FConnectionServiceImpl(
     private val orchestrator: FDeviceOrchestrator,
     private val fDevicePersistedStorage: FDevicePersistedStorage

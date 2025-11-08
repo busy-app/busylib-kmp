@@ -11,7 +11,7 @@ import me.tatarka.inject.annotations.Inject
 import dev.zacsweers.metro.binding
 
 @Inject
-@ContributesBinding(BusyLibGraph::class, binding<FDeviceConnectionConfigMapper>())
+@ContributesBinding(BusyLibGraph::class, FDeviceConnectionConfigMapper::class)
 class FDeviceConnectionConfigMapperImpl(
     private val mockBuilderConfig: BUSYBarMockBuilderConfig,
     private val bleBuilderConfig: BUSYBarBLEBuilderConfig
