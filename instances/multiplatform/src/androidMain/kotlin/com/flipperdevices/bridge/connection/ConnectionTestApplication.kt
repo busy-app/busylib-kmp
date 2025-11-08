@@ -30,11 +30,9 @@ class ConnectionTestApplication : Application() {
             context = applicationContext,
         )
         RootModule(
-            scope = scope,
             principalApi = UserPrincipalApiNoop(),
             bsbBarsApi = BSBBarsApiNoop(),
             persistedStorage = persistedStorage,
-            platformModule = PlatformModule(applicationContext),
             scannerModule = scannerModule,
             fDeviceHolderFactoryModule = AndroidFDeviceHolderFactoryModule(
                 scannerModule = scannerModule,
