@@ -24,7 +24,7 @@ class BUSYLibDesktop(
             bsbBarsApi: BSBBarsApi,
             persistedStorage: FDevicePersistedStorage,
         ): BUSYLibDesktop {
-            val graph = BUSYLibGraphDesktop.createBUSYLibGraphDesktop(
+            val graph = BUSYLibGraphDesktop::class.createBUSYLibGraphDesktop(
                 scope,
                 principalApi,
                 bsbBarsApi,
