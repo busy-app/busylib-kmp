@@ -8,20 +8,16 @@ import com.flipperdevices.bridge.connection.feature.rpc.impl.client.FRpcClientMo
 import com.flipperdevices.core.busylib.ktx.common.FlipperDispatchers
 import com.flipperdevices.core.busylib.ktx.common.runSuspendCatching
 import com.flipperdevices.core.busylib.log.LogTagProvider
-import dev.zacsweers.metro.Assisted
-import dev.zacsweers.metro.AssistedFactory
-import dev.zacsweers.metro.Inject
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
 import io.ktor.client.request.post
 import kotlinx.coroutines.withContext
 
-@Inject
 @Suppress("TooManyFunctions")
 class FRpcCriticalFeatureApiImpl(
     @Suppress("UnusedPrivateProperty")
-    @Assisted private val client: HttpClient,
+    private val client: HttpClient,
 ) : FRpcCriticalFeatureApi, LogTagProvider {
     override val TAG = "FRpcCriticalFeatureApi"
     override val clientModeApi: FRpcClientModeApi = FRpcClientModeApiImpl()
@@ -43,7 +39,6 @@ class FRpcCriticalFeatureApiImpl(
         }
     }
 
-    @AssistedFactory
     fun interface InternalFactory {
         operator fun invoke(
             client: HttpClient

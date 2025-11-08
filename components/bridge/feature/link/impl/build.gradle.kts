@@ -4,7 +4,6 @@ plugins {
     id("com.android.library")
     id("ru.astrainteractive.gradleplugin.android.namespace")
     id("ru.astrainteractive.gradleplugin.android.core")
-    id("dev.zacsweers.metro")
 }
 
 kotlin {
@@ -26,7 +25,6 @@ kotlin {
         implementation(projects.components.principal.api)
         implementation(projects.components.cloud.api)
 
-        implementation(projects.components.di)
         implementation(projects.components.ktx)
         implementation(projects.components.log)
 

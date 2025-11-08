@@ -6,7 +6,6 @@ import android.content.pm.PackageManager
 import com.flipperdevices.bridge.connection.transport.ble.api.BleDeviceConnectionApi
 import com.flipperdevices.bridge.connection.transport.ble.api.FBleApi
 import com.flipperdevices.bridge.connection.transport.ble.api.FBleDeviceConnectionConfig
-import com.flipperdevices.bridge.connection.transport.common.api.DeviceConnectionApi
 import com.flipperdevices.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import com.flipperdevices.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import com.flipperdevices.bridge.connection.transport.mock.impl.api.FBleApiImpl
@@ -15,21 +14,13 @@ import com.flipperdevices.bridge.connection.transport.mock.impl.exception.BLECon
 import com.flipperdevices.bridge.connection.transport.mock.impl.exception.FailedConnectToDeviceException
 import com.flipperdevices.bridge.connection.transport.mock.impl.exception.NoFoundDeviceException
 import com.flipperdevices.bridge.connection.transport.mock.impl.utils.BleConstants
-import com.flipperdevices.busylib.core.di.BusyLibGraph
 import com.flipperdevices.core.busylib.log.LogTagProvider
 import com.flipperdevices.core.busylib.log.info
-import dev.zacsweers.metro.ClassKey
-import dev.zacsweers.metro.ContributesIntoMap
-import dev.zacsweers.metro.Inject
-import dev.zacsweers.metro.binding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.withTimeout
 import no.nordicsemi.kotlin.ble.client.android.CentralManager
 import no.nordicsemi.kotlin.ble.core.Phy
 
-@Inject
-@ClassKey(FBleDeviceConnectionConfig::class)
-@ContributesIntoMap(BusyLibGraph::class, binding<DeviceConnectionApi<*, *>>())
 class BLEDeviceConnectionApiImpl(
     private val context: Context,
     private val centralManager: CentralManager,

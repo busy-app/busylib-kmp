@@ -34,7 +34,6 @@ include(
 )
 
 include(
-    ":components:di",
     ":components:buildkonfig",
     ":components:log",
     ":components:ktx"

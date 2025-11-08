@@ -5,14 +5,9 @@ import com.flipperdevices.bridge.connection.orchestrator.api.FDeviceOrchestrator
 import com.flipperdevices.bridge.connection.orchestrator.api.model.DisconnectStatus
 import com.flipperdevices.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
 import com.flipperdevices.bridge.connection.service.api.FConnectionService
-import com.flipperdevices.busylib.core.di.BusyLibGraph
 import com.flipperdevices.core.busylib.ktx.common.FlipperDispatchers
 import com.flipperdevices.core.busylib.log.LogTagProvider
 import com.flipperdevices.core.busylib.log.warn
-import dev.zacsweers.metro.ContributesBinding
-import dev.zacsweers.metro.Inject
-import dev.zacsweers.metro.SingleIn
-import dev.zacsweers.metro.binding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
@@ -25,9 +20,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
-@SingleIn(BusyLibGraph::class)
-@Inject
-@ContributesBinding(BusyLibGraph::class, binding<FConnectionService>())
 class FConnectionServiceImpl(
     private val orchestrator: FDeviceOrchestrator,
     private val fDevicePersistedStorage: FDevicePersistedStorage

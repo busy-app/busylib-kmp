@@ -4,7 +4,6 @@ plugins {
     id("com.android.library")
     id("ru.astrainteractive.gradleplugin.android.namespace")
     id("ru.astrainteractive.gradleplugin.android.core")
-    id("dev.zacsweers.metro")
 }
 
 kotlin {
@@ -22,8 +21,6 @@ kotlin {
 kotlin {
     sourceSets.commonMain.dependencies {
         implementation(projects.components.bridge.transportconfigbuilder.api)
-
-        implementation(projects.components.di)
 
         implementation(projects.components.bridge.transport.common.api)
         implementation(projects.components.bridge.transport.mock.api)

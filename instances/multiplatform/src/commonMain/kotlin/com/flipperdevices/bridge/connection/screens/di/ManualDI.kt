@@ -12,20 +12,20 @@ import com.flipperdevices.bridge.connection.screens.device.viewmodel.PingViewMod
 import com.flipperdevices.bridge.connection.screens.search.ConnectionSearchDecomposeComponent
 import com.flipperdevices.bridge.connection.screens.search.ConnectionSearchViewModel
 import com.flipperdevices.bridge.connection.screens.utils.PermissionChecker
-import com.flipperdevices.busylib.BUSYLib
+import com.flipperdevices.busylib.di.RootModule
 
 fun getRootDecomposeComponent(
     componentContext: ComponentContext,
     permissionChecker: PermissionChecker,
     persistedStorage: FDevicePersistedStorage,
-    busyLib: BUSYLib,
+    rootModule: RootModule,
     searchViewModelProvider: () -> ConnectionSearchViewModel
 ): ConnectionRootDecomposeComponent {
     return getRootDecomposeComponentFactory(
         permissionChecker = permissionChecker,
         persistedStorage = persistedStorage,
-        orchestrator = busyLib.orchestrator,
-        featureProvider = busyLib.featureProvider,
+        orchestrator = rootModule.orchestratorModule.orchestrator,
+        featureProvider = rootModule.deviceModule.featureProvider,
         searchViewModelProvider = searchViewModelProvider
     ).invoke(componentContext)
 }

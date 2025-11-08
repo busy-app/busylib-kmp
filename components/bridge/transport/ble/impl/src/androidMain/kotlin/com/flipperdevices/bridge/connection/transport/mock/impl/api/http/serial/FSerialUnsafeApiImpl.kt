@@ -7,9 +7,6 @@ import com.flipperdevices.bridge.connection.transport.mock.impl.exception.BLECon
 import com.flipperdevices.core.busylib.log.LogTagProvider
 import com.flipperdevices.core.busylib.log.error
 import com.flipperdevices.core.busylib.log.info
-import dev.zacsweers.metro.Assisted
-import dev.zacsweers.metro.AssistedFactory
-import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -26,19 +23,15 @@ import no.nordicsemi.kotlin.ble.core.CharacteristicProperty
 import no.nordicsemi.kotlin.ble.core.WriteType
 import no.nordicsemi.kotlin.ble.core.util.chunked
 
-private const val DAGGER_ID_CHARACTERISTIC_RX = "rx_service"
-private const val DAGGER_ID_CHARACTERISTIC_TX = "tx_service"
-
 // Max chunk size, limited by firmware:
 // https://github.com/flipperdevices/bsb-firmware/blob/d429cf84d9ec7a0160b22726491aca7aef259c8d/applications/system/ble_usart_echo/ble_usart_echo.c#L20
 private const val MAX_ATTRIBUTE_SIZE = 237
 
-@Inject
 @OptIn(ExperimentalStdlibApi::class)
 class FSerialUnsafeApiImpl(
-    @Assisted(DAGGER_ID_CHARACTERISTIC_RX) private val rxCharacteristic: Flow<RemoteCharacteristic?>,
-    @Assisted(DAGGER_ID_CHARACTERISTIC_TX) private val txCharacteristic: Flow<RemoteCharacteristic?>,
-    @Assisted scope: CoroutineScope,
+    private val rxCharacteristic: Flow<RemoteCharacteristic?>,
+    private val txCharacteristic: Flow<RemoteCharacteristic?>,
+    scope: CoroutineScope,
     private val context: Context,
 ) : LogTagProvider {
     override val TAG = "FSerialUnsafeApiImpl"
@@ -90,11 +83,10 @@ class FSerialUnsafeApiImpl(
         }
     }
 
-    @AssistedFactory
     fun interface Factory {
         operator fun invoke(
-            @Assisted(DAGGER_ID_CHARACTERISTIC_RX) rxCharacteristic: Flow<RemoteCharacteristic?>,
-            @Assisted(DAGGER_ID_CHARACTERISTIC_TX) txCharacteristic: Flow<RemoteCharacteristic?>,
+            rxCharacteristic: Flow<RemoteCharacteristic?>,
+            txCharacteristic: Flow<RemoteCharacteristic?>,
             scope: CoroutineScope
         ): FSerialUnsafeApiImpl
     }
