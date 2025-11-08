@@ -9,7 +9,6 @@ plugins {
     alias(libs.plugins.kotlinJvm) apply false
     alias(libs.plugins.kotlinSerialization) apply false
     alias(libs.plugins.googleServices) apply false
-    alias(libs.plugins.metro) apply false
 
     alias(libs.plugins.klibs.gradle.detekt) apply false
     alias(libs.plugins.klibs.gradle.detekt.compose) apply false
