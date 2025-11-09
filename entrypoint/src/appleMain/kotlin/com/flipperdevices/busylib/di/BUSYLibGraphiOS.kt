@@ -3,22 +3,31 @@ package com.flipperdevices.busylib.di
 import com.flipperdevices.bridge.connection.config.api.FDevicePersistedStorage
 import com.flipperdevices.bsb.auth.principal.api.BsbUserPrincipalApi
 import com.flipperdevices.bsb.cloud.api.BSBBarsApi
-import com.flipperdevices.busylib.BUSYLibiOS
+import com.flipperdevices.busylib.BUSYLibIOS
 import com.flipperdevices.busylib.core.di.BusyLibGraph
-import dev.zacsweers.metro.DependencyGraph
-import dev.zacsweers.metro.Provides
+import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 import kotlinx.coroutines.CoroutineScope
+import me.tatarka.inject.annotations.Provides
+import software.amazon.lastmile.kotlin.inject.anvil.MergeComponent
+import kotlin.reflect.KClass
 
-@DependencyGraph(BusyLibGraph::class)
-interface BUSYLibGraphiOS {
-    val busyLib: BUSYLibiOS
-    @DependencyGraph.Factory
-    fun interface Factory {
-        fun create(
-            @Provides scope: CoroutineScope,
-            @Provides principalApi: BsbUserPrincipalApi,
-            @Provides bsbBarsApi: BSBBarsApi,
-            @Provides persistedStorage: FDevicePersistedStorage,
-        ): BUSYLibGraphiOS
-    }
+@SingleIn(BusyLibGraph::class)
+@MergeComponent(BusyLibGraph::class)
+abstract class BUSYLibGraphIOS(
+    @get:Provides protected val scope: CoroutineScope,
+    @get:Provides protected val principalApi: BsbUserPrincipalApi,
+    @get:Provides protected val bsbBarsApi: BSBBarsApi,
+    @get:Provides protected val persistedStorage: FDevicePersistedStorage,
+) {
+    abstract val busyLib: BUSYLibIOS
 }
+
+
+
+@MergeComponent.CreateComponent
+expect fun create(
+    scope: CoroutineScope,
+    principalApi: BsbUserPrincipalApi,
+    bsbBarsApi: BSBBarsApi,
+    persistedStorage: FDevicePersistedStorage,
+): BUSYLibGraphIOS

@@ -2,8 +2,8 @@ package com.flipperdevices.bridge.connection.transport.mock.impl.api.http.serial
 
 import com.flipperdevices.bridge.connection.transport.ble.api.FBleDeviceSerialConfig
 import com.flipperdevices.core.busylib.log.LogTagProvider
+import me.tatarka.inject.annotations.Inject
 import com.flipperdevices.bridge.connection.transport.ble.api.FSerialBleApi
-import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map

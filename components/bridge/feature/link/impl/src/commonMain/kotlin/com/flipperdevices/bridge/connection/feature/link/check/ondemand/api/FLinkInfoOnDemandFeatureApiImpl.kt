@@ -12,9 +12,8 @@ import com.flipperdevices.core.busylib.ktx.common.exponentialRetry
 import com.flipperdevices.core.busylib.log.LogTagProvider
 import com.flipperdevices.core.busylib.log.error
 import com.flipperdevices.core.busylib.log.info
-import dev.zacsweers.metro.Assisted
-import dev.zacsweers.metro.AssistedFactory
-import dev.zacsweers.metro.Inject
+import me.tatarka.inject.annotations.Assisted
+import me.tatarka.inject.annotations.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -105,11 +104,13 @@ class FLinkInfoOnDemandFeatureApiImpl(
         info { "Completed authorization for BUSY Bar" }
     }
 
-    @AssistedFactory
-    interface InternalFactory {
+    @Inject
+    class InternalFactory(
+        private val factory: (FRpcCriticalFeatureApi, CoroutineScope) -> FLinkInfoOnDemandFeatureApiImpl
+    ) {
         operator fun invoke(
             rpcFeatureApi: FRpcCriticalFeatureApi,
             scope: CoroutineScope
-        ): FLinkInfoOnDemandFeatureApiImpl
+        ): FLinkInfoOnDemandFeatureApiImpl = factory(rpcFeatureApi, scope)
     }
 }

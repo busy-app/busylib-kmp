@@ -13,9 +13,8 @@ import com.flipperdevices.bridge.connection.feature.rpc.api.model.WifiStatusResp
 import com.flipperdevices.core.busylib.ktx.common.FlipperDispatchers
 import com.flipperdevices.core.busylib.ktx.common.runSuspendCatching
 import com.flipperdevices.core.busylib.log.LogTagProvider
-import dev.zacsweers.metro.Assisted
-import dev.zacsweers.metro.AssistedFactory
-import dev.zacsweers.metro.Inject
+import me.tatarka.inject.annotations.Assisted
+import me.tatarka.inject.annotations.Inject
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
@@ -107,10 +106,12 @@ class FRpcFeatureApiImpl(
         }
     }
 
-    @AssistedFactory
-    fun interface InternalFactory {
+    @Inject
+    class InternalFactory(
+        private val factory: (HttpClient) -> FRpcFeatureApiImpl
+    ) {
         operator fun invoke(
             client: HttpClient
-        ): FRpcFeatureApiImpl
+        ): FRpcFeatureApiImpl = factory(client)
     }
 }

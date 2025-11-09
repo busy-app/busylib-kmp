@@ -9,3 +9,9 @@ interface DeviceConnectionApi<API : FConnectedDeviceApi, CONFIG : FDeviceConnect
         listener: FTransportConnectionStatusListener
     ): Result<API>
 }
+
+/**
+ * Used to bypass DI issues and avoid having generics work in the dependency graph
+ */
+class DeviceConnectionApiHolder(val deviceConnectionApi: DeviceConnectionApi<*, *>)
+fun DeviceConnectionApi<*, *>.toHolder() = DeviceConnectionApiHolder(this)

@@ -4,7 +4,7 @@ import com.flipperdevices.bridge.connection.config.api.model.FDeviceBaseModel
 import com.flipperdevices.bridge.connection.device.bsb.api.FBSBDeviceApi
 import com.flipperdevices.bridge.connection.device.common.api.FDeviceApi
 import com.flipperdevices.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
-import dev.zacsweers.metro.Inject
+import me.tatarka.inject.annotations.Inject
 
 @Inject
 class FDeviceConnectStatusToDeviceApi(

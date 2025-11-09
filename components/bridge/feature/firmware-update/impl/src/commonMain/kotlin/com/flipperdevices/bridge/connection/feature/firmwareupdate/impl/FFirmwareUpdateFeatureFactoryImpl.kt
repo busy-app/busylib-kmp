@@ -2,19 +2,21 @@ package com.flipperdevices.bridge.connection.feature.firmwareupdate.impl
 
 import com.flipperdevices.bridge.connection.feature.common.api.FDeviceFeature
 import com.flipperdevices.bridge.connection.feature.common.api.FDeviceFeatureApi
-import com.flipperdevices.bridge.connection.feature.common.api.FDeviceFeatureQualifier
+
 import com.flipperdevices.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import com.flipperdevices.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import com.flipperdevices.bridge.connection.transport.common.api.FConnectedDeviceApi
 import com.flipperdevices.busylib.core.di.BusyLibGraph
-import dev.zacsweers.metro.ContributesIntoMap
-import dev.zacsweers.metro.Inject
-import dev.zacsweers.metro.binding
+import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
+import me.tatarka.inject.annotations.Inject
+import me.tatarka.inject.annotations.Provides
+
 import kotlinx.coroutines.CoroutineScope
+import me.tatarka.inject.annotations.IntoMap
+import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
 
 @Inject
-@FDeviceFeatureQualifier(FDeviceFeature.FIRMWARE_UPDATE)
-@ContributesIntoMap(BusyLibGraph::class, binding<FDeviceFeatureApi.Factory>())
+
 class FFirmwareUpdateFeatureFactoryImpl(
     private val internalFactory: FFirmwareUpdateFeatureApiImpl.InternalFactory
 ) : FDeviceFeatureApi.Factory {
@@ -28,5 +30,16 @@ class FFirmwareUpdateFeatureFactoryImpl(
             ?.await()
             ?: return null
         return internalFactory(rpcApi)
+    }
+}
+
+@ContributesTo(BusyLibGraph::class)
+interface FFirmwareUpdateFeatureComponent {
+    @Provides
+    @IntoMap
+    fun provideFFirmwareUpdateFeatureFactory(
+        fFirmwareUpdateFeatureFactory: FFirmwareUpdateFeatureFactoryImpl
+    ): Pair<FDeviceFeature, FDeviceFeatureApi.Factory> {
+        return FDeviceFeature.FIRMWARE_UPDATE to fFirmwareUpdateFeatureFactory
     }
 }

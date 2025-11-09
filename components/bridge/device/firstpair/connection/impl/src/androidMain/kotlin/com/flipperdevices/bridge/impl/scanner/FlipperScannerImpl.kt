@@ -11,9 +11,9 @@ import com.flipperdevices.bridge.api.utils.Constants
 import com.flipperdevices.busylib.core.di.BusyLibGraph
 import com.flipperdevices.core.busylib.log.LogTagProvider
 import com.flipperdevices.core.busylib.log.info
-import dev.zacsweers.metro.ContributesBinding
-import dev.zacsweers.metro.Inject
-import dev.zacsweers.metro.binding
+import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
+import me.tatarka.inject.annotations.Inject
+
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.flowOf
@@ -27,7 +27,7 @@ import kotlin.collections.map
 import kotlin.uuid.toKotlinUuid
 
 @Inject
-@ContributesBinding(BusyLibGraph::class, binding<FlipperScanner>())
+@ContributesBinding(BusyLibGraph::class, FlipperScanner::class)
 class FlipperScannerImpl(
     private val centralManager: CentralManager,
     private val bluetoothAdapter: BluetoothAdapter,

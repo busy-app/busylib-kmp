@@ -3,9 +3,8 @@ package com.flipperdevices.bridge.connection.feature.firmwareupdate.impl
 import com.flipperdevices.bridge.connection.feature.firmwareupdate.api.FFirmwareUpdateFeatureApi
 import com.flipperdevices.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import com.flipperdevices.core.busylib.log.LogTagProvider
-import dev.zacsweers.metro.Assisted
-import dev.zacsweers.metro.AssistedFactory
-import dev.zacsweers.metro.Inject
+import me.tatarka.inject.annotations.Assisted
+import me.tatarka.inject.annotations.Inject
 
 @Inject
 @Suppress("UnusedPrivateProperty")
@@ -22,10 +21,12 @@ class FFirmwareUpdateFeatureApiImpl(
         return runCatching { error("Not implemented yet") }
     }
 
-    @AssistedFactory
-    interface InternalFactory {
+    @Inject
+    class InternalFactory(
+        private val factory: (FRpcFeatureApi) -> FFirmwareUpdateFeatureApiImpl
+    ) {
         operator fun invoke(
             rpcFeatureApi: FRpcFeatureApi
-        ): FFirmwareUpdateFeatureApiImpl
+        ): FFirmwareUpdateFeatureApiImpl = factory(rpcFeatureApi)
     }
 }

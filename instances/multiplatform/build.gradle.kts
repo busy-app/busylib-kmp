@@ -1,6 +1,7 @@
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.konan.target.Family
 import ru.astrainteractive.gradleplugin.property.baseGradleProperty
+import ru.astrainteractive.gradleplugin.property.extension.AndroidModelPropertyValueExt.requireAndroidSdkInfo
 import ru.astrainteractive.gradleplugin.property.extension.ModelPropertyValueExt.requireProjectInfo
 import ru.astrainteractive.gradleplugin.property.extension.PrimitivePropertyValueExt.requireInt
 
@@ -18,7 +19,7 @@ plugins {
 }
 
 kotlin {
-    jvm()
+    jvm("desktop")
     androidTarget()
 
     iosArm64()
@@ -82,6 +83,12 @@ kotlin {
         implementation(libs.androidx.activity.compose)
         implementation(libs.appcompat)
     }
+    sourceSets {
+        val desktopMain by getting
+        desktopMain.dependencies {
+            implementation(compose.desktop.currentOs)
+        }
+    }
 }
 
 android {
@@ -90,6 +97,9 @@ android {
         applicationId = requireProjectInfo.group
         versionCode = baseGradleProperty("project.version.code").requireInt
         versionName = requireProjectInfo.versionString
+        compileSdk = requireAndroidSdkInfo.compile
+        targetSdk = requireAndroidSdkInfo.target
+        minSdk = requireAndroidSdkInfo.min
 
         multiDexEnabled = true
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -112,5 +122,17 @@ android {
     lint {
         abortOnError = false
         checkReleaseBuilds = true
+    }
+}
+
+compose.desktop {
+    application {
+        mainClass = "com.flipperdevices.bridge.connection.AppKt"
+
+        nativeDistributions {
+            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
+            packageName = "BUSYLib"
+            packageVersion = "1.0.0"
+        }
     }
 }

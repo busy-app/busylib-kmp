@@ -6,23 +6,25 @@ import android.content.Context
 import android.os.Build
 import androidx.core.content.ContextCompat
 import com.flipperdevices.busylib.core.di.BusyLibGraph
-import dev.zacsweers.metro.ContributesTo
-import dev.zacsweers.metro.Provides
-import dev.zacsweers.metro.SingleIn
+import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 import kotlinx.coroutines.CoroutineScope
+import me.tatarka.inject.annotations.Provides
 import no.nordicsemi.kotlin.ble.client.android.CentralManager
 import no.nordicsemi.kotlin.ble.client.android.native
+import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
 
 @ContributesTo(BusyLibGraph::class)
 interface NordicBleModule {
     @Provides
     @SingleIn(BusyLibGraph::class)
     fun provideCentralManager(context: Context, scope: CoroutineScope): CentralManager {
-        return CentralManager.Factory.native(context, scope)
+        return CentralManager.native(context, scope)
     }
 
     @Provides
-    fun provideBluetoothAdapter(bluetoothManager: BluetoothManager?): BluetoothAdapter {
+    fun provideBluetoothAdapter(
+        bluetoothManager: BluetoothManager?
+    ): BluetoothAdapter {
         return when {
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ->
                 @Suppress("DEPRECATION")

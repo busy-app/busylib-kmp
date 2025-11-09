@@ -9,17 +9,14 @@ import com.flipperdevices.bridge.connection.transport.mock.FMockDeviceConnection
 import com.flipperdevices.bridge.connection.transport.mock.MockDeviceConnectionApi
 import com.flipperdevices.bridge.connection.transport.mock.impl.meta.MockFTransportMetaInfoApiImpl
 import com.flipperdevices.busylib.core.di.BusyLibGraph
-import dev.zacsweers.metro.ClassKey
-import dev.zacsweers.metro.ContributesIntoMap
-import dev.zacsweers.metro.Inject
-import dev.zacsweers.metro.binding
+import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
+import me.tatarka.inject.annotations.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.seconds
 
 @Inject
-@ClassKey(FMockDeviceConnectionConfig::class)
-@ContributesIntoMap(BusyLibGraph::class, binding<DeviceConnectionApi<*, *>>())
+@ContributesBinding(BusyLibGraph::class, MockDeviceConnectionApi::class)
 class MockDeviceConnectionApiImpl : MockDeviceConnectionApi {
     override suspend fun connect(
         scope: CoroutineScope,

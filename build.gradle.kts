@@ -1,8 +1,3 @@
-import com.vanniktech.maven.publish.MavenPublishBaseExtension
-import org.gradle.kotlin.dsl.findByType
-import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
 plugins {
     // this is necessary to avoid the plugins to be loaded multiple times
     // in each subproject's classloader
@@ -14,7 +9,6 @@ plugins {
     alias(libs.plugins.kotlinJvm) apply false
     alias(libs.plugins.kotlinSerialization) apply false
     alias(libs.plugins.googleServices) apply false
-    alias(libs.plugins.metro) apply false
 
     alias(libs.plugins.klibs.gradle.detekt) apply false
     alias(libs.plugins.klibs.gradle.detekt.compose) apply false
@@ -31,52 +25,3 @@ plugins {
 }
 
 apply(plugin = "ru.astrainteractive.gradleplugin.detekt")
-
-val optIns = listOf(
-    "com.google.accompanist.pager.ExperimentalPagerApi",
-    "androidx.compose.ui.ExperimentalComposeUiApi",
-    "androidx.compose.foundation.ExperimentalFoundationApi",
-    "kotlinx.serialization.ExperimentalSerializationApi",
-    "kotlinx.coroutines.ExperimentalCoroutinesApi",
-    "com.squareup.anvil.annotations.ExperimentalAnvilApi",
-    "kotlin.time.ExperimentalTime",
-    "kotlin.RequiresOptIn",
-    "androidx.compose.animation.ExperimentalAnimationApi",
-    "com.google.accompanist.navigation.material.ExperimentalMaterialNavigationApi",
-    "androidx.compose.foundation.layout.ExperimentalLayoutApi",
-    "com.google.android.horologist.annotations.ExperimentalHorologistApi",
-    "kotlin.uuid.ExperimentalUuidApi",
-    "androidx.media3.common.util.UnstableApi",
-)
-
-subprojects.forEach { subProject ->
-    subProject.afterEvaluate {
-        extensions
-            .findByType<KotlinMultiplatformExtension>()
-            ?.sourceSets
-            ?.all {
-                optIns.onEach(languageSettings::optIn)
-            }
-        tasks
-            .withType<KotlinCompile>()
-            .configureEach {
-                compilerOptions {
-                    optIn.addAll(optIns)
-                }
-            }
-    }
-}
-
-subprojects.forEach { subProject ->
-    if (!subProject.path.startsWith(":components")) return@forEach
-    subProject.apply(plugin = "ru.astrainteractive.gradleplugin.publication")
-    subProject
-        .extensions
-        .configure<MavenPublishBaseExtension> {
-            val artifactId = subProject.path
-                .replace(":components:", "")
-                .replace(":", "-")
-                .replace(".", "-")
-            coordinates(null, artifactId, null)
-        }
-}

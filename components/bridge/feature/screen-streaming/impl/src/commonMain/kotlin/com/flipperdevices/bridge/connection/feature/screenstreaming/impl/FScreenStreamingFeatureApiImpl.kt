@@ -4,9 +4,8 @@ import com.flipperdevices.bridge.connection.feature.rpc.api.exposed.FRpcFeatureA
 import com.flipperdevices.bridge.connection.feature.screenstreaming.api.FScreenStreamingFeatureApi
 import com.flipperdevices.bridge.connection.feature.screenstreaming.model.BusyImageFormat
 import com.flipperdevices.core.busylib.log.LogTagProvider
-import dev.zacsweers.metro.Assisted
-import dev.zacsweers.metro.AssistedFactory
-import dev.zacsweers.metro.Inject
+import me.tatarka.inject.annotations.Assisted
+import me.tatarka.inject.annotations.Inject
 import kotlin.io.encoding.Base64
 
 @Inject
@@ -22,10 +21,12 @@ class FScreenStreamingFeatureApiImpl(
             .map(::BusyImageFormat)
     }
 
-    @AssistedFactory
-    interface InternalFactory {
+    @Inject
+    class InternalFactory(
+        private val factory: (FRpcFeatureApi) -> FScreenStreamingFeatureApiImpl
+    ) {
         operator fun invoke(
             rpcFeatureApi: FRpcFeatureApi
-        ): FScreenStreamingFeatureApiImpl
+        ): FScreenStreamingFeatureApiImpl = factory(rpcFeatureApi)
     }
 }

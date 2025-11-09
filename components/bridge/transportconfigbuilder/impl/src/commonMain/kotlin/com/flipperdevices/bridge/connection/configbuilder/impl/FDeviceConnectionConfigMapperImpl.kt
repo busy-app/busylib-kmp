@@ -6,12 +6,12 @@ import com.flipperdevices.bridge.connection.configbuilder.impl.builders.BUSYBarB
 import com.flipperdevices.bridge.connection.configbuilder.impl.builders.BUSYBarMockBuilderConfig
 import com.flipperdevices.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import com.flipperdevices.busylib.core.di.BusyLibGraph
-import dev.zacsweers.metro.ContributesBinding
-import dev.zacsweers.metro.Inject
-import dev.zacsweers.metro.binding
+import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
+import me.tatarka.inject.annotations.Inject
+
 
 @Inject
-@ContributesBinding(BusyLibGraph::class, binding<FDeviceConnectionConfigMapper>())
+@ContributesBinding(BusyLibGraph::class, FDeviceConnectionConfigMapper::class)
 class FDeviceConnectionConfigMapperImpl(
     private val mockBuilderConfig: BUSYBarMockBuilderConfig,
     private val bleBuilderConfig: BUSYBarBLEBuilderConfig
