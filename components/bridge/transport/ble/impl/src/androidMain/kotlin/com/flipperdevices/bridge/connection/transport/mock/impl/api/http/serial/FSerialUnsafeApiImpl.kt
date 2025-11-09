@@ -9,6 +9,7 @@ import com.flipperdevices.core.busylib.log.error
 import com.flipperdevices.core.busylib.log.info
 import com.r0adkll.kimchi.annotations.StringKey
 import me.tatarka.inject.annotations.Assisted
+import me.tatarka.inject.annotations.AssistedFactory
 import me.tatarka.inject.annotations.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
@@ -87,15 +88,13 @@ class FSerialUnsafeApiImpl(
         }
     }
 
-    @Inject
-    class Factory(
-        private val factory: (Flow<RemoteCharacteristic?>, Flow<RemoteCharacteristic?>, CoroutineScope) -> FSerialUnsafeApiImpl
-    ) {
+    @AssistedFactory
+    fun interface Factory {
         operator fun invoke(
             rxCharacteristic: Flow<RemoteCharacteristic?>,
             txCharacteristic: Flow<RemoteCharacteristic?>,
             scope: CoroutineScope
-        ): FSerialUnsafeApiImpl = factory(rxCharacteristic, txCharacteristic, scope)
+        ): FSerialUnsafeApiImpl
     }
 }
 

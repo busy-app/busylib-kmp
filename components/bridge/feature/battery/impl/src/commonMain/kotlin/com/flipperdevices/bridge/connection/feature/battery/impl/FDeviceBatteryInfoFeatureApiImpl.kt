@@ -8,6 +8,7 @@ import com.flipperdevices.bridge.connection.transport.common.api.meta.FTransport
 import com.flipperdevices.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
 import com.flipperdevices.core.busylib.ktx.common.orEmpty
 import me.tatarka.inject.annotations.Assisted
+import me.tatarka.inject.annotations.AssistedFactory
 import me.tatarka.inject.annotations.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -100,14 +101,12 @@ class FDeviceBatteryInfoFeatureApiImpl(
             }
     }
 
-    @Inject
-    class InternalFactory(
-        private val factory: (FRpcFeatureApi, FTransportMetaInfoApi?) -> FDeviceBatteryInfoFeatureApiImpl
-    ) {
+    @AssistedFactory
+    interface InternalFactory {
         operator fun invoke(
             rpcFeatureApi: FRpcFeatureApi,
             metaInfoApi: FTransportMetaInfoApi?
-        ): FDeviceBatteryInfoFeatureApiImpl = factory(rpcFeatureApi, metaInfoApi)
+        ): FDeviceBatteryInfoFeatureApiImpl
     }
 
     companion object {

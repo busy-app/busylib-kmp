@@ -9,6 +9,7 @@ import com.flipperdevices.core.busylib.ktx.common.FlipperDispatchers
 import com.flipperdevices.core.busylib.ktx.common.runSuspendCatching
 import com.flipperdevices.core.busylib.log.LogTagProvider
 import me.tatarka.inject.annotations.Assisted
+import me.tatarka.inject.annotations.AssistedFactory
 import me.tatarka.inject.annotations.Inject
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -42,12 +43,10 @@ class FRpcCriticalFeatureApiImpl(
         }
     }
 
-    @Inject
-    class InternalFactory(
-        private val factory: (HttpClient) -> FRpcCriticalFeatureApiImpl
-    ) {
+    @AssistedFactory
+    fun interface InternalFactory {
         operator fun invoke(
             client: HttpClient
-        ): FRpcCriticalFeatureApiImpl = factory(client)
+        ): FRpcCriticalFeatureApiImpl
     }
 }

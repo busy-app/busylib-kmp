@@ -4,6 +4,7 @@ import com.flipperdevices.bridge.connection.feature.firmwareupdate.api.FFirmware
 import com.flipperdevices.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import com.flipperdevices.core.busylib.log.LogTagProvider
 import me.tatarka.inject.annotations.Assisted
+import me.tatarka.inject.annotations.AssistedFactory
 import me.tatarka.inject.annotations.Inject
 
 @Inject
@@ -21,12 +22,10 @@ class FFirmwareUpdateFeatureApiImpl(
         return runCatching { error("Not implemented yet") }
     }
 
-    @Inject
-    class InternalFactory(
-        private val factory: (FRpcFeatureApi) -> FFirmwareUpdateFeatureApiImpl
-    ) {
+    @AssistedFactory
+    interface InternalFactory {
         operator fun invoke(
             rpcFeatureApi: FRpcFeatureApi
-        ): FFirmwareUpdateFeatureApiImpl = factory(rpcFeatureApi)
+        ): FFirmwareUpdateFeatureApiImpl
     }
 }
