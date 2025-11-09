@@ -2,12 +2,8 @@ package com.flipperdevices.bridge.connection.screens.search
 
 import com.flipperdevices.bridge.connection.config.api.FDevicePersistedStorage
 import com.flipperdevices.bridge.connection.config.api.model.FDeviceBaseModel
-import com.flipperdevices.busylib.core.di.BusyLibGraph
 import com.flipperdevices.core.busylib.log.LogTagProvider
 import com.flipperdevices.core.busylib.log.warn
-import dev.zacsweers.metro.ContributesBinding
-import dev.zacsweers.metro.Inject
-import dev.zacsweers.metro.binding
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
@@ -20,8 +16,6 @@ import platform.AccessorySetupKit.ASAccessorySession
 import platform.Foundation.NSUUID
 import platform.darwin.dispatch_get_main_queue
 
-@Inject
-@ContributesBinding(BusyLibGraph::class, binding<ConnectionSearchViewModel>())
 class iOSSearchViewModel(
     private val persistedStorage: FDevicePersistedStorage
 ) : ConnectionSearchViewModel(persistedStorage), LogTagProvider {

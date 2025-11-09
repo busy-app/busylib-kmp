@@ -44,7 +44,7 @@ include(
 )
 
 include(":entrypoint")
-include(":instances:multiplatform")
+include(":sample")
 
 include(
     ":components:bridge:config:api",

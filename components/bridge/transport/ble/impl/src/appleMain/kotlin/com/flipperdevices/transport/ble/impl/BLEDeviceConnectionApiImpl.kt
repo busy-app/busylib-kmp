@@ -15,21 +15,18 @@ import com.flipperdevices.core.busylib.log.info
 import com.flipperdevices.transport.ble.impl.cb.FCentralManager
 import com.flipperdevices.transport.ble.impl.cb.FPeripheralApi
 import com.flipperdevices.transport.ble.impl.cb.FPeripheralState
-import dev.zacsweers.metro.ClassKey
-import dev.zacsweers.metro.ContributesIntoMap
-import dev.zacsweers.metro.Inject
-import dev.zacsweers.metro.binding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withTimeoutOrNull
+import me.tatarka.inject.annotations.Inject
 import platform.Foundation.NSUUID
+import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 import kotlin.time.Duration
 
 @Inject
-@ClassKey(FBleDeviceConnectionConfig::class)
-@ContributesIntoMap(BusyLibGraph::class, binding<DeviceConnectionApi<*, *>>())
+@ContributesBinding(BusyLibGraph::class, BleDeviceConnectionApi::class)
 class BLEDeviceConnectionApiImpl() : BleDeviceConnectionApi, LogTagProvider {
     override val TAG = "BleDeviceConnectionApi"
 
@@ -45,7 +42,7 @@ class BLEDeviceConnectionApiImpl() : BleDeviceConnectionApi, LogTagProvider {
         connectUnsafe(scope, config, listener)
     }
 
-    @Suppress("ThrowsCount", "ForbiddenComment")
+    @Suppress("ThrowsCount")
     private suspend fun connectUnsafe(
         scope: CoroutineScope,
         config: FBleDeviceConnectionConfig,
@@ -116,12 +113,14 @@ class BLEDeviceConnectionApiImpl() : BleDeviceConnectionApi, LogTagProvider {
                         info { "Peripheral ready (connected) id=${deviceIdentifier.UUIDString}" }
                         true
                     }
+
                     FPeripheralState.PAIRING_FAILED,
                     FPeripheralState.INVALID_PAIRING,
                     FPeripheralState.DISCONNECTED -> {
                         info { "Peripheral connection failed with state: $state" }
                         throw FailedConnectToDeviceException()
                     }
+
                     else -> false
                 }
             }

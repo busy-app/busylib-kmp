@@ -2,6 +2,8 @@ package com.flipperdevices.bridge.connection.transport.mock.impl.api
 
 import com.flipperdevices.bridge.connection.transport.ble.api.FBleApi
 import com.flipperdevices.bridge.connection.transport.ble.api.FBleDeviceConnectionConfig
+import com.flipperdevices.bridge.connection.transport.ble.api.FSerialBleApi
+import com.flipperdevices.bridge.connection.transport.ble.http.FHttpBLEEngine
 import com.flipperdevices.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import com.flipperdevices.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import com.flipperdevices.bridge.connection.transport.common.api.meta.FTransportMetaInfoApi

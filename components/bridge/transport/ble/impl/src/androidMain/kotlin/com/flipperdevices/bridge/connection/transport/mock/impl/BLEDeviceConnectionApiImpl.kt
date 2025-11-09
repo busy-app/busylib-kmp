@@ -43,7 +43,7 @@ class BLEDeviceConnectionApiImpl(
         connectUnsafe(scope, config, listener)
     }
 
-    @Suppress("ThrowsCount", "ForbiddenComment")
+    @Suppress("ThrowsCount")
     private suspend fun connectUnsafe(
         scope: CoroutineScope,
         config: FBleDeviceConnectionConfig,
@@ -70,12 +70,17 @@ class BLEDeviceConnectionApiImpl(
                 )
             )
         }
+        info { "Device connected!" }
         if (!device.isConnected) {
             info { "Device failed to connect, so throw exception" }
             throw FailedConnectToDeviceException()
         }
         listener.onStatusUpdate(FInternalTransportConnectionStatus.Pairing)
-        // TODO: Bonding logic
+
+        if (!device.hasBondInformation) {
+            device.createBond()
+            info { "Create bond with device" }
+        }
 
         info { "Request the highest mtu" }
         device.requestHighestValueLength()
