@@ -18,18 +18,16 @@ import com.flipperdevices.bridge.connection.transport.mock.impl.utils.BleConstan
 import com.flipperdevices.busylib.core.di.BusyLibGraph
 import com.flipperdevices.core.busylib.log.LogTagProvider
 import com.flipperdevices.core.busylib.log.info
-import dev.zacsweers.metro.ClassKey
-import dev.zacsweers.metro.ContributesIntoMap
-import dev.zacsweers.metro.Inject
-import dev.zacsweers.metro.binding
+import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
+import me.tatarka.inject.annotations.Inject
+
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.withTimeout
 import no.nordicsemi.kotlin.ble.client.android.CentralManager
 import no.nordicsemi.kotlin.ble.core.Phy
 
 @Inject
-@ClassKey(FBleDeviceConnectionConfig::class)
-@ContributesIntoMap(BusyLibGraph::class, binding<DeviceConnectionApi<*, *>>())
+@ContributesBinding(BusyLibGraph::class, BleDeviceConnectionApi::class)
 class BLEDeviceConnectionApiImpl(
     private val context: Context,
     private val centralManager: CentralManager,

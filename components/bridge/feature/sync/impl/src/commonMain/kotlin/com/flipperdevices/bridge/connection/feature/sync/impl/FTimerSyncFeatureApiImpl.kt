@@ -1,9 +1,8 @@
 package com.flipperdevices.bridge.connection.feature.sync.impl
 
 import com.flipperdevices.bridge.connection.feature.common.api.FOnDeviceReadyFeatureApi
-import dev.zacsweers.metro.Assisted
-import dev.zacsweers.metro.AssistedFactory
-import dev.zacsweers.metro.Inject
+import me.tatarka.inject.annotations.Assisted
+import me.tatarka.inject.annotations.Inject
 import kotlinx.coroutines.CoroutineScope
 
 @Inject
@@ -15,10 +14,12 @@ class FTimerSyncFeatureApiImpl(
         // Not implemented
     }
 
-    @AssistedFactory
-    interface InternalFactory {
+    @Inject
+    class InternalFactory(
+        private val factory: (CoroutineScope) -> FTimerSyncFeatureApiImpl
+    ) {
         operator fun invoke(
             scope: CoroutineScope
-        ): FTimerSyncFeatureApiImpl
+        ): FTimerSyncFeatureApiImpl = factory(scope)
     }
 }

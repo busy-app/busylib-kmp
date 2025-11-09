@@ -16,4 +16,4 @@ kotlin {
     applyDefaultHierarchyTemplate()
 }
 
-includeCommonKspConfigurationTo("kspJvm", "kspAndroid")
+includeCommonKspConfigurationTo("kspJvm", "kspAndroid", "kspIosX64", "kspIosArm64", "kspIosSimulatorArm64", "kspMacosX64", "kspMacosArm64")

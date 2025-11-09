@@ -2,19 +2,21 @@ package com.flipperdevices.bridge.connection.feature.wifi.impl
 
 import com.flipperdevices.bridge.connection.feature.common.api.FDeviceFeature
 import com.flipperdevices.bridge.connection.feature.common.api.FDeviceFeatureApi
-import com.flipperdevices.bridge.connection.feature.common.api.FDeviceFeatureQualifier
+
 import com.flipperdevices.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import com.flipperdevices.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import com.flipperdevices.bridge.connection.transport.common.api.FConnectedDeviceApi
 import com.flipperdevices.busylib.core.di.BusyLibGraph
-import dev.zacsweers.metro.ContributesIntoMap
-import dev.zacsweers.metro.Inject
-import dev.zacsweers.metro.binding
+import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
+import me.tatarka.inject.annotations.Inject
+import me.tatarka.inject.annotations.Provides
+
 import kotlinx.coroutines.CoroutineScope
+import me.tatarka.inject.annotations.IntoMap
+import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
 
 @Inject
-@FDeviceFeatureQualifier(FDeviceFeature.WIFI)
-@ContributesIntoMap(BusyLibGraph::class, binding<FDeviceFeatureApi.Factory>())
+
 class FWiFiFeatureFactoryImpl(
     private val deviceInfoFeatureFactory: FWiFiFeatureApiImpl.InternalFactory
 ) : FDeviceFeatureApi.Factory {
@@ -31,5 +33,16 @@ class FWiFiFeatureFactoryImpl(
         return deviceInfoFeatureFactory(
             rpcFeatureApi = fRpcFeatureApi
         )
+    }
+}
+
+@ContributesTo(BusyLibGraph::class)
+interface FWiFiFeatureComponent {
+    @Provides
+    @IntoMap
+    fun provideFWiFiFeatureFactory(
+        fWiFiFeatureFactory: FWiFiFeatureFactoryImpl
+    ): Pair<FDeviceFeature, FDeviceFeatureApi.Factory> {
+        return FDeviceFeature.WIFI to fWiFiFeatureFactory
     }
 }

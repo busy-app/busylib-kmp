@@ -7,8 +7,8 @@ import com.flipperdevices.bridge.connection.service.api.FConnectionService
 import com.flipperdevices.bsb.auth.principal.api.BsbUserPrincipalApi
 import com.flipperdevices.bsb.cloud.api.BSBBarsApi
 import com.flipperdevices.busylib.di.BUSYLibGraphDesktop
-import dev.zacsweers.metro.Inject
-import dev.zacsweers.metro.createGraphFactory
+import com.flipperdevices.busylib.di.create
+import me.tatarka.inject.annotations.Inject
 import kotlinx.coroutines.CoroutineScope
 
 @Inject
@@ -24,13 +24,12 @@ class BUSYLibDesktop(
             bsbBarsApi: BSBBarsApi,
             persistedStorage: FDevicePersistedStorage,
         ): BUSYLibDesktop {
-            val graph = createGraphFactory<BUSYLibGraphDesktop.Factory>()
-                .create(
-                    scope,
-                    principalApi,
-                    bsbBarsApi,
-                    persistedStorage
-                )
+            val graph = BUSYLibGraphDesktop::class.create(
+                scope,
+                principalApi,
+                bsbBarsApi,
+                persistedStorage
+            )
             return graph.busyLib
         }
     }

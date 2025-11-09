@@ -3,9 +3,8 @@ package com.flipperdevices.bridge.connection.feature.info.impl
 import com.flipperdevices.bridge.connection.feature.info.api.FDeviceInfoFeatureApi
 import com.flipperdevices.bridge.connection.feature.info.api.model.BSBDeviceInfo
 import com.flipperdevices.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
-import dev.zacsweers.metro.Assisted
-import dev.zacsweers.metro.AssistedFactory
-import dev.zacsweers.metro.Inject
+import me.tatarka.inject.annotations.Assisted
+import me.tatarka.inject.annotations.Inject
 
 @Inject
 class FDeviceInfoFeatureApiImpl(
@@ -19,10 +18,12 @@ class FDeviceInfoFeatureApiImpl(
         )
     }
 
-    @AssistedFactory
-    interface InternalFactory {
+    @Inject
+    class InternalFactory(
+        private val factory: (FRpcFeatureApi) -> FDeviceInfoFeatureApiImpl
+    ) {
         operator fun invoke(
             rpcFeatureApi: FRpcFeatureApi
-        ): FDeviceInfoFeatureApiImpl
+        ): FDeviceInfoFeatureApiImpl = factory(rpcFeatureApi)
     }
 }

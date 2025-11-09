@@ -4,7 +4,7 @@ import com.flipperdevices.bridge.connection.transport.ble.api.FBleDeviceConnecti
 import com.flipperdevices.bridge.connection.transport.ble.api.FBleDeviceSerialConfig
 import com.flipperdevices.bridge.connection.transport.ble.api.GATTCharacteristicAddress
 import com.flipperdevices.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
-import dev.zacsweers.metro.Inject
+import me.tatarka.inject.annotations.Inject
 import kotlinx.collections.immutable.persistentMapOf
 import kotlin.uuid.Uuid
 

@@ -7,7 +7,7 @@ import com.flipperdevices.bridge.connection.transport.common.api.FTransportConne
 import com.flipperdevices.core.busylib.ktx.common.FlipperDispatchers
 import com.flipperdevices.core.busylib.log.LogTagProvider
 import com.flipperdevices.core.busylib.log.info
-import dev.zacsweers.metro.Inject
+import me.tatarka.inject.annotations.Inject
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job

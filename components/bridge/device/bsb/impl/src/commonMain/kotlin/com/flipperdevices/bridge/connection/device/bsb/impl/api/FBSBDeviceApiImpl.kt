@@ -12,11 +12,9 @@ import com.flipperdevices.busylib.core.di.BusyLibGraph
 import com.flipperdevices.core.busylib.log.LogTagProvider
 import com.flipperdevices.core.busylib.log.error
 import com.flipperdevices.core.busylib.log.info
-import dev.zacsweers.metro.Assisted
-import dev.zacsweers.metro.AssistedFactory
-import dev.zacsweers.metro.ContributesBinding
-import dev.zacsweers.metro.Inject
-import dev.zacsweers.metro.binding
+import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
+import me.tatarka.inject.annotations.Assisted
+import me.tatarka.inject.annotations.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
@@ -34,7 +32,6 @@ class FBSBDeviceApiImpl(
 ) : FBSBDeviceApi, FUnsafeDeviceFeatureApi, LogTagProvider {
     override val TAG = "FZeroDeviceApi"
 
-    // todo Hi, @Programistich you've had fix for that
     private val features = mutableMapOf<FDeviceFeature, Deferred<FDeviceFeatureApi?>>()
     private val mutex = Mutex()
 
@@ -114,12 +111,14 @@ class FBSBDeviceApiImpl(
         }
     }
 
-    @AssistedFactory
-    @ContributesBinding(BusyLibGraph::class, binding<FBSBDeviceApi.Factory>())
-    interface Factory : FBSBDeviceApi.Factory {
+    @Inject
+    @ContributesBinding(BusyLibGraph::class, FBSBDeviceApi.Factory::class)
+    class Factory(
+        private val factory: (CoroutineScope, FConnectedDeviceApi) -> FBSBDeviceApiImpl
+    ) : FBSBDeviceApi.Factory {
         override fun invoke(
             scope: CoroutineScope,
             connectedDevice: FConnectedDeviceApi,
-        ): FBSBDeviceApiImpl
+        ): FBSBDeviceApiImpl = factory(scope, connectedDevice)
     }
 }
