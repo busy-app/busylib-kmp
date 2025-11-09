@@ -9,7 +9,6 @@ import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 import kotlinx.coroutines.CoroutineScope
 import me.tatarka.inject.annotations.Provides
 import software.amazon.lastmile.kotlin.inject.anvil.MergeComponent
-import kotlin.reflect.KClass
 
 @SingleIn(BusyLibGraph::class)
 @MergeComponent(BusyLibGraph::class)

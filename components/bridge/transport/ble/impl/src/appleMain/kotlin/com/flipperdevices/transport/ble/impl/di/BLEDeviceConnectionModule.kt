@@ -13,7 +13,7 @@ import kotlin.reflect.KClass
 interface BLEDeviceConnectionModule {
     @IntoMap
     @Provides
-    fun getMockDeviceConnection(
+    fun getBLEDeviceConnection(
         bleDeviceConnectionApi: BleDeviceConnectionApi
     ): Pair<KClass<*>, DeviceConnectionApiHolder> {
         return FBleDeviceConnectionConfig::class to DeviceConnectionApiHolder(
