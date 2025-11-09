@@ -3,7 +3,6 @@ package com.flipperdevices.bridge.connection.feature.link.check.onready.api
 import com.flipperdevices.bridge.connection.feature.link.check.ondemand.api.FLinkedInfoOnDemandFeatureApi
 import com.flipperdevices.core.busylib.log.LogTagProvider
 import me.tatarka.inject.annotations.Assisted
-import me.tatarka.inject.annotations.AssistedFactory
 import me.tatarka.inject.annotations.Inject
 
 @Inject
@@ -16,10 +15,12 @@ class FLinkInfoOnReadyFeatureApiImpl(
         fLinkedInfoOnDemandFeatureApi.tryCheckLinkedInfo()
     }
 
-    @AssistedFactory
-    interface InternalFactory {
+    @Inject
+    class InternalFactory(
+        private val factory: (FLinkedInfoOnDemandFeatureApi) -> FLinkInfoOnReadyFeatureApiImpl
+    ) {
         operator fun invoke(
             fLinkedInfoOnDemandFeatureApi: FLinkedInfoOnDemandFeatureApi,
-        ): FLinkInfoOnReadyFeatureApiImpl
+        ): FLinkInfoOnReadyFeatureApiImpl = factory(fLinkedInfoOnDemandFeatureApi)
     }
 }

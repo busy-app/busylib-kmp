@@ -13,7 +13,6 @@ import com.flipperdevices.core.busylib.log.LogTagProvider
 import com.flipperdevices.core.busylib.log.error
 import com.flipperdevices.core.busylib.log.info
 import me.tatarka.inject.annotations.Assisted
-import me.tatarka.inject.annotations.AssistedFactory
 import me.tatarka.inject.annotations.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -105,11 +104,13 @@ class FLinkInfoOnDemandFeatureApiImpl(
         info { "Completed authorization for BUSY Bar" }
     }
 
-    @AssistedFactory
-    interface InternalFactory {
+    @Inject
+    class InternalFactory(
+        private val factory: (FRpcCriticalFeatureApi, CoroutineScope) -> FLinkInfoOnDemandFeatureApiImpl
+    ) {
         operator fun invoke(
             rpcFeatureApi: FRpcCriticalFeatureApi,
             scope: CoroutineScope
-        ): FLinkInfoOnDemandFeatureApiImpl
+        ): FLinkInfoOnDemandFeatureApiImpl = factory(rpcFeatureApi, scope)
     }
 }
