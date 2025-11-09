@@ -7,7 +7,7 @@ import com.flipperdevices.bridge.connection.service.api.FConnectionService
 import com.flipperdevices.bsb.auth.principal.api.BsbUserPrincipalApi
 import com.flipperdevices.bsb.cloud.api.BSBBarsApi
 import com.flipperdevices.busylib.di.BUSYLibGraphDesktop
-import kimchi.merge.com.flipperdevices.busylib.di.createBUSYLibGraphDesktop
+import com.flipperdevices.busylib.di.create
 import me.tatarka.inject.annotations.Inject
 import kotlinx.coroutines.CoroutineScope
 
@@ -24,7 +24,7 @@ class BUSYLibDesktop(
             bsbBarsApi: BSBBarsApi,
             persistedStorage: FDevicePersistedStorage,
         ): BUSYLibDesktop {
-            val graph = BUSYLibGraphDesktop::class.createBUSYLibGraphDesktop(
+            val graph = BUSYLibGraphDesktop::class.create(
                 scope,
                 principalApi,
                 bsbBarsApi,
