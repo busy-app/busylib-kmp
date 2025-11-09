@@ -11,6 +11,3 @@ enum class FDeviceFeature {
     FIRMWARE_UPDATE,
     LINKED_USER_STATUS
 }
-
-@Retention(AnnotationRetention.RUNTIME)
-annotation class FDeviceFeatureQualifier(val enum: FDeviceFeature)

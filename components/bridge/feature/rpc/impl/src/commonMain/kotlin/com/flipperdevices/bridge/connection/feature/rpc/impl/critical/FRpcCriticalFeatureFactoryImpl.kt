@@ -2,20 +2,20 @@ package com.flipperdevices.bridge.connection.feature.rpc.impl.critical
 
 import com.flipperdevices.bridge.connection.feature.common.api.FDeviceFeature
 import com.flipperdevices.bridge.connection.feature.common.api.FDeviceFeatureApi
-import com.flipperdevices.bridge.connection.feature.common.api.FDeviceFeatureQualifier
+
 import com.flipperdevices.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import com.flipperdevices.bridge.connection.feature.rpc.impl.util.getHttpClient
 import com.flipperdevices.bridge.connection.transport.common.api.FConnectedDeviceApi
 import com.flipperdevices.bridge.connection.transport.common.api.serial.FHTTPDeviceApi
 import com.flipperdevices.busylib.core.di.BusyLibGraph
-import com.r0adkll.kimchi.annotations.ContributesMultibinding
+import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 import me.tatarka.inject.annotations.Inject
+import me.tatarka.inject.annotations.Provides
 
 import kotlinx.coroutines.CoroutineScope
 
 @Inject
-@FDeviceFeatureQualifier(FDeviceFeature.RPC_CRITICAL)
-@ContributesMultibinding(BusyLibGraph::class, FDeviceFeatureApi.Factory::class)
+
 class FRpcCriticalFeatureFactoryImpl(
     private val fRpcCriticalFeatureApiFactory: FRpcCriticalFeatureApiImpl.InternalFactory,
 ) : FDeviceFeatureApi.Factory {
@@ -28,5 +28,15 @@ class FRpcCriticalFeatureFactoryImpl(
         return fRpcCriticalFeatureApiFactory.invoke(
             client = getHttpClient(httpClient.getDeviceHttpEngine())
         )
+    }
+}
+
+@ContributesBinding(BusyLibGraph::class)
+interface FRpcCriticalFeatureComponent {
+    @Provides
+    fun provideFRpcCriticalFeatureFactory(
+        fRpcCriticalFeatureFactory: FRpcCriticalFeatureFactoryImpl
+    ): Pair<FDeviceFeature, FDeviceFeatureApi.Factory> {
+        return FDeviceFeature.RPC_CRITICAL to fRpcCriticalFeatureFactory
     }
 }

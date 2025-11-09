@@ -11,7 +11,11 @@ import kotlinx.coroutines.CoroutineScope
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 
 @Inject
-@ContributesBinding(BusyLibGraph::class, FOnDeviceReadyFeatureApi.Factory::class)
+@ContributesBinding(
+    BusyLibGraph::class,
+    FOnDeviceReadyFeatureApi.Factory::class,
+    multibinding = true
+)
 class FLinkInfoOnReadyFeatureFactoryImpl(
     private val fLinkInfoOnReadyFeatureApiImpl: FLinkInfoOnReadyFeatureApiImpl.InternalFactory
 ) : FOnDeviceReadyFeatureApi.Factory {

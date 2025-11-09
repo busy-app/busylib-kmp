@@ -2,20 +2,20 @@ package com.flipperdevices.bridge.connection.feature.battery.impl
 
 import com.flipperdevices.bridge.connection.feature.common.api.FDeviceFeature
 import com.flipperdevices.bridge.connection.feature.common.api.FDeviceFeatureApi
-import com.flipperdevices.bridge.connection.feature.common.api.FDeviceFeatureQualifier
+
 import com.flipperdevices.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import com.flipperdevices.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import com.flipperdevices.bridge.connection.transport.common.api.FConnectedDeviceApi
 import com.flipperdevices.bridge.connection.transport.common.api.meta.FTransportMetaInfoApi
 import com.flipperdevices.busylib.core.di.BusyLibGraph
-import com.r0adkll.kimchi.annotations.ContributesMultibinding
+import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 import me.tatarka.inject.annotations.Inject
+import me.tatarka.inject.annotations.Provides
 
 import kotlinx.coroutines.CoroutineScope
 
 @Inject
-@FDeviceFeatureQualifier(FDeviceFeature.BATTERY_INFO)
-@ContributesMultibinding(BusyLibGraph::class, FDeviceFeatureApi.Factory::class)
+
 class FDeviceBatteryInfoFeatureFactoryImpl(
     private val deviceInfoFeatureFactory: FDeviceBatteryInfoFeatureApiImpl.InternalFactory
 ) : FDeviceFeatureApi.Factory {
@@ -33,5 +33,15 @@ class FDeviceBatteryInfoFeatureFactoryImpl(
             rpcFeatureApi = rpcFeatureApi,
             metaInfoApi = metaInfoApi
         )
+    }
+}
+
+@ContributesBinding(BusyLibGraph::class)
+interface FDeviceBatteryInfoFeatureComponent {
+    @Provides
+    fun provideFDeviceBatteryInfoFeatureFactory(
+        fDeviceBatteryInfoFeatureFactory: FDeviceBatteryInfoFeatureFactoryImpl
+    ): Pair<FDeviceFeature, FDeviceFeatureApi.Factory> {
+        return FDeviceFeature.BATTERY_INFO to fDeviceBatteryInfoFeatureFactory
     }
 }
