@@ -5,13 +5,13 @@ import com.flipperdevices.bridge.connection.feature.common.api.FUnsafeDeviceFeat
 import com.flipperdevices.bridge.connection.feature.link.check.ondemand.api.FLinkedInfoOnDemandFeatureApi
 import com.flipperdevices.bridge.connection.transport.common.api.FConnectedDeviceApi
 import com.flipperdevices.busylib.core.di.BusyLibGraph
-import com.r0adkll.kimchi.annotations.ContributesMultibinding
 import me.tatarka.inject.annotations.Inject
 
 import kotlinx.coroutines.CoroutineScope
+import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 
 @Inject
-@ContributesMultibinding(BusyLibGraph::class, FOnDeviceReadyFeatureApi.Factory::class)
+@ContributesBinding(BusyLibGraph::class, FOnDeviceReadyFeatureApi.Factory::class)
 class FLinkInfoOnReadyFeatureFactoryImpl(
     private val fLinkInfoOnReadyFeatureApiImpl: FLinkInfoOnReadyFeatureApiImpl.InternalFactory
 ) : FOnDeviceReadyFeatureApi.Factory {

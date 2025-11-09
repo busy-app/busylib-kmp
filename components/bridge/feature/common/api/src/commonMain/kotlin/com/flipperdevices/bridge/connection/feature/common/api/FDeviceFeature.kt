@@ -1,7 +1,5 @@
 package com.flipperdevices.bridge.connection.feature.common.api
 
-import com.r0adkll.kimchi.annotations.MapKey
-
 
 enum class FDeviceFeature {
     RPC_EXPOSED,
@@ -15,5 +13,4 @@ enum class FDeviceFeature {
 }
 
 @Retention(AnnotationRetention.RUNTIME)
-@MapKey
 annotation class FDeviceFeatureQualifier(val enum: FDeviceFeature)
