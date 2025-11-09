@@ -8,9 +8,9 @@ import com.flipperdevices.core.busylib.ktx.common.withLock
 import com.flipperdevices.core.busylib.log.LogTagProvider
 import com.flipperdevices.core.busylib.log.error
 import com.flipperdevices.core.busylib.log.info
-import com.r0adkll.kimchi.annotations.ContributesBinding
+import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 import me.tatarka.inject.annotations.Inject
-import com.flipperdevices.busylib.core.di.SingleIn
+import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.sync.Mutex

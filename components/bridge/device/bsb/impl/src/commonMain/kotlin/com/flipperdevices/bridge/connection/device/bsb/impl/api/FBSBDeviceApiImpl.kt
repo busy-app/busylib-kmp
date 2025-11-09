@@ -12,7 +12,7 @@ import com.flipperdevices.busylib.core.di.BusyLibGraph
 import com.flipperdevices.core.busylib.log.LogTagProvider
 import com.flipperdevices.core.busylib.log.error
 import com.flipperdevices.core.busylib.log.info
-import com.r0adkll.kimchi.annotations.ContributesBinding
+import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.AssistedFactory
 import me.tatarka.inject.annotations.Inject

@@ -4,9 +4,9 @@ import com.flipperdevices.bridge.connection.transport.common.api.DeviceConnectio
 import com.flipperdevices.bridge.connection.transport.mock.FMockDeviceConnectionConfig
 import com.flipperdevices.bridge.connection.transport.mock.MockDeviceConnectionApi
 import com.flipperdevices.busylib.core.di.BusyLibGraph
-import com.r0adkll.kimchi.annotations.ContributesTo
 import me.tatarka.inject.annotations.IntoMap
 import me.tatarka.inject.annotations.Provides
+import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
 import kotlin.reflect.KClass
 
 @ContributesTo(BusyLibGraph::class)

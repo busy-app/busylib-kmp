@@ -9,9 +9,9 @@ import com.flipperdevices.busylib.core.di.BusyLibGraph
 import com.flipperdevices.core.busylib.ktx.common.FlipperDispatchers
 import com.flipperdevices.core.busylib.log.LogTagProvider
 import com.flipperdevices.core.busylib.log.warn
-import com.r0adkll.kimchi.annotations.ContributesBinding
+import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 import me.tatarka.inject.annotations.Inject
-import com.flipperdevices.busylib.core.di.SingleIn
+import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job

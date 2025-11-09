@@ -8,7 +8,8 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(libs.kotlin.inject.runtime)
-                implementation(libs.kotlin.inject.kimchi.runtime)
+                implementation(libs.kotlin.inject.anvil.runtime)
+                implementation(libs.kotlin.inject.anvil.runtime.optional)
             }
         }
     }
@@ -16,5 +17,5 @@ kotlin {
 
 dependencies {
     add("commonKsp", libs.kotlin.inject.compiler)
-    add("commonKsp", libs.kotlin.inject.kimchi.compiler)
+    add("commonKsp", libs.kotlin.inject.anvil.compiler)
 }

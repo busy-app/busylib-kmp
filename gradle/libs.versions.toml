@@ -15,7 +15,7 @@ ksp = "2.3.0"
 klibs-gradleplugin = "1.11.3" # https://github.com/makeevrserg/gradle-plugin# Exposed
 decompose = "3.4.0"
 kotlin-inject = "0.8.0"
-kotlin-inject-kimchi = "0.6.0"
+kotlin-inject-anvil = "0.1.6"
 essenty = "2.5.0"
 settings = "1.3.0"
 ktor = "3.3.1" # https://ktor.io/
@@ -47,8 +47,9 @@ appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat"
 # kotlin-inject dependencies
 kotlin-inject-runtime = { module = "me.tatarka.inject:kotlin-inject-runtime", version.ref = "kotlin-inject" }
 kotlin-inject-compiler = { module = "me.tatarka.inject:kotlin-inject-compiler-ksp", version.ref = "kotlin-inject" }
-kotlin-inject-kimchi-runtime = { module = "com.r0adkll.kimchi:kimchi-annotations", version.ref = "kotlin-inject-kimchi"}
-kotlin-inject-kimchi-compiler = { module = "com.r0adkll.kimchi:kimchi-compiler", version.ref = "kotlin-inject-kimchi"}
+kotlin-inject-anvil-runtime = { module = "software.amazon.lastmile.kotlin.inject.anvil:runtime", version.ref = "kotlin-inject-anvil"}
+kotlin-inject-anvil-runtime-optional = { module = "software.amazon.lastmile.kotlin.inject.anvil:runtime-optional", version.ref = "kotlin-inject-anvil"}
+kotlin-inject-anvil-compiler = { module = "software.amazon.lastmile.kotlin.inject.anvil:compiler", version.ref = "kotlin-inject-anvil"}
 
 decompose = { module = "com.arkivanov.decompose:decompose", version.ref = "decompose" }
 decompose-composeExtension = { module = "com.arkivanov.decompose:extensions-compose", version.ref = "decompose" }

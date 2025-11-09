@@ -8,9 +8,9 @@ import com.flipperdevices.bridge.connection.feature.provider.impl.utils.FDeviceC
 import com.flipperdevices.bridge.connection.orchestrator.api.FDeviceOrchestrator
 import com.flipperdevices.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
 import com.flipperdevices.busylib.core.di.BusyLibGraph
-import com.flipperdevices.busylib.core.di.SingleIn
+import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 import com.flipperdevices.core.busylib.ktx.common.FlipperDispatchers
-import com.r0adkll.kimchi.annotations.ContributesBinding
+import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 import me.tatarka.inject.annotations.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow

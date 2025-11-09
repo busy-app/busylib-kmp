@@ -5,7 +5,7 @@ import com.flipperdevices.bsb.auth.principal.api.BsbUserPrincipalApi
 import com.flipperdevices.bsb.cloud.api.BSBBarsApi
 import com.flipperdevices.busylib.BUSYLibDesktop
 import com.flipperdevices.busylib.core.di.BusyLibGraph
-import com.flipperdevices.busylib.core.di.SingleIn
+import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 import com.r0adkll.kimchi.annotations.MergeComponent
 import kotlinx.coroutines.CoroutineScope
 import me.tatarka.inject.annotations.Provides

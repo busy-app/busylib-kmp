@@ -7,7 +7,7 @@ import com.flipperdevices.bridge.connection.transport.common.api.FConnectedDevic
 import com.flipperdevices.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import com.flipperdevices.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import com.flipperdevices.busylib.core.di.BusyLibGraph
-import com.r0adkll.kimchi.annotations.ContributesBinding
+import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 import me.tatarka.inject.annotations.Inject
 
 import kotlinx.coroutines.CoroutineScope
