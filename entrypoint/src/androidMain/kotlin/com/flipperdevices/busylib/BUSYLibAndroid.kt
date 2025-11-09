@@ -9,8 +9,10 @@ import com.flipperdevices.bridge.connection.service.api.FConnectionService
 import com.flipperdevices.bsb.auth.principal.api.BsbUserPrincipalApi
 import com.flipperdevices.bsb.cloud.api.BSBBarsApi
 import com.flipperdevices.busylib.di.BUSYLibGraphAndroid
+import com.flipperdevices.busylib.di.create
 import me.tatarka.inject.annotations.Inject
 import kotlinx.coroutines.CoroutineScope
+import software.amazon.lastmile.kotlin.inject.anvil.MergeComponent
 
 @Inject
 class BUSYLibAndroid(
