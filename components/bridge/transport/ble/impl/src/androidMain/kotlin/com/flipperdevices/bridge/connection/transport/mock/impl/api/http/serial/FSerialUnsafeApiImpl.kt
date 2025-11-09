@@ -7,7 +7,6 @@ import com.flipperdevices.bridge.connection.transport.mock.impl.exception.BLECon
 import com.flipperdevices.core.busylib.log.LogTagProvider
 import com.flipperdevices.core.busylib.log.error
 import com.flipperdevices.core.busylib.log.info
-import com.r0adkll.kimchi.annotations.StringKey
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.AssistedFactory
 import me.tatarka.inject.annotations.Inject

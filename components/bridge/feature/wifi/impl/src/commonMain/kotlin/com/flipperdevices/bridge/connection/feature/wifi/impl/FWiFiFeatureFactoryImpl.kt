@@ -12,6 +12,8 @@ import me.tatarka.inject.annotations.Inject
 import me.tatarka.inject.annotations.Provides
 
 import kotlinx.coroutines.CoroutineScope
+import me.tatarka.inject.annotations.IntoMap
+import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
 
 @Inject
 
@@ -34,9 +36,10 @@ class FWiFiFeatureFactoryImpl(
     }
 }
 
-@ContributesBinding(BusyLibGraph::class)
+@ContributesTo(BusyLibGraph::class)
 interface FWiFiFeatureComponent {
     @Provides
+    @IntoMap
     fun provideFWiFiFeatureFactory(
         fWiFiFeatureFactory: FWiFiFeatureFactoryImpl
     ): Pair<FDeviceFeature, FDeviceFeatureApi.Factory> {

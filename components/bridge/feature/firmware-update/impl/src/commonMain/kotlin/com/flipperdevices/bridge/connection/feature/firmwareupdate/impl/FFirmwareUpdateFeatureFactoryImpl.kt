@@ -12,6 +12,8 @@ import me.tatarka.inject.annotations.Inject
 import me.tatarka.inject.annotations.Provides
 
 import kotlinx.coroutines.CoroutineScope
+import me.tatarka.inject.annotations.IntoMap
+import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
 
 @Inject
 
@@ -31,9 +33,10 @@ class FFirmwareUpdateFeatureFactoryImpl(
     }
 }
 
-@ContributesBinding(BusyLibGraph::class)
+@ContributesTo(BusyLibGraph::class)
 interface FFirmwareUpdateFeatureComponent {
     @Provides
+    @IntoMap
     fun provideFFirmwareUpdateFeatureFactory(
         fFirmwareUpdateFeatureFactory: FFirmwareUpdateFeatureFactoryImpl
     ): Pair<FDeviceFeature, FDeviceFeatureApi.Factory> {

@@ -10,8 +10,10 @@ import com.flipperdevices.busylib.core.di.BusyLibGraph
 import me.tatarka.inject.annotations.Inject
 
 import kotlinx.coroutines.CoroutineScope
+import me.tatarka.inject.annotations.IntoMap
 import me.tatarka.inject.annotations.Provides
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
+import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
 
 @Inject
 
@@ -31,9 +33,10 @@ class FScreenStreamingFeatureFactoryImpl(
     }
 }
 
-@ContributesBinding(BusyLibGraph::class)
+@ContributesTo(BusyLibGraph::class)
 interface FScreenStreamingFeatureComponent {
     @Provides
+    @IntoMap
     fun provideFScreenStreamingFeatureFactory(
         fScreenStreamingFeatureFactory: FScreenStreamingFeatureFactoryImpl
     ): Pair<FDeviceFeature, FDeviceFeatureApi.Factory> {

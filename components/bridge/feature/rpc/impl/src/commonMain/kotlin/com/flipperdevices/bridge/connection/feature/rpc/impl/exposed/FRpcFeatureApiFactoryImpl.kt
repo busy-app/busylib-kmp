@@ -16,6 +16,8 @@ import me.tatarka.inject.annotations.Provides
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
+import me.tatarka.inject.annotations.IntoMap
+import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
 
 @Inject
 
@@ -44,9 +46,10 @@ class FRpcFeatureApiFactoryImpl(
     }
 }
 
-@ContributesBinding(BusyLibGraph::class)
+@ContributesTo(BusyLibGraph::class)
 interface FRpcFeatureApiComponent {
     @Provides
+    @IntoMap
     fun provideFRpcFeatureApiFactory(
         fRpcFeatureApiFactory: FRpcFeatureApiFactoryImpl
     ): Pair<FDeviceFeature, FDeviceFeatureApi.Factory> {
