@@ -1,8 +1,5 @@
 name: Pull request
 on:
-  push:
-    branches:
-      - feature/publish
   pull_request:
     branches:
       - 'develop'
