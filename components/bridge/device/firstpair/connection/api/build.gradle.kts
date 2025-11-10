@@ -6,6 +6,7 @@ plugins {
     id("ru.astrainteractive.gradleplugin.publication")
 }
 
+
 kotlin {
     sourceSets.androidMain.dependencies {
         implementation(projects.components.log)

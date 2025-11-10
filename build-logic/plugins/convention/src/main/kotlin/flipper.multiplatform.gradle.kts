@@ -4,14 +4,20 @@ plugins {
     id("suppress-optin")
 }
 
+val appleEnabled = providers.gradleProperty("flipper.appleEnabled")
+    .map { it.toBoolean() }
+    .getOrElse(true)
+
 kotlin {
     jvm()
     androidLibrary {}
-    iosX64()
-    iosArm64()
-    iosSimulatorArm64()
-    macosX64()
-    macosArm64()
+    if (appleEnabled) {
+        iosX64()
+        iosArm64()
+        iosSimulatorArm64()
+        macosX64()
+        macosArm64()
+    }
 
     applyDefaultHierarchyTemplate()
 }

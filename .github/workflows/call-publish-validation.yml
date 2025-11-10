@@ -35,4 +35,4 @@ jobs:
       - name: Run publish
         uses: gradle/gradle-build-action@v3
         with:
-          arguments: publishToMavenLocal --debug --stacktrace
+          arguments: publishToMavenLocal --stacktrace
