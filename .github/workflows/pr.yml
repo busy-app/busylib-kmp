@@ -2,8 +2,8 @@ name: Pull request
 on:
   pull_request:
     branches:
-      - 'develop'
-      - 'master'
+      - 'dev'
+      - 'main'
       - 'prerelease/*'
 
 
