@@ -15,12 +15,8 @@ on:
 
 jobs:
   validate_publish:
-    strategy:
-      matrix:
-        target:
-          - "publishToMavenLocal"
     name: "Validate local publish"
-    runs-on: [ self-hosted, macOS ]
+    runs-on: macOS-latest
     env:
       ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.ORG_GRADLE_PROJECT_MAVENCENTRALUSERNAME }}
       ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.ORG_GRADLE_PROJECT_MAVENCENTRALPASSWORD }}
@@ -39,4 +35,4 @@ jobs:
       - name: Run publish
         uses: gradle/gradle-build-action@v3
         with:
-          arguments: ${{ matrix.target }} --stacktrace
+          arguments: publishToMavenLocal --stacktrace
