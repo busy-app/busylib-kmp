@@ -6,14 +6,14 @@ google-services = "4.4.4"
 appcompat = "1.7.1" # https://developer.android.com/jetpack/androidx/releases/appcompat
 compose-plugin = "1.9.3"
 # Because of SKIE https://skie.touchlab.co/intro#compatibility-with-kotlin
-kotlin = "2.2.10"
+kotlin = "2.2.21"
 kotlin-coroutines = "1.10.2"
 kotlin-serialization-runtime = "1.9.0"
 kotlin-datetime = "0.7.1" # https://github.com/Kotlin/kotlinx-datetime/releases
 kotlin-immutable = "0.4.0"
 kotlin-io = "0.8.0"
-ksp = "2.2.10-2.0.2"
-klibs-gradleplugin = "1.11.3" # https://github.com/makeevrserg/gradle-plugin
+ksp = "2.3.2"
+klibs-gradleplugin = "1.11.4" # https://github.com/makeevrserg/gradle-plugin
 decompose = "3.4.0"
 kotlin-inject = "0.8.0"
 kotlin-inject-anvil = "0.1.6"
