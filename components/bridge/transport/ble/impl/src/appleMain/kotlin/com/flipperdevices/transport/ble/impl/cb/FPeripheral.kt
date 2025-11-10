@@ -133,6 +133,8 @@ class FPeripheral(
         _metaInfoKeysStream.asStateFlow()
 
     private var serialWrite: CBCharacteristic? = null
+
+    @Suppress("UnusedPrivateProperty")
     private var statusJob: Job? = null
 
     private val delegate = FPeripheralDelegate(this, scope)
@@ -224,7 +226,7 @@ class FPeripheral(
 
     internal fun handleDidDiscoverServices(
         peripheral: CBPeripheral,
-        didDiscoverServices: NSError?
+        @Suppress("UnusedParameter") didDiscoverServices: NSError?
     ) {
         peripheral.services?.forEach { service ->
             val cbService = service as CBService
