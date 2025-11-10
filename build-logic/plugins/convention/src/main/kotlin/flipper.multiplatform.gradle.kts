@@ -4,9 +4,8 @@ plugins {
     id("suppress-optin")
 }
 
-val appleEnabled = providers.gradleProperty("flipper.appleEnabled")
-    .map { it.toBoolean() }
-    .getOrElse(true)
+val appleEnabled = project.findProperty("flipper.appleEnabled")?.toString()?.toBoolean() ?: true
+
 
 kotlin {
     jvm()
