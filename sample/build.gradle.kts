@@ -21,7 +21,7 @@ plugins {
 }
 
 kotlin {
-    jvm("desktop")
+    jvm()
     androidTarget()
 
     iosArm64()
@@ -85,11 +85,8 @@ kotlin {
         implementation(libs.androidx.activity.compose)
         implementation(libs.appcompat)
     }
-    sourceSets {
-        val desktopMain by getting
-        desktopMain.dependencies {
-            implementation(compose.desktop.currentOs)
-        }
+    sourceSets.jvmMain.dependencies {
+        implementation(compose.desktop.currentOs)
     }
 }
 
