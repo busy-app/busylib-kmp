@@ -2,8 +2,7 @@ name: Release
 on:
   push:
     branches:
-      - master
-      - feature/publish
+      - main
   workflow_dispatch:
 jobs:
   gradle_validation:
