@@ -3,7 +3,7 @@ package com.flipperdevices.bridge.connection.transport.mock.impl.api.http.serial
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
-import com.flipperdevices.bridge.connection.transport.mock.impl.exception.BLEConnectionPermissionException
+import com.flipperdevices.bridge.connection.transport.ble.common.exception.BLEConnectionPermissionException
 import com.flipperdevices.core.busylib.log.LogTagProvider
 import com.flipperdevices.core.busylib.log.error
 import com.flipperdevices.core.busylib.log.info

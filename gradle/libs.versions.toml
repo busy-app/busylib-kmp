@@ -27,7 +27,6 @@ roboelectric = "4.16" # https://github.com/robolectric/robolectric/releases
 androidx-test = "1.3.0"
 ble = "2.0.0-alpha10"
 mockk = "1.14.6" # https://mockk.io/
-fastutil = "8.5.18" # https://github.com/vigna/fastutil/tags
 vaniktech = "0.34.0" #https://github.com/vanniktech/gradle-maven-publish-plugin
 
 [libraries]
@@ -91,7 +90,6 @@ encoding-hash-md = { module = "org.kotlincrypto.hash:md", version.ref = "encodin
 
 ble-client = { module = "no.nordicsemi.kotlin.ble:client-android", version.ref = "ble" }
 ble-client-mock = { module = "no.nordicsemi.kotlin.ble:client-android-mock", version.ref = "ble" }
-fastutil = { module = "it.unimi.dsi:fastutil", version.ref = "fastutil" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

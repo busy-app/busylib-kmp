@@ -61,4 +61,7 @@ kotlin {
         implementation(projects.components.bridge.transport.ble.impl)
         implementation(libs.ble.client)
     }
+    sourceSets.appleMain.dependencies {
+        api(projects.components.bridge.transport.ble.impl)
+    }
 }
