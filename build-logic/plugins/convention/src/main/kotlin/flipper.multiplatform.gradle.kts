@@ -4,24 +4,37 @@ plugins {
     id("suppress-optin")
 }
 
+val appleEnabled = project.findProperty("flipper.appleEnabled")?.toString()?.toBoolean() ?: true
+
 kotlin {
     jvm()
     androidLibrary {}
-    iosX64()
-    iosArm64()
-    iosSimulatorArm64()
-    macosX64()
-    macosArm64()
+    if (appleEnabled) {
+        iosX64()
+        iosArm64()
+        iosSimulatorArm64()
+        macosX64()
+        macosArm64()
+    }
 
     applyDefaultHierarchyTemplate()
 }
 
-includeCommonKspConfigurationTo(
+var configurations = arrayListOf(
     "kspJvm",
     "kspAndroid",
-    "kspIosX64",
-    "kspIosArm64",
-    "kspIosSimulatorArm64",
-    "kspMacosX64",
-    "kspMacosArm64"
+)
+
+if (appleEnabled) {
+    configurations += arrayListOf(
+        "kspIosX64",
+        "kspIosArm64",
+        "kspIosSimulatorArm64",
+        "kspMacosX64",
+        "kspMacosArm64"
+    )
+}
+
+includeCommonKspConfigurationTo(
+    *configurations.toTypedArray()
 )
