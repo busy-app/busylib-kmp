@@ -16,7 +16,7 @@ on:
 jobs:
   validate_publish:
     name: "Validate local publish"
-    runs-on: macOS-latest
+    runs-on: [ self-hosted, macOS ]
     env:
       ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.ORG_GRADLE_PROJECT_MAVENCENTRALUSERNAME }}
       ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.ORG_GRADLE_PROJECT_MAVENCENTRALPASSWORD }}
@@ -30,8 +30,8 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
-      - name: Give gradle permission
-        run: chmod +x gradlew
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
       - name: Run publish
         uses: gradle/gradle-build-action@v3
         with:
