@@ -16,7 +16,7 @@ on:
 jobs:
   publish:
     name: "Publish on MavenCentral"
-    runs-on: macOS-latest
+    runs-on: [ self-hosted, macOS ]
     env:
       ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.ORG_GRADLE_PROJECT_MAVENCENTRALUSERNAME }}
       ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.ORG_GRADLE_PROJECT_MAVENCENTRALPASSWORD }}
@@ -39,7 +39,7 @@ jobs:
   release:
     needs: [ publish ]
     name: Create GitHub release
-    runs-on: ubuntu-latest
+    runs-on: [ self-hosted, Linux ]
     # Only for personal repositories
     permissions:
       contents: write

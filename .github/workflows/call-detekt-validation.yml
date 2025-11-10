@@ -4,7 +4,7 @@ on:
 jobs:
   detekt:
     name: "Check project by detekt"
-    runs-on: ubuntu-latest
+    runs-on: [ self-hosted, Linux ]
     steps:
       - uses: actions/checkout@v4
       - name: Set up JDK 1.17
