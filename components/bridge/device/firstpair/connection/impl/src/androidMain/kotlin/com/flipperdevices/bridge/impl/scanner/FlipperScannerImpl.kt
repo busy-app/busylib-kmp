@@ -11,9 +11,6 @@ import com.flipperdevices.bridge.api.utils.Constants
 import com.flipperdevices.busylib.core.di.BusyLibGraph
 import com.flipperdevices.core.busylib.log.LogTagProvider
 import com.flipperdevices.core.busylib.log.info
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
-import me.tatarka.inject.annotations.Inject
-
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.flowOf
@@ -21,8 +18,10 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import me.tatarka.inject.annotations.Inject
 import no.nordicsemi.kotlin.ble.client.android.CentralManager
 import no.nordicsemi.kotlin.ble.client.distinctByPeripheral
+import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 import kotlin.collections.map
 import kotlin.uuid.toKotlinUuid
 

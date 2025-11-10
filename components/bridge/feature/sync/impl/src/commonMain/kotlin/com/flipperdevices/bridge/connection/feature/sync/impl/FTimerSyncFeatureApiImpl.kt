@@ -1,9 +1,9 @@
 package com.flipperdevices.bridge.connection.feature.sync.impl
 
 import com.flipperdevices.bridge.connection.feature.common.api.FOnDeviceReadyFeatureApi
+import kotlinx.coroutines.CoroutineScope
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
-import kotlinx.coroutines.CoroutineScope
 
 @Inject
 class FTimerSyncFeatureApiImpl(

@@ -1,7 +1,5 @@
 package com.flipperdevices.core.busylib.ktx.common
 
-import com.flipperdevices.core.busylib.ktx.common.SingleJobMode
-import com.flipperdevices.core.busylib.ktx.common.asSingleJobScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first

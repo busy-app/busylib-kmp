@@ -43,10 +43,10 @@ class FBleApiImpl(
                     FPeripheralState.DISCONNECTED,
                     FPeripheralState.PAIRING_FAILED,
                     FPeripheralState.INVALID_PAIRING -> FInternalTransportConnectionStatus.Disconnected
-                   FPeripheralState.CONNECTED -> FInternalTransportConnectionStatus.Connected(
-                       scope = scope,
-                       deviceApi = this
-                   )
+                    FPeripheralState.CONNECTED -> FInternalTransportConnectionStatus.Connected(
+                        scope = scope,
+                        deviceApi = this
+                    )
                 }
             }
             .onEach {
