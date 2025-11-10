@@ -14,7 +14,12 @@ import com.flipperdevices.busylib.BUSYLibIOS
 import com.russhwolf.settings.NSUserDefaultsSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
+import platform.CoreBluetooth.CBCentralManager
 import platform.Foundation.NSUserDefaults
+
+val manager: CBCentralManager by lazy {
+    CBCentralManager()
+}
 
 val storage by lazy {
     FDevicePersistedStorageImpl(
@@ -28,7 +33,8 @@ val busyLib: BUSYLibIOS by lazy {
         CoroutineScope(SupervisorJob()),
         principalApi = UserPrincipalApiNoop(),
         bsbBarsApi = BSBBarsApiNoop(),
-        persistedStorage = storage
+        persistedStorage = storage,
+        manager = manager,
     )
 }
 

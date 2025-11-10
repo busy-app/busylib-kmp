@@ -9,6 +9,7 @@ import com.flipperdevices.bsb.cloud.api.BSBBarsApi
 import com.flipperdevices.busylib.di.create
 import kotlinx.coroutines.CoroutineScope
 import me.tatarka.inject.annotations.Inject
+import platform.CoreBluetooth.CBCentralManager
 
 @Inject
 class BUSYLibIOS(
@@ -22,12 +23,14 @@ class BUSYLibIOS(
             principalApi: BsbUserPrincipalApi,
             bsbBarsApi: BSBBarsApi,
             persistedStorage: FDevicePersistedStorage,
+            manager: CBCentralManager,
         ): BUSYLibIOS {
             val graph = create(
                 scope,
                 principalApi,
                 bsbBarsApi,
-                persistedStorage
+                persistedStorage,
+                manager
             )
             return graph.busyLib
         }

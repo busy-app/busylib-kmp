@@ -20,17 +20,20 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withTimeoutOrNull
 import me.tatarka.inject.annotations.Inject
+import platform.CoreBluetooth.CBCentralManager
 import platform.Foundation.NSUUID
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 import kotlin.time.Duration
 
 @Inject
 @ContributesBinding(BusyLibGraph::class, BleDeviceConnectionApi::class)
-class BLEDeviceConnectionApiImpl : BleDeviceConnectionApi, LogTagProvider {
+class BLEDeviceConnectionApiImpl(
+    val manager: CBCentralManager
+) : BleDeviceConnectionApi, LogTagProvider {
     override val TAG = "BleDeviceConnectionApi"
 
     private val centralManager by lazy {
-        FCentralManager()
+        FCentralManager(manager = manager)
     }
 
     override suspend fun connect(
