@@ -13,8 +13,6 @@ import com.flipperdevices.bridge.connection.feature.rpc.api.model.WifiStatusResp
 import com.flipperdevices.core.busylib.ktx.common.FlipperDispatchers
 import com.flipperdevices.core.busylib.ktx.common.runSuspendCatching
 import com.flipperdevices.core.busylib.log.LogTagProvider
-import me.tatarka.inject.annotations.Assisted
-import me.tatarka.inject.annotations.Inject
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
@@ -28,6 +26,8 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 import kotlinx.coroutines.withContext
+import me.tatarka.inject.annotations.Assisted
+import me.tatarka.inject.annotations.Inject
 
 @Inject
 @Suppress("TooManyFunctions")

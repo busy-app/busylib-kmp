@@ -5,7 +5,7 @@ import com.arkivanov.decompose.DefaultComponentContext
 import com.arkivanov.essenty.lifecycle.ApplicationLifecycle
 import com.flipperdevices.bridge.connection.screens.ConnectionRootDecomposeComponent
 import com.flipperdevices.bridge.connection.screens.di.getRootDecomposeComponent
-import com.flipperdevices.bridge.connection.screens.search.iOSSearchViewModel
+import com.flipperdevices.bridge.connection.screens.search.IOSSearchViewModel
 import com.flipperdevices.bridge.connection.utils.PermissionCheckerNoop
 import com.flipperdevices.bridge.connection.utils.cloud.BSBBarsApiNoop
 import com.flipperdevices.bridge.connection.utils.config.impl.FDevicePersistedStorageImpl
@@ -42,7 +42,7 @@ fun getRootDecomposeComponent(): ConnectionRootDecomposeComponent {
         permissionChecker = PermissionCheckerNoop(),
         persistedStorage = storage,
         searchViewModelProvider = {
-            iOSSearchViewModel(
+            IOSSearchViewModel(
                 storage
             )
         }

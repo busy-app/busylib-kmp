@@ -6,9 +6,8 @@ import com.flipperdevices.bridge.connection.configbuilder.impl.builders.BUSYBarB
 import com.flipperdevices.bridge.connection.configbuilder.impl.builders.BUSYBarMockBuilderConfig
 import com.flipperdevices.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import com.flipperdevices.busylib.core.di.BusyLibGraph
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 import me.tatarka.inject.annotations.Inject
-
+import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 
 @Inject
 @ContributesBinding(BusyLibGraph::class, FDeviceConnectionConfigMapper::class)

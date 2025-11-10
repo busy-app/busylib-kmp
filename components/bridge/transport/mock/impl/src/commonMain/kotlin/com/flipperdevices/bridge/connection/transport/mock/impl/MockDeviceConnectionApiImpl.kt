@@ -1,6 +1,5 @@
 package com.flipperdevices.bridge.connection.transport.mock.impl
 
-import com.flipperdevices.bridge.connection.transport.common.api.DeviceConnectionApi
 import com.flipperdevices.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import com.flipperdevices.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import com.flipperdevices.bridge.connection.transport.common.api.meta.FTransportMetaInfoApi
@@ -9,10 +8,10 @@ import com.flipperdevices.bridge.connection.transport.mock.FMockDeviceConnection
 import com.flipperdevices.bridge.connection.transport.mock.MockDeviceConnectionApi
 import com.flipperdevices.bridge.connection.transport.mock.impl.meta.MockFTransportMetaInfoApiImpl
 import com.flipperdevices.busylib.core.di.BusyLibGraph
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
-import me.tatarka.inject.annotations.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
+import me.tatarka.inject.annotations.Inject
+import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 import kotlin.time.Duration.Companion.seconds
 
 @Inject

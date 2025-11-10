@@ -75,6 +75,8 @@ class FCentralManager(
     override val connectedStream: StateFlow<Map<NSUUID, FPeripheralApi>> = _connectedStream.asStateFlow()
 
     private val _discoveredStream = MutableStateFlow<Map<NSUUID, FPeripheralApi>>(emptyMap())
+
+    @Suppress("UnusedPrivateProperty")
     private val discoveredStream: StateFlow<Map<NSUUID, FPeripheralApi>> = _discoveredStream.asStateFlow()
 
     private val _bleStatusStream = MutableStateFlow<FBLEStatus>(FBLEStatus.UNKNOWN)

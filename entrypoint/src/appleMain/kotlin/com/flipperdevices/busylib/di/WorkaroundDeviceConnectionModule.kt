@@ -9,6 +9,7 @@ import me.tatarka.inject.annotations.Provides
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
 import kotlin.reflect.KClass
 
+@Suppress("ForbiddenComment")
 // TODO: remove me
 // This is dirty workaround because kotlin-inject doesn't support one-line multibinding
 @ContributesTo(BusyLibGraph::class)

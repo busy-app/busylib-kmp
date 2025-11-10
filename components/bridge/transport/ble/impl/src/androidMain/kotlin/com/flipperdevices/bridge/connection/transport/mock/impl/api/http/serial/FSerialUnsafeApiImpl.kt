@@ -7,8 +7,6 @@ import com.flipperdevices.bridge.connection.transport.ble.common.exception.BLECo
 import com.flipperdevices.core.busylib.log.LogTagProvider
 import com.flipperdevices.core.busylib.log.error
 import com.flipperdevices.core.busylib.log.info
-import me.tatarka.inject.annotations.Assisted
-import me.tatarka.inject.annotations.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -20,6 +18,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import me.tatarka.inject.annotations.Assisted
+import me.tatarka.inject.annotations.Inject
 import no.nordicsemi.kotlin.ble.client.RemoteCharacteristic
 import no.nordicsemi.kotlin.ble.core.CharacteristicProperty
 import no.nordicsemi.kotlin.ble.core.WriteType
@@ -88,7 +88,11 @@ class FSerialUnsafeApiImpl(
 
     @Inject
     class Factory(
-        private val factory: (Flow<RemoteCharacteristic?>, Flow<RemoteCharacteristic?>, CoroutineScope) -> FSerialUnsafeApiImpl
+        private val factory: (
+            Flow<RemoteCharacteristic?>,
+            Flow<RemoteCharacteristic?>,
+            CoroutineScope
+        ) -> FSerialUnsafeApiImpl
     ) {
         operator fun invoke(
             rxCharacteristic: Flow<RemoteCharacteristic?>,

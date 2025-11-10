@@ -6,10 +6,10 @@ import com.flipperdevices.bsb.auth.principal.api.BsbUserPrincipalApi
 import com.flipperdevices.bsb.cloud.api.BSBBarsApi
 import com.flipperdevices.busylib.BUSYLibAndroid
 import com.flipperdevices.busylib.core.di.BusyLibGraph
-import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 import kotlinx.coroutines.CoroutineScope
 import me.tatarka.inject.annotations.Provides
 import software.amazon.lastmile.kotlin.inject.anvil.MergeComponent
+import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 
 @MergeComponent(BusyLibGraph::class)
 @SingleIn(BusyLibGraph::class)

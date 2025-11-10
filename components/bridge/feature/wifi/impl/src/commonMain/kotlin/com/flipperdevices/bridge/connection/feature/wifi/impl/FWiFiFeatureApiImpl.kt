@@ -11,14 +11,14 @@ import com.flipperdevices.bridge.connection.feature.wifi.api.model.WiFiNetwork
 import com.flipperdevices.bridge.connection.feature.wifi.api.model.WiFiSecurity
 import com.flipperdevices.core.busylib.log.LogTagProvider
 import com.flipperdevices.core.busylib.log.error
-import me.tatarka.inject.annotations.Assisted
-import me.tatarka.inject.annotations.Inject
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.isActive
+import me.tatarka.inject.annotations.Assisted
+import me.tatarka.inject.annotations.Inject
 import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.time.Duration.Companion.seconds

@@ -50,6 +50,7 @@ interface FPeripheralApi {
 }
 
 @OptIn(ExperimentalForeignApi::class)
+@Suppress("TooManyFunctions")
 private class FPeripheralDelegate(
     private val peripheral: FPeripheral,
     private val scope: CoroutineScope
@@ -74,7 +75,9 @@ private class FPeripheralDelegate(
         scope.launch {
             this@FPeripheralDelegate.peripheral.didDiscoverCharacteristics(
                 service = didDiscoverCharacteristicsForService,
-                characteristics = didDiscoverCharacteristicsForService.characteristics?.map { it as CBCharacteristic } ?: emptyList()
+                characteristics = didDiscoverCharacteristicsForService.characteristics?.map {
+                    it as CBCharacteristic
+                } ?: emptyList()
             )
         }
     }
@@ -86,7 +89,10 @@ private class FPeripheralDelegate(
         error: NSError?
     ) {
         scope.launch {
-            this@FPeripheralDelegate.peripheral.didUpdateValue(characteristic = didUpdateValueForCharacteristic, error = error)
+            this@FPeripheralDelegate.peripheral.didUpdateValue(
+                characteristic = didUpdateValueForCharacteristic,
+                error = error
+            )
         }
     }
 
@@ -101,6 +107,7 @@ private class FPeripheralDelegate(
 }
 
 @OptIn(ExperimentalForeignApi::class)
+@Suppress("TooManyFunctions")
 class FPeripheral(
     private val peripheral: CBPeripheral,
     private val config: FBleDeviceConnectionConfig,
@@ -126,6 +133,8 @@ class FPeripheral(
         _metaInfoKeysStream.asStateFlow()
 
     private var serialWrite: CBCharacteristic? = null
+
+    @Suppress("UnusedPrivateProperty")
     private var statusJob: Job? = null
 
     private val delegate = FPeripheralDelegate(this, scope)
@@ -152,7 +161,8 @@ class FPeripheral(
 
     override suspend fun onDisconnect() {
         if (stateStream.value == FPeripheralState.PAIRING_FAILED ||
-            stateStream.value == FPeripheralState.INVALID_PAIRING) {
+            stateStream.value == FPeripheralState.INVALID_PAIRING
+        ) {
             return
         }
 
@@ -216,7 +226,7 @@ class FPeripheral(
 
     internal fun handleDidDiscoverServices(
         peripheral: CBPeripheral,
-        didDiscoverServices: NSError?
+        @Suppress("UnusedParameter") didDiscoverServices: NSError?
     ) {
         peripheral.services?.forEach { service ->
             val cbService = service as CBService
@@ -235,10 +245,12 @@ class FPeripheral(
         // Check if this is the serial service
         if (serviceUuid == config.serialConfig.serialServiceUuid.toString().lowercase()) {
             val serialRead = characteristics.firstOrNull {
-                it.UUID.UUIDString.lowercase() == config.serialConfig.rxServiceCharUuid.toString().lowercase()
+                it.UUID.UUIDString.lowercase() == config.serialConfig.rxServiceCharUuid.toString()
+                    .lowercase()
             }
             val serialWrite = characteristics.firstOrNull {
-                it.UUID.UUIDString.lowercase() == config.serialConfig.txServiceCharUuid.toString().lowercase()
+                it.UUID.UUIDString.lowercase() == config.serialConfig.txServiceCharUuid.toString()
+                    .lowercase()
             }
 
             if (serialRead != null && serialWrite != null) {
@@ -246,7 +258,7 @@ class FPeripheral(
                 this.serialWrite = serialWrite
                 info { "Serial characteristics ready (read/write) id=${identifier.UUIDString}" }
             } else {
-                error { "Serial characteristics not found id=${identifier.UUIDString}"}
+                error { "Serial characteristics not found id=${identifier.UUIDString}" }
             }
             return
         }
@@ -261,7 +273,7 @@ class FPeripheral(
             // Find if this characteristic is in our meta info map
             val metaKey = config.metaInfoGattMap.entries.firstOrNull { (_, address) ->
                 address.serviceAddress == serviceAddress &&
-                address.characteristicAddress == charAddress
+                    address.characteristicAddress == charAddress
             }?.key
 
             debug { "Found meta info characteristic: $charUuid for key=$metaKey" }
@@ -278,7 +290,7 @@ class FPeripheral(
             }
 
             peripheral.readValueForCharacteristic(characteristic)
-            debug { "Reading meta info characteristic: ${metaKey}" }
+            debug { "Reading meta info characteristic: $metaKey" }
         }
     }
 
