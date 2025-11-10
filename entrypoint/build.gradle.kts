@@ -1,3 +1,7 @@
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
+import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
+import org.jetbrains.kotlin.konan.target.Family
+
 plugins {
     id("flipper.multiplatform")
     id("flipper.anvil-multiplatform")
@@ -10,6 +14,36 @@ plugins {
 }
 
 kotlin {
+    val xcFramework = XCFramework("BusyLibKMP")
+    targets
+        .filterIsInstance<KotlinNativeTarget>()
+        .filter { it.konanTarget.family == Family.IOS }
+        .forEach { target ->
+            target.binaries.framework {
+                baseName = "BusyLibKMP"
+                isStatic = true
+
+                binaryOption("bundleId", "com.flipperdevices.busylib")
+
+                export(projects.components.principal.api)
+                export(projects.components.cloud.api)
+                export(projects.components.bridge.config.api)
+                export(projects.components.bridge.device.common.api)
+                export(projects.components.bridge.feature.battery.api)
+                export(projects.components.bridge.feature.firmwareUpdate.api)
+                export(projects.components.bridge.feature.info.api)
+                export(projects.components.bridge.feature.link.api)
+                export(projects.components.bridge.feature.provider.api)
+                export(projects.components.bridge.feature.screenStreaming.api)
+                export(projects.components.bridge.feature.wifi.api)
+                export(projects.components.bridge.orchestrator.api)
+                export(projects.components.bridge.service.api)
+                export(projects.components.bridge.transport.ble.api)
+
+                xcFramework.add(this)
+            }
+        }
+
     sourceSets.commonMain.dependencies {
         implementation(projects.components.di)
         implementation(projects.components.ktx)
