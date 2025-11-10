@@ -6,25 +6,23 @@ import android.content.pm.PackageManager
 import com.flipperdevices.bridge.connection.transport.ble.api.BleDeviceConnectionApi
 import com.flipperdevices.bridge.connection.transport.ble.api.FBleApi
 import com.flipperdevices.bridge.connection.transport.ble.api.FBleDeviceConnectionConfig
-import com.flipperdevices.bridge.connection.transport.common.api.DeviceConnectionApi
+import com.flipperdevices.bridge.connection.transport.ble.common.BleConstants
+import com.flipperdevices.bridge.connection.transport.ble.common.exception.BLEConnectionPermissionException
+import com.flipperdevices.bridge.connection.transport.ble.common.exception.FailedConnectToDeviceException
+import com.flipperdevices.bridge.connection.transport.ble.common.exception.NoFoundDeviceException
 import com.flipperdevices.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import com.flipperdevices.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import com.flipperdevices.bridge.connection.transport.mock.impl.api.FBleApiImpl
 import com.flipperdevices.bridge.connection.transport.mock.impl.api.http.serial.SerialApiFactory
-import com.flipperdevices.bridge.connection.transport.ble.common.exception.BLEConnectionPermissionException
-import com.flipperdevices.bridge.connection.transport.ble.common.exception.FailedConnectToDeviceException
-import com.flipperdevices.bridge.connection.transport.ble.common.exception.NoFoundDeviceException
-import com.flipperdevices.bridge.connection.transport.ble.common.BleConstants
 import com.flipperdevices.busylib.core.di.BusyLibGraph
 import com.flipperdevices.core.busylib.log.LogTagProvider
 import com.flipperdevices.core.busylib.log.info
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
-import me.tatarka.inject.annotations.Inject
-
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.withTimeout
+import me.tatarka.inject.annotations.Inject
 import no.nordicsemi.kotlin.ble.client.android.CentralManager
 import no.nordicsemi.kotlin.ble.core.Phy
+import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 
 @Inject
 @ContributesBinding(BusyLibGraph::class, BleDeviceConnectionApi::class)

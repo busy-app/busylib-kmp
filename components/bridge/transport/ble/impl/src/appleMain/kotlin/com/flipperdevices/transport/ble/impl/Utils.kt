@@ -7,8 +7,6 @@ import kotlinx.cinterop.usePinned
 import platform.Foundation.NSData
 import platform.Foundation.create
 import platform.Foundation.getBytes
-import kotlin.time.Duration.Companion.seconds
-
 
 @OptIn(ExperimentalForeignApi::class)
 fun NSData.toByteArray(): ByteArray = ByteArray(length.toInt()).apply {

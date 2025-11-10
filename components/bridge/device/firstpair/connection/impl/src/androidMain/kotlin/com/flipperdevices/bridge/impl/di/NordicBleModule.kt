@@ -6,12 +6,12 @@ import android.content.Context
 import android.os.Build
 import androidx.core.content.ContextCompat
 import com.flipperdevices.busylib.core.di.BusyLibGraph
-import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 import kotlinx.coroutines.CoroutineScope
 import me.tatarka.inject.annotations.Provides
 import no.nordicsemi.kotlin.ble.client.android.CentralManager
 import no.nordicsemi.kotlin.ble.client.android.native
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
+import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 
 @ContributesTo(BusyLibGraph::class)
 interface NordicBleModule {

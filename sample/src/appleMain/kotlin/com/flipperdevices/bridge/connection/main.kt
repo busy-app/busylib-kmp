@@ -1,3 +1,5 @@
+@file:Suppress("Filename")
+
 package com.flipperdevices.bridge.connection
 
 import androidx.compose.foundation.background

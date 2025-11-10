@@ -6,7 +6,6 @@ import com.flipperdevices.bridge.connection.transport.ble.api.FBleDeviceConnecti
 import com.flipperdevices.bridge.connection.transport.ble.common.BleConstants
 import com.flipperdevices.bridge.connection.transport.ble.common.exception.FailedConnectToDeviceException
 import com.flipperdevices.bridge.connection.transport.ble.common.exception.NoFoundDeviceException
-import com.flipperdevices.bridge.connection.transport.common.api.DeviceConnectionApi
 import com.flipperdevices.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import com.flipperdevices.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import com.flipperdevices.busylib.core.di.BusyLibGraph
@@ -27,7 +26,7 @@ import kotlin.time.Duration
 
 @Inject
 @ContributesBinding(BusyLibGraph::class, BleDeviceConnectionApi::class)
-class BLEDeviceConnectionApiImpl() : BleDeviceConnectionApi, LogTagProvider {
+class BLEDeviceConnectionApiImpl : BleDeviceConnectionApi, LogTagProvider {
     override val TAG = "BleDeviceConnectionApi"
 
     private val centralManager by lazy {

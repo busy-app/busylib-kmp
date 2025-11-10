@@ -4,8 +4,8 @@ import com.flipperdevices.bridge.connection.transport.ble.api.FBleDeviceConnecti
 import com.flipperdevices.bridge.connection.transport.ble.api.FBleDeviceSerialConfig
 import com.flipperdevices.bridge.connection.transport.ble.api.GATTCharacteristicAddress
 import com.flipperdevices.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
-import me.tatarka.inject.annotations.Inject
 import kotlinx.collections.immutable.persistentMapOf
+import me.tatarka.inject.annotations.Inject
 import kotlin.uuid.Uuid
 
 private val INFORMATION_SERVICE_UUID = Uuid.parse("0000180a-0000-1000-8000-00805f9b34fb")

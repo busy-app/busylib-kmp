@@ -16,7 +16,7 @@ import platform.AccessorySetupKit.ASAccessorySession
 import platform.Foundation.NSUUID
 import platform.darwin.dispatch_get_main_queue
 
-class iOSSearchViewModel(
+class IOSSearchViewModel(
     private val persistedStorage: FDevicePersistedStorage
 ) : ConnectionSearchViewModel(persistedStorage), LogTagProvider {
     override val TAG = "iOSSearchViewModel"
