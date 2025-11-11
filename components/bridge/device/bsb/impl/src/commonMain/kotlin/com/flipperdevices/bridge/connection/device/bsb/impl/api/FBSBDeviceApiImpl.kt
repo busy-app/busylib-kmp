@@ -7,7 +7,6 @@ import com.flipperdevices.bridge.connection.feature.common.api.FDeviceFeatureApi
 import com.flipperdevices.bridge.connection.feature.common.api.FOnDeviceReadyFeatureApi
 import com.flipperdevices.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import com.flipperdevices.bridge.connection.transport.common.api.FConnectedDeviceApi
-import com.flipperdevices.busylib.core.buildkonfig.BuildKonfigBusyBle
 import com.flipperdevices.busylib.core.di.BusyLibGraph
 import com.flipperdevices.core.busylib.log.LogTagProvider
 import com.flipperdevices.core.busylib.log.error
@@ -20,6 +19,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
+import net.flipper.busylib.kmp.components.buildkonfig.BuildKonfig
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 import kotlin.reflect.KClass
 
@@ -36,7 +36,7 @@ class FBSBDeviceApiImpl(
     private val mutex = Mutex()
 
     init {
-        if (BuildKonfigBusyBle.CRASH_APP_ON_FAILED_CHECKS) {
+        if (BuildKonfig.CRASH_APP_ON_FAILED_CHECKS) {
             FDeviceFeature.entries.forEach { key ->
                 checkNotNull(factories[key]) { "Not found factory for $key" }
             }

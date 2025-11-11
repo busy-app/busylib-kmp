@@ -1,11 +1,18 @@
 name: "Release version"
 on:
   workflow_call:
+    inputs:
+      VERSION_NAME:
+        required: true
+        type: string
+      VERSION_CODE:
+        required: true
+        type: number
+        default: 1
+      FLAVOR_TYPE:
+        required: true
+        type: string
     secrets:
-      ORG_GRADLE_PROJECT_MAVENCENTRALUSERNAME:
-        required: true
-      ORG_GRADLE_PROJECT_MAVENCENTRALPASSWORD:
-        required: true
       ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEY:
         required: true
       ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEYID:
@@ -14,15 +21,14 @@ on:
         required: true
 
 jobs:
-  publish:
-    name: "Publish on MavenCentral"
+  publish_internal:
+    name: "Publish on Internal Maven"
     runs-on: [ self-hosted, macOS ]
     env:
-      ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.ORG_GRADLE_PROJECT_MAVENCENTRALUSERNAME }}
-      ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.ORG_GRADLE_PROJECT_MAVENCENTRALPASSWORD }}
       ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEY }}
       ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEYID }}
       ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEYPASSWORD }}
+      ORG_GRADLE_PROJECT_current_flavor_type: ${{ inputs.FLAVOR_TYPE }}
     steps:
       - uses: actions/checkout@v4
       - name: Set up JDK 1.17
@@ -32,7 +38,11 @@ jobs:
           java-version: '17'
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
+      - name: Replace gradle properties with sed
+        run: |
+          sed -i -e 's/^makeevrserg.project.version.string=.*$/makeevrserg.project.version.string=${{ inputs.VERSION_NAME }}/g' gradle.properties
+          sed -i -e 's/^makeevrserg.project.version.code=.*$/makeevrserg.project.version.code=${{ inputs.VERSION_CODE }}/g' gradle.properties
       - name: Run publish
         uses: gradle/gradle-build-action@v3
         with:
-          arguments: publishAndReleaseToMavenCentral --stacktrace
+          arguments: publishToMavenLocal --stacktrace

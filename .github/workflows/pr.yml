@@ -31,13 +31,14 @@ jobs:
   tests_validation:
     needs: gradle_validation
     uses: ./.github/workflows/call-tests-validation.yml
-  publish_validation:
-    name: Check publish
+  publish_internal:
+    name: Publish to internal maven
     needs: gradle_validation
-    uses: ./.github/workflows/call-publish-validation.yml
+    uses: ./.github/workflows/call-release-internal.yml
     secrets:
-      ORG_GRADLE_PROJECT_MAVENCENTRALUSERNAME: ${{ secrets.ORG_GRADLE_PROJECT_MAVENCENTRALUSERNAME }}
-      ORG_GRADLE_PROJECT_MAVENCENTRALPASSWORD: ${{ secrets.ORG_GRADLE_PROJECT_MAVENCENTRALPASSWORD }}
       ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEY: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEY }}
       ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEYID: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEYID }}
       ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEYPASSWORD: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEYPASSWORD }}
+    with:
+      VERSION_NAME: pr-${{ github.event.pull_request.number }}
+      FLAVOR_TYPE: DEBUG

@@ -5,16 +5,46 @@ on:
       - main
   workflow_dispatch:
 jobs:
+  # ${{ needs.build_number.outputs.BUILD_NUMBER }}
+  # ${{ needs.build_number.outputs.MAJOR_VERSION }}
+  build_number:
+    name: "Create build number"
+    uses: ./.github/workflows/call-build-number.yml
   gradle_validation:
     name: Validate gradle wrapper
     uses: ./.github/workflows/call-gradle-wrapper-validation.yml
-  release:
-    name: Release
-    needs: gradle_validation
-    uses: ./.github/workflows/call-release.yml
+  release-central:
+    name: Release Central
+    needs: [ gradle_validation, build_number ]
+    uses: ./.github/workflows/call-release-central.yml
     secrets:
       ORG_GRADLE_PROJECT_MAVENCENTRALUSERNAME: ${{ secrets.ORG_GRADLE_PROJECT_MAVENCENTRALUSERNAME }}
       ORG_GRADLE_PROJECT_MAVENCENTRALPASSWORD: ${{ secrets.ORG_GRADLE_PROJECT_MAVENCENTRALPASSWORD }}
       ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEY: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEY }}
       ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEYID: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEYID }}
       ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEYPASSWORD: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEYPASSWORD }}
+    with:
+      VERSION_NAME: ${{ needs.build_number.outputs.MAJOR_VERSION }}.${{ needs.build_number.outputs.BUILD_NUMBER }}
+      FLAVOR_TYPE: PROD
+  release-internal:
+    name: Release Internal
+    needs: [ gradle_validation, build_number ]
+    uses: ./.github/workflows/call-release-internal.yml
+    secrets:
+      ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEY: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEY }}
+      ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEYID: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEYID }}
+      ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEYPASSWORD: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEYPASSWORD }}
+    with:
+      VERSION_NAME: ${{ needs.build_number.outputs.MAJOR_VERSION }}.${{ needs.build_number.outputs.BUILD_NUMBER }}
+      FLAVOR_TYPE: PROD
+  release-internal-debug:
+    name: Release Internal
+    needs: [ gradle_validation, build_number ]
+    uses: ./.github/workflows/call-release-internal.yml
+    secrets:
+      ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEY: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEY }}
+      ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEYID: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEYID }}
+      ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEYPASSWORD: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEYPASSWORD }}
+    with:
+      VERSION_NAME: ${{ needs.build_number.outputs.MAJOR_VERSION }}.${{ needs.build_number.outputs.BUILD_NUMBER }}-debug
+      FLAVOR_TYPE: DEBUG
