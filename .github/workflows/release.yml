@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - main
+      - feature/new_ci
   workflow_dispatch:
 jobs:
   # ${{ needs.build_number.outputs.BUILD_NUMBER }}
