@@ -15,7 +15,6 @@ tasks.withType<Detekt>().configureEach {
     enabled = false
 }
 
-
 buildConfig {
     className("BuildKonfig")
     packageName("${kotlin.android.namespace}")

@@ -10,8 +10,9 @@ class SecretPropertyValue(
 ) : PropertyValue {
     override fun getValue(): Result<String> {
         val envValue = System.getenv(key)?.toString()
-        if (envValue != null) return Result.success(envValue)
-        else {
+        if (envValue != null) {
+            return Result.success(envValue)
+        } else {
             project.logger.error("Key $key is not found in Environment. Getting from local.properties")
         }
         val secretPropsFile = project.file("local.properties")

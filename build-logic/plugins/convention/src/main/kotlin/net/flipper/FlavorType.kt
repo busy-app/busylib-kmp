@@ -1,6 +1,5 @@
 package net.flipper
 
-
 /**
  * This enum is used to define new kotlin-generated BuildKonfig
  *

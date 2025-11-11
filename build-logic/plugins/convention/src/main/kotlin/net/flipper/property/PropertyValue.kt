@@ -1,8 +1,6 @@
 package net.flipper.property
 
-import net.flipper.property.CachedPropertyValue
 import org.gradle.api.plugins.ExtensionContainer
-
 
 interface PropertyValue {
     val key: String

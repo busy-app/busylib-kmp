@@ -2,7 +2,6 @@ package com.flipperdevices.core.busylib.log
 
 import net.flipper.busylib.kmp.components.buildkonfig.BuildKonfig
 
-
 @Suppress("PropertyName")
 interface LogTagProvider {
     @Suppress("VariableNaming")

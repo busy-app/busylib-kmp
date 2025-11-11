@@ -1,6 +1,5 @@
 package net.flipper.property
 
-import net.flipper.property.PropertyValue
 import net.flipper.property.exception.PropertyValueNotPresentException
 import net.flipper.property.model.EmptyValue
 import org.gradle.api.plugins.ExtensionContainer
@@ -20,6 +19,5 @@ class CachedPropertyValue(
         return propertyValue.getValue()
             .onSuccess { value -> extensionContainer.add(key, value) }
             .onFailure { extensionContainer.add(key, EmptyValue) }
-
     }
 }
