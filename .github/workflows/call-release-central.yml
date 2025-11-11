@@ -1,6 +1,16 @@
-name: "Validate local publish"
+name: "Release version"
 on:
   workflow_call:
+    inputs:
+      VERSION_NAME:
+        required: true
+        type: string
+      VERSION_CODE:
+        required: true
+        type: string
+      FLAVOR_TYPE:
+        required: true
+        type: string
     secrets:
       ORG_GRADLE_PROJECT_MAVENCENTRALUSERNAME:
         required: true
@@ -14,8 +24,8 @@ on:
         required: true
 
 jobs:
-  validate_publish:
-    name: "Validate local publish"
+  publish_central:
+    name: "Publish on MavenCentral"
     runs-on: [ self-hosted, macOS ]
     env:
       ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.ORG_GRADLE_PROJECT_MAVENCENTRALUSERNAME }}
@@ -23,6 +33,7 @@ jobs:
       ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEY }}
       ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEYID }}
       ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEYPASSWORD }}
+      ORG_GRADLE_PROJECT_current_flavor_type: ${{ inputs.FLAVOR_TYPE }}
     steps:
       - uses: actions/checkout@v4
       - name: Set up JDK 1.17
@@ -32,7 +43,11 @@ jobs:
           java-version: '17'
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
+      - name: Replace gradle properties with sed
+        run: |
+          sed -i -e 's/^makeevrserg.project.version.string=.*$/makeevrserg.project.version.string=${{ inputs.VERSION_NAME }}/g' gradle.properties
+          sed -i -e 's/^makeevrserg.project.version.code=.*$/makeevrserg.project.version.code=${{ inputs.VERSION_CODE }}/g' gradle.properties
       - name: Run publish
         uses: gradle/gradle-build-action@v3
         with:
-          arguments: publishToMavenLocal --stacktrace
+          arguments: publishAndReleaseToMavenCentral --stacktrace

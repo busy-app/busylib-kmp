@@ -1,0 +1,39 @@
+name: Create build number
+on:
+  workflow_call:
+    outputs:
+      BUILD_NUMBER:
+        description: "Auto-incremented build number"
+        value: ${{ jobs.build_number.outputs.BUILD_NUMBER }}
+      MAJOR_VERSION:
+        description: "Major version from gradle.properties"
+        value: ${{ jobs.build_number.outputs.MAJOR_VERSION }}
+jobs:
+  # ${{ jobs.build_number.outputs.BUILD_NUMBER }}
+  # ${{ jobs.build_number.outputs.MAJOR_VERSION }}
+  build_number:
+    name: Generate build number
+    runs-on: [ self-hosted, Linux ]
+    outputs:
+      BUILD_NUMBER: ${{ steps.buildnumber.outputs.build_number }}
+      MAJOR_VERSION: ${{ steps.properties.outputs.flipper-major_version }}
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v4
+      # ${{ steps.buildnumber.outputs.build_number }}
+      - name: Generate build number
+        id: buildnumber
+        uses: onyxmueller/build-tag-number@4a0c81c9af350d967032d49204c83c38e6b0c8e4 # v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      # ${{ steps.properties.outputs.flipper-major_version }}
+      - name: "Get major version"
+        uses: christian-draeger/read-properties@908f99d3334be3802ec7cb528395a69d19914e7b # 1.1.1
+        id: properties
+        with:
+          path: './gradle.properties'
+          properties: 'flipper.major_version'
+      - name: 'Print build number'
+        id: buildnumber_print
+        run: |
+          echo "BUILD_NUMBER=${{ steps.buildnumber.outputs.build_number }}"
+          echo "MAJOR_VERSION=${{ steps.properties.outputs.flipper-major_version }}"
