@@ -1,0 +1,54 @@
+package net.flipper.bridge.connection.feature.rpc.impl.exposed
+
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.first
+import me.tatarka.inject.annotations.Inject
+import me.tatarka.inject.annotations.IntoMap
+import me.tatarka.inject.annotations.Provides
+import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
+import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
+import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
+import net.flipper.bridge.connection.feature.rpc.api.client.FRpcClientModeApi
+import net.flipper.bridge.connection.feature.rpc.api.critical.FRpcCriticalFeatureApi
+import net.flipper.bridge.connection.feature.rpc.impl.util.getHttpClient
+import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
+import net.flipper.bridge.connection.transport.common.api.serial.FHTTPDeviceApi
+import net.flipper.busylib.core.di.BusyLibGraph
+import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
+
+@Inject
+class FRpcFeatureApiFactoryImpl(
+    private val fRpcFeatureFactory: FRpcFeatureApiImpl.InternalFactory,
+) : FDeviceFeatureApi.Factory {
+    override suspend fun invoke(
+        unsafeFeatureDeviceApi: FUnsafeDeviceFeatureApi,
+        scope: CoroutineScope,
+        connectedDevice: FConnectedDeviceApi
+    ): FDeviceFeatureApi? {
+        // Wait for authorization
+        unsafeFeatureDeviceApi
+            .getUnsafe(FRpcCriticalFeatureApi::class)
+            ?.await()
+            ?.clientModeApi
+            ?.httpClientModeFlow
+            ?.first { mode -> mode == FRpcClientModeApi.HttpClientMode.DEFAULT }
+            ?: return null
+
+        val httpClient = connectedDevice as? FHTTPDeviceApi ?: return null
+
+        return fRpcFeatureFactory.invoke(
+            client = getHttpClient(httpClient.getDeviceHttpEngine())
+        )
+    }
+}
+
+@ContributesTo(BusyLibGraph::class)
+interface FRpcFeatureApiComponent {
+    @Provides
+    @IntoMap
+    fun provideFRpcFeatureApiFactory(
+        fRpcFeatureApiFactory: FRpcFeatureApiFactoryImpl
+    ): Pair<FDeviceFeature, FDeviceFeatureApi.Factory> {
+        return FDeviceFeature.RPC_EXPOSED to fRpcFeatureApiFactory
+    }
+}
