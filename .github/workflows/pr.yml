@@ -41,4 +41,5 @@ jobs:
       ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEYPASSWORD: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEYPASSWORD }}
     with:
       VERSION_NAME: pr-${{ github.event.pull_request.number }}
+      VERSION_CODE: 1
       FLAVOR_TYPE: DEBUG
