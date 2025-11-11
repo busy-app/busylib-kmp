@@ -27,7 +27,6 @@ jobs:
   publish_central:
     name: "Publish on MavenCentral"
     runs-on: [ self-hosted, macOS ]
-    if: ${{ inputs.IS_UPLOAD_TO_MAVEN_CENTRAL }}
     env:
       ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.ORG_GRADLE_PROJECT_MAVENCENTRALUSERNAME }}
       ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.ORG_GRADLE_PROJECT_MAVENCENTRALPASSWORD }}
