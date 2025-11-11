@@ -15,7 +15,6 @@ import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.common.api.FOnDeviceReadyFeatureApi
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
-import net.flipper.busylib.core.buildkonfig.BuildKonfigBusyBle
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
