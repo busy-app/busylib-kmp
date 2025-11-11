@@ -31,6 +31,6 @@ sealed interface FDeviceBaseModel {
     @Serializable
     data class FDeviceBSBModelMock(
         override val uniqueId: String = Uuid.random().toString(),
-        override val humanReadableName: String = "BUSY Bar"
+        override val humanReadableName: String = "BUSY Bar Mock"
     ) : FDeviceBaseModel
 }

@@ -17,6 +17,7 @@ plugins {
     id("ru.astrainteractive.gradleplugin.android.core")
     id("ru.astrainteractive.gradleplugin.android.apk.name")
     id("ru.astrainteractive.gradleplugin.android.namespace")
+    alias(libs.plugins.skie)
 }
 
 kotlin {
@@ -32,8 +33,8 @@ kotlin {
     targets
         .filterIsInstance<KotlinNativeTarget>()
         .filter { it.konanTarget.family == Family.IOS || it.konanTarget.family == Family.OSX }
-        .forEach {
-            it.binaries.framework {
+        .forEach { target ->
+            target.binaries.framework {
                 baseName = "BridgeConnection"
                 isStatic = true
 

@@ -10,7 +10,6 @@
 	</array>
 	<key>NSAccessorySetupBluetoothServices</key>
 	<array>
-		<string>3082</string>
 		<string>308A</string>
 	</array>
 	<key>NSAccessorySetupKitSupports</key>

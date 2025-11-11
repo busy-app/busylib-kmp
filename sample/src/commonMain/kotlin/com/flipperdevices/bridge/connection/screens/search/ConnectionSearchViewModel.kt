@@ -7,10 +7,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 abstract class ConnectionSearchViewModel(
-    private val persistedStorage: FDevicePersistedStorage
+    val persistedStorage: FDevicePersistedStorage
 ) : DecomposeViewModel() {
     abstract fun getDevicesFlow(): StateFlow<ImmutableList<ConnectionSearchItem>>
-    fun onDeviceClick(searchItem: ConnectionSearchItem) {
+    open fun onDeviceClick(searchItem: ConnectionSearchItem) {
         viewModelScope.launch {
             if (searchItem.isAdded) {
                 persistedStorage.removeDevice(searchItem.deviceModel.uniqueId)

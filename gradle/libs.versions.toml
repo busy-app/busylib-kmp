@@ -30,6 +30,7 @@ ble = "2.0.0-alpha10"
 mockk = "1.14.6" # https://mockk.io/
 vaniktech = "0.34.0" #https://github.com/vanniktech/gradle-maven-publish-plugin
 buildkonfig = "5.7.1"
+skie = "0.10.6" # https://github.com/touchlab/SKIE/releases
 
 [libraries]
 vaniktech = { module = "com.vanniktech:gradle-maven-publish-plugin", version.ref = "vaniktech" }
@@ -120,3 +121,4 @@ klibs-gradle-android-apk-name = { id = "ru.astrainteractive.gradleplugin.android
 klibs-gradle-android-namespace = { id = "ru.astrainteractive.gradleplugin.android.namespace", version.ref = "klibs-gradleplugin" }
 
 buildkonfig = { id = "com.github.gmazzo.buildconfig", version.ref = "buildkonfig" }
+skie = { id = "co.touchlab.skie", version.ref = "skie" }

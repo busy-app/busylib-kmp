@@ -66,6 +66,7 @@ private class FCentralManagerDelegate(
 
 class FCentralManager(
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.Main),
+    val manager: CBCentralManager
 ) : FCentralManagerApi, LogTagProvider {
 
     override val TAG: String
@@ -81,8 +82,6 @@ class FCentralManager(
 
     private val _bleStatusStream = MutableStateFlow<FBLEStatus>(FBLEStatus.UNKNOWN)
     override val bleStatusStream: StateFlow<FBLEStatus> = _bleStatusStream.asStateFlow()
-
-    private val manager: CBCentralManager = CBCentralManager()
 
     private val delegate = FCentralManagerDelegate(
         onStateUpdate = { state -> scope.launch { updateBLEStatus(state) } },
