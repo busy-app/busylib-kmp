@@ -23,7 +23,7 @@ kotlin {
                 baseName = "BusyLibKMP"
                 isStatic = true
 
-                binaryOption("bundleId", "com.flipperdevices.busylib")
+                binaryOption("bundleId", "net.flipper.busylib")
 
                 export(projects.components.principal.api)
                 export(projects.components.cloud.api)

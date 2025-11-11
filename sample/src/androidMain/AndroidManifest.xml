@@ -2,11 +2,11 @@
           xmlns:tools="http://schemas.android.com/tools">
 
     <application
-            android:name="com.flipperdevices.bridge.connection.ConnectionTestApplication">
+            android:name="net.flipper.bridge.connection.ConnectionTestApplication">
         <activity
                 android:exported="true"
                 android:label="@string/app_name"
-                android:name="com.flipperdevices.bridge.connection.ConnectionTestActivity"
+                android:name="net.flipper.bridge.connection.ConnectionTestActivity"
                 android:windowSoftInputMode="adjustResize"
                 android:theme="@style/Theme.AppCompat.DayNight.NoActionBar"
                 tools:node="merge">

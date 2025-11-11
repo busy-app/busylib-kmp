@@ -126,7 +126,7 @@ android {
 
 compose.desktop {
     application {
-        mainClass = "com.flipperdevices.bridge.connection.AppKt"
+        mainClass = "net.flipper.bridge.connection.AppKt"
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
