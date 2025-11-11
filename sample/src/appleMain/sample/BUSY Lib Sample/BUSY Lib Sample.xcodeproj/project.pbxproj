@@ -10,22 +10,9 @@
 		657518372EBE44C1009281D3 /* BUSY Lib Sample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "BUSY Lib Sample.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		65EC6FC62EC0F795005713FC /* Exceptions for "BUSY Lib Sample" folder in "BUSY Lib Sample" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				"BUSY-Lib-Sample-Info.plist",
-			);
-			target = 657518362EBE44C1009281D3 /* BUSY Lib Sample */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		657518392EBE44C1009281D3 /* BUSY Lib Sample */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				65EC6FC62EC0F795005713FC /* Exceptions for "BUSY Lib Sample" folder in "BUSY Lib Sample" target */,
-			);
 			path = "BUSY Lib Sample";
 			sourceTree = "<group>";
 		};

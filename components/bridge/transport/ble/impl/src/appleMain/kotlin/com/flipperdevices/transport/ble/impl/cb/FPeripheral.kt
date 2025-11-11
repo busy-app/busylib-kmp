@@ -10,7 +10,6 @@ import com.flipperdevices.core.busylib.log.warn
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.ObjCSignatureOverride
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -134,9 +133,6 @@ class FPeripheral(
 
     private var serialWrite: CBCharacteristic? = null
 
-    @Suppress("UnusedPrivateProperty")
-    private var statusJob: Job? = null
-
     private val delegate = FPeripheralDelegate(this, scope)
 
     init {
@@ -238,19 +234,15 @@ class FPeripheral(
         service: CBService,
         characteristics: List<CBCharacteristic>
     ) {
-        info { "Discovered ${characteristics.size} characteristic(s) under ${service.UUID}" }
+        val serviceUUID = service.UUID.toKotlinUUID()
+        info { "Service $service UUID ${service.UUID} Kotlin $serviceUUID" }
 
-        val serviceUuid = service.UUID.UUIDString.lowercase()
-
-        // Check if this is the serial service
-        if (serviceUuid == config.serialConfig.serialServiceUuid.toString().lowercase()) {
+        if (serviceUUID == config.serialConfig.serialServiceUuid) {
             val serialRead = characteristics.firstOrNull {
-                it.UUID.UUIDString.lowercase() == config.serialConfig.rxServiceCharUuid.toString()
-                    .lowercase()
+                it.UUID.toKotlinUUID() == config.serialConfig.rxServiceCharUuid
             }
             val serialWrite = characteristics.firstOrNull {
-                it.UUID.UUIDString.lowercase() == config.serialConfig.txServiceCharUuid.toString()
-                    .lowercase()
+                it.UUID.toKotlinUUID() == config.serialConfig.txServiceCharUuid
             }
 
             if (serialRead != null && serialWrite != null) {
@@ -263,21 +255,16 @@ class FPeripheral(
             return
         }
 
-        // Check for meta info characteristics from config
-        val serviceAddress = kotlin.uuid.Uuid.parse(serviceUuid)
-
         characteristics.forEach { characteristic ->
-            val charUuid = characteristic.UUID.UUIDString.lowercase()
-            val charAddress = kotlin.uuid.Uuid.parse(charUuid)
+            val characteristicUUID = characteristic.UUID.toKotlinUUID()
+            info { "Characteristic UUID: $characteristicUUID" }
 
-            // Find if this characteristic is in our meta info map
             val metaKey = config.metaInfoGattMap.entries.firstOrNull { (_, address) ->
-                address.serviceAddress == serviceAddress &&
-                    address.characteristicAddress == charAddress
+                address.characteristicAddress == characteristicUUID
             }?.key
 
-            debug { "Found meta info characteristic: $charUuid for key=$metaKey" }
             if (metaKey == null) {
+                warn { "Unknown characteristic discovered: $characteristicUUID" }
                 return@forEach
             }
 
@@ -295,10 +282,10 @@ class FPeripheral(
     }
 
     internal suspend fun didUpdateValue(characteristic: CBCharacteristic, error: NSError?) {
-        val uuid = characteristic.UUID.UUIDString.lowercase()
+        val characteristicUUID = characteristic.UUID.toKotlinUUID()
         val data = characteristic.value
 
-        info { "Received value for $uuid" }
+        info { "Received value for $characteristicUUID" }
 
         if (error != null) {
             onError(error)
@@ -306,16 +293,23 @@ class FPeripheral(
         }
 
         // Check if this is serial read data
-        if (uuid == config.serialConfig.rxServiceCharUuid.toString().lowercase()) {
+        if (characteristicUUID == config.serialConfig.rxServiceCharUuid) {
             if (data != null) {
                 _rxDataStream.emit(data)
                 debug { "RX data chunk bytes=${data.length} id=${identifier.UUIDString}" }
+            } else {
+                warn { "RX data is null id=${identifier.UUIDString}" }
             }
             return
         }
 
-        val metaKey = fromCBUUID(characteristic.UUID, config)
-        if (metaKey != null) {
+        val metaKey = config.metaInfoGattMap.entries.firstOrNull { (_, address) ->
+            address.characteristicAddress == characteristicUUID
+        }?.key
+
+        if (metaKey == null) {
+            warn { "Unknown characteristic updated: $characteristicUUID" }
+        } else {
             _stateStream.emit(FPeripheralState.CONNECTED)
             updateMetaInfo(key = metaKey, data = data)
         }
@@ -343,13 +337,54 @@ class FPeripheral(
     }
 }
 
-private fun fromCBUUID(
-    uuid: CBUUID,
-    config: FBleDeviceConnectionConfig
-): TransportMetaInfoKey? {
-    val uuidString = uuid.UUIDString.lowercase()
+private fun CBUUID.toKotlinUUID(): kotlin.uuid.Uuid {
+    /**
+     * Convert short-form Bluetooth SIG UUIDs to full 128-bit format.
+     * Standard Bluetooth UUIDs use the base: 0000XXXX-0000-1000-8000-00805F9B34FB
+     * where XXXX is the short form (16-bit or 32-bit).
+     */
+    fun normalizeUuid(uuidString: String): String {
+        val lowercase = uuidString.lowercase()
 
-    return config.metaInfoGattMap.entries.firstOrNull { (_, address) ->
-        address.characteristicAddress.toString().lowercase() == uuidString
-    }?.key
+        // If it already has dashes and is 36 characters, it's already a full UUID
+        if (lowercase.contains("-") && lowercase.length == 36) {
+            return lowercase
+        }
+
+        // Remove dashes for processing
+        val withoutDashes = lowercase.replace("-", "")
+
+        // Already a full UUID without dashes (32 hex chars)
+        if (withoutDashes.length == 32) {
+            // Format as standard UUID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+            return "${withoutDashes.substring(0, 8)}-${withoutDashes.substring(8, 12)}-" +
+                "${withoutDashes.substring(12, 16)}-${withoutDashes.substring(16, 20)}-" +
+                withoutDashes.substring(20, 32)
+        }
+
+        // Short form UUID (4 or 8 characters) - convert to full Bluetooth SIG UUID
+        if (withoutDashes.length == 4 || withoutDashes.length == 8) {
+            val paddedUuid = withoutDashes.padStart(4, '0')
+            return "0000$paddedUuid-0000-1000-8000-00805f9b34fb"
+        }
+
+        // Unknown format - try to parse as hex and convert to Bluetooth SIG format
+        // This handles malformed UUIDs by extracting just the service ID part
+        warn { "Unexpected UUID format: $uuidString (length=${withoutDashes.length}) " }
+
+        // Try to extract first 4 hex characters as the service ID
+        val hexDigits = withoutDashes.filter { it in "0123456789abcdef" }
+        val serviceId = when {
+            hexDigits.length >= 4 -> hexDigits.substring(0, 4).padStart(4, '0')
+            else -> {
+                error { "Unable to normalize UUID: $uuidString" }
+                return lowercase // Return as-is as last resort
+            }
+        }
+
+        return "0000$serviceId-0000-1000-8000-00805f9b34fb"
+    }
+
+    val uuid = normalizeUuid(this.UUIDString)
+    return kotlin.uuid.Uuid.parse(uuid)
 }
