@@ -6,8 +6,8 @@ on:
         required: true
         type: string
       VERSION_CODE:
-        required: true
-        type: number
+        required: false
+        type: string
         default: 1
       FLAVOR_TYPE:
         required: true
