@@ -9,7 +9,7 @@ plugins {
 
 kotlin {
     sourceSets.commonMain.dependencies {
-        implementation(projects.components.core.ktx)
+        implementation(projects.components.core.wrapper)
 
         implementation(libs.kotlin.coroutines)
         implementation(libs.kotlin.serialization.json)

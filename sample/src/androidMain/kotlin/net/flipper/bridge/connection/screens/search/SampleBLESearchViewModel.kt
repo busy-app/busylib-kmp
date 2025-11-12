@@ -15,8 +15,8 @@ import net.flipper.bridge.api.scanner.FlipperScanner
 import net.flipper.bridge.api.utils.Constants.UNKNOWN_NAME
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.config.api.model.FDeviceBaseModel
-import net.flipper.core.busylib.ktx.common.WrappedStateFlow
-import net.flipper.core.busylib.ktx.common.wrap
+import net.flipper.busylib.core.wrapper.WrappedStateFlow
+import net.flipper.busylib.core.wrapper.wrap
 
 @SuppressLint("MissingPermission")
 class SampleBLESearchViewModel(

@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.merge
 import net.flipper.bridge.connection.transport.ble.api.GATTCharacteristicAddress
 import net.flipper.bridge.connection.transport.common.api.meta.FTransportMetaInfoApi
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
-import net.flipper.core.busylib.ktx.common.WrappedStateFlow
+import net.flipper.busylib.core.wrapper.WrappedStateFlow
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
 import net.flipper.core.busylib.log.warn

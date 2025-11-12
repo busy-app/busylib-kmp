@@ -48,6 +48,7 @@ kotlin {
         implementation(projects.components.core.di)
         implementation(projects.components.core.ktx)
         implementation(projects.components.core.log)
+        api(projects.components.core.wrapper)
         api(projects.components.principal.api)
         api(projects.components.cloud.api)
 

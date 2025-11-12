@@ -11,9 +11,9 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
-import net.flipper.core.busylib.ktx.common.WrappedSharedFlow
-import net.flipper.core.busylib.ktx.common.WrappedStateFlow
-import net.flipper.core.busylib.ktx.common.wrap
+import net.flipper.busylib.core.wrapper.WrappedSharedFlow
+import net.flipper.busylib.core.wrapper.WrappedStateFlow
+import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.debug
 import net.flipper.core.busylib.log.error

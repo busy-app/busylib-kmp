@@ -1,4 +1,4 @@
-package net.flipper.core.busylib.ktx.common
+package net.flipper.busylib.core.wrapper
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
