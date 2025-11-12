@@ -39,6 +39,7 @@ kotlin {
                 .replace(":", "_")
                 .replace("-", "_")
                 .replace(".", "_")
+                .trim('_', '-', '.', ' ')
         )
         optIn.addAll(optIns)
     }
@@ -53,6 +54,7 @@ afterEvaluate {
                 .replace(":components:", "")
                 .replace(":", "-")
                 .replace(".", "-")
+                .trim('_', '-', '.', ' ')
             coordinates(null, artifactId, null)
         }
     }
