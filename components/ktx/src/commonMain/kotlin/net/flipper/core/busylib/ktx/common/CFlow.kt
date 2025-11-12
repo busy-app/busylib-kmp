@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
 @OptIn(ExperimentalForInheritanceCoroutinesApi::class)
-class WrappedStateFlow<T : Any>(private val origin: StateFlow<T>) : StateFlow<T> by origin {
+class WrappedStateFlow<T : Any?>(private val origin: StateFlow<T>) : StateFlow<T> by origin {
     public fun watch(block: (T) -> Unit): Closeable = watchFlow(block)
 }
 
@@ -20,6 +20,9 @@ class WrappedStateFlow<T : Any>(private val origin: StateFlow<T>) : StateFlow<T>
 class WrappedSharedFlow<T : Any?>(private val origin: SharedFlow<T>) : SharedFlow<T> by origin {
     fun watch(block: (T) -> Unit): Closeable = watchFlow(block)
 }
+
+fun <T : Any?> StateFlow<T>.wrap(): WrappedStateFlow<T> = WrappedStateFlow(this)
+fun <T : Any?> SharedFlow<T>.wrap(): WrappedSharedFlow<T> = WrappedSharedFlow(this)
 
 private fun <T> Flow<T>.watchFlow(block: (T) -> Unit): Closeable {
     val context = CoroutineScope(SupervisorJob() + Dispatchers.Main)
