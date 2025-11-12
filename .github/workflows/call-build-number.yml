@@ -13,7 +13,7 @@ jobs:
   # ${{ jobs.build_number.outputs.MAJOR_VERSION }}
   build_number:
     name: Generate build number
-    runs-on: [ self-hosted, Linux ]
+    runs-on: ubuntu-latest
     outputs:
       BUILD_NUMBER: ${{ steps.buildnumber.outputs.build_number }}
       MAJOR_VERSION: ${{ steps.properties.outputs.flipper-major_version }}

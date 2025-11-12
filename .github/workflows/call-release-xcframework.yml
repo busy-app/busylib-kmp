@@ -1,0 +1,66 @@
+name: "Release iOS XCFramework"
+
+on:
+  push:
+    branches:
+      - feature/ios_release
+  workflow_call:
+    inputs:
+      VERSION_NAME:
+        required: true
+        type: string
+      VERSION_CODE:
+        required: false
+        type: string
+      FLAVOR_TYPE:
+        required: true
+        type: string
+
+jobs:
+  publish_xcframework:
+    name: "Publish XCFramework"
+    runs-on: [ self-hosted, macOS ]
+    env:
+      ORG_GRADLE_PROJECT_current_flavor_type: ${{ inputs.FLAVOR_TYPE }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 1.17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Replace gradle properties with sed
+        run: |
+          sed -i -e 's/^makeevrserg.project.version.string=.*$/makeevrserg.project.version.string=${{ inputs.VERSION_NAME }}/g' gradle.properties
+          sed -i -e 's/^makeevrserg.project.version.code=.*$/makeevrserg.project.version.code=${{ inputs.VERSION_CODE }}/g' gradle.properties
+      - name: Run publish
+        uses: gradle/gradle-build-action@v3
+        with:
+          arguments: :entrypoint:assembleBusyLibKMPXCFramework --stacktrace
+      - name: Prepare releases file
+        id: releasefiles
+        run: |
+          zip -r BusyLibKMPDebug.xcframework.zip entrypoint/build/XCFrameworks/debug/BusyLibKMP.xcframework
+          zip -r BusyLibKMPRelease.xcframework.zip entrypoint/build/XCFrameworks/release/BusyLibKMP.xcframework
+          echo "file_debug=BusyLibKMPDebug.xcframework.zip" >> "$GITHUB_OUTPUT"
+          echo "file_release=BusyLibKMPRelease.xcframework.zip" >> "$GITHUB_OUTPUT"
+          echo "hash_debug=$(swift package compute-checksum BusyLibKMPDebug.xcframework.zip)" >> "$GITHUB_OUTPUT"
+          echo "hash_release=$(swift package compute-checksum BusyLibKMPRelease.xcframework.zip)" >> "$GITHUB_OUTPUT"
+      - name: Publish release
+        id: create_release
+        uses: softprops/action-gh-release@e7a8f85e1c67a31e6ed99a94b41bd0b71bbee6b8 # v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          files: |
+            ${{ steps.releasefiles.outputs.file_release }}
+            ${{ steps.releasefiles.outputs.file_debug }}
+          tag_name: ${{ inputs.VERSION_NAME }}
+          name: BUSY Lib ${{ inputs.VERSION_NAME }}
+          draft: false
+          prerelease: false
+          body: |
+            Release hash: `${{ steps.releasefiles.outputs.hash_release }}`
+            Debug hash: `${{ steps.releasefiles.outputs.hash_debug }}`
