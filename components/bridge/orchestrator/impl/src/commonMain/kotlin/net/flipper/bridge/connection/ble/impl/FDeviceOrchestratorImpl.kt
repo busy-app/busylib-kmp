@@ -7,8 +7,8 @@ import net.flipper.bridge.connection.config.api.model.FDeviceBaseModel
 import net.flipper.bridge.connection.configbuilder.api.FDeviceConnectionConfigMapper
 import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
 import net.flipper.busylib.core.di.BusyLibGraph
+import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.ktx.common.withLock
-import net.flipper.core.busylib.ktx.common.wrap
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info

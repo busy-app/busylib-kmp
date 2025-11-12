@@ -45,9 +45,10 @@ kotlin {
         }
 
     sourceSets.commonMain.dependencies {
-        implementation(projects.components.di)
-        implementation(projects.components.ktx)
-        implementation(projects.components.log)
+        implementation(projects.components.core.di)
+        implementation(projects.components.core.ktx)
+        implementation(projects.components.core.log)
+        api(projects.components.core.wrapper)
         api(projects.components.principal.api)
         api(projects.components.cloud.api)
 

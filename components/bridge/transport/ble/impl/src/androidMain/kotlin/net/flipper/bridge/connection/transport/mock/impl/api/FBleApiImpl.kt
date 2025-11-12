@@ -12,7 +12,7 @@ import net.flipper.bridge.connection.transport.common.api.FTransportConnectionSt
 import net.flipper.bridge.connection.transport.common.api.meta.FTransportMetaInfoApi
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPDeviceApi
 import net.flipper.bridge.connection.transport.mock.impl.meta.FTransportMetaInfoApiImpl
-import net.flipper.core.busylib.ktx.common.WrappedStateFlow
+import net.flipper.busylib.core.wrapper.WrappedStateFlow
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
 import no.nordicsemi.kotlin.ble.client.RemoteService

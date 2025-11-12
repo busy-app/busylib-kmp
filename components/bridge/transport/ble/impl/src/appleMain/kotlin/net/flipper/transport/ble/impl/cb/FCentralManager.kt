@@ -7,8 +7,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceConnectionConfig
-import net.flipper.core.busylib.ktx.common.WrappedStateFlow
-import net.flipper.core.busylib.ktx.common.wrap
+import net.flipper.busylib.core.wrapper.WrappedStateFlow
+import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info

@@ -4,7 +4,7 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.launch
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.screens.decompose.DecomposeViewModel
-import net.flipper.core.busylib.ktx.common.WrappedStateFlow
+import net.flipper.busylib.core.wrapper.WrappedStateFlow
 
 abstract class ConnectionSearchViewModel(
     val persistedStorage: FDevicePersistedStorage

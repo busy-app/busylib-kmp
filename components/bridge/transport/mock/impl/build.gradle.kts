@@ -12,8 +12,8 @@ kotlin {
         implementation(projects.components.bridge.transport.common.api)
         implementation(projects.components.bridge.transport.common.impl)
         implementation(projects.components.bridge.transport.mock.api)
-        implementation(projects.components.di)
-        implementation(projects.components.log)
+        implementation(projects.components.core.di)
+        implementation(projects.components.core.log)
 
         implementation(libs.kotlin.coroutines)
         implementation(libs.ktor.client.core)

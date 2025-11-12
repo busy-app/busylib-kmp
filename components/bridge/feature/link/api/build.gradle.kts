@@ -8,7 +8,7 @@ plugins {
 
 kotlin {
     sourceSets.commonMain.dependencies {
-        implementation(projects.components.ktx)
+        implementation(projects.components.core.ktx)
 
         api(projects.components.bridge.feature.common.api)
         api(projects.components.bridge.feature.rpc.api)

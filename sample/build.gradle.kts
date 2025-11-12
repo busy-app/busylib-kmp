@@ -46,8 +46,9 @@ kotlin {
 
 kotlin {
     sourceSets.commonMain.dependencies {
-        implementation(projects.components.log)
-        implementation(projects.components.ktx)
+        implementation(projects.components.core.log)
+        implementation(projects.components.core.ktx)
+        implementation(projects.components.core.wrapper)
 
         implementation(kotlin.compose.runtime)
         implementation(kotlin.compose.ui)

@@ -11,8 +11,8 @@ kotlin {
     sourceSets.commonMain.dependencies {
         implementation(projects.components.bridge.config.api)
 
-        implementation(projects.components.log)
-        implementation(projects.components.di)
+        implementation(projects.components.core.log)
+        implementation(projects.components.core.di)
 
         implementation(libs.kotlin.coroutines)
         implementation(libs.kotlin.serialization.json)

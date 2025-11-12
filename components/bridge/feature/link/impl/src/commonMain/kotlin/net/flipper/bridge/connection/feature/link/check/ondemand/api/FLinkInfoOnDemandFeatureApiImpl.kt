@@ -12,9 +12,9 @@ import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.feature.link.model.LinkedAccountInfo
 import net.flipper.bridge.connection.feature.rpc.api.critical.FRpcCriticalFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.RpcLinkedAccountInfo
-import net.flipper.bsb.auth.principal.api.BsbUserPrincipal
-import net.flipper.bsb.auth.principal.api.BsbUserPrincipalApi
-import net.flipper.bsb.cloud.api.BSBBarsApi
+import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
+import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
+import net.flipper.bsb.cloud.api.BUSYLibBarsApi
 import net.flipper.core.busylib.ktx.common.SingleJobMode
 import net.flipper.core.busylib.ktx.common.asSingleJobScope
 import net.flipper.core.busylib.ktx.common.exponentialRetry
@@ -29,8 +29,8 @@ private val ACCOUNT_PROVIDING_TIMEOUT = 3.seconds
 class FLinkInfoOnDemandFeatureApiImpl(
     @Assisted private val rpcFeatureApi: FRpcCriticalFeatureApi,
     @Assisted private val scope: CoroutineScope,
-    private val bsbUserPrincipalApi: BsbUserPrincipalApi,
-    private val bsbBarsApi: BSBBarsApi
+    private val busyLibPrincipalApi: BUSYLibPrincipalApi,
+    private val busyLibBarsApi: BUSYLibBarsApi
 ) : FLinkedInfoOnDemandFeatureApi, LogTagProvider {
     override val TAG = "FLinkedInfoFeatureApi"
     private val _status = MutableStateFlow<LinkedAccountInfo?>(null)
@@ -59,9 +59,9 @@ class FLinkInfoOnDemandFeatureApiImpl(
 
     override fun tryCheckLinkedInfo() {
         singleJobScope.launch(SingleJobMode.CANCEL_PREVIOUS) {
-            val principal = bsbUserPrincipalApi.getPrincipalFlow()
-                .filter { principal -> principal !is BsbUserPrincipal.Loading }
-                .first() as? BsbUserPrincipal.Full
+            val principal = busyLibPrincipalApi.getPrincipalFlow()
+                .filter { principal -> principal !is BUSYLibUserPrincipal.Loading }
+                .first() as? BUSYLibUserPrincipal.Full
 
             info { "Local principal is ${principal?.userId}/${principal?.email}" }
 
@@ -82,13 +82,13 @@ class FLinkInfoOnDemandFeatureApiImpl(
     }
 
     private suspend fun authBusyBar(
-        principal: BsbUserPrincipal.Full
+        principal: BUSYLibUserPrincipal.Full
     ): Result<Unit> = runCatching {
         val linkCode = rpcFeatureApi.getLinkCode().getOrThrow()
 
         info { "Receive link code from BUSY Bar: $linkCode" }
 
-        bsbBarsApi.registerBusyBar(principal, linkCode.code).getOrThrow()
+        busyLibBarsApi.registerBusyBar(principal, linkCode.code).getOrThrow()
 
         info { "BUSY Bar registered, waiting user registration from BUSY Bar" }
 

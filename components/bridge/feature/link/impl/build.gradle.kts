@@ -14,9 +14,10 @@ kotlin {
         implementation(projects.components.principal.api)
         implementation(projects.components.cloud.api)
 
-        implementation(projects.components.di)
-        implementation(projects.components.ktx)
-        implementation(projects.components.log)
+        implementation(projects.components.core.di)
+        implementation(projects.components.core.ktx)
+        implementation(projects.components.core.log)
+        implementation(projects.components.core.wrapper)
 
         implementation(projects.components.bridge.feature.common.api)
         implementation(projects.components.bridge.transport.common.api)

@@ -11,9 +11,9 @@ kotlin {
     sourceSets.commonMain.dependencies {
         implementation(projects.components.bridge.device.bsb.api)
 
-        implementation(projects.components.di)
-        implementation(projects.components.log)
-        implementation(projects.components.buildkonfig)
+        implementation(projects.components.core.di)
+        implementation(projects.components.core.log)
+        implementation(projects.components.core.buildkonfig)
 
         implementation(projects.components.bridge.device.common.api)
         implementation(projects.components.bridge.feature.common.api)
