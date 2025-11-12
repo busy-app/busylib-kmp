@@ -4,10 +4,11 @@ import kotlinx.cinterop.ObjCSignatureOverride
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceConnectionConfig
+import net.flipper.core.busylib.ktx.common.WrappedStateFlow
+import net.flipper.core.busylib.ktx.common.wrap
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
@@ -21,8 +22,8 @@ import platform.Foundation.NSUUID
 import platform.darwin.NSObject
 
 interface FCentralManagerApi {
-    val connectedStream: StateFlow<Map<NSUUID, FPeripheralApi>>
-    val bleStatusStream: StateFlow<FBLEStatus>
+    val connectedStream: WrappedStateFlow<Map<NSUUID, FPeripheralApi>>
+    val bleStatusStream: WrappedStateFlow<FBLEStatus>
 
     suspend fun connect(config: FBleDeviceConnectionConfig)
     suspend fun disconnect(id: NSUUID)
@@ -73,15 +74,15 @@ class FCentralManager(
         get() = "FCentralManager"
 
     private val _connectedStream = MutableStateFlow<Map<NSUUID, FPeripheralApi>>(emptyMap())
-    override val connectedStream: StateFlow<Map<NSUUID, FPeripheralApi>> = _connectedStream.asStateFlow()
+    override val connectedStream: WrappedStateFlow<Map<NSUUID, FPeripheralApi>> = _connectedStream.asStateFlow().wrap()
 
     private val _discoveredStream = MutableStateFlow<Map<NSUUID, FPeripheralApi>>(emptyMap())
 
     @Suppress("UnusedPrivateProperty")
-    private val discoveredStream: StateFlow<Map<NSUUID, FPeripheralApi>> = _discoveredStream.asStateFlow()
+    private val discoveredStream: WrappedStateFlow<Map<NSUUID, FPeripheralApi>> = _discoveredStream.asStateFlow().wrap()
 
     private val _bleStatusStream = MutableStateFlow<FBLEStatus>(FBLEStatus.UNKNOWN)
-    override val bleStatusStream: StateFlow<FBLEStatus> = _bleStatusStream.asStateFlow()
+    override val bleStatusStream: WrappedStateFlow<FBLEStatus> = _bleStatusStream.asStateFlow().wrap()
 
     private val delegate = FCentralManagerDelegate(
         onStateUpdate = { state -> scope.launch { updateBLEStatus(state) } },

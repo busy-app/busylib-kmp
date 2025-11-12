@@ -1,12 +1,12 @@
 package net.flipper.bridge.connection.orchestrator.api
 
-import kotlinx.coroutines.flow.StateFlow
 import net.flipper.bridge.connection.config.api.model.FDeviceBaseModel
 import net.flipper.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
+import net.flipper.core.busylib.ktx.common.WrappedStateFlow
 
 interface FDeviceOrchestrator {
 
-    fun getState(): StateFlow<FDeviceConnectStatus>
+    fun getState(): WrappedStateFlow<FDeviceConnectStatus>
 
     suspend fun connect(config: FDeviceBaseModel)
 

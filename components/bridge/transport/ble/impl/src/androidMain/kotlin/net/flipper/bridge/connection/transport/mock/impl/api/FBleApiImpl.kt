@@ -1,7 +1,6 @@
 package net.flipper.bridge.connection.transport.mock.impl.api
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import net.flipper.bridge.connection.transport.ble.api.FBleApi
@@ -13,6 +12,7 @@ import net.flipper.bridge.connection.transport.common.api.FTransportConnectionSt
 import net.flipper.bridge.connection.transport.common.api.meta.FTransportMetaInfoApi
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPDeviceApi
 import net.flipper.bridge.connection.transport.mock.impl.meta.FTransportMetaInfoApiImpl
+import net.flipper.core.busylib.ktx.common.WrappedStateFlow
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
 import no.nordicsemi.kotlin.ble.client.RemoteService
@@ -24,7 +24,7 @@ class FBleApiImpl(
     private val peripheral: Peripheral,
     private val scope: CoroutineScope,
     private val listener: FTransportConnectionStatusListener,
-    services: StateFlow<List<RemoteService>?>,
+    services: WrappedStateFlow<List<RemoteService>?>,
     serialApi: FSerialBleApi,
     config: FBleDeviceConnectionConfig,
 ) : FBleApi,
