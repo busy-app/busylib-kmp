@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
@@ -12,6 +11,7 @@ import kotlinx.coroutines.flow.merge
 import net.flipper.bridge.connection.transport.ble.api.GATTCharacteristicAddress
 import net.flipper.bridge.connection.transport.common.api.meta.FTransportMetaInfoApi
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
+import net.flipper.core.busylib.ktx.common.WrappedStateFlow
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
 import net.flipper.core.busylib.log.warn
@@ -19,7 +19,7 @@ import no.nordicsemi.kotlin.ble.client.RemoteService
 import no.nordicsemi.kotlin.ble.core.CharacteristicProperty
 
 class FTransportMetaInfoApiImpl(
-    private val services: StateFlow<List<RemoteService>?>,
+    private val services: WrappedStateFlow<List<RemoteService>?>,
     private val metaInfoGattMap: ImmutableMap<TransportMetaInfoKey, GATTCharacteristicAddress>
 ) : FTransportMetaInfoApi, LogTagProvider {
     override val TAG = "FTransportMetaInfoApi"

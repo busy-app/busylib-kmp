@@ -9,6 +9,8 @@ plugins {
 
 kotlin {
     sourceSets.commonMain.dependencies {
+        implementation(projects.components.ktx)
+
         implementation(libs.kotlin.coroutines)
         implementation(libs.kotlin.serialization.json)
     }

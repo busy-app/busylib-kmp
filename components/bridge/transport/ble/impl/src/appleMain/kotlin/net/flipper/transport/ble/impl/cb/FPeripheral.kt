@@ -5,14 +5,15 @@ import kotlinx.cinterop.ObjCSignatureOverride
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
+import net.flipper.core.busylib.ktx.common.WrappedSharedFlow
+import net.flipper.core.busylib.ktx.common.WrappedStateFlow
+import net.flipper.core.busylib.ktx.common.wrap
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.debug
 import net.flipper.core.busylib.log.error
@@ -34,10 +35,10 @@ import platform.darwin.NSObject
 interface FPeripheralApi {
     val identifier: NSUUID
     val name: String?
-    val stateStream: StateFlow<FPeripheralState>
+    val stateStream: WrappedStateFlow<FPeripheralState>
 
-    val rxDataStream: SharedFlow<NSData>
-    val metaInfoKeysStream: StateFlow<Map<TransportMetaInfoKey, NSData?>>
+    val rxDataStream: WrappedSharedFlow<NSData>
+    val metaInfoKeysStream: WrappedStateFlow<Map<TransportMetaInfoKey, NSData?>>
 
     suspend fun writeValue(data: NSData)
 
@@ -121,15 +122,15 @@ class FPeripheral(
         get() = peripheral.name
 
     private val _stateStream = MutableStateFlow(FPeripheralState.from(peripheral.state))
-    override val stateStream: StateFlow<FPeripheralState> = _stateStream.asStateFlow()
+    override val stateStream: WrappedStateFlow<FPeripheralState> = _stateStream.asStateFlow().wrap()
 
     private val _rxDataStream = MutableSharedFlow<NSData>()
-    override val rxDataStream: SharedFlow<NSData> = _rxDataStream.asSharedFlow()
+    override val rxDataStream: WrappedSharedFlow<NSData> = _rxDataStream.asSharedFlow().wrap()
 
     private val _metaInfoKeysStream =
         MutableStateFlow<Map<TransportMetaInfoKey, NSData?>>(emptyMap())
-    override val metaInfoKeysStream: StateFlow<Map<TransportMetaInfoKey, NSData?>> =
-        _metaInfoKeysStream.asStateFlow()
+    override val metaInfoKeysStream: WrappedStateFlow<Map<TransportMetaInfoKey, NSData?>> =
+        _metaInfoKeysStream.asStateFlow().wrap()
 
     private var serialWrite: CBCharacteristic? = null
 
