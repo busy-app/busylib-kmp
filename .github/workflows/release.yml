@@ -57,6 +57,5 @@ jobs:
     needs: [ gradle_validation, build_number ]
     uses: ./.github/workflows/call-release-xcframework.yml
     with:
-      VERSION_NAME: ${{ needs.build_number.outputs.MAJOR_VERSION }}.${{ needs.build_number.outputs.BUILD_NUMBER }}-debug
+      VERSION_NAME: ${{ needs.build_number.outputs.MAJOR_VERSION }}.${{ needs.build_number.outputs.BUILD_NUMBER }}
       VERSION_CODE: ${{ needs.build_number.outputs.BUILD_NUMBER }}
-      FLAVOR_TYPE: PROD
