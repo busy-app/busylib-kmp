@@ -18,7 +18,7 @@ import net.flipper.bridge.connection.transport.common.api.FTransportConnectionSt
 import net.flipper.bridge.connection.transport.mock.impl.api.FBleApiImpl
 import net.flipper.bridge.connection.transport.mock.impl.api.http.serial.SerialApiFactory
 import net.flipper.busylib.core.di.BusyLibGraph
-import net.flipper.core.busylib.ktx.common.wrap
+import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
 import no.nordicsemi.kotlin.ble.client.android.CentralManager

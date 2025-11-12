@@ -1,6 +1,7 @@
 package net.flipper.core.busylib.log
 
-import net.flipper.busylib.kmp.components.buildkonfig.BuildKonfig
+import net.flipper.busylib.kmp.components.core.buildkonfig.BuildKonfig
+
 
 inline fun error(logMessage: () -> String) {
     if (BuildKonfig.IS_LOG_ENABLED) {

@@ -1,6 +1,6 @@
 package net.flipper.core.busylib.log
 
-import net.flipper.busylib.kmp.components.buildkonfig.BuildKonfig
+import net.flipper.busylib.kmp.components.core.buildkonfig.BuildKonfig
 
 @Suppress("PropertyName")
 interface LogTagProvider {
