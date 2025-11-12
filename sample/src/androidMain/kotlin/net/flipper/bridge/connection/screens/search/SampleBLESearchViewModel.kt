@@ -1,6 +1,7 @@
 package net.flipper.bridge.connection.screens.search
 
 import android.annotation.SuppressLint
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
@@ -14,6 +15,8 @@ import net.flipper.bridge.api.scanner.FlipperScanner
 import net.flipper.bridge.api.utils.Constants.UNKNOWN_NAME
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.config.api.model.FDeviceBaseModel
+import net.flipper.core.busylib.ktx.common.WrappedStateFlow
+import net.flipper.core.busylib.ktx.common.wrap
 
 @SuppressLint("MissingPermission")
 class SampleBLESearchViewModel(
@@ -54,7 +57,7 @@ class SampleBLESearchViewModel(
         }.launchIn(viewModelScope)
     }
 
-    override fun getDevicesFlow() = devicesFlow.asStateFlow()
+    override fun getDevicesFlow(): WrappedStateFlow<ImmutableList<ConnectionSearchItem>> = devicesFlow.asStateFlow().wrap()
 }
 private fun DiscoveredBluetoothDevice.toFDeviceModel(): FDeviceBaseModel {
     val id = address
