@@ -98,5 +98,6 @@ kotlin {
     }
     sourceSets.appleMain.dependencies {
         api(projects.components.bridge.transport.ble.impl)
+        api(projects.components.bridge.config.impl)
     }
 }

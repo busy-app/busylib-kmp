@@ -1,7 +1,7 @@
 package net.flipper.bsb.auth.principal.api
 
-import kotlinx.coroutines.flow.StateFlow
+import net.flipper.core.busylib.ktx.common.WrappedStateFlow
 
 interface BsbUserPrincipalApi {
-    fun getPrincipalFlow(): StateFlow<BsbUserPrincipal>
+    fun getPrincipalFlow(): WrappedStateFlow<BsbUserPrincipal>
 }

@@ -1,15 +1,15 @@
 package net.flipper.bridge.connection.screens.search
 
 import kotlinx.collections.immutable.ImmutableList
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.screens.decompose.DecomposeViewModel
+import net.flipper.core.busylib.ktx.common.WrappedStateFlow
 
 abstract class ConnectionSearchViewModel(
     val persistedStorage: FDevicePersistedStorage
 ) : DecomposeViewModel() {
-    abstract fun getDevicesFlow(): StateFlow<ImmutableList<ConnectionSearchItem>>
+    abstract fun getDevicesFlow(): WrappedStateFlow<ImmutableList<ConnectionSearchItem>>
     open fun onDeviceClick(searchItem: ConnectionSearchItem) {
         viewModelScope.launch {
             if (searchItem.isAdded) {

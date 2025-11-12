@@ -1,11 +1,11 @@
 package net.flipper.bridge.connection.transport.mock.impl.api.http.serial
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceSerialConfig
 import net.flipper.bridge.connection.transport.ble.api.FSerialBleApi
+import net.flipper.core.busylib.ktx.common.WrappedStateFlow
 import net.flipper.core.busylib.log.LogTagProvider
 import no.nordicsemi.kotlin.ble.client.RemoteService
 
@@ -17,7 +17,7 @@ class SerialApiFactory(
 
     fun build(
         config: FBleDeviceSerialConfig,
-        services: StateFlow<List<RemoteService>?>,
+        services: WrappedStateFlow<List<RemoteService>?>,
         scope: CoroutineScope
     ): FSerialBleApi {
         val serialService = services.map { services ->
