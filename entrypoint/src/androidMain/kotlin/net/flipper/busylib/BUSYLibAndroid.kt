@@ -8,23 +8,25 @@ import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
 import net.flipper.bridge.connection.service.api.FConnectionService
-import net.flipper.bsb.auth.principal.api.BsbUserPrincipalApi
-import net.flipper.bsb.cloud.api.BSBBarsApi
+import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
+import net.flipper.bsb.cloud.api.BUSYLibBarsApi
 import net.flipper.busylib.di.BUSYLibGraphAndroid
 import net.flipper.busylib.di.create
+import no.nordicsemi.kotlin.ble.client.android.CentralManager
 
 @Inject
 class BUSYLibAndroid(
     override val connectionService: FConnectionService,
     override val orchestrator: FDeviceOrchestrator,
     override val featureProvider: FFeatureProvider,
-    val flipperScanner: FlipperScanner
+    val flipperScanner: FlipperScanner,
+    val centralManager: CentralManager
 ) : BUSYLib {
     companion object {
         fun build(
             scope: CoroutineScope,
-            principalApi: BsbUserPrincipalApi,
-            bsbBarsApi: BSBBarsApi,
+            principalApi: BUSYLibPrincipalApi,
+            busyLibBarsApi: BUSYLibBarsApi,
             persistedStorage: FDevicePersistedStorage,
             // Android-specific factory
             context: Context,
@@ -32,7 +34,7 @@ class BUSYLibAndroid(
             val graph = BUSYLibGraphAndroid::class.create(
                 scope,
                 principalApi,
-                bsbBarsApi,
+                busyLibBarsApi,
                 persistedStorage,
                 context
             )

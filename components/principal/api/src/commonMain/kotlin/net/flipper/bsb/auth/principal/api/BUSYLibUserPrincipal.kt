@@ -1,12 +1,13 @@
 package net.flipper.bsb.auth.principal.api
 
 import kotlinx.serialization.Serializable
+import kotlin.uuid.Uuid
 
 @Serializable
-sealed interface BsbUserPrincipal {
+sealed interface BUSYLibUserPrincipal {
 
     @Serializable
-    sealed interface Token : BsbUserPrincipal {
+    sealed interface Token : BUSYLibUserPrincipal {
         val token: String
 
         @Serializable
@@ -21,12 +22,12 @@ sealed interface BsbUserPrincipal {
     data class Full(
         override val token: String,
         val email: String,
-        val userId: String?
+        val userId: Uuid?
     ) : Token
 
     @Serializable
-    data object Empty : BsbUserPrincipal
+    data object Empty : BUSYLibUserPrincipal
 
     @Serializable
-    data object Loading : BsbUserPrincipal
+    data object Loading : BUSYLibUserPrincipal
 }

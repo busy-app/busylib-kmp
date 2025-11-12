@@ -10,7 +10,7 @@ import net.flipper.bridge.connection.screens.ConnectionRootDecomposeComponent
 import net.flipper.bridge.connection.screens.di.getRootDecomposeComponent
 import net.flipper.bridge.connection.screens.search.IOSSearchViewModel
 import net.flipper.bridge.connection.utils.PermissionCheckerNoop
-import net.flipper.bridge.connection.utils.cloud.BSBBarsApiNoop
+import net.flipper.bridge.connection.utils.cloud.BUSYLibBarsApiNoop
 import net.flipper.bridge.connection.utils.config.impl.FDevicePersistedStorageImpl
 import net.flipper.bridge.connection.utils.principal.impl.UserPrincipalApiNoop
 import net.flipper.busylib.BUSYLibIOS
@@ -32,7 +32,7 @@ val busyLib: BUSYLibIOS by lazy {
     BUSYLibIOS.build(
         CoroutineScope(SupervisorJob()),
         principalApi = UserPrincipalApiNoop(),
-        bsbBarsApi = BSBBarsApiNoop(),
+        BUSYLibBarsApi = BUSYLibBarsApiNoop(),
         persistedStorage = storage,
         manager = manager,
     )

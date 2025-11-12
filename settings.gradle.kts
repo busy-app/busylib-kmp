@@ -87,7 +87,6 @@ include(
     ":components:bridge:feature:battery:impl",
     ":components:bridge:feature:screen-streaming:api",
     ":components:bridge:feature:screen-streaming:impl",
-    ":components:bridge:feature:screen-streaming:compose",
     ":components:bridge:feature:firmware-update:api",
     ":components:bridge:feature:firmware-update:impl",
 )
