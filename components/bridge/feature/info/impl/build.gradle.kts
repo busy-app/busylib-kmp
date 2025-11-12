@@ -11,9 +11,9 @@ kotlin {
     sourceSets.commonMain.dependencies {
         implementation(projects.components.bridge.feature.info.api)
 
-        implementation(projects.components.di)
-        implementation(projects.components.ktx)
-        implementation(projects.components.log)
+        implementation(projects.components.core.di)
+        implementation(projects.components.core.ktx)
+        implementation(projects.components.core.log)
 
         implementation(projects.components.bridge.feature.common.api)
         implementation(projects.components.bridge.transport.common.api)

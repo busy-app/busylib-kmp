@@ -8,7 +8,7 @@ plugins {
 
 kotlin {
     sourceSets.commonMain.dependencies {
-        implementation(projects.components.buildkonfig)
+        implementation(projects.components.core.buildkonfig)
     }
     sourceSets.androidMain.dependencies {
         implementation(libs.timber)

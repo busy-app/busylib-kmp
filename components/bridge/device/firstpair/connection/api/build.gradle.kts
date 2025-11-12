@@ -8,8 +8,8 @@ plugins {
 
 kotlin {
     sourceSets.androidMain.dependencies {
-        implementation(projects.components.log)
-        implementation(projects.components.ktx)
+        implementation(projects.components.core.log)
+        implementation(projects.components.core.ktx)
 
         implementation(libs.kotlin.coroutines)
         implementation(libs.kotlin.immutable)

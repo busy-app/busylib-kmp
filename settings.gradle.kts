@@ -31,22 +31,14 @@ dependencyResolutionManagement {
     }
 }
 
-include(
-    ":components:principal:api",
-    ":components:cloud:api",
-)
 
 include(
-    ":components:di",
-    ":components:buildkonfig",
-    ":components:log",
-    ":components:ktx"
-)
+    ":components:core:di",
+    ":components:core:buildkonfig",
+    ":components:core:log",
+    ":components:core:ktx",
+    ":components:core:wrapper",
 
-include(":entrypoint")
-include(":sample")
-
-include(
     ":components:bridge:config:api",
     ":components:bridge:config:impl",
     ":components:bridge:connectionbuilder:api",
@@ -90,4 +82,10 @@ include(
     ":components:bridge:feature:screen-streaming:impl",
     ":components:bridge:feature:firmware-update:api",
     ":components:bridge:feature:firmware-update:impl",
+
+    ":components:principal:api",
+    ":components:cloud:api",
+
+    ":entrypoint",
+    ":sample"
 )

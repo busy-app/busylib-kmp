@@ -9,9 +9,9 @@ plugins {
 
 kotlin {
     sourceSets.commonMain.dependencies {
-        implementation(projects.components.ktx)
-        implementation(projects.components.log)
-        implementation(projects.components.di)
+        implementation(projects.components.core.ktx)
+        implementation(projects.components.core.log)
+        implementation(projects.components.core.di)
 
         implementation(projects.components.bridge.orchestrator.api)
         implementation(projects.components.bridge.transport.mock.api)

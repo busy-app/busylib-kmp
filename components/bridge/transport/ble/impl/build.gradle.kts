@@ -15,9 +15,9 @@ kotlin {
         implementation(projects.components.bridge.transport.ble.common)
         implementation(projects.components.bridge.transport.ble.http)
 
-        implementation(projects.components.log)
-        implementation(projects.components.di)
-        implementation(projects.components.ktx)
+        implementation(projects.components.core.log)
+        implementation(projects.components.core.di)
+        implementation(projects.components.core.ktx)
 
         implementation(libs.kotlin.coroutines)
         implementation(libs.kotlin.immutable)

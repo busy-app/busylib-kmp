@@ -8,8 +8,8 @@ plugins {
 
 kotlin {
     sourceSets.commonMain.dependencies {
-        implementation(projects.components.log)
-        implementation(projects.components.buildkonfig)
+        implementation(projects.components.core.log)
+        implementation(projects.components.core.buildkonfig)
 
         implementation(libs.kotlin.coroutines)
         implementation(libs.kotlin.datetime)

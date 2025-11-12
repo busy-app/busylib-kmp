@@ -9,7 +9,7 @@ plugins {
 
 kotlin {
     sourceSets.commonMain.dependencies {
-        implementation(projects.components.di)
+        implementation(projects.components.core.di)
 
         implementation(projects.components.bridge.transport.common.api)
 

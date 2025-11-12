@@ -11,8 +11,8 @@ kotlin {
     sourceSets.androidMain.dependencies {
         implementation(projects.components.bridge.device.firstpair.connection.api)
 
-        implementation(projects.components.di)
-        implementation(projects.components.log)
+        implementation(projects.components.core.di)
+        implementation(projects.components.core.log)
 
         implementation(libs.ble.client)
         implementation(libs.appcompat)
