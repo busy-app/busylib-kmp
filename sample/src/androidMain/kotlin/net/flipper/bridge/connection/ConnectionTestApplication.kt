@@ -24,7 +24,7 @@ class ConnectionTestApplication : Application() {
         BUSYLibAndroid.build(
             CoroutineScope(SupervisorJob()),
             principalApi = UserPrincipalApiNoop(),
-            BUSYLibBarsApi = BUSYLibBarsApiNoop(),
+            busyLibBarsApi = BUSYLibBarsApiNoop(),
             persistedStorage = persistedStorage,
             context = this
         )

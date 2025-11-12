@@ -31,7 +31,6 @@ dependencyResolutionManagement {
     }
 }
 
-
 include(
     ":components:core:di",
     ":components:core:buildkonfig",
