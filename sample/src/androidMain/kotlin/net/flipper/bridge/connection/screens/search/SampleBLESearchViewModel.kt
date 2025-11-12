@@ -57,7 +57,8 @@ class SampleBLESearchViewModel(
         }.launchIn(viewModelScope)
     }
 
-    override fun getDevicesFlow(): WrappedStateFlow<ImmutableList<ConnectionSearchItem>> = devicesFlow.asStateFlow().wrap()
+    override fun getDevicesFlow(): WrappedStateFlow<ImmutableList<ConnectionSearchItem>> =
+        devicesFlow.asStateFlow().wrap()
 }
 private fun DiscoveredBluetoothDevice.toFDeviceModel(): FDeviceBaseModel {
     val id = address
