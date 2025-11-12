@@ -1,9 +1,6 @@
 name: "Release iOS XCFramework"
 
 on:
-  push:
-    branches:
-      - feature/ios_release
   workflow_call:
     inputs:
       VERSION_NAME:

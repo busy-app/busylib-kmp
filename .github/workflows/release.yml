@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - main
+      - feature/ios_release
   workflow_dispatch:
 jobs:
   # ${{ needs.build_number.outputs.BUILD_NUMBER }}
@@ -51,3 +52,11 @@ jobs:
       VERSION_NAME: ${{ needs.build_number.outputs.MAJOR_VERSION }}.${{ needs.build_number.outputs.BUILD_NUMBER }}-debug
       VERSION_CODE: ${{ needs.build_number.outputs.BUILD_NUMBER }}
       FLAVOR_TYPE: DEBUG
+  release-ios:
+    name: Release Internal
+    needs: [ gradle_validation, build_number ]
+    uses: ./.github/workflows/call-release-xcframework.yml
+    with:
+      VERSION_NAME: ${{ needs.build_number.outputs.MAJOR_VERSION }}.${{ needs.build_number.outputs.BUILD_NUMBER }}-debug
+      VERSION_CODE: ${{ needs.build_number.outputs.BUILD_NUMBER }}
+      FLAVOR_TYPE: PROD
