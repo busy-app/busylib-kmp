@@ -57,7 +57,8 @@ publishing {
     repositories {
         maven {
             name = "flipperMaven"
-            url = if (version.toString().endsWith("debug") || version.toString().startsWith("pr")) {
+            val version = projectInfo.versionString
+            url = if (version.endsWith("debug") || version.startsWith("pr") || version == "local") {
                 uri("${FLIPPER_MAVEN_URL}/snapshots")
             } else {
                 uri("${FLIPPER_MAVEN_URL}/releases")
