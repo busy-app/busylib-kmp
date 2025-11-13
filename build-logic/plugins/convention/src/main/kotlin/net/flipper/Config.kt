@@ -34,7 +34,6 @@ object Config {
             return flavor
         }
 
-
     val Project.requirePublishInfo: PublishInfo
         get() = PublishInfo(
             libraryName = baseGradleProperty("publish.name").getValue().getOrThrow(),

@@ -50,6 +50,7 @@ mavenPublishing {
     publishToMavenCentral(automaticRelease = false)
 }
 
+@Suppress("VariableNaming")
 private val FLIPPER_MAVEN_URL = "https://reposilite.flipp.dev"
 
 publishing {
