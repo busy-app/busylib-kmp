@@ -9,7 +9,7 @@ private val projectInfo = project.requireProjectInfo
 private val publishInfo = project.requirePublishInfo
 
 mavenPublishing {
-    publishToMavenCentral(automaticRelease = false)
+    // What
     coordinates(
         groupId = publishInfo.publishGroupId,
         artifactId = project.name,
@@ -42,6 +42,29 @@ mavenPublishing {
             this.connection.set(publishInfo.sshUrl)
             this.developerConnection.set(publishInfo.sshUrl)
             this.url.set(publishInfo.gitHubUrl)
+        }
+    }
+
+    // Where
+
+    publishToMavenCentral(automaticRelease = false)
+}
+
+private val FLIPPER_MAVEN_URL = "https://reposilite.flipp.dev"
+
+publishing {
+    repositories {
+        maven {
+            name = "flipperMaven"
+            url = if (version.toString().endsWith("debug") || version.toString().startsWith("pr")) {
+                uri("${FLIPPER_MAVEN_URL}/snapshots")
+            } else {
+                uri("${FLIPPER_MAVEN_URL}/releases")
+            }
+            credentials(PasswordCredentials::class)
+            authentication {
+                create<BasicAuthentication>("basic")
+            }
         }
     }
 }

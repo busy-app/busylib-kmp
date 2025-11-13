@@ -19,6 +19,10 @@ on:
         required: true
       ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEYPASSWORD:
         required: true
+      ORG_GRADLE_PROJECT_FLIPPERMAVEN_USERNAME:
+        required: true
+      ORG_GRADLE_PROJECT_FLIPPERMAVEN_PASSWORD:
+        required: true
 
 jobs:
   publish_internal:
@@ -29,6 +33,8 @@ jobs:
       ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEYID }}
       ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEYPASSWORD }}
       ORG_GRADLE_PROJECT_current_flavor_type: ${{ inputs.FLAVOR_TYPE }}
+      ORG_GRADLE_PROJECT_flipperMavenUsername: ${{ secrets.ORG_GRADLE_PROJECT_FLIPPERMAVEN_USERNAME }}
+      ORG_GRADLE_PROJECT_flipperMavenPassword: ${{ secrets.ORG_GRADLE_PROJECT_FLIPPERMAVEN_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
       - name: Set up JDK 1.17
@@ -45,4 +51,4 @@ jobs:
       - name: Run publish
         uses: gradle/gradle-build-action@v3
         with:
-          arguments: publishToMavenLocal --stacktrace
+          arguments: publishAllPublicationsToFlipperMavenRepository --stacktrace
