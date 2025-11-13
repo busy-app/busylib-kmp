@@ -45,3 +45,20 @@ jobs:
       VERSION_NAME: pr-${{ github.event.pull_request.number }}
       VERSION_CODE: 1
       FLAVOR_TYPE: DEBUG
+  post_comment:
+    name: Post PR Comment about release
+    runs-on: ubuntu-latest
+    needs: [ publish_internal ]
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: mshick/add-pr-comment@v2
+        with:
+          message: |
+            ## Published to Flipper Maven!
+            Last commit: [${{ github.event.pull_request.head.sha }}](https://github.com/busy-app/busylib-kmp/pull/${{ github.event.pull_request.number }}/commits/${{ github.event.pull_request.head.sha }})
+            
+            🤖 Android artefact: [net.flipper.busylib.kmp:entrypoint:pr-${{ github.event.pull_request.number }}](https://reposilite.flipp.dev/#/snapshots/net/flipper/busylib/kmp/entrypoint/pr-${{ github.event.pull_request.number }})
+            🍏 Apple artefact: [entrypoint-xcframework-debug-pr-${{ github.event.pull_request.number }}.zip](https://reposilite.flipp.dev/snapshots/net/flipper/busylib/kmp/entrypoint-xcframework-debug/pr-${{ github.event.pull_request.number }}/entrypoint-xcframework-debug-pr-${{ github.event.pull_request.number }}.zip) (hash: `${{ needs.publish_internal.outputs.HASH_XCFRAMEWORK_DEBUG }}`)
+
+            Version: `pr-${{ github.event.pull_request.number }}`

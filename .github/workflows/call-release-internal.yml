@@ -23,6 +23,11 @@ on:
         required: true
       ORG_GRADLE_PROJECT_FLIPPERMAVEN_PASSWORD:
         required: true
+    outputs:
+      HASH_XCFRAMEWORK_DEBUG:
+        value: ${{ jobs.publish_internal.outputs.HASH_XCFRAMEWORK_DEBUG }}
+      HASH_XCFRAMEWORK_RELEASE:
+        value: ${{ jobs.publish_internal.outputs.HASH_XCFRAMEWORK_RELEASE }}
 
 jobs:
   publish_internal:
@@ -35,6 +40,9 @@ jobs:
       ORG_GRADLE_PROJECT_current_flavor_type: ${{ inputs.FLAVOR_TYPE }}
       ORG_GRADLE_PROJECT_flipperMavenUsername: ${{ secrets.ORG_GRADLE_PROJECT_FLIPPERMAVEN_USERNAME }}
       ORG_GRADLE_PROJECT_flipperMavenPassword: ${{ secrets.ORG_GRADLE_PROJECT_FLIPPERMAVEN_PASSWORD }}
+    outputs:
+      HASH_XCFRAMEWORK_DEBUG: ${{ steps.hashes.outputs.hash_debug }}
+      HASH_XCFRAMEWORK_RELEASE: ${{ steps.hashes.outputs.hash_release }}
     steps:
       - uses: actions/checkout@v4
       - name: Set up JDK 1.17
@@ -52,3 +60,8 @@ jobs:
         uses: gradle/gradle-build-action@v3
         with:
           arguments: publishAllPublicationsToFlipperMavenRepository --stacktrace
+      - name: Print hashes
+        id: hashes
+        run: |
+          echo "hash_debug=$(swift package compute-checksum entrypoint/build/xcframework-zips/BusyLibKMP-debug.xcframework.zip)" >> "$GITHUB_OUTPUT"
+          echo "hash_release=$(swift package compute-checksum entrypoint/build/xcframework-zips/BusyLibKMP-release.xcframework.zip)" >> "$GITHUB_OUTPUT"
