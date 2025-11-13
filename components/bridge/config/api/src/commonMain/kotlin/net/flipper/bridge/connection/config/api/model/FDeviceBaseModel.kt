@@ -22,9 +22,7 @@ sealed interface FDeviceBaseModel {
 
     @Serializable
     data class FDeviceBSBModelBLEiOS(
-        @SerialName("address")
-        val uuid: String,
-        override val uniqueId: String = uuid,
+        override val uniqueId: String,
         override val humanReadableName: String,
     ) : FDeviceBaseModel
 

@@ -18,7 +18,7 @@ class FDeviceConnectionConfigMapperImpl(
     override fun getConnectionConfig(device: FDeviceBaseModel): FDeviceConnectionConfig<*> {
         return when (device) {
             is FDeviceBaseModel.FDeviceBSBModelBLE -> bleBuilderConfig.build(device.address)
-            is FDeviceBaseModel.FDeviceBSBModelBLEiOS -> bleBuilderConfig.build(device.uuid)
+            is FDeviceBaseModel.FDeviceBSBModelBLEiOS -> bleBuilderConfig.build(device.uniqueId)
             is FDeviceBaseModel.FDeviceBSBModelMock -> mockBuilderConfig.build()
         }
     }
