@@ -56,7 +56,7 @@ jobs:
         with:
           message: |
             ## Published to Flipper Maven!
-            Last commit: [${{ github.event.pull_request.head.ref }}](https://github.com/busy-app/busylib-kmp/pull/${{ github.event.pull_request.number }}/commits/${{ github.event.pull_request.head.sha }})
+            Last commit: [${{ github.event.pull_request.head.sha }}](https://github.com/busy-app/busylib-kmp/pull/${{ github.event.pull_request.number }}/commits/${{ github.event.pull_request.head.sha }})
             
             🤖 Android artefact: [net.flipper.busylib.kmp:entrypoint:pr-${{ github.event.pull_request.number }}](https://reposilite.flipp.dev/#/snapshots/net/flipper/busylib/kmp/entrypoint/pr-${{ github.event.pull_request.number }})
             🍏 Apple artefact: [entrypoint-xcframework-debug-pr-${{ github.event.pull_request.number }}.zip](https://reposilite.flipp.dev/snapshots/net/flipper/busylib/kmp/entrypoint-xcframework-debug/pr-${{ github.event.pull_request.number }}/entrypoint-xcframework-debug-pr-${{ github.event.pull_request.number }}.zip) (hash: `${{ needs.publish_internal.outputs.HASH_XCFRAMEWORK_DEBUG }}`)
