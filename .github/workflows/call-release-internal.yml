@@ -25,9 +25,9 @@ on:
         required: true
     outputs:
       HASH_XCFRAMEWORK_DEBUG:
-        value: ${{ jobs.build_number.outputs.BUILD_NUMBER }}
+        value: ${{ jobs.publish_internal.outputs.HASH_XCFRAMEWORK_DEBUG }}
       HASH_XCFRAMEWORK_RELEASE:
-        value: ${{ jobs.build_number.outputs.MAJOR_VERSION }}
+        value: ${{ jobs.publish_internal.outputs.HASH_XCFRAMEWORK_RELEASE }}
 
 jobs:
   publish_internal:
