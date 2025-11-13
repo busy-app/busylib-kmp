@@ -2,6 +2,7 @@ plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("com.android.kotlin.multiplatform.library")
     id("suppress-optin")
+    id("flipper.publish")
 }
 
 val appleEnabled = project.findProperty("flipper.appleEnabled")?.toString()?.toBoolean() ?: true
