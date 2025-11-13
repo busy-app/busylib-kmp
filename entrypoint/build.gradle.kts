@@ -102,3 +102,46 @@ kotlin {
         api(projects.components.bridge.config.impl)
     }
 }
+
+val zipXCFrameworkDebug by tasks.registering(Zip::class) {
+    group = "publishing"
+    description = "Creates a ZIP archive of the debug XCFramework"
+
+    dependsOn("assembleBusyLibKMPDebugXCFramework")
+
+    from(layout.buildDirectory.dir("XCFrameworks/debug"))
+    include("BusyLibKMP.xcframework/**")
+    archiveFileName.set("BusyLibKMP-debug.xcframework.zip")
+    destinationDirectory.set(layout.buildDirectory.dir("xcframework-zips"))
+}
+
+val zipXCFrameworkRelease by tasks.registering(Zip::class) {
+    group = "publishing"
+    description = "Creates a ZIP archive of the release XCFramework"
+
+    dependsOn("assembleBusyLibKMPReleaseXCFramework")
+
+    from(layout.buildDirectory.dir("XCFrameworks/release"))
+    include("BusyLibKMP.xcframework/**")
+    archiveFileName.set("BusyLibKMP-release.xcframework.zip")
+    destinationDirectory.set(layout.buildDirectory.dir("xcframework-zips"))
+}
+
+// Configure publishing to include the XCFramework zip files
+publishing {
+    publications {
+        // Add XCFramework debug zip as an artifact
+        create<MavenPublication>("xcframeworkDebug") {
+            artifactId = "${project.name}-xcframework-debug"
+
+            artifact(zipXCFrameworkDebug.get())
+        }
+
+        // Add XCFramework release zip as an artifact
+        create<MavenPublication>("xcframeworkRelease") {
+            artifactId = "${project.name}-xcframework-release"
+
+            artifact(zipXCFrameworkRelease.get())
+        }
+    }
+}
