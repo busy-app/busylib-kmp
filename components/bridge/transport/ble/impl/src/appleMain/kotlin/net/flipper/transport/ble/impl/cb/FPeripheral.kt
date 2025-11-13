@@ -3,12 +3,14 @@ package net.flipper.transport.ble.impl.cb
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.ObjCSignatureOverride
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
 import net.flipper.busylib.core.wrapper.WrappedSharedFlow
@@ -52,19 +54,22 @@ interface FPeripheralApi {
 @OptIn(ExperimentalForeignApi::class)
 @Suppress("TooManyFunctions")
 private class FPeripheralDelegate(
-    private val peripheral: FPeripheral,
-    private val scope: CoroutineScope
+    val updateName: (CBPeripheral) -> Unit,
+    val didDiscoverServices: (CBPeripheral, NSError?) -> Unit,
+    val didDiscoverCharacteristics: (CBService, NSError?) -> Unit,
+    val didUpdateValueForCharacteristic: (CBCharacteristic, NSError?) -> Unit,
+    val didWriteValueForCharacteristic: (CBCharacteristic, NSError?) -> Unit,
 ) : NSObject(), CBPeripheralDelegateProtocol {
 
     override fun peripheralDidUpdateName(peripheral: CBPeripheral) {
-        this.peripheral.updateName(peripheral)
+        updateName(peripheral)
     }
 
     override fun peripheral(
         peripheral: CBPeripheral,
         didDiscoverServices: NSError?
     ) {
-        this.peripheral.handleDidDiscoverServices(peripheral, didDiscoverServices)
+        didDiscoverServices(peripheral, didDiscoverServices)
     }
 
     override fun peripheral(
@@ -72,14 +77,7 @@ private class FPeripheralDelegate(
         didDiscoverCharacteristicsForService: CBService,
         error: NSError?
     ) {
-        scope.launch {
-            this@FPeripheralDelegate.peripheral.didDiscoverCharacteristics(
-                service = didDiscoverCharacteristicsForService,
-                characteristics = didDiscoverCharacteristicsForService.characteristics?.map {
-                    it as CBCharacteristic
-                } ?: emptyList()
-            )
-        }
+        didDiscoverCharacteristics(didDiscoverCharacteristicsForService, error)
     }
 
     @ObjCSignatureOverride
@@ -88,12 +86,7 @@ private class FPeripheralDelegate(
         didUpdateValueForCharacteristic: CBCharacteristic,
         error: NSError?
     ) {
-        scope.launch {
-            this@FPeripheralDelegate.peripheral.didUpdateValue(
-                characteristic = didUpdateValueForCharacteristic,
-                error = error
-            )
-        }
+        didUpdateValueForCharacteristic(didUpdateValueForCharacteristic, error)
     }
 
     @ObjCSignatureOverride
@@ -102,7 +95,7 @@ private class FPeripheralDelegate(
         didWriteValueForCharacteristic: CBCharacteristic,
         error: NSError?
     ) {
-        this.peripheral.handleDidWriteValue(didWriteValueForCharacteristic, error)
+        didWriteValueForCharacteristic(didWriteValueForCharacteristic, error)
     }
 }
 
@@ -134,40 +127,60 @@ class FPeripheral(
 
     private var serialWrite: CBCharacteristic? = null
 
-    private val delegate = FPeripheralDelegate(this, scope)
+    private val delegate = FPeripheralDelegate(
+        updateName = { scope.launch { updateName(it) } },
+        didDiscoverServices = { peripheral, error ->
+            scope.launch { handleDidDiscoverServices(peripheral, error) }
+        },
+        didDiscoverCharacteristics = { service, error ->
+            scope.launch { didDiscoverCharacteristics(service, error) }
+        },
+        didUpdateValueForCharacteristic = { characteristic, error ->
+            scope.launch { didUpdateValue(characteristic, error) }
+        },
+        didWriteValueForCharacteristic = { characteristic, error ->
+            scope.launch { handleDidWriteValue(characteristic, error) }
+        },
+    )
 
     init {
-        peripheral.delegate = delegate
-        updateName(peripheral)
+        scope.launch {
+            withContext(Dispatchers.Main) {
+                peripheral.delegate = delegate
+                updateName(peripheral)
+            }
+        }
     }
 
-    override suspend fun onConnecting() {
+    override suspend fun onConnecting() = withContext(Dispatchers.Main) {
         _stateStream.emit(FPeripheralState.CONNECTING)
         debug { "Peripheral onConnecting id=${identifier.UUIDString}" }
     }
 
-    override suspend fun onConnect() {
+    override suspend fun onConnect() = withContext(Dispatchers.Main) {
         debug { "Peripheral onConnect — discovering services id=${identifier.UUIDString}" }
         peripheral.discoverServices(null)
     }
 
-    override suspend fun onDisconnecting() {
+    override suspend fun onDisconnecting() = withContext(Dispatchers.Main) {
         _stateStream.emit(FPeripheralState.DISCONNECTING)
         debug { "Peripheral onDisconnecting id=${identifier.UUIDString}" }
     }
 
-    override suspend fun onDisconnect() {
+    override suspend fun onDisconnect() = withContext(Dispatchers.Main) {
         if (stateStream.value == FPeripheralState.PAIRING_FAILED ||
             stateStream.value == FPeripheralState.INVALID_PAIRING
         ) {
-            return
+            return@withContext
         }
 
+        serialWrite = null
+        _metaInfoKeysStream.emit(emptyMap())
         _stateStream.emit(FPeripheralState.DISCONNECTED)
         debug { "Peripheral onDisconnect id=${identifier.UUIDString}" }
     }
 
-    override suspend fun onError(error: NSError) {
+    override suspend fun onError(error: NSError) = withContext(Dispatchers.Main) {
         val domain = error.domain
         val code = error.code
 
@@ -177,7 +190,7 @@ class FPeripheral(
         }
     }
 
-    private suspend fun handleCBError(code: Long) {
+    private suspend fun handleCBError(code: Long) = withContext(Dispatchers.Main) {
         when (code) {
             7L -> _stateStream.emit(FPeripheralState.INVALID_PAIRING) // CBErrorPeerRemovedPairingInformation
             17L -> _stateStream.emit(FPeripheralState.DISCONNECTED) // CBErrorEncryptionTimedOut
@@ -185,19 +198,19 @@ class FPeripheral(
         warn { "Peripheral CBError id=${identifier.UUIDString} code=$code" }
     }
 
-    private suspend fun handleCBATTError(code: Long) {
+    private suspend fun handleCBATTError(code: Long) = withContext(Dispatchers.Main) {
         when (code) {
             15L -> _stateStream.emit(FPeripheralState.PAIRING_FAILED) // CBATTErrorInsufficientEncryption
         }
         warn { "Peripheral CBATTError id=${identifier.UUIDString} code=$code" }
     }
 
-    override suspend fun writeValue(data: NSData) {
+    override suspend fun writeValue(data: NSData) = withContext(Dispatchers.Main) {
         if (stateStream.value != FPeripheralState.CONNECTED) {
-            return
+            return@withContext
         }
 
-        val characteristic = serialWrite ?: return
+        val characteristic = serialWrite ?: return@withContext
 
         debug { "Peripheral writeValue bytes=${data.length} id=${identifier.UUIDString}" }
         peripheral.writeValue(
@@ -207,12 +220,12 @@ class FPeripheral(
         )
     }
 
-    internal fun updateName(peripheral: CBPeripheral) {
+    internal suspend fun updateName(peripheral: CBPeripheral) = withContext(Dispatchers.Main) {
         debug { "Peripheral name updated: ${peripheral.name}" }
-        val name = peripheral.name ?: return
+        val name = peripheral.name ?: return@withContext
 
         val nsName = name as NSString
-        val data = nsName.dataUsingEncoding(NSUTF8StringEncoding) ?: return
+        val data = nsName.dataUsingEncoding(NSUTF8StringEncoding) ?: return@withContext
 
         _metaInfoKeysStream.update {
             val newMap = it.toMutableMap()
@@ -221,10 +234,15 @@ class FPeripheral(
         }
     }
 
-    internal fun handleDidDiscoverServices(
+    internal suspend fun handleDidDiscoverServices(
         peripheral: CBPeripheral,
         @Suppress("UnusedParameter") didDiscoverServices: NSError?
-    ) {
+    ) = withContext(Dispatchers.Main) {
+        if (didDiscoverServices != null) {
+            error { "Service discovery failed id=${identifier.UUIDString} error=$didDiscoverServices" }
+            return@withContext
+        }
+
         peripheral.services?.forEach { service ->
             val cbService = service as CBService
             peripheral.discoverCharacteristics(null, forService = cbService)
@@ -233,8 +251,15 @@ class FPeripheral(
 
     internal suspend fun didDiscoverCharacteristics(
         service: CBService,
-        characteristics: List<CBCharacteristic>
-    ) {
+        error: NSError?
+    )  = withContext(Dispatchers.Main) {
+        if (error != null) {
+            error { "Characteristic discovery failed id=${identifier.UUIDString} error=$error" }
+            return@withContext
+        }
+
+        val characteristics = service.characteristics?.map { it as CBCharacteristic } ?: emptyList()
+
         val serviceUUID = service.UUID.toKotlinUUID()
         info { "Service $service UUID ${service.UUID} Kotlin $serviceUUID" }
 
@@ -248,12 +273,12 @@ class FPeripheral(
 
             if (serialRead != null && serialWrite != null) {
                 peripheral.setNotifyValue(true, forCharacteristic = serialRead)
-                this.serialWrite = serialWrite
+                this@FPeripheral.serialWrite = serialWrite
                 info { "Serial characteristics ready (read/write) id=${identifier.UUIDString}" }
             } else {
                 error { "Serial characteristics not found id=${identifier.UUIDString}" }
             }
-            return
+            return@withContext
         }
 
         characteristics.forEach { characteristic ->
@@ -282,7 +307,10 @@ class FPeripheral(
         }
     }
 
-    internal suspend fun didUpdateValue(characteristic: CBCharacteristic, error: NSError?) {
+    internal suspend fun didUpdateValue(
+        characteristic: CBCharacteristic,
+        error: NSError?
+    )  = withContext(Dispatchers.Main) {
         val characteristicUUID = characteristic.UUID.toKotlinUUID()
         val data = characteristic.value
 
@@ -290,7 +318,7 @@ class FPeripheral(
 
         if (error != null) {
             onError(error)
-            return
+            return@withContext
         }
 
         // Check if this is serial read data
@@ -301,7 +329,7 @@ class FPeripheral(
             } else {
                 warn { "RX data is null id=${identifier.UUIDString}" }
             }
-            return
+            return@withContext
         }
 
         val metaKey = config.metaInfoGattMap.entries.firstOrNull { (_, address) ->
@@ -326,12 +354,12 @@ class FPeripheral(
         }
     }
 
-    internal fun handleDidWriteValue(
+    internal suspend fun handleDidWriteValue(
         didWriteValueForCharacteristic: CBCharacteristic,
         error: NSError?
-    ) {
+    )  = withContext(Dispatchers.Main) {
         if (error != null) {
-            this.error { "Write failed: ${error.localizedDescription}" }
+            error { "Write failed: ${error.localizedDescription}" }
         } else {
             debug { "Write succeeded for ${didWriteValueForCharacteristic.UUID.UUIDString}" }
         }
