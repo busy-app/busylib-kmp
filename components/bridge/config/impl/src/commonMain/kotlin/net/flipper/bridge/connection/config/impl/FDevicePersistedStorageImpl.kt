@@ -48,15 +48,13 @@ class FDevicePersistedStorageImpl(
     }
 
     override suspend fun removeDevice(id: String) = bleConfigKrate.save { settings ->
-        val devicesList = settings.devices.toMutableList()
-        val deviceIndex = devicesList.indexOfFirst { it.uniqueId == id }
-        if (deviceIndex < 0) {
+        val deviceExists = settings.devices.any { it.uniqueId == id }
+        if (!deviceExists) {
             warn { "Can't find device with id $id" }
             settings
         } else {
-            devicesList.removeAt(deviceIndex)
             settings.copy(
-                devices = devicesList
+                devices = settings.devices.filter { it.uniqueId != id }
             )
         }
     }
