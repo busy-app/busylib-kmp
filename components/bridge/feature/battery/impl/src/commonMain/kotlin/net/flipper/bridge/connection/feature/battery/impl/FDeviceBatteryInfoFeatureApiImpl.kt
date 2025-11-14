@@ -15,6 +15,8 @@ import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.PowerState
 import net.flipper.bridge.connection.transport.common.api.meta.FTransportMetaInfoApi
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
+import net.flipper.busylib.core.wrapper.WrappedFlow
+import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.ktx.common.orEmpty
 import kotlin.experimental.and
 
@@ -89,7 +91,7 @@ class FDeviceBatteryInfoFeatureApiImpl(
             }
     }
 
-    override suspend fun getDeviceBatteryInfo(): Flow<BSBDeviceBatteryInfo> {
+    override fun getDeviceBatteryInfo(): WrappedFlow<BSBDeviceBatteryInfo> {
         return getGattBatteryInfoFlow()
             .flatMapLatest { batteryInfo ->
                 if (batteryInfo == null) {
@@ -97,7 +99,7 @@ class FDeviceBatteryInfoFeatureApiImpl(
                 } else {
                     flowOf(batteryInfo)
                 }
-            }
+            }.wrap()
     }
 
     @Inject
