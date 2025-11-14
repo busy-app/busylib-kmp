@@ -7,7 +7,7 @@ import net.flipper.busylib.core.wrapper.WrappedStateFlow
 import net.flipper.busylib.core.wrapper.wrap
 
 class BUSYLibPrincipalApiImpl : BUSYLibPrincipalApi {
-    private val userStateFlow = MutableStateFlow<BUSYLibUserPrincipal>(BUSYLibUserPrincipal.Loading)
+    private val userStateFlow = MutableStateFlow<BUSYLibUserPrincipal>(BUSYLibUserPrincipal.Empty)
 
     override fun getPrincipalFlow(): WrappedStateFlow<BUSYLibUserPrincipal> {
         return userStateFlow.wrap()
