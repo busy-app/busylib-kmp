@@ -58,6 +58,7 @@ class FLinkInfoOnDemandFeatureApiImpl(
     }
 
     override fun tryCheckLinkedInfo() {
+        info { "Try check linked info" }
         singleJobScope.launch(SingleJobMode.CANCEL_PREVIOUS) {
             val principal = busyLibPrincipalApi.getPrincipalFlow()
                 .filter { principal -> principal !is BUSYLibUserPrincipal.Loading }
