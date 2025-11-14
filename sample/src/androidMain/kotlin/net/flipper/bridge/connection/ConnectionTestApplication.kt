@@ -8,6 +8,7 @@ import net.flipper.bridge.connection.utils.cloud.BUSYLibBarsApiNoop
 import net.flipper.bridge.connection.utils.config.impl.FDevicePersistedStorageImpl
 import net.flipper.bridge.connection.utils.principal.impl.UserPrincipalApiNoop
 import net.flipper.busylib.BUSYLibAndroid
+import timber.log.Timber
 
 class ConnectionTestApplication : Application() {
     val persistedStorage by lazy {
@@ -32,6 +33,8 @@ class ConnectionTestApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+
+        Timber.plant(Timber.DebugTree())
 
         busyLib.connectionService.onApplicationInit()
     }

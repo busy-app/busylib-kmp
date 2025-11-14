@@ -7,6 +7,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 import kotlinx.coroutines.delay
 import net.flipper.bridge.connection.transport.common.utils.toRawHttpRequestString
+import net.flipper.bridge.connection.transport.mock.impl.model.ApiAccountResponse
 import net.flipper.bridge.connection.transport.mock.impl.model.ApiBleStatusResponse
 import net.flipper.bridge.connection.transport.mock.impl.model.ApiScreenResponse
 import net.flipper.bridge.connection.transport.mock.impl.model.ApiStatusPowerResponse
@@ -63,6 +64,11 @@ fun getBSBMockHttpEngine() = MockEngine { request ->
         ApiScreenResponse.PATH -> {
             delay(DEFAULT_DELAY)
             ApiScreenResponse.getJsonPlainTextResponse()
+        }
+
+        ApiAccountResponse.PATH -> {
+            delay(DEFAULT_DELAY)
+            ApiAccountResponse.getJsonPlainTextResponse()
         }
 
         else -> return@MockEngine respond(
