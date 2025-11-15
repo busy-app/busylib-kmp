@@ -4,30 +4,19 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 pluginManagement {
     includeBuild("build-logic")
     repositories {
-        mavenLocal()
-        google {
-            mavenContent {
-                includeGroupAndSubgroups("androidx")
-                includeGroupAndSubgroups("com.android")
-                includeGroupAndSubgroups("com.google")
-            }
+        maven {
+            url = uri("https://reposilite.flipp.dev/releases")
         }
-        mavenCentral()
-        gradlePluginPortal()
+        mavenLocal()
     }
 }
 
 dependencyResolutionManagement {
     repositories {
-        mavenLocal()
-        google {
-            mavenContent {
-                includeGroupAndSubgroups("androidx")
-                includeGroupAndSubgroups("com.android")
-                includeGroupAndSubgroups("com.google")
-            }
+        maven {
+            url = uri("https://reposilite.flipp.dev/releases")
         }
-        mavenCentral()
+        mavenLocal()
     }
 }
 
