@@ -17,6 +17,8 @@ import net.flipper.bridge.connection.feature.rpc.api.model.WifiSecurityMethod
 import net.flipper.bridge.connection.feature.wifi.api.FWiFiFeatureApi
 import net.flipper.bridge.connection.feature.wifi.api.model.WiFiNetwork
 import net.flipper.bridge.connection.feature.wifi.api.model.WiFiSecurity
+import net.flipper.busylib.core.wrapper.WrappedFlow
+import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import kotlin.collections.component1
@@ -31,7 +33,7 @@ class FWiFiFeatureApiImpl(
 ) : FWiFiFeatureApi, LogTagProvider {
     override val TAG = "FWiFiFeatureApi"
 
-    override suspend fun getWifiStateFlow(): Flow<ImmutableList<WiFiNetwork>> {
+    override fun getWifiStateFlow(): WrappedFlow<ImmutableList<WiFiNetwork>> {
         return callbackFlow {
             var networks = listOf<WiFiNetwork>()
 
@@ -58,7 +60,7 @@ class FWiFiFeatureApiImpl(
 
                 delay(POOLING_TIME)
             }
-        }
+        }.wrap()
     }
 
     override suspend fun connect(

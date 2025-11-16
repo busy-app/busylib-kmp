@@ -5,9 +5,10 @@ import kotlinx.coroutines.flow.Flow
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.wifi.api.model.WiFiNetwork
 import net.flipper.bridge.connection.feature.wifi.api.model.WiFiSecurity
+import net.flipper.busylib.core.wrapper.WrappedFlow
 
 interface FWiFiFeatureApi : FDeviceFeatureApi {
-    suspend fun getWifiStateFlow(): Flow<ImmutableList<WiFiNetwork>>
+    fun getWifiStateFlow(): WrappedFlow<ImmutableList<WiFiNetwork>>
 
     suspend fun connect(
         ssid: String,
