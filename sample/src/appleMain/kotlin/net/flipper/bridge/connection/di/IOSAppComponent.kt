@@ -32,7 +32,7 @@ val busyLib: BUSYLibIOS by lazy {
     BUSYLibIOS.build(
         CoroutineScope(SupervisorJob()),
         principalApi = UserPrincipalApiNoop(),
-        BUSYLibBarsApi = BUSYLibBarsApiNoop(),
+        busyLibBarsApi = BUSYLibBarsApiNoop(),
         persistedStorage = storage,
         manager = manager,
     )
