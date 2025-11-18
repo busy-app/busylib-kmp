@@ -13,38 +13,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
 
-@OptIn(ExperimentalForInheritanceCoroutinesApi::class)
-class WrappedFlow<T : Any?>(private val origin: Flow<T>) : Flow<T> by origin {
-    fun watch(
-        onEach: (T) -> Unit,
-        onComplete: () -> Unit = {},
-        onError: (Throwable) -> Unit = {}
-    ): Closeable = origin.watchFlow(onEach, onComplete, onError)
-}
-
-@OptIn(ExperimentalForInheritanceCoroutinesApi::class)
-class WrappedStateFlow<T : Any?>(private val origin: StateFlow<T>) : StateFlow<T> by origin {
-    fun watch(
-        onEach: (T) -> Unit,
-        onComplete: () -> Unit = {},
-        onError: (Throwable) -> Unit = {}
-    ): Closeable = origin.watchFlow(onEach, onComplete, onError)
-}
-
-@OptIn(ExperimentalForInheritanceCoroutinesApi::class)
-class WrappedSharedFlow<T : Any?>(private val origin: SharedFlow<T>) : SharedFlow<T> by origin {
-    fun watch(
-        onEach: (T) -> Unit,
-        onComplete: () -> Unit = {},
-        onError: (Throwable) -> Unit = {}
-    ): Closeable = origin.watchFlow(onEach, onComplete, onError)
-}
-
-fun <T : Any?> StateFlow<T>.wrap(): WrappedStateFlow<T> = WrappedStateFlow(this)
-fun <T : Any?> SharedFlow<T>.wrap(): WrappedSharedFlow<T> = WrappedSharedFlow(this)
-fun <T : Any?> Flow<T>.wrap(): WrappedFlow<T> = WrappedFlow(this)
-
-private fun <T> Flow<T>.watchFlow(
+private fun <T> Flow<T>.onEach(
     onEach: (T) -> Unit,
     onComplete: () -> Unit = {},
     onError: (Throwable) -> Unit = {}
@@ -66,6 +35,37 @@ private fun <T> Flow<T>.watchFlow(
         }
     }
 }
+
+@OptIn(ExperimentalForInheritanceCoroutinesApi::class)
+class WrappedFlow<T : Any?>(private val origin: Flow<T>) : Flow<T> by origin {
+    fun watch(
+        onEach: (T) -> Unit,
+        onComplete: () -> Unit = {},
+        onError: (Throwable) -> Unit = {}
+    ): Closeable = origin.onEach(onEach, onComplete, onError)
+}
+
+@OptIn(ExperimentalForInheritanceCoroutinesApi::class)
+class WrappedStateFlow<T : Any?>(private val origin: StateFlow<T>) : StateFlow<T> by origin {
+    fun watch(
+        onEach: (T) -> Unit,
+        onComplete: () -> Unit = {},
+        onError: (Throwable) -> Unit = {}
+    ): Closeable = origin.onEach(onEach, onComplete, onError)
+}
+
+@OptIn(ExperimentalForInheritanceCoroutinesApi::class)
+class WrappedSharedFlow<T : Any?>(private val origin: SharedFlow<T>) : SharedFlow<T> by origin {
+    fun watch(
+        onEach: (T) -> Unit,
+        onComplete: () -> Unit = {},
+        onError: (Throwable) -> Unit = {}
+    ): Closeable = origin.onEach(onEach, onComplete, onError)
+}
+
+fun <T : Any?> StateFlow<T>.wrap(): WrappedStateFlow<T> = WrappedStateFlow(this)
+fun <T : Any?> SharedFlow<T>.wrap(): WrappedSharedFlow<T> = WrappedSharedFlow(this)
+fun <T : Any?> Flow<T>.wrap(): WrappedFlow<T> = WrappedFlow(this)
 
 interface Closeable {
     fun close()
