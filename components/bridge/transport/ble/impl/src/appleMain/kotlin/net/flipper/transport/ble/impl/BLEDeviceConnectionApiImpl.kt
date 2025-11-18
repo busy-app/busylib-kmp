@@ -15,6 +15,7 @@ import net.flipper.bridge.connection.transport.ble.common.exception.NoFoundDevic
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.busylib.core.di.BusyLibGraph
+import net.flipper.core.busylib.ktx.common.orEmpty
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
 import net.flipper.transport.ble.impl.cb.FBLEStatus
@@ -110,24 +111,11 @@ class BLEDeviceConnectionApiImpl(
             info { "Previous connection disconnected, proceeding with new connection..." }
         }
 
-//        info { "Starting scan to discover peripheral..." }
-//        centralManager.startScan()
-//        centralManager
-//            .discoveredStream
-//            .filter { it.contains(deviceIdentifier) }
-//            .first()
-//
-//        info { "Stopping scan and connecting to peripheral id=${deviceIdentifier}..." }
-//        centralManager.stopScan()
-
-        var peripheral = centralManager.connectedStream.value[deviceIdentifier]
-        if (peripheral == null) {
-            centralManager.connect(config)
-            peripheral = centralManager.connectedStream
-                .map { it[deviceIdentifier] }
-                .filter { it != null }
-                .first()!!
-        }
+        val peripheral = centralManager.connectedStream
+            .map { it[deviceIdentifier] }
+            .filter { it != null }
+            .orEmpty()
+            .first()
 
         info { "Found peripheral in connected stream id=${deviceIdentifier.UUIDString}" }
 

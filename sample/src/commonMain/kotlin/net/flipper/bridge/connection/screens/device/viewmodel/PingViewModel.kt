@@ -17,6 +17,7 @@ import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
 import net.flipper.bridge.connection.screens.decompose.DecomposeViewModel
 import net.flipper.core.busylib.log.LogTagProvider
+import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -35,9 +36,9 @@ class PingViewModel(
 
         featureProvider.get<FRpcFeatureApi>()
             .onEach { featureStatusSupport ->
-                log("FDeviceBatteryInfoFeatureApiapi status support ${featureStatusSupport::class.simpleName}")
+                log("Receive rpc api status support ${featureStatusSupport::class.simpleName}")
                 if (featureStatusSupport !is FFeatureStatus.Supported) {
-                    log("Device api don't support FDeviceBatteryInfoFeatureApi, so skip subscribe on bytes")
+                    log("Device api don't support rpc, so skip subscribe on bytes")
                 } else {
                     log("Subscribe to receive bytes flow")
                 }
@@ -47,19 +48,19 @@ class PingViewModel(
     fun getLogLinesState() = logLines.asStateFlow()
 
     fun sendPing() = viewModelScope.launch {
-//        log("Request send wifi request")
-//        val requestApi = featureProvider.getSync<FRpcFeatureApi>()
-//        info { "Receive requestApi: $requestApi" }
-//        if (requestApi == null) {
-//            log("Failed receive request api")
-//        } else {
-//            requestApi.getWifiNetworks().onSuccess {
-//                log("Response wifi request successful $it")
-//            }.onFailure {
-//                error(it) { "Failed to receive wifi request" }
-//                log("Failed receive wifi request")
-//            }
-//        }
+        log("Request send wifi request")
+        val requestApi = featureProvider.getSync<FRpcFeatureApi>()
+        info { "Receive requestApi: $requestApi" }
+        if (requestApi == null) {
+            log("Failed receive request api")
+        } else {
+            requestApi.getWifiNetworks().onSuccess {
+                log("Response wifi request successful $it")
+            }.onFailure {
+                error(it) { "Failed to receive wifi request" }
+                log("Failed receive wifi request")
+            }
+        }
     }
 
     private fun log(text: String) {

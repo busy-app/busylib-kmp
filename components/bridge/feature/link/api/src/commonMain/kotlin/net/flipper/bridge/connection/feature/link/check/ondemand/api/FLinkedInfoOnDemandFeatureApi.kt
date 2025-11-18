@@ -1,11 +1,11 @@
 package net.flipper.bridge.connection.feature.link.check.ondemand.api
 
-import kotlinx.coroutines.flow.Flow
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.link.model.LinkedAccountInfo
+import net.flipper.busylib.core.wrapper.WrappedFlow
 
 interface FLinkedInfoOnDemandFeatureApi : FDeviceFeatureApi {
-    val status: Flow<LinkedAccountInfo>
+    val status: WrappedFlow<LinkedAccountInfo>
 
     fun tryCheckLinkedInfo()
 }

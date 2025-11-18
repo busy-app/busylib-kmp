@@ -1,7 +1,6 @@
 package net.flipper.bridge.connection.feature.link.check.ondemand.api
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
@@ -15,6 +14,8 @@ import net.flipper.bridge.connection.feature.rpc.api.model.RpcLinkedAccountInfo
 import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
 import net.flipper.bsb.cloud.api.BUSYLibBarsApi
+import net.flipper.busylib.core.wrapper.WrappedFlow
+import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.ktx.common.SingleJobMode
 import net.flipper.core.busylib.ktx.common.asSingleJobScope
 import net.flipper.core.busylib.ktx.common.exponentialRetry
@@ -34,7 +35,7 @@ class FLinkInfoOnDemandFeatureApiImpl(
 ) : FLinkedInfoOnDemandFeatureApi, LogTagProvider {
     override val TAG = "FLinkedInfoFeatureApi"
     private val _status = MutableStateFlow<LinkedAccountInfo?>(null)
-    override val status: Flow<LinkedAccountInfo> = _status.filterNotNull()
+    override val status: WrappedFlow<LinkedAccountInfo> = _status.filterNotNull().wrap()
     private val singleJobScope = scope.asSingleJobScope()
 
     private fun RpcLinkedAccountInfo.asSealed(currentUserEmail: String?): LinkedAccountInfo {
