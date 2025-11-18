@@ -2,6 +2,7 @@ package net.flipper.transport.ble.impl
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withTimeoutOrNull
@@ -113,8 +114,7 @@ class BLEDeviceConnectionApiImpl(
 
         val peripheral = centralManager.connectedStream
             .map { it[deviceIdentifier] }
-            .filter { it != null }
-            .orEmpty()
+            .filterNotNull()
             .first()
 
         info { "Found peripheral in connected stream id=${deviceIdentifier.UUIDString}" }
