@@ -1,9 +1,9 @@
 package net.flipper.bridge.connection.feature.battery.api
 
-import kotlinx.coroutines.flow.Flow
 import net.flipper.bridge.connection.feature.battery.model.BSBDeviceBatteryInfo
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
+import net.flipper.busylib.core.wrapper.WrappedFlow
 
 interface FDeviceBatteryInfoFeatureApi : FDeviceFeatureApi {
-    suspend fun getDeviceBatteryInfo(): Flow<BSBDeviceBatteryInfo>
+    fun getDeviceBatteryInfo(): WrappedFlow<BSBDeviceBatteryInfo>
 }

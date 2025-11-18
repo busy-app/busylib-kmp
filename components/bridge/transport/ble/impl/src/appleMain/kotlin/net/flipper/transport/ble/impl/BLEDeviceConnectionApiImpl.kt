@@ -2,6 +2,7 @@ package net.flipper.transport.ble.impl
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withTimeoutOrNull
@@ -17,6 +18,7 @@ import net.flipper.bridge.connection.transport.common.api.FTransportConnectionSt
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
+import net.flipper.transport.ble.impl.cb.FBLEStatus
 import net.flipper.transport.ble.impl.cb.FCentralManager
 import net.flipper.transport.ble.impl.cb.FPeripheralApi
 import net.flipper.transport.ble.impl.cb.FPeripheralState
@@ -53,15 +55,13 @@ class BLEDeviceConnectionApiImpl(
         listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting)
         info { "Starting BLE connect with ${BleConstants.CONNECT_TIME.inWholeMilliseconds}ms timeout..." }
 
-        // Start connection process
-        centralManager.connect(config)
-
         // Wait for peripheral to connect with timeout (30 seconds)
         val peripheral = waitForPeripheralConnect(
-            deviceIdentifier = NSUUID(config.macAddress),
+            config = config,
             timeout = BleConstants.CONNECT_TIME
         )
 
+        centralManager.stopScan()
         if (peripheral == null) {
             info { "Connection timeout - disconnecting" }
             throw NoFoundDeviceException()
@@ -87,21 +87,34 @@ class BLEDeviceConnectionApiImpl(
         return bleApi
     }
 
-    /**
-     * Waits for a peripheral to connect with a timeout, similar to Swift implementation.
-     * Returns null if timeout occurs.
-     */
     private suspend fun waitForPeripheralConnect(
-        deviceIdentifier: NSUUID,
+        config: FBleDeviceConnectionConfig,
         timeout: Duration
     ): FPeripheralApi? = withTimeoutOrNull(timeout) {
+        val deviceIdentifier = NSUUID(config.macAddress)
         info { "Waiting for peripheral in connected stream (timeout: ${timeout.inWholeSeconds}s)..." }
 
-        // Wait until device appears in connected stream
+        info { "Waiting for BLE to be powered on..." }
+        if (centralManager.bleStatusStream.value != FBLEStatus.POWERED_ON) {
+            centralManager
+                .bleStatusStream
+                .first { status -> status == FBLEStatus.POWERED_ON }
+        }
+
+        info { "Waiting for previous connections to disconnect..." }
+        centralManager.disconnect(deviceIdentifier)
+        val existingDevice = centralManager.connectedStream.value[deviceIdentifier]
+        if (existingDevice != null) {
+            existingDevice.stateStream
+                .filter { it == FPeripheralState.DISCONNECTED }
+                .first()
+            info { "Previous connection disconnected, proceeding with new connection..." }
+        }
+
         val peripheral = centralManager.connectedStream
             .map { it[deviceIdentifier] }
-            .filter { it != null }
-            .first()!!
+            .filterNotNull()
+            .first()
 
         info { "Found peripheral in connected stream id=${deviceIdentifier.UUIDString}" }
 

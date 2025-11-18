@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.config.api.model.FDeviceBaseModel
+import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
 import net.flipper.core.busylib.log.warn
@@ -48,7 +49,7 @@ class IOSSearchViewModel(
         persistentListOf(mockDevice)
     )
 
-    override fun getDevicesFlow() = devicesFlow.asStateFlow()
+    override fun getDevicesFlow() = devicesFlow.asStateFlow().wrap()
 
     private val session = ASAccessorySession()
 
@@ -101,13 +102,13 @@ class IOSSearchViewModel(
         ) { accessoriesMap, savedDevices ->
             val existedUuids = savedDevices
                 .filterIsInstance<FDeviceBaseModel.FDeviceBSBModelBLEiOS>()
-                .associateBy { it.uuid }
+                .associateBy { it.uniqueId }
 
             accessoriesMap.map { (uuid, accessory) ->
                 ConnectionSearchItem(
                     address = uuid,
                     deviceModel = existedUuids[uuid] ?: FDeviceBaseModel.FDeviceBSBModelBLEiOS(
-                        uuid = uuid,
+                        uniqueId = uuid,
                         humanReadableName = accessory.displayName
                     ),
                     isAdded = existedUuids.containsKey(uuid)
