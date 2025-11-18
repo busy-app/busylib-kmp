@@ -21,6 +21,12 @@ kotlin {
     applyDefaultHierarchyTemplate()
 }
 
+kotlin {
+    sourceSets.commonMain.dependencies {
+        implementation(kotlin("test"))
+    }
+}
+
 var configurations = arrayListOf(
     "kspJvm",
     "kspAndroid",

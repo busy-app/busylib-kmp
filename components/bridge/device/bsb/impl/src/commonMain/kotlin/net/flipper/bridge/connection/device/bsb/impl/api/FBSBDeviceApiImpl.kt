@@ -12,8 +12,10 @@ import net.flipper.bridge.connection.device.bsb.api.FBSBDeviceApi
 import net.flipper.bridge.connection.device.bsb.impl.utils.FZeroFeatureClassToEnumMapper
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
+import net.flipper.bridge.connection.feature.common.api.FFeatureInstanceKeeper
 import net.flipper.bridge.connection.feature.common.api.FOnDeviceReadyFeatureApi
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
+import net.flipper.bridge.connection.feature.common.api.SetFFeatureInstanceKeeper
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.kmp.components.core.buildkonfig.BuildKonfig
@@ -31,6 +33,8 @@ class FBSBDeviceApiImpl(
     private val factories: Map<FDeviceFeature, FDeviceFeatureApi.Factory>
 ) : FBSBDeviceApi, FUnsafeDeviceFeatureApi, LogTagProvider {
     override val TAG = "FZeroDeviceApi"
+
+    override val instanceKeeper: FFeatureInstanceKeeper = SetFFeatureInstanceKeeper()
 
     private val features = mutableMapOf<FDeviceFeature, Deferred<FDeviceFeatureApi?>>()
     private val mutex = Mutex()
