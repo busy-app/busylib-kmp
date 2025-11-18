@@ -252,7 +252,7 @@ class FPeripheral(
     internal suspend fun didDiscoverCharacteristics(
         service: CBService,
         error: NSError?
-    )  = withContext(Dispatchers.Main) {
+    ) = withContext(Dispatchers.Main) {
         if (error != null) {
             error { "Characteristic discovery failed id=${identifier.UUIDString} error=$error" }
             return@withContext
@@ -310,7 +310,7 @@ class FPeripheral(
     internal suspend fun didUpdateValue(
         characteristic: CBCharacteristic,
         error: NSError?
-    )  = withContext(Dispatchers.Main) {
+    ) = withContext(Dispatchers.Main) {
         val characteristicUUID = characteristic.UUID.toKotlinUUID()
         val data = characteristic.value
 
@@ -357,7 +357,7 @@ class FPeripheral(
     internal suspend fun handleDidWriteValue(
         didWriteValueForCharacteristic: CBCharacteristic,
         error: NSError?
-    )  = withContext(Dispatchers.Main) {
+    ) = withContext(Dispatchers.Main) {
         if (error != null) {
             error { "Write failed: ${error.localizedDescription}" }
         } else {

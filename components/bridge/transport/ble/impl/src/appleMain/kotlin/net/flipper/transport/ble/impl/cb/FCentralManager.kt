@@ -21,11 +21,8 @@ import platform.CoreBluetooth.CBPeripheral
 import platform.CoreBluetooth.CBUUID
 import platform.Foundation.NSError
 import platform.Foundation.NSNumber
-import platform.Foundation.NSThread
 import platform.Foundation.NSUUID
 import platform.darwin.NSObject
-import platform.darwin.dispatch_async
-import platform.darwin.dispatch_get_main_queue
 
 interface FCentralManagerApi {
     val connectedStream: WrappedStateFlow<Map<NSUUID, FPeripheralApi>>

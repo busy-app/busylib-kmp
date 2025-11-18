@@ -65,7 +65,6 @@ class FWiFiFeatureApiImpl(
     override fun getWifiStatusFlow(): WrappedFlow<WifiStatusResponse> {
         return callbackFlow {
             while (isActive) {
-
                 val statusResponse = rpcFeatureApi.getWifiStatus().onFailure {
                     error(it) { "Failed to get WiFi networks" }
                 }.getOrNull() ?: continue
