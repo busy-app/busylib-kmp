@@ -1,20 +1,24 @@
 package net.flipper.bridge.connection.feature.link.check.onready.api
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.withTimeout
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
-import net.flipper.bridge.connection.feature.link.check.status.api.LinkedAccountInfoApi
+import net.flipper.bridge.connection.feature.link.check.ondemand.api.FLinkedInfoOnDemandFeatureApi
 import net.flipper.bridge.connection.feature.link.model.LinkedAccountInfo
 import net.flipper.bridge.connection.feature.rpc.api.critical.FRpcCriticalFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.RpcLinkedAccountInfo
 import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
 import net.flipper.bsb.cloud.api.BUSYLibBarsApi
+import net.flipper.busylib.core.wrapper.WrappedFlow
+import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.ktx.common.SingleJobMode
 import net.flipper.core.busylib.ktx.common.asSingleJobScope
 import net.flipper.core.busylib.ktx.common.exponentialRetry
@@ -27,11 +31,12 @@ import kotlin.time.Duration.Companion.seconds
 class FLinkInfoOnReadyFeatureApiImpl(
     @Assisted private val rpcFeatureApi: FRpcCriticalFeatureApi,
     @Assisted private val scope: CoroutineScope,
-    @Assisted private val linkedAccountInfoApi: LinkedAccountInfoApi,
     private val busyLibPrincipalApi: BUSYLibPrincipalApi,
     private val busyLibBarsApi: BUSYLibBarsApi
-) : FLinkedInfoOnReadyFeatureApi, LogTagProvider {
+) : FLinkedInfoOnReadyFeatureApi, FLinkedInfoOnDemandFeatureApi, LogTagProvider {
     override val TAG = "FLinkedInfoOnReadyFeatureApi"
+    private val _status = MutableStateFlow<LinkedAccountInfo?>(null)
+    override val status: WrappedFlow<LinkedAccountInfo> = _status.filterNotNull().wrap()
     private val singleJobScope = scope.asSingleJobScope()
 
     override suspend fun onReady() {
@@ -63,7 +68,6 @@ class FLinkInfoOnReadyFeatureApiImpl(
     }
 
     private fun tryCheckLinkedInfo() {
-        info { "Try check linked info" }
         singleJobScope.launch(SingleJobMode.CANCEL_PREVIOUS) {
             val principal = busyLibPrincipalApi.getPrincipalFlow()
                 .filter { principal -> principal !is BUSYLibUserPrincipal.Loading }
@@ -83,7 +87,7 @@ class FLinkInfoOnReadyFeatureApiImpl(
                     error(it) { "Failed authorize for BUSY Bar" }
                 }
             }
-            linkedAccountInfoApi.status.emit(info)
+            _status.emit(info)
         }
     }
 
@@ -115,17 +119,14 @@ class FLinkInfoOnReadyFeatureApiImpl(
         private val factory: (
             FRpcCriticalFeatureApi,
             CoroutineScope,
-            LinkedAccountInfoApi
         ) -> FLinkInfoOnReadyFeatureApiImpl
     ) {
         operator fun invoke(
             rpcFeatureApi: FRpcCriticalFeatureApi,
             scope: CoroutineScope,
-            linkedAccountInfoApi: LinkedAccountInfoApi,
         ): FLinkInfoOnReadyFeatureApiImpl = factory(
             rpcFeatureApi,
             scope,
-            linkedAccountInfoApi
         )
     }
 

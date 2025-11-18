@@ -3,6 +3,7 @@ package net.flipper.bridge.connection.device.bsb.impl.api
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -12,10 +13,8 @@ import net.flipper.bridge.connection.device.bsb.api.FBSBDeviceApi
 import net.flipper.bridge.connection.device.bsb.impl.utils.FZeroFeatureClassToEnumMapper
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
-import net.flipper.bridge.connection.feature.common.api.FFeatureInstanceKeeper
 import net.flipper.bridge.connection.feature.common.api.FOnDeviceReadyFeatureApi
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
-import net.flipper.bridge.connection.feature.common.api.SetFFeatureInstanceKeeper
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.kmp.components.core.buildkonfig.BuildKonfig
@@ -33,8 +32,6 @@ class FBSBDeviceApiImpl(
     private val factories: Map<FDeviceFeature, FDeviceFeatureApi.Factory>
 ) : FBSBDeviceApi, FUnsafeDeviceFeatureApi, LogTagProvider {
     override val TAG = "FZeroDeviceApi"
-
-    override val instanceKeeper: FFeatureInstanceKeeper = SetFFeatureInstanceKeeper()
 
     private val features = mutableMapOf<FDeviceFeature, Deferred<FDeviceFeatureApi?>>()
     private val mutex = Mutex()
@@ -100,20 +97,33 @@ class FBSBDeviceApiImpl(
 
     private suspend fun callAllOnReadyDeviceFeatures(
         factories: Set<FOnDeviceReadyFeatureApi.Factory>
-    ) = mutex.withLock {
-        for (factory in factories) {
+    ) = factories.map { factory ->
+        scope.async {
             try {
-                val featureApi = factory(
-                    unsafeFeatureDeviceApi = this,
-                    scope = scope,
-                    connectedDevice = connectedDevice
-                )
-                featureApi?.onReady()
+                val featureApi = when (factory) {
+                    is FDeviceFeatureApi.Factory -> {
+                        this@FBSBDeviceApiImpl.factories
+                            .toList()
+                            .firstOrNull { (_, onDemandFeatureFactory) -> onDemandFeatureFactory == factory }
+                            ?.first
+                            ?.let { fDeviceFeature -> getFeatureApi(fDeviceFeature) }
+                            ?.await()
+                    }
+
+                    else -> {
+                        factory(
+                            unsafeFeatureDeviceApi = this@FBSBDeviceApiImpl,
+                            scope = scope,
+                            connectedDevice = connectedDevice
+                        )
+                    }
+                }
+                (featureApi as? FOnDeviceReadyFeatureApi)?.onReady()
             } catch (e: Throwable) {
                 error(e) { "Failed init on ready device factory $factory" }
             }
         }
-    }
+    }.awaitAll()
 
     @Inject
     @ContributesBinding(BusyLibGraph::class, FBSBDeviceApi.Factory::class)

@@ -2,14 +2,17 @@ package net.flipper.bridge.connection.feature.link.check.onready.api
 
 import kotlinx.coroutines.CoroutineScope
 import me.tatarka.inject.annotations.Inject
+import me.tatarka.inject.annotations.IntoMap
+import me.tatarka.inject.annotations.Provides
+import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
+import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.common.api.FOnDeviceReadyFeatureApi
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
-import net.flipper.bridge.connection.feature.common.api.getOrCreate
-import net.flipper.bridge.connection.feature.link.check.status.api.LinkedAccountInfoApi
 import net.flipper.bridge.connection.feature.rpc.api.critical.FRpcCriticalFeatureApi
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.busylib.core.di.BusyLibGraph
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
+import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
 
 @Inject
 @ContributesBinding(
@@ -19,8 +22,7 @@ import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 )
 class FLinkInfoOnReadyFeatureFactoryImpl(
     private val fLinkInfoOnReadyFeatureApiImpl: FLinkInfoOnReadyFeatureApiImpl.InternalFactory,
-    private val linkedAccountInfoProviderApi: () -> LinkedAccountInfoApi
-) : FOnDeviceReadyFeatureApi.Factory {
+) : FOnDeviceReadyFeatureApi.Factory, FDeviceFeatureApi.Factory {
     override suspend fun invoke(
         unsafeFeatureDeviceApi: FUnsafeDeviceFeatureApi,
         scope: CoroutineScope,
@@ -30,13 +32,20 @@ class FLinkInfoOnReadyFeatureFactoryImpl(
             .getUnsafe(FRpcCriticalFeatureApi::class)
             ?.await()
             ?: return null
-        val linkedAccountInfoApi = unsafeFeatureDeviceApi
-            .instanceKeeper
-            .getOrCreate(linkedAccountInfoProviderApi)
         return fLinkInfoOnReadyFeatureApiImpl(
             rpcFeatureApi = fRpcCriticalFeatureApi,
             scope = scope,
-            linkedAccountInfoApi = linkedAccountInfoApi
         )
+    }
+}
+
+@ContributesTo(BusyLibGraph::class)
+interface FLinkInfoOnDemandFeatureComponent {
+    @Provides
+    @IntoMap
+    fun provideFLinkInfoOnDemandFeatureFactory(
+        fLinkInfoOnDemandFeatureFactory: FLinkInfoOnReadyFeatureFactoryImpl
+    ): Pair<FDeviceFeature, FDeviceFeatureApi.Factory> {
+        return FDeviceFeature.LINKED_USER_STATUS to fLinkInfoOnDemandFeatureFactory
     }
 }
