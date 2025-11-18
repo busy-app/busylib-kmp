@@ -251,6 +251,7 @@ class FCentralManager(
         error { "CB didFailToConnect id=${peripheral.identifier} error=$error" }
     }
 
+    @Suppress("UnusedParameter")
     private suspend fun didDiscover(
         peripheral: CBPeripheral,
         advertisementData: Map<Any?, *>,

@@ -61,7 +61,6 @@ class FWiFiFeatureApiImpl(
         }.wrap()
     }
 
-    // TODO: Cast to model
     override fun getWifiStatusFlow(): WrappedFlow<WifiStatusResponse> {
         return callbackFlow {
             while (isActive) {
