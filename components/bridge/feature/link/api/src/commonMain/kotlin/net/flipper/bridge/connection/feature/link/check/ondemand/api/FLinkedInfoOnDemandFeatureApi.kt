@@ -6,6 +6,4 @@ import net.flipper.busylib.core.wrapper.WrappedFlow
 
 interface FLinkedInfoOnDemandFeatureApi : FDeviceFeatureApi {
     val status: WrappedFlow<LinkedAccountInfo>
-
-    fun tryCheckLinkedInfo()
 }

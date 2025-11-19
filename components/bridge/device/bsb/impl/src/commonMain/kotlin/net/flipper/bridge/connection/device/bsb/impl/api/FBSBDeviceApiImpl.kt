@@ -3,6 +3,7 @@ package net.flipper.bridge.connection.device.bsb.impl.api
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -96,20 +97,33 @@ class FBSBDeviceApiImpl(
 
     private suspend fun callAllOnReadyDeviceFeatures(
         factories: Set<FOnDeviceReadyFeatureApi.Factory>
-    ) = mutex.withLock {
-        for (factory in factories) {
+    ) = factories.map { factory ->
+        scope.async {
             try {
-                val featureApi = factory(
-                    unsafeFeatureDeviceApi = this,
-                    scope = scope,
-                    connectedDevice = connectedDevice
-                )
-                featureApi?.onReady()
+                val featureApi = when (factory) {
+                    is FDeviceFeatureApi.Factory -> {
+                        this@FBSBDeviceApiImpl.factories
+                            .toList()
+                            .firstOrNull { (_, onDemandFeatureFactory) -> onDemandFeatureFactory == factory }
+                            ?.first
+                            ?.let { fDeviceFeature -> getFeatureApi(fDeviceFeature) }
+                            ?.await()
+                    }
+
+                    else -> {
+                        factory(
+                            unsafeFeatureDeviceApi = this@FBSBDeviceApiImpl,
+                            scope = scope,
+                            connectedDevice = connectedDevice
+                        )
+                    }
+                }
+                (featureApi as? FOnDeviceReadyFeatureApi)?.onReady()
             } catch (e: Throwable) {
                 error(e) { "Failed init on ready device factory $factory" }
             }
         }
-    }
+    }.awaitAll()
 
     @Inject
     @ContributesBinding(BusyLibGraph::class, FBSBDeviceApi.Factory::class)
