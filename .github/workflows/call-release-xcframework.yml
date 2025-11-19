@@ -36,8 +36,10 @@ jobs:
       - name: Prepare releases file
         id: files_release
         run: |
-          zip -r BusyLibKMPRelease.xcframework.zip entrypoint/build/XCFrameworks/release/BusyLibKMP.xcframework
+          cp -r ./entrypoint/build/XCFrameworks/release/BusyLibKMP.xcframework ./
+          zip -r BusyLibKMPRelease.xcframework.zip BusyLibKMP.xcframework
           echo "file_release=BusyLibKMPRelease.xcframework.zip" >> "$GITHUB_OUTPUT"
+          rm -rf BusyLibKMP.xcframework
       - name: Build debug xcframework
         uses: gradle/gradle-build-action@v3
         with:
@@ -47,8 +49,10 @@ jobs:
       - name: Prepare debug file
         id: files_debug
         run: |
-          zip -r BusyLibKMPDebug.xcframework.zip entrypoint/build/XCFrameworks/debug/BusyLibKMP.xcframework
+          cp -r ./entrypoint/build/XCFrameworks/debug/BusyLibKMP.xcframework ./
+          zip -r BusyLibKMPDebug.xcframework.zip BusyLibKMP.xcframework
           echo "file_debug=BusyLibKMPDebug.xcframework.zip" >> "$GITHUB_OUTPUT"
+          rm -rf BusyLibKMP.xcframework
       - name: Publish release
         id: create_release
         uses: softprops/action-gh-release@e7a8f85e1c67a31e6ed99a94b41bd0b71bbee6b8 # v2
