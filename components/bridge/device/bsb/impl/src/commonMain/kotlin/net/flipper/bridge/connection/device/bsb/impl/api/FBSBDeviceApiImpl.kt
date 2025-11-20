@@ -100,11 +100,14 @@ class FBSBDeviceApiImpl(
     ) = factories.map { factory ->
         scope.async {
             try {
+                info { "$factory onReady feature start creation!" }
                 val featureApi = when (factory) {
                     is FDeviceFeatureApi.Factory -> {
                         this@FBSBDeviceApiImpl.factories
                             .toList()
-                            .firstOrNull { (_, onDemandFeatureFactory) -> onDemandFeatureFactory == factory }
+                            .firstOrNull { (_, onDemandFeatureFactory) ->
+                                onDemandFeatureFactory::class == factory::class
+                            }
                             ?.first
                             ?.let { fDeviceFeature -> getFeatureApi(fDeviceFeature) }
                             ?.await()
@@ -118,6 +121,7 @@ class FBSBDeviceApiImpl(
                         )
                     }
                 }
+                info { "$featureApi onReady feature creation successful!" }
                 (featureApi as? FOnDeviceReadyFeatureApi)?.onReady()
             } catch (e: Throwable) {
                 error(e) { "Failed init on ready device factory $factory" }
