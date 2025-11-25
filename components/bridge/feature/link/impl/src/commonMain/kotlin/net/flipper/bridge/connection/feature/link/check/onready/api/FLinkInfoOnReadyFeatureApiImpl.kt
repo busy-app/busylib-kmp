@@ -117,6 +117,7 @@ class FLinkInfoOnReadyFeatureApiImpl(
 
     override suspend fun deleteAccount(): Result<SuccessResponse> {
         return rpcFeatureApi.deleteAccount()
+            .onSuccess { tryCheckLinkedInfo() }
     }
 
     @Inject
