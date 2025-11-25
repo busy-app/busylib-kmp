@@ -2,6 +2,7 @@ package net.flipper.bridge.connection.feature.rpc.impl.critical
 
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.post
 import kotlinx.coroutines.withContext
@@ -11,6 +12,7 @@ import net.flipper.bridge.connection.feature.rpc.api.client.FRpcClientModeApi
 import net.flipper.bridge.connection.feature.rpc.api.critical.FRpcCriticalFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarLinkCode
 import net.flipper.bridge.connection.feature.rpc.api.model.RpcLinkedAccountInfo
+import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
 import net.flipper.bridge.connection.feature.rpc.impl.client.FRpcClientModeApiImpl
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
@@ -38,6 +40,14 @@ class FRpcCriticalFeatureApiImpl(
         return withContext(dispatcher) {
             return@withContext runSuspendCatching {
                 client.post("/api/account/link").body<BusyBarLinkCode>()
+            }
+        }
+    }
+
+    override suspend fun deleteAccount(): Result<SuccessResponse> {
+        return withContext(dispatcher) {
+            return@withContext runSuspendCatching {
+                client.delete("/api/account").body<SuccessResponse>()
             }
         }
     }

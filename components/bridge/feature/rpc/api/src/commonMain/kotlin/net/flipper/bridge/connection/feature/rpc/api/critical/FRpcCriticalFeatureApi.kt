@@ -4,6 +4,7 @@ import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.client.FRpcClientModeApi
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarLinkCode
 import net.flipper.bridge.connection.feature.rpc.api.model.RpcLinkedAccountInfo
+import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
 
 interface FRpcCriticalFeatureApi : FDeviceFeatureApi {
     val clientModeApi: FRpcClientModeApi
@@ -11,4 +12,6 @@ interface FRpcCriticalFeatureApi : FDeviceFeatureApi {
     suspend fun invalidateLinkedUser(email: String?): Result<RpcLinkedAccountInfo>
 
     suspend fun getLinkCode(): Result<BusyBarLinkCode>
+
+    suspend fun deleteAccount(): Result<SuccessResponse>
 }
