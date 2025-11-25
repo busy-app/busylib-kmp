@@ -57,8 +57,10 @@ class FLinkInfoOnReadyFeatureApiImpl(
                 val linkedMail = this.email
                 if (linkedMail != null && linkedMail == currentUserEmail) {
                     LinkedAccountInfo.Linked.SameUser(linkedMail)
-                } else if (linkedMail != null) {
+                } else if (linkedMail != null && currentUserEmail != null) {
                     LinkedAccountInfo.Linked.DifferentUser(linkedMail)
+                } else if (linkedMail != null && currentUserEmail == null) {
+                    LinkedAccountInfo.Linked.MissingBusyCloud(linkedMail)
                 } else {
                     LinkedAccountInfo.Error
                 }
