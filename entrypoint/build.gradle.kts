@@ -21,7 +21,7 @@ kotlin {
         .forEach { target ->
             target.binaries.framework {
                 baseName = "BusyLibKMP"
-                isStatic = true
+                isStatic = false
 
                 binaryOption("bundleId", "net.flipper.busylib")
 
