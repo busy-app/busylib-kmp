@@ -48,8 +48,6 @@ class ConnectionRootDecomposeComponent(
                 componentContext = componentContext,
                 navigation = navigation
             )
-
-        ConnectionRootConfig.FileManager -> TODO()
     }
 
     class Factory(

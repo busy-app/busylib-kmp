@@ -19,8 +19,9 @@ import kotlinx.collections.immutable.PersistentList
 fun FPingComposable(
     logs: PersistentList<String>,
     onSendPing: () -> Unit,
-    invalidateRpcInfo: () -> Unit,
-    onOpenFM: () -> Unit,
+    onDisconnect: () -> Unit,
+    onForget: () -> Unit,
+    onConnect: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier) {
@@ -49,19 +50,28 @@ fun FPingComposable(
         }
         Button(
             modifier = Modifier.fillMaxWidth(),
-            onClick = invalidateRpcInfo
+            onClick = onDisconnect
         ) {
             Text(
-                text = "Get device info",
+                text = "Disconnect",
                 color = MaterialTheme.colors.onBackground
             )
         }
         Button(
             modifier = Modifier.fillMaxWidth(),
-            onClick = onOpenFM
+            onClick = onConnect
         ) {
             Text(
-                text = "File Manager",
+                text = "Connect",
+                color = MaterialTheme.colors.onBackground
+            )
+        }
+        Button(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = onForget
+        ) {
+            Text(
+                text = "Forget",
                 color = MaterialTheme.colors.onBackground
             )
         }
