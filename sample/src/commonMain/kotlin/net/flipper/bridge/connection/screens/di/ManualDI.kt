@@ -12,6 +12,7 @@ import net.flipper.bridge.connection.screens.device.viewmodel.PingViewModel
 import net.flipper.bridge.connection.screens.search.ConnectionSearchDecomposeComponent
 import net.flipper.bridge.connection.screens.search.ConnectionSearchViewModel
 import net.flipper.bridge.connection.screens.utils.PermissionChecker
+import net.flipper.bridge.connection.service.api.FConnectionService
 import net.flipper.busylib.BUSYLib
 
 fun getRootDecomposeComponent(
@@ -26,15 +27,18 @@ fun getRootDecomposeComponent(
         persistedStorage = persistedStorage,
         orchestrator = busyLib.orchestrator,
         featureProvider = busyLib.featureProvider,
-        searchViewModelProvider = searchViewModelProvider
+        searchViewModelProvider = searchViewModelProvider,
+        fConnectionService = busyLib.connectionService
     ).invoke(componentContext)
 }
 
+@Suppress("LongParameterList")
 private fun getRootDecomposeComponentFactory(
     permissionChecker: PermissionChecker,
     persistedStorage: FDevicePersistedStorage,
     orchestrator: FDeviceOrchestrator,
     featureProvider: FFeatureProvider,
+    fConnectionService: FConnectionService,
     searchViewModelProvider: () -> ConnectionSearchViewModel
 ): ConnectionRootDecomposeComponent.Factory {
     return ConnectionRootDecomposeComponent.Factory(
@@ -45,7 +49,8 @@ private fun getRootDecomposeComponentFactory(
         connectionDeviceScreenDecomposeComponentFactory = getConnectionDeviceScreenDecomposeComponentFactory(
             persistedStorage = persistedStorage,
             orchestrator = orchestrator,
-            featureProvider = featureProvider
+            featureProvider = featureProvider,
+            fService = fConnectionService
         )
     )
 }
@@ -61,14 +66,15 @@ private fun getSearchDecomposeFactory(
 private fun getConnectionDeviceScreenDecomposeComponentFactory(
     persistedStorage: FDevicePersistedStorage,
     orchestrator: FDeviceOrchestrator,
-    featureProvider: FFeatureProvider
+    featureProvider: FFeatureProvider,
+    fService: FConnectionService
 ): ConnectionDeviceScreenDecomposeComponent.Factory {
     return ConnectionDeviceScreenDecomposeComponent.Factory(
         devicesViewModelProvider = { FDevicesViewModel(persistedStorage) },
         currentDeviceViewModelProvider = {
             FCurrentDeviceViewModel(
                 orchestrator,
-                persistedStorage
+                fService,
             )
         },
         pingViewModelProvider = { PingViewModel(featureProvider, orchestrator) }

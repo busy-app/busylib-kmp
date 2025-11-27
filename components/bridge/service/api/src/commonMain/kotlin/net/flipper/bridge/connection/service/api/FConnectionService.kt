@@ -12,21 +12,15 @@ interface FConnectionService {
     /**
      * Reconnect to last known device after being force disconnected
      */
-    fun forceReconnect()
+    fun connectCurrent()
 
     /**
      * Disconnect current device
-     * @param force if true, will not reconnect until [forceReconnect]
      */
-    fun disconnect(force: Boolean = false)
+    fun disconnect()
 
     /**
      * Forget current device and disconnect from it as side effect
      */
     fun forgetCurrentDevice()
-
-    /**
-     * Connect devices only if it wasn't force disconnected
-     */
-    fun connectIfNotForceDisconnect()
 }

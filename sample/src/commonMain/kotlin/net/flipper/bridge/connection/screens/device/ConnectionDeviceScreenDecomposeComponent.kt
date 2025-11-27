@@ -51,10 +51,9 @@ class ConnectionDeviceScreenDecomposeComponent(
             FPingComposable(
                 logs = logs,
                 onSendPing = pingViewModel::sendPing,
-                invalidateRpcInfo = { },
-                onOpenFM = {
-                    navigation.pushNew(ConnectionRootConfig.FileManager)
-                }
+                onDisconnect = currentDeviceViewModel::disconnect,
+                onForget = currentDeviceViewModel::forget,
+                onConnect = currentDeviceViewModel::connect
             )
         }
     }

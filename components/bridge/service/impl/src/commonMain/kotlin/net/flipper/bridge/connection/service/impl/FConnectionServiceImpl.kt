@@ -83,33 +83,26 @@ class FConnectionServiceImpl(
         }
     }
 
-    override fun forceReconnect() {
-        scope.launch { isForceDisconnected.emit(false) }
+    override fun connectCurrent() {
+        scope.launch {
+            isForceDisconnected.emit(false)
+        }
     }
 
-    override fun disconnect(force: Boolean) {
+    override fun disconnect() {
         scope.launch {
-            isForceDisconnected.emit(force)
+            isForceDisconnected.emit(true)
         }
     }
 
     override fun forgetCurrentDevice() {
         scope.launch {
+            isForceDisconnected.emit(true)
             fDevicePersistedStorage.getCurrentDevice()
                 .first()
                 ?.let { currentDevice ->
                     fDevicePersistedStorage.removeDevice(currentDevice.uniqueId)
                 }
-        }
-    }
-
-    override fun connectIfNotForceDisconnect() {
-        scope.launch {
-            if (isForceDisconnected.first()) return@launch
-            val currentDevice = fDevicePersistedStorage.getCurrentDevice()
-                .first()
-                ?: return@launch
-            orchestrator.connect(currentDevice)
         }
     }
 }
