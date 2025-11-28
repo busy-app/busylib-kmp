@@ -24,7 +24,7 @@ private fun <T> Flow<T>.onEach(
         .catch { e ->
             onError(e)
         }
-        .onCompletion { cause ->
+        .onCompletion {
             onComplete()
             scope.cancel()
         }
