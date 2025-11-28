@@ -23,9 +23,11 @@ private fun <T> Flow<T>.onEach(
     onEach(onEach)
         .catch { e ->
             onError(e)
+            scope.cancel()
         }
         .onCompletion {
             onComplete()
+            scope.cancel()
         }
         .launchIn(scope)
 
