@@ -6,6 +6,7 @@ import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfo
 import kotlin.uuid.Uuid
 
 data class FBleDeviceConnectionConfig(
+    val deviceName: String,
     val macAddress: String,
     val serialConfig: FBleDeviceSerialConfig,
     val metaInfoGattMap: ImmutableMap<TransportMetaInfoKey, GATTCharacteristicAddress>

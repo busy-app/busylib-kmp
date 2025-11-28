@@ -80,6 +80,8 @@ kotlin {
         implementation(projects.components.bridge.orchestrator.impl)
         api(projects.components.bridge.service.api)
         implementation(projects.components.bridge.service.impl)
+        api(projects.components.bridge.feature.events.api)
+        implementation(projects.components.bridge.feature.events.impl)
 
         implementation(projects.components.bridge.transport.ble.api)
         implementation(projects.components.bridge.transport.common.api)

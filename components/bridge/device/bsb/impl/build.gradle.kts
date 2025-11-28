@@ -25,6 +25,7 @@ kotlin {
         implementation(projects.components.bridge.feature.link.api)
         implementation(projects.components.bridge.feature.screenStreaming.api)
         implementation(projects.components.bridge.feature.firmwareUpdate.api)
+        implementation(projects.components.bridge.feature.events.api)
 
         implementation(libs.kotlin.coroutines)
         implementation(libs.kotlin.immutable)

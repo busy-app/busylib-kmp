@@ -11,11 +11,15 @@ import kotlin.uuid.Uuid
 private val INFORMATION_SERVICE_UUID = Uuid.parse("0000180a-0000-1000-8000-00805f9b34fb")
 private val BATTERY_SERVICE_UUID = Uuid.parse("0000180f-0000-1000-8000-00805f9b34fb")
 
+private val NOTIFICATION_SERVICE_UUID = Uuid.parse("AF569D00-716A-452D-BE64-66E465766C29")
+
 @Inject
 class BUSYBarBLEBuilderConfig {
     fun build(
-        address: String
+        address: String,
+        deviceName: String
     ) = FBleDeviceConnectionConfig(
+        deviceName = deviceName,
         macAddress = address,
         serialConfig = FBleDeviceSerialConfig(
             serialServiceUuid = Uuid.parse("6E400001-B5A3-F393-E0A9-E50E24DCCA9E"),
@@ -46,6 +50,10 @@ class BUSYBarBLEBuilderConfig {
             TransportMetaInfoKey.BATTERY_POWER_STATE to GATTCharacteristicAddress(
                 serviceAddress = BATTERY_SERVICE_UUID,
                 characteristicAddress = Uuid.parse("00002BED-0000-1000-8000-00805F9B34FB")
+            ),
+            TransportMetaInfoKey.EVENTS_INDICATION to GATTCharacteristicAddress(
+                serviceAddress = NOTIFICATION_SERVICE_UUID,
+                characteristicAddress = Uuid.parse("AF569D01-716A-452D-BE64-66E465766C29"),
             )
         )
     )

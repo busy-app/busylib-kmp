@@ -5,6 +5,7 @@ import kotlinx.collections.immutable.toPersistentMap
 import net.flipper.bridge.connection.feature.battery.api.FDeviceBatteryInfoFeatureApi
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
+import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
 import net.flipper.bridge.connection.feature.firmwareupdate.api.FFirmwareUpdateFeatureApi
 import net.flipper.bridge.connection.feature.info.api.FDeviceInfoFeatureApi
 import net.flipper.bridge.connection.feature.link.check.ondemand.api.FLinkedInfoOnDemandFeatureApi
@@ -29,6 +30,7 @@ object FZeroFeatureClassToEnumMapper {
             FDeviceFeature.FIRMWARE_UPDATE -> FFirmwareUpdateFeatureApi::class
             FDeviceFeature.RPC_CRITICAL -> FRpcCriticalFeatureApi::class
             FDeviceFeature.LINKED_USER_STATUS -> FLinkedInfoOnDemandFeatureApi::class
+            FDeviceFeature.EVENTS -> FEventsFeatureApi::class
         }
     }
 

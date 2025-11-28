@@ -22,6 +22,7 @@ fun FPingComposable(
     onDisconnect: () -> Unit,
     onForget: () -> Unit,
     onConnect: () -> Unit,
+    toDashboard: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier) {
@@ -75,5 +76,15 @@ fun FPingComposable(
                 color = MaterialTheme.colors.onBackground
             )
         }
+        Button(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = toDashboard
+        ) {
+            Text(
+                text = "To Dashboard",
+                color = MaterialTheme.colors.onBackground
+            )
+        }
+
     }
 }

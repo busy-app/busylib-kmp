@@ -53,7 +53,10 @@ class ConnectionDeviceScreenDecomposeComponent(
                 onSendPing = pingViewModel::sendPing,
                 onDisconnect = currentDeviceViewModel::disconnect,
                 onForget = currentDeviceViewModel::forget,
-                onConnect = currentDeviceViewModel::connect
+                onConnect = currentDeviceViewModel::connect,
+                toDashboard = {
+                    navigation.pushNew(ConnectionRootConfig.Dashboard)
+                }
             )
         }
     }

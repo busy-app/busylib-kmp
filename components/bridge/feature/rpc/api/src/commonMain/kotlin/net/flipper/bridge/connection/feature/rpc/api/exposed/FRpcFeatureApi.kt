@@ -24,4 +24,6 @@ interface FRpcFeatureApi : FDeviceFeatureApi {
     suspend fun getWifiStatus(): Result<WifiStatusResponse>
     suspend fun getBleStatus(): Result<BleStatusResponse>
     suspend fun getScreen(display: Int): Result<String>
+
+    suspend fun getDeviceName(): Result<String>
 }

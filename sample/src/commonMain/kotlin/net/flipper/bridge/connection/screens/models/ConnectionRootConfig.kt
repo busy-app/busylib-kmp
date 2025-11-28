@@ -12,4 +12,7 @@ sealed class ConnectionRootConfig {
 
     @Serializable
     data object Device : ConnectionRootConfig()
+
+    @Serializable
+    data object Dashboard : ConnectionRootConfig()
 }

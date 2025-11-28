@@ -25,6 +25,7 @@ import net.flipper.bridge.connection.feature.rpc.api.model.ConnectRequestConfig
 import net.flipper.bridge.connection.feature.rpc.api.model.NetworkResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.WifiStatusResponse
+import net.flipper.bridge.connection.feature.rpc.impl.exposed.model.DeviceNameResponse
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.busylib.log.LogTagProvider
@@ -103,6 +104,14 @@ class FRpcFeatureApiImpl(
                 header(HttpHeaders.Accept, "image/bmp")
                 parameter("display", display)
             }.bodyAsText()
+        }
+    }
+
+    override suspend fun getDeviceName(): Result<String> = withContext(dispatcher) {
+        return@withContext runSuspendCatching {
+            httpClient.get {
+                url("/api/name")
+            }.body<DeviceNameResponse>().name
         }
     }
 
