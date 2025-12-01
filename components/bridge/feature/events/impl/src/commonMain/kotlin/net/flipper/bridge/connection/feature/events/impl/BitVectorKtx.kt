@@ -3,18 +3,32 @@ package net.flipper.bridge.connection.feature.events.impl
 import dev.dokky.bitvector.BitVector
 import dev.dokky.bitvector.MutableBitVector
 
+
+/**
+ * Parse uint32_t little-endian array to [BitVector]
+ *
+ *
+ */
 fun bitsOf(byteArray: ByteArray): BitVector {
     val vector = MutableBitVector()
 
-    byteArray.map {
-        it.toBits().toList()
-    }.flatten().forEachIndexed { index, bool ->
-        vector[index] = bool
-    }
+    byteArray.toList()
+        .chunked(UInt.SIZE_BYTES) // Just in case, if there are more than 32 bits
+        .map { uintBytes ->
+            uintBytes
+                .map { byte ->
+                    byte.toBits().toList()
+                }.flatten()
+        }.flatten()
+        .reversed() // Because little-endian
+        .forEachIndexed { index, bool ->
+            vector[index] = bool
+        }
 
     return vector
 }
 
+// For debug:
 
 private fun Byte.toBits(): List<Boolean> {
     return ((Byte.SIZE_BITS - 1) downTo 0).map { bitIndex ->
