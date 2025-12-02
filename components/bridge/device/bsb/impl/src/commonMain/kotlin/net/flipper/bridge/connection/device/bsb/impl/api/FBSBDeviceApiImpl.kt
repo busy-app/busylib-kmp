@@ -31,7 +31,7 @@ class FBSBDeviceApiImpl(
     onReadyFeaturesApiFactories: Set<FOnDeviceReadyFeatureApi.Factory>,
     private val factories: Map<FDeviceFeature, FDeviceFeatureApi.Factory>
 ) : FBSBDeviceApi, FUnsafeDeviceFeatureApi, LogTagProvider {
-    override val TAG = "FZeroDeviceApi"
+    override val TAG = "FBSBDeviceApi"
 
     private val features = mutableMapOf<FDeviceFeature, Deferred<FDeviceFeatureApi?>>()
     private val mutex = Mutex()

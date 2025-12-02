@@ -18,7 +18,7 @@ import net.flipper.core.busylib.log.info
 class FEventsFeatureApiImpl(
     @Assisted private val metaInfoApi: FTransportMetaInfoApi,
 ) : FEventsFeatureApi, LogTagProvider {
-    override val TAG = "FEventsFlowApi"
+    override val TAG = "FEventsFeatureApi"
 
     override fun getUpdatesFlow(): Flow<List<UpdateEvent>> {
         val indicationFlow = metaInfoApi.get(TransportMetaInfoKey.EVENTS_INDICATION)

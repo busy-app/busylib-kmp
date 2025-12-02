@@ -27,10 +27,11 @@ class FDeviceInfoFeatureFactoryImpl(
             .getUnsafe(FRpcFeatureApi::class)
             ?.await()
             ?: return null
+        val eventsFeatureApi = unsafeFeatureDeviceApi.getUnsafe<FEventsFeatureApi>()?.await()
         return deviceInfoFeatureFactory(
             rpcFeatureApi = rpcFeatureApi,
             connectedDevice = connectedDevice,
-            fEventsFeatureApi = unsafeFeatureDeviceApi.getUnsafe<FEventsFeatureApi>()?.await()
+            fEventsFeatureApi = eventsFeatureApi
         )
     }
 }
