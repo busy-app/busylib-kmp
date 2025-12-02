@@ -9,10 +9,10 @@ class BitVectorKtxTests {
     @Test
     fun `first bit true`() {
         val input = byteArrayOf(
+            0b00000001.toByte(),
             0b00000000.toByte(),
             0b00000000.toByte(),
             0b00000000.toByte(),
-            0b00000001.toByte()
         )
         val bits = bitsOf(input)
 
@@ -22,10 +22,10 @@ class BitVectorKtxTests {
     @Test
     fun `last bit true`() {
         val input = byteArrayOf(
+            0b10000000.toByte(),
             0b00000000.toByte(),
             0b00000000.toByte(),
             0b00000000.toByte(),
-            0b10000000.toByte()
         )
         val bits = bitsOf(input)
 
@@ -35,10 +35,10 @@ class BitVectorKtxTests {
     @Test
     fun `two bits true`() {
         val input = byteArrayOf(
+            0b10000001.toByte(),
             0b00000000.toByte(),
             0b00000000.toByte(),
             0b00000000.toByte(),
-            0b10000001.toByte()
         )
         val bits = bitsOf(input)
 
@@ -50,10 +50,10 @@ class BitVectorKtxTests {
     @Test
     fun `two bytes first bit true`() {
         val input = byteArrayOf(
-            0b00000000.toByte(),
-            0b00000000.toByte(),
+            0b10000000.toByte(),
             0b00000001.toByte(),
-            0b10000000.toByte()
+            0b00000000.toByte(),
+            0b00000000.toByte(),
         )
         val bits = bitsOf(input)
 
@@ -63,10 +63,10 @@ class BitVectorKtxTests {
     @Test
     fun `two bytes two bit true`() {
         val input = byteArrayOf(
-            0b00000000.toByte(),
-            0b00000000.toByte(),
+            0b10000000.toByte(),
             0b00000001.toByte(),
-            0b10000000.toByte()
+            0b00000000.toByte(),
+            0b00000000.toByte(),
         )
         val bits = bitsOf(input)
 

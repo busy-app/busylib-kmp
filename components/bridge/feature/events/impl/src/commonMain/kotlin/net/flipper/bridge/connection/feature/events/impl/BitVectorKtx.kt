@@ -17,10 +17,12 @@ fun bitsOf(byteArray: ByteArray): BitVector {
         .map { uintBytes ->
             uintBytes
                 .map { byte ->
-                    byte.toBits().toList()
+                    byte
+                        .toBits()
+                        .toList()
+                        .reversed() // Because little-endian
                 }.flatten()
         }.flatten()
-        .reversed() // Because little-endian
         .forEachIndexed { index, bool ->
             vector[index] = bool
         }
