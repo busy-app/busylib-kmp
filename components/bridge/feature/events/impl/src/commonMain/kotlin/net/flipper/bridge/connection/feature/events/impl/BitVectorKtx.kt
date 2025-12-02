@@ -6,7 +6,9 @@ import dev.dokky.bitvector.MutableBitVector
 /**
  * Parse uint32_t little-endian array to [BitVector]
  *
- *
+ * [0b00000001, 0b00000000, 0b00000000, 0b00000000]
+ * to
+ * [1,0,0,0,0,0,0,0,/*first byte*/, 0,0,0,0,0,0,0,/*second byte*/...]
  */
 fun bitsOf(byteArray: ByteArray): BitVector {
     val vector = MutableBitVector()
