@@ -28,7 +28,7 @@ class FEventsFeatureFactoryImpl(
 }
 
 @ContributesTo(BusyLibGraph::class)
-interface FDeviceInfoFeatureComponent {
+interface FEventsFeatureComponent {
     @Provides
     @IntoMap
     fun provideFEventsFeatureFactory(
