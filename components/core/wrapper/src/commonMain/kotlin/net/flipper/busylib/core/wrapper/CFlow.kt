@@ -26,6 +26,7 @@ private fun <T> Flow<T>.onEach(
         }
         .onCompletion {
             onComplete()
+            scope.cancel()
         }
         .launchIn(scope)
 
