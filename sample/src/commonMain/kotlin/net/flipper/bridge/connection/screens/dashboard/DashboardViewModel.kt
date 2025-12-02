@@ -21,9 +21,10 @@ class DashboardViewModel(
                 FFeatureStatus.Retrieving,
                 FFeatureStatus.Unsupported -> MutableStateFlow(null)
 
-                is FFeatureStatus.Supported<FDeviceInfoFeatureApi> -> feature
-                    .featureApi
-                    .getDeviceName(viewModelScope)
+                is FFeatureStatus.Supported<FDeviceInfoFeatureApi> ->
+                    feature
+                        .featureApi
+                        .getDeviceName(viewModelScope)
             }
         }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 

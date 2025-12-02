@@ -7,11 +7,11 @@ import net.flipper.bridge.connection.transport.ble.api.FBleApi
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.ble.api.FSerialBleApi
 import net.flipper.bridge.connection.transport.ble.http.FHttpBLEEngine
+import net.flipper.bridge.connection.transport.ble.impl.meta.FTransportMetaInfoApiImpl
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.bridge.connection.transport.common.api.meta.FTransportMetaInfoApi
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPDeviceApi
-import net.flipper.bridge.connection.transport.ble.impl.meta.FTransportMetaInfoApiImpl
 import net.flipper.busylib.core.wrapper.WrappedStateFlow
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info

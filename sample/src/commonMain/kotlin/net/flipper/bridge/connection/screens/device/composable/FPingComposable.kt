@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.PersistentList
 
 @Composable
+@Suppress("LongMethod")
 fun FPingComposable(
     logs: PersistentList<String>,
     onSendPing: () -> Unit,
@@ -85,6 +86,5 @@ fun FPingComposable(
                 color = MaterialTheme.colors.onBackground
             )
         }
-
     }
 }

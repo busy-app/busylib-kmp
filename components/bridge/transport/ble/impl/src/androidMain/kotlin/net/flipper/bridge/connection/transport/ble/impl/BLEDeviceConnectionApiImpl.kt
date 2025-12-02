@@ -13,10 +13,10 @@ import net.flipper.bridge.connection.transport.ble.common.BleConstants
 import net.flipper.bridge.connection.transport.ble.common.exception.BLEConnectionPermissionException
 import net.flipper.bridge.connection.transport.ble.common.exception.FailedConnectToDeviceException
 import net.flipper.bridge.connection.transport.ble.common.exception.NoFoundDeviceException
-import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
-import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.bridge.connection.transport.ble.impl.api.FBleApiImpl
 import net.flipper.bridge.connection.transport.ble.impl.api.http.serial.SerialApiFactory
+import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
+import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.log.LogTagProvider

@@ -1,8 +1,6 @@
 package net.flipper.bridge.connection.feature.events.impl
 
-import dev.dokky.bitvector.BitVector
 import kotlin.test.Test
-import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class BitVectorKtxTests {
@@ -45,7 +43,6 @@ class BitVectorKtxTests {
         assertTrue(bits[0])
         assertTrue(bits[7])
     }
-
 
     @Test
     fun `two bytes first bit true`() {

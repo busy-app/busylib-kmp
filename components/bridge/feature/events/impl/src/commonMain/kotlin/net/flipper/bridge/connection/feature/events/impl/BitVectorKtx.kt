@@ -3,7 +3,6 @@ package net.flipper.bridge.connection.feature.events.impl
 import dev.dokky.bitvector.BitVector
 import dev.dokky.bitvector.MutableBitVector
 
-
 /**
  * Parse uint32_t little-endian array to [BitVector]
  *
