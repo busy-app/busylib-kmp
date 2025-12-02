@@ -2,7 +2,6 @@ package net.flipper.bridge.connection.feature.info.impl
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.stateIn
@@ -15,6 +14,8 @@ import net.flipper.bridge.connection.feature.info.api.FDeviceInfoFeatureApi
 import net.flipper.bridge.connection.feature.info.api.model.BSBDeviceInfo
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
+import net.flipper.busylib.core.wrapper.WrappedStateFlow
+import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 
@@ -34,7 +35,7 @@ class FDeviceInfoFeatureApiImpl(
         )
     }
 
-    override fun getDeviceName(scope: CoroutineScope): StateFlow<String> {
+    override fun getDeviceName(scope: CoroutineScope): WrappedStateFlow<String> {
         return flow {
             emit(Unit)
             fEventsFeatureApi
@@ -49,6 +50,7 @@ class FDeviceInfoFeatureApiImpl(
                 }
                 .getOrNull()
         }.stateIn(scope, SharingStarted.WhileSubscribed(), connectedDevice.deviceName)
+            .wrap()
     }
 
     @Inject
