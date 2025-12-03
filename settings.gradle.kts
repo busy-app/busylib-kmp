@@ -61,6 +61,8 @@ include(
     ":components:bridge:feature:info:impl",
     ":components:bridge:feature:wifi:api",
     ":components:bridge:feature:wifi:impl",
+    ":components:bridge:feature:ble:api",
+    ":components:bridge:feature:ble:impl",
     ":components:bridge:feature:link:api",
     ":components:bridge:feature:link:impl",
     ":components:bridge:feature:sync:impl",

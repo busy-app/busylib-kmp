@@ -92,6 +92,10 @@ class FWiFiFeatureApiImpl(
         ).map { }
     }
 
+    override suspend fun disconnect(): Result<Unit> {
+        return rpcFeatureApi.disconnectWifi().map { }
+    }
+
     @Inject
     class InternalFactory(
         private val factory: (FRpcFeatureApi) -> FWiFiFeatureApiImpl
