@@ -8,5 +8,6 @@ enum class FDeviceFeature {
     WIFI,
     SCREEN_STREAMING,
     FIRMWARE_UPDATE,
-    LINKED_USER_STATUS
+    LINKED_USER_STATUS,
+    EVENTS
 }

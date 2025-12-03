@@ -31,6 +31,7 @@ mockk = "1.14.6" # https://mockk.io/
 vaniktech = "0.34.0" #https://github.com/vanniktech/gradle-maven-publish-plugin
 buildkonfig = "5.7.1"
 skie = "0.10.6" # https://github.com/touchlab/SKIE/releases
+bitvector = "0.9.2"
 
 [libraries]
 vaniktech = { module = "com.vanniktech:gradle-maven-publish-plugin", version.ref = "vaniktech" }
@@ -49,9 +50,9 @@ appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat"
 # kotlin-inject dependencies
 kotlin-inject-runtime = { module = "me.tatarka.inject:kotlin-inject-runtime", version.ref = "kotlin-inject" }
 kotlin-inject-compiler = { module = "me.tatarka.inject:kotlin-inject-compiler-ksp", version.ref = "kotlin-inject" }
-kotlin-inject-anvil-runtime = { module = "software.amazon.lastmile.kotlin.inject.anvil:runtime", version.ref = "kotlin-inject-anvil"}
-kotlin-inject-anvil-runtime-optional = { module = "software.amazon.lastmile.kotlin.inject.anvil:runtime-optional", version.ref = "kotlin-inject-anvil"}
-kotlin-inject-anvil-compiler = { module = "software.amazon.lastmile.kotlin.inject.anvil:compiler", version.ref = "kotlin-inject-anvil"}
+kotlin-inject-anvil-runtime = { module = "software.amazon.lastmile.kotlin.inject.anvil:runtime", version.ref = "kotlin-inject-anvil" }
+kotlin-inject-anvil-runtime-optional = { module = "software.amazon.lastmile.kotlin.inject.anvil:runtime-optional", version.ref = "kotlin-inject-anvil" }
+kotlin-inject-anvil-compiler = { module = "software.amazon.lastmile.kotlin.inject.anvil:compiler", version.ref = "kotlin-inject-anvil" }
 
 decompose = { module = "com.arkivanov.decompose:decompose", version.ref = "decompose" }
 decompose-composeExtension = { module = "com.arkivanov.decompose:extensions-compose", version.ref = "decompose" }
@@ -63,6 +64,8 @@ kotlin-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", 
 kotlin-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlin-coroutines" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlin-immutable = { module = "org.jetbrains.kotlinx:kotlinx-collections-immutable", version.ref = "kotlin-immutable" }
+
+bitvector = { module = "io.github.adokky:bitvector", version.ref = "bitvector" }
 
 # Testing
 junit-bom = { module = "org.junit:junit-bom", version.ref = "jupiter" }

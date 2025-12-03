@@ -43,6 +43,7 @@ class FBleApiImpl(
                     FPeripheralState.DISCONNECTED,
                     FPeripheralState.PAIRING_FAILED,
                     FPeripheralState.INVALID_PAIRING -> FInternalTransportConnectionStatus.Disconnected
+
                     FPeripheralState.CONNECTED -> FInternalTransportConnectionStatus.Connected(
                         scope = scope,
                         deviceApi = this
@@ -54,6 +55,8 @@ class FBleApiImpl(
             }
             .launchIn(scope + FlipperDispatchers.default)
     }
+
+    override val deviceName = peripheral.name ?: config.deviceName
 
     override suspend fun disconnect() {
         onDisconnect()

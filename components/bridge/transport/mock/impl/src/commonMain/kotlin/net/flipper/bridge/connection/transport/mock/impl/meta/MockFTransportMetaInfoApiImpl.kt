@@ -19,6 +19,7 @@ class MockFTransportMetaInfoApiImpl : FTransportMetaInfoApi {
             TransportMetaInfoKey.SOFTWARE_VERSION -> "1.0.0 fakeusb0".toByteArray()
             TransportMetaInfoKey.BATTERY_LEVEL -> byteArrayOf(0.5.toInt().toByte())
             TransportMetaInfoKey.BATTERY_POWER_STATE -> byteArrayOf(0)
+            TransportMetaInfoKey.EVENTS_INDICATION -> byteArrayOf(0)
         }
     }
 }
