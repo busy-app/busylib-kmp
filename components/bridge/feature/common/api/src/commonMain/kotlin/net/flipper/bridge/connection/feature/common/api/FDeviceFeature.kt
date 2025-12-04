@@ -10,5 +10,6 @@ enum class FDeviceFeature {
     FIRMWARE_UPDATE,
     LINKED_USER_STATUS,
     BLE,
-    EVENTS
+    EVENTS,
+    SETTINGS,
 }
