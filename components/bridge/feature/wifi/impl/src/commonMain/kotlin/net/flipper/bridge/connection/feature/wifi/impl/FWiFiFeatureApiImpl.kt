@@ -19,6 +19,7 @@ import net.flipper.bridge.connection.feature.wifi.api.model.WiFiNetwork
 import net.flipper.bridge.connection.feature.wifi.api.model.WiFiSecurity
 import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.wrap
+import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import kotlin.time.Duration.Companion.seconds
@@ -36,9 +37,10 @@ class FWiFiFeatureApiImpl(
             var networks = listOf<WiFiNetwork>()
 
             while (isActive) {
-                val networksResponse = rpcFeatureApi.getWifiNetworks().onFailure {
-                    error(it) { "Failed to get WiFi networks" }
-                }.getOrNull() ?: continue
+                val networksResponse = exponentialRetry {
+                    rpcFeatureApi.getWifiNetworks()
+                        .onFailure { error(it) { "Failed to get WiFi networks" } }
+                }
                 val mutableNetworkList = networksResponse.networks
                     .map { it.toWiFiNetwork() }
                     .groupBy { it.ssid }
@@ -64,12 +66,11 @@ class FWiFiFeatureApiImpl(
     override fun getWifiStatusFlow(): WrappedFlow<WifiStatusResponse> {
         return callbackFlow {
             while (isActive) {
-                val statusResponse = rpcFeatureApi.getWifiStatus().onFailure {
-                    error(it) { "Failed to get WiFi networks" }
-                }.getOrNull() ?: continue
-
+                val statusResponse = exponentialRetry {
+                    rpcFeatureApi.getWifiStatus()
+                        .onFailure { error(it) { "Failed to get WiFi networks" } }
+                }
                 send(statusResponse)
-
                 delay(POOLING_TIME)
             }
         }.wrap()
