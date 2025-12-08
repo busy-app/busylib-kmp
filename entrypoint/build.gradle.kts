@@ -17,7 +17,9 @@ kotlin {
     val xcFramework = XCFramework("BusyLibKMP")
     targets
         .filterIsInstance<KotlinNativeTarget>()
-        .filter { it.konanTarget.family == Family.IOS }
+        .filter {
+            it.konanTarget.family == Family.IOS ||  it.konanTarget.family == Family.OSX
+        }
         .forEach { target ->
             target.binaries.framework {
                 baseName = "BusyLibKMP"
