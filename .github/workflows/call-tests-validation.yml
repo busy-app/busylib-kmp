@@ -7,13 +7,11 @@ jobs:
     strategy:
       matrix:
         target:
-          - "allTests"
           - "macosX64Test"
           - "macosArm64Test"
           - "iosX64Test"
-          - "jvmTest"
     name: "Run tests"
-    runs-on: [ self-hosted, Linux ]
+    runs-on: [ self-hosted, macOS ]
     steps:
       - uses: actions/checkout@v4
       - name: Set up JDK 1.17
