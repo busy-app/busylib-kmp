@@ -15,6 +15,8 @@ class FLanApiImpl(
     private val httpEngine = BUSYBarHttpEngine(httpEngineOriginal, config.host)
 
     override suspend fun disconnect() {
+        httpEngine.close()
+        httpEngineOriginal.close()
         listener.onStatusUpdate(FInternalTransportConnectionStatus.Disconnected)
     }
 
