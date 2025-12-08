@@ -16,12 +16,14 @@ import kotlinx.coroutines.withContext
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
+import net.flipper.bridge.connection.feature.rpc.api.model.AudioVolumeInfo
 import net.flipper.bridge.connection.feature.rpc.api.model.BleStatusResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarStatus
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarStatusPower
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarStatusSystem
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarVersion
 import net.flipper.bridge.connection.feature.rpc.api.model.ConnectRequestConfig
+import net.flipper.bridge.connection.feature.rpc.api.model.DisplayBrightnessInfo
 import net.flipper.bridge.connection.feature.rpc.api.model.NetworkResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.WifiStatusResponse
@@ -104,6 +106,26 @@ class FRpcFeatureApiImpl(
                 header(HttpHeaders.Accept, "image/bmp")
                 parameter("display", display)
             }.bodyAsText()
+        }
+    }
+
+    override suspend fun getBrightnessInfo(): Result<DisplayBrightnessInfo> {
+        return withContext(dispatcher) {
+            return@withContext runSuspendCatching {
+                httpClient.get {
+                    url("/api/display/brightness")
+                }.body()
+            }
+        }
+    }
+
+    override suspend fun getVolumeInfo(): Result<AudioVolumeInfo> {
+        return withContext(dispatcher) {
+            return@withContext runSuspendCatching {
+                httpClient.get {
+                    url("/api/audio/volume")
+                }.body()
+            }
         }
     }
 
