@@ -13,10 +13,10 @@ import net.flipper.busylib.core.wrapper.WrappedStateFlow
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.log.LogTagProvider
 
-class USBSearchViewModel(
+class LanSearchViewModel(
     persistedStorage: FDevicePersistedStorage
 ) : ConnectionSearchViewModel(persistedStorage), LogTagProvider {
-    override val TAG = "USBSearchViewModel"
+    override val TAG = "LanSearchViewModel"
 
     private val searchItems = combine(
         persistedStorage.getAllDevices(),
