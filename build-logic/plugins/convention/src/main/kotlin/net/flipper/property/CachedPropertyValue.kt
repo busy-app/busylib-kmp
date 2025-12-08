@@ -12,8 +12,7 @@ class CachedPropertyValue(
 
     override fun getValue(): Result<String> {
         val extensionValue = extensionContainer.findByName(key)
-        // TODO: fix strange behaviour with many different EmptyValue in project
-        if (extensionValue == EmptyValue.toString()) {
+        if (extensionValue == EmptyValue) {
             return Result.failure(PropertyValueNotPresentException())
         }
         if (extensionValue != null) {
@@ -21,6 +20,6 @@ class CachedPropertyValue(
         }
         return propertyValue.getValue()
             .onSuccess { value -> extensionContainer.add(key, value) }
-            .onFailure { extensionContainer.add(key, EmptyValue.toString()) }
+            .onFailure { extensionContainer.add(key, EmptyValue) }
     }
 }
