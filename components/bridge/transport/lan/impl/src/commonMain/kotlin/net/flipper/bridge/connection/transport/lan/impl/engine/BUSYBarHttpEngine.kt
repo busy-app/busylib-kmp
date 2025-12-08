@@ -25,4 +25,9 @@ class BUSYBarHttpEngine(
 
         return delegate.execute(newRequestData)
     }
+
+    override fun close() {
+        delegate.close()
+        super.close()
+    }
 }
