@@ -8,6 +8,10 @@ jobs:
       matrix:
         target:
           - "allTests"
+          - "macosX64Test"
+          - "macosArm64Test"
+          - "iosX64Test"
+          - "jvmTest"
     name: "Run tests"
     runs-on: [ self-hosted, Linux ]
     steps:
