@@ -26,13 +26,13 @@ kotlin {
     }
     compilerOptions {
         optIn.addAll(optIns)
-
-        // This is required due to our modules hierarchy
-        // Without this, modules named impl/api will have
-        // same name kotlin_module
-        freeCompilerArgs.addAll(
-            "-module-name",
-            project
+    }
+    targets.configureEach {
+        compilations.configureEach {
+            // This is required due to our modules hierarchy
+            // Without this, modules named impl/api will have
+            // same name kotlin_module
+            val moduleName = project
                 .path
                 .replace(":components:", "")
                 .replace(":entrypoint", "entrypoint")
@@ -40,10 +40,23 @@ kotlin {
                 .replace("-", "_")
                 .replace(".", "_")
                 .trim('_', '-', '.', ' ')
-        )
-        optIn.addAll(optIns)
+
+            val fullModuleName = if (compilationName == "main") {
+                moduleName
+            } else {
+                "${moduleName}_${compilationName}"
+            }
+
+            compilerOptions.configure {
+                freeCompilerArgs.addAll(
+                    "-module-name",
+                    fullModuleName
+                )
+            }
+        }
     }
 }
+
 // This is required due to our modules hierarchy
 // Without this, modules named impl/api will have
 // same name artifactId
