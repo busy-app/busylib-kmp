@@ -22,6 +22,7 @@ plugins {
     alias(libs.plugins.klibs.gradle.android.apk.sign) apply false
     alias(libs.plugins.klibs.gradle.android.apk.name) apply false
     alias(libs.plugins.klibs.gradle.android.namespace) apply false
+    id("flipper.multiplatform") apply false // For sharing `build-logic` runtime between subprojects
 }
 
 apply(plugin = "ru.astrainteractive.gradleplugin.detekt")

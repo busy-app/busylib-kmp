@@ -42,6 +42,8 @@ include(
     ":components:bridge:service:impl",
     ":components:bridge:transport:mock:api",
     ":components:bridge:transport:mock:impl",
+    ":components:bridge:transport:lan:api",
+    ":components:bridge:transport:lan:impl",
     ":components:bridge:transport:common:api",
     ":components:bridge:transport:common:impl",
 

@@ -25,9 +25,10 @@ object Config {
                 .map { value -> FlavorType.entries.find { it.name.equals(value, true) } }
                 .getOrNull()
             if (flavor == null) {
-                logger.error("Not found ${propertyValue.getOrNull()} in flavors")
-                if (propertyValue.getOrNull() != null) {
-                    error("Not allowed to use wrong flavor type name!")
+                val propertyRaw = propertyValue.getOrNull()
+                logger.error("Not found $propertyRaw in flavors")
+                if (propertyRaw != null) {
+                    error("Not allowed to use wrong flavor type name $propertyRaw!")
                 }
                 return FlavorType.DEBUG
             }
