@@ -1,3 +1,3 @@
 package net.flipper.property.model
 
-internal object EmptyValue
+internal data object EmptyValue
