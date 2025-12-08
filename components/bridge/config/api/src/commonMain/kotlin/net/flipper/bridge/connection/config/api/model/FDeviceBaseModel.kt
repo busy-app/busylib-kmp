@@ -31,4 +31,12 @@ sealed interface FDeviceBaseModel {
         override val uniqueId: String = Uuid.random().toString(),
         override val humanReadableName: String = "BUSY Bar Mock"
     ) : FDeviceBaseModel
+
+    @Serializable
+    data class FDeviceBSBModelLan(
+        val host: String = "10.0.4.20",
+    ) : FDeviceBaseModel {
+        override val uniqueId: String = host
+        override val humanReadableName: String = "BUSY Bar LAN"
+    }
 }

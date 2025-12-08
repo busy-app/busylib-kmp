@@ -1,7 +1,6 @@
 package net.flipper.bridge.connection.transport.lan
 
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
-import net.flipper.bridge.connection.transport.common.api.meta.FTransportMetaInfoApi
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPDeviceApi
 
-interface FLanApi : FConnectedDeviceApi, FHTTPDeviceApi, FTransportMetaInfoApi
+interface FLanApi : FConnectedDeviceApi, FHTTPDeviceApi

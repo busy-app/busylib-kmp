@@ -14,6 +14,7 @@ class FDeviceConnectStatusToDeviceApi(
         return when (status.device) {
             is FDeviceBaseModel.FDeviceBSBModelBLE,
             is FDeviceBaseModel.FDeviceBSBModelBLEiOS,
+            is FDeviceBaseModel.FDeviceBSBModelLan,
             is FDeviceBaseModel.FDeviceBSBModelMock -> fBSBDeviceApiFactory(
                 scope = status.scope,
                 connectedDevice = status.deviceApi

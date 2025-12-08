@@ -18,6 +18,5 @@ class CachedPropertyValue(
         if (extensionValue != null) return Result.success(extensionValue.toString())
         return propertyValue.getValue()
             .onSuccess { value -> extensionContainer.add(key, value) }
-            .onFailure { extensionContainer.add(key, EmptyValue) }
     }
 }

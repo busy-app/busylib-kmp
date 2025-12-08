@@ -1,3 +1,4 @@
+import net.flipper.Config.CURRENT_FLAVOR_TYPE
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
 import org.jetbrains.kotlin.konan.target.Family
@@ -85,7 +86,10 @@ kotlin {
         implementation(projects.components.bridge.transport.common.api)
         implementation(projects.components.bridge.transport.common.impl)
         implementation(projects.components.bridge.transport.mock.api)
-        implementation(projects.components.bridge.transport.mock.impl)
+        if (CURRENT_FLAVOR_TYPE.isMockEnabled) {
+            implementation(projects.components.bridge.transport.mock.impl)
+        }
+        implementation(projects.components.bridge.transport.lan.api)
         implementation(projects.components.bridge.transportconfigbuilder.api)
         implementation(projects.components.bridge.transportconfigbuilder.impl)
         implementation(libs.kotlin.coroutines)
@@ -100,6 +104,9 @@ kotlin {
     sourceSets.appleMain.dependencies {
         api(projects.components.bridge.transport.ble.impl)
         api(projects.components.bridge.config.impl)
+    }
+    sourceSets.jvmMain.dependencies {
+        implementation(projects.components.bridge.transport.lan.impl)
     }
 }
 
