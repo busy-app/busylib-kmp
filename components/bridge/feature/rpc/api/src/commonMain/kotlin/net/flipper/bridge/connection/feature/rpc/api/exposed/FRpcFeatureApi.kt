@@ -1,12 +1,14 @@
 package net.flipper.bridge.connection.feature.rpc.api.exposed
 
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
+import net.flipper.bridge.connection.feature.rpc.api.model.AudioVolumeInfo
 import net.flipper.bridge.connection.feature.rpc.api.model.BleStatusResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarStatus
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarStatusPower
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarStatusSystem
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarVersion
 import net.flipper.bridge.connection.feature.rpc.api.model.ConnectRequestConfig
+import net.flipper.bridge.connection.feature.rpc.api.model.DisplayBrightnessInfo
 import net.flipper.bridge.connection.feature.rpc.api.model.NetworkResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.WifiStatusResponse
@@ -24,6 +26,8 @@ interface FRpcFeatureApi : FDeviceFeatureApi {
     suspend fun getWifiStatus(): Result<WifiStatusResponse>
     suspend fun getBleStatus(): Result<BleStatusResponse>
     suspend fun getScreen(display: Int): Result<String>
+    suspend fun getBrightnessInfo(): Result<DisplayBrightnessInfo>
+    suspend fun getVolumeInfo(): Result<AudioVolumeInfo>
 
     suspend fun getDeviceName(): Result<String>
 }

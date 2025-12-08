@@ -13,6 +13,7 @@ import net.flipper.bridge.connection.feature.link.check.ondemand.api.FLinkedInfo
 import net.flipper.bridge.connection.feature.rpc.api.critical.FRpcCriticalFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.screenstreaming.api.FScreenStreamingFeatureApi
+import net.flipper.bridge.connection.feature.settings.api.FSettingsFeatureApi
 import net.flipper.bridge.connection.feature.wifi.api.FWiFiFeatureApi
 import kotlin.reflect.KClass
 
@@ -33,6 +34,7 @@ object FZeroFeatureClassToEnumMapper {
             FDeviceFeature.RPC_CRITICAL -> FRpcCriticalFeatureApi::class
             FDeviceFeature.LINKED_USER_STATUS -> FLinkedInfoOnDemandFeatureApi::class
             FDeviceFeature.EVENTS -> FEventsFeatureApi::class
+            FDeviceFeature.SETTINGS -> FSettingsFeatureApi::class
         }
     }
 
