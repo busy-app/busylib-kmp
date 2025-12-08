@@ -24,7 +24,7 @@ class DashboardViewModel(
                 is FFeatureStatus.Supported<FDeviceInfoFeatureApi> ->
                     feature
                         .featureApi
-                        .getDeviceName(viewModelScope)
+                        .getDeviceName()
             }
         }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
