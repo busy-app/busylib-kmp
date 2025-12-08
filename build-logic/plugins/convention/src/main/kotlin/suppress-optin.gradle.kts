@@ -47,11 +47,13 @@ kotlin {
                 "${moduleName}_$compilationName"
             }
 
-            compilerOptions.configure {
-                freeCompilerArgs.addAll(
-                    "-module-name",
-                    fullModuleName
-                )
+            compileTaskProvider.configure {
+                compilerOptions {
+                    freeCompilerArgs.addAll(
+                        "-module-name",
+                        fullModuleName
+                    )
+                }
             }
         }
     }
