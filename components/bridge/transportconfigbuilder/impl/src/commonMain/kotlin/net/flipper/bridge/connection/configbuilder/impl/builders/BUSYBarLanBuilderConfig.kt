@@ -6,8 +6,9 @@ import net.flipper.bridge.connection.transport.lan.FLanDeviceConnectionConfig
 @Inject
 class BUSYBarLanBuilderConfig {
     fun build(
-        host: String
+        host: String,
+        name: String
     ): FLanDeviceConnectionConfig {
-        return FLanDeviceConnectionConfig(host)
+        return FLanDeviceConnectionConfig(host, name)
     }
 }

@@ -13,6 +13,7 @@ class FLanApiImpl(
 ) : FLanApi {
     private val httpEngineOriginal = getPlatformEngineFactory().create()
     private val httpEngine = BUSYBarHttpEngine(httpEngineOriginal, config.host)
+    override val deviceName = config.host
 
     override suspend fun disconnect() {
         httpEngine.close()

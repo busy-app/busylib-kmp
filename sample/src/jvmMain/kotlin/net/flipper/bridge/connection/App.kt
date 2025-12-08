@@ -17,7 +17,7 @@ import com.russhwolf.settings.PreferencesSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import net.flipper.bridge.connection.screens.di.getRootDecomposeComponent
-import net.flipper.bridge.connection.screens.search.USBSearchViewModel
+import net.flipper.bridge.connection.screens.search.LanSearchViewModel
 import net.flipper.bridge.connection.utils.PermissionCheckerNoop
 import net.flipper.bridge.connection.utils.cloud.BUSYLibBarsApiNoop
 import net.flipper.bridge.connection.utils.config.impl.FDevicePersistedStorageImpl
@@ -52,7 +52,7 @@ fun main() {
             persistedStorage = persistedStorage,
             busyLib = busyLib,
             searchViewModelProvider = {
-                USBSearchViewModel(persistedStorage)
+                LanSearchViewModel(persistedStorage)
             }
         )
     }

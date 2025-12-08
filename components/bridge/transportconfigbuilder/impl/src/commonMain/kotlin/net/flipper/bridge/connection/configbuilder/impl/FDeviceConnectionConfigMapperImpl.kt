@@ -33,7 +33,11 @@ class FDeviceConnectionConfigMapperImpl(
                 address = device.uniqueId,
                 name = device.humanReadableName
             )
-            is FDeviceBaseModel.FDeviceBSBModelLan -> lanBuilderConfig.build(device.host)
+
+            is FDeviceBaseModel.FDeviceBSBModelLan -> lanBuilderConfig.build(
+                host = device.host,
+                name = device.humanReadableName
+            )
         }
     }
 }
