@@ -44,7 +44,7 @@ kotlin {
             val fullModuleName = if (compilationName == "main") {
                 moduleName
             } else {
-                "${moduleName}_${compilationName}"
+                "${moduleName}_$compilationName"
             }
 
             compilerOptions.configure {
