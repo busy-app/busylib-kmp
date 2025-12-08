@@ -25,6 +25,8 @@ class MockDeviceConnectionApiImpl : MockDeviceConnectionApi {
         listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting)
         val mockApi = object : FMockApi, FTransportMetaInfoApi by MockFTransportMetaInfoApiImpl() {
             val bsbMockEngine = getBSBMockHttpEngine()
+            override val deviceName = config.deviceName
+
             override suspend fun disconnect() {
                 listener.onStatusUpdate(FInternalTransportConnectionStatus.Disconnected)
             }

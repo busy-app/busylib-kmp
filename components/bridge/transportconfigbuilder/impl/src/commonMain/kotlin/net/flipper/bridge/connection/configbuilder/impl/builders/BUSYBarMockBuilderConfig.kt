@@ -5,5 +5,11 @@ import net.flipper.bridge.connection.transport.mock.FMockDeviceConnectionConfig
 
 @Inject
 class BUSYBarMockBuilderConfig {
-    fun build() = FMockDeviceConnectionConfig(address = "BUSY Bar")
+    fun build(
+        address: String,
+        name: String
+    ) = FMockDeviceConnectionConfig(
+        address = address,
+        deviceName = name
+    )
 }

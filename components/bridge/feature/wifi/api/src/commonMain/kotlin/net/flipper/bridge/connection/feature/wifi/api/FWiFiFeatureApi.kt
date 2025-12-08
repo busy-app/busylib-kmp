@@ -17,4 +17,6 @@ interface FWiFiFeatureApi : FDeviceFeatureApi {
         password: String,
         security: WiFiSecurity.Supported
     ): Result<Unit>
+
+    suspend fun disconnect(): Result<Unit>
 }

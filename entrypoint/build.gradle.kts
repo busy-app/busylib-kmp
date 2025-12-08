@@ -18,7 +18,9 @@ kotlin {
     val xcFramework = XCFramework("BusyLibKMP")
     targets
         .filterIsInstance<KotlinNativeTarget>()
-        .filter { it.konanTarget.family == Family.IOS }
+        .filter {
+            it.konanTarget.family == Family.IOS || it.konanTarget.family == Family.OSX
+        }
         .forEach { target ->
             target.binaries.framework {
                 baseName = "BusyLibKMP"
@@ -37,6 +39,7 @@ kotlin {
                 export(projects.components.bridge.feature.provider.api)
                 export(projects.components.bridge.feature.screenStreaming.api)
                 export(projects.components.bridge.feature.wifi.api)
+                export(projects.components.bridge.feature.ble.api)
                 export(projects.components.bridge.orchestrator.api)
                 export(projects.components.bridge.service.api)
                 export(projects.components.bridge.transport.ble.api)
@@ -77,10 +80,14 @@ kotlin {
         implementation(projects.components.bridge.feature.sync.impl)
         api(projects.components.bridge.feature.wifi.api)
         implementation(projects.components.bridge.feature.wifi.impl)
+        api(projects.components.bridge.feature.ble.api)
+        implementation(projects.components.bridge.feature.ble.impl)
         api(projects.components.bridge.orchestrator.api)
         implementation(projects.components.bridge.orchestrator.impl)
         api(projects.components.bridge.service.api)
         implementation(projects.components.bridge.service.impl)
+        api(projects.components.bridge.feature.events.api)
+        implementation(projects.components.bridge.feature.events.impl)
 
         implementation(projects.components.bridge.transport.ble.api)
         implementation(projects.components.bridge.transport.common.api)

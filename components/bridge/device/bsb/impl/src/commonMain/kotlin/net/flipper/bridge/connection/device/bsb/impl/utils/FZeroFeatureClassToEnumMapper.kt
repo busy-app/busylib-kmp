@@ -3,8 +3,10 @@ package net.flipper.bridge.connection.device.bsb.impl.utils
 import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.toPersistentMap
 import net.flipper.bridge.connection.feature.battery.api.FDeviceBatteryInfoFeatureApi
+import net.flipper.bridge.connection.feature.ble.api.FBleFeatureApi
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
+import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
 import net.flipper.bridge.connection.feature.firmwareupdate.api.FFirmwareUpdateFeatureApi
 import net.flipper.bridge.connection.feature.info.api.FDeviceInfoFeatureApi
 import net.flipper.bridge.connection.feature.link.check.ondemand.api.FLinkedInfoOnDemandFeatureApi
@@ -25,10 +27,12 @@ object FZeroFeatureClassToEnumMapper {
             FDeviceFeature.DEVICE_INFO -> FDeviceInfoFeatureApi::class
             FDeviceFeature.BATTERY_INFO -> FDeviceBatteryInfoFeatureApi::class
             FDeviceFeature.WIFI -> FWiFiFeatureApi::class
+            FDeviceFeature.BLE -> FBleFeatureApi::class
             FDeviceFeature.SCREEN_STREAMING -> FScreenStreamingFeatureApi::class
             FDeviceFeature.FIRMWARE_UPDATE -> FFirmwareUpdateFeatureApi::class
             FDeviceFeature.RPC_CRITICAL -> FRpcCriticalFeatureApi::class
             FDeviceFeature.LINKED_USER_STATUS -> FLinkedInfoOnDemandFeatureApi::class
+            FDeviceFeature.EVENTS -> FEventsFeatureApi::class
         }
     }
 

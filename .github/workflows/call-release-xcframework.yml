@@ -30,7 +30,7 @@ jobs:
       - name: Build release xcframework
         uses: gradle/gradle-build-action@v3
         with:
-          arguments: :entrypoint:assembleBusyLibKMPXCFramework --stacktrace
+          arguments: :entrypoint:assembleBusyLibKMPReleaseXCFramework --stacktrace
         env:
           ORG_GRADLE_PROJECT_current_flavor_type: PROD
       - name: Prepare releases file
@@ -43,7 +43,7 @@ jobs:
       - name: Build debug xcframework
         uses: gradle/gradle-build-action@v3
         with:
-          arguments: :entrypoint:assembleBusyLibKMPXCFramework --stacktrace
+          arguments: :entrypoint:assembleBusyLibKMPDebugXCFramework --stacktrace
         env:
           ORG_GRADLE_PROJECT_current_flavor_type: DEBUG
       - name: Prepare debug file

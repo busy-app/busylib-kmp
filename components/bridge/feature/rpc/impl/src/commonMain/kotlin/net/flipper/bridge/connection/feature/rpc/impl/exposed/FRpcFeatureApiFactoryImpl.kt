@@ -2,6 +2,7 @@ package net.flipper.bridge.connection.feature.rpc.impl.exposed
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.onEach
 import me.tatarka.inject.annotations.Inject
 import me.tatarka.inject.annotations.IntoMap
 import me.tatarka.inject.annotations.Provides
@@ -14,25 +15,32 @@ import net.flipper.bridge.connection.feature.rpc.impl.util.getHttpClient
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPDeviceApi
 import net.flipper.busylib.core.di.BusyLibGraph
+import net.flipper.core.busylib.log.LogTagProvider
+import net.flipper.core.busylib.log.info
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
 
 @Inject
 class FRpcFeatureApiFactoryImpl(
     private val fRpcFeatureFactory: FRpcFeatureApiImpl.InternalFactory,
-) : FDeviceFeatureApi.Factory {
+) : FDeviceFeatureApi.Factory, LogTagProvider {
+    override val TAG = "FRpcFeatureApiFactory"
+
     override suspend fun invoke(
         unsafeFeatureDeviceApi: FUnsafeDeviceFeatureApi,
         scope: CoroutineScope,
         connectedDevice: FConnectedDeviceApi
     ): FDeviceFeatureApi? {
         // Wait for authorization
-        unsafeFeatureDeviceApi
+        val unsafeFeatureDeviceApi = unsafeFeatureDeviceApi
             .getUnsafe(FRpcCriticalFeatureApi::class)
-            ?.await()
-            ?.clientModeApi
-            ?.httpClientModeFlow
-            ?.first { mode -> mode == FRpcClientModeApi.HttpClientMode.DEFAULT }
-            ?: return null
+            ?.await() ?: return null
+
+        unsafeFeatureDeviceApi.clientModeApi
+            .httpClientModeFlow
+            .onEach { mode -> info { "Waiting for default, but receive $mode" } }
+            .first { mode -> mode == FRpcClientModeApi.HttpClientMode.DEFAULT }
+
+        info { "Waiting for unsafe feature flow completed" }
 
         val httpClient = connectedDevice as? FHTTPDeviceApi ?: return null
 

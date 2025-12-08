@@ -5,6 +5,8 @@ import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
 import net.flipper.bridge.connection.screens.ConnectionRootDecomposeComponent
+import net.flipper.bridge.connection.screens.dashboard.DashboardDecomposeComponent
+import net.flipper.bridge.connection.screens.dashboard.DashboardViewModel
 import net.flipper.bridge.connection.screens.device.ConnectionDeviceScreenDecomposeComponent
 import net.flipper.bridge.connection.screens.device.viewmodel.FCurrentDeviceViewModel
 import net.flipper.bridge.connection.screens.device.viewmodel.FDevicesViewModel
@@ -50,8 +52,9 @@ private fun getRootDecomposeComponentFactory(
             persistedStorage = persistedStorage,
             orchestrator = orchestrator,
             featureProvider = featureProvider,
-            fService = fConnectionService
-        )
+            fService = fConnectionService,
+        ),
+        dashboardDecomposeComponentFactory = getDashboardDecomposeComponentFactory(featureProvider)
     )
 }
 
@@ -78,5 +81,13 @@ private fun getConnectionDeviceScreenDecomposeComponentFactory(
             )
         },
         pingViewModelProvider = { PingViewModel(featureProvider, orchestrator) }
+    )
+}
+
+private fun getDashboardDecomposeComponentFactory(
+    fFeatureProvider: FFeatureProvider
+): DashboardDecomposeComponent.Factory {
+    return DashboardDecomposeComponent.Factory(
+        dashboardViewModelFactory = { DashboardViewModel(fFeatureProvider) }
     )
 }

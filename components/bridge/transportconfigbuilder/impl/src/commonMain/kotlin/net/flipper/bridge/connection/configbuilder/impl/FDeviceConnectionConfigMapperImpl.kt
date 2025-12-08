@@ -19,9 +19,20 @@ class FDeviceConnectionConfigMapperImpl(
 ) : FDeviceConnectionConfigMapper {
     override fun getConnectionConfig(device: FDeviceBaseModel): FDeviceConnectionConfig<*> {
         return when (device) {
-            is FDeviceBaseModel.FDeviceBSBModelBLE -> bleBuilderConfig.build(device.address)
-            is FDeviceBaseModel.FDeviceBSBModelBLEiOS -> bleBuilderConfig.build(device.uniqueId)
-            is FDeviceBaseModel.FDeviceBSBModelMock -> mockBuilderConfig.build()
+            is FDeviceBaseModel.FDeviceBSBModelBLE -> bleBuilderConfig.build(
+                address = device.address,
+                deviceName = device.humanReadableName
+            )
+
+            is FDeviceBaseModel.FDeviceBSBModelBLEiOS -> bleBuilderConfig.build(
+                address = device.uniqueId,
+                deviceName = device.humanReadableName
+            )
+
+            is FDeviceBaseModel.FDeviceBSBModelMock -> mockBuilderConfig.build(
+                address = device.uniqueId,
+                name = device.humanReadableName
+            )
             is FDeviceBaseModel.FDeviceBSBModelLan -> lanBuilderConfig.build(device.host)
         }
     }

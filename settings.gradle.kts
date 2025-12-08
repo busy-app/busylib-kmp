@@ -63,6 +63,8 @@ include(
     ":components:bridge:feature:info:impl",
     ":components:bridge:feature:wifi:api",
     ":components:bridge:feature:wifi:impl",
+    ":components:bridge:feature:ble:api",
+    ":components:bridge:feature:ble:impl",
     ":components:bridge:feature:link:api",
     ":components:bridge:feature:link:impl",
     ":components:bridge:feature:sync:impl",
@@ -72,6 +74,8 @@ include(
     ":components:bridge:feature:screen-streaming:impl",
     ":components:bridge:feature:firmware-update:api",
     ":components:bridge:feature:firmware-update:impl",
+    ":components:bridge:feature:events:api",
+    ":components:bridge:feature:events:impl",
 
     ":components:principal:api",
     ":components:cloud:api",
