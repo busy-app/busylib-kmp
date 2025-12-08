@@ -18,7 +18,7 @@ kotlin {
     targets
         .filterIsInstance<KotlinNativeTarget>()
         .filter {
-            it.konanTarget.family == Family.IOS ||  it.konanTarget.family == Family.OSX
+            it.konanTarget.family == Family.IOS || it.konanTarget.family == Family.OSX
         }
         .forEach { target ->
             target.binaries.framework {
