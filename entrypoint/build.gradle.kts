@@ -111,9 +111,14 @@ kotlin {
         implementation(projects.components.bridge.transport.ble.impl)
         implementation(libs.ble.client)
     }
-    sourceSets.appleMain.dependencies {
-        api(projects.components.bridge.transport.ble.impl)
-        api(projects.components.bridge.config.impl)
+    sourceSets.appleMain {
+        dependencies {
+            api(projects.components.bridge.transport.ble.impl)
+            api(projects.components.bridge.config.impl)
+        }
+        if (CURRENT_FLAVOR_TYPE.isMockEnabled) {
+            kotlin.srcDir("src/appleMainMock/kotlin")
+        }
     }
     sourceSets.jvmMain.dependencies {
         implementation(projects.components.bridge.transport.lan.impl)
