@@ -27,32 +27,20 @@ jobs:
         run: |
           sed -i -e 's/^makeevrserg.project.version.string=.*$/makeevrserg.project.version.string=${{ inputs.VERSION_NAME }}/g' gradle.properties
           sed -i -e 's/^makeevrserg.project.version.code=.*$/makeevrserg.project.version.code=${{ inputs.VERSION_CODE }}/g' gradle.properties
-      - name: Build release xcframework
-        uses: gradle/gradle-build-action@v3
-        with:
-          arguments: :entrypoint:assembleBusyLibKMPReleaseXCFramework --stacktrace
-        env:
-          ORG_GRADLE_PROJECT_current_flavor_type: PROD
-      - name: Prepare releases file
+      - name: Build release xcframework zip
         id: files_release
         run: |
-          cp -r ./entrypoint/build/XCFrameworks/release/BusyLibKMP.xcframework ./
-          zip -r BusyLibKMPRelease.xcframework.zip BusyLibKMP.xcframework
-          echo "file_release=BusyLibKMPRelease.xcframework.zip" >> "$GITHUB_OUTPUT"
-          rm -rf BusyLibKMP.xcframework
-      - name: Build debug xcframework
-        uses: gradle/gradle-build-action@v3
-        with:
-          arguments: :entrypoint:assembleBusyLibKMPDebugXCFramework --stacktrace
+          ./gradlew :entrypoint:zipXCFrameworkRelease --stacktrace
+          echo "file_release=entrypoint/build/xcframework-zips/BusyLibKMP-release.xcframework.zip" >> "$GITHUB_OUTPUT"
         env:
-          ORG_GRADLE_PROJECT_current_flavor_type: DEBUG
-      - name: Prepare debug file
+          ORG_GRADLE_PROJECT_current_flavor_type: PROD
+      - name: Build debug xcframework zip
         id: files_debug
         run: |
-          cp -r ./entrypoint/build/XCFrameworks/debug/BusyLibKMP.xcframework ./
-          zip -r BusyLibKMPDebug.xcframework.zip BusyLibKMP.xcframework
-          echo "file_debug=BusyLibKMPDebug.xcframework.zip" >> "$GITHUB_OUTPUT"
-          rm -rf BusyLibKMP.xcframework
+          ./gradlew :entrypoint:zipXCFrameworkDebug --stacktrace
+          echo "file_debug=entrypoint/build/xcframework-zips/BusyLibKMP-debug.xcframework.zip" >> "$GITHUB_OUTPUT"
+        env:
+          ORG_GRADLE_PROJECT_current_flavor_type: DEBUG
       - name: Publish release
         id: create_release
         uses: softprops/action-gh-release@e7a8f85e1c67a31e6ed99a94b41bd0b71bbee6b8 # v2
