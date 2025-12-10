@@ -16,7 +16,7 @@ class BUSYLibIOS(
     override val connectionService: FConnectionService,
     override val orchestrator: FDeviceOrchestrator,
     override val featureProvider: FFeatureProvider
-) : BUSYLib {
+) : BUSYLibApple {
     companion object {
         fun build(
             scope: CoroutineScope,
