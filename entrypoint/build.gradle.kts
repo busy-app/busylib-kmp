@@ -120,6 +120,11 @@ kotlin {
             kotlin.srcDir("src/appleMainMock/kotlin")
         }
     }
+    sourceSets.macosMain {
+        dependencies {
+            implementation(projects.components.bridge.transport.lan.impl)
+        }
+    }
     sourceSets.jvmMain.dependencies {
         implementation(projects.components.bridge.transport.lan.impl)
     }

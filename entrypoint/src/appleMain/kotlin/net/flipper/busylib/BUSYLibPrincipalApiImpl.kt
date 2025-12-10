@@ -1,4 +1,4 @@
-package net.flipper.busylib.di
+package net.flipper.busylib
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
