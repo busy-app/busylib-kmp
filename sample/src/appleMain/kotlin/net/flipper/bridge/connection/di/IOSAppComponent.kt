@@ -14,7 +14,6 @@ import net.flipper.bridge.connection.utils.cloud.BUSYLibBarsApiNoop
 import net.flipper.bridge.connection.utils.config.impl.FDevicePersistedStorageImpl
 import net.flipper.bridge.connection.utils.principal.impl.UserPrincipalApiNoop
 import net.flipper.busylib.BUSYLibIOS
-import net.flipper.busylib.BUSYLibIOSBuilder
 import platform.CoreBluetooth.CBCentralManager
 import platform.Foundation.NSUserDefaults
 
@@ -30,13 +29,13 @@ val storage by lazy {
     )
 }
 val busyLib: BUSYLibIOS by lazy {
-    BUSYLibIOSBuilder(
+    BUSYLibIOS.build(
         CoroutineScope(SupervisorJob()),
         principalApi = UserPrincipalApiNoop(),
         busyLibBarsApi = BUSYLibBarsApiNoop(),
         persistedStorage = storage,
         manager = manager,
-    ).build()
+    )
 }
 
 fun getRootDecomposeComponent(): ConnectionRootDecomposeComponent {
