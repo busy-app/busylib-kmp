@@ -1,4 +1,4 @@
-package net.flipper.busylib.di
+package net.flipper.busylib
 
 import com.russhwolf.settings.NSUserDefaultsSettings
 import kotlinx.coroutines.CoroutineScope

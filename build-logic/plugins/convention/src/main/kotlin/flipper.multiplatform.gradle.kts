@@ -6,6 +6,7 @@ plugins {
 }
 
 val appleEnabled = project.findProperty("flipper.appleEnabled")?.toString()?.toBoolean() ?: true
+val macOSEnabled = project.findProperty("flipper.macOSEnabled")?.toString()?.toBoolean() ?: true
 
 kotlin {
     jvm()
@@ -14,8 +15,10 @@ kotlin {
         iosX64()
         iosArm64()
         iosSimulatorArm64()
-        macosX64()
-        macosArm64()
+        if (macOSEnabled) {
+            macosX64()
+            macosArm64()
+        }
     }
 
     applyDefaultHierarchyTemplate()
@@ -30,10 +33,14 @@ if (appleEnabled) {
     configurations += arrayListOf(
         "kspIosX64",
         "kspIosArm64",
-        "kspIosSimulatorArm64",
-        "kspMacosX64",
-        "kspMacosArm64"
+        "kspIosSimulatorArm64"
     )
+    if (macOSEnabled) {
+        configurations += arrayListOf(
+            "kspMacosX64",
+            "kspMacosArm64"
+        )
+    }
 }
 
 includeCommonKspConfigurationTo(
