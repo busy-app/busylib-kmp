@@ -58,6 +58,8 @@ kotlin {
         implementation(projects.components.bridge.service.impl)
         api(projects.components.bridge.feature.events.api)
         implementation(projects.components.bridge.feature.events.impl)
+        api(projects.components.bridge.feature.oncall.api)
+        implementation(projects.components.bridge.feature.oncall.impl)
 
         implementation(projects.components.bridge.transport.ble.api)
         implementation(projects.components.bridge.transport.common.api)

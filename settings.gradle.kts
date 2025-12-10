@@ -78,6 +78,8 @@ include(
     ":components:bridge:feature:firmware-update:impl",
     ":components:bridge:feature:events:api",
     ":components:bridge:feature:events:impl",
+    ":components:bridge:feature:oncall:api",
+    ":components:bridge:feature:oncall:impl",
 
     ":components:principal:api",
     ":components:cloud:api",

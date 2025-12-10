@@ -10,6 +10,7 @@ import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
 import net.flipper.bridge.connection.feature.firmwareupdate.api.FFirmwareUpdateFeatureApi
 import net.flipper.bridge.connection.feature.info.api.FDeviceInfoFeatureApi
 import net.flipper.bridge.connection.feature.link.check.ondemand.api.FLinkedInfoOnDemandFeatureApi
+import net.flipper.bridge.connection.feature.oncall.api.FOnCallFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.critical.FRpcCriticalFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.screenstreaming.api.FScreenStreamingFeatureApi
@@ -35,6 +36,7 @@ object FZeroFeatureClassToEnumMapper {
             FDeviceFeature.LINKED_USER_STATUS -> FLinkedInfoOnDemandFeatureApi::class
             FDeviceFeature.EVENTS -> FEventsFeatureApi::class
             FDeviceFeature.SETTINGS -> FSettingsFeatureApi::class
+            FDeviceFeature.ON_CALL -> FOnCallFeatureApi::class
         }
     }
 

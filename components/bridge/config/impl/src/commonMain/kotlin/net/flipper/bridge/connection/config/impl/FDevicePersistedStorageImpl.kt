@@ -54,12 +54,12 @@ class FDevicePersistedStorageImpl(
             settings
         } else {
             settings.copy(
-                devices = settings.devices.filter { it.uniqueId != id }
+                devices = settings.devices.filter { it.uniqueId != id }.toSet()
             )
         }
     }
 
-    override fun getAllDevices(): Flow<List<FDeviceBaseModel>> {
+    override fun getAllDevices(): Flow<Set<FDeviceBaseModel>> {
         return bleConfigKrate.flow.map { it.devices }
     }
 
@@ -75,6 +75,7 @@ class FDevicePersistedStorageImpl(
                         device
                     }
                 }
+                .toSet()
         )
     }
 }

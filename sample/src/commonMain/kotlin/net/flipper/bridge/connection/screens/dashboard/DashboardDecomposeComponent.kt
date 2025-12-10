@@ -3,6 +3,7 @@ package net.flipper.bridge.connection.screens.dashboard
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.material.Button
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -28,6 +29,18 @@ class DashboardDecomposeComponent(
         ) {
             val deviceName by viewModel.getDeviceName().collectAsState()
             Text("Device Name: $deviceName")
+
+            Button(
+                onClick = viewModel::startOnCall
+            ) {
+                Text("Enable on call")
+            }
+
+            Button(
+                onClick = viewModel::stopOnCall
+            ) {
+                Text("Disable on call")
+            }
         }
     }
 

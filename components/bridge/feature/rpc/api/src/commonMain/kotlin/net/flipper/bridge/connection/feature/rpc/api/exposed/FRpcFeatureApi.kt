@@ -9,6 +9,7 @@ import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarStatusSystem
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarVersion
 import net.flipper.bridge.connection.feature.rpc.api.model.ConnectRequestConfig
 import net.flipper.bridge.connection.feature.rpc.api.model.DisplayBrightnessInfo
+import net.flipper.bridge.connection.feature.rpc.api.model.DrawRequest
 import net.flipper.bridge.connection.feature.rpc.api.model.NetworkResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.WifiStatusResponse
@@ -30,4 +31,12 @@ interface FRpcFeatureApi : FDeviceFeatureApi {
     suspend fun getVolumeInfo(): Result<AudioVolumeInfo>
 
     suspend fun getDeviceName(): Result<String>
+
+    suspend fun uploadAsset(
+        appId: String,
+        file: String,
+        content: ByteArray
+    ): Result<SuccessResponse>
+    suspend fun displayDraw(request: DrawRequest): Result<SuccessResponse>
+    suspend fun removeDraw(appId: String): Result<SuccessResponse>
 }
