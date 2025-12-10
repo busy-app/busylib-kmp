@@ -15,39 +15,6 @@ plugins {
 }
 
 kotlin {
-    val xcFramework = XCFramework("BusyLibKMP")
-    targets
-        .filterIsInstance<KotlinNativeTarget>()
-        .filter {
-            it.konanTarget.family == Family.IOS || it.konanTarget.family == Family.OSX
-        }
-        .forEach { target ->
-            target.binaries.framework {
-                baseName = "BusyLibKMP"
-                isStatic = false
-
-                binaryOption("bundleId", "net.flipper.busylib")
-
-                export(projects.components.principal.api)
-                export(projects.components.cloud.api)
-                export(projects.components.bridge.config.api)
-                export(projects.components.bridge.device.common.api)
-                export(projects.components.bridge.feature.battery.api)
-                export(projects.components.bridge.feature.firmwareUpdate.api)
-                export(projects.components.bridge.feature.info.api)
-                export(projects.components.bridge.feature.link.api)
-                export(projects.components.bridge.feature.provider.api)
-                export(projects.components.bridge.feature.screenStreaming.api)
-                export(projects.components.bridge.feature.wifi.api)
-                export(projects.components.bridge.feature.ble.api)
-                export(projects.components.bridge.feature.settings.api)
-                export(projects.components.bridge.orchestrator.api)
-                export(projects.components.bridge.service.api)
-                export(projects.components.bridge.transport.ble.api)
-
-                xcFramework.add(this)
-            }
-        }
 
     sourceSets.commonMain.dependencies {
         implementation(projects.components.core.di)
@@ -111,21 +78,56 @@ kotlin {
         implementation(projects.components.bridge.transport.ble.impl)
         implementation(libs.ble.client)
     }
+    sourceSets.jvmMain.dependencies {
+        implementation(projects.components.bridge.transport.lan.impl)
+    }
+}
+
+kotlin {
+    val xcFramework = XCFramework("BusyLibKMP")
+    targets
+        .filterIsInstance<KotlinNativeTarget>()
+        .filter {
+            it.konanTarget.family == Family.IOS || it.konanTarget.family == Family.OSX
+        }
+        .forEach { target ->
+            target.binaries.framework {
+                baseName = "BusyLibKMP"
+                isStatic = false
+
+                binaryOption("bundleId", "net.flipper.busylib")
+
+                export(projects.components.principal.api)
+                export(projects.components.cloud.api)
+                export(projects.components.bridge.config.api)
+                export(projects.components.bridge.device.common.api)
+                export(projects.components.bridge.feature.battery.api)
+                export(projects.components.bridge.feature.firmwareUpdate.api)
+                export(projects.components.bridge.feature.info.api)
+                export(projects.components.bridge.feature.link.api)
+                export(projects.components.bridge.feature.provider.api)
+                export(projects.components.bridge.feature.screenStreaming.api)
+                export(projects.components.bridge.feature.wifi.api)
+                export(projects.components.bridge.feature.settings.api)
+                export(projects.components.bridge.orchestrator.api)
+                export(projects.components.bridge.service.api)
+
+                xcFramework.add(this)
+            }
+        }
+
     sourceSets.appleMain {
         dependencies {
-            api(projects.components.bridge.transport.ble.impl)
-            api(projects.components.bridge.config.impl)
+            implementation(projects.components.bridge.config.impl)
         }
         if (CURRENT_FLAVOR_TYPE.isMockEnabled) {
             kotlin.srcDir("src/appleMainMock/kotlin")
         }
     }
-    sourceSets.macosMain {
-        dependencies {
-            implementation(projects.components.bridge.transport.lan.impl)
-        }
+    sourceSets.iosMain.dependencies {
+        implementation(projects.components.bridge.transport.ble.impl)
     }
-    sourceSets.jvmMain.dependencies {
+    sourceSets.macosMain.dependencies {
         implementation(projects.components.bridge.transport.lan.impl)
     }
 }
