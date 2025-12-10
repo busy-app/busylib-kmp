@@ -32,7 +32,7 @@ class FRpcFeatureApiFactoryImpl(
     ): FDeviceFeatureApi? {
         // Wait for authorization
         val unsafeFeatureDeviceApi = unsafeFeatureDeviceApi
-            .getUnsafe(FRpcCriticalFeatureApi::class)
+            .get(FRpcCriticalFeatureApi::class)
             ?.await() ?: return null
 
         unsafeFeatureDeviceApi.clientModeApi

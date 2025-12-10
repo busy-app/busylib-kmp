@@ -29,7 +29,7 @@ class FLinkInfoOnReadyFeatureFactoryImpl(
         connectedDevice: FConnectedDeviceApi
     ): FOnDeviceReadyFeatureApi? {
         val fRpcCriticalFeatureApi = unsafeFeatureDeviceApi
-            .getUnsafe(FRpcCriticalFeatureApi::class)
+            .get(FRpcCriticalFeatureApi::class)
             ?.await()
             ?: return null
         return fLinkInfoOnReadyFeatureApiImpl(
