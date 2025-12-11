@@ -36,7 +36,7 @@ class FEventsFeatureApiImpl(
             .mapNotNull { byteArray -> byteArray?.let(::parse) }
             .onEach { info { "Receive updates: $it" } }
             .collect { value -> emit(value) }
-    }.shareIn(scope, SharingStarted.WhileSubscribed(5.seconds), 1)
+    }.shareIn(scope, SharingStarted.WhileSubscribed(5.seconds))
 
     override fun getUpdatesFlow(): Flow<List<UpdateEvent>> = sharedIndicationFlow
 
