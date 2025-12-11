@@ -7,6 +7,7 @@ import me.tatarka.inject.annotations.Provides
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
+import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.busylib.core.di.BusyLibGraph
@@ -25,9 +26,13 @@ class FWiFiFeatureFactoryImpl(
             .get(FRpcFeatureApi::class)
             ?.await()
             ?: return null
+        val fEventsFeatureApi = unsafeFeatureDeviceApi
+            .get(FEventsFeatureApi::class)
+            ?.await()
 
         return deviceInfoFeatureFactory(
-            rpcFeatureApi = fRpcFeatureApi
+            rpcFeatureApi = fRpcFeatureApi,
+            fEventsFeatureApi = fEventsFeatureApi
         )
     }
 }

@@ -4,9 +4,14 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.isActive
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
+import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
+import net.flipper.bridge.connection.feature.events.api.UpdateEvent
+import net.flipper.bridge.connection.feature.events.api.getUpdateFlow
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.ConnectRequestConfig
 import net.flipper.bridge.connection.feature.rpc.api.model.Network
@@ -20,6 +25,8 @@ import net.flipper.bridge.connection.feature.wifi.api.model.WiFiSecurity
 import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.ktx.common.exponentialRetry
+import net.flipper.core.busylib.ktx.common.merge
+import net.flipper.core.busylib.ktx.common.orEmpty
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import kotlin.time.Duration.Companion.seconds
@@ -28,7 +35,8 @@ private val POOLING_TIME = 3.seconds
 
 @Inject
 class FWiFiFeatureApiImpl(
-    @Assisted private val rpcFeatureApi: FRpcFeatureApi
+    @Assisted private val rpcFeatureApi: FRpcFeatureApi,
+    @Assisted private val fEventsFeatureApi: FEventsFeatureApi?
 ) : FWiFiFeatureApi, LogTagProvider {
     override val TAG = "FWiFiFeatureApi"
 
@@ -64,16 +72,17 @@ class FWiFiFeatureApiImpl(
     }
 
     override fun getWifiStatusFlow(): WrappedFlow<WifiStatusResponse> {
-        return callbackFlow {
-            while (isActive) {
-                val statusResponse = exponentialRetry {
+        return fEventsFeatureApi
+            ?.getUpdateFlow(UpdateEvent.BRIGHTNESS)
+            .orEmpty()
+            .merge(flowOf(Unit))
+            .map {
+                exponentialRetry {
                     rpcFeatureApi.getWifiStatus()
                         .onFailure { error(it) { "Failed to get WiFi networks" } }
                 }
-                send(statusResponse)
-                delay(POOLING_TIME)
             }
-        }.wrap()
+            .wrap()
     }
 
     override suspend fun connect(
@@ -99,11 +108,12 @@ class FWiFiFeatureApiImpl(
 
     @Inject
     class InternalFactory(
-        private val factory: (FRpcFeatureApi) -> FWiFiFeatureApiImpl
+        private val factory: (FRpcFeatureApi, FEventsFeatureApi?) -> FWiFiFeatureApiImpl
     ) {
         operator fun invoke(
-            rpcFeatureApi: FRpcFeatureApi
-        ): FWiFiFeatureApiImpl = factory(rpcFeatureApi)
+            rpcFeatureApi: FRpcFeatureApi,
+            fEventsFeatureApi: FEventsFeatureApi?
+        ): FWiFiFeatureApiImpl = factory(rpcFeatureApi, fEventsFeatureApi)
     }
 }
 

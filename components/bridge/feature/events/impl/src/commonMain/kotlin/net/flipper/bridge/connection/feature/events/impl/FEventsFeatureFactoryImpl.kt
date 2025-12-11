@@ -22,7 +22,8 @@ class FEventsFeatureFactoryImpl(
         connectedDevice: FConnectedDeviceApi
     ): FDeviceFeatureApi? {
         return eventsFeatureFactory(
-            metaInfoApi = connectedDevice as? FTransportMetaInfoApi ?: return null
+            metaInfoApi = connectedDevice as? FTransportMetaInfoApi ?: return null,
+            scope = scope
         )
     }
 }

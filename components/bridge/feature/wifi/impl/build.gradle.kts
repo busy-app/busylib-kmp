@@ -9,6 +9,7 @@ plugins {
 kotlin {
     sourceSets.commonMain.dependencies {
         implementation(projects.components.bridge.feature.wifi.api)
+        implementation(projects.components.bridge.feature.events.api)
 
         implementation(projects.components.core.di)
         implementation(projects.components.core.ktx)
