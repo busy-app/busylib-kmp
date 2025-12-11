@@ -73,7 +73,7 @@ class FWiFiFeatureApiImpl(
 
     override fun getWifiStatusFlow(): WrappedFlow<WifiStatusResponse> {
         return fEventsFeatureApi
-            ?.getUpdateFlow(UpdateEvent.BRIGHTNESS)
+            ?.getUpdateFlow(UpdateEvent.WIFI_STATUS)
             .orEmpty()
             .merge(flowOf(Unit))
             .map {

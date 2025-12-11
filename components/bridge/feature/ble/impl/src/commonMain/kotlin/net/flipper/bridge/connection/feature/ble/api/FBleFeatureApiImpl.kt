@@ -52,7 +52,7 @@ class FBleFeatureApiImpl(
 
     override fun getBleStatus(): WrappedFlow<FBleStatus> {
         return fEventsFeatureApi
-            ?.getUpdateFlow(UpdateEvent.BRIGHTNESS)
+            ?.getUpdateFlow(UpdateEvent.BLE_STATUS)
             .orEmpty()
             .merge(flowOf(Unit))
             .map {

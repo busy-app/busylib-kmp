@@ -50,7 +50,7 @@ class FSettingsFeatureApiImpl(
 
     override fun getVolumeFlow(): Flow<AudioVolumeInfo> {
         return fEventsFeatureApi
-            ?.getUpdateFlow(UpdateEvent.BRIGHTNESS)
+            ?.getUpdateFlow(UpdateEvent.AUDIO_VOLUME)
             .orEmpty()
             .merge(flowOf(Unit))
             .map {
