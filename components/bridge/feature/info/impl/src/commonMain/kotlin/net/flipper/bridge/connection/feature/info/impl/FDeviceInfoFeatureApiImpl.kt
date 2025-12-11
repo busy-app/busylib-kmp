@@ -2,6 +2,7 @@ package net.flipper.bridge.connection.feature.info.impl
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.mapNotNull
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
@@ -14,6 +15,8 @@ import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.wrap
+import net.flipper.core.busylib.ktx.common.merge
+import net.flipper.core.busylib.ktx.common.orEmpty
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 
@@ -34,12 +37,10 @@ class FDeviceInfoFeatureApiImpl(
     }
 
     private fun getDeviceNameChangeEventFlow(): Flow<Unit> {
-        return flow {
-            emit(Unit)
-            fEventsFeatureApi
-                ?.getUpdateFlow(UpdateEvent.DEVICE_NAME)
-                ?.collect { emit(Unit) }
-        }
+        return fEventsFeatureApi
+            ?.getUpdateFlow(UpdateEvent.DEVICE_NAME)
+            ?.merge(flowOf(Unit))
+            .orEmpty()
     }
 
     override fun getDeviceName(): WrappedFlow<String> {

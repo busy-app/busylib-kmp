@@ -1,9 +1,8 @@
 package net.flipper.bridge.connection.feature.ble.api
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.isActive
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
 import me.tatarka.inject.annotations.IntoMap
@@ -12,6 +11,9 @@ import net.flipper.bridge.connection.feature.ble.api.model.FBleStatus
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
+import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
+import net.flipper.bridge.connection.feature.events.api.UpdateEvent
+import net.flipper.bridge.connection.feature.events.api.getUpdateFlow
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.BleState
 import net.flipper.bridge.connection.feature.rpc.api.model.BleStatusResponse
@@ -20,16 +22,16 @@ import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.ktx.common.exponentialRetry
+import net.flipper.core.busylib.ktx.common.merge
+import net.flipper.core.busylib.ktx.common.orEmpty
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
-import kotlin.time.Duration.Companion.seconds
-
-private val POOLING_TIME = 3.seconds
 
 @Inject
 class FBleFeatureApiImpl(
-    @Assisted private val rpcFeatureApi: FRpcFeatureApi
+    @Assisted private val rpcFeatureApi: FRpcFeatureApi,
+    @Assisted private val fEventsFeatureApi: FEventsFeatureApi?
 ) : FBleFeatureApi, LogTagProvider {
     override val TAG: String = "FBleFeatureApi"
 
@@ -49,17 +51,18 @@ class FBleFeatureApiImpl(
     }
 
     override fun getBleStatus(): WrappedFlow<FBleStatus> {
-        return callbackFlow {
-            while (isActive) {
-                val status = exponentialRetry {
+        return fEventsFeatureApi
+            ?.getUpdateFlow(UpdateEvent.BLE_STATUS)
+            .orEmpty()
+            .merge(flowOf(Unit))
+            .map {
+                exponentialRetry {
                     rpcFeatureApi.getBleStatus()
                         .onFailure { error(it) { "Failed to get Ble status" } }
                         .map { response -> response.toFBleStatus() }
                 }
-                send(status)
-                delay(POOLING_TIME)
             }
-        }.wrap()
+            .wrap()
     }
 
     @Inject
@@ -73,9 +76,13 @@ class FBleFeatureApiImpl(
                 .get(FRpcFeatureApi::class)
                 ?.await()
                 ?: return null
+            val fEventsFeatureApi = unsafeFeatureDeviceApi
+                .get(FEventsFeatureApi::class)
+                ?.await()
 
             return FBleFeatureApiImpl(
-                rpcFeatureApi = fRpcFeatureApi
+                rpcFeatureApi = fRpcFeatureApi,
+                fEventsFeatureApi = fEventsFeatureApi
             )
         }
     }
