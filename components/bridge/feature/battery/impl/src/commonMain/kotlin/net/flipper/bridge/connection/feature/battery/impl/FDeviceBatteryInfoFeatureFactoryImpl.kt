@@ -23,7 +23,7 @@ class FDeviceBatteryInfoFeatureFactoryImpl(
         connectedDevice: FConnectedDeviceApi
     ): FDeviceFeatureApi? {
         val rpcFeatureApi = unsafeFeatureDeviceApi
-            .getUnsafe(FRpcFeatureApi::class)
+            .get(FRpcFeatureApi::class)
             ?.await()
             ?: return null
         val metaInfoApi = connectedDevice as? FTransportMetaInfoApi

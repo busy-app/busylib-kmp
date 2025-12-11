@@ -22,7 +22,7 @@ class FScreenStreamingFeatureFactoryImpl(
         connectedDevice: FConnectedDeviceApi
     ): FDeviceFeatureApi? {
         val rpcApi = unsafeFeatureDeviceApi
-            .getUnsafe(FRpcFeatureApi::class)
+            .get(FRpcFeatureApi::class)
             ?.await()
             ?: return null
         return internalFactory(rpcApi)

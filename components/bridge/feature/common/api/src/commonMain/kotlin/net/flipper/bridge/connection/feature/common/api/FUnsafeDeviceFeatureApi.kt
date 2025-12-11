@@ -9,9 +9,9 @@ import kotlin.reflect.KClass
  * which means that the caller must ensure that no more than one call at a time are made to the methods
  */
 interface FUnsafeDeviceFeatureApi {
-    suspend fun <T : FDeviceFeatureApi> getUnsafe(clazz: KClass<T>): Deferred<T?>?
+    suspend fun <T : FDeviceFeatureApi> get(clazz: KClass<T>): Deferred<T?>?
 }
 
-suspend inline fun <reified T : FDeviceFeatureApi> FUnsafeDeviceFeatureApi.getUnsafe(): Deferred<T?>? {
-    return getUnsafe(T::class)
+suspend inline fun <reified T : FDeviceFeatureApi> FUnsafeDeviceFeatureApi.get(): Deferred<T?>? {
+    return get(T::class)
 }

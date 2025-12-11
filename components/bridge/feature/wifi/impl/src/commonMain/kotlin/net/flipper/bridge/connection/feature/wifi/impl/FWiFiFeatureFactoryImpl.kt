@@ -22,7 +22,7 @@ class FWiFiFeatureFactoryImpl(
         connectedDevice: FConnectedDeviceApi
     ): FDeviceFeatureApi? {
         val fRpcFeatureApi = unsafeFeatureDeviceApi
-            .getUnsafe(FRpcFeatureApi::class)
+            .get(FRpcFeatureApi::class)
             ?.await()
             ?: return null
 

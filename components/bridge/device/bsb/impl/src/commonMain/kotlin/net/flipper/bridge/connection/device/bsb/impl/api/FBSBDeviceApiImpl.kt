@@ -1,5 +1,6 @@
 package net.flipper.bridge.connection.device.bsb.impl.api
 
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
@@ -48,16 +49,11 @@ class FBSBDeviceApiImpl(
         }
     }
 
-    override suspend fun <T : FDeviceFeatureApi> get(clazz: KClass<T>): Deferred<T?>? =
-        mutex.withLock {
-            return@withLock getUnsafe(clazz)
-        }
-
-    override suspend fun <T : FDeviceFeatureApi> getUnsafe(clazz: KClass<T>): Deferred<T?>? {
+    override suspend fun <T : FDeviceFeatureApi> get(clazz: KClass<T>): Deferred<T?>? {
         val deviceFeature = FZeroFeatureClassToEnumMapper.get(clazz) ?: return null
-        val deferredFeatureApi = getFeatureApi(deviceFeature)
         return scope.async {
-            val featureApi = deferredFeatureApi?.await()
+            val deferredFeatureApi = getFeatureApiWithLock(deviceFeature)
+            val featureApi = deferredFeatureApi.await()
             if (!clazz.isInstance(featureApi)) {
                 null
             } else {
@@ -66,33 +62,37 @@ class FBSBDeviceApiImpl(
         }
     }
 
-    private suspend fun getFeatureApi(feature: FDeviceFeature): Deferred<FDeviceFeatureApi?>? {
-        var featureApiFlow: Deferred<FDeviceFeatureApi?>? = features[feature]
-        if (featureApiFlow != null) {
-            return featureApiFlow
-        }
-        val factory = factories[feature]
-        if (factory == null) {
-            error { "Fail to find factory for feature $feature" }
-            return null
-        }
-        info { "$feature feature start creation..." }
-        featureApiFlow = scope.async {
-            val featureApi = factory(
-                unsafeFeatureDeviceApi = this@FBSBDeviceApiImpl,
-                scope = scope,
-                connectedDevice = connectedDevice
-            )
-            if (featureApi == null) {
-                error { "Fail to create $feature!" }
-            } else {
-                info { "$feature feature creation successful!" }
+    private suspend fun getFeatureApiWithLock(
+        feature: FDeviceFeature
+    ): Deferred<FDeviceFeatureApi?> {
+        return mutex.withLock {
+            var featureApiFlow: Deferred<FDeviceFeatureApi?>? = features[feature]
+            if (featureApiFlow != null) {
+                return@withLock featureApiFlow
             }
-            featureApi
-        }
+            val factory = factories[feature]
+            if (factory == null) {
+                error { "Fail to find factory for feature $feature" }
+                return@withLock CompletableDeferred(null)
+            }
+            info { "$feature feature start creation..." }
+            featureApiFlow = scope.async {
+                val featureApi = factory(
+                    unsafeFeatureDeviceApi = this@FBSBDeviceApiImpl,
+                    scope = scope,
+                    connectedDevice = connectedDevice
+                )
+                if (featureApi == null) {
+                    error { "Fail to create $feature!" }
+                } else {
+                    info { "$feature feature creation successful!" }
+                }
+                featureApi
+            }
 
-        features[feature] = featureApiFlow
-        return featureApiFlow
+            features[feature] = featureApiFlow
+            return@withLock featureApiFlow
+        }
     }
 
     private suspend fun callAllOnReadyDeviceFeatures(
@@ -109,7 +109,7 @@ class FBSBDeviceApiImpl(
                                 onDemandFeatureFactory::class == factory::class
                             }
                             ?.first
-                            ?.let { fDeviceFeature -> getFeatureApi(fDeviceFeature) }
+                            ?.let { fDeviceFeature -> getFeatureApiWithLock(fDeviceFeature) }
                             ?.await()
                     }
 
