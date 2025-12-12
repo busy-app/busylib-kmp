@@ -7,6 +7,7 @@ import kotlinx.serialization.Serializable
 sealed class FDeviceBaseModel {
     @SerialName("human_readable_name")
     abstract val humanReadableName: String
+
     @SerialName("unique_id")
     abstract val uniqueId: String
 

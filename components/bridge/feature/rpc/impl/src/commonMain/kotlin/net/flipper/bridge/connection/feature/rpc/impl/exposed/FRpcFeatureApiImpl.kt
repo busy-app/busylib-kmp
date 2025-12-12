@@ -172,7 +172,7 @@ class FRpcFeatureApiImpl(
             httpClient.delete("/api/display/draw") {
                 parameter("app_id", appId)
             }
-            .body<SuccessResponse>()
+                .body<SuccessResponse>()
         }
     }
 
