@@ -18,15 +18,7 @@ class LanDeviceConnectionApiImpl : LanDeviceConnectionApi {
         config: FLanDeviceConnectionConfig,
         listener: FTransportConnectionStatusListener
     ): Result<FLanApi> = runCatching {
-        val lanApi = FLanApiImpl(listener, config)
-        // TODO add connecting status with ping
-        listener.onStatusUpdate(
-            FInternalTransportConnectionStatus.Connected(
-                scope = scope,
-                deviceApi = lanApi
-            )
-        )
-
+        val lanApi = FLanApiImpl(listener, config, scope)
         return@runCatching lanApi
     }
 }
