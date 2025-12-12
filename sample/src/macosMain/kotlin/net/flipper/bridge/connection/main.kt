@@ -15,7 +15,7 @@ import net.flipper.bridge.connection.screens.ConnectionRootDecomposeComponent
 fun rootWindow(
     root: ConnectionRootDecomposeComponent
 ) {
-    return Window {
+    Window {
         MaterialTheme(lightColors()) {
             Box(
                 modifier = Modifier
