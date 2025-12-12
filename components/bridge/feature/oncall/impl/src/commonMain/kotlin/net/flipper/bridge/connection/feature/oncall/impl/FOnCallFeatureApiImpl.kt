@@ -6,7 +6,7 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
 import me.tatarka.inject.annotations.IntoMap
@@ -51,7 +51,7 @@ class FOnCallFeatureApiImpl(
                 awaitCancellation()
             } finally {
                 withContext(NonCancellable) {
-                    withTimeout(3.seconds) {
+                    withTimeoutOrNull(3.seconds) {
                         performStopAttempt()
                     }
                 }
@@ -61,11 +61,8 @@ class FOnCallFeatureApiImpl(
 
     override suspend fun stop() {
         val job = startJob
-        if (job != null) {
-            job.cancelAndJoin()
-        } else {
-            performStopAttempt()
-        }
+        job?.cancelAndJoin()
+        performStopAttempt()
     }
 
     private suspend fun performStartAttempt(): Result<Unit> = runCatching {
