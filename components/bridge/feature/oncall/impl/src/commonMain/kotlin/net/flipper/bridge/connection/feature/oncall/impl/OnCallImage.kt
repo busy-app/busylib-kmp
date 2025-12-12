@@ -3,6 +3,8 @@ package net.flipper.bridge.connection.feature.oncall.impl
 object OnCallImage {
     const val IMAGE_NAME = "on_call.png"
     const val APP_ID = "on_call"
+
+    const val TIMEOUT = 24 * 60 * 60
     val content: ByteArray by lazy {
         ByteArray(ints.size) { i -> ints[i].toByte() }
     }

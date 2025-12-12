@@ -23,6 +23,7 @@ import net.flipper.core.busylib.ktx.common.SingleJobMode
 import net.flipper.core.busylib.ktx.common.asSingleJobScope
 import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.log.LogTagProvider
+import net.flipper.core.busylib.log.error
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -73,9 +74,14 @@ class FOnCallFeatureApiImpl(
                 appId = OnCallImage.APP_ID,
                 file = OnCallImage.IMAGE_NAME,
                 content = OnCallImage.content
-            ).getOrThrow()
+            )
+            .onFailure { error(it) { "Failed to upload asset" } }
+            .getOrThrow()
 
-        rpcFeatureApi.displayDraw(createDrawRequest()).getOrThrow()
+        rpcFeatureApi
+            .displayDraw(createDrawRequest())
+            .onFailure { error(it) { "Failed to display draw" } }
+            .getOrThrow()
     }
 
     private suspend fun performStopAttempt(): Result<Unit> {
@@ -88,7 +94,7 @@ class FOnCallFeatureApiImpl(
             elements = listOf(
                 DrawRequest.Element(
                     id = "0",
-                    timeout = 24 * 60 * 60,
+                    timeout = OnCallImage.TIMEOUT,
                     type = DrawRequest.Element.ElementType.IMAGE,
                     x = 0,
                     y = 0,
