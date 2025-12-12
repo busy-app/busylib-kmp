@@ -2,6 +2,7 @@ package net.flipper.bridge.connection.config.api.model
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlin.uuid.Uuid
 
 @Serializable
 sealed class FDeviceBaseModel {
@@ -27,7 +28,7 @@ sealed class FDeviceBaseModel {
 
     @Serializable
     class FDeviceBSBModelMock(
-        override val uniqueId: String,
+        override val uniqueId: String = Uuid.random().toString(),
         override val humanReadableName: String = "BUSY Bar Mock"
     ) : FDeviceBaseModel()
 
