@@ -7,7 +7,7 @@ import net.flipper.bridge.connection.transport.common.api.FTransportConnectionSt
 import net.flipper.bridge.connection.transport.lan.FLanDeviceConnectionConfig
 
 actual class FLanConnectionMonitor actual constructor(
-    val listener: FTransportConnectionStatusListener,
+    private val listener: FTransportConnectionStatusListener,
     config: FLanDeviceConnectionConfig
 ) {
     actual fun startMonitoring(

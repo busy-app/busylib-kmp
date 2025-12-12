@@ -34,12 +34,9 @@ import platform.darwin.dispatch_queue_create
 @OptIn(ExperimentalForeignApi::class)
 actual class FLanConnectionMonitor actual constructor(
     private val listener: FTransportConnectionStatusListener,
-    config: FLanDeviceConnectionConfig
+    private val config: FLanDeviceConnectionConfig
 ) : LogTagProvider {
     override val TAG: String = "FLanConnectionMonitor"
-
-    private val ip = config.host
-
     private val queue = dispatch_queue_create("net.flipper.lan.connection", null)
     private val connectionLock = NSLock()
     private var connection: nw_connection_t? = null
@@ -51,7 +48,7 @@ actual class FLanConnectionMonitor actual constructor(
         val newConnection = connectionLock.withLock {
             connection?.let { nw_connection_cancel(it) }
 
-            val endpoint = nw_endpoint_create_host(ip, "80")
+            val endpoint = nw_endpoint_create_host(config.host, "80")
             val parameters = nw_parameters_create()
             val protocolStack = nw_parameters_copy_default_protocol_stack(parameters)
             val tcpOptions = nw_tcp_create_options()
@@ -75,7 +72,7 @@ actual class FLanConnectionMonitor actual constructor(
         nw_connection_set_queue(newConnection, queue)
         nw_connection_start(newConnection)
 
-        info { "Started monitoring connection to $ip" }
+        info { "Started monitoring connection to ${config.host}" }
     }
 
     actual fun stopMonitoring() {
@@ -83,7 +80,7 @@ actual class FLanConnectionMonitor actual constructor(
             connection?.let { nw_connection_force_cancel(it) }
             connection = null
         }
-        info { "Stopped monitoring connection to $ip" }
+        info { "Stopped monitoring connection to ${config.host}" }
     }
 
     private fun handleStateUpdate(
@@ -94,7 +91,7 @@ actual class FLanConnectionMonitor actual constructor(
     ) {
         when (state) {
             nw_connection_state_ready -> {
-                info { "Connected to $ip" }
+                info { "Connected to ${config.host}" }
                 listener.onStatusUpdate(
                     FInternalTransportConnectionStatus.Connected(
                         scope = scope,
