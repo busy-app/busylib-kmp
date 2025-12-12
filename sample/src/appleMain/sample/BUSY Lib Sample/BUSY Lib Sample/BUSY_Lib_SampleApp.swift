@@ -1,6 +1,7 @@
 import SwiftUI
 import BridgeConnection
 
+#if os(iOS)
 @main
 struct BUSY_Lib_SampleApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self)
@@ -40,3 +41,12 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         return true
     }
 }
+#elseif os(macOS)
+class AppDelegate: NSObject, NSApplicationDelegate {
+    let root: ConnectionRootDecomposeComponent = MacOSAppComponentKt.getRootDecomposeComponent()
+
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        MacOSAppComponentKt.busyLib.connectionService.onApplicationInit()
+    }
+}
+#endif

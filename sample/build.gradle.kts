@@ -28,6 +28,9 @@ kotlin {
     iosSimulatorArm64()
     iosX64()
 
+    macosArm64()
+    macosX64()
+
     applyDefaultHierarchyTemplate()
 
     targets
