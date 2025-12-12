@@ -10,8 +10,10 @@ import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.debug
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
+import platform.Foundation.NSLock
 import platform.Network.nw_connection_cancel
 import platform.Network.nw_connection_create
+import platform.Network.nw_connection_force_cancel
 import platform.Network.nw_connection_set_queue
 import platform.Network.nw_connection_set_state_changed_handler
 import platform.Network.nw_connection_start
@@ -31,31 +33,35 @@ import platform.darwin.dispatch_queue_create
 
 @OptIn(ExperimentalForeignApi::class)
 actual class FLanConnectionMonitor actual constructor(
-    val listener: FTransportConnectionStatusListener,
-    val config: FLanDeviceConnectionConfig
+    private val listener: FTransportConnectionStatusListener,
+    config: FLanDeviceConnectionConfig
 ) : LogTagProvider {
     override val TAG: String = "FLanConnectionMonitor"
 
     private val ip = config.host
 
     private val queue = dispatch_queue_create("net.flipper.lan.connection", null)
+    private val connectionLock = NSLock()
     private var connection: nw_connection_t? = null
 
     actual fun startMonitoring(
         scope: CoroutineScope,
         deviceApi: FConnectedDeviceApi
     ) {
-        connection?.let { nw_connection_cancel(it) }
+        val newConnection = connectionLock.withLock {
+            connection?.let { nw_connection_cancel(it) }
 
-        val endpoint = nw_endpoint_create_host(ip, "80")
-        val parameters = nw_parameters_create()
-        val protocolStack = nw_parameters_copy_default_protocol_stack(parameters)
-        val tcpOptions = nw_tcp_create_options()
-        nw_protocol_stack_set_transport_protocol(protocolStack, tcpOptions)
-        nw_parameters_set_include_peer_to_peer(parameters, true)
+            val endpoint = nw_endpoint_create_host(ip, "80")
+            val parameters = nw_parameters_create()
+            val protocolStack = nw_parameters_copy_default_protocol_stack(parameters)
+            val tcpOptions = nw_tcp_create_options()
+            nw_protocol_stack_set_transport_protocol(protocolStack, tcpOptions)
+            nw_parameters_set_include_peer_to_peer(parameters, true)
 
-        val newConnection = nw_connection_create(endpoint, parameters)
-        connection = newConnection
+            val createdConnection = nw_connection_create(endpoint, parameters)
+            connection = createdConnection
+            createdConnection
+        }
 
         nw_connection_set_state_changed_handler(newConnection) { state, error ->
             handleStateUpdate(
@@ -73,8 +79,10 @@ actual class FLanConnectionMonitor actual constructor(
     }
 
     actual fun stopMonitoring() {
-        connection?.let { nw_connection_cancel(it) }
-        connection = null
+        connectionLock.withLock {
+            connection?.let { nw_connection_force_cancel(it) }
+            connection = null
+        }
         info { "Stopped monitoring connection to $ip" }
     }
 
@@ -112,5 +120,14 @@ actual class FLanConnectionMonitor actual constructor(
                 debug { "Connection unknown state: $state" }
             }
         }
+    }
+}
+
+private inline fun <T> NSLock.withLock(block: () -> T): T {
+    lock()
+    return try {
+        block()
+    } finally {
+        unlock()
     }
 }

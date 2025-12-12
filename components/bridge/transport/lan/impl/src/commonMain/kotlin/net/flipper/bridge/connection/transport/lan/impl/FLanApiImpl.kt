@@ -12,7 +12,7 @@ import net.flipper.bridge.connection.transport.lan.impl.monitor.FLanConnectionMo
 class FLanApiImpl(
     private val listener: FTransportConnectionStatusListener,
     config: FLanDeviceConnectionConfig,
-    private val scope: CoroutineScope
+    scope: CoroutineScope
 ) : FLanApi {
     private val httpEngineOriginal = getPlatformEngineFactory().create()
     private val httpEngine = BUSYBarHttpEngine(httpEngineOriginal, config.host)

@@ -8,8 +8,7 @@ import net.flipper.bridge.connection.transport.lan.FLanDeviceConnectionConfig
 
 actual class FLanConnectionMonitor actual constructor(
     private val listener: FTransportConnectionStatusListener,
-    @Suppress("UnusedPrivateProperty")
-    private val config: FLanDeviceConnectionConfig
+    config: FLanDeviceConnectionConfig
 ) {
     actual fun startMonitoring(
         scope: CoroutineScope,
