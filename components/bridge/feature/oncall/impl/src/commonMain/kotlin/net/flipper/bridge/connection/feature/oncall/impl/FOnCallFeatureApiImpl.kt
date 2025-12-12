@@ -37,7 +37,7 @@ class FOnCallFeatureApiImpl(
     override val TAG: String = "FOnCallFeatureApi"
 
     private val singleJobScope = scope.asSingleJobScope()
-    private var startJob: Job? = null
+    private var startJob: Job? = null // todo replace with singleJobScope job
 
     override suspend fun start() {
         startJob = singleJobScope.launch(SingleJobMode.SKIP_IF_RUNNING) {

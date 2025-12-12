@@ -13,7 +13,7 @@ sealed class FDeviceBaseModel {
     abstract val uniqueId: String
 
     @Serializable
-    class FDeviceBSBModelBLE(
+    data class FDeviceBSBModelBLE(
         @SerialName("address")
         val address: String,
         override val uniqueId: String = address,
@@ -21,19 +21,19 @@ sealed class FDeviceBaseModel {
     ) : FDeviceBaseModel()
 
     @Serializable
-    class FDeviceBSBModelBLEiOS(
+    data class FDeviceBSBModelBLEiOS(
         override val uniqueId: String,
         override val humanReadableName: String,
     ) : FDeviceBaseModel()
 
     @Serializable
-    class FDeviceBSBModelMock(
+    data class FDeviceBSBModelMock(
         override val uniqueId: String = Uuid.random().toString(),
         override val humanReadableName: String = "BUSY Bar Mock"
     ) : FDeviceBaseModel()
 
     @Serializable
-    class FDeviceBSBModelLan(
+    data class FDeviceBSBModelLan(
         val host: String = "10.0.4.20",
     ) : FDeviceBaseModel() {
         override val uniqueId: String = host
