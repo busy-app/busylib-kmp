@@ -4,8 +4,8 @@ import android.app.Application
 import com.russhwolf.settings.SharedPreferencesSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
+import net.flipper.bridge.connection.config.impl.FDevicePersistedStorageImpl
 import net.flipper.bridge.connection.utils.cloud.BUSYLibBarsApiNoop
-import net.flipper.bridge.connection.utils.config.impl.FDevicePersistedStorageImpl
 import net.flipper.bridge.connection.utils.principal.impl.UserPrincipalApiNoop
 import net.flipper.busylib.BUSYLibAndroid
 import timber.log.Timber
