@@ -22,5 +22,5 @@ actual class FLanConnectionMonitor actual constructor(
         )
     }
 
-    actual fun stopMonitoring() {}
+    actual fun stopMonitoring() = Unit
 }

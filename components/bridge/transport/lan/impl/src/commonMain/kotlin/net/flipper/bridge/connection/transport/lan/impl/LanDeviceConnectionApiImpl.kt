@@ -2,7 +2,6 @@ package net.flipper.bridge.connection.transport.lan.impl
 
 import kotlinx.coroutines.CoroutineScope
 import me.tatarka.inject.annotations.Inject
-import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.bridge.connection.transport.lan.FLanApi
 import net.flipper.bridge.connection.transport.lan.FLanDeviceConnectionConfig
