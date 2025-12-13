@@ -13,7 +13,7 @@ sealed class FDeviceBaseModel {
     abstract val uniqueId: String
 
     @Serializable
-    data class FDeviceBSBModelBLE(
+    class FDeviceBSBModelBLE(
         @SerialName("address")
         val address: String,
         override val uniqueId: String = address,
@@ -21,19 +21,19 @@ sealed class FDeviceBaseModel {
     ) : FDeviceBaseModel()
 
     @Serializable
-    data class FDeviceBSBModelBLEiOS(
+    class FDeviceBSBModelBLEiOS(
         override val uniqueId: String,
         override val humanReadableName: String,
     ) : FDeviceBaseModel()
 
     @Serializable
-    data class FDeviceBSBModelMock(
+    class FDeviceBSBModelMock(
         override val uniqueId: String = Uuid.random().toString(),
         override val humanReadableName: String = "BUSY Bar Mock"
     ) : FDeviceBaseModel()
 
     @Serializable
-    data class FDeviceBSBModelLan(
+    class FDeviceBSBModelLan(
         val host: String = "10.0.4.20",
     ) : FDeviceBaseModel() {
         override val uniqueId: String = host
@@ -48,5 +48,39 @@ sealed class FDeviceBaseModel {
 
     override fun hashCode(): Int {
         return uniqueId.hashCode()
+    }
+
+    override fun toString(): String {
+        when (this) {
+            is FDeviceBSBModelBLE -> {
+                return "FDeviceBSBModelBLE(" +
+                    "address='$address', " +
+                    "uniqueId='$uniqueId', " +
+                    "humanReadableName='$humanReadableName'" +
+                    ")"
+            }
+
+            is FDeviceBSBModelBLEiOS -> {
+                return "FDeviceBSBModelBLEiOS(" +
+                    "uniqueId='$uniqueId', " +
+                    "humanReadableName='$humanReadableName'" +
+                    ")"
+            }
+
+            is FDeviceBSBModelMock -> {
+                return "FDeviceBSBModelMock(" +
+                    "uniqueId='$uniqueId', " +
+                    "humanReadableName='$humanReadableName'" +
+                    ")"
+            }
+
+            is FDeviceBSBModelLan -> {
+                return "FDeviceBSBModelLan(" +
+                    "host='$host', " +
+                    "uniqueId='$uniqueId', " +
+                    "humanReadableName='$humanReadableName'" +
+                    ")"
+            }
+        }
     }
 }

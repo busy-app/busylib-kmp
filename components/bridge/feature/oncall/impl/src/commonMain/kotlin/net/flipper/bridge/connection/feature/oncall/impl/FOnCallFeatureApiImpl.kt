@@ -62,7 +62,6 @@ class FOnCallFeatureApiImpl(
     override suspend fun stop() {
         val job = startJob
         job?.cancelAndJoin()
-        performStopAttempt()
     }
 
     private suspend fun performStartAttempt(): Result<Unit> = runCatching {
