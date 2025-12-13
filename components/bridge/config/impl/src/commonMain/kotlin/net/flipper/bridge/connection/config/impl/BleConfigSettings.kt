@@ -9,5 +9,5 @@ data class BleConfigSettings(
     @SerialName("current_selected_device_id")
     val currentSelectedDeviceId: String? = null,
     @SerialName("devices")
-    val devices: List<FDeviceBaseModel> = emptyList()
+    val devices: Set<FDeviceBaseModel> = emptySet()
 )

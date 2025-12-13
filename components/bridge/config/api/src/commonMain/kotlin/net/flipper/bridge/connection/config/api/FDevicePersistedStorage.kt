@@ -8,6 +8,6 @@ interface FDevicePersistedStorage {
     suspend fun setCurrentDevice(id: String?)
     suspend fun addDevice(device: FDeviceBaseModel)
     suspend fun removeDevice(id: String)
-    fun getAllDevices(): Flow<List<FDeviceBaseModel>>
+    fun getAllDevices(): Flow<Set<FDeviceBaseModel>>
     suspend fun updateCurrentDevice(block: (FDeviceBaseModel) -> FDeviceBaseModel)
 }

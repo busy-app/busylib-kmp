@@ -2,6 +2,7 @@ package net.flipper.bridge.connection.feature.rpc.impl.exposed
 
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
@@ -24,6 +25,7 @@ import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarStatusSystem
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarVersion
 import net.flipper.bridge.connection.feature.rpc.api.model.ConnectRequestConfig
 import net.flipper.bridge.connection.feature.rpc.api.model.DisplayBrightnessInfo
+import net.flipper.bridge.connection.feature.rpc.api.model.DrawRequest
 import net.flipper.bridge.connection.feature.rpc.api.model.NetworkResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.WifiStatusResponse
@@ -134,6 +136,43 @@ class FRpcFeatureApiImpl(
             httpClient.get {
                 url("/api/name")
             }.body<DeviceNameResponse>().name
+        }
+    }
+
+    override suspend fun uploadAsset(
+        appId: String,
+        file: String,
+        content: ByteArray
+    ): Result<SuccessResponse> = withContext(dispatcher) {
+        return@withContext runSuspendCatching {
+            httpClient.post("/api/assets/upload") {
+                parameter("app_id", appId)
+                parameter("file", file)
+                contentType(ContentType.Application.OctetStream)
+                setBody(content)
+            }.body<SuccessResponse>()
+        }
+    }
+
+    override suspend fun displayDraw(
+        request: DrawRequest
+    ): Result<SuccessResponse> = withContext(dispatcher) {
+        return@withContext runSuspendCatching {
+            httpClient.post("/api/display/draw") {
+                contentType(ContentType.Application.Json)
+                setBody(request)
+            }.body<SuccessResponse>()
+        }
+    }
+
+    override suspend fun removeDraw(
+        appId: String
+    ): Result<SuccessResponse> = withContext(dispatcher) {
+        return@withContext runSuspendCatching {
+            httpClient.delete("/api/display/draw") {
+                parameter("app_id", appId)
+            }
+                .body<SuccessResponse>()
         }
     }
 

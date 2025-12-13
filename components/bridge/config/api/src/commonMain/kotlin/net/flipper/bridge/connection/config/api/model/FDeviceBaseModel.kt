@@ -5,38 +5,82 @@ import kotlinx.serialization.Serializable
 import kotlin.uuid.Uuid
 
 @Serializable
-sealed interface FDeviceBaseModel {
+sealed class FDeviceBaseModel {
     @SerialName("human_readable_name")
-    val humanReadableName: String
+    abstract val humanReadableName: String
 
     @SerialName("unique_id")
-    val uniqueId: String
+    abstract val uniqueId: String
 
     @Serializable
-    data class FDeviceBSBModelBLE(
+    class FDeviceBSBModelBLE(
         @SerialName("address")
         val address: String,
         override val uniqueId: String = address,
         override val humanReadableName: String,
-    ) : FDeviceBaseModel
+    ) : FDeviceBaseModel()
 
     @Serializable
-    data class FDeviceBSBModelBLEiOS(
+    class FDeviceBSBModelBLEiOS(
         override val uniqueId: String,
         override val humanReadableName: String,
-    ) : FDeviceBaseModel
+    ) : FDeviceBaseModel()
 
     @Serializable
-    data class FDeviceBSBModelMock(
+    class FDeviceBSBModelMock(
         override val uniqueId: String = Uuid.random().toString(),
         override val humanReadableName: String = "BUSY Bar Mock"
-    ) : FDeviceBaseModel
+    ) : FDeviceBaseModel()
 
     @Serializable
-    data class FDeviceBSBModelLan(
+    class FDeviceBSBModelLan(
         val host: String = "10.0.4.20",
-    ) : FDeviceBaseModel {
+    ) : FDeviceBaseModel() {
         override val uniqueId: String = host
         override val humanReadableName: String = "BUSY Bar LAN"
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is FDeviceBaseModel) return false
+        return uniqueId == other.uniqueId
+    }
+
+    override fun hashCode(): Int {
+        return uniqueId.hashCode()
+    }
+
+    override fun toString(): String {
+        when (this) {
+            is FDeviceBSBModelBLE -> {
+                return "FDeviceBSBModelBLE(" +
+                    "address='$address', " +
+                    "uniqueId='$uniqueId', " +
+                    "humanReadableName='$humanReadableName'" +
+                    ")"
+            }
+
+            is FDeviceBSBModelBLEiOS -> {
+                return "FDeviceBSBModelBLEiOS(" +
+                    "uniqueId='$uniqueId', " +
+                    "humanReadableName='$humanReadableName'" +
+                    ")"
+            }
+
+            is FDeviceBSBModelMock -> {
+                return "FDeviceBSBModelMock(" +
+                    "uniqueId='$uniqueId', " +
+                    "humanReadableName='$humanReadableName'" +
+                    ")"
+            }
+
+            is FDeviceBSBModelLan -> {
+                return "FDeviceBSBModelLan(" +
+                    "host='$host', " +
+                    "uniqueId='$uniqueId', " +
+                    "humanReadableName='$humanReadableName'" +
+                    ")"
+            }
+        }
     }
 }

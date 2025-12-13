@@ -67,6 +67,7 @@ kotlin {
         implementation(compose.components.uiToolingPreview)
 
         api(projects.entrypoint)
+        implementation(projects.components.bridge.config.impl)
 
         implementation(libs.settings)
         implementation(libs.settings.observable)
