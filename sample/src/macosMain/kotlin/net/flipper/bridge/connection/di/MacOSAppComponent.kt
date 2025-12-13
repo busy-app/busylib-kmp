@@ -6,12 +6,12 @@ import com.arkivanov.essenty.lifecycle.LifecycleRegistry
 import com.russhwolf.settings.NSUserDefaultsSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
+import net.flipper.bridge.connection.config.impl.FDevicePersistedStorageImpl
 import net.flipper.bridge.connection.screens.ConnectionRootDecomposeComponent
 import net.flipper.bridge.connection.screens.di.getRootDecomposeComponent
 import net.flipper.bridge.connection.screens.search.LanSearchViewModel
 import net.flipper.bridge.connection.utils.PermissionCheckerNoop
 import net.flipper.bridge.connection.utils.cloud.BUSYLibBarsApiNoop
-import net.flipper.bridge.connection.utils.config.impl.FDevicePersistedStorageImpl
 import net.flipper.bridge.connection.utils.principal.impl.UserPrincipalApiNoop
 import net.flipper.busylib.BUSYLibMacOS
 import platform.Foundation.NSUserDefaults
