@@ -18,7 +18,7 @@ class FLanApiImpl(
     private val httpEngineOriginal = getPlatformEngineFactory().create()
     private val httpEngine = BUSYBarHttpEngine(httpEngineOriginal, config.host)
 
-    val connectionMonitor = connectionMonitor.invoke(
+    private val connectionMonitor = connectionMonitor.invoke(
         listener,
         config
     )
