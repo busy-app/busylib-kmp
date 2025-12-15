@@ -68,7 +68,7 @@ kotlin {
         if (CURRENT_FLAVOR_TYPE.isMockEnabled) {
             implementation(projects.components.bridge.transport.mock.impl)
         }
-        implementation(projects.components.bridge.transport.lan.api)
+        implementation(projects.components.bridge.transport.tcp.lan.api)
         implementation(projects.components.bridge.transportconfigbuilder.api)
         implementation(projects.components.bridge.transportconfigbuilder.impl)
         implementation(libs.kotlin.coroutines)
@@ -81,7 +81,7 @@ kotlin {
         implementation(libs.ble.client)
     }
     sourceSets.jvmMain.dependencies {
-        implementation(projects.components.bridge.transport.lan.impl)
+        implementation(projects.components.bridge.transport.tcp.lan.impl)
     }
 }
 
@@ -130,7 +130,7 @@ kotlin {
         implementation(projects.components.bridge.transport.ble.impl)
     }
     sourceSets.macosMain.dependencies {
-        implementation(projects.components.bridge.transport.lan.impl)
+        implementation(projects.components.bridge.transport.tcp.lan.impl)
     }
 }
 

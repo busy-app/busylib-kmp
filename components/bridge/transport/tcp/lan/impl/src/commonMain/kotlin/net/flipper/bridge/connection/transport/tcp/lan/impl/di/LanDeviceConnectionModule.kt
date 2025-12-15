@@ -1,4 +1,4 @@
-package net.flipper.busylib.di
+package net.flipper.bridge.connection.transport.tcp.lan.impl.di
 
 import me.tatarka.inject.annotations.IntoMap
 import me.tatarka.inject.annotations.Provides
@@ -10,10 +10,10 @@ import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
 import kotlin.reflect.KClass
 
 @ContributesTo(BusyLibGraph::class)
-interface WorkaroundLANConnectionModule {
+interface LanDeviceConnectionModule {
     @IntoMap
     @Provides
-    fun getWorkaroundLANDeviceConnection(
+    fun getLanDeviceConnection(
         lanDeviceConnectionApi: LanDeviceConnectionApi
     ): Pair<KClass<*>, DeviceConnectionApiHolder> {
         return FLanDeviceConnectionConfig::class to DeviceConnectionApiHolder(
