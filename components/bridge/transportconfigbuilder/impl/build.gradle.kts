@@ -15,6 +15,7 @@ kotlin {
         implementation(projects.components.bridge.transport.common.api)
         implementation(projects.components.bridge.transport.mock.api)
         implementation(projects.components.bridge.transport.ble.api)
+        implementation(projects.components.bridge.transport.tcp.cloud.api)
         implementation(projects.components.bridge.transport.tcp.lan.api)
         implementation(projects.components.bridge.config.api)
 

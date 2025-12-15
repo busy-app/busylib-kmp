@@ -7,7 +7,7 @@ import net.flipper.bridge.connection.transport.tcp.lan.FLanApi
 import net.flipper.bridge.connection.transport.tcp.lan.FLanDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.tcp.lan.impl.engine.BUSYBarHttpEngine
 import net.flipper.bridge.connection.transport.tcp.common.engine.getPlatformEngineFactory
-import net.flipper.bridge.connection.transport.tcp.lan.monitor.FLanConnectionMonitorApi
+import net.flipper.bridge.connection.transport.tcp.lan.impl.monitor.FLanConnectionMonitorApi
 
 class FLanApiImpl(
     private val listener: FTransportConnectionStatusListener,

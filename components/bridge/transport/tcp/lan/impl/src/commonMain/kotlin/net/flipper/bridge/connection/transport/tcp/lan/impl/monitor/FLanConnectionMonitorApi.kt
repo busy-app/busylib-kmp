@@ -1,4 +1,4 @@
-package net.flipper.bridge.connection.transport.tcp.lan.monitor
+package net.flipper.bridge.connection.transport.tcp.lan.impl.monitor
 
 import kotlinx.coroutines.CoroutineScope
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi

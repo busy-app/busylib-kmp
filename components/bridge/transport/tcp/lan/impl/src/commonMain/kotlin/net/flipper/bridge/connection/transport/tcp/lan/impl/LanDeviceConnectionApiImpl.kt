@@ -6,7 +6,7 @@ import net.flipper.bridge.connection.transport.common.api.FTransportConnectionSt
 import net.flipper.bridge.connection.transport.tcp.lan.FLanApi
 import net.flipper.bridge.connection.transport.tcp.lan.FLanDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.tcp.lan.LanDeviceConnectionApi
-import net.flipper.bridge.connection.transport.tcp.lan.monitor.FLanConnectionMonitorApi
+import net.flipper.bridge.connection.transport.tcp.lan.impl.monitor.FLanConnectionMonitorApi
 import net.flipper.busylib.core.di.BusyLibGraph
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 

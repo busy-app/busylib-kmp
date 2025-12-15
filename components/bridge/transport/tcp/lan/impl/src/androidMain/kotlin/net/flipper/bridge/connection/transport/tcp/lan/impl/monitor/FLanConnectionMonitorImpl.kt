@@ -7,7 +7,6 @@ import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.bridge.connection.transport.tcp.lan.FLanDeviceConnectionConfig
-import net.flipper.bridge.connection.transport.tcp.lan.monitor.FLanConnectionMonitorApi
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.log.LogTagProvider
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding

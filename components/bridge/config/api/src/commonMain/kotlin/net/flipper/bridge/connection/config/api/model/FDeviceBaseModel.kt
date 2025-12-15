@@ -39,6 +39,13 @@ sealed class FDeviceBaseModel {
         override val uniqueId: String = host
         override val humanReadableName: String = "BUSY Bar LAN"
     }
+    @Serializable
+    class FDeviceBSBModelCloud(
+        val authToken: String,
+    ) : FDeviceBaseModel() {
+        override val uniqueId: String = authToken
+        override val humanReadableName: String = "BUSY Bar"
+    }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
