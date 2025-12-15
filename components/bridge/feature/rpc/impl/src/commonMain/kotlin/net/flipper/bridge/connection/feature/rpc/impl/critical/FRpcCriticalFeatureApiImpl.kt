@@ -17,6 +17,7 @@ import net.flipper.bridge.connection.feature.rpc.impl.client.FRpcClientModeApiIm
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.busylib.log.LogTagProvider
+import kotlin.uuid.Uuid
 
 @Inject
 @Suppress("TooManyFunctions")
@@ -28,11 +29,11 @@ class FRpcCriticalFeatureApiImpl(
     override val clientModeApi: FRpcClientModeApi = FRpcClientModeApiImpl()
     private val dispatcher = FlipperDispatchers.default
 
-    override suspend fun invalidateLinkedUser(email: String?): Result<RpcLinkedAccountInfo> {
+    override suspend fun invalidateLinkedUser(uuid: Uuid?): Result<RpcLinkedAccountInfo> {
         return withContext(dispatcher) {
             return@withContext runSuspendCatching {
                 client.get("/api/account/info").body<RpcLinkedAccountInfo>()
-            }.onSuccess { response -> clientModeApi.updateClientMode(response, email) }
+            }.onSuccess { response -> clientModeApi.updateClientMode(response, uuid) }
         }
     }
 

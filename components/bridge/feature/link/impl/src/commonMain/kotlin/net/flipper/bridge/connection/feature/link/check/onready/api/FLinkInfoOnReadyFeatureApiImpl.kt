@@ -27,6 +27,7 @@ import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
 import kotlin.time.Duration.Companion.seconds
+import kotlin.uuid.Uuid
 
 @Inject
 class FLinkInfoOnReadyFeatureApiImpl(
@@ -48,25 +49,25 @@ class FLinkInfoOnReadyFeatureApiImpl(
             .launchIn(scope)
     }
 
-    private fun RpcLinkedAccountInfo.asSealed(currentUserEmail: String?): LinkedAccountInfo {
+    private fun RpcLinkedAccountInfo.asSealed(currentUserEmail: Uuid?): LinkedAccountInfo {
         info { "Calculate state from $this and current user $currentUserEmail" }
-        return when (this.state) {
-            RpcLinkedAccountInfo.State.NOT_LINKED -> LinkedAccountInfo.NotLinked
-            RpcLinkedAccountInfo.State.ERROR -> LinkedAccountInfo.Error
-            RpcLinkedAccountInfo.State.LINKED -> {
-                val linkedMail = this.email
-                if (linkedMail != null && linkedMail == currentUserEmail) {
-                    LinkedAccountInfo.Linked.SameUser(linkedMail)
-                } else if (linkedMail != null && currentUserEmail != null) {
-                    LinkedAccountInfo.Linked.DifferentUser(linkedMail)
-                } else if (linkedMail != null && currentUserEmail == null) {
-                    LinkedAccountInfo.Linked.MissingBusyCloud(linkedMail)
-                } else {
-                    LinkedAccountInfo.Error
-                }
-            }
-
-            RpcLinkedAccountInfo.State.DISCONNECTED -> LinkedAccountInfo.Disconnected
+        val linkedUuid = this.userId
+        return when {
+            // BUSY Bar is not linked
+            !linked -> LinkedAccountInfo.NotLinked
+            // BUSY Bar is linked, but userId is missing
+            userId == null -> LinkedAccountInfo.Error
+            // BUSY Bar is linked to the current user
+            linkedUuid != null && userId == currentUserEmail ->
+                LinkedAccountInfo.Linked.SameUser(linkedUuid)
+            // BUSY Bar is linked to a different user
+            linkedUuid != null && currentUserEmail != null ->
+                LinkedAccountInfo.Linked.DifferentUser(linkedUuid)
+            // BUSY Bar is linked, but we don't know the current user
+            linkedUuid != null && currentUserEmail == null ->
+                LinkedAccountInfo.Linked.MissingBusyCloud(linkedUuid)
+            // Fallback case
+            else -> LinkedAccountInfo.Error
         }
     }
 
@@ -79,8 +80,8 @@ class FLinkInfoOnReadyFeatureApiImpl(
             info { "Local principal is ${principal?.userId}/${principal?.email}" }
 
             val info = exponentialRetry {
-                rpcFeatureApi.invalidateLinkedUser(principal?.email)
-                    .map { result -> result.asSealed(principal?.email) }
+                rpcFeatureApi.invalidateLinkedUser(principal?.userId)
+                    .map { result -> result.asSealed(principal?.userId) }
             }
 
             info { "BUSY Bar info is $info" }
@@ -109,9 +110,9 @@ class FLinkInfoOnReadyFeatureApiImpl(
 
         withTimeout(ACCOUNT_PROVIDING_TIMEOUT) {
             do {
-                busyBarUser = rpcFeatureApi.invalidateLinkedUser(principal.email).getOrThrow()
+                busyBarUser = rpcFeatureApi.invalidateLinkedUser(principal.userId).getOrThrow()
                 info { "Requested BUSY Bar user info: $busyBarUser" }
-            } while (principal.email != busyBarUser.email)
+            } while (principal.userId != busyBarUser.userId)
         }
 
         info { "Completed authorization for BUSY Bar" }
