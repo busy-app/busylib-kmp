@@ -14,16 +14,16 @@ sealed interface LinkedAccountInfo {
         /**
          * BusyBar account linked to the same account
          */
-        data class SameUser(val linkedMail: Uuid) : Linked
+        data class SameUser(val uuid: Uuid) : Linked
 
         /**
          * BusyBar is linked to another account
          */
-        data class DifferentUser(val linkedMail: Uuid) : Linked
+        data class DifferentUser(val uuid: Uuid) : Linked
 
         /**
          * BusyBar is linked to an account, but mobile app is not connected to BusyCloud
          */
-        data class MissingBusyCloud(val linkedMail: Uuid) : Linked
+        data class MissingBusyCloud(val uuid: Uuid) : Linked
     }
 }
