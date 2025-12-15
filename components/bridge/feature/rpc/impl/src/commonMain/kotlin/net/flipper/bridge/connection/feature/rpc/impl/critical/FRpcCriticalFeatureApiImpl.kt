@@ -31,7 +31,7 @@ class FRpcCriticalFeatureApiImpl(
     override suspend fun invalidateLinkedUser(email: String?): Result<RpcLinkedAccountInfo> {
         return withContext(dispatcher) {
             return@withContext runSuspendCatching {
-                client.get("/api/account").body<RpcLinkedAccountInfo>()
+                client.get("/api/account/info").body<RpcLinkedAccountInfo>()
             }.onSuccess { response -> clientModeApi.updateClientMode(response, email) }
         }
     }
