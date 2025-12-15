@@ -9,5 +9,5 @@ object ApiAccountResponse {
         """.trimIndent()
     }
 
-    const val PATH = "/api/account"
+    const val PATH = "/api/account/info"
 }
