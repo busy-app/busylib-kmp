@@ -6,27 +6,12 @@ import kotlin.uuid.Uuid
 
 @Serializable
 data class RpcLinkedAccountInfo(
-    @SerialName("state")
-    val state: State,
+    @SerialName("linked")
+    val linked: Boolean,
     @SerialName("email")
     val email: String? = null,
-    @SerialName("id")
-    val id: String? = null
+    @SerialName("user_id")
+    val userStr: String? = null
 ) {
-    val uuid: Uuid? = id?.let { Uuid.parse(it) }
-
-    @Serializable
-    enum class State {
-        @SerialName("not_linked")
-        NOT_LINKED,
-
-        @SerialName("error")
-        ERROR,
-
-        @SerialName("linked")
-        LINKED,
-
-        @SerialName("disconnected")
-        DISCONNECTED,
-    }
+    val userId: Uuid? = userStr?.let { Uuid.parse(it) }
 }
