@@ -10,7 +10,7 @@ import kotlin.uuid.Uuid
 interface FRpcCriticalFeatureApi : FDeviceFeatureApi {
     val clientModeApi: FRpcClientModeApi
 
-    suspend fun invalidateLinkedUser(uuid: Uuid?): Result<RpcLinkedAccountInfo>
+    suspend fun invalidateLinkedUser(userId: Uuid?): Result<RpcLinkedAccountInfo>
 
     suspend fun getLinkCode(): Result<BusyBarLinkCode>
 

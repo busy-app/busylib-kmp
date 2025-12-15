@@ -11,7 +11,7 @@ data class RpcLinkedAccountInfo(
     @SerialName("email")
     val email: String? = null,
     @SerialName("user_id")
-    val userStr: String? = null
+    val userIdRaw: String? = null
 ) {
-    val userId: Uuid? = userStr?.let { Uuid.parse(it) }
+    val userId: Uuid? = userIdRaw?.let { Uuid.parse(it) }
 }

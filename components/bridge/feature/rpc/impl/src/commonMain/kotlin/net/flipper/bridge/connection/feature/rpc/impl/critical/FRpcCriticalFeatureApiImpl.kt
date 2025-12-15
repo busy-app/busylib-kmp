@@ -29,11 +29,11 @@ class FRpcCriticalFeatureApiImpl(
     override val clientModeApi: FRpcClientModeApi = FRpcClientModeApiImpl()
     private val dispatcher = FlipperDispatchers.default
 
-    override suspend fun invalidateLinkedUser(uuid: Uuid?): Result<RpcLinkedAccountInfo> {
+    override suspend fun invalidateLinkedUser(userId: Uuid?): Result<RpcLinkedAccountInfo> {
         return withContext(dispatcher) {
             return@withContext runSuspendCatching {
                 client.get("/api/account/info").body<RpcLinkedAccountInfo>()
-            }.onSuccess { response -> clientModeApi.updateClientMode(response, uuid) }
+            }.onSuccess { response -> clientModeApi.updateClientMode(response, userId) }
         }
     }
 
