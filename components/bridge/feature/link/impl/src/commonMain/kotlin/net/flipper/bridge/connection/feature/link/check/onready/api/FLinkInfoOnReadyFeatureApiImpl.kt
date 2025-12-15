@@ -49,25 +49,23 @@ class FLinkInfoOnReadyFeatureApiImpl(
             .launchIn(scope)
     }
 
-    private fun RpcLinkedAccountInfo.asSealed(currentUserEmail: Uuid?): LinkedAccountInfo {
-        info { "Calculate state from $this and current user $currentUserEmail" }
+    private fun RpcLinkedAccountInfo.asSealed(currentUserId: Uuid?): LinkedAccountInfo {
+        info { "Calculate state from $this and current user $currentUserId" }
         val linkedUuid = this.userId
         return when {
             // BUSY Bar is not linked
             !linked -> LinkedAccountInfo.NotLinked
             // BUSY Bar is linked, but userId is missing
-            userId == null -> LinkedAccountInfo.Error
+            linkedUuid == null -> LinkedAccountInfo.Error
             // BUSY Bar is linked to the current user
-            linkedUuid != null && userId == currentUserEmail ->
+            linkedUuid == currentUserId ->
                 LinkedAccountInfo.Linked.SameUser(linkedUuid)
             // BUSY Bar is linked to a different user
-            linkedUuid != null && currentUserEmail != null ->
+            currentUserId != null ->
                 LinkedAccountInfo.Linked.DifferentUser(linkedUuid)
             // BUSY Bar is linked, but we don't know the current user
-            linkedUuid != null && currentUserEmail == null ->
-                LinkedAccountInfo.Linked.MissingBusyCloud(linkedUuid)
             // Fallback case
-            else -> LinkedAccountInfo.Error
+            else -> LinkedAccountInfo.Linked.MissingBusyCloud(linkedUuid)
         }
     }
 
