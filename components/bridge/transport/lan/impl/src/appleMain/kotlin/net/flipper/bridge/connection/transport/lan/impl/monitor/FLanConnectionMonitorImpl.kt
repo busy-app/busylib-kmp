@@ -2,10 +2,14 @@ package net.flipper.bridge.connection.transport.lan.impl.monitor
 
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.CoroutineScope
+import me.tatarka.inject.annotations.Assisted
+import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.bridge.connection.transport.lan.FLanDeviceConnectionConfig
+import net.flipper.bridge.connection.transport.lan.monitor.FLanConnectionMonitorApi
+import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.debug
 import net.flipper.core.busylib.log.error
@@ -30,18 +34,20 @@ import platform.Network.nw_parameters_set_include_peer_to_peer
 import platform.Network.nw_protocol_stack_set_transport_protocol
 import platform.Network.nw_tcp_create_options
 import platform.darwin.dispatch_queue_create
+import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 
+@Inject
 @OptIn(ExperimentalForeignApi::class)
-actual class FLanConnectionMonitor actual constructor(
-    private val listener: FTransportConnectionStatusListener,
-    private val config: FLanDeviceConnectionConfig
-) : LogTagProvider {
+class FLanConnectionMonitorImpl(
+    @Assisted private val listener: FTransportConnectionStatusListener,
+    @Assisted private val config: FLanDeviceConnectionConfig
+) : FLanConnectionMonitorApi, LogTagProvider {
     override val TAG: String = "FLanConnectionMonitor"
     private val queue = dispatch_queue_create("net.flipper.lan.connection", null)
     private val connectionLock = NSLock()
     private var connection: nw_connection_t? = null
 
-    actual fun startMonitoring(
+    override fun startMonitoring(
         scope: CoroutineScope,
         deviceApi: FConnectedDeviceApi
     ) {
@@ -75,7 +81,7 @@ actual class FLanConnectionMonitor actual constructor(
         info { "Started monitoring connection to ${config.host}" }
     }
 
-    actual fun stopMonitoring() {
+    override fun stopMonitoring() {
         connectionLock.withLock {
             connection?.let { nw_connection_force_cancel(it) }
             connection = null
@@ -117,6 +123,20 @@ actual class FLanConnectionMonitor actual constructor(
                 debug { "Connection unknown state: $state" }
             }
         }
+    }
+
+    @Inject
+    @ContributesBinding(BusyLibGraph::class, FLanConnectionMonitorApi.Factory::class)
+    class InternalFactory(
+        private val factory: (
+            FTransportConnectionStatusListener,
+            FLanDeviceConnectionConfig
+        ) -> FLanConnectionMonitorImpl
+    ) : FLanConnectionMonitorApi.Factory {
+        override operator fun invoke(
+            listener: FTransportConnectionStatusListener,
+            config: FLanDeviceConnectionConfig
+        ): FLanConnectionMonitorApi = factory(listener, config)
     }
 }
 
