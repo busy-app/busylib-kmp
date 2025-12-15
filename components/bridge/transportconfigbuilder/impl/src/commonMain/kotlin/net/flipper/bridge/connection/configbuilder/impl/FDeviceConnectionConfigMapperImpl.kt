@@ -43,6 +43,7 @@ class FDeviceConnectionConfigMapperImpl(
 
             is FDeviceBaseModel.FDeviceBSBModelCloud -> cloudBuilderConfig.build(
                 authToken = device.authToken,
+                host = device.host,
                 name = device.humanReadableName
             )
         }

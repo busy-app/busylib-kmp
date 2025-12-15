@@ -13,14 +13,16 @@ enum class FlavorType(
     val isVerboseLogEnabled: Boolean = false,
     val crashAppOnFailedChecks: Boolean = false,
     val isSensitiveLogEnabled: Boolean = false,
-    val isMockEnabled: Boolean = false
+    val isMockEnabled: Boolean = false,
+    val isCloudEnabled: Boolean = false,
 ) {
     DEBUG(
         isLogEnabled = true,
         crashAppOnFailedChecks = true,
         isSensitiveLogEnabled = true,
         isVerboseLogEnabled = true,
-        isMockEnabled = true
+        isMockEnabled = true,
+        isCloudEnabled = true
     ),
     PROD(),
 }

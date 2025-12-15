@@ -39,9 +39,11 @@ sealed class FDeviceBaseModel {
         override val uniqueId: String = host
         override val humanReadableName: String = "BUSY Bar LAN"
     }
+
     @Serializable
     class FDeviceBSBModelCloud(
         val authToken: String,
+        val host: String
     ) : FDeviceBaseModel() {
         override val uniqueId: String = authToken
         override val humanReadableName: String = "BUSY Bar"
@@ -83,6 +85,15 @@ sealed class FDeviceBaseModel {
 
             is FDeviceBSBModelLan -> {
                 return "FDeviceBSBModelLan(" +
+                    "host='$host', " +
+                    "uniqueId='$uniqueId', " +
+                    "humanReadableName='$humanReadableName'" +
+                    ")"
+            }
+
+            is FDeviceBSBModelCloud -> {
+                return "FDeviceBSBModelCloud(" +
+                    "authToken='$authToken', " +
                     "host='$host', " +
                     "uniqueId='$uniqueId', " +
                     "humanReadableName='$humanReadableName'" +

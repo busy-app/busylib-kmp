@@ -3,10 +3,10 @@ package net.flipper.bridge.connection.transport.tcp.lan.impl
 import kotlinx.coroutines.CoroutineScope
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
+import net.flipper.bridge.connection.transport.tcp.common.engine.getPlatformEngineFactory
 import net.flipper.bridge.connection.transport.tcp.lan.FLanApi
 import net.flipper.bridge.connection.transport.tcp.lan.FLanDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.tcp.lan.impl.engine.BUSYBarHttpEngine
-import net.flipper.bridge.connection.transport.tcp.common.engine.getPlatformEngineFactory
 import net.flipper.bridge.connection.transport.tcp.lan.impl.monitor.FLanConnectionMonitorApi
 
 class FLanApiImpl(

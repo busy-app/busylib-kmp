@@ -13,7 +13,7 @@ import kotlin.reflect.KClass
 interface CloudDeviceConnectionModule {
     @IntoMap
     @Provides
-    fun getLanDeviceConnection(
+    fun getCloudDeviceConnection(
         lanDeviceConnectionApi: CloudDeviceConnectionApi
     ): Pair<KClass<*>, DeviceConnectionApiHolder> {
         return FCloudDeviceConnectionConfig::class to DeviceConnectionApiHolder(

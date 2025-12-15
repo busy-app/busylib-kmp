@@ -9,24 +9,32 @@ import io.ktor.client.request.HttpResponseData
 import io.ktor.client.request.takeFrom
 import io.ktor.http.URLProtocol
 import io.ktor.utils.io.InternalAPI
+import net.flipper.core.busylib.log.LogTagProvider
+import net.flipper.core.busylib.log.info
 
 class BUSYCloudHttpEngine(
     private val delegate: HttpClientEngine,
-    private val authToken: String
-) : HttpClientEngineBase("busy-bar") {
+    private val authToken: String,
+    private val host: String
+) : HttpClientEngineBase("busy-bar"), LogTagProvider {
+    override val TAG = "BUSYCloudHttpEngine"
     override val config: HttpClientEngineConfig = delegate.config
 
     @InternalAPI
     override suspend fun execute(data: HttpRequestData): HttpResponseData {
         val newRequest = HttpRequestBuilder().takeFrom(data)
 
-        newRequest.url.host = "proxy.dev.busy.app"
+        newRequest.url.host = host
         newRequest.url.protocol = URLProtocol.HTTPS
+        newRequest.url.port = 443
         newRequest.headers["Authorization"] = "Bearer $authToken"
 
         val newRequestData = newRequest.build()
+        info { "Process $newRequestData" }
 
-        return delegate.execute(newRequestData)
+        val result = delegate.execute(newRequestData)
+        info { "Return $result" }
+        return result
     }
 
     override fun close() {

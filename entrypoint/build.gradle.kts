@@ -65,8 +65,12 @@ kotlin {
         implementation(projects.components.bridge.transport.common.api)
         implementation(projects.components.bridge.transport.common.impl)
         implementation(projects.components.bridge.transport.mock.api)
+        implementation(projects.components.bridge.transport.tcp.cloud.api)
         if (CURRENT_FLAVOR_TYPE.isMockEnabled) {
             implementation(projects.components.bridge.transport.mock.impl)
+        }
+        if (CURRENT_FLAVOR_TYPE.isCloudEnabled) {
+            implementation(projects.components.bridge.transport.tcp.cloud.impl)
         }
         implementation(projects.components.bridge.transport.tcp.lan.api)
         implementation(projects.components.bridge.transportconfigbuilder.api)
