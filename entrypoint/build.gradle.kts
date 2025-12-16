@@ -138,28 +138,62 @@ kotlin {
     }
 }
 
-val zipXCFrameworkDebug by tasks.registering(Zip::class) {
+val zipXCFrameworkDebug by tasks.registering(Exec::class) {
     group = "publishing"
-    description = "Creates a ZIP archive of the debug XCFramework"
+    description = "Creates a ZIP archive of the debug XCFramework (preserving symlinks)"
 
     dependsOn("assembleBusyLibKMPDebugXCFramework")
 
-    from(layout.buildDirectory.dir("XCFrameworks/debug"))
-    include("BusyLibKMP.xcframework/**")
-    archiveFileName.set("BusyLibKMP-debug.xcframework.zip")
-    destinationDirectory.set(layout.buildDirectory.dir("xcframework-zips"))
+    val xcframeworkDir = layout.buildDirectory.dir("XCFrameworks/debug")
+    val outputDir = layout.buildDirectory.dir("xcframework-zips")
+    val outputFile = outputDir.map { it.file("BusyLibKMP-debug.xcframework.zip") }
+
+    inputs.dir(xcframeworkDir)
+    outputs.file(outputFile)
+
+    doFirst {
+        outputDir.get().asFile.mkdirs()
+    }
+
+    workingDir(xcframeworkDir)
+    commandLine(
+        "ditto",
+        "-c",
+        "-k",
+        "--sequesterRsrc",
+        "--keepParent",
+        "BusyLibKMP.xcframework",
+        outputFile.get().asFile.absolutePath
+    )
 }
 
-val zipXCFrameworkRelease by tasks.registering(Zip::class) {
+val zipXCFrameworkRelease by tasks.registering(Exec::class) {
     group = "publishing"
-    description = "Creates a ZIP archive of the release XCFramework"
+    description = "Creates a ZIP archive of the release XCFramework (preserving symlinks)"
 
     dependsOn("assembleBusyLibKMPReleaseXCFramework")
 
-    from(layout.buildDirectory.dir("XCFrameworks/release"))
-    include("BusyLibKMP.xcframework/**")
-    archiveFileName.set("BusyLibKMP-release.xcframework.zip")
-    destinationDirectory.set(layout.buildDirectory.dir("xcframework-zips"))
+    val xcframeworkDir = layout.buildDirectory.dir("XCFrameworks/release")
+    val outputDir = layout.buildDirectory.dir("xcframework-zips")
+    val outputFile = outputDir.map { it.file("BusyLibKMP-release.xcframework.zip") }
+
+    inputs.dir(xcframeworkDir)
+    outputs.file(outputFile)
+
+    doFirst {
+        outputDir.get().asFile.mkdirs()
+    }
+
+    workingDir(xcframeworkDir)
+    commandLine(
+        "ditto",
+        "-c",
+        "-k",
+        "--sequesterRsrc",
+        "--keepParent",
+        "BusyLibKMP.xcframework",
+        outputFile.get().asFile.absolutePath
+    )
 }
 
 // Configure publishing to include the XCFramework zip files
@@ -169,14 +203,22 @@ publishing {
         create<MavenPublication>("xcframeworkDebug") {
             artifactId = "${project.name}-xcframework-debug"
 
-            artifact(zipXCFrameworkDebug.get())
+            artifact(
+                layout.buildDirectory.file("xcframework-zips/BusyLibKMP-debug.xcframework.zip")
+            ) {
+                builtBy(zipXCFrameworkDebug)
+            }
         }
 
         // Add XCFramework release zip as an artifact
         create<MavenPublication>("xcframeworkRelease") {
             artifactId = "${project.name}-xcframework-release"
 
-            artifact(zipXCFrameworkRelease.get())
+            artifact(
+                layout.buildDirectory.file("xcframework-zips/BusyLibKMP-release.xcframework.zip")
+            ) {
+                builtBy(zipXCFrameworkRelease)
+            }
         }
     }
 }
