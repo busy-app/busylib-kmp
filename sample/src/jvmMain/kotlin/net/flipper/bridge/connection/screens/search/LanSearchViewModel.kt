@@ -20,11 +20,19 @@ class LanSearchViewModel(
 
     private val searchItems = combine(
         persistedStorage.getAllDevices(),
-        flowOf(listOf(FDeviceBaseModel.FDeviceBSBModelLan()))
+        flowOf(
+            listOf(
+                FDeviceBaseModel.FDeviceBSBModelLan(),
+                FDeviceBaseModel.FDeviceBSBModelCloud(
+                    authToken = "",
+                    host = "proxy.dev.busy.app"
+                )
+            )
+        )
     ) { savedDevices, foundDevices ->
         foundDevices.map { device ->
             ConnectionSearchItem(
-                address = device.host,
+                address = device.humanReadableName,
                 deviceModel = device,
                 isAdded = savedDevices.find { it.uniqueId == device.uniqueId } != null
             )
