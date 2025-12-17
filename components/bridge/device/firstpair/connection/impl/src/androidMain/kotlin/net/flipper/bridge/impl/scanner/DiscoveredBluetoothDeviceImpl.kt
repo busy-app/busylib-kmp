@@ -32,10 +32,27 @@ class DiscoveredBluetoothDeviceImpl(
     }
 
     override fun equals(other: Any?): Boolean {
-        if (other is Peripheral) {
-            return device.address == other.address
+        return when (other) {
+            is Peripheral -> {
+                device.address == other.address
+            }
+
+            is DiscoveredBluetoothDevice -> {
+                device.address == other.address
+            }
+
+            else -> false
         }
-        return false
+    }
+
+    override fun toString(): String {
+        return "DiscoveredBluetoothDeviceImpl(" +
+            "device=$device," +
+            "lastScanResult=$lastScanResult," +
+            "nameInternal=$nameInternal," +
+            "servicesResult=$servicesResult," +
+            "servicesResult=$servicesResult," +
+            "name=$name)"
     }
 
     override fun hashCode() = device.hashCode()
