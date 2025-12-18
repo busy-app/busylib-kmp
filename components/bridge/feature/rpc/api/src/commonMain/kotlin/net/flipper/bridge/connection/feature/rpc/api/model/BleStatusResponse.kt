@@ -6,9 +6,42 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class BleStatusResponse(
     @SerialName("state")
-    val state: BleState,
-    @SerialName("connected_device_ssid")
-    val connectedDeviceBssid: String? = null,
-    @SerialName("connected_device_name")
-    val connectedDeviceName: String? = null
-)
+    val state: State,
+    @SerialName("address")
+    val address: String? = null,
+    @SerialName("pairing")
+    val pairing: Pairing? = null
+) {
+    @Serializable
+    enum class State {
+        @SerialName("reset")
+        RESET,
+
+        @SerialName("initialization")
+        INITIALIZATION,
+
+        @SerialName("disabled")
+        DISABLED,
+
+        @SerialName("enabled")
+        ENABLED,
+
+        @SerialName("connected")
+        CONNECTED,
+
+        @SerialName("internal error")
+        INTERNAL_ERROR
+    }
+
+    @Serializable
+    enum class Pairing {
+        @SerialName("unknown")
+        UNKNOWN,
+
+        @SerialName("not paired")
+        NOT_PAIR,
+
+        @SerialName("paired")
+        PAIRED
+    }
+}

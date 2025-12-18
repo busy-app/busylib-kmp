@@ -17,12 +17,6 @@ enum class WifiSecurityMethod {
     @SerialName("WEP")
     WEP,
 
-    @SerialName("WPA (Enterprise)")
-    WPA_ENTERPRISE,
-
-    @SerialName("WPA2 (Enterprise)")
-    WPA2_ENTERPRISE,
-
     @SerialName("WPA/WPA2")
     WPA_WPA2,
 
@@ -30,11 +24,5 @@ enum class WifiSecurityMethod {
     WPA3,
 
     @SerialName("WPA2/WPA3")
-    WPA2_WPA3,
-
-    @SerialName("WPA3 (Enterprise)")
-    WPA3_ENTERPRISE,
-
-    @SerialName("WPA2/WPA3 (Enterprise)")
-    WPA2_WPA3_ENTERPRISE
+    WPA2_WPA3
 }

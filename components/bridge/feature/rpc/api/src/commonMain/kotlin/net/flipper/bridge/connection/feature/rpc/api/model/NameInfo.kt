@@ -4,13 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-enum class BleState {
-    @SerialName("disabled")
-    DISABLED,
-
-    @SerialName("enabled")
-    ENABLED,
-
-    @SerialName("connected")
-    CONNECTED
-}
+data class NameInfo(
+    @SerialName("name")
+    val name: String
+)

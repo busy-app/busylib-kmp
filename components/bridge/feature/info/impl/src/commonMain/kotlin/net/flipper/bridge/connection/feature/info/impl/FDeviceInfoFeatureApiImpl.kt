@@ -29,7 +29,10 @@ class FDeviceInfoFeatureApiImpl(
     override val TAG = "FDeviceInfoFeatureApi"
 
     override suspend fun getDeviceInfo(): BSBDeviceInfo? {
-        val statusSystem = rpcFeatureApi.getStatusSystem().getOrNull() ?: return null
+        val statusSystem = rpcFeatureApi.fRpcSystemApi
+            .getStatusSystem()
+            .getOrNull()
+            ?: return null
 
         return BSBDeviceInfo(
             version = statusSystem.version
@@ -48,9 +51,12 @@ class FDeviceInfoFeatureApiImpl(
             emit(connectedDevice.deviceName)
             getDeviceNameChangeEventFlow()
                 .mapNotNull {
-                    rpcFeatureApi.getDeviceName()
+                    rpcFeatureApi
+                        .fRpcSettingsApi
+                        .getName()
                         .onFailure { error { "Failed get device name: ${it.message}" } }
                         .getOrNull()
+                        ?.name
                 }
                 .collect { deviceName -> emit(deviceName) }
         }.wrap()

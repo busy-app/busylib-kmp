@@ -18,7 +18,7 @@ object BsbBrightnessSerializer : KSerializer<BsbBrightness> {
     override fun serialize(encoder: Encoder, value: BsbBrightness) {
         val str = when (value) {
             is BsbBrightness.Auto -> "auto"
-            is BsbBrightness.Percentage -> "${value.value}"
+            is BsbBrightness.Number -> "${value.value}"
         }
         encoder.encodeString(str)
     }
@@ -28,12 +28,12 @@ object BsbBrightnessSerializer : KSerializer<BsbBrightness> {
             .takeIf { string.equals("auto", true) }
     }
 
-    private fun getPercentageBrightnessOrNull(string: String): BsbBrightness.Percentage? {
+    private fun getPercentageBrightnessOrNull(string: String): BsbBrightness.Number? {
         return string
             .toIntOrNull()
             ?.takeIf { int -> int > 0 }
             ?.takeIf { int -> int in 0..100 }
-            ?.let(BsbBrightness::Percentage)
+            ?.let(BsbBrightness::Number)
     }
 
     override fun deserialize(decoder: Decoder): BsbBrightness {
