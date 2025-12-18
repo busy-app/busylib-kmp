@@ -66,6 +66,7 @@ class FOnCallFeatureApiImpl(
 
     private suspend fun performStartAttempt(): Result<Unit> = runCatching {
         rpcFeatureApi
+            .fRpcAssetsApi
             .uploadAsset(
                 appId = OnCallImage.APP_ID,
                 file = OnCallImage.IMAGE_NAME,
@@ -75,13 +76,14 @@ class FOnCallFeatureApiImpl(
             .getOrThrow()
 
         rpcFeatureApi
+            .fRpcAssetsApi
             .displayDraw(createDrawRequest())
             .onFailure { error(it) { "Failed to display draw" } }
             .getOrThrow()
     }
 
     private suspend fun performStopAttempt(): Result<Unit> {
-        return rpcFeatureApi.removeDraw(appId = OnCallImage.APP_ID).map { }
+        return rpcFeatureApi.fRpcAssetsApi.removeDraw(appId = OnCallImage.APP_ID).map { }
     }
 
     private fun createDrawRequest(): DrawRequest {

@@ -15,7 +15,6 @@ import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
 import net.flipper.bridge.connection.feature.events.api.UpdateEvent
 import net.flipper.bridge.connection.feature.events.api.getUpdateFlow
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
-import net.flipper.bridge.connection.feature.rpc.api.model.BleState
 import net.flipper.bridge.connection.feature.rpc.api.model.BleStatusResponse
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.busylib.core.di.BusyLibGraph
@@ -37,16 +36,18 @@ class FBleFeatureApiImpl(
 
     private fun BleStatusResponse.toFBleStatus(): FBleStatus {
         return when (this.state) {
-            BleState.DISABLED -> FBleStatus.Disabled
-            BleState.ENABLED -> FBleStatus.Enabled
-            BleState.CONNECTED -> {
+            BleStatusResponse.State.RESET -> FBleStatus.Reset
+            BleStatusResponse.State.INITIALIZATION -> FBleStatus.Initialization
+            BleStatusResponse.State.DISABLED -> FBleStatus.Disabled
+            BleStatusResponse.State.ENABLED -> FBleStatus.Enabled
+            BleStatusResponse.State.CONNECTED -> {
                 FBleStatus.Connected(
-                    connectedDeviceName = connectedDeviceName
-                        ?: return FBleStatus.Enabled,
-                    connectedDeviceBssid = connectedDeviceBssid
-                        ?: return FBleStatus.Enabled
+                    address = this.address ?: return FBleStatus.Enabled,
+                    pairing = this.pairing ?: return FBleStatus.Enabled
                 )
             }
+
+            BleStatusResponse.State.INTERNAL_ERROR -> FBleStatus.InternalError
         }
     }
 
@@ -57,7 +58,8 @@ class FBleFeatureApiImpl(
             .merge(flowOf(Unit))
             .map {
                 exponentialRetry {
-                    rpcFeatureApi.getBleStatus()
+                    rpcFeatureApi.fRpcBleApi
+                        .getBleStatus()
                         .onFailure { error(it) { "Failed to get Ble status" } }
                         .map { response -> response.toFBleStatus() }
                 }

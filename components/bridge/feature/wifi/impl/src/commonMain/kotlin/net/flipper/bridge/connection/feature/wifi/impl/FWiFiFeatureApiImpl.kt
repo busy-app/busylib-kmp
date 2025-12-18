@@ -15,10 +15,9 @@ import net.flipper.bridge.connection.feature.events.api.getUpdateFlow
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.ConnectRequestConfig
 import net.flipper.bridge.connection.feature.rpc.api.model.Network
-import net.flipper.bridge.connection.feature.rpc.api.model.WifiIpConfig
+import net.flipper.bridge.connection.feature.rpc.api.model.StatusResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.WifiIpMethod
 import net.flipper.bridge.connection.feature.rpc.api.model.WifiSecurityMethod
-import net.flipper.bridge.connection.feature.rpc.api.model.WifiStatusResponse
 import net.flipper.bridge.connection.feature.wifi.api.FWiFiFeatureApi
 import net.flipper.bridge.connection.feature.wifi.api.model.WiFiNetwork
 import net.flipper.bridge.connection.feature.wifi.api.model.WiFiSecurity
@@ -46,7 +45,9 @@ class FWiFiFeatureApiImpl(
 
             while (isActive) {
                 val networksResponse = exponentialRetry {
-                    rpcFeatureApi.getWifiNetworks()
+                    rpcFeatureApi
+                        .fRpcWifiApi
+                        .getWifiNetworks()
                         .onFailure { error(it) { "Failed to get WiFi networks" } }
                 }
                 val mutableNetworkList = networksResponse.networks
@@ -71,14 +72,16 @@ class FWiFiFeatureApiImpl(
         }.wrap()
     }
 
-    override fun getWifiStatusFlow(): WrappedFlow<WifiStatusResponse> {
+    override fun getWifiStatusFlow(): WrappedFlow<StatusResponse> {
         return fEventsFeatureApi
             ?.getUpdateFlow(UpdateEvent.WIFI_STATUS)
             .orEmpty()
             .merge(flowOf(Unit))
             .map {
                 exponentialRetry {
-                    rpcFeatureApi.getWifiStatus()
+                    rpcFeatureApi
+                        .fRpcWifiApi
+                        .getWifiStatus()
                         .onFailure { error(it) { "Failed to get WiFi networks" } }
                 }
             }
@@ -90,12 +93,12 @@ class FWiFiFeatureApiImpl(
         password: String,
         security: WiFiSecurity.Supported
     ): Result<Unit> {
-        return rpcFeatureApi.connectWifi(
+        return rpcFeatureApi.fRpcWifiApi.connectWifi(
             ConnectRequestConfig(
                 ssid = ssid,
                 password = password,
                 security = security.toInternalSecurity(),
-                ipConfig = WifiIpConfig(
+                ipConfig = ConnectRequestConfig.IpConfig(
                     ipMethod = WifiIpMethod.DHCP
                 )
             )
@@ -103,7 +106,7 @@ class FWiFiFeatureApiImpl(
     }
 
     override suspend fun disconnect(): Result<Unit> {
-        return rpcFeatureApi.disconnectWifi().map { }
+        return rpcFeatureApi.fRpcWifiApi.disconnectWifi().map { }
     }
 
     @Inject

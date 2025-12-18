@@ -8,5 +8,5 @@ data class NetworkResponse(
     @SerialName("count")
     val count: Int,
     @SerialName("networks")
-    val networks: List<Network> = emptyList()
+    val networks: List<Network>
 )

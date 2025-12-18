@@ -12,5 +12,17 @@ data class ConnectRequestConfig(
     @SerialName("security")
     val security: WifiSecurityMethod,
     @SerialName("ip_config")
-    val ipConfig: WifiIpConfig
-)
+    val ipConfig: IpConfig? = null
+) {
+    @Serializable
+    data class IpConfig(
+        @SerialName("ip_method")
+        val ipMethod: WifiIpMethod,
+        @SerialName("address")
+        val address: String? = null,
+        @SerialName("mask")
+        val mask: String? = null,
+        @SerialName("gateway")
+        val gateway: String? = null
+    )
+}
