@@ -15,14 +15,13 @@ import net.flipper.bridge.connection.feature.rpc.impl.util.getHttpClient
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPDeviceApi
 import net.flipper.busylib.core.di.BusyLibGraph
+import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
 
 @Inject
-class FRpcFeatureApiFactoryImpl(
-    private val fRpcFeatureFactory: FRpcFeatureApiImpl.InternalFactory,
-) : FDeviceFeatureApi.Factory, LogTagProvider {
+class FRpcFeatureApiFactoryImpl : FDeviceFeatureApi.Factory, LogTagProvider {
     override val TAG = "FRpcFeatureApiFactory"
 
     override suspend fun invoke(
@@ -42,10 +41,40 @@ class FRpcFeatureApiFactoryImpl(
 
         info { "Waiting for unsafe feature flow completed" }
 
-        val httpClient = connectedDevice as? FHTTPDeviceApi ?: return null
+        val fHttpDeviceApi = connectedDevice as? FHTTPDeviceApi ?: return null
 
-        return fRpcFeatureFactory.invoke(
-            client = getHttpClient(httpClient.getDeviceHttpEngine())
+        val httpClient = getHttpClient(fHttpDeviceApi.getDeviceHttpEngine())
+        val dispatcher = FlipperDispatchers.default
+
+        return FRpcFeatureApiImpl(
+            fRpcSystemApi = FRpcSystemApiImpl(
+                httpClient = httpClient,
+                dispatcher = dispatcher
+            ),
+            fRpcWifiApi = FRpcWifiApiImpl(
+                httpClient = httpClient,
+                dispatcher = dispatcher
+            ),
+            fRpcBleApi = FRpcBleApiImpl(
+                httpClient = httpClient,
+                dispatcher = dispatcher
+            ),
+            fRpcSettingsApi = FRpcSettingsApiImpl(
+                httpClient = httpClient,
+                dispatcher = dispatcher
+            ),
+            fRpcStreamingApi = FRpcStreamingApiImpl(
+                httpClient = httpClient,
+                dispatcher = dispatcher
+            ),
+            fRpcAssetsApi = FRpcAssetsApiImpl(
+                httpClient = httpClient,
+                dispatcher = dispatcher
+            ),
+            fRpcUpdaterApi = FRpcUpdaterApiImpl(
+                httpClient = httpClient,
+                dispatcher = dispatcher
+            )
         )
     }
 }

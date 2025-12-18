@@ -4,13 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-enum class WifiState {
-    @SerialName("disabled")
-    DISABLED,
-
-    @SerialName("enabled")
-    ENABLED,
-
-    @SerialName("connected")
-    CONNECTED
-}
+class GetUpdateChangelogResponse(
+    @SerialName("changelog")
+    val changelog: String
+)

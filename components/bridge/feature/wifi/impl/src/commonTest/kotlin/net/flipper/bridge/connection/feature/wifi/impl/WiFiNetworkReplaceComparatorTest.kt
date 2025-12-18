@@ -14,7 +14,7 @@ class WiFiNetworkReplaceComparatorTest {
                 ssid = "Test",
                 rssi = 12,
                 wifiSecurity = WiFiSecurity.Other(
-                    WifiSecurityMethod.WPA3_ENTERPRISE
+                    WifiSecurityMethod.WPA2_WPA3
                 )
             ),
             WiFiNetwork(
@@ -40,7 +40,7 @@ class WiFiNetworkReplaceComparatorTest {
                 ssid = "Test",
                 rssi = 10,
                 wifiSecurity = WiFiSecurity.Other(
-                    WifiSecurityMethod.WPA3_ENTERPRISE
+                    WifiSecurityMethod.WPA2_WPA3
                 )
             ),
             WiFiNetwork(

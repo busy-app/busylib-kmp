@@ -77,7 +77,7 @@ class FDeviceBatteryInfoFeatureApiImpl(
     }
 
     private fun getRpcBatteryInfoFlow(): Flow<BSBDeviceBatteryInfo> {
-        return flow { emit(rpcFeatureApi.getStatusPower().getOrNull()) }
+        return flow { emit(rpcFeatureApi.fRpcSystemApi.getStatusPower().getOrNull()) }
             .filterNotNull()
             .map { status ->
                 BSBDeviceBatteryInfo(

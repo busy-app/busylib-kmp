@@ -12,7 +12,6 @@ import net.flipper.bridge.connection.transport.mock.impl.model.ApiBleStatusRespo
 import net.flipper.bridge.connection.transport.mock.impl.model.ApiDeviceNameResponse
 import net.flipper.bridge.connection.transport.mock.impl.model.ApiScreenResponse
 import net.flipper.bridge.connection.transport.mock.impl.model.ApiStatusPowerResponse
-import net.flipper.bridge.connection.transport.mock.impl.model.ApiStatusResponse
 import net.flipper.bridge.connection.transport.mock.impl.model.ApiWifiConnectResponse
 import net.flipper.bridge.connection.transport.mock.impl.model.ApiWifiDisconnectResponse
 import net.flipper.bridge.connection.transport.mock.impl.model.ApiWifiNetworksResponse
@@ -31,7 +30,7 @@ fun getBSBMockHttpEngine() = MockEngine { request ->
     }
 
     val response = when (request.url.encodedPath) {
-        ApiStatusResponse.PATH -> ApiStatusResponse.getJsonPlainTextResponse()
+        ApiWifiStatusResponse.PATH -> ApiWifiStatusResponse.getJsonPlainTextResponse()
         ApiStatusPowerResponse.PATH -> {
             delay(DEFAULT_DELAY)
             ApiStatusPowerResponse.getJsonPlainTextResponse()

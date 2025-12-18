@@ -55,12 +55,14 @@ class PingViewModel(
         if (requestApi == null) {
             log("Failed receive request api")
         } else {
-            requestApi.getWifiNetworks().onSuccess {
-                log("Response wifi request successful $it")
-            }.onFailure {
-                error(it) { "Failed to receive wifi request" }
-                log("Failed receive wifi request")
-            }
+            requestApi.fRpcWifiApi
+                .getWifiNetworks()
+                .onSuccess {
+                    log("Response wifi request successful $it")
+                }.onFailure {
+                    error(it) { "Failed to receive wifi request" }
+                    log("Failed receive wifi request")
+                }
         }
     }
 

@@ -16,7 +16,8 @@ import net.flipper.bridge.connection.feature.events.api.UpdateEvent
 import net.flipper.bridge.connection.feature.events.api.getUpdateFlow
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.AudioVolumeInfo
-import net.flipper.bridge.connection.feature.rpc.api.model.DisplayBrightnessInfo
+import net.flipper.bridge.connection.feature.rpc.api.model.BsbBrightnessInfo
+import net.flipper.bridge.connection.feature.rpc.api.model.toBsbBrightnessInfo
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.core.wrapper.wrap
@@ -34,17 +35,20 @@ class FSettingsFeatureApiImpl(
 ) : FSettingsFeatureApi, LogTagProvider {
     override val TAG: String = "FSettingsFeatureApi"
 
-    override fun getBrightnessInfoFlow(): Flow<DisplayBrightnessInfo> {
+    override fun getBrightnessInfoFlow(): Flow<BsbBrightnessInfo> {
         return fEventsFeatureApi
             ?.getUpdateFlow(UpdateEvent.BRIGHTNESS)
             .orEmpty()
             .merge(flowOf(Unit))
             .map {
                 exponentialRetry {
-                    rpcFeatureApi.getBrightnessInfo()
+                    rpcFeatureApi
+                        .fRpcSettingsApi
+                        .getDisplayBrightness()
                         .onFailure { error(it) { "Failed to get Settings status" } }
                 }
             }
+            .map { brightnessInfo -> brightnessInfo.toBsbBrightnessInfo() }
             .wrap()
     }
 
@@ -55,7 +59,8 @@ class FSettingsFeatureApiImpl(
             .merge(flowOf(Unit))
             .map {
                 exponentialRetry {
-                    rpcFeatureApi.getVolumeInfo()
+                    rpcFeatureApi.fRpcSettingsApi
+                        .getAudioVolume()
                         .onFailure { error(it) { "Failed to get Settings status" } }
                 }
             }

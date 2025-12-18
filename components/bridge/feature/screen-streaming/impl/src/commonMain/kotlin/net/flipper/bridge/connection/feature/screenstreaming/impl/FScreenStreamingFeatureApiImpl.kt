@@ -15,7 +15,8 @@ class FScreenStreamingFeatureApiImpl(
     override val TAG: String = "FScreenStreamingFeatureApi"
 
     override suspend fun getBusyImageFormat(): Result<BusyImageFormat> {
-        return rpcFeatureApi.getScreen(0)
+        return rpcFeatureApi.fRpcStreamingApi
+            .getScreen(0)
             .map { base64 -> base64.replace("\\s".toRegex(), "") }
             .mapCatching(Base64::decode)
             .map(::BusyImageFormat)

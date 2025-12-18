@@ -12,5 +12,5 @@ sealed interface BsbBrightness {
     /**
      * @param value percentage from 0 to 100
      */
-    data class Percentage(val value: Int) : BsbBrightness
+    data class Number(val value: Int) : BsbBrightness
 }
