@@ -434,10 +434,6 @@ class FBSBDeviceApiImplRaceConditionTest {
         override suspend fun getDeviceInfo(): BSBDeviceInfo {
             return BSBDeviceInfo(version = "1.0.0")
         }
-
-        override fun getDeviceName(): WrappedFlow<String> {
-            return WrappedFlow(flowOf("TestDevice"))
-        }
     }
 
     private class TestBatteryFeatureApi : FDeviceBatteryInfoFeatureApi {
