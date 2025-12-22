@@ -8,6 +8,6 @@ interface FRpcUpdaterApi {
     suspend fun startUpdateCheck(): Result<SuccessResponse>
     suspend fun getUpdateStatus(): Result<UpdateStatus>
     suspend fun getUpdateChangelog(version: String): Result<GetUpdateChangelogResponse>
-    suspend fun startUpdateInstall(): Result<SuccessResponse>
+    suspend fun startUpdateInstall(version: String): Result<SuccessResponse>
     suspend fun startUpdateAbortDownload(): Result<SuccessResponse>
 }

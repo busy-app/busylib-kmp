@@ -5,5 +5,6 @@ enum class UpdateEvent {
     BRIGHTNESS,
     BLE_STATUS,
     AUDIO_VOLUME,
-    WIFI_STATUS
+    WIFI_STATUS,
+    UPDATER_UPDATE_STATUS
 }
