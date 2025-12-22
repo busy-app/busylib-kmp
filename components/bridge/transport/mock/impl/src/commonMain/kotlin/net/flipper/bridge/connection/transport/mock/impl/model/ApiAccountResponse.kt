@@ -4,7 +4,7 @@ object ApiAccountResponse {
     fun getJsonPlainTextResponse(): String {
         return """
             {
-                "state": "not_linked"
+                "linked": "false"
             }
         """.trimIndent()
     }
