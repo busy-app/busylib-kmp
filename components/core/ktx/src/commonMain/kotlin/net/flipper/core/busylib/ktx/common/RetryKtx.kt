@@ -21,7 +21,7 @@ fun getExponentialDelay(
 
 suspend fun <T> exponentialRetry(
     retries: Long = Long.MAX_VALUE,
-    initialDelay: Duration = 0.1.seconds,
+    initialDelay: Duration = 1.seconds,
     maxDelay: Duration = 10.seconds,
     factor: Double = 2.0,
     block: suspend () -> Result<T>
