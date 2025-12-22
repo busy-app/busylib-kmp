@@ -4,6 +4,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
+import io.ktor.client.request.post
 import kotlinx.coroutines.CoroutineDispatcher
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcUpdaterApi
 import net.flipper.bridge.connection.feature.rpc.api.model.GetUpdateChangelogResponse
@@ -17,7 +18,7 @@ class FRpcUpdaterApiImpl(
 ) : FRpcUpdaterApi {
     override suspend fun startUpdateCheck(): Result<SuccessResponse> {
         return runSafely(dispatcher) {
-            httpClient.get("/api/update/check").body<SuccessResponse>()
+            httpClient.post("/api/update/check").body<SuccessResponse>()
         }
     }
 
@@ -35,15 +36,17 @@ class FRpcUpdaterApiImpl(
         }
     }
 
-    override suspend fun startUpdateInstall(): Result<SuccessResponse> {
+    override suspend fun startUpdateInstall(version: String): Result<SuccessResponse> {
         return runSafely(dispatcher) {
-            httpClient.get("/api/update/install").body<SuccessResponse>()
+            httpClient.post("/api/update/install") {
+                parameter("version", version)
+            }.body<SuccessResponse>()
         }
     }
 
     override suspend fun startUpdateAbortDownload(): Result<SuccessResponse> {
         return runSafely(dispatcher) {
-            httpClient.get("/api/update/abort_download").body<SuccessResponse>()
+            httpClient.post("/api/update/abort_download").body<SuccessResponse>()
         }
     }
 }
