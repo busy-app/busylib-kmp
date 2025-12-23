@@ -86,7 +86,6 @@ class FSettingsFeatureApiImpl(
     }
 
     private val deviceNameCache = DefaultSingleObjectCache<String>()
-
     override fun getDeviceName(): WrappedFlow<String> {
         return flow {
             emit(connectedDevice.deviceName)

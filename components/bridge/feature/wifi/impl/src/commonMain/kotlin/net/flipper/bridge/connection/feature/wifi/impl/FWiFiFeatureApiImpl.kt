@@ -76,7 +76,6 @@ class FWiFiFeatureApiImpl(
     }
 
     private val statusResponseCache = DefaultSingleObjectCache<StatusResponse>()
-
     override fun getWifiStatusFlow(): WrappedFlow<StatusResponse> {
         return fEventsFeatureApi
             ?.getUpdateFlow(UpdateEvent.WIFI_STATUS)
