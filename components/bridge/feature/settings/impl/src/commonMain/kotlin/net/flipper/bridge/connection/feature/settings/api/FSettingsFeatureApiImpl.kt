@@ -23,7 +23,6 @@ import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.wrap
-import net.flipper.core.busylib.ktx.common.cache.DefaultSingleObjectCache
 import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.merge
 import net.flipper.core.busylib.ktx.common.orEmpty
@@ -40,40 +39,34 @@ class FSettingsFeatureApiImpl(
 ) : FSettingsFeatureApi, LogTagProvider {
     override val TAG: String = "FSettingsFeatureApi"
 
-    private val bsbBrightnessInfoCache = DefaultSingleObjectCache<BsbBrightnessInfo>()
     override fun getBrightnessInfoFlow(): WrappedFlow<BsbBrightnessInfo> {
         return fEventsFeatureApi
             ?.getUpdateFlow(UpdateEvent.BRIGHTNESS)
             .orEmpty()
             .merge(flowOf(null))
-            .map { key ->
-                bsbBrightnessInfoCache.getOrElse(key) {
-                    exponentialRetry {
-                        rpcFeatureApi
-                            .fRpcSettingsApi
-                            .getDisplayBrightness()
-                            .map { it.toBsbBrightnessInfo() }
-                            .onFailure { error(it) { "Failed to get Settings status" } }
-                    }
+            .map {
+                exponentialRetry {
+                    rpcFeatureApi
+                        .fRpcSettingsApi
+                        .getDisplayBrightness()
+                        .map { it.toBsbBrightnessInfo() }
+                        .onFailure { error(it) { "Failed to get Settings status" } }
                 }
             }
             .wrap()
     }
 
-    private val audioVolumeInfoCache = DefaultSingleObjectCache<AudioVolumeInfo>()
     override fun getVolumeFlow(): WrappedFlow<AudioVolumeInfo> {
         return fEventsFeatureApi
             ?.getUpdateFlow(UpdateEvent.AUDIO_VOLUME)
             .orEmpty()
             .merge(flowOf(null))
-            .map { key ->
-                audioVolumeInfoCache.getOrElse(key) {
-                    exponentialRetry {
-                        info { "#getVolumeFlow getting volume flow" }
-                        rpcFeatureApi.fRpcSettingsApi
-                            .getAudioVolume()
-                            .onFailure { error(it) { "Failed to get Settings status" } }
-                    }
+            .map {
+                exponentialRetry {
+                    info { "#getVolumeFlow getting volume flow" }
+                    rpcFeatureApi.fRpcSettingsApi
+                        .getAudioVolume()
+                        .onFailure { error(it) { "Failed to get Settings status" } }
                 }
             }
             .wrap()
@@ -85,7 +78,6 @@ class FSettingsFeatureApiImpl(
             .map { }
     }
 
-    private val deviceNameCache = DefaultSingleObjectCache<String>()
     override fun getDeviceName(): WrappedFlow<String> {
         return flow {
             emit(connectedDevice.deviceName)
@@ -93,14 +85,12 @@ class FSettingsFeatureApiImpl(
                 ?.getUpdateFlow(UpdateEvent.DEVICE_NAME)
                 .orEmpty()
                 .merge(flowOf(null))
-                .map { key ->
-                    deviceNameCache.getOrElse(key = key) {
-                        exponentialRetry {
-                            rpcFeatureApi
-                                .fRpcSettingsApi
-                                .getName()
-                                .map { nameInfo -> nameInfo.name }
-                        }
+                .map {
+                    exponentialRetry {
+                        rpcFeatureApi
+                            .fRpcSettingsApi
+                            .getName()
+                            .map { nameInfo -> nameInfo.name }
                     }
                 }
                 .collect { deviceName -> emit(deviceName) }

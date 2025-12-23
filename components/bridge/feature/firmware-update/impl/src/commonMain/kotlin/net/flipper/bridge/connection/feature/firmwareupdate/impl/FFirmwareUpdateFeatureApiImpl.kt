@@ -4,7 +4,6 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import net.flipper.bridge.connection.feature.events.api.EventsKey
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
 import net.flipper.bridge.connection.feature.events.api.UpdateEvent
 import net.flipper.bridge.connection.feature.events.api.getUpdateFlow
@@ -14,7 +13,6 @@ import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.UpdateStatus
 import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.wrap
-import net.flipper.core.busylib.ktx.common.cache.DefaultSingleObjectCache
 import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.merge
 import net.flipper.core.busylib.ktx.common.orEmpty
@@ -29,14 +27,11 @@ class FFirmwareUpdateFeatureApiImpl(
 ) : FFirmwareUpdateFeatureApi, LogTagProvider {
     override val TAG: String = "FFirmwareUpdateFeatureApi"
 
-    private val updateStatusCache = DefaultSingleObjectCache<UpdateStatus>()
-    private suspend fun requireUpdateStatus(key: EventsKey?): UpdateStatus {
-        return updateStatusCache.getOrElse(key) {
-            exponentialRetry {
-                rpcFeatureApi.fRpcUpdaterApi
-                    .getUpdateStatus()
-                    .onFailure { throwable -> error(throwable) { "Failed to get update status" } }
-            }
+    private suspend fun requireUpdateStatus(): UpdateStatus {
+        return exponentialRetry {
+            rpcFeatureApi.fRpcUpdaterApi
+                .getUpdateStatus()
+                .onFailure { throwable -> error(throwable) { "Failed to get update status" } }
         }
     }
 
@@ -45,14 +40,12 @@ class FFirmwareUpdateFeatureApiImpl(
             ?.getUpdateFlow(UpdateEvent.UPDATER_UPDATE_STATUS)
             .orEmpty()
             .merge(flowOf(null))
-            .map { key ->
-                requireUpdateStatus(key)
-            }
+            .map { requireUpdateStatus() }
             .wrap()
     }
 
     private suspend fun tryStartInstantUpdate(): Boolean {
-        val status = requireUpdateStatus(null)
+        val status = requireUpdateStatus()
         when (status.install.action) {
             UpdateStatus.Install.Action.APPLY,
             UpdateStatus.Install.Action.PREPARE,
@@ -80,7 +73,7 @@ class FFirmwareUpdateFeatureApiImpl(
         rpcFeatureApi.fRpcUpdaterApi.startUpdateCheck()
             .onFailure { throwable -> error(throwable) { "#tryStartInstantUpdate could not start update check" } }
             .onFailure { throwable -> return Result.failure(throwable) }
-        val version = updateStatusCache.flow
+        val version = getUpdateStatusFlow()
             .map { status -> status.check.availableVersion }
             .filter { version -> version.isNotEmpty() }
             .first()
@@ -92,7 +85,7 @@ class FFirmwareUpdateFeatureApiImpl(
     }
 
     override suspend fun getNextVersionChangelog(): Result<BsbVersionChangelog> {
-        val version = updateStatusCache.flow
+        val version = getUpdateStatusFlow()
             .map { status -> status.check.availableVersion }
             .filter { version -> version.isNotEmpty() }
             .first()

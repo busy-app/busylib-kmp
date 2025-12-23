@@ -12,7 +12,6 @@ import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
 import net.flipper.bridge.connection.feature.events.api.UpdateEvent
-import net.flipper.bridge.connection.feature.events.api.UpdateEventData
 import net.flipper.bridge.connection.transport.common.api.meta.FTransportMetaInfoApi
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
 import net.flipper.core.busylib.ktx.common.orEmpty
@@ -36,10 +35,10 @@ class FEventsFeatureApiImpl(
             .onEach { info { "Receive ${it?.toBitsString()}" } }
             .mapNotNull { byteArray -> byteArray?.let(::parse) }
             .onEach { info { "Receive updates: $it" } }
-            .collect { value -> emit(value.map(::UpdateEventData)) }
+            .collect { value -> emit(value) }
     }.shareIn(scope, SharingStarted.WhileSubscribed(5.seconds))
 
-    override fun getUpdatesFlow(): Flow<List<UpdateEventData>> = sharedIndicationFlow
+    override fun getUpdatesFlow(): Flow<List<UpdateEvent>> = sharedIndicationFlow
 
     private fun parse(byteArray: ByteArray): List<UpdateEvent> {
         val events = mutableListOf<UpdateEvent>()

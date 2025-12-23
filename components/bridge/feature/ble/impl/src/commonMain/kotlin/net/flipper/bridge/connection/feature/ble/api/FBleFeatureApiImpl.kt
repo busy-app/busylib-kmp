@@ -20,7 +20,6 @@ import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.wrap
-import net.flipper.core.busylib.ktx.common.cache.DefaultSingleObjectCache
 import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.merge
 import net.flipper.core.busylib.ktx.common.orEmpty
@@ -53,20 +52,17 @@ class FBleFeatureApiImpl(
         }
     }
 
-    private val fBleStatusCache = DefaultSingleObjectCache<FBleStatus>()
     override fun getBleStatus(): WrappedFlow<FBleStatus> {
         return fEventsFeatureApi
             ?.getUpdateFlow(UpdateEvent.BLE_STATUS)
             .orEmpty()
             .merge(flowOf(null))
-            .map { key ->
-                fBleStatusCache.getOrElse(key) {
-                    exponentialRetry {
-                        rpcFeatureApi.fRpcBleApi
-                            .getBleStatus()
-                            .onFailure { error(it) { "Failed to get Ble status" } }
-                            .map { response -> response.toFBleStatus() }
-                    }
+            .map {
+                exponentialRetry {
+                    rpcFeatureApi.fRpcBleApi
+                        .getBleStatus()
+                        .onFailure { error(it) { "Failed to get Ble status" } }
+                        .map { response -> response.toFBleStatus() }
                 }
             }
             .wrap()
