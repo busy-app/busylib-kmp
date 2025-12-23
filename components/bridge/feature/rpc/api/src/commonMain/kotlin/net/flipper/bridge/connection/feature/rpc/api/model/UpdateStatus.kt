@@ -132,8 +132,8 @@ data class UpdateStatus(
         val availableVersion: String,
         @SerialName("event")
         val event: CheckEvent,
-        @SerialName("result")
-        val result: CheckResult
+        @SerialName("status")
+        val status: CheckResult
     ) {
         @Serializable
         enum class CheckEvent {

@@ -16,6 +16,7 @@ import net.flipper.bridge.connection.feature.events.api.UpdateEvent
 import net.flipper.bridge.connection.feature.events.api.getUpdateFlow
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.AudioVolumeInfo
+import net.flipper.bridge.connection.feature.rpc.api.model.BsbBrightness
 import net.flipper.bridge.connection.feature.rpc.api.model.BsbBrightnessInfo
 import net.flipper.bridge.connection.feature.rpc.api.model.toBsbBrightnessInfo
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
@@ -65,6 +66,21 @@ class FSettingsFeatureApiImpl(
                 }
             }
             .wrap()
+    }
+
+    override suspend fun setVolume(volume: Int): Result<Unit> {
+        return rpcFeatureApi.fRpcSettingsApi
+            .setAudioVolume(volume)
+            .map { }
+    }
+
+    override suspend fun setBrightness(
+        front: BsbBrightness,
+        back: BsbBrightness
+    ): Result<Unit> {
+        return rpcFeatureApi.fRpcSettingsApi
+            .setDisplayBrightness(front = front, back = back)
+            .map { }
     }
 
     @Inject

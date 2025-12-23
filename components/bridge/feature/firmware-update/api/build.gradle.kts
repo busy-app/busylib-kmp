@@ -11,6 +11,7 @@ kotlin {
 
         api(projects.components.bridge.feature.common.api)
         api(projects.components.bridge.feature.rpc.api)
+        implementation(projects.components.core.wrapper)
 
         implementation(libs.kotlin.coroutines)
         implementation(libs.kotlin.immutable)
