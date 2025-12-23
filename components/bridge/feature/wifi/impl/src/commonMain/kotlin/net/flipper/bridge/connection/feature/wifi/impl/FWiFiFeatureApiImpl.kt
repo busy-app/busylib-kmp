@@ -2,6 +2,7 @@ package net.flipper.bridge.connection.feature.wifi.impl
 
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toPersistentList
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flowOf
@@ -35,7 +36,8 @@ private val POOLING_TIME = 3.seconds
 @Inject
 class FWiFiFeatureApiImpl(
     @Assisted private val rpcFeatureApi: FRpcFeatureApi,
-    @Assisted private val fEventsFeatureApi: FEventsFeatureApi?
+    @Assisted private val fEventsFeatureApi: FEventsFeatureApi?,
+    @Assisted private val scope: CoroutineScope
 ) : FWiFiFeatureApi, LogTagProvider {
     override val TAG = "FWiFiFeatureApi"
 
@@ -76,7 +78,7 @@ class FWiFiFeatureApiImpl(
         return fEventsFeatureApi
             ?.getUpdateFlow(UpdateEvent.WIFI_STATUS)
             .orEmpty()
-            .merge(flowOf(Unit))
+            .merge(flowOf(null))
             .map {
                 exponentialRetry {
                     rpcFeatureApi
@@ -111,12 +113,13 @@ class FWiFiFeatureApiImpl(
 
     @Inject
     class InternalFactory(
-        private val factory: (FRpcFeatureApi, FEventsFeatureApi?) -> FWiFiFeatureApiImpl
+        private val factory: (FRpcFeatureApi, FEventsFeatureApi?, CoroutineScope) -> FWiFiFeatureApiImpl
     ) {
         operator fun invoke(
             rpcFeatureApi: FRpcFeatureApi,
-            fEventsFeatureApi: FEventsFeatureApi?
-        ): FWiFiFeatureApiImpl = factory(rpcFeatureApi, fEventsFeatureApi)
+            fEventsFeatureApi: FEventsFeatureApi?,
+            scope: CoroutineScope
+        ): FWiFiFeatureApiImpl = factory(rpcFeatureApi, fEventsFeatureApi, scope)
     }
 }
 

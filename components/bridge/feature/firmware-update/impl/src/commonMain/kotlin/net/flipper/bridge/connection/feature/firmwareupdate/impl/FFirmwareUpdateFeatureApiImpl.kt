@@ -1,13 +1,9 @@
 package net.flipper.bridge.connection.feature.firmwareupdate.impl
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.shareIn
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
 import net.flipper.bridge.connection.feature.events.api.UpdateEvent
 import net.flipper.bridge.connection.feature.events.api.getUpdateFlow
@@ -15,7 +11,7 @@ import net.flipper.bridge.connection.feature.firmwareupdate.api.FFirmwareUpdateF
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbVersionChangelog
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.UpdateStatus
-import net.flipper.busylib.core.wrapper.WrappedSharedFlow
+import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.merge
@@ -23,32 +19,33 @@ import net.flipper.core.busylib.ktx.common.orEmpty
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
-import kotlin.time.Duration.Companion.seconds
 
 @Suppress("UnusedPrivateProperty")
 class FFirmwareUpdateFeatureApiImpl(
     private val rpcFeatureApi: FRpcFeatureApi,
-    fEventsFeatureApi: FEventsFeatureApi?,
-    scope: CoroutineScope
+    private val fEventsFeatureApi: FEventsFeatureApi?,
 ) : FFirmwareUpdateFeatureApi, LogTagProvider {
     override val TAG: String = "FFirmwareUpdateFeatureApi"
 
-    override val updateStatusSharedFlow: WrappedSharedFlow<UpdateStatus> = fEventsFeatureApi
-        ?.getUpdateFlow(UpdateEvent.UPDATER_UPDATE_STATUS)
-        .orEmpty()
-        .merge(flowOf(Unit))
-        .map {
-            exponentialRetry {
-                rpcFeatureApi.fRpcUpdaterApi
-                    .getUpdateStatus()
-                    .onFailure { throwable -> error(throwable) { "Failed to get update status" } }
-            }
+    private suspend fun requireUpdateStatus(): UpdateStatus {
+        return exponentialRetry {
+            rpcFeatureApi.fRpcUpdaterApi
+                .getUpdateStatus()
+                .onFailure { throwable -> error(throwable) { "Failed to get update status" } }
         }
-        .shareIn(scope, SharingStarted.WhileSubscribed(10.seconds), 1)
-        .wrap()
+    }
+
+    override fun getUpdateStatusFlow(): WrappedFlow<UpdateStatus> {
+        return fEventsFeatureApi
+            ?.getUpdateFlow(UpdateEvent.UPDATER_UPDATE_STATUS)
+            .orEmpty()
+            .merge(flowOf(null))
+            .map { requireUpdateStatus() }
+            .wrap()
+    }
 
     private suspend fun tryStartInstantUpdate(): Boolean {
-        val status = updateStatusSharedFlow.first()
+        val status = requireUpdateStatus()
         when (status.install.action) {
             UpdateStatus.Install.Action.APPLY,
             UpdateStatus.Install.Action.PREPARE,
@@ -76,7 +73,7 @@ class FFirmwareUpdateFeatureApiImpl(
         rpcFeatureApi.fRpcUpdaterApi.startUpdateCheck()
             .onFailure { throwable -> error(throwable) { "#tryStartInstantUpdate could not start update check" } }
             .onFailure { throwable -> return Result.failure(throwable) }
-        val version = updateStatusSharedFlow
+        val version = getUpdateStatusFlow()
             .map { status -> status.check.availableVersion }
             .filter { version -> version.isNotEmpty() }
             .first()
@@ -88,7 +85,7 @@ class FFirmwareUpdateFeatureApiImpl(
     }
 
     override suspend fun getNextVersionChangelog(): Result<BsbVersionChangelog> {
-        val version = updateStatusSharedFlow
+        val version = getUpdateStatusFlow()
             .map { status -> status.check.availableVersion }
             .filter { version -> version.isNotEmpty() }
             .first()

@@ -6,11 +6,12 @@ import kotlinx.coroutines.flow.map
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 
 interface FEventsFeatureApi : FDeviceFeatureApi {
+
     fun getUpdatesFlow(): Flow<List<UpdateEvent>>
 }
 
 fun FEventsFeatureApi.getUpdateFlow(vararg events: UpdateEvent): Flow<Unit> {
     return getUpdatesFlow()
-        .filter { updatesList -> events.any { updatesList.contains(it) } }
+        .filter { updatesList -> events.any { event -> updatesList.contains(event) } }
         .map { }
 }

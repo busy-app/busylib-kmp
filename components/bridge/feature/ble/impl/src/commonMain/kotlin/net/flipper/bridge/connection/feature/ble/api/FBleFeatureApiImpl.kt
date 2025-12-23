@@ -30,7 +30,8 @@ import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
 @Inject
 class FBleFeatureApiImpl(
     @Assisted private val rpcFeatureApi: FRpcFeatureApi,
-    @Assisted private val fEventsFeatureApi: FEventsFeatureApi?
+    @Assisted private val fEventsFeatureApi: FEventsFeatureApi?,
+    @Assisted private val scope: CoroutineScope
 ) : FBleFeatureApi, LogTagProvider {
     override val TAG: String = "FBleFeatureApi"
 
@@ -55,7 +56,7 @@ class FBleFeatureApiImpl(
         return fEventsFeatureApi
             ?.getUpdateFlow(UpdateEvent.BLE_STATUS)
             .orEmpty()
-            .merge(flowOf(Unit))
+            .merge(flowOf(null))
             .map {
                 exponentialRetry {
                     rpcFeatureApi.fRpcBleApi
@@ -84,7 +85,8 @@ class FBleFeatureApiImpl(
 
             return FBleFeatureApiImpl(
                 rpcFeatureApi = fRpcFeatureApi,
-                fEventsFeatureApi = fEventsFeatureApi
+                fEventsFeatureApi = fEventsFeatureApi,
+                scope = scope
             )
         }
     }

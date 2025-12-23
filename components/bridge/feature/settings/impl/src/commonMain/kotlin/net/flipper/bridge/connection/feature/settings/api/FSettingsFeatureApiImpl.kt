@@ -1,10 +1,9 @@
 package net.flipper.bridge.connection.feature.settings.api
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
 import me.tatarka.inject.annotations.IntoMap
 import me.tatarka.inject.annotations.Provides
@@ -18,48 +17,53 @@ import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.AudioVolumeInfo
 import net.flipper.bridge.connection.feature.rpc.api.model.BsbBrightness
 import net.flipper.bridge.connection.feature.rpc.api.model.BsbBrightnessInfo
+import net.flipper.bridge.connection.feature.rpc.api.model.NameInfo
 import net.flipper.bridge.connection.feature.rpc.api.model.toBsbBrightnessInfo
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.busylib.core.di.BusyLibGraph
+import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.merge
 import net.flipper.core.busylib.ktx.common.orEmpty
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
+import net.flipper.core.busylib.log.info
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
 
-@Inject
 class FSettingsFeatureApiImpl(
-    @Assisted private val rpcFeatureApi: FRpcFeatureApi,
-    @Assisted private val fEventsFeatureApi: FEventsFeatureApi?
+    private val scope: CoroutineScope,
+    private val rpcFeatureApi: FRpcFeatureApi,
+    private val fEventsFeatureApi: FEventsFeatureApi?,
+    private val connectedDevice: FConnectedDeviceApi,
 ) : FSettingsFeatureApi, LogTagProvider {
     override val TAG: String = "FSettingsFeatureApi"
 
-    override fun getBrightnessInfoFlow(): Flow<BsbBrightnessInfo> {
+    override fun getBrightnessInfoFlow(): WrappedFlow<BsbBrightnessInfo> {
         return fEventsFeatureApi
             ?.getUpdateFlow(UpdateEvent.BRIGHTNESS)
             .orEmpty()
-            .merge(flowOf(Unit))
+            .merge(flowOf(null))
             .map {
                 exponentialRetry {
                     rpcFeatureApi
                         .fRpcSettingsApi
                         .getDisplayBrightness()
+                        .map { it.toBsbBrightnessInfo() }
                         .onFailure { error(it) { "Failed to get Settings status" } }
                 }
             }
-            .map { brightnessInfo -> brightnessInfo.toBsbBrightnessInfo() }
             .wrap()
     }
 
-    override fun getVolumeFlow(): Flow<AudioVolumeInfo> {
+    override fun getVolumeFlow(): WrappedFlow<AudioVolumeInfo> {
         return fEventsFeatureApi
             ?.getUpdateFlow(UpdateEvent.AUDIO_VOLUME)
             .orEmpty()
-            .merge(flowOf(Unit))
+            .merge(flowOf(null))
             .map {
                 exponentialRetry {
+                    info { "#getVolumeFlow getting volume flow" }
                     rpcFeatureApi.fRpcSettingsApi
                         .getAudioVolume()
                         .onFailure { error(it) { "Failed to get Settings status" } }
@@ -72,6 +76,29 @@ class FSettingsFeatureApiImpl(
         return rpcFeatureApi.fRpcSettingsApi
             .setAudioVolume(volume)
             .map { }
+    }
+
+    override fun getDeviceName(): WrappedFlow<String> {
+        return flow {
+            emit(connectedDevice.deviceName)
+            fEventsFeatureApi
+                ?.getUpdateFlow(UpdateEvent.DEVICE_NAME)
+                .orEmpty()
+                .merge(flowOf(null))
+                .map {
+                    exponentialRetry {
+                        rpcFeatureApi
+                            .fRpcSettingsApi
+                            .getName()
+                            .map { nameInfo -> nameInfo.name }
+                    }
+                }
+                .collect { deviceName -> emit(deviceName) }
+        }.wrap()
+    }
+
+    override suspend fun setDeviceName(name: String): Result<Unit> {
+        return rpcFeatureApi.fRpcSettingsApi.setName(NameInfo(name)).map { }
     }
 
     override suspend fun setBrightness(
@@ -100,7 +127,9 @@ class FSettingsFeatureApiImpl(
 
             return FSettingsFeatureApiImpl(
                 rpcFeatureApi = fRpcFeatureApi,
-                fEventsFeatureApi = fEventsFeatureApi
+                fEventsFeatureApi = fEventsFeatureApi,
+                connectedDevice = connectedDevice,
+                scope = scope
             )
         }
     }
