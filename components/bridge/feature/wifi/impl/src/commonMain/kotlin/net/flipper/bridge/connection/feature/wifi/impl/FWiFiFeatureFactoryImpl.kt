@@ -32,7 +32,8 @@ class FWiFiFeatureFactoryImpl(
 
         return deviceInfoFeatureFactory(
             rpcFeatureApi = fRpcFeatureApi,
-            fEventsFeatureApi = fEventsFeatureApi
+            fEventsFeatureApi = fEventsFeatureApi,
+            scope = scope
         )
     }
 }

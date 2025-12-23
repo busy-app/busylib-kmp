@@ -33,7 +33,7 @@ class FFirmwareUpdateFeatureApiImpl(
 ) : FFirmwareUpdateFeatureApi, LogTagProvider {
     override val TAG: String = "FFirmwareUpdateFeatureApi"
 
-    override val updateStatusSharedFlow: WrappedSharedFlow<UpdateStatus> = fEventsFeatureApi
+    private val updateStatusSharedFlow = fEventsFeatureApi
         ?.getUpdateFlow(UpdateEvent.UPDATER_UPDATE_STATUS)
         .orEmpty()
         .merge(flowOf(Unit))
@@ -45,7 +45,10 @@ class FFirmwareUpdateFeatureApiImpl(
             }
         }
         .shareIn(scope, SharingStarted.WhileSubscribed(10.seconds), 1)
-        .wrap()
+
+    override fun getUpdateStatusFlow(): WrappedSharedFlow<UpdateStatus> {
+        return updateStatusSharedFlow.wrap()
+    }
 
     private suspend fun tryStartInstantUpdate(): Boolean {
         val status = updateStatusSharedFlow.first()

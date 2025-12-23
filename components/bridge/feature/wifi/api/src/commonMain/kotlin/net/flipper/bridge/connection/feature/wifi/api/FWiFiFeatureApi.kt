@@ -6,11 +6,12 @@ import net.flipper.bridge.connection.feature.rpc.api.model.StatusResponse
 import net.flipper.bridge.connection.feature.wifi.api.model.WiFiNetwork
 import net.flipper.bridge.connection.feature.wifi.api.model.WiFiSecurity
 import net.flipper.busylib.core.wrapper.WrappedFlow
+import net.flipper.busylib.core.wrapper.WrappedSharedFlow
 
 interface FWiFiFeatureApi : FDeviceFeatureApi {
     fun getWifiStateFlow(): WrappedFlow<ImmutableList<WiFiNetwork>>
 
-    fun getWifiStatusFlow(): WrappedFlow<StatusResponse>
+    fun getWifiStatusFlow(): WrappedSharedFlow<StatusResponse>
 
     suspend fun connect(
         ssid: String,

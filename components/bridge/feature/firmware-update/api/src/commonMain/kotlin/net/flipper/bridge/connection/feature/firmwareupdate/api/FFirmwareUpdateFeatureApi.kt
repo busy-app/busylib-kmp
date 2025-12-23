@@ -6,7 +6,7 @@ import net.flipper.bridge.connection.feature.rpc.api.model.UpdateStatus
 import net.flipper.busylib.core.wrapper.WrappedSharedFlow
 
 interface FFirmwareUpdateFeatureApi : FDeviceFeatureApi {
-    val updateStatusSharedFlow: WrappedSharedFlow<UpdateStatus>
+    fun getUpdateStatusFlow(): WrappedSharedFlow<UpdateStatus>
 
     /**
      * Start firmware download and after automatically install

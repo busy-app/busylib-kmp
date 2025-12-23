@@ -2,10 +2,14 @@ package net.flipper.bridge.connection.feature.wifi.impl
 
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toPersistentList
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.isActive
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
@@ -22,6 +26,7 @@ import net.flipper.bridge.connection.feature.wifi.api.FWiFiFeatureApi
 import net.flipper.bridge.connection.feature.wifi.api.model.WiFiNetwork
 import net.flipper.bridge.connection.feature.wifi.api.model.WiFiSecurity
 import net.flipper.busylib.core.wrapper.WrappedFlow
+import net.flipper.busylib.core.wrapper.WrappedSharedFlow
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.merge
@@ -35,7 +40,8 @@ private val POOLING_TIME = 3.seconds
 @Inject
 class FWiFiFeatureApiImpl(
     @Assisted private val rpcFeatureApi: FRpcFeatureApi,
-    @Assisted private val fEventsFeatureApi: FEventsFeatureApi?
+    @Assisted private val fEventsFeatureApi: FEventsFeatureApi?,
+    @Assisted private val scope: CoroutineScope
 ) : FWiFiFeatureApi, LogTagProvider {
     override val TAG = "FWiFiFeatureApi"
 
@@ -72,20 +78,21 @@ class FWiFiFeatureApiImpl(
         }.wrap()
     }
 
-    override fun getWifiStatusFlow(): WrappedFlow<StatusResponse> {
-        return fEventsFeatureApi
-            ?.getUpdateFlow(UpdateEvent.WIFI_STATUS)
-            .orEmpty()
-            .merge(flowOf(Unit))
-            .map {
-                exponentialRetry {
-                    rpcFeatureApi
-                        .fRpcWifiApi
-                        .getWifiStatus()
-                        .onFailure { error(it) { "Failed to get WiFi networks" } }
-                }
+    private val wifiStatusSharedFlow = fEventsFeatureApi
+        ?.getUpdateFlow(UpdateEvent.WIFI_STATUS)
+        .orEmpty()
+        .merge(flowOf(Unit))
+        .map {
+            exponentialRetry {
+                rpcFeatureApi
+                    .fRpcWifiApi
+                    .getWifiStatus()
+                    .onFailure { error(it) { "Failed to get WiFi networks" } }
             }
-            .wrap()
+        }.shareIn(scope, SharingStarted.WhileSubscribed(5.seconds), 1)
+
+    override fun getWifiStatusFlow(): WrappedSharedFlow<StatusResponse> {
+        return wifiStatusSharedFlow.wrap()
     }
 
     override suspend fun connect(
@@ -111,12 +118,13 @@ class FWiFiFeatureApiImpl(
 
     @Inject
     class InternalFactory(
-        private val factory: (FRpcFeatureApi, FEventsFeatureApi?) -> FWiFiFeatureApiImpl
+        private val factory: (FRpcFeatureApi, FEventsFeatureApi?, CoroutineScope) -> FWiFiFeatureApiImpl
     ) {
         operator fun invoke(
             rpcFeatureApi: FRpcFeatureApi,
-            fEventsFeatureApi: FEventsFeatureApi?
-        ): FWiFiFeatureApiImpl = factory(rpcFeatureApi, fEventsFeatureApi)
+            fEventsFeatureApi: FEventsFeatureApi?,
+            scope: CoroutineScope
+        ): FWiFiFeatureApiImpl = factory(rpcFeatureApi, fEventsFeatureApi, scope)
     }
 }
 
