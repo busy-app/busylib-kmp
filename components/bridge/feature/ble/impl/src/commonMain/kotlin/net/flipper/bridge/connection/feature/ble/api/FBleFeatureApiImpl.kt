@@ -1,11 +1,8 @@
 package net.flipper.bridge.connection.feature.ble.api
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.shareIn
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
 import me.tatarka.inject.annotations.IntoMap
@@ -21,15 +18,15 @@ import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.BleStatusResponse
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.busylib.core.di.BusyLibGraph
-import net.flipper.busylib.core.wrapper.WrappedSharedFlow
+import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.wrap
+import net.flipper.core.busylib.ktx.common.cache.DefaultSingleObjectCache
 import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.merge
 import net.flipper.core.busylib.ktx.common.orEmpty
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
-import kotlin.time.Duration.Companion.seconds
 
 @Inject
 class FBleFeatureApiImpl(
@@ -56,22 +53,23 @@ class FBleFeatureApiImpl(
         }
     }
 
-    private val bleStatusSharedFlow = fEventsFeatureApi
-        ?.getUpdateFlow(UpdateEvent.BLE_STATUS)
-        .orEmpty()
-        .merge(flowOf(Unit))
-        .map {
-            exponentialRetry {
-                rpcFeatureApi.fRpcBleApi
-                    .getBleStatus()
-                    .onFailure { error(it) { "Failed to get Ble status" } }
-                    .map { response -> response.toFBleStatus() }
+    private val fBleStatusCache = DefaultSingleObjectCache<FBleStatus>()
+    override fun getBleStatus(): WrappedFlow<FBleStatus> {
+        return fEventsFeatureApi
+            ?.getUpdateFlow(UpdateEvent.BLE_STATUS)
+            .orEmpty()
+            .merge(flowOf(null))
+            .map { key ->
+                fBleStatusCache.getOrElse(key) {
+                    exponentialRetry {
+                        rpcFeatureApi.fRpcBleApi
+                            .getBleStatus()
+                            .onFailure { error(it) { "Failed to get Ble status" } }
+                            .map { response -> response.toFBleStatus() }
+                    }
+                }
             }
-        }
-        .shareIn(scope, SharingStarted.WhileSubscribed(5.seconds), 1)
-
-    override fun getBleStatus(): WrappedSharedFlow<FBleStatus> {
-        return bleStatusSharedFlow.wrap()
+            .wrap()
     }
 
     @Inject

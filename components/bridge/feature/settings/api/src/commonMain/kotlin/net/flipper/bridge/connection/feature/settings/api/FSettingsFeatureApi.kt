@@ -4,11 +4,11 @@ import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.AudioVolumeInfo
 import net.flipper.bridge.connection.feature.rpc.api.model.BsbBrightness
 import net.flipper.bridge.connection.feature.rpc.api.model.BsbBrightnessInfo
-import net.flipper.busylib.core.wrapper.WrappedSharedFlow
+import net.flipper.busylib.core.wrapper.WrappedFlow
 
 interface FSettingsFeatureApi : FDeviceFeatureApi {
-    fun getVolumeFlow(): WrappedSharedFlow<AudioVolumeInfo>
-    fun getBrightnessInfoFlow(): WrappedSharedFlow<BsbBrightnessInfo>
+    fun getVolumeFlow(): WrappedFlow<AudioVolumeInfo>
+    fun getBrightnessInfoFlow(): WrappedFlow<BsbBrightnessInfo>
     suspend fun setBrightness(
         front: BsbBrightness,
         back: BsbBrightness
@@ -16,6 +16,6 @@ interface FSettingsFeatureApi : FDeviceFeatureApi {
 
     suspend fun setVolume(volume: Int): Result<Unit>
 
-    fun getDeviceName(): WrappedSharedFlow<String>
+    fun getDeviceName(): WrappedFlow<String>
     suspend fun setDeviceName(name: String): Result<Unit>
 }

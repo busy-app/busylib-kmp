@@ -3,10 +3,10 @@ package net.flipper.bridge.connection.feature.firmwareupdate.api
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbVersionChangelog
 import net.flipper.bridge.connection.feature.rpc.api.model.UpdateStatus
-import net.flipper.busylib.core.wrapper.WrappedSharedFlow
+import net.flipper.busylib.core.wrapper.WrappedFlow
 
 interface FFirmwareUpdateFeatureApi : FDeviceFeatureApi {
-    fun getUpdateStatusFlow(): WrappedSharedFlow<UpdateStatus>
+    fun getUpdateStatusFlow(): WrappedFlow<UpdateStatus>
 
     /**
      * Start firmware download and after automatically install

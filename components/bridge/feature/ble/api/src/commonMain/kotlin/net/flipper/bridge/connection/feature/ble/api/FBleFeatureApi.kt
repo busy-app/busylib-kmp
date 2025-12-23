@@ -2,8 +2,8 @@ package net.flipper.bridge.connection.feature.ble.api
 
 import net.flipper.bridge.connection.feature.ble.api.model.FBleStatus
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
-import net.flipper.busylib.core.wrapper.WrappedSharedFlow
+import net.flipper.busylib.core.wrapper.WrappedFlow
 
 interface FBleFeatureApi : FDeviceFeatureApi {
-    fun getBleStatus(): WrappedSharedFlow<FBleStatus>
+    fun getBleStatus(): WrappedFlow<FBleStatus>
 }
