@@ -11,10 +11,13 @@ import net.flipper.bridge.connection.feature.rpc.api.model.GetUpdateChangelogRes
 import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.UpdateStatus
 import net.flipper.bridge.connection.feature.rpc.impl.util.runSafely
+import net.flipper.core.busylib.ktx.common.cache.ObjectCache
+import net.flipper.core.busylib.ktx.common.cache.getOrElse
 
 class FRpcUpdaterApiImpl(
     private val httpClient: HttpClient,
-    private val dispatcher: CoroutineDispatcher
+    private val dispatcher: CoroutineDispatcher,
+    private val objectCache: ObjectCache
 ) : FRpcUpdaterApi {
     override suspend fun startUpdateCheck(): Result<SuccessResponse> {
         return runSafely(dispatcher) {
@@ -22,9 +25,11 @@ class FRpcUpdaterApiImpl(
         }
     }
 
-    override suspend fun getUpdateStatus(): Result<UpdateStatus> {
+    override suspend fun getUpdateStatus(ignoreCache: Boolean): Result<UpdateStatus> {
         return runSafely(dispatcher) {
-            httpClient.get("/api/update/status").body<UpdateStatus>()
+            objectCache.getOrElse(ignoreCache) {
+                httpClient.get("/api/update/status").body<UpdateStatus>()
+            }
         }
     }
 

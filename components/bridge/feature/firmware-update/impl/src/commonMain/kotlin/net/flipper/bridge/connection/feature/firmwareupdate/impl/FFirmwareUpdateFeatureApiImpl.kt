@@ -4,6 +4,8 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
+import net.flipper.bridge.connection.feature.events.api.DefaultConsumable
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
 import net.flipper.bridge.connection.feature.events.api.UpdateEvent
 import net.flipper.bridge.connection.feature.events.api.getUpdateFlow
@@ -27,10 +29,10 @@ class FFirmwareUpdateFeatureApiImpl(
 ) : FFirmwareUpdateFeatureApi, LogTagProvider {
     override val TAG: String = "FFirmwareUpdateFeatureApi"
 
-    private suspend fun requireUpdateStatus(): UpdateStatus {
+    private suspend fun requireUpdateStatus(ignoreCache: Boolean): UpdateStatus {
         return exponentialRetry {
             rpcFeatureApi.fRpcUpdaterApi
-                .getUpdateStatus()
+                .getUpdateStatus(ignoreCache)
                 .onFailure { throwable -> error(throwable) { "Failed to get update status" } }
         }
     }
@@ -39,13 +41,17 @@ class FFirmwareUpdateFeatureApiImpl(
         return fEventsFeatureApi
             ?.getUpdateFlow(UpdateEvent.UPDATER_UPDATE_STATUS)
             .orEmpty()
-            .merge(flowOf(null))
-            .map { requireUpdateStatus() }
+            .merge(flowOf(DefaultConsumable(false)))
+            .mapLatest { consumable ->
+                consumable.tryConsume { couldConsume ->
+                    requireUpdateStatus(couldConsume)
+                }
+            }
             .wrap()
     }
 
     private suspend fun tryStartInstantUpdate(): Boolean {
-        val status = requireUpdateStatus()
+        val status = requireUpdateStatus(false)
         when (status.install.action) {
             UpdateStatus.Install.Action.APPLY,
             UpdateStatus.Install.Action.PREPARE,

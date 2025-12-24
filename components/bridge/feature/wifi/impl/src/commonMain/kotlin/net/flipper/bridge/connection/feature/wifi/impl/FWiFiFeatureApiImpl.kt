@@ -7,9 +7,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.isActive
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
+import net.flipper.bridge.connection.feature.events.api.DefaultConsumable
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
 import net.flipper.bridge.connection.feature.events.api.UpdateEvent
 import net.flipper.bridge.connection.feature.events.api.getUpdateFlow
@@ -78,13 +80,15 @@ class FWiFiFeatureApiImpl(
         return fEventsFeatureApi
             ?.getUpdateFlow(UpdateEvent.WIFI_STATUS)
             .orEmpty()
-            .merge(flowOf(null))
-            .map {
-                exponentialRetry {
-                    rpcFeatureApi
-                        .fRpcWifiApi
-                        .getWifiStatus()
-                        .onFailure { error(it) { "Failed to get WiFi networks" } }
+            .merge(flowOf(DefaultConsumable(false)))
+            .mapLatest { consumable ->
+                consumable.tryConsume { couldConsume ->
+                    exponentialRetry {
+                        rpcFeatureApi
+                            .fRpcWifiApi
+                            .getWifiStatus(couldConsume)
+                            .onFailure { error(it) { "Failed to get WiFi networks" } }
+                    }
                 }
             }
             .wrap()

@@ -3,6 +3,7 @@ package net.flipper.bridge.connection.feature.ble.api
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
 import me.tatarka.inject.annotations.IntoMap
@@ -11,6 +12,7 @@ import net.flipper.bridge.connection.feature.ble.api.model.FBleStatus
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
+import net.flipper.bridge.connection.feature.events.api.DefaultConsumable
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
 import net.flipper.bridge.connection.feature.events.api.UpdateEvent
 import net.flipper.bridge.connection.feature.events.api.getUpdateFlow
@@ -56,13 +58,15 @@ class FBleFeatureApiImpl(
         return fEventsFeatureApi
             ?.getUpdateFlow(UpdateEvent.BLE_STATUS)
             .orEmpty()
-            .merge(flowOf(null))
-            .map {
-                exponentialRetry {
-                    rpcFeatureApi.fRpcBleApi
-                        .getBleStatus()
-                        .onFailure { error(it) { "Failed to get Ble status" } }
-                        .map { response -> response.toFBleStatus() }
+            .merge(flowOf(DefaultConsumable(false)))
+            .mapLatest { consumable ->
+                consumable.tryConsume { couldConsume ->
+                    exponentialRetry {
+                        rpcFeatureApi.fRpcBleApi
+                            .getBleStatus(couldConsume)
+                            .onFailure { error(it) { "Failed to get Ble status" } }
+                            .map { response -> response.toFBleStatus() }
+                    }
                 }
             }
             .wrap()

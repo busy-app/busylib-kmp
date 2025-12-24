@@ -4,12 +4,14 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import me.tatarka.inject.annotations.Inject
 import me.tatarka.inject.annotations.IntoMap
 import me.tatarka.inject.annotations.Provides
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
+import net.flipper.bridge.connection.feature.events.api.DefaultConsumable
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
 import net.flipper.bridge.connection.feature.events.api.UpdateEvent
 import net.flipper.bridge.connection.feature.events.api.getUpdateFlow
@@ -43,14 +45,16 @@ class FSettingsFeatureApiImpl(
         return fEventsFeatureApi
             ?.getUpdateFlow(UpdateEvent.BRIGHTNESS)
             .orEmpty()
-            .merge(flowOf(null))
-            .map {
-                exponentialRetry {
-                    rpcFeatureApi
-                        .fRpcSettingsApi
-                        .getDisplayBrightness()
-                        .map { it.toBsbBrightnessInfo() }
-                        .onFailure { error(it) { "Failed to get Settings status" } }
+            .merge(flowOf(DefaultConsumable(false)))
+            .mapLatest { consumable ->
+                consumable.tryConsume { couldConsume ->
+                    exponentialRetry {
+                        rpcFeatureApi
+                            .fRpcSettingsApi
+                            .getDisplayBrightness(couldConsume)
+                            .map { it.toBsbBrightnessInfo() }
+                            .onFailure { error(it) { "Failed to get Settings status" } }
+                    }
                 }
             }
             .wrap()
@@ -60,13 +64,15 @@ class FSettingsFeatureApiImpl(
         return fEventsFeatureApi
             ?.getUpdateFlow(UpdateEvent.AUDIO_VOLUME)
             .orEmpty()
-            .merge(flowOf(null))
-            .map {
-                exponentialRetry {
-                    info { "#getVolumeFlow getting volume flow" }
-                    rpcFeatureApi.fRpcSettingsApi
-                        .getAudioVolume()
-                        .onFailure { error(it) { "Failed to get Settings status" } }
+            .merge(flowOf(DefaultConsumable(false)))
+            .mapLatest { consumable ->
+                consumable.tryConsume { couldConsume ->
+                    exponentialRetry {
+                        info { "#getVolumeFlow getting volume flow" }
+                        rpcFeatureApi.fRpcSettingsApi
+                            .getAudioVolume(couldConsume)
+                            .onFailure { error(it) { "Failed to get Settings status" } }
+                    }
                 }
             }
             .wrap()
@@ -84,13 +90,15 @@ class FSettingsFeatureApiImpl(
             fEventsFeatureApi
                 ?.getUpdateFlow(UpdateEvent.DEVICE_NAME)
                 .orEmpty()
-                .merge(flowOf(null))
-                .map {
-                    exponentialRetry {
-                        rpcFeatureApi
-                            .fRpcSettingsApi
-                            .getName()
-                            .map { nameInfo -> nameInfo.name }
+                .merge(flowOf(DefaultConsumable(false)))
+                .mapLatest { consumable ->
+                    consumable.tryConsume { couldConsume ->
+                        exponentialRetry {
+                            rpcFeatureApi
+                                .fRpcSettingsApi
+                                .getName(couldConsume)
+                                .map { nameInfo -> nameInfo.name }
+                        }
                     }
                 }
                 .collect { deviceName -> emit(deviceName) }
