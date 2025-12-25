@@ -11,11 +11,14 @@ import kotlinx.collections.immutable.toImmutableMap
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.config.api.model.FDeviceBaseModel
+import net.flipper.bridge.connection.service.api.FConnectionService
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
@@ -30,9 +33,11 @@ import platform.Foundation.NSError
 import platform.Foundation.NSUUID
 import platform.UIKit.UIImage
 import platform.darwin.dispatch_get_main_queue
+import kotlin.collections.toMutableMap
 
 class IOSSearchViewModel(
-    persistedStorage: FDevicePersistedStorage
+    persistedStorage: FDevicePersistedStorage,
+    private val connectionService: FConnectionService,
 ) : ConnectionSearchViewModel(persistedStorage), LogTagProvider {
     override val TAG = "iOSSearchViewModel"
 
@@ -78,6 +83,7 @@ class IOSSearchViewModel(
         val descriptor = ASDiscoveryDescriptor()
         descriptor.bluetoothServiceUUID = CBUUID.UUIDWithString("308A") as objcnames.classes.CBUUID
         descriptor.bluetoothCompanyIdentifier = 3625u // 0E29
+        descriptor.supportedOptions = 2uL // .bluetoothPairingLE
 
         val productImage = UIImage.imageNamed("BusyBarDevice") ?: run {
             warn { "Failed to load system image, using empty UIImage" }
@@ -127,6 +133,7 @@ class IOSSearchViewModel(
         session.showPickerForDisplayItems(supportedPickerDisplayItems) { error: platform.Foundation.NSError? ->
             warn { "Error showing picker: $error" }
         }
+
     }
 
     private fun handleSessionEvent(event: ASAccessoryEvent?) {
@@ -140,21 +147,21 @@ class IOSSearchViewModel(
             // .activated
             10L -> {
                 info { "Acccessory ${session.accessories}" }
-                for (accessory in session.accessories) {
-                    saveAccessory(accessory as ASAccessory?)
-                }
             }
             // .accessoryAdded
             30L -> {
+                info { "Accessory added: ${event.accessory}" }
                 saveAccessory(event.accessory)
             }
             // accessoryRemoved
             31L -> {
+                info { "Accessory removed: ${event.accessory}" }
                 removeAccessory(event.accessory?.bluetoothIdentifier)
             }
             // .accessoryChanged
             32L -> {
-                saveAccessory(event.accessory)
+                info { "Accessory changed: ${event.accessory}" }
+                // saveAccessory(event.accessory)
             }
             else -> {
                 warn { "Received unknown event type ${event.eventType}" }
@@ -191,13 +198,32 @@ class IOSSearchViewModel(
         }
 
         val uuidString = id.UUIDString()
+        info { "Removing accessory with UUID: $uuidString" }
 
         // Remove from map
         val updatedMap = searchItems.value.toMutableMap()
+        info { "All devices before $uuidString removal: ${updatedMap.keys}" }
         updatedMap.remove(uuidString)
+        info { "All devices after $uuidString removal: ${updatedMap.keys}" }
 
-        viewModelScope.launch {
+        runBlocking {
+            info { "Emitting updated map without $uuidString" }
             searchItems.emit(updatedMap.toImmutableMap())
+            info { "Emitted updated map without $uuidString" }
+            val currentDevice = persistedStorage.getCurrentDevice().first()
+            val isCurrentDevice = currentDevice?.uniqueId == uuidString
+            val existingDevices = persistedStorage.getAllDevices().first()
+            val deviceExists = existingDevices.any { it.uniqueId == uuidString }
+
+            if (isCurrentDevice) {
+                info { "Accessory is current device, stopping connection attempts" }
+                connectionService.forgetCurrentDevice()
+            } else if (deviceExists) {
+                info { "Device found in storage, removing..." }
+                persistedStorage.removeDevice(uuidString)
+            } else {
+                info { "Device not in storage, skipping removal" }
+            }
         }
     }
 }

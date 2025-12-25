@@ -49,7 +49,8 @@ fun getRootDecomposeComponent(): ConnectionRootDecomposeComponent {
         persistedStorage = storage,
         searchViewModelProvider = {
             IOSSearchViewModel(
-                storage
+                persistedStorage = storage,
+                connectionService = busyLib.connectionService
             )
         }
     )

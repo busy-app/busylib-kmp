@@ -65,7 +65,7 @@ class FBleApiImpl(
     override fun get(key: TransportMetaInfoKey): Result<Flow<ByteArray?>> {
         if (config.metaInfoGattMap.containsKey(key)) {
             val flow = peripheral.metaInfoKeysStream.map { metaMap ->
-                metaMap[key]?.toByteArray()
+                metaMap[key]
             }
             return Result.success(flow)
         }
