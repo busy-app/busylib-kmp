@@ -15,7 +15,6 @@ import kotlinx.coroutines.isActive
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.feature.events.api.ConsumableUpdateEvent
-import net.flipper.bridge.connection.feature.events.api.DefaultConsumableUpdateEvent
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
 import net.flipper.bridge.connection.feature.events.api.UpdateEvent
 import net.flipper.bridge.connection.transport.common.api.meta.FTransportMetaInfoApi
@@ -37,7 +36,7 @@ class FEventsFeatureApiImpl(
         while (currentCoroutineContext().isActive) {
             delay(5.seconds)
             UpdateEvent.entries
-                .map(::DefaultConsumableUpdateEvent)
+                .map(::ConsumableUpdateEvent)
                 .forEach { event -> emit(event) }
         }
         metaInfoApi.get(TransportMetaInfoKey.EVENTS_INDICATION)
@@ -47,7 +46,7 @@ class FEventsFeatureApiImpl(
             .onEach { info { "Receive ${it?.toBitsString()}" } }
             .mapNotNull { byteArray -> byteArray?.let(::parse) }
             .onEach { info { "Receive updates: $it" } }
-            .map { updateEvents -> updateEvents.map(::DefaultConsumableUpdateEvent) }
+            .map { updateEvents -> updateEvents.map(::ConsumableUpdateEvent) }
             .collect { updateEvents -> updateEvents.forEach { event -> emit(event) } }
     }.shareIn(scope, SharingStarted.WhileSubscribed(5.seconds))
 
