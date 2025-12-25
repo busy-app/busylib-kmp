@@ -217,7 +217,7 @@ class FPeripheral(
                 forCharacteristic = characteristic,
                 type = 0L // CBCharacteristicWriteWithResponse
             )
-            // TODO: BUSY bar crashes when we send bytes too fast, need to handle write response properly
+            // TODO MOB-2061
             delay(500L)
         }
     }
