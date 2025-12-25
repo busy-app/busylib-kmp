@@ -15,6 +15,7 @@ import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfo
 import net.flipper.busylib.core.wrapper.WrappedSharedFlow
 import net.flipper.busylib.core.wrapper.WrappedStateFlow
 import net.flipper.busylib.core.wrapper.wrap
+import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.debug
 import net.flipper.core.busylib.log.error
@@ -30,6 +31,7 @@ import platform.CoreBluetooth.CBUUID
 import platform.Foundation.NSError
 import platform.Foundation.NSUUID
 import platform.darwin.NSObject
+import platform.posix.sleep
 
 interface FPeripheralApi {
     val identifier: NSUUID
