@@ -94,11 +94,14 @@ class DefaultObjectCache(
     }
 
     override suspend fun clear() {
+        info { "#clear" }
         mutex.withLock {
+            info { "#clear entered mutex" }
             val mutexes = cache.map { (_, entry) -> entry.mutex }
             mutexes.forEach { mutex -> mutex.lock() }
             cache.clear()
             mutexes.forEach { mutex -> mutex.unlock() }
+            info { "#clear cleared all!" }
         }
     }
 }
