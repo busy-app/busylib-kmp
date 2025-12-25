@@ -6,7 +6,6 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.TaggedLogger
-import net.flipper.core.busylib.log.info
 import kotlin.reflect.KClass
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -48,7 +47,6 @@ class DefaultObjectCache(
             .toMap()
             .filter { (_, value) -> (value as? CacheEntry.Created<*>?)?.isExpired == true }
             .filter { (_, value) -> value.mutex.tryLock() }
-            .also { info { "#clearExpired cleared ${it.size} old entries" } }
             .forEach { (clazz, value) ->
                 cache.remove(clazz)
                 value.mutex.unlock()
@@ -64,7 +62,6 @@ class DefaultObjectCache(
             value = block.invoke(),
             mutex = entityMutex
         )
-        info { "#replaceEntry replaced entry $clazz with $newEntry" }
         mutex.withLock { cache.put(clazz, newEntry) }
         return newEntry
     }
@@ -79,7 +76,6 @@ class DefaultObjectCache(
             val entry = cache.getOrPut(clazz) { CacheEntry.Pending(Mutex()) }
             async {
                 entry.mutex.withLock {
-                    info { "#getOrElse got entry of $clazz with ignoreCache=$ignoreCache as $entry" }
                     (entry as? CacheEntry.Created<*>)
                         ?.let { entry -> entry.value as? T }
                         ?.takeIf { !ignoreCache }
@@ -94,14 +90,11 @@ class DefaultObjectCache(
     }
 
     override suspend fun clear() {
-        info { "#clear" }
         mutex.withLock {
-            info { "#clear entered mutex" }
             val mutexes = cache.map { (_, entry) -> entry.mutex }
             mutexes.forEach { mutex -> mutex.lock() }
             cache.clear()
             mutexes.forEach { mutex -> mutex.unlock() }
-            info { "#clear cleared all!" }
         }
     }
 }
