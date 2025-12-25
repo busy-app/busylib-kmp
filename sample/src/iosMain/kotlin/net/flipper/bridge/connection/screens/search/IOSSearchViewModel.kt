@@ -133,7 +133,6 @@ class IOSSearchViewModel(
         session.showPickerForDisplayItems(supportedPickerDisplayItems) { error: platform.Foundation.NSError? ->
             warn { "Error showing picker: $error" }
         }
-
     }
 
     private fun handleSessionEvent(event: ASAccessoryEvent?) {
