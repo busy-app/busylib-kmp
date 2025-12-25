@@ -34,9 +34,7 @@ class BLEDeviceConnectionApiImpl(
 ) : BleDeviceConnectionApi, LogTagProvider {
     override val TAG = "BleDeviceConnectionApi"
 
-    private val centralManager by lazy {
-        FCentralManager(manager = manager)
-    }
+    private val centralManager = FCentralManager(manager = manager)
 
     override suspend fun connect(
         scope: CoroutineScope,
@@ -94,7 +92,7 @@ class BLEDeviceConnectionApiImpl(
         val deviceIdentifier = NSUUID(config.macAddress)
         info { "Waiting for peripheral in connected stream (timeout: ${timeout.inWholeSeconds}s)..." }
 
-        info { "Waiting for BLE to be powered on..." }
+        info { "Waiting for BLE to be powered on, current: ${centralManager.bleStatusStream.value}" }
         if (centralManager.bleStatusStream.value != FBLEStatus.POWERED_ON) {
             centralManager
                 .bleStatusStream
@@ -110,6 +108,9 @@ class BLEDeviceConnectionApiImpl(
                 .first()
             info { "Previous connection disconnected, proceeding with new connection..." }
         }
+
+        info { "Connecting to peripheral id=${deviceIdentifier.UUIDString}..." }
+        centralManager.connect(config)
 
         val peripheral = centralManager.connectedStream
             .map { it[deviceIdentifier] }

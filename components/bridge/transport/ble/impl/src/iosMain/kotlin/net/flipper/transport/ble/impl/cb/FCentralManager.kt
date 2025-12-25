@@ -2,14 +2,13 @@ package net.flipper.transport.ble.impl.cb
 
 import kotlinx.cinterop.ObjCSignatureOverride
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceConnectionConfig
 import net.flipper.busylib.core.wrapper.WrappedStateFlow
 import net.flipper.busylib.core.wrapper.wrap
+import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
@@ -80,7 +79,7 @@ private class FCentralManagerDelegate(
 }
 
 class FCentralManager(
-    private val scope: CoroutineScope = CoroutineScope(Dispatchers.Main),
+    private val scope: CoroutineScope = CoroutineScope(FlipperDispatchers.default),
     val manager: CBCentralManager
 ) : FCentralManagerApi, LogTagProvider {
 
@@ -107,80 +106,72 @@ class FCentralManager(
     )
 
     init {
-        scope.launch {
-            withContext(Dispatchers.Main) {
-                manager.delegate = delegate
-            }
-        }
+        manager.delegate = delegate
     }
 
     override suspend fun connect(config: FBleDeviceConnectionConfig) {
-        withContext(Dispatchers.Main) {
-            val id = config.macAddress
-            val uuid = NSUUID(id)
+        info { "#connect config=$config" }
+        val id = config.macAddress
+        val uuid = NSUUID(id)
 
-            val peripheral: CBPeripheral = manager.retrievePeripheral(uuid) ?: run {
-                error { "Requested connect for unknown peripheral id=$id" }
-                return@withContext
-            }
-
-            info { "CB connect preparing id=$id" }
-            val device = FPeripheral(peripheral, config, scope)
-            device.onConnecting()
-
-            val current = _connectedStream.value
-            _connectedStream.emit(current + (peripheral.identifier to device))
-
-            info { "CB connect requested id=$id" }
-            manager.connectPeripheral(peripheral, options = null)
+        val peripheral: CBPeripheral = manager.retrievePeripheral(uuid) ?: run {
+            error { "Requested connect for unknown peripheral id=$id" }
+            return
         }
+
+        info { "CB connect preparing id=$id" }
+        val device = FPeripheral(peripheral, config, scope)
+        device.onConnecting()
+
+        val current = _connectedStream.value
+        _connectedStream.emit(current + (peripheral.identifier to device))
+
+        info { "CB connect requested id=$id" }
+        manager.connectPeripheral(peripheral, options = null)
     }
 
     override suspend fun disconnect(id: NSUUID) {
-        withContext(Dispatchers.Main) {
-            val cbPeripheral = manager.retrievePeripheral(id) ?: run {
-                warn { "Requested disconnect for unknown peripheral id=$id" }
-                return@withContext
-            }
-            val peripheral = _connectedStream.value[id] ?: run {
-                warn { "Requested disconnect for not connected peripheral id=$id" }
-                return@withContext
-            }
-
-            info { "CB disconnect requested id=$id" }
-            peripheral.onDisconnecting()
-            manager.cancelPeripheralConnection(cbPeripheral)
+        info { "#disconnect id=$id" }
+        val cbPeripheral = manager.retrievePeripheral(id) ?: run {
+            warn { "Requested disconnect for unknown peripheral id=$id" }
+            return
         }
+        val peripheral = _connectedStream.value[id] ?: run {
+            warn { "Requested disconnect for not connected peripheral id=$id" }
+            return
+        }
+
+        info { "CB disconnect requested id=$id" }
+        peripheral.onDisconnecting()
+        manager.cancelPeripheralConnection(cbPeripheral)
     }
 
     override suspend fun startScan() {
-        withContext(Dispatchers.Main) {
-            val state = FBLEStatus.from(manager.state)
-            if (state != FBLEStatus.POWERED_ON) {
-                warn { "Cannot start scan with BLE state: $state" }
-                return@withContext
-            }
-
-            manager.scanForPeripheralsWithServices(
-                serviceUUIDs = listOf(CBUUID.UUIDWithString("308A")),
-                options = null
-            )
-            info { "Scan started ${manager.delegate}" }
+        info { "#startScan" }
+        val state = FBLEStatus.from(manager.state)
+        if (state != FBLEStatus.POWERED_ON) {
+            warn { "Cannot start scan with BLE state: $state" }
+            return
         }
+
+        manager.scanForPeripheralsWithServices(
+            serviceUUIDs = listOf(CBUUID.UUIDWithString("308A")),
+            options = null
+        )
+        info { "Scan started ${manager.delegate}" }
     }
 
     override suspend fun stopScan() {
-        withContext(Dispatchers.Main) {
-            if (manager.isScanning()) {
-                manager.stopScan()
-                _discoveredStream.emit(emptySet())
-                info { "Scan stopped" }
-            }
+        info { "#stopScan" }
+        if (manager.isScanning()) {
+            manager.stopScan()
+            _discoveredStream.emit(emptySet())
+            info { "Scan stopped" }
         }
     }
 
-    private suspend fun updateBLEStatus(state: CBManagerState) = withContext(Dispatchers.Main) {
-        info { "#updateBLEStatus" }
+    private suspend fun updateBLEStatus(state: CBManagerState) {
+        info { "#updateBLEStatus state=$state" }
         val newStatus = FBLEStatus.from(state)
         _bleStatusStream.emit(newStatus)
 
@@ -198,11 +189,11 @@ class FCentralManager(
         }
     }
 
-    private suspend fun didConnect(peripheral: CBPeripheral) = withContext(Dispatchers.Main) {
-        info { "didConnect" }
+    private suspend fun didConnect(peripheral: CBPeripheral) {
+        info { "#didConnect peripheral=${peripheral.identifier}" }
         val device = _connectedStream.value[peripheral.identifier] ?: run {
             error { "CB didConnect for unknown peripheral id=${peripheral.identifier}" }
-            return@withContext
+            return
         }
 
         val current = _connectedStream.value
@@ -214,8 +205,8 @@ class FCentralManager(
     private suspend fun didDisconnect(
         peripheral: CBPeripheral,
         error: NSError?
-    ) = withContext(Dispatchers.Main) {
-        info { "didDisconnect" }
+    ) {
+        info { "#didDisconnect peripheral=${peripheral.identifier} error=$error" }
         if (error != null) {
             error { "didDisconnect with error: $error" }
         }
@@ -223,7 +214,7 @@ class FCentralManager(
         val connected = _connectedStream.value
         val device = connected[peripheral.identifier] ?: run {
             error { "CB didDisconnect for unknown peripheral id=${peripheral.identifier}" }
-            return@withContext
+            return
         }
 
         device.onDisconnect()
@@ -234,17 +225,17 @@ class FCentralManager(
     private suspend fun didFailToConnect(
         peripheral: CBPeripheral,
         error: NSError?
-    ) = withContext(Dispatchers.Main) {
-        info { "didFailToConnect" }
+    ) {
+        info { "#didFailToConnect peripheral=${peripheral.identifier} error=$error" }
         val connected = _connectedStream.value
         val device = connected[peripheral.identifier] ?: run {
             error { "CB didFailToConnect for unknown peripheral id=${peripheral.identifier}" }
-            return@withContext
+            return
         }
 
         if (error == null) {
             error { "CB didFailToConnect without error id=${peripheral.identifier}" }
-            return@withContext
+            return
         }
         device.onError(error)
         _connectedStream.emit(connected - peripheral.identifier)
@@ -256,8 +247,8 @@ class FCentralManager(
         peripheral: CBPeripheral,
         advertisementData: Map<Any?, *>,
         rssi: NSNumber
-    ) = withContext(Dispatchers.Main) {
-        info { "didDiscover" }
+    ) {
+        info { "#didDiscover peripheral=${peripheral.identifier} rssi=$rssi" }
         val uuid = peripheral.identifier
 
         val current = _discoveredStream.value
@@ -267,6 +258,7 @@ class FCentralManager(
 }
 
 private fun CBCentralManager.retrievePeripheral(id: NSUUID): CBPeripheral? {
-    val list: List<*> = listOf(id)
-    return this.retrievePeripheralsWithIdentifiers(list).firstOrNull() as? CBPeripheral
+    val list: List<NSUUID> = listOf(id)
+    val peripherals = this.retrievePeripheralsWithIdentifiers(list)
+    return peripherals.firstOrNull() as? CBPeripheral
 }
