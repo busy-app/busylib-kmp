@@ -4,6 +4,9 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import net.flipper.core.busylib.log.LogTagProvider
+import net.flipper.core.busylib.log.TaggedLogger
+import net.flipper.core.busylib.log.info
 import kotlin.reflect.KClass
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -12,7 +15,7 @@ import kotlin.time.TimeSource
 class DefaultObjectCache(
     private val aliveAfterRead: Duration = 5.seconds,
     private val aliveAfterWrite: Duration = Duration.Companion.INFINITE
-) : ObjectCache {
+) : ObjectCache, LogTagProvider by TaggedLogger("DefaultObjectCache") {
     private val mutex = Mutex()
     private val cache = mutableMapOf<KClass<*>, CacheEntry<*>>()
 
@@ -45,6 +48,7 @@ class DefaultObjectCache(
             .toMap()
             .filter { (_, value) -> (value as? CacheEntry.Created<*>?)?.isExpired == true }
             .filter { (_, value) -> value.mutex.tryLock() }
+            .also { info { "#clearExpired cleared ${it.size} old entries" } }
             .forEach { (clazz, value) ->
                 cache.remove(clazz)
                 value.mutex.unlock()
@@ -53,13 +57,14 @@ class DefaultObjectCache(
 
     private suspend fun <T : Any> replaceEntry(
         clazz: KClass<T>,
-        mutex: Mutex,
+        entityMutex: Mutex,
         block: suspend () -> T
     ): CacheEntry.Created<T> {
         val newEntry = CacheEntry.Created(
             value = block.invoke(),
-            mutex = mutex
+            mutex = entityMutex
         )
+        info { "#replaceEntry replaced entry $clazz with $newEntry" }
         mutex.withLock { cache.put(clazz, newEntry) }
         return newEntry
     }
@@ -74,12 +79,13 @@ class DefaultObjectCache(
             val entry = cache.getOrPut(clazz) { CacheEntry.Pending(Mutex()) }
             async {
                 entry.mutex.withLock {
-                    (entry as? CacheEntry.Created<T>)
-                        ?.value
+                    info { "#getOrElse got entry of $clazz with ignoreCache=$ignoreCache as $entry" }
+                    (entry as? CacheEntry.Created<*>)
+                        ?.let { entry -> entry.value as? T }
                         ?.takeIf { !ignoreCache }
                         ?: replaceEntry(
                             clazz = clazz,
-                            mutex = entry.mutex,
+                            entityMutex = entry.mutex,
                             block = block
                         ).value
                 }

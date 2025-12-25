@@ -7,7 +7,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.isActive
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
@@ -29,6 +28,7 @@ import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.merge
 import net.flipper.core.busylib.ktx.common.orEmpty
+import net.flipper.core.busylib.ktx.common.throttleLatest
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import kotlin.time.Duration.Companion.seconds
@@ -81,7 +81,7 @@ class FWiFiFeatureApiImpl(
             ?.getUpdateFlow(UpdateEvent.WIFI_STATUS)
             .orEmpty()
             .merge(flowOf(DefaultConsumable(false)))
-            .mapLatest { consumable ->
+            .throttleLatest { consumable ->
                 consumable.tryConsume { couldConsume ->
                     exponentialRetry {
                         rpcFeatureApi

@@ -4,7 +4,6 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapLatest
 import net.flipper.bridge.connection.feature.events.api.DefaultConsumable
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
 import net.flipper.bridge.connection.feature.events.api.UpdateEvent
@@ -18,6 +17,7 @@ import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.merge
 import net.flipper.core.busylib.ktx.common.orEmpty
+import net.flipper.core.busylib.ktx.common.throttleLatest
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
@@ -42,7 +42,7 @@ class FFirmwareUpdateFeatureApiImpl(
             ?.getUpdateFlow(UpdateEvent.UPDATER_UPDATE_STATUS)
             .orEmpty()
             .merge(flowOf(DefaultConsumable(false)))
-            .mapLatest { consumable ->
+            .throttleLatest { consumable ->
                 consumable.tryConsume { couldConsume ->
                     requireUpdateStatus(couldConsume)
                 }

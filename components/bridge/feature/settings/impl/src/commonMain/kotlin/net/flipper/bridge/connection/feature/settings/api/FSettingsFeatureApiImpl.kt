@@ -4,7 +4,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapLatest
 import me.tatarka.inject.annotations.Inject
 import me.tatarka.inject.annotations.IntoMap
 import me.tatarka.inject.annotations.Provides
@@ -28,6 +27,7 @@ import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.merge
 import net.flipper.core.busylib.ktx.common.orEmpty
+import net.flipper.core.busylib.ktx.common.throttleLatest
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
@@ -46,7 +46,7 @@ class FSettingsFeatureApiImpl(
             ?.getUpdateFlow(UpdateEvent.BRIGHTNESS)
             .orEmpty()
             .merge(flowOf(DefaultConsumable(false)))
-            .mapLatest { consumable ->
+            .throttleLatest { consumable ->
                 consumable.tryConsume { couldConsume ->
                     exponentialRetry {
                         rpcFeatureApi
@@ -65,7 +65,7 @@ class FSettingsFeatureApiImpl(
             ?.getUpdateFlow(UpdateEvent.AUDIO_VOLUME)
             .orEmpty()
             .merge(flowOf(DefaultConsumable(false)))
-            .mapLatest { consumable ->
+            .throttleLatest { consumable ->
                 consumable.tryConsume { couldConsume ->
                     exponentialRetry {
                         info { "#getVolumeFlow getting volume flow" }
@@ -91,7 +91,7 @@ class FSettingsFeatureApiImpl(
                 ?.getUpdateFlow(UpdateEvent.DEVICE_NAME)
                 .orEmpty()
                 .merge(flowOf(DefaultConsumable(false)))
-                .mapLatest { consumable ->
+                .throttleLatest { consumable ->
                     consumable.tryConsume { couldConsume ->
                         exponentialRetry {
                             rpcFeatureApi
