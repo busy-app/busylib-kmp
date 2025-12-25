@@ -11,16 +11,17 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceConnectionConfig
+import net.flipper.bridge.connection.transport.ble.api.MAX_ATTRIBUTE_SIZE
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
 import net.flipper.busylib.core.wrapper.WrappedSharedFlow
 import net.flipper.busylib.core.wrapper.WrappedStateFlow
 import net.flipper.busylib.core.wrapper.wrap
-import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.debug
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
 import net.flipper.core.busylib.log.warn
+import net.flipper.transport.ble.impl.chunked
 import net.flipper.transport.ble.impl.toByteArray
 import net.flipper.transport.ble.impl.toNSData
 import platform.CoreBluetooth.CBCharacteristic
@@ -31,7 +32,6 @@ import platform.CoreBluetooth.CBUUID
 import platform.Foundation.NSError
 import platform.Foundation.NSUUID
 import platform.darwin.NSObject
-import platform.posix.sleep
 
 interface FPeripheralApi {
     val identifier: NSUUID
@@ -49,10 +49,6 @@ interface FPeripheralApi {
     suspend fun onDisconnect()
     suspend fun onError(error: NSError)
 }
-
-// Max chunk size, limited by firmware:
-// https://github.com/flipperdevices/bsb-firmware/blob/d429cf84d9ec7a0160b22726491aca7aef259c8d/applications/system/ble_usart_echo/ble_usart_echo.c#L20
-private const val MAX_ATTRIBUTE_SIZE = 237
 
 @OptIn(ExperimentalForeignApi::class)
 @Suppress("TooManyFunctions")
@@ -216,20 +212,6 @@ class FPeripheral(
             // TODO MOB-2061
             delay(500L)
         }
-    }
-
-    fun ByteArray.chunked(size: Int): List<ByteArray> {
-        require(size > 0) { "Chunk size must be greater than 0." }
-        if (this.isEmpty()) return emptyList()
-        if (this.size <= size) return listOf(this)
-        val chunks = mutableListOf<ByteArray>()
-        var offset = 0
-        while (offset < this.size) {
-            val length = minOf(size, this.size - offset)
-            chunks.add(copyOfRange(offset, offset + length))
-            offset += length
-        }
-        return chunks
     }
 
     internal suspend fun handleDidDiscoverServices(

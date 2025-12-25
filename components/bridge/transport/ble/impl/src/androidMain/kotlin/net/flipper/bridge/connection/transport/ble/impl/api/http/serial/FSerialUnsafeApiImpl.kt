@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
+import net.flipper.bridge.connection.transport.ble.api.MAX_ATTRIBUTE_SIZE
 import net.flipper.bridge.connection.transport.ble.common.exception.BLEConnectionPermissionException
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
@@ -24,10 +25,6 @@ import no.nordicsemi.kotlin.ble.client.RemoteCharacteristic
 import no.nordicsemi.kotlin.ble.core.CharacteristicProperty
 import no.nordicsemi.kotlin.ble.core.WriteType
 import no.nordicsemi.kotlin.ble.core.util.chunked
-
-// Max chunk size, limited by firmware:
-// https://github.com/flipperdevices/bsb-firmware/blob/d429cf84d9ec7a0160b22726491aca7aef259c8d/applications/system/ble_usart_echo/ble_usart_echo.c#L20
-private const val MAX_ATTRIBUTE_SIZE = 237
 
 @Inject
 @OptIn(ExperimentalStdlibApi::class)

@@ -27,3 +27,17 @@ fun ByteArray.toNSData(): NSData {
         NSData.create(bytes = pinned.addressOf(0), length = size.toULong())
     }
 }
+
+fun ByteArray.chunked(size: Int): List<ByteArray> {
+    require(size > 0) { "Chunk size must be greater than 0." }
+    if (this.isEmpty()) return emptyList()
+    if (this.size <= size) return listOf(this)
+    val chunks = mutableListOf<ByteArray>()
+    var offset = 0
+    while (offset < this.size) {
+        val length = minOf(size, this.size - offset)
+        chunks.add(copyOfRange(offset, offset + length))
+        offset += length
+    }
+    return chunks
+}
