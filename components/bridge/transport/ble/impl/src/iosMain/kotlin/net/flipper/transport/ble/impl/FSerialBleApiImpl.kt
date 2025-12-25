@@ -21,7 +21,7 @@ class FSerialBleApiImpl(
         fPeripheralApi
             .rxDataStream
             .onEach {
-                channel.onByteReceive(it.toByteArray())
+                channel.onByteReceive(it)
             }
             .launchIn(scope + FlipperDispatchers.default)
     }
@@ -29,6 +29,6 @@ class FSerialBleApiImpl(
     override fun getReceiveByteChannel() = channel
 
     override suspend fun send(data: ByteArray) {
-        fPeripheralApi.writeValue(data.toNSData())
+        fPeripheralApi.writeValue(data)
     }
 }
