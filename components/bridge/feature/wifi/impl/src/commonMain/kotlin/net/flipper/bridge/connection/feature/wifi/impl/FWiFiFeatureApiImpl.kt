@@ -24,9 +24,11 @@ import net.flipper.bridge.connection.feature.wifi.api.model.WiFiNetwork
 import net.flipper.bridge.connection.feature.wifi.api.model.WiFiSecurity
 import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.wrap
+import net.flipper.core.busylib.ktx.common.DefaultConsumable
 import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.merge
 import net.flipper.core.busylib.ktx.common.orEmpty
+import net.flipper.core.busylib.ktx.common.throttleLatest
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import kotlin.time.Duration.Companion.seconds
@@ -78,13 +80,15 @@ class FWiFiFeatureApiImpl(
         return fEventsFeatureApi
             ?.getUpdateFlow(UpdateEvent.WIFI_STATUS)
             .orEmpty()
-            .merge(flowOf(null))
-            .map {
-                exponentialRetry {
-                    rpcFeatureApi
-                        .fRpcWifiApi
-                        .getWifiStatus()
-                        .onFailure { error(it) { "Failed to get WiFi networks" } }
+            .merge(flowOf(DefaultConsumable(false)))
+            .throttleLatest { consumable ->
+                consumable.tryConsume { couldConsume ->
+                    exponentialRetry {
+                        rpcFeatureApi
+                            .fRpcWifiApi
+                            .getWifiStatus(couldConsume)
+                            .onFailure { error(it) { "Failed to get WiFi networks" } }
+                    }
                 }
             }
             .wrap()

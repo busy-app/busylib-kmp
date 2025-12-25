@@ -5,11 +5,13 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.shareIn
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
+import net.flipper.bridge.connection.feature.events.api.ConsumableUpdateEvent
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
 import net.flipper.bridge.connection.feature.events.api.UpdateEvent
 import net.flipper.bridge.connection.transport.common.api.meta.FTransportMetaInfoApi
@@ -35,10 +37,11 @@ class FEventsFeatureApiImpl(
             .onEach { info { "Receive ${it?.toBitsString()}" } }
             .mapNotNull { byteArray -> byteArray?.let(::parse) }
             .onEach { info { "Receive updates: $it" } }
-            .collect { value -> emit(value) }
+            .map { updateEvents -> updateEvents.map(::ConsumableUpdateEvent) }
+            .collect { updateEvents -> updateEvents.forEach { event -> emit(event) } }
     }.shareIn(scope, SharingStarted.WhileSubscribed(5.seconds))
 
-    override fun getUpdatesFlow(): Flow<List<UpdateEvent>> = sharedIndicationFlow
+    override fun getUpdatesFlow(): Flow<ConsumableUpdateEvent> = sharedIndicationFlow
 
     private fun parse(byteArray: ByteArray): List<UpdateEvent> {
         val events = mutableListOf<UpdateEvent>()

@@ -16,14 +16,19 @@ import net.flipper.bridge.connection.feature.rpc.api.model.DisplayBrightnessInfo
 import net.flipper.bridge.connection.feature.rpc.api.model.NameInfo
 import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
 import net.flipper.bridge.connection.feature.rpc.impl.util.runSafely
+import net.flipper.core.busylib.ktx.common.cache.ObjectCache
+import net.flipper.core.busylib.ktx.common.cache.getOrElse
 
 class FRpcSettingsApiImpl(
     private val httpClient: HttpClient,
-    private val dispatcher: CoroutineDispatcher
+    private val dispatcher: CoroutineDispatcher,
+    private val objectCache: ObjectCache
 ) : FRpcSettingsApi {
-    override suspend fun getName(): Result<NameInfo> {
+    override suspend fun getName(ignoreCache: Boolean): Result<NameInfo> {
         return runSafely(dispatcher) {
-            httpClient.get("/api/name").body<NameInfo>()
+            objectCache.getOrElse(ignoreCache) {
+                httpClient.get("/api/name").body<NameInfo>()
+            }
         }
     }
 
@@ -36,9 +41,11 @@ class FRpcSettingsApiImpl(
         }
     }
 
-    override suspend fun getDisplayBrightness(): Result<DisplayBrightnessInfo> {
+    override suspend fun getDisplayBrightness(ignoreCache: Boolean): Result<DisplayBrightnessInfo> {
         return runSafely(dispatcher) {
-            httpClient.get("/api/display/brightness").body<DisplayBrightnessInfo>()
+            objectCache.getOrElse(ignoreCache) {
+                httpClient.get("/api/display/brightness").body<DisplayBrightnessInfo>()
+            }
         }
     }
 
@@ -61,9 +68,11 @@ class FRpcSettingsApiImpl(
         }
     }
 
-    override suspend fun getAudioVolume(): Result<AudioVolumeInfo> {
+    override suspend fun getAudioVolume(ignoreCache: Boolean): Result<AudioVolumeInfo> {
         return runSafely(dispatcher) {
-            httpClient.get("/api/audio/volume").body<AudioVolumeInfo>()
+            objectCache.getOrElse(ignoreCache) {
+                httpClient.get("/api/audio/volume").body<AudioVolumeInfo>()
+            }
         }
     }
 

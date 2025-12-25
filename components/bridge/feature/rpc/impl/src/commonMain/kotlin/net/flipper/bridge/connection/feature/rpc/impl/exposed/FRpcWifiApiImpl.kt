@@ -14,10 +14,13 @@ import net.flipper.bridge.connection.feature.rpc.api.model.NetworkResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.StatusResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
 import net.flipper.bridge.connection.feature.rpc.impl.util.runSafely
+import net.flipper.core.busylib.ktx.common.cache.ObjectCache
+import net.flipper.core.busylib.ktx.common.cache.getOrElse
 
 class FRpcWifiApiImpl(
     private val httpClient: HttpClient,
-    private val dispatcher: CoroutineDispatcher
+    private val dispatcher: CoroutineDispatcher,
+    private val objectCache: ObjectCache
 ) : FRpcWifiApi {
 
     override suspend fun getWifiNetworks(): Result<NetworkResponse> {
@@ -41,9 +44,9 @@ class FRpcWifiApiImpl(
         }
     }
 
-    override suspend fun getWifiStatus(): Result<StatusResponse> {
+    override suspend fun getWifiStatus(ignoreCache: Boolean): Result<StatusResponse> {
         return runSafely(dispatcher) {
-            httpClient.get("/api/wifi/status").body<StatusResponse>()
+            objectCache.getOrElse(ignoreCache) { httpClient.get("/api/wifi/status").body<StatusResponse>() }
         }
     }
 }

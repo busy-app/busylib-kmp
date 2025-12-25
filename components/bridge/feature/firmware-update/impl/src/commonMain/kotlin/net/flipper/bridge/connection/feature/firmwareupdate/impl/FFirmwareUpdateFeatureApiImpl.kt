@@ -13,9 +13,11 @@ import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.UpdateStatus
 import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.wrap
+import net.flipper.core.busylib.ktx.common.DefaultConsumable
 import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.merge
 import net.flipper.core.busylib.ktx.common.orEmpty
+import net.flipper.core.busylib.ktx.common.throttleLatest
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
@@ -27,10 +29,10 @@ class FFirmwareUpdateFeatureApiImpl(
 ) : FFirmwareUpdateFeatureApi, LogTagProvider {
     override val TAG: String = "FFirmwareUpdateFeatureApi"
 
-    private suspend fun requireUpdateStatus(): UpdateStatus {
+    private suspend fun requireUpdateStatus(ignoreCache: Boolean): UpdateStatus {
         return exponentialRetry {
             rpcFeatureApi.fRpcUpdaterApi
-                .getUpdateStatus()
+                .getUpdateStatus(ignoreCache)
                 .onFailure { throwable -> error(throwable) { "Failed to get update status" } }
         }
     }
@@ -39,13 +41,17 @@ class FFirmwareUpdateFeatureApiImpl(
         return fEventsFeatureApi
             ?.getUpdateFlow(UpdateEvent.UPDATER_UPDATE_STATUS)
             .orEmpty()
-            .merge(flowOf(null))
-            .map { requireUpdateStatus() }
+            .merge(flowOf(DefaultConsumable(false)))
+            .throttleLatest { consumable ->
+                consumable.tryConsume { couldConsume ->
+                    requireUpdateStatus(couldConsume)
+                }
+            }
             .wrap()
     }
 
     private suspend fun tryStartInstantUpdate(): Boolean {
-        val status = requireUpdateStatus()
+        val status = requireUpdateStatus(false)
         when (status.install.action) {
             UpdateStatus.Install.Action.APPLY,
             UpdateStatus.Install.Action.PREPARE,

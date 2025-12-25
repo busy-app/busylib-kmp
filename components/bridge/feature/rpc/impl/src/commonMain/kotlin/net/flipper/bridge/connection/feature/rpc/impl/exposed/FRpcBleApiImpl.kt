@@ -7,14 +7,19 @@ import kotlinx.coroutines.CoroutineDispatcher
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcBleApi
 import net.flipper.bridge.connection.feature.rpc.api.model.BleStatusResponse
 import net.flipper.bridge.connection.feature.rpc.impl.util.runSafely
+import net.flipper.core.busylib.ktx.common.cache.ObjectCache
+import net.flipper.core.busylib.ktx.common.cache.getOrElse
 
 class FRpcBleApiImpl(
     private val httpClient: HttpClient,
-    private val dispatcher: CoroutineDispatcher
+    private val dispatcher: CoroutineDispatcher,
+    private val objectCache: ObjectCache
 ) : FRpcBleApi {
-    override suspend fun getBleStatus(): Result<BleStatusResponse> {
+    override suspend fun getBleStatus(ignoreCache: Boolean): Result<BleStatusResponse> {
         return runSafely(dispatcher) {
-            httpClient.get("/api/ble/status").body<BleStatusResponse>()
+            objectCache.getOrElse(ignoreCache) {
+                httpClient.get("/api/ble/status").body<BleStatusResponse>()
+            }
         }
     }
 }
