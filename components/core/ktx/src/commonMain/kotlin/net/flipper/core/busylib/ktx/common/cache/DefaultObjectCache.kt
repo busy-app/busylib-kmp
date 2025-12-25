@@ -13,6 +13,7 @@ class DefaultObjectCache(
     private val aliveAfterRead: Duration = 5.seconds,
     private val aliveAfterWrite: Duration = Duration.Companion.INFINITE
 ) : ObjectCache {
+    private val mutex = Mutex()
     private val cache = mutableMapOf<KClass<*>, CacheEntry<*>>()
 
     sealed interface CacheEntry<T : Any> {
@@ -36,16 +37,28 @@ class DefaultObjectCache(
                 .and(this.writtenAt.plus(aliveAfterWrite).hasPassedNow())
         }
 
-    private val mutex = Mutex()
+    /**
+     * Clear expired entries only if entry's mutex is not locked
+     */
+    private fun clearExpired() {
+        cache
+            .toMap()
+            .filter { (_, value) -> (value as? CacheEntry.Created<*>?)?.isExpired == true }
+            .filter { (_, value) -> value.mutex.tryLock() }
+            .forEach { (clazz, value) ->
+                cache.remove(clazz)
+                value.mutex.unlock()
+            }
+    }
 
-    private suspend fun <T : Any> createEntry(
+    private suspend fun <T : Any> replaceEntry(
         clazz: KClass<T>,
-        entry: CacheEntry<*>,
+        mutex: Mutex,
         block: suspend () -> T
     ): CacheEntry.Created<T> {
         val newEntry = CacheEntry.Created(
             value = block.invoke(),
-            mutex = entry.mutex
+            mutex = mutex
         )
         mutex.withLock { cache.put(clazz, newEntry) }
         return newEntry
@@ -57,30 +70,18 @@ class DefaultObjectCache(
         block: suspend () -> T
     ): T = coroutineScope {
         mutex.withLock {
+            clearExpired()
             val entry = cache.getOrPut(clazz) { CacheEntry.Pending(Mutex()) }
             async {
                 entry.mutex.withLock {
-                    when (entry) {
-                        is CacheEntry.Created<*> -> {
-                            if (entry.isExpired || ignoreCache) {
-                                createEntry(
-                                    clazz = clazz,
-                                    entry = entry,
-                                    block = block
-                                ).value
-                            } else {
-                                entry.value as T
-                            }
-                        }
-
-                        is CacheEntry.Pending -> {
-                            createEntry(
-                                clazz = clazz,
-                                entry = entry,
-                                block = block
-                            ).value
-                        }
-                    }
+                    (entry as? CacheEntry.Created<T>)
+                        ?.value
+                        ?.takeIf { !ignoreCache }
+                        ?: replaceEntry(
+                            clazz = clazz,
+                            mutex = entry.mutex,
+                            block = block
+                        ).value
                 }
             }
         }.await()
@@ -88,7 +89,7 @@ class DefaultObjectCache(
 
     override suspend fun clear() {
         mutex.withLock {
-            val mutexes = cache.map { it.value.mutex }
+            val mutexes = cache.map { (_, entry) -> entry.mutex }
             mutexes.forEach { mutex -> mutex.lock() }
             cache.clear()
             mutexes.forEach { mutex -> mutex.unlock() }
