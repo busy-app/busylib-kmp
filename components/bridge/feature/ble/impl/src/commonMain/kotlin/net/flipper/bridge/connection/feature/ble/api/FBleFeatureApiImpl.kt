@@ -25,6 +25,7 @@ import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.merge
 import net.flipper.core.busylib.ktx.common.orEmpty
 import net.flipper.core.busylib.ktx.common.throttleLatest
+import net.flipper.core.busylib.ktx.common.tryConsume
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
@@ -60,13 +61,12 @@ class FBleFeatureApiImpl(
             .orEmpty()
             .merge(flowOf(DefaultConsumable(false)))
             .throttleLatest { consumable ->
-                consumable.tryConsume { couldConsume ->
-                    exponentialRetry {
-                        rpcFeatureApi.fRpcBleApi
-                            .getBleStatus(couldConsume)
-                            .onFailure { error(it) { "Failed to get Ble status" } }
-                            .map { response -> response.toFBleStatus() }
-                    }
+                val couldConsume = consumable.tryConsume()
+                exponentialRetry {
+                    rpcFeatureApi.fRpcBleApi
+                        .getBleStatus(couldConsume)
+                        .onFailure { error(it) { "Failed to get Ble status" } }
+                        .map { response -> response.toFBleStatus() }
                 }
             }
             .wrap()

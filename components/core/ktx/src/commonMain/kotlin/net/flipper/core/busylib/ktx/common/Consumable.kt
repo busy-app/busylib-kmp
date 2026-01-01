@@ -5,9 +5,19 @@ import kotlinx.coroutines.sync.withLock
 
 interface Consumable {
     /**
-     * @return true if it have been consumed, false if already consumed by another consumer
+     * @return true if it has been consumed, false if already consumed by another consumer
      */
     suspend fun <T> tryConsume(block: suspend (isConsumedSuccessfully: Boolean) -> T): T
+}
+
+/**
+ * Attempts to consume this instance and returns if the attempt
+ * was successful
+ *
+ * @return `true` if this call consumed the instance, `false` otherwise
+ */
+suspend fun Consumable.tryConsume(): Boolean {
+    return this.tryConsume { boolean -> boolean }
 }
 
 class DefaultConsumable(val isConsumedSuccessfully: Boolean) : Consumable {

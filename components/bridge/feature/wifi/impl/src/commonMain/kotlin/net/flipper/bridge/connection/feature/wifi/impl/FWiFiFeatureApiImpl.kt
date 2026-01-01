@@ -29,6 +29,7 @@ import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.merge
 import net.flipper.core.busylib.ktx.common.orEmpty
 import net.flipper.core.busylib.ktx.common.throttleLatest
+import net.flipper.core.busylib.ktx.common.tryConsume
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import kotlin.time.Duration.Companion.seconds
@@ -82,13 +83,12 @@ class FWiFiFeatureApiImpl(
             .orEmpty()
             .merge(flowOf(DefaultConsumable(false)))
             .throttleLatest { consumable ->
-                consumable.tryConsume { couldConsume ->
-                    exponentialRetry {
-                        rpcFeatureApi
-                            .fRpcWifiApi
-                            .getWifiStatus(couldConsume)
-                            .onFailure { error(it) { "Failed to get WiFi networks" } }
-                    }
+                val couldConsume = consumable.tryConsume()
+                exponentialRetry {
+                    rpcFeatureApi
+                        .fRpcWifiApi
+                        .getWifiStatus(couldConsume)
+                        .onFailure { error(it) { "Failed to get WiFi networks" } }
                 }
             }
             .wrap()

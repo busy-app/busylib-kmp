@@ -18,6 +18,7 @@ import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.merge
 import net.flipper.core.busylib.ktx.common.orEmpty
 import net.flipper.core.busylib.ktx.common.throttleLatest
+import net.flipper.core.busylib.ktx.common.tryConsume
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
@@ -43,9 +44,8 @@ class FFirmwareUpdateFeatureApiImpl(
             .orEmpty()
             .merge(flowOf(DefaultConsumable(false)))
             .throttleLatest { consumable ->
-                consumable.tryConsume { couldConsume ->
-                    requireUpdateStatus(couldConsume)
-                }
+                val couldConsume = consumable.tryConsume()
+                requireUpdateStatus(couldConsume)
             }
             .wrap()
     }

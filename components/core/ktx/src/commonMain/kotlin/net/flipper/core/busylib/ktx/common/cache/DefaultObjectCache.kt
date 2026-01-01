@@ -1,5 +1,7 @@
 package net.flipper.core.busylib.ktx.common.cache
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.sync.Mutex
@@ -24,7 +26,7 @@ class DefaultObjectCache(
         data class Pending(override val mutex: Mutex) : CacheEntry<Nothing>
 
         data class Created<T : Any>(
-            val value: T,
+            val deferredValue: Deferred<T>,
             override val mutex: Mutex
         ) : CacheEntry<T> {
             val writtenAt: TimeSource.Monotonic.ValueTimeMark = TimeSource.Monotonic.markNow()
@@ -53,13 +55,13 @@ class DefaultObjectCache(
             }
     }
 
-    private suspend fun <T : Any> replaceEntry(
+    private suspend fun <T : Any> CoroutineScope.replaceEntry(
         clazz: KClass<T>,
         entityMutex: Mutex,
         block: suspend () -> T
     ): CacheEntry.Created<T> {
         val newEntry = CacheEntry.Created(
-            value = block.invoke(),
+            deferredValue = async { block.invoke() },
             mutex = entityMutex
         )
         mutex.withLock { cache.put(clazz, newEntry) }
@@ -70,20 +72,20 @@ class DefaultObjectCache(
         ignoreCache: Boolean,
         clazz: KClass<T>,
         block: suspend () -> T
-    ): T = coroutineScope {
+    ): Deferred<T> = coroutineScope {
         mutex.withLock {
             clearExpired()
             val entry = cache.getOrPut(clazz) { CacheEntry.Pending(Mutex()) }
             async {
                 entry.mutex.withLock {
                     (entry as? CacheEntry.Created<*>)
-                        ?.let { entry -> entry.value as? T }
+                        ?.let { entry -> entry.deferredValue as? Deferred<T> }
                         ?.takeIf { !ignoreCache }
-                        ?: replaceEntry(
+                        ?: this@coroutineScope.replaceEntry(
                             clazz = clazz,
                             entityMutex = entry.mutex,
                             block = block
-                        ).value
+                        ).deferredValue
                 }
             }
         }.await()
