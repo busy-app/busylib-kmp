@@ -18,7 +18,7 @@ jobs:
       BUILD_NUMBER: ${{ steps.buildnumber.outputs.build_number }}
       MAJOR_VERSION: ${{ steps.properties.outputs.flipper-major_version }}
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v4
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v4
       # ${{ steps.buildnumber.outputs.build_number }}
       - name: Generate build number
         id: buildnumber
