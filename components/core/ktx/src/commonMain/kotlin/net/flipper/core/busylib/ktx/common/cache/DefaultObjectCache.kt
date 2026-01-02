@@ -2,10 +2,12 @@ package net.flipper.core.busylib.ktx.common.cache
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.TaggedLogger
 import kotlin.reflect.KClass
@@ -73,22 +75,24 @@ class DefaultObjectCache(
         clazz: KClass<T>,
         block: suspend () -> T
     ): Deferred<T> = coroutineScope {
-        mutex.withLock {
-            clearExpired()
-            val entry = cache.getOrPut(clazz) { CacheEntry.Pending(Mutex()) }
-            async {
-                entry.mutex.withLock {
-                    (entry as? CacheEntry.Created<*>)
-                        ?.let { entry -> entry.deferredValue as? Deferred<T> }
-                        ?.takeIf { !ignoreCache }
-                        ?: this@coroutineScope.replaceEntry(
-                            clazz = clazz,
-                            entityMutex = entry.mutex,
-                            block = block
-                        ).deferredValue
+        withContext(NonCancellable) {
+            mutex.withLock {
+                clearExpired()
+                val entry = cache.getOrPut(clazz) { CacheEntry.Pending(Mutex()) }
+                async {
+                    entry.mutex.withLock {
+                        (entry as? CacheEntry.Created<*>)
+                            ?.let { entry -> entry.deferredValue as? Deferred<T> }
+                            ?.takeIf { !ignoreCache }
+                            ?: this@coroutineScope.replaceEntry(
+                                clazz = clazz,
+                                entityMutex = entry.mutex,
+                                block = block
+                            ).deferredValue
+                    }
                 }
-            }
-        }.await()
+            }.await()
+        }
     }
 
     override suspend fun clear() {
