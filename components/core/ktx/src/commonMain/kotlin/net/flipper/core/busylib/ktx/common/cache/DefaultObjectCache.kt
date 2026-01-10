@@ -16,7 +16,7 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 
 class DefaultObjectCache(
-    private val aliveAfterRead: Duration = 5.seconds,
+    private val aliveAfterRead: Duration = 15.seconds,
     private val aliveAfterWrite: Duration = Duration.INFINITE
 ) : ObjectCache, LogTagProvider by TaggedLogger("DefaultObjectCache") {
     private val mutex = Mutex()
@@ -28,9 +28,9 @@ class DefaultObjectCache(
 
         data class Created<T : Any>(
             val deferredValue: Deferred<T>,
+            val lastReadAt: TimeSource.Monotonic.ValueTimeMark = TimeSource.Monotonic.markNow()
         ) : CacheEntry<T> {
             val writtenAt: TimeSource.Monotonic.ValueTimeMark = TimeSource.Monotonic.markNow()
-            var lastReadAt: TimeSource.Monotonic.ValueTimeMark = TimeSource.Monotonic.markNow()
         }
     }
 
@@ -51,7 +51,7 @@ class DefaultObjectCache(
             .forEach { (clazz, _) -> cache.remove(clazz) }
     }
 
-    private suspend fun <T : Any> CoroutineScope.replaceEntry(
+    private suspend fun <T : Any> CoroutineScope.putEntry(
         clazz: KClass<T>,
         block: suspend () -> T
     ): CacheEntry.Created<T> {
@@ -59,6 +59,22 @@ class DefaultObjectCache(
             deferredValue = async { block.invoke() },
         )
         cache[clazz] = newEntry
+        return newEntry
+    }
+
+    /**
+     * @return entry and update it's [CacheEntry.Created.lastReadAt]
+     */
+    private fun getEntry(clazz: KClass<*>): CacheEntry<*> {
+        val entry = cache.getOrPut(clazz) { CacheEntry.Pending }
+        val newEntry = when (entry) {
+            is CacheEntry.Created<*> -> {
+                entry.copy(lastReadAt = TimeSource.Monotonic.markNow())
+            }
+
+            CacheEntry.Pending -> entry
+        }
+        cache[clazz] = entry
         return newEntry
     }
 
@@ -70,11 +86,11 @@ class DefaultObjectCache(
         withContext(NonCancellable) {
             mutex.withLock {
                 clearExpiredUnsafe()
-                val entry = cache.getOrPut(clazz) { CacheEntry.Pending }
+                val entry = getEntry(clazz)
                 (entry as? CacheEntry.Created<*>)
                     ?.let { entry -> entry.deferredValue as? Deferred<T> }
                     ?.takeIf { !ignoreCache }
-                    ?: this@coroutineScope.replaceEntry(
+                    ?: this@coroutineScope.putEntry(
                         clazz = clazz,
                         block = block
                     ).deferredValue
