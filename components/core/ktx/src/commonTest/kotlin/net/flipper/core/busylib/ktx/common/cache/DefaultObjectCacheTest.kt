@@ -705,7 +705,7 @@ class DefaultObjectCacheTest {
     fun GIVEN_cache_with_test_time_WHEN_both_durations_expire_THEN_entry_removed() = runTest {
         val timeProvider = TestTimeProvider()
         val cache = DefaultObjectCache(
-            aliveAfterRead = 100.milliseconds,
+            aliveAfterRead = 170.milliseconds,
             aliveAfterWrite = 200.milliseconds,
             timeProvider = timeProvider
         )

@@ -6,9 +6,9 @@ import io.ktor.client.request.get
 import kotlinx.coroutines.CoroutineDispatcher
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcBleApi
 import net.flipper.bridge.connection.feature.rpc.api.model.BleStatusResponse
-import net.flipper.bridge.connection.feature.rpc.impl.util.runSafely
 import net.flipper.core.busylib.ktx.common.cache.ObjectCache
 import net.flipper.core.busylib.ktx.common.cache.getOrElse
+import net.flipper.core.busylib.ktx.common.runSuspendCatching
 
 class FRpcBleApiImpl(
     private val httpClient: HttpClient,
@@ -16,7 +16,7 @@ class FRpcBleApiImpl(
     private val objectCache: ObjectCache
 ) : FRpcBleApi {
     override suspend fun getBleStatus(ignoreCache: Boolean): Result<BleStatusResponse> {
-        return runSafely(dispatcher) {
+        return runSuspendCatching(dispatcher) {
             objectCache.getOrElse(ignoreCache) {
                 httpClient.get("/api/ble/status").body<BleStatusResponse>()
             }

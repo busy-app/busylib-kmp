@@ -5,7 +5,7 @@ import kotlin.reflect.KClass
 
 interface ObjectCache {
     /**
-     * @return either cached request or one executed by [block] if [key] is different from previous
+     * @return either cached request or one executed by [block] if [clazz] is different from previous
      */
     suspend fun <T : Any> getOrElse(
         ignoreCache: Boolean,

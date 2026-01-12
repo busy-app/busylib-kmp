@@ -1,6 +1,5 @@
 package net.flipper.core.busylib.ktx.common.cache
 
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
@@ -38,7 +37,7 @@ class DefaultObjectCache(
         get() {
             return this.lastReadAt.plus(aliveAfterRead)
                 .hasPassedNow()
-                .and(this.writtenAt.plus(aliveAfterWrite).hasPassedNow())
+                .or(this.writtenAt.plus(aliveAfterWrite).hasPassedNow())
         }
 
     /**
@@ -51,10 +50,10 @@ class DefaultObjectCache(
             .forEach { (clazz, _) -> cache.remove(clazz) }
     }
 
-    private suspend fun <T : Any> CoroutineScope.putEntry(
+    private suspend fun <T : Any> putEntry(
         clazz: KClass<T>,
         block: suspend () -> T
-    ): CacheEntry.Created<T> {
+    ): CacheEntry.Created<T> = coroutineScope {
         val now = timeProvider.markNow()
         val newEntry = CacheEntry.Created(
             deferredValue = async { block.invoke() },
@@ -62,11 +61,11 @@ class DefaultObjectCache(
             writtenAt = now
         )
         cache[clazz] = newEntry
-        return newEntry
+        return@coroutineScope newEntry
     }
 
     /**
-     * @return entry and update it's [CacheEntry.Created.lastReadAt]
+     * @return entry and update its [CacheEntry.Created.lastReadAt]
      */
     private fun getEntry(clazz: KClass<*>): CacheEntry<*> {
         val entry = cache.getOrPut(clazz) { CacheEntry.Pending }
@@ -77,7 +76,7 @@ class DefaultObjectCache(
 
             CacheEntry.Pending -> entry
         }
-        cache[clazz] = entry
+        cache[clazz] = newEntry
         return newEntry
     }
 
@@ -86,14 +85,14 @@ class DefaultObjectCache(
         clazz: KClass<T>,
         block: suspend () -> T
     ): Deferred<T> = coroutineScope {
-        withContext(NonCancellable) {
-            mutex.withLock {
-                clearExpiredUnsafe()
+        mutex.withLock {
+            clearExpiredUnsafe()
+            withContext(NonCancellable) {
                 val entry = getEntry(clazz)
                 (entry as? CacheEntry.Created<*>)
                     ?.let { entry -> entry.deferredValue as? Deferred<T> }
                     ?.takeIf { !ignoreCache }
-                    ?: this@coroutineScope.putEntry(
+                    ?: putEntry(
                         clazz = clazz,
                         block = block
                     ).deferredValue

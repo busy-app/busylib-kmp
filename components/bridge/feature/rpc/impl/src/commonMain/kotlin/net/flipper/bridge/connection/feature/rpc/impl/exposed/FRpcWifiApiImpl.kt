@@ -13,9 +13,9 @@ import net.flipper.bridge.connection.feature.rpc.api.model.ConnectRequestConfig
 import net.flipper.bridge.connection.feature.rpc.api.model.NetworkResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.StatusResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
-import net.flipper.bridge.connection.feature.rpc.impl.util.runSafely
 import net.flipper.core.busylib.ktx.common.cache.ObjectCache
 import net.flipper.core.busylib.ktx.common.cache.getOrElse
+import net.flipper.core.busylib.ktx.common.runSuspendCatching
 
 class FRpcWifiApiImpl(
     private val httpClient: HttpClient,
@@ -24,13 +24,13 @@ class FRpcWifiApiImpl(
 ) : FRpcWifiApi {
 
     override suspend fun getWifiNetworks(): Result<NetworkResponse> {
-        return runSafely(dispatcher) {
+        return runSuspendCatching(dispatcher) {
             httpClient.get("/api/wifi/networks").body<NetworkResponse>()
         }
     }
 
     override suspend fun connectWifi(config: ConnectRequestConfig): Result<SuccessResponse> {
-        return runSafely(dispatcher) {
+        return runSuspendCatching(dispatcher) {
             httpClient.post("/api/wifi/connect") {
                 contentType(ContentType.Application.Json)
                 setBody(config)
@@ -39,13 +39,13 @@ class FRpcWifiApiImpl(
     }
 
     override suspend fun disconnectWifi(): Result<SuccessResponse> {
-        return runSafely(dispatcher) {
+        return runSuspendCatching(dispatcher) {
             httpClient.post("/api/wifi/disconnect").body<SuccessResponse>()
         }
     }
 
     override suspend fun getWifiStatus(ignoreCache: Boolean): Result<StatusResponse> {
-        return runSafely(dispatcher) {
+        return runSuspendCatching(dispatcher) {
             objectCache.getOrElse(ignoreCache) { httpClient.get("/api/wifi/status").body<StatusResponse>() }
         }
     }

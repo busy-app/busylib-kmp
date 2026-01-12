@@ -10,9 +10,9 @@ import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcUpdaterApi
 import net.flipper.bridge.connection.feature.rpc.api.model.GetUpdateChangelogResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.UpdateStatus
-import net.flipper.bridge.connection.feature.rpc.impl.util.runSafely
 import net.flipper.core.busylib.ktx.common.cache.ObjectCache
 import net.flipper.core.busylib.ktx.common.cache.getOrElse
+import net.flipper.core.busylib.ktx.common.runSuspendCatching
 
 class FRpcUpdaterApiImpl(
     private val httpClient: HttpClient,
@@ -20,13 +20,13 @@ class FRpcUpdaterApiImpl(
     private val objectCache: ObjectCache
 ) : FRpcUpdaterApi {
     override suspend fun startUpdateCheck(): Result<SuccessResponse> {
-        return runSafely(dispatcher) {
+        return runSuspendCatching(dispatcher) {
             httpClient.post("/api/update/check").body<SuccessResponse>()
         }
     }
 
     override suspend fun getUpdateStatus(ignoreCache: Boolean): Result<UpdateStatus> {
-        return runSafely(dispatcher) {
+        return runSuspendCatching(dispatcher) {
             objectCache.getOrElse(ignoreCache) {
                 httpClient.get("/api/update/status").body<UpdateStatus>()
             }
@@ -34,7 +34,7 @@ class FRpcUpdaterApiImpl(
     }
 
     override suspend fun getUpdateChangelog(version: String): Result<GetUpdateChangelogResponse> {
-        return runSafely(dispatcher) {
+        return runSuspendCatching(dispatcher) {
             httpClient.get("/api/update/changelog") {
                 parameter("version", version)
             }.body<GetUpdateChangelogResponse>()
@@ -42,7 +42,7 @@ class FRpcUpdaterApiImpl(
     }
 
     override suspend fun startUpdateInstall(version: String): Result<SuccessResponse> {
-        return runSafely(dispatcher) {
+        return runSuspendCatching(dispatcher) {
             httpClient.post("/api/update/install") {
                 parameter("version", version)
             }.body<SuccessResponse>()
@@ -50,7 +50,7 @@ class FRpcUpdaterApiImpl(
     }
 
     override suspend fun startUpdateAbortDownload(): Result<SuccessResponse> {
-        return runSafely(dispatcher) {
+        return runSuspendCatching(dispatcher) {
             httpClient.post("/api/update/abort_download").body<SuccessResponse>()
         }
     }
