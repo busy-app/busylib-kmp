@@ -11,13 +11,14 @@ import kotlinx.coroutines.withContext
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.TaggedLogger
 import kotlin.reflect.KClass
+import kotlin.time.ComparableTimeMark
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
-import kotlin.time.TimeSource
 
 class DefaultObjectCache(
     private val aliveAfterRead: Duration = 15.seconds,
-    private val aliveAfterWrite: Duration = Duration.INFINITE
+    private val aliveAfterWrite: Duration = Duration.INFINITE,
+    private val timeProvider: TimeProvider = SystemTimeProvider()
 ) : ObjectCache, LogTagProvider by TaggedLogger("DefaultObjectCache") {
     private val mutex = Mutex()
     private val cache = mutableMapOf<KClass<*>, CacheEntry<*>>()
@@ -28,10 +29,9 @@ class DefaultObjectCache(
 
         data class Created<T : Any>(
             val deferredValue: Deferred<T>,
-            val lastReadAt: TimeSource.Monotonic.ValueTimeMark = TimeSource.Monotonic.markNow()
-        ) : CacheEntry<T> {
-            val writtenAt: TimeSource.Monotonic.ValueTimeMark = TimeSource.Monotonic.markNow()
-        }
+            val lastReadAt: ComparableTimeMark,
+            val writtenAt: ComparableTimeMark
+        ) : CacheEntry<T>
     }
 
     private val CacheEntry.Created<*>.isExpired: Boolean
@@ -55,8 +55,11 @@ class DefaultObjectCache(
         clazz: KClass<T>,
         block: suspend () -> T
     ): CacheEntry.Created<T> {
+        val now = timeProvider.markNow()
         val newEntry = CacheEntry.Created(
             deferredValue = async { block.invoke() },
+            lastReadAt = now,
+            writtenAt = now
         )
         cache[clazz] = newEntry
         return newEntry
@@ -69,7 +72,7 @@ class DefaultObjectCache(
         val entry = cache.getOrPut(clazz) { CacheEntry.Pending }
         val newEntry = when (entry) {
             is CacheEntry.Created<*> -> {
-                entry.copy(lastReadAt = TimeSource.Monotonic.markNow())
+                entry.copy(lastReadAt = timeProvider.markNow())
             }
 
             CacheEntry.Pending -> entry
