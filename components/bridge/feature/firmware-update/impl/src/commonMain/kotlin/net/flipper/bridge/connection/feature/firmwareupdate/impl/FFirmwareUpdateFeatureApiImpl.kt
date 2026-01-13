@@ -1,9 +1,6 @@
 package net.flipper.bridge.connection.feature.firmwareupdate.impl
 
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
 import net.flipper.bridge.connection.feature.events.api.UpdateEvent
 import net.flipper.bridge.connection.feature.events.api.getUpdateFlow
@@ -21,7 +18,6 @@ import net.flipper.core.busylib.ktx.common.throttleLatest
 import net.flipper.core.busylib.ktx.common.tryConsume
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
-import net.flipper.core.busylib.log.info
 
 @Suppress("UnusedPrivateProperty")
 class FFirmwareUpdateFeatureApiImpl(
@@ -30,14 +26,6 @@ class FFirmwareUpdateFeatureApiImpl(
 ) : FFirmwareUpdateFeatureApi, LogTagProvider {
     override val TAG: String = "FFirmwareUpdateFeatureApi"
 
-    private suspend fun requireUpdateStatus(ignoreCache: Boolean): UpdateStatus {
-        return exponentialRetry {
-            rpcFeatureApi.fRpcUpdaterApi
-                .getUpdateStatus(ignoreCache)
-                .onFailure { throwable -> error(throwable) { "Failed to get update status" } }
-        }
-    }
-
     override fun getUpdateStatusFlow(): WrappedFlow<UpdateStatus> {
         return fEventsFeatureApi
             ?.getUpdateFlow(UpdateEvent.UPDATER_UPDATE_STATUS)
@@ -45,44 +33,23 @@ class FFirmwareUpdateFeatureApiImpl(
             .merge(flowOf(DefaultConsumable(false)))
             .throttleLatest { consumable ->
                 val couldConsume = consumable.tryConsume()
-                requireUpdateStatus(couldConsume)
+                exponentialRetry {
+                    rpcFeatureApi.fRpcUpdaterApi
+                        .getUpdateStatus(couldConsume)
+                        .onFailure { throwable -> error(throwable) { "Failed to get update status" } }
+                }
             }
             .wrap()
     }
 
-    private suspend fun tryStartInstantUpdate(): Boolean {
-        val status = requireUpdateStatus(false)
-        when (status.install.action) {
-            UpdateStatus.Install.Action.APPLY,
-            UpdateStatus.Install.Action.PREPARE,
-            UpdateStatus.Install.Action.UNPACK,
-            UpdateStatus.Install.Action.SHA_VERIFICATION,
-            UpdateStatus.Install.Action.DOWNLOAD -> {
-                info { "#tryStartInstantUpdate already downloading" }
-                return true
-            }
-
-            UpdateStatus.Install.Action.NONE -> Unit
-        }
-        val version = status
-            .check
-            .availableVersion
-            .takeIf(String::isNotEmpty)
-        if (version == null) return false
-        info { "#tryStartInstantUpdate got new version $version" }
-        return rpcFeatureApi.fRpcUpdaterApi.startUpdateInstall(version).isSuccess
-    }
-
-    override suspend fun beginFirmwareUpdate(): Result<Unit> {
-        if (tryStartInstantUpdate()) return Result.success(Unit)
-
-        rpcFeatureApi.fRpcUpdaterApi.startUpdateCheck()
+    override suspend fun startUpdateCheck(): Result<Unit> {
+        return rpcFeatureApi.fRpcUpdaterApi.startUpdateCheck()
             .onFailure { throwable -> error(throwable) { "#tryStartInstantUpdate could not start update check" } }
             .onFailure { throwable -> return Result.failure(throwable) }
-        val version = getUpdateStatusFlow()
-            .map { status -> status.check.availableVersion }
-            .filter { version -> version.isNotEmpty() }
-            .first()
+            .map { }
+    }
+
+    override suspend fun startVersionInstall(version: String): Result<Unit> {
         return rpcFeatureApi.fRpcUpdaterApi.startUpdateInstall(version).map { }
     }
 
@@ -90,11 +57,7 @@ class FFirmwareUpdateFeatureApiImpl(
         return rpcFeatureApi.fRpcUpdaterApi.startUpdateAbortDownload().map { }
     }
 
-    override suspend fun getNextVersionChangelog(): Result<BsbVersionChangelog> {
-        val version = getUpdateStatusFlow()
-            .map { status -> status.check.availableVersion }
-            .filter { version -> version.isNotEmpty() }
-            .first()
+    override suspend fun getVersionChangelog(version: String): Result<BsbVersionChangelog> {
         return rpcFeatureApi.fRpcUpdaterApi
             .getUpdateChangelog(version)
             .map { changelog ->
