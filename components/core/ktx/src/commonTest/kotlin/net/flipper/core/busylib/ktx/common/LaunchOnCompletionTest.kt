@@ -193,6 +193,6 @@ class LaunchOnCompletionTest {
     }
 
     companion object {
-        private val TIMEOUT = 10.seconds
+        private val TIMEOUT = 2.seconds
     }
 }
