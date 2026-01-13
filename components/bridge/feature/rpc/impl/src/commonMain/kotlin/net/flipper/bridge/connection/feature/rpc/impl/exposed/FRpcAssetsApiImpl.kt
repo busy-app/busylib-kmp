@@ -12,7 +12,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcAssetsApi
 import net.flipper.bridge.connection.feature.rpc.api.model.DrawRequest
 import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
-import net.flipper.bridge.connection.feature.rpc.impl.util.runSafely
+import net.flipper.core.busylib.ktx.common.runSuspendCatching
 
 class FRpcAssetsApiImpl(
     private val httpClient: HttpClient,
@@ -23,7 +23,7 @@ class FRpcAssetsApiImpl(
         file: String,
         content: ByteArray
     ): Result<SuccessResponse> {
-        return runSafely(dispatcher) {
+        return runSuspendCatching(dispatcher) {
             httpClient.post("/api/assets/upload") {
                 parameter("app_id", appId)
                 parameter("file", file)
@@ -36,7 +36,7 @@ class FRpcAssetsApiImpl(
     override suspend fun displayDraw(
         request: DrawRequest
     ): Result<SuccessResponse> {
-        return runSafely(dispatcher) {
+        return runSuspendCatching(dispatcher) {
             httpClient.post("/api/display/draw") {
                 contentType(ContentType.Application.Json)
                 setBody(request)
@@ -47,7 +47,7 @@ class FRpcAssetsApiImpl(
     override suspend fun removeDraw(
         appId: String
     ): Result<SuccessResponse> {
-        return runSafely(dispatcher) {
+        return runSuspendCatching(dispatcher) {
             httpClient.delete("/api/display/draw") {
                 parameter("app_id", appId)
             }.body<SuccessResponse>()

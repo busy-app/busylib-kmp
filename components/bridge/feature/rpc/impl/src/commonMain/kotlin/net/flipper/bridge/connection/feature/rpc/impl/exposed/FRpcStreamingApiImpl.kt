@@ -9,14 +9,14 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpHeaders
 import kotlinx.coroutines.CoroutineDispatcher
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcStreamingApi
-import net.flipper.bridge.connection.feature.rpc.impl.util.runSafely
+import net.flipper.core.busylib.ktx.common.runSuspendCatching
 
 class FRpcStreamingApiImpl(
     private val httpClient: HttpClient,
     private val dispatcher: CoroutineDispatcher
 ) : FRpcStreamingApi {
     override suspend fun getScreen(display: Int): Result<String> {
-        return runSafely(dispatcher) {
+        return runSuspendCatching(dispatcher) {
             httpClient.get {
                 url("/api/screen")
                 header(HttpHeaders.Accept, "image/bmp")
