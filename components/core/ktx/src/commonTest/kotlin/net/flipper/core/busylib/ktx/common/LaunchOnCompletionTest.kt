@@ -7,15 +7,12 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.timeout
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.job
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -36,7 +33,7 @@ class LaunchOnCompletionTest {
     ): T {
         return try {
             withContext(Dispatchers.Default.limitedParallelism(1)) {
-                withTimeout(timeout * 5) {
+                withTimeout(timeout) {
                     first()
                 }
             }
@@ -64,7 +61,6 @@ class LaunchOnCompletionTest {
                 cancellableScope.launchOnCompletion {
                     executionFlagFlow.update { true }
                 }
-
                 cancellableScope.cancel()
             }
             assertTrue(
@@ -73,7 +69,6 @@ class LaunchOnCompletionTest {
                     .timeoutFirst(TIMEOUT) { "Completion block should be executed after scope cancellation" },
                 message = "Completion block should be executed after scope cancellation"
             )
-            delay(3000L)
         }
     }
 
@@ -90,12 +85,9 @@ class LaunchOnCompletionTest {
                         cancellationCountFlow.update { count -> count + 1 }
                     }
                 }
-
                 cancellableScope.launchOnCompletion {
                     executionCountFlow.update { count -> count + 1 }
                 }
-
-                delay(50)
                 cancellableScope.cancel()
             }
             assertEquals(
@@ -153,7 +145,6 @@ class LaunchOnCompletionTest {
     fun GIVEN_custom_scope_with_launchOnCompletion_WHEN_block_throws_exception_THEN_exception_does_not_affect_parent() {
         runTest {
             val mutex = Mutex()
-
             val executionFlagFlow = MutableStateFlow(false)
 
             CoroutineScope(Job(backgroundScope.coroutineContext.job)).let { cancellableScope ->
@@ -164,7 +155,6 @@ class LaunchOnCompletionTest {
                 cancellableScope.launchOnCompletion(mutex) {
                     executionFlagFlow.update { true }
                 }
-
                 cancellableScope.cancel()
             }
 
@@ -188,7 +178,6 @@ class LaunchOnCompletionTest {
                 cancellableScope.launchOnCompletion {
                     executionFlagFlow.update { true }
                 }
-
                 cancellableScope.cancel()
             }
 
@@ -206,10 +195,6 @@ class LaunchOnCompletionTest {
     fun GIVEN_custom_scope_with_launchOnCompletion_WHEN_scope_completes_naturally_THEN_block_is_executed() {
         val executionFlagFlow = MutableStateFlow(false)
         runTest {
-            backgroundScope.launch {
-                delay(50)
-            }
-
             backgroundScope.launchOnCompletion {
                 executionFlagFlow.update { true }
             }
