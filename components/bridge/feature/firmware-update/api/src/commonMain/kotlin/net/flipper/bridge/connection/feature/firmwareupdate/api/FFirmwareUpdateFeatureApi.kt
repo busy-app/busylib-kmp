@@ -7,15 +7,12 @@ import net.flipper.busylib.core.wrapper.WrappedFlow
 
 interface FFirmwareUpdateFeatureApi : FDeviceFeatureApi {
     fun getUpdateStatusFlow(): WrappedFlow<UpdateStatus>
-
-    /**
-     * Start firmware download and after automatically install
-     */
-    suspend fun beginFirmwareUpdate(): Result<Unit>
+    suspend fun startUpdateCheck(): Result<Unit>
+    suspend fun startVersionInstall(version: String): Result<Unit>
 
     /**
      * Force stop firmware download if possible
      */
     suspend fun stopFirmwareUpdate(): Result<Unit>
-    suspend fun getNextVersionChangelog(): Result<BsbVersionChangelog>
+    suspend fun getVersionChangelog(version: String): Result<BsbVersionChangelog>
 }
