@@ -5,6 +5,7 @@ import kotlinx.coroutines.CoroutineScope
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.api.scanner.FlipperScanner
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
+import net.flipper.bridge.connection.feature.firmwareupdate.updater.api.UpdaterApi
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
 import net.flipper.bridge.connection.service.api.FConnectionService
@@ -19,6 +20,7 @@ class BUSYLibAndroid(
     override val connectionService: FConnectionService,
     override val orchestrator: FDeviceOrchestrator,
     override val featureProvider: FFeatureProvider,
+    override val updaterApi: UpdaterApi,
     val flipperScanner: FlipperScanner,
     val centralManager: CentralManager
 ) : BUSYLib {
@@ -36,7 +38,7 @@ class BUSYLibAndroid(
                 principalApi,
                 busyLibBarsApi,
                 persistedStorage,
-                context
+                context,
             )
             return graph.busyLib
         }
