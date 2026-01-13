@@ -33,7 +33,7 @@ class TestTimeProvider : TimeProvider {
     /**
      * Custom TimeMark implementation for testing that uses virtual time
      */
-    private class TestTimeMark(
+    private data class TestTimeMark(
         private val markedAt: Duration,
         private val provider: TestTimeProvider
     ) : ComparableTimeMark {
@@ -64,20 +64,6 @@ class TestTimeProvider : TimeProvider {
 
         override fun hasNotPassedNow(): Boolean {
             return provider.currentVirtualTime < markedAt
-        }
-
-        override fun equals(other: Any?): Boolean {
-            if (this === other) return true
-            if (other !is TestTimeMark) return false
-            if (markedAt != other.markedAt) return false
-            if (provider !== other.provider) return false
-            return true
-        }
-
-        override fun hashCode(): Int {
-            var result = markedAt.hashCode()
-            result = 31 * result + provider.hashCode()
-            return result
         }
     }
 }
