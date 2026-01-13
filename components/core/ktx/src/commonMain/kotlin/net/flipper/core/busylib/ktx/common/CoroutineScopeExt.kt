@@ -17,7 +17,7 @@ fun CoroutineScope.launchOnCompletion(block: suspend () -> Unit) {
                 try {
                     block.invoke()
                 } catch (t: Throwable) {
-                    error(t) { "#launchOnCompletion could not execute block" }
+                    error(t) { "#launchOnCompletion 7 could not execute block" }
                 }
             }
         }
