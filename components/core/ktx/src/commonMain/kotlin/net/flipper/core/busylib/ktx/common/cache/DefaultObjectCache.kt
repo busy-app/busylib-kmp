@@ -1,5 +1,6 @@
 package net.flipper.core.busylib.ktx.common.cache
 
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
@@ -50,18 +51,19 @@ class DefaultObjectCache(
             .forEach { (clazz, _) -> cache.remove(clazz) }
     }
 
-    private suspend fun <T : Any> putEntry(
+    private fun <T : Any> putEntry(
         clazz: KClass<T>,
+        scope: CoroutineScope,
         block: suspend () -> T
-    ): CacheEntry.Created<T> = coroutineScope {
+    ): CacheEntry.Created<T> {
         val now = timeProvider.markNow()
         val newEntry = CacheEntry.Created(
-            deferredValue = async { block.invoke() },
+            deferredValue = scope.async { block.invoke() },
             lastReadAt = now,
             writtenAt = now
         )
         cache[clazz] = newEntry
-        return@coroutineScope newEntry
+        return newEntry
     }
 
     /**
@@ -85,15 +87,16 @@ class DefaultObjectCache(
         clazz: KClass<T>,
         block: suspend () -> T
     ): Deferred<T> = coroutineScope {
-        mutex.withLock {
-            clearExpiredUnsafe()
-            withContext(NonCancellable) {
+        withContext(NonCancellable) {
+            mutex.withLock {
+                clearExpiredUnsafe()
                 val entry = getEntry(clazz)
                 (entry as? CacheEntry.Created<*>)
                     ?.let { entry -> entry.deferredValue as? Deferred<T> }
                     ?.takeIf { !ignoreCache }
                     ?: putEntry(
                         clazz = clazz,
+                        scope = this,
                         block = block
                     ).deferredValue
             }

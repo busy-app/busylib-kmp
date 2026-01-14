@@ -31,4 +31,8 @@ class FSerialBleApiImpl(
     override suspend fun send(data: ByteArray) {
         fPeripheralApi.writeValue(data)
     }
+
+    override fun close() {
+        channel.cancel(null)
+    }
 }
