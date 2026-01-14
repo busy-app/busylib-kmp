@@ -19,6 +19,9 @@ import io.ktor.utils.io.InternalAPI
 import io.ktor.utils.io.core.BytePacketBuilder
 import io.ktor.utils.io.core.remaining
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
 import kotlinx.io.InternalIoApi
@@ -29,15 +32,24 @@ import net.flipper.bridge.connection.transport.ble.http.exception.BadHttpRespons
 import net.flipper.bridge.connection.transport.common.utils.toRawHttpRequestString
 import net.flipper.core.busylib.ktx.common.withLockResult
 import net.flipper.core.busylib.log.LogTagProvider
+import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
 import kotlin.coroutines.CoroutineContext
 
 class FHttpBLEEngine(
-    private val serialApi: FSerialBleApi
+    private val serialApi: FSerialBleApi,
 ) : HttpClientEngineBase("ble-serial"), LogTagProvider {
+
     override val TAG = "FHttpBLEEngine"
+
     override val config = HttpClientEngineConfig()
     private val mutex = Mutex()
+
+    override fun close() {
+        super.close()
+        // Need to cancel HttpClientEngineBase's scope
+        cancel()
+    }
 
     @InternalAPI
     override suspend fun execute(data: HttpRequestData): HttpResponseData {
@@ -52,7 +64,6 @@ class FHttpBLEEngine(
 
             withContext(NonCancellable) {
                 serialApi.send(rawText.encodeToByteArray())
-
                 parseRawHttpResponse(
                     channel = channel,
                     requestTime = requestTime,
@@ -108,7 +119,7 @@ class FHttpBLEEngine(
 public suspend fun ByteReadChannel.readRemainingInternal(max: Long): Source {
     val result = BytePacketBuilder()
     var remaining = max
-    while (!isClosedForRead && remaining > 0) {
+    while (currentCoroutineContext().isActive && !isClosedForRead && remaining > 0) {
         awaitContent()
 
         if (remaining >= readBuffer.remaining) {

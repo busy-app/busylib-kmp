@@ -68,5 +68,6 @@ class FBleApiImpl(
 
     override suspend fun disconnect() {
         peripheral.disconnect()
+        bleHttpEngine.close()
     }
 }

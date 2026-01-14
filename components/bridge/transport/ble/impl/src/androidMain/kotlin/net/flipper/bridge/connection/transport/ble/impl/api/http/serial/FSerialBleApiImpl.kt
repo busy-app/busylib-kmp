@@ -1,5 +1,6 @@
 package net.flipper.bridge.connection.transport.ble.impl.api.http.serial
 
+import io.ktor.utils.io.cancel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -7,6 +8,7 @@ import kotlinx.coroutines.plus
 import net.flipper.bridge.connection.transport.ble.api.FSerialBleApi
 import net.flipper.bridge.connection.transport.ble.common.ByteEndlessReadChannel
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
+import net.flipper.core.busylib.ktx.common.launchOnCompletion
 import net.flipper.core.busylib.log.LogTagProvider
 
 class FSerialBleApiImpl(
@@ -19,10 +21,10 @@ class FSerialBleApiImpl(
     init {
         unsafeSerialApi
             .getReceiveBytesFlow()
-            .onEach {
-                channel.onByteReceive(it)
-            }
+            .onEach { byteArray -> channel.onByteReceive(byteArray) }
             .launchIn(scope + FlipperDispatchers.default)
+
+        scope.launchOnCompletion { channel.cancel() }
     }
 
     override fun getReceiveByteChannel() = channel
