@@ -3,10 +3,10 @@ package net.flipper.core.busylib.ktx.common.cache
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
+import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import net.flipper.core.busylib.ktx.common.launchOnCompletion
-import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.TaggedLogger
 import kotlin.reflect.KClass
@@ -87,21 +87,23 @@ class DefaultObjectCache(
         clazz: KClass<T>,
         block: suspend () -> T
     ): Deferred<T> = scope.async {
-        mutex.withLock {
-            clearExpiredUnsafe()
-            val entry = getEntry(clazz)
-            runSuspendCatching {
+        // Use supervisorScope so parent scope won't be cancelled when child is cancelled
+        // Don't wrap with runCatching. Let exception go through child up to original caller
+        supervisorScope {
+            mutex.withLock {
+                clearExpiredUnsafe()
+                val entry = getEntry(clazz)
                 (entry as? CacheEntry.Created<*>)
                     ?.let { entry -> entry.deferredValue as? Deferred<T> }
                     ?.takeIf { !ignoreCache }
                     ?: putEntry(
                         clazz = clazz,
-                        scope = this,
+                        scope = this@supervisorScope,
                         block = block
                     ).deferredValue
             }
         }
-    }.await().getOrThrow()
+    }.await()
 
     override suspend fun clear() {
         mutex.withLock { cache.clear() }
