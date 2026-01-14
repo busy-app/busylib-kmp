@@ -87,7 +87,7 @@ class FDeviceOrchestratorImpl(
 
     private suspend fun disconnectInternalUnsafe(configToDisconnect: FDeviceHolder<*>? = null) {
         val currentDeviceLocal = currentDevice
-        // Three '=' is not a typo
+        // Use referential equality (===) to ensure this is the same FDeviceHolder instance
         if (configToDisconnect != null && currentDeviceLocal !== configToDisconnect) {
             info { "Tried to disconnect not current device, skip" }
             return
