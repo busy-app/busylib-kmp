@@ -74,8 +74,8 @@ class FDeviceOrchestratorImpl(
         globalScope.launch { // Self-disconnect and kill coroutine scope
             withLock(mutex, "disconnect_internal") {
                 disconnectInternalUnsafe(deviceHolder)
+                postAction()
             }
-            postAction()
         }
     }
 
