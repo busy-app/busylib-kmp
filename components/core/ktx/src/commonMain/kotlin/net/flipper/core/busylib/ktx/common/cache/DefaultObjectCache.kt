@@ -2,12 +2,11 @@ package net.flipper.core.busylib.ktx.common.cache
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
+import net.flipper.core.busylib.ktx.common.launchOnCompletion
+import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.TaggedLogger
 import kotlin.reflect.KClass
@@ -16,6 +15,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 class DefaultObjectCache(
+    private val scope: CoroutineScope,
     private val aliveAfterRead: Duration = 15.seconds,
     private val aliveAfterWrite: Duration = Duration.INFINITE,
     private val timeProvider: TimeProvider = SystemTimeProvider()
@@ -86,11 +86,11 @@ class DefaultObjectCache(
         ignoreCache: Boolean,
         clazz: KClass<T>,
         block: suspend () -> T
-    ): Deferred<T> = coroutineScope {
-        withContext(NonCancellable) {
-            mutex.withLock {
-                clearExpiredUnsafe()
-                val entry = getEntry(clazz)
+    ): Deferred<T> = scope.async {
+        mutex.withLock {
+            clearExpiredUnsafe()
+            val entry = getEntry(clazz)
+            runSuspendCatching {
                 (entry as? CacheEntry.Created<*>)
                     ?.let { entry -> entry.deferredValue as? Deferred<T> }
                     ?.takeIf { !ignoreCache }
@@ -101,9 +101,13 @@ class DefaultObjectCache(
                     ).deferredValue
             }
         }
-    }
+    }.await().getOrThrow()
 
     override suspend fun clear() {
         mutex.withLock { cache.clear() }
+    }
+
+    init {
+        scope.launchOnCompletion { clear() }
     }
 }

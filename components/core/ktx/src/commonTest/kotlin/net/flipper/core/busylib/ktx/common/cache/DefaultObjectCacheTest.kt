@@ -20,7 +20,7 @@ class DefaultObjectCacheTest {
 
     @Test
     fun GIVEN_cache_WHEN_get_same_class_twice_THEN_cached_value_returned() = runTest {
-        val cache = DefaultObjectCache()
+        val cache = DefaultObjectCache(scope = this)
         val counterFlow = MutableStateFlow(0)
 
         val deferred1 = cache.getOrElse(
@@ -49,7 +49,7 @@ class DefaultObjectCacheTest {
 
     @Test
     fun GIVEN_cache_WHEN_get_different_classes_THEN_different_values_returned() = runTest {
-        val cache = DefaultObjectCache()
+        val cache = DefaultObjectCache(scope = this)
 
         val stringDeferred = cache.getOrElse(
             ignoreCache = false,
@@ -69,7 +69,7 @@ class DefaultObjectCacheTest {
 
     @Test
     fun GIVEN_cache_WHEN_ignore_cache_true_THEN_new_value_created() = runTest {
-        val cache = DefaultObjectCache()
+        val cache = DefaultObjectCache(scope = this)
         val counterFlow = MutableStateFlow(0)
 
         val deferred1 = cache.getOrElse(
@@ -101,7 +101,8 @@ class DefaultObjectCacheTest {
         // Test that cache can be constructed with custom durations
         val cache = DefaultObjectCache(
             aliveAfterRead = 10.milliseconds,
-            aliveAfterWrite = 1.seconds
+            aliveAfterWrite = 1.seconds,
+            scope = this
         )
         val counterFlow = MutableStateFlow(0)
 
@@ -136,7 +137,8 @@ class DefaultObjectCacheTest {
         // Test that cache can be constructed with custom durations
         val cache = DefaultObjectCache(
             aliveAfterRead = 1.seconds,
-            aliveAfterWrite = 10.milliseconds
+            aliveAfterWrite = 10.milliseconds,
+            scope = this
         )
         val counterFlow = MutableStateFlow(0)
 
@@ -170,7 +172,8 @@ class DefaultObjectCacheTest {
     fun GIVEN_cache_WHEN_multiple_reads_THEN_cache_updates_lastReadAt() = runTest {
         val cache = DefaultObjectCache(
             aliveAfterRead = 1.seconds,
-            aliveAfterWrite = 1.seconds
+            aliveAfterWrite = 1.seconds,
+            scope = this
         )
         val counterFlow = MutableStateFlow(0)
 
@@ -208,7 +211,7 @@ class DefaultObjectCacheTest {
 
     @Test
     fun GIVEN_cache_WHEN_clear_called_THEN_all_entries_removed() = runTest {
-        val cache = DefaultObjectCache()
+        val cache = DefaultObjectCache(scope = this)
         val counterFlow = MutableStateFlow(0)
 
         cache.getOrElse(
@@ -240,7 +243,7 @@ class DefaultObjectCacheTest {
 
     @Test
     fun GIVEN_cache_WHEN_concurrent_requests_THEN_only_one_execution() = runTest {
-        val cache = DefaultObjectCache()
+        val cache = DefaultObjectCache(scope = this)
         val counterFlow = MutableStateFlow(0)
 
         val jobs = List(10) { index ->
@@ -265,7 +268,7 @@ class DefaultObjectCacheTest {
 
     @Test
     fun GIVEN_cache_WHEN_concurrent_different_classes_THEN_separate_executions() = runTest {
-        val cache = DefaultObjectCache()
+        val cache = DefaultObjectCache(scope = this)
         val counterFlow = MutableStateFlow(0)
 
         val stringDeferred = cache.getOrElse(
@@ -297,7 +300,7 @@ class DefaultObjectCacheTest {
 
     @Test
     fun GIVEN_cache_WHEN_deferred_not_awaited_THEN_still_cached() = runTest {
-        val cache = DefaultObjectCache()
+        val cache = DefaultObjectCache(scope = this)
         val counterFlow = MutableStateFlow(0)
 
         // Get deferred but don't await
@@ -328,7 +331,7 @@ class DefaultObjectCacheTest {
 
     @Test
     fun GIVEN_cache_WHEN_inline_extension_used_THEN_works_correctly() = runTest {
-        val cache = DefaultObjectCache()
+        val cache = DefaultObjectCache(scope = this)
         val counterFlow = MutableStateFlow(0)
 
         val value1: String = cache.getOrElse(ignoreCache = false) {
@@ -348,7 +351,7 @@ class DefaultObjectCacheTest {
 
     @Test
     fun GIVEN_cache_WHEN_multiple_clears_THEN_works_correctly() = runTest {
-        val cache = DefaultObjectCache()
+        val cache = DefaultObjectCache(scope = this)
 
         cache.getOrElse(ignoreCache = false, clazz = String::class) { "value1" }.await()
         cache.clear()
@@ -360,7 +363,7 @@ class DefaultObjectCacheTest {
 
     @Test
     fun GIVEN_multiple_cache_entries_WHEN_accessing_THEN_each_type_cached_independently() = runTest {
-        val cache = DefaultObjectCache()
+        val cache = DefaultObjectCache(scope = this)
         val counterFlow = MutableStateFlow(0)
 
         // Create multiple different type entries
@@ -385,7 +388,7 @@ class DefaultObjectCacheTest {
 
     @Test
     fun GIVEN_block_throws_exception_WHEN_awaiting_deferred_THEN_exception_propagated() = runTest {
-        val cache = DefaultObjectCache()
+        val cache = DefaultObjectCache(scope = this)
 
         var exceptionCaught = false
         try {
@@ -408,7 +411,7 @@ class DefaultObjectCacheTest {
 
     @Test
     fun GIVEN_failed_deferred_WHEN_accessed_again_THEN_cached_failed_deferred_returned() = runTest {
-        val cache = DefaultObjectCache()
+        val cache = DefaultObjectCache(scope = this)
         val counterFlow = MutableStateFlow(0)
 
         var deferred1: Deferred<String>? = null
@@ -452,14 +455,14 @@ class DefaultObjectCacheTest {
     @Test
     fun GIVEN_default_durations_WHEN_cache_created_THEN_uses_defaults() = runTest {
         // Test default constructor parameters
-        val cache = DefaultObjectCache()
+        val cache = DefaultObjectCache(scope = this)
         val result = cache.getOrElse(ignoreCache = false, clazz = String::class) { "test" }
         assertEquals("test", result.await())
     }
 
     @Test
     fun GIVEN_multiple_concurrent_getOrElse_WHEN_same_key_THEN_single_execution() = runTest {
-        val cache = DefaultObjectCache()
+        val cache = DefaultObjectCache(scope = this)
         val executionCounter = MutableStateFlow(0)
 
         // Launch multiple concurrent requests for the same key
@@ -483,7 +486,7 @@ class DefaultObjectCacheTest {
 
     @Test
     fun GIVEN_empty_cache_WHEN_clear_called_THEN_no_error() = runTest {
-        val cache = DefaultObjectCache()
+        val cache = DefaultObjectCache(scope = this)
         // Should not throw
         cache.clear()
         cache.clear()
@@ -491,7 +494,7 @@ class DefaultObjectCacheTest {
 
     @Test
     fun GIVEN_cache_WHEN_using_inline_extension_with_different_types_THEN_works_correctly() = runTest {
-        val cache = DefaultObjectCache()
+        val cache = DefaultObjectCache(scope = this)
 
         val stringValue: String = cache.getOrElse(ignoreCache = false) { "hello" }
         val intValue: Int = cache.getOrElse(ignoreCache = false) { 42 }
@@ -511,7 +514,7 @@ class DefaultObjectCacheTest {
 
     @Test
     fun GIVEN_cache_with_value_WHEN_ignore_cache_used_multiple_times_THEN_creates_new_each_time() = runTest {
-        val cache = DefaultObjectCache()
+        val cache = DefaultObjectCache(scope = this)
         val counter = MutableStateFlow(0)
 
         val val1 = cache.getOrElse(ignoreCache = true, clazz = String::class) {
@@ -538,7 +541,7 @@ class DefaultObjectCacheTest {
     @Test
     fun GIVEN_NonCancellable_context_WHEN_getOrElse_called_THEN_executes_successfully() = runTest {
         // Test that NonCancellable context is used internally
-        val cache = DefaultObjectCache()
+        val cache = DefaultObjectCache(scope = this)
         val result = cache.getOrElse(ignoreCache = false, clazz = String::class) {
             delay(10)
             "result"
@@ -548,7 +551,7 @@ class DefaultObjectCacheTest {
 
     @Test
     fun GIVEN_cache_WHEN_same_class_accessed_repeatedly_THEN_lastReadAt_updated() = runTest {
-        val cache = DefaultObjectCache()
+        val cache = DefaultObjectCache(scope = this)
 
         // First access
         cache.getOrElse(ignoreCache = false, clazz = String::class) { "value" }.await()
@@ -571,7 +574,8 @@ class DefaultObjectCacheTest {
         val cache = DefaultObjectCache(
             aliveAfterRead = 100.milliseconds,
             aliveAfterWrite = 1.seconds,
-            timeProvider = timeProvider
+            timeProvider = timeProvider,
+            scope = this
         )
         val counterFlow = MutableStateFlow(0)
 
@@ -612,7 +616,8 @@ class DefaultObjectCacheTest {
         val cache = DefaultObjectCache(
             aliveAfterRead = 1.seconds,
             aliveAfterWrite = 100.milliseconds,
-            timeProvider = timeProvider
+            timeProvider = timeProvider,
+            scope = this
         )
         val counterFlow = MutableStateFlow(0)
 
@@ -653,7 +658,8 @@ class DefaultObjectCacheTest {
         val cache = DefaultObjectCache(
             aliveAfterRead = 100.milliseconds,
             aliveAfterWrite = 1.seconds,
-            timeProvider = timeProvider
+            timeProvider = timeProvider,
+            scope = this
         )
         val counterFlow = MutableStateFlow(0)
 
@@ -707,7 +713,8 @@ class DefaultObjectCacheTest {
         val cache = DefaultObjectCache(
             aliveAfterRead = 170.milliseconds,
             aliveAfterWrite = 200.milliseconds,
-            timeProvider = timeProvider
+            timeProvider = timeProvider,
+            scope = this
         )
         val counterFlow = MutableStateFlow(0)
 
@@ -760,7 +767,8 @@ class DefaultObjectCacheTest {
         val cache = DefaultObjectCache(
             aliveAfterRead = 100.milliseconds,
             aliveAfterWrite = 100.milliseconds,
-            timeProvider = timeProvider
+            timeProvider = timeProvider,
+            scope = this
         )
 
         // Create first entry (String)
@@ -794,7 +802,8 @@ class DefaultObjectCacheTest {
         val cache = DefaultObjectCache(
             aliveAfterRead = 10.milliseconds,
             aliveAfterWrite = 10.milliseconds,
-            timeProvider = timeProvider
+            timeProvider = timeProvider,
+            scope = this
         )
         val counterFlow = MutableStateFlow(0)
 
@@ -830,7 +839,8 @@ class DefaultObjectCacheTest {
         val cache = DefaultObjectCache(
             aliveAfterRead = 100.milliseconds,
             aliveAfterWrite = 100.milliseconds,
-            timeProvider = timeProvider
+            timeProvider = timeProvider,
+            scope = this
         )
 
         // Create entry

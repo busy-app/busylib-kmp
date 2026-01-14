@@ -47,7 +47,6 @@ class FHttpBLEEngine(
 
     override fun close() {
         super.close()
-        serialApi.close()
         // Need to cancel HttpClientEngineBase's scope
         cancel()
     }
