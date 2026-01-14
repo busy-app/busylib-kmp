@@ -3,6 +3,7 @@ package net.flipper.bridge.connection.ble.impl
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.updateAndGet
 import net.flipper.bridge.connection.config.api.model.FDeviceBaseModel
 import net.flipper.bridge.connection.orchestrator.api.model.ConnectingStatus
 import net.flipper.bridge.connection.orchestrator.api.model.DisconnectStatus
@@ -10,6 +11,7 @@ import net.flipper.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
+import net.flipper.core.busylib.log.info
 
 class FTransportListenerImpl : LogTagProvider {
     override val TAG = "FTransportListener"
@@ -39,7 +41,7 @@ class FTransportListenerImpl : LogTagProvider {
     }
 
     fun onStatusUpdate(device: FDeviceBaseModel, status: FInternalTransportConnectionStatus) {
-        state.update { currentStatus ->
+        val newState = state.updateAndGet { currentStatus ->
             when (status) {
                 is FInternalTransportConnectionStatus.Connected -> FDeviceConnectStatus.Connected(
                     device = device,
@@ -74,5 +76,6 @@ class FTransportListenerImpl : LogTagProvider {
                     )
             }
         }
+        info { "New state is $newState" }
     }
 }
