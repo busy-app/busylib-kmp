@@ -24,5 +24,8 @@ enum class WifiSecurityMethod {
     WPA3,
 
     @SerialName("WPA2/WPA3")
-    WPA2_WPA3
+    WPA2_WPA3,
+
+    @SerialName("Unsupported")
+    UNSUPPORTED
 }
