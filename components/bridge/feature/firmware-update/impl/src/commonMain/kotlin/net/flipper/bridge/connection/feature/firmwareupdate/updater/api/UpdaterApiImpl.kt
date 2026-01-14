@@ -114,6 +114,7 @@ class UpdaterApiImpl(
 
                         UpdateStatus.Install.Action.NONE -> {
                             when (updateStatus.check.event) {
+                                UpdateStatus.Check.CheckEvent.START,
                                 UpdateStatus.Check.CheckEvent.NONE,
                                 UpdateStatus.Check.CheckEvent.STOP -> {
                                     when (updateStatus.check.status) {
@@ -132,12 +133,9 @@ class UpdaterApiImpl(
                                         }
 
                                         UpdateStatus.Check.CheckResult.NONE -> {
-                                            flowOf(FwUpdateState.Pending)
+                                            flowOf(FwUpdateState.CheckingVersion)
                                         }
                                     }
-                                }
-                                UpdateStatus.Check.CheckEvent.START -> {
-                                    flowOf(FwUpdateState.CheckingVersion)
                                 }
                             }
                         }
