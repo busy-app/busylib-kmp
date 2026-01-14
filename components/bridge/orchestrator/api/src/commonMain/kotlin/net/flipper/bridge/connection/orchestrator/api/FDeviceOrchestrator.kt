@@ -8,7 +8,7 @@ interface FDeviceOrchestrator {
 
     fun getState(): WrappedStateFlow<FDeviceConnectStatus>
 
-    suspend fun connect(config: FDeviceBaseModel)
+    suspend fun connectIfNot(config: FDeviceBaseModel)
 
     suspend fun disconnectCurrent()
 }

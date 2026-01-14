@@ -9,32 +9,32 @@ import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarStatus
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarStatusPower
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarStatusSystem
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarVersion
-import net.flipper.bridge.connection.feature.rpc.impl.util.runSafely
+import net.flipper.core.busylib.ktx.common.runSuspendCatching
 
 class FRpcSystemApiImpl(
     private val httpClient: HttpClient,
     private val dispatcher: CoroutineDispatcher
 ) : FRpcSystemApi {
     override suspend fun getVersion(): Result<BusyBarVersion> {
-        return runSafely(dispatcher) {
+        return runSuspendCatching(dispatcher) {
             httpClient.get("/api/version").body<BusyBarVersion>()
         }
     }
 
     override suspend fun getStatus(): Result<BusyBarStatus> {
-        return runSafely {
+        return runSuspendCatching(dispatcher) {
             httpClient.get("/api/status").body<BusyBarStatus>()
         }
     }
 
     override suspend fun getStatusSystem(): Result<BusyBarStatusSystem> {
-        return runSafely {
+        return runSuspendCatching(dispatcher) {
             httpClient.get("/api/status/system").body<BusyBarStatusSystem>()
         }
     }
 
     override suspend fun getStatusPower(): Result<BusyBarStatusPower> {
-        return runSafely {
+        return runSuspendCatching(dispatcher) {
             httpClient.get("/api/status/power").body<BusyBarStatusPower>()
         }
     }

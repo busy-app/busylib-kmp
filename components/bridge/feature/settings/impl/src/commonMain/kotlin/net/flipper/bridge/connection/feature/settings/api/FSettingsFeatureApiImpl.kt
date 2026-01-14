@@ -23,9 +23,12 @@ import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.wrap
+import net.flipper.core.busylib.ktx.common.DefaultConsumable
 import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.merge
 import net.flipper.core.busylib.ktx.common.orEmpty
+import net.flipper.core.busylib.ktx.common.throttleLatest
+import net.flipper.core.busylib.ktx.common.tryConsume
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
@@ -43,12 +46,13 @@ class FSettingsFeatureApiImpl(
         return fEventsFeatureApi
             ?.getUpdateFlow(UpdateEvent.BRIGHTNESS)
             .orEmpty()
-            .merge(flowOf(null))
-            .map {
+            .merge(flowOf(DefaultConsumable(false)))
+            .throttleLatest { consumable ->
+                val couldConsume = consumable.tryConsume()
                 exponentialRetry {
                     rpcFeatureApi
                         .fRpcSettingsApi
-                        .getDisplayBrightness()
+                        .getDisplayBrightness(couldConsume)
                         .map { it.toBsbBrightnessInfo() }
                         .onFailure { error(it) { "Failed to get Settings status" } }
                 }
@@ -60,12 +64,13 @@ class FSettingsFeatureApiImpl(
         return fEventsFeatureApi
             ?.getUpdateFlow(UpdateEvent.AUDIO_VOLUME)
             .orEmpty()
-            .merge(flowOf(null))
-            .map {
+            .merge(flowOf(DefaultConsumable(false)))
+            .throttleLatest { consumable ->
+                val couldConsume = consumable.tryConsume()
                 exponentialRetry {
                     info { "#getVolumeFlow getting volume flow" }
                     rpcFeatureApi.fRpcSettingsApi
-                        .getAudioVolume()
+                        .getAudioVolume(couldConsume)
                         .onFailure { error(it) { "Failed to get Settings status" } }
                 }
             }
@@ -84,12 +89,13 @@ class FSettingsFeatureApiImpl(
             fEventsFeatureApi
                 ?.getUpdateFlow(UpdateEvent.DEVICE_NAME)
                 .orEmpty()
-                .merge(flowOf(null))
-                .map {
+                .merge(flowOf(DefaultConsumable(false)))
+                .throttleLatest { consumable ->
+                    val couldConsume = consumable.tryConsume()
                     exponentialRetry {
                         rpcFeatureApi
                             .fRpcSettingsApi
-                            .getName()
+                            .getName(couldConsume)
                             .map { nameInfo -> nameInfo.name }
                     }
                 }

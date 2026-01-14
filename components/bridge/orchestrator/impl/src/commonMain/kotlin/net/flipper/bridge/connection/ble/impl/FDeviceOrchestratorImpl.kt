@@ -1,11 +1,13 @@
 package net.flipper.bridge.connection.ble.impl
 
-import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.config.api.model.FDeviceBaseModel
 import net.flipper.bridge.connection.configbuilder.api.FDeviceConnectionConfigMapper
 import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
+import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.ktx.common.withLock
@@ -20,30 +22,61 @@ import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 @ContributesBinding(BusyLibGraph::class, FDeviceOrchestrator::class)
 class FDeviceOrchestratorImpl(
     private val deviceHolderFactory: FDeviceHolderFactory,
-    private val deviceConnectionConfigMapper: FDeviceConnectionConfigMapper
+    private val deviceConnectionConfigMapper: FDeviceConnectionConfigMapper,
+    private val globalScope: CoroutineScope
 ) : FDeviceOrchestrator, LogTagProvider {
     override val TAG = "FDeviceOrchestrator"
 
     private val transportListener = FTransportListenerImpl()
     private var currentDevice: FDeviceHolder<*>? = null
     private val mutex = Mutex()
-    override suspend fun connect(config: FDeviceBaseModel) = withLock(mutex, "connect") {
+
+    override suspend fun connectIfNot(config: FDeviceBaseModel) = withLock(mutex, "connect") {
         info { "Request connect for config $config" }
+
+        val connectionConfig = deviceConnectionConfigMapper.getConnectionConfig(config)
+
+        if (currentDevice?.config == connectionConfig) {
+            info { "Device already connected, so skip connection" }
+            return@withLock
+        }
 
         disconnectInternalUnsafe()
 
         info { "Create new device" }
         currentDevice = deviceHolderFactory.build(
             config = deviceConnectionConfigMapper.getConnectionConfig(config),
-            listener = { transportListener.onStatusUpdate(config, it) },
-            onConnectError = {
-                transportListener.onErrorDuringConnect(config, it)
-                error(it) { "Failed connect" }
+            listener = { deviceHolder, status ->
+                if (status is FInternalTransportConnectionStatus.Disconnected) {
+                    onInternalDisconnect(deviceHolder) {
+                        transportListener.onStatusUpdate(config, status)
+                    }
+                } else {
+                    transportListener.onStatusUpdate(config, status)
+                }
             },
-            exceptionHandler = CoroutineExceptionHandler { _, exception ->
-                transportListener.onErrorDuringConnect(config, exception)
+            onConnectError = { deviceHolder, error ->
+                onInternalDisconnect(deviceHolder) {
+                    transportListener.onErrorDuringConnect(config, error)
+                }
+                error(error) { "Failed connect" }
+            },
+            exceptionHandler = { deviceHolder, error ->
+                onInternalDisconnect(deviceHolder) {
+                    transportListener.onErrorDuringConnect(config, error)
+                }
+                error(error) { "Exception in coroutine" }
             }
         )
+    }
+
+    private fun onInternalDisconnect(deviceHolder: FDeviceHolder<*>, postAction: () -> Unit) {
+        globalScope.launch { // Self-disconnect and kill coroutine scope
+            withLock(mutex, "disconnect_internal") {
+                disconnectInternalUnsafe(deviceHolder)
+                postAction()
+            }
+        }
     }
 
     override fun getState() = transportListener.getState().wrap()
@@ -52,8 +85,13 @@ class FDeviceOrchestratorImpl(
         disconnectInternalUnsafe()
     }
 
-    private suspend fun disconnectInternalUnsafe() {
+    private suspend fun disconnectInternalUnsafe(configToDisconnect: FDeviceHolder<*>? = null) {
         val currentDeviceLocal = currentDevice
+        // Use referential equality (===) to ensure this is the same FDeviceHolder instance
+        if (configToDisconnect != null && currentDeviceLocal !== configToDisconnect) {
+            info { "Tried to disconnect not current device, skip" }
+            return
+        }
         if (currentDeviceLocal != null) {
             info { "Found current device, wait until disconnect" }
             currentDeviceLocal.disconnect()
