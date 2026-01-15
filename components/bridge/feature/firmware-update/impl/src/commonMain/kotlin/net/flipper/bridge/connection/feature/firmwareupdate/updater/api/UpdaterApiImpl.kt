@@ -3,6 +3,7 @@ package net.flipper.bridge.connection.feature.firmwareupdate.updater.api
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
@@ -81,116 +82,18 @@ class UpdaterApiImpl(
         }
         .flatMapLatest { feature -> feature?.getUpdateStatusFlow().orNullable() }
         .onEach { info { "#state status: $it" } }
-        .flatMapLatest { updateStatus ->
-            if (updateStatus == null) {
-                return@flatMapLatest flowOf(FwUpdateState.Pending)
-            }
-
-            when (updateStatus.install.status) {
-                UpdateStatus.Install.Status.BUSY,
-                UpdateStatus.Install.Status.OK -> {
-                    when (updateStatus.install.action) {
-                        UpdateStatus.Install.Action.DOWNLOAD,
-                        UpdateStatus.Install.Action.SHA_VERIFICATION,
-                        UpdateStatus.Install.Action.UNPACK,
-                        UpdateStatus.Install.Action.APPLY,
-                        UpdateStatus.Install.Action.PREPARE -> {
-                            changelogSharedFlow.map { changelogOrNull ->
-                                FwUpdateState.Downloading(
-                                    bsbVersionChangelog = changelogOrNull,
-                                    progress = updateStatus.install.download.totalBytes
-                                        .toFloat()
-                                        .takeIf { total -> total > 0 }
-                                        ?.let { total ->
-                                            updateStatus.install
-                                                .download
-                                                .receivedBytes
-                                                .div(total)
-                                        }
-                                        ?: 0f
-                                )
-                            }
-                        }
-
-                        UpdateStatus.Install.Action.NONE -> {
-                            when (updateStatus.check.event) {
-                                UpdateStatus.Check.CheckEvent.START,
-                                UpdateStatus.Check.CheckEvent.NONE,
-                                UpdateStatus.Check.CheckEvent.STOP -> {
-                                    when (updateStatus.check.status) {
-                                        UpdateStatus.Check.CheckResult.AVAILABLE -> {
-                                            changelogSharedFlow.map { changelogOrNull ->
-                                                FwUpdateState.UpdateAvailable(bsbVersionChangelog = changelogOrNull)
-                                            }
-                                        }
-
-                                        UpdateStatus.Check.CheckResult.NOT_AVAILABLE -> {
-                                            flowOf(FwUpdateState.NoUpdateAvailable)
-                                        }
-
-                                        UpdateStatus.Check.CheckResult.FAILURE -> {
-                                            flowOf(FwUpdateState.CouldNotCheckUpdate)
-                                        }
-
-                                        UpdateStatus.Check.CheckResult.NONE -> {
-                                            flowOf(FwUpdateState.CheckingVersion)
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                UpdateStatus.Install.Status.BATTERY_LOW -> flowOf(FwUpdateState.LowBattery)
-                UpdateStatus.Install.Status.DOWNLOAD_ABORT,
-                UpdateStatus.Install.Status.SHA_MISMATCH,
-                UpdateStatus.Install.Status.UNPACK_STAGING_DIR_FAILURE,
-                UpdateStatus.Install.Status.UNPACK_ARCHIVE_OPEN_FAILURE,
-                UpdateStatus.Install.Status.UNPACK_ARCHIVE_UNPACK_FAILURE,
-                UpdateStatus.Install.Status.INSTALL_MANIFEST_NOT_FOUND,
-                UpdateStatus.Install.Status.INSTALL_MANIFEST_INVALID,
-                UpdateStatus.Install.Status.INSTALL_SESSION_CONFIG_FAILURE,
-                UpdateStatus.Install.Status.INSTALL_POINTER_SETUP_FAILURE,
-                UpdateStatus.Install.Status.UNKNOWN_FAILURE,
-                UpdateStatus.Install.Status.DOWNLOAD_FAILURE -> flowOf(FwUpdateState.Failure)
-            }
+        .combine(changelogSharedFlow) { updateStatus, changelogOrNull ->
+            FwUpdateStatusMapper.toFwUpdateState(
+                updateStatus = updateStatus,
+                changelogOrNull = changelogOrNull
+            )
         }
         .onEach { info { "#state state: $it" } }
         .mapCached { currentFwUpdateState, previousFwUpdateState: FwUpdateState? ->
-            when (previousFwUpdateState) {
-                null -> currentFwUpdateState
-
-                is FwUpdateState.Updating,
-                is FwUpdateState.UpdateFinished,
-                is FwUpdateState.UpdateAvailable,
-                FwUpdateState.Pending,
-                FwUpdateState.NoUpdateAvailable,
-                FwUpdateState.LowBattery,
-                FwUpdateState.Failure,
-                FwUpdateState.CouldNotCheckUpdate,
-                FwUpdateState.CheckingVersion,
-                FwUpdateState.Busy -> currentFwUpdateState
-
-                is FwUpdateState.Downloading -> {
-                    when (currentFwUpdateState) {
-                        is FwUpdateState.UpdateFinished,
-                        FwUpdateState.Busy,
-                        FwUpdateState.CheckingVersion,
-                        FwUpdateState.CouldNotCheckUpdate,
-                        is FwUpdateState.Downloading,
-                        FwUpdateState.Failure,
-                        FwUpdateState.LowBattery,
-                        FwUpdateState.NoUpdateAvailable,
-                        is FwUpdateState.Updating,
-                        is FwUpdateState.UpdateAvailable -> currentFwUpdateState
-
-                        FwUpdateState.Pending -> {
-                            FwUpdateState.Updating(previousFwUpdateState.bsbVersionChangelog)
-                        }
-                    }
-                }
-            }
+            FwUpdateStateDiff.combineDiff(
+                previous = previousFwUpdateState,
+                latest = currentFwUpdateState
+            )
         }
         .stateIn(scope, SharingStarted.Eagerly, FwUpdateState.Pending)
 
