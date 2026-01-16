@@ -11,7 +11,10 @@ object FwUpdateStatusMapper {
     ): FwUpdateState {
         return when (updateStatus.check.status) {
             UpdateStatus.Check.CheckResult.AVAILABLE -> {
-                FwUpdateState.UpdateAvailable(bsbVersionChangelog = changelogOrNull)
+                FwUpdateState.UpdateAvailable(
+                    targetVersion = updateStatus.check.availableVersion,
+                    bsbVersionChangelog = changelogOrNull
+                )
             }
 
             UpdateStatus.Check.CheckResult.NOT_AVAILABLE -> {
@@ -39,6 +42,7 @@ object FwUpdateStatusMapper {
             UpdateStatus.Install.Action.APPLY,
             UpdateStatus.Install.Action.PREPARE -> {
                 FwUpdateState.Downloading(
+                    targetVersion = updateStatus.check.availableVersion, // todo here we need the version from firmware
                     bsbVersionChangelog = changelogOrNull,
                     progress = updateStatus.install.download.totalBytes
                         .toFloat()

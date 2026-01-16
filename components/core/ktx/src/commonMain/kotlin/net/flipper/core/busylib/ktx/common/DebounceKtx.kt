@@ -4,6 +4,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.launch
 
 /**
@@ -21,4 +22,11 @@ fun <T, K> Flow<T>.throttleLatest(
             send(transform(value))
         }
     }
+}
+
+public fun <T> Flow<T>.onLatest(
+    action: suspend (T) -> Unit
+): Flow<T> = transformLatest { value ->
+    action(value)
+    return@transformLatest emit(value)
 }
