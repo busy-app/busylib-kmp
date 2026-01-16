@@ -3,6 +3,7 @@ package net.flipper.busylib
 import kotlinx.coroutines.CoroutineScope
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
+import net.flipper.bridge.connection.feature.firmwareupdate.updater.api.UpdaterApi
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
 import net.flipper.bridge.connection.service.api.FConnectionService
@@ -15,7 +16,8 @@ import platform.CoreBluetooth.CBCentralManager
 class BUSYLibIOS(
     override val connectionService: FConnectionService,
     override val orchestrator: FDeviceOrchestrator,
-    override val featureProvider: FFeatureProvider
+    override val featureProvider: FFeatureProvider,
+    override val updaterApi: UpdaterApi
 ) : BUSYLibApple {
     companion object {
         fun build(
@@ -30,7 +32,7 @@ class BUSYLibIOS(
                 principalApi,
                 busyLibBarsApi,
                 persistedStorage,
-                manager
+                manager,
             )
             return graph.busyLib
         }
