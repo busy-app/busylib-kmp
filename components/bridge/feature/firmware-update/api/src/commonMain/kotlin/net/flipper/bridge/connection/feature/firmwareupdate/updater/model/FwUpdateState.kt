@@ -10,13 +10,28 @@ sealed interface FwUpdateState {
     object Pending : FwUpdateState
     object CouldNotCheckUpdate : FwUpdateState
     object NoUpdateAvailable : FwUpdateState
-    data class UpdateFinished(val bsbVersionChangelog: BsbVersionChangelog?) : FwUpdateState
-    data class Updating(val bsbVersionChangelog: BsbVersionChangelog?) : FwUpdateState
+
+    data class UpdateFinished(
+        val targetVersion: String,
+        val bsbVersionChangelog: BsbVersionChangelog?
+    ) : FwUpdateState
+
+    data class UpdateFailed(
+        val targetVersion: String,
+    ) : FwUpdateState
+
+    data class Updating(
+        val targetVersion: String,
+        val bsbVersionChangelog: BsbVersionChangelog?
+    ) : FwUpdateState
+
     data class UpdateAvailable(
+        val targetVersion: String,
         val bsbVersionChangelog: BsbVersionChangelog?
     ) : FwUpdateState
 
     data class Downloading(
+        val targetVersion: String,
         val bsbVersionChangelog: BsbVersionChangelog?,
         val progress: Float
     ) : FwUpdateState
