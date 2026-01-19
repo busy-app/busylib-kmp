@@ -5,5 +5,5 @@ import io.ktor.client.engine.HttpClientEngine
 interface FHTTPDeviceApi {
     fun getDeviceHttpEngine(): HttpClientEngine
 
-    fun hasCapability(capability: FHTTPTransportCapability): Boolean
+    fun hasCapability(capability: FHTTPTransportCapability): Boolean = false
 }

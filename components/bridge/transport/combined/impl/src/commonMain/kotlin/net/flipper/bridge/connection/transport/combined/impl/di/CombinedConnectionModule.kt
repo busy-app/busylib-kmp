@@ -2,6 +2,8 @@ package net.flipper.bridge.connection.transport.combined.impl.di
 
 import me.tatarka.inject.annotations.IntoMap
 import me.tatarka.inject.annotations.Provides
+import net.flipper.bridge.connection.transport.combined.CombinedConnectionApi
+import net.flipper.bridge.connection.transport.combined.FCombinedConnectionConfig
 import net.flipper.bridge.connection.transport.common.api.DeviceConnectionApiHolder
 import net.flipper.busylib.core.di.BusyLibGraph
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
@@ -12,10 +14,10 @@ interface CombinedConnectionModule {
     @IntoMap
     @Provides
     fun getCombinedConnection(
-        mockDeviceConnectionApi: MockDeviceConnectionApi
+        combinedConnectionApi: CombinedConnectionApi
     ): Pair<KClass<*>, DeviceConnectionApiHolder> {
-        return FMockDeviceConnectionConfig::class to DeviceConnectionApiHolder(
-            mockDeviceConnectionApi
+        return FCombinedConnectionConfig::class to DeviceConnectionApiHolder(
+            combinedConnectionApi
         )
     }
 }

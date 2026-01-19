@@ -16,5 +16,7 @@ kotlin {
 
         implementation(libs.kotlin.coroutines)
         implementation(libs.ktor.client.core)
+
+        implementation(projects.components.bridge.connectionbuilder.api)
     }
 }
