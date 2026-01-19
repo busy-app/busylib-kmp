@@ -47,6 +47,8 @@ include(
     ":components:bridge:transport:tcp:lan:impl",
     ":components:bridge:transport:tcp:cloud:api",
     ":components:bridge:transport:tcp:cloud:impl",
+    ":components:bridge:transport:combined:api",
+    ":components:bridge:transport:combined:impl",
     ":components:bridge:transport:common:api",
     ":components:bridge:transport:common:impl",
 
