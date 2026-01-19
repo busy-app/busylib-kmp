@@ -17,7 +17,6 @@ import net.flipper.bridge.connection.transport.common.api.serial.FHTTPDeviceApi
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 import net.flipper.core.busylib.ktx.common.cache.DefaultObjectCache
-import net.flipper.core.busylib.ktx.common.launchOnCompletion
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
@@ -48,8 +47,7 @@ class FRpcFeatureApiFactoryImpl : FDeviceFeatureApi.Factory, LogTagProvider {
         val httpClient = getHttpClient(fHttpDeviceApi.getDeviceHttpEngine())
         val dispatcher = FlipperDispatchers.default
 
-        val objectCache = DefaultObjectCache()
-        scope.launchOnCompletion { objectCache.clear() }
+        val objectCache = DefaultObjectCache(scope = scope)
         return FRpcFeatureApiImpl(
             fRpcSystemApi = FRpcSystemApiImpl(
                 httpClient = httpClient,

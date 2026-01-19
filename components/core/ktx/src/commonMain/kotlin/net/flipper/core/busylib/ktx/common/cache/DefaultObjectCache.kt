@@ -1,12 +1,12 @@
 package net.flipper.core.busylib.ktx.common.cache
 
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
+import net.flipper.core.busylib.ktx.common.launchOnCompletion
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.TaggedLogger
 import kotlin.reflect.KClass
@@ -15,6 +15,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 class DefaultObjectCache(
+    private val scope: CoroutineScope,
     private val aliveAfterRead: Duration = 15.seconds,
     private val aliveAfterWrite: Duration = Duration.INFINITE,
     private val timeProvider: TimeProvider = SystemTimeProvider()
@@ -50,18 +51,19 @@ class DefaultObjectCache(
             .forEach { (clazz, _) -> cache.remove(clazz) }
     }
 
-    private suspend fun <T : Any> putEntry(
+    private fun <T : Any> putEntry(
         clazz: KClass<T>,
+        scope: CoroutineScope,
         block: suspend () -> T
-    ): CacheEntry.Created<T> = coroutineScope {
+    ): CacheEntry.Created<T> {
         val now = timeProvider.markNow()
         val newEntry = CacheEntry.Created(
-            deferredValue = async { block.invoke() },
+            deferredValue = scope.async { block.invoke() },
             lastReadAt = now,
             writtenAt = now
         )
         cache[clazz] = newEntry
-        return@coroutineScope newEntry
+        return newEntry
     }
 
     /**
@@ -84,23 +86,30 @@ class DefaultObjectCache(
         ignoreCache: Boolean,
         clazz: KClass<T>,
         block: suspend () -> T
-    ): Deferred<T> = coroutineScope {
-        mutex.withLock {
-            clearExpiredUnsafe()
-            withContext(NonCancellable) {
+    ): Deferred<T> = scope.async {
+        // Use supervisorScope so parent scope won't be cancelled when child is cancelled
+        // Don't wrap with runCatching. Let exception go through child up to original caller
+        supervisorScope {
+            mutex.withLock {
+                clearExpiredUnsafe()
                 val entry = getEntry(clazz)
                 (entry as? CacheEntry.Created<*>)
                     ?.let { entry -> entry.deferredValue as? Deferred<T> }
                     ?.takeIf { !ignoreCache }
                     ?: putEntry(
                         clazz = clazz,
+                        scope = this@supervisorScope,
                         block = block
                     ).deferredValue
             }
         }
-    }
+    }.await()
 
     override suspend fun clear() {
         mutex.withLock { cache.clear() }
+    }
+
+    init {
+        scope.launchOnCompletion { clear() }
     }
 }
