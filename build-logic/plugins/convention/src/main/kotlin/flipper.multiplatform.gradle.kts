@@ -10,7 +10,16 @@ val macOSEnabled = project.findProperty("flipper.macOSEnabled")?.toString()?.toB
 
 kotlin {
     jvm()
-    androidLibrary {}
+    androidLibrary {
+        // Generate namespace based on project path: :components:core:log -> net.flipper.core.busylib.log
+        val pathParts = project.path.split(":").filter { it.isNotEmpty() }
+        namespace = if (pathParts.isNotEmpty()) {
+            "net.flipper.${pathParts.drop(1).joinToString(".")}.busylib.${pathParts.last()}"
+        } else {
+            "net.flipper.busylib.${project.name}"
+        }
+        compileSdk = 36
+    }
     if (appleEnabled) {
         iosX64()
         iosArm64()

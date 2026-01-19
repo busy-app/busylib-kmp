@@ -2,6 +2,9 @@ enableFeaturePreview("STABLE_CONFIGURATION_CACHE")
 
 pluginManagement {
     repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
         maven {
             url = uri("https://reposilite.flipp.dev/releases")
         }
@@ -11,6 +14,8 @@ pluginManagement {
 
 dependencyResolutionManagement {
     repositories {
+        google()
+        mavenCentral()
         maven {
             url = uri("https://reposilite.flipp.dev/releases")
         }

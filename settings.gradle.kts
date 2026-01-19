@@ -4,6 +4,9 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 pluginManagement {
     includeBuild("build-logic")
     repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
         maven {
             url = uri("https://reposilite.flipp.dev/releases")
         }
@@ -13,6 +16,8 @@ pluginManagement {
 
 dependencyResolutionManagement {
     repositories {
+        google()
+        mavenCentral()
         maven {
             url = uri("https://reposilite.flipp.dev/releases")
         }
@@ -87,6 +92,6 @@ include(
     ":components:principal:api",
     ":components:cloud:api",
 
-    ":entrypoint",
-    ":sample"
+    ":entrypoint"
+    // ":sample" // Temporarily disabled: AGP 9.0.0 doesn't support KMP Android applications yet
 )

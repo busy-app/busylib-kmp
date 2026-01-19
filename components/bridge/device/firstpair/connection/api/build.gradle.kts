@@ -1,8 +1,8 @@
 plugins {
     id("flipper.multiplatform")
     id("ru.astrainteractive.gradleplugin.java.core")
-    id("ru.astrainteractive.gradleplugin.android.namespace")
-    id("ru.astrainteractive.gradleplugin.android.core")
+    // id("ru.astrainteractive.gradleplugin.android.namespace") // Temporarily disabled for AGP 9.0.0 compatibility
+    // id("ru.astrainteractive.gradleplugin.android.core") // Temporarily disabled for AGP 9.0.0 compatibility
 }
 
 kotlin {

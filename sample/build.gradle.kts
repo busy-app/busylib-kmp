@@ -8,15 +8,15 @@ import ru.astrainteractive.gradleplugin.property.extension.PrimitivePropertyValu
 
 
 plugins {
+    id("com.android.application")
     id("org.jetbrains.kotlin.multiplatform")
     id("ru.astrainteractive.gradleplugin.java.core")
-    id("com.android.application")
     id("org.jetbrains.compose")
     id("org.jetbrains.kotlin.plugin.compose")
     id("kotlinx-serialization")
-    id("ru.astrainteractive.gradleplugin.android.core")
+    // id("ru.astrainteractive.gradleplugin.android.core") // Temporarily disabled for AGP 9.0.0 compatibility
     id("ru.astrainteractive.gradleplugin.android.apk.name")
-    id("ru.astrainteractive.gradleplugin.android.namespace")
+    // id("ru.astrainteractive.gradleplugin.android.namespace") // Temporarily disabled for AGP 9.0.0 compatibility
     alias(libs.plugins.skie)
 }
 
