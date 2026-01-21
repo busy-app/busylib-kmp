@@ -181,7 +181,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd ../../../../../  \n\necho $CONFIGURATION\necho $SDK_NAME\necho $ARCHS\n\nORG_GRADLE_PROJECT_current_flavor_type=DEBUG\n./gradlew :sample:embedAndSignAppleFrameworkForXcode --stacktrace\n";
+			shellScript = "cd ../  \n\necho $CONFIGURATION\necho $SDK_NAME\necho $ARCHS\n\nORG_GRADLE_PROJECT_current_flavor_type=DEBUG\n./gradlew :sample:embedAndSignAppleFrameworkForXcode --stacktrace\n";
 		};
 		658A18892EF9A67B006EAA52 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -199,7 +199,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd ../../../../../  \n\necho $CONFIGURATION\necho $SDK_NAME\necho $ARCHS\n\nORG_GRADLE_PROJECT_current_flavor_type=DEBUG\n./gradlew :sample:embedAndSignAppleFrameworkForXcode --stacktrace\n";
+			shellScript = "cd ../  \n\necho $CONFIGURATION\necho $SDK_NAME\necho $ARCHS\n\nORG_GRADLE_PROJECT_current_flavor_type=DEBUG\n./gradlew :sample:embedAndSignAppleFrameworkForXcode --stacktrace\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -381,7 +381,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "com.flipperdevices.BUSY-Lib-Sample";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
-				SDKROOT = auto;
+				SDKROOT = macosx;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SUPPORTED_PLATFORMS = macosx;
 				SUPPORTS_MACCATALYST = NO;
@@ -438,7 +438,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "com.flipperdevices.BUSY-Lib-Sample";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
-				SDKROOT = auto;
+				SDKROOT = macosx;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SUPPORTED_PLATFORMS = macosx;
 				SUPPORTS_MACCATALYST = NO;
