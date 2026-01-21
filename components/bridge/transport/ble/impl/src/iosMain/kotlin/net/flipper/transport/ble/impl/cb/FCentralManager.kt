@@ -148,8 +148,8 @@ class FCentralManager(
 
         peripheral.stateStream.first {
             it == FPeripheralState.DISCONNECTED ||
-                    it == FPeripheralState.PAIRING_FAILED ||
-                    it == FPeripheralState.INVALID_PAIRING
+                it == FPeripheralState.PAIRING_FAILED ||
+                it == FPeripheralState.INVALID_PAIRING
         }
     }
 
