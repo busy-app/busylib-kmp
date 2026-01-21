@@ -145,6 +145,12 @@ class FCentralManager(
         info { "CB disconnect requested id=$id" }
         peripheral.onDisconnecting()
         manager.cancelPeripheralConnection(cbPeripheral)
+
+        peripheral.stateStream.first {
+            it == FPeripheralState.DISCONNECTED ||
+                    it == FPeripheralState.PAIRING_FAILED ||
+                    it == FPeripheralState.INVALID_PAIRING
+        }
     }
 
     override suspend fun startScan() {
