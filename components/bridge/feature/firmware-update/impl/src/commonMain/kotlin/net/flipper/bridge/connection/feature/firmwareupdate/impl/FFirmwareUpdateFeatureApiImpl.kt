@@ -44,7 +44,7 @@ class FFirmwareUpdateFeatureApiImpl(
 
     override suspend fun startUpdateCheck(): Result<Unit> {
         return rpcFeatureApi.fRpcUpdaterApi.startUpdateCheck()
-            .onFailure { throwable -> error(throwable) { "#tryStartInstantUpdate could not start update check" } }
+            .onFailure { throwable -> error(throwable) { "#startUpdateCheck could not start update check" } }
             .map { }
     }
 

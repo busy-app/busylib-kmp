@@ -34,7 +34,7 @@ class CheckUpdateService(
                     ?.getUpdateStatusFlow()
                     .orNullable()
             }
-            .filter { status -> status?.check?.availableVersion.isNullOrBlank() }
+            .filter { status -> status?.check?.availableVersion.isNullOrEmpty() }
             .filter { status ->
                 when (status?.check?.status) {
                     UpdateStatus.Check.CheckResult.AVAILABLE -> false

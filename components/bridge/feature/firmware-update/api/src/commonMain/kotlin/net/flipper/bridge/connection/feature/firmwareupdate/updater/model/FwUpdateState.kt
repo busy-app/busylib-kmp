@@ -7,9 +7,9 @@ sealed interface FwUpdateState {
     data object CheckingVersion : FwUpdateState
     data object LowBattery : FwUpdateState
     data object Busy : FwUpdateState
-    object Pending : FwUpdateState
-    object CouldNotCheckUpdate : FwUpdateState
-    object NoUpdateAvailable : FwUpdateState
+    data object Pending : FwUpdateState
+    data object CouldNotCheckUpdate : FwUpdateState
+    data object NoUpdateAvailable : FwUpdateState
 
     data class UpdateFinished(
         val targetVersion: String,
