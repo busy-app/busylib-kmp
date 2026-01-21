@@ -1,5 +1,22 @@
 package net.flipper.busylib.core.wrapper
 
+/**
+ * Custom wrapper over operation result (success/failure).
+ *
+ * Created specifically for Swift interoperability in Kotlin Multiplatform projects.
+ *
+ * Standard Kotlin [Result] is not exported to Swift/Objective-C because:
+ * - [Result] is an inline value class, which cannot be represented in Objective-C runtime
+ * - Swift cannot see or use Kotlin [Result] type in function signatures
+ * - This makes it impossible to return [Result] from Kotlin code consumed by Swift
+ *
+ * [CResult] solves this by being a regular sealed class that:
+ * - Is properly exported to Swift as a native Swift enum with associated values
+ * - Can be used as return type in functions called from Swift
+ * - Can be stored in class properties visible to Swift
+ * - Provides idiomatic Swift API through [Success] and [Failure] cases
+ * - Can be converted to Kotlin [Result] when needed via [toKotlinResult]
+ */
 sealed class CResult<out T> {
     data class Success<T>(val value: T) : CResult<T>()
     data class Failure(val error: Throwable) : CResult<Nothing>()
