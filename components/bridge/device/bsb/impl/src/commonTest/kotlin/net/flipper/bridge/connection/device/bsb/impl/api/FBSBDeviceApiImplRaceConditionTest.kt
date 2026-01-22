@@ -12,8 +12,9 @@ import net.flipper.bridge.connection.feature.battery.model.BSBDeviceBatteryInfo
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.common.api.FOnDeviceReadyFeatureApi
+import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.feature.info.api.FDeviceInfoFeatureApi
-import net.flipper.bridge.connection.feature.info.api.model.BSBDeviceInfo
+import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarStatusSystem
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.busylib.core.wrapper.WrappedFlow
 import kotlin.test.Test
@@ -272,8 +273,8 @@ class FBSBDeviceApiImplRaceConditionTest {
 
         val onReadyFactory = object : FOnDeviceReadyFeatureApi.Factory {
             override suspend fun invoke(
-                unsafeFeatureDeviceApi: net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi,
-                scope: kotlinx.coroutines.CoroutineScope,
+                unsafeFeatureDeviceApi: FUnsafeDeviceFeatureApi,
+                scope: CoroutineScope,
                 connectedDevice: FConnectedDeviceApi
             ): FOnDeviceReadyFeatureApi {
                 return TestOnReadyFeatureApi {
@@ -431,8 +432,16 @@ class FBSBDeviceApiImplRaceConditionTest {
 
     // Test implementations
     private open class TestFeatureApi : FDeviceInfoFeatureApi {
-        override suspend fun getDeviceInfo(): BSBDeviceInfo {
-            return BSBDeviceInfo(version = "1.0.0")
+        override suspend fun getDeviceInfo(): Result<BusyBarStatusSystem> {
+            return Result.success(
+                BusyBarStatusSystem(
+                    branch = "",
+                    version = "1.0.0",
+                    buildDate = "",
+                    commitHash = "",
+                    uptime = ""
+                )
+            )
         }
     }
 
