@@ -1,3 +1,5 @@
+@file:Suppress("TooManyFunctions")
+
 package net.flipper.busylib
 
 import net.flipper.bridge.connection.feature.battery.api.FDeviceBatteryInfoFeatureApi
