@@ -6,7 +6,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceConnectionConfig
+import net.flipper.bridge.connection.transport.ble.common.BleConstants
 import net.flipper.busylib.core.wrapper.WrappedStateFlow
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
@@ -145,6 +147,17 @@ class FCentralManager(
         info { "CB disconnect requested id=$id" }
         peripheral.onDisconnecting()
         manager.cancelPeripheralConnection(cbPeripheral)
+
+        withTimeoutOrNull(BleConstants.DISCONNECT_TIME) {
+            peripheral.stateStream.first {
+                it == FPeripheralState.DISCONNECTED ||
+                    it == FPeripheralState.PAIRING_FAILED ||
+                    it == FPeripheralState.INVALID_PAIRING
+            }
+        } ?: run {
+            warn { "Disconnect timeout for peripheral id=$id, forcing cleanup" }
+            peripheral.onDisconnect()
+        }
     }
 
     override suspend fun startScan() {
