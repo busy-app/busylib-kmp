@@ -1,6 +1,6 @@
 @file:Suppress("Filename")
 
-import net.flipper.property.SecretPropertyValue
+import net.flipper.property.AnyPropertyValue
 import org.gradle.accessors.dm.LibrariesForLibs
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.the
@@ -21,14 +21,14 @@ fun Project.includeCommonKspConfigurationTo(
 }
 
 val Project.appleEnabled: Boolean
-    get() = SecretPropertyValue(this, "flipper.appleEnabled")
+    get() = AnyPropertyValue(this, "flipper.appleEnabled")
         .getValue()
         .getOrNull()
         ?.toBoolean()
         ?: true
 
 val Project.macOSEnabled: Boolean
-    get() = SecretPropertyValue(this, "flipper.macOSEnabled")
+    get() = AnyPropertyValue(this, "flipper.macOSEnabled")
         .getValue()
         .getOrNull()
         ?.toBoolean()
