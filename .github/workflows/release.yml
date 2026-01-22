@@ -16,6 +16,7 @@ jobs:
   release-central:
     name: Release Central
     needs: [ gradle_validation, build_number ]
+    if: false
     uses: ./.github/workflows/call-release-central.yml
     secrets:
       ORG_GRADLE_PROJECT_MAVENCENTRALUSERNAME: ${{ secrets.ORG_GRADLE_PROJECT_MAVENCENTRALUSERNAME }}
