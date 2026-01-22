@@ -5,9 +5,6 @@ plugins {
     id("flipper.publish")
 }
 
-val appleEnabled = project.findProperty("flipper.appleEnabled")?.toString()?.toBoolean() ?: true
-val macOSEnabled = project.findProperty("flipper.macOSEnabled")?.toString()?.toBoolean() ?: true
-
 kotlin {
     jvm()
     androidLibrary {}
