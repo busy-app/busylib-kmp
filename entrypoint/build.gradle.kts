@@ -10,9 +10,7 @@ plugins {
     id("ru.astrainteractive.gradleplugin.java.core")
     id("ru.astrainteractive.gradleplugin.android.namespace")
     id("ru.astrainteractive.gradleplugin.android.core")
-}
-if (appleEnabled) {
-    apply(plugin = "co.touchlab.skie")
+    alias(libs.plugins.skie)
 }
 
 kotlin {
