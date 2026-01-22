@@ -4,15 +4,12 @@ package net.flipper.busylib
 
 import net.flipper.bridge.connection.feature.battery.api.FDeviceBatteryInfoFeatureApi
 import net.flipper.bridge.connection.feature.ble.api.FBleFeatureApi
-import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
 import net.flipper.bridge.connection.feature.firmwareupdate.api.FFirmwareUpdateFeatureApi
 import net.flipper.bridge.connection.feature.info.api.FDeviceInfoFeatureApi
 import net.flipper.bridge.connection.feature.link.check.ondemand.api.FLinkedInfoOnDemandFeatureApi
 import net.flipper.bridge.connection.feature.oncall.api.FOnCallFeatureApi
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
-import net.flipper.bridge.connection.feature.rpc.api.critical.FRpcCriticalFeatureApi
-import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.screenstreaming.api.FScreenStreamingFeatureApi
 import net.flipper.bridge.connection.feature.settings.api.FSettingsFeatureApi
 import net.flipper.bridge.connection.feature.wifi.api.FWiFiFeatureApi
@@ -73,15 +70,6 @@ suspend fun FFeatureProvider.getBleFeatureSync(): FBleFeatureApi? {
     return this.getSync(FBleFeatureApi::class)
 }
 
-// Events Feature
-fun FFeatureProvider.getEventsFeature(): WrappedFlow<FFeatureStatus<FEventsFeatureApi>> {
-    return get(FEventsFeatureApi::class).wrap()
-}
-
-suspend fun FFeatureProvider.getEventsFeatureSync(): FEventsFeatureApi? {
-    return this.getSync(FEventsFeatureApi::class)
-}
-
 // Device Info Feature
 fun FFeatureProvider.getDeviceInfoFeature(): WrappedFlow<FFeatureStatus<FDeviceInfoFeatureApi>> {
     return get(FDeviceInfoFeatureApi::class).wrap()
@@ -98,24 +86,6 @@ fun FFeatureProvider.getFirmwareUpdateFeature(): WrappedFlow<FFeatureStatus<FFir
 
 suspend fun FFeatureProvider.getFirmwareUpdateFeatureSync(): FFirmwareUpdateFeatureApi? {
     return this.getSync(FFirmwareUpdateFeatureApi::class)
-}
-
-// RPC Feature
-fun FFeatureProvider.getRpcFeature(): WrappedFlow<FFeatureStatus<FRpcFeatureApi>> {
-    return get(FRpcFeatureApi::class).wrap()
-}
-
-suspend fun FFeatureProvider.getRpcFeatureSync(): FRpcFeatureApi? {
-    return this.getSync(FRpcFeatureApi::class)
-}
-
-// RPC Critical Feature
-fun FFeatureProvider.getRpcCriticalFeature(): WrappedFlow<FFeatureStatus<FRpcCriticalFeatureApi>> {
-    return get(FRpcCriticalFeatureApi::class).wrap()
-}
-
-suspend fun FFeatureProvider.getRpcCriticalFeatureSync(): FRpcCriticalFeatureApi? {
-    return this.getSync(FRpcCriticalFeatureApi::class)
 }
 
 // Screen Streaming Feature
