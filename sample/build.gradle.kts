@@ -24,12 +24,15 @@ kotlin {
     jvm()
     androidTarget()
 
-    iosArm64()
-    iosSimulatorArm64()
-    iosX64()
-
-    macosArm64()
-    macosX64()
+    if (appleEnabled) {
+        iosX64()
+        iosArm64()
+        iosSimulatorArm64()
+        if (macOSEnabled) {
+            macosX64()
+            macosArm64()
+        }
+    }
 
     applyDefaultHierarchyTemplate()
 
