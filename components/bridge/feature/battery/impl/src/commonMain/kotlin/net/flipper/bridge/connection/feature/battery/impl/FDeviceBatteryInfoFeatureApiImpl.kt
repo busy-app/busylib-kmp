@@ -47,10 +47,12 @@ class FDeviceBatteryInfoFeatureApiImpl(
             ?.getOrNull()
             .orEmpty()
             .map { byteArray ->
-                val isCharging = byteArray?.firstOrNull()
-                    ?.and(BATTERY_POWER_STATE_MASK)
-                    ?.equals(BATTERY_POWER_STATE_MASK)
-                    ?: return@map null
+                // https://github.com/flipperdevices/bsb-firmware/blob/9acca0c947e764bb0fbdabb4b7b513afa6519de7/applications/services/ble/service/battery/ble_service_battery_i.h#L13
+                val stateByte = byteArray?.getOrNull(1) ?: return@map null
+
+                val maskedValue = stateByte and BATTERY_POWER_STATE_MASK
+                val isCharging = maskedValue == BATTERY_POWER_STATE_CHARGING
+
                 if (isCharging) {
                     BSBDeviceBatteryInfo.BSBBatteryState.CHARGING
                 } else {
@@ -114,6 +116,7 @@ class FDeviceBatteryInfoFeatureApiImpl(
 
     companion object {
         private const val MAX_BATTERY_LEVEL = 100
-        const val BATTERY_POWER_STATE_MASK: Byte = 0b0011_0000
+        const val BATTERY_POWER_STATE_MASK: Byte = 0b0110_0000
+        const val BATTERY_POWER_STATE_CHARGING: Byte = 0b0010_0000
     }
 }
