@@ -1,5 +1,5 @@
 [versions]
-agp = "8.13.2"
+agp = "9.0.0"
 androidx-activityCompose = "1.12.2"
 androidx-core = "1.17.0"
 google-services = "4.4.4"
@@ -13,7 +13,7 @@ kotlin-datetime = "0.7.1" # https://github.com/Kotlin/kotlinx-datetime/releases
 kotlin-immutable = "0.4.0"
 kotlin-io = "0.8.2"
 ksp = "2.3.4"
-klibs-gradleplugin = "1.11.4" # https://github.com/makeevrserg/gradle-plugin
+klibs-gradleplugin = "1.14.0" # https://github.com/makeevrserg/gradle-plugin
 decompose = "3.4.0"
 kotlin-inject = "0.9.0"
 kotlin-inject-anvil = "0.1.6"
@@ -67,6 +67,14 @@ kotlin-immutable = { module = "org.jetbrains.kotlinx:kotlinx-collections-immutab
 
 bitvector = { module = "io.github.adokky:bitvector", version.ref = "bitvector" }
 
+jetbrains-compose-foundation = { group = "org.jetbrains.compose.foundation", name = "foundation", version.ref = "compose-plugin" }
+jetbrains-compose-material = { group = "org.jetbrains.compose.material", name = "material", version.ref = "compose-plugin" }
+jetbrains-compose-runtime = { group = "org.jetbrains.compose.runtime", name = "runtime", version.ref = "compose-plugin" }
+jetbrains-compose-ui = { group = "org.jetbrains.compose.ui", name = "ui", version.ref = "compose-plugin" }
+jetbrains-compose-tooling = { group = "org.jetbrains.compose.ui", name = "ui-tooling", version.ref = "compose-plugin" }
+jetbrains-compose-preview = { group = "org.jetbrains.compose.ui", name = "ui-tooling-preview", version.ref = "compose-plugin" }
+jetbrains-compose-resources = { group = "org.jetbrains.compose.components", name = "components-resources", version.ref = "compose-plugin" }
+
 # Testing
 junit-bom = { module = "org.junit:junit-bom", version.ref = "jupiter" }
 jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "jupiter" }
@@ -99,6 +107,9 @@ encoding-hash-md = { module = "org.kotlincrypto.hash:md", version.ref = "encodin
 ble-client = { module = "no.nordicsemi.kotlin.ble:client-android", version.ref = "ble" }
 ble-client-mock = { module = "no.nordicsemi.kotlin.ble:client-android-mock", version.ref = "ble" }
 
+klibs-gradle-android = { module = "ru.astrainteractive.gradleplugin:android", version.ref = "klibs-gradleplugin" }
+klibs-gradle-convention = { module = "ru.astrainteractive.gradleplugin:convention", version.ref = "klibs-gradleplugin" }
+
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
 androidLibrary = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
@@ -115,11 +126,12 @@ klibs-gradle-detekt = { id = "ru.astrainteractive.gradleplugin.detekt", version.
 klibs-gradle-detekt-compose = { id = "ru.astrainteractive.gradleplugin.detekt.compose", version.ref = "klibs-gradleplugin" }
 klibs-gradle-dokka-root = { id = "ru.astrainteractive.gradleplugin.dokka.root", version.ref = "klibs-gradleplugin" }
 klibs-gradle-dokka-module = { id = "ru.astrainteractive.gradleplugin.dokka.module", version.ref = "klibs-gradleplugin" }
-klibs-gradle-java-core = { id = "ru.astrainteractive.gradleplugin.java.core", version.ref = "klibs-gradleplugin" }
+klibs-gradle-java-version = { id = "ru.astrainteractive.gradleplugin.java.version", version.ref = "klibs-gradleplugin" }
 klibs-gradle-publication = { id = "ru.astrainteractive.gradleplugin.publication", version.ref = "klibs-gradleplugin" }
 klibs-gradle-rootinfo = { id = "ru.astrainteractive.gradleplugin.root.info", version.ref = "klibs-gradleplugin" }
 # klibs - android
-klibs-gradle-android-core = { id = "ru.astrainteractive.gradleplugin.android.core", version.ref = "klibs-gradleplugin" }
+klibs-gradle-android-sdk = { id = "ru.astrainteractive.gradleplugin.android.sdk", version.ref = "klibs-gradleplugin" }
+klibs-gradle-android-java = { id = "ru.astrainteractive.gradleplugin.android.java", version.ref = "klibs-gradleplugin" }
 klibs-gradle-android-compose = { id = "ru.astrainteractive.gradleplugin.android.compose", version.ref = "klibs-gradleplugin" }
 klibs-gradle-android-apk-sign = { id = "ru.astrainteractive.gradleplugin.android.apk.sign", version.ref = "klibs-gradleplugin" }
 klibs-gradle-android-apk-name = { id = "ru.astrainteractive.gradleplugin.android.apk.name", version.ref = "klibs-gradleplugin" }
