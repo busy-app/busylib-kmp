@@ -13,8 +13,8 @@ actual inline fun error(tag: String?, error: Throwable, logMessage: () -> String
         System.err.println(logMessage())
     } else {
         System.err.println("[$tag] ${logMessage()}")
-        error.printStackTrace()
     }
+    error.printStackTrace()
 }
 
 actual inline fun info(tag: String?, logMessage: () -> String) {

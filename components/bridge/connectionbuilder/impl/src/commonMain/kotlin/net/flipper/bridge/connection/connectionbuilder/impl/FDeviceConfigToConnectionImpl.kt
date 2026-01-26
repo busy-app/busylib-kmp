@@ -26,11 +26,8 @@ class FDeviceConfigToConnectionImpl(
         listener: FTransportConnectionStatusListener
     ): Result<API> = runCatching {
         if (config is FCombinedConnectionConfig) {
-            val connectionApi = combinedConnectionApi
-                ?: throw NotImplementedError("Failed to find CombinedConnectionApi")
-
             @Suppress("UNCHECKED_CAST")
-            val result = connectionApi.connect(
+            val result = combinedConnectionApi.connect(
                 scope = scope,
                 config = config,
                 listener = listener,
