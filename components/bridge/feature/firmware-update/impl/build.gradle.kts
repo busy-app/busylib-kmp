@@ -1,9 +1,6 @@
 plugins {
     id("flipper.multiplatform")
     id("flipper.anvil-multiplatform")
-    id("ru.astrainteractive.gradleplugin.java.core")
-    id("ru.astrainteractive.gradleplugin.android.namespace")
-    id("ru.astrainteractive.gradleplugin.android.core")
 }
 
 kotlin {
@@ -20,6 +17,7 @@ kotlin {
 
         implementation(projects.components.bridge.feature.rpc.api)
         implementation(projects.components.bridge.feature.events.api)
+        implementation(projects.components.bridge.feature.provider.api)
 
         implementation(libs.kotlin.coroutines)
         implementation(libs.kotlin.immutable)

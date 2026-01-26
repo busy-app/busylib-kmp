@@ -7,10 +7,6 @@ plugins {
     id("flipper.multiplatform")
     id("flipper.anvil-multiplatform")
     id("org.jetbrains.kotlin.plugin.serialization")
-    id("ru.astrainteractive.gradleplugin.java.core")
-    id("ru.astrainteractive.gradleplugin.android.namespace")
-    id("ru.astrainteractive.gradleplugin.android.core")
-
     alias(libs.plugins.skie)
 }
 
@@ -95,6 +91,7 @@ kotlin {
 }
 
 kotlin {
+    if (!appleEnabled) return@kotlin
     val xcFramework = XCFramework("BusyLibKMP")
     targets
         .filterIsInstance<KotlinNativeTarget>()
@@ -138,6 +135,7 @@ kotlin {
     sourceSets.iosMain.dependencies {
         implementation(projects.components.bridge.transport.ble.impl)
     }
+    if (!macOSEnabled) return@kotlin
     sourceSets.macosMain.dependencies {
         implementation(projects.components.bridge.transport.tcp.lan.impl)
     }
@@ -148,6 +146,11 @@ val zipXCFrameworkDebug by tasks.registering(Exec::class) {
     description = "Creates a ZIP archive of the debug XCFramework (preserving symlinks)"
 
     dependsOn("assembleBusyLibKMPDebugXCFramework")
+
+    if (!appleEnabled) {
+        logger.error("Can't execute zipXCFrameworkDebug as apple isn't enabled")
+        return@registering
+    }
 
     val xcframeworkDir = layout.buildDirectory.dir("XCFrameworks/debug")
     val outputDir = layout.buildDirectory.dir("xcframework-zips")
@@ -178,6 +181,11 @@ val zipXCFrameworkRelease by tasks.registering(Exec::class) {
 
     dependsOn("assembleBusyLibKMPReleaseXCFramework")
 
+    if (!appleEnabled) {
+        logger.error("Can't execute zipXCFrameworkDebug as apple isn't enabled")
+        return@registering
+    }
+
     val xcframeworkDir = layout.buildDirectory.dir("XCFrameworks/release")
     val outputDir = layout.buildDirectory.dir("xcframework-zips")
     val outputFile = outputDir.map { it.file("BusyLibKMP-release.xcframework.zip") }
@@ -204,6 +212,10 @@ val zipXCFrameworkRelease by tasks.registering(Exec::class) {
 // Configure publishing to include the XCFramework zip files
 publishing {
     publications {
+        if (!appleEnabled) {
+            logger.error("Can't execute zipXCFrameworkDebug as apple isn't enabled")
+            return@publications
+        }
         // Add XCFramework debug zip as an artifact
         create<MavenPublication>("xcframeworkDebug") {
             artifactId = "${project.name}-xcframework-debug"

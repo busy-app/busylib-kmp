@@ -1,32 +1,27 @@
 package net.flipper.property
 
+import localProperties
 import org.gradle.api.GradleException
 import org.gradle.api.Project
-import java.util.Properties
 
 class SecretPropertyValue(
     private val project: Project,
     override val key: String
 ) : PropertyValue {
-    override fun getValue(): Result<String> {
-        val envValue = System.getenv(key)?.toString()
-        if (envValue != null) {
-            return Result.success(envValue)
-        } else {
-            project.logger.error("Key $key is not found in Environment. Getting from local.properties")
-        }
-        val secretPropsFile = project.file("local.properties")
-        if (!secretPropsFile.exists()) {
-            val e = IllegalStateException("File ${secretPropsFile.name} doesn't exist")
-            return Result.failure(e)
-        }
-        val properties = Properties().apply {
-            load(secretPropsFile.reader())
-        }
-        return runCatching {
-            properties[key]
-                ?.toString()
-                ?: throw GradleException("Required property $key not defined!")
-        }
+
+    /**
+     * System.getenv doesn't allow dots
+     */
+    private val envKey: String = key.replace(".", "_")
+
+    override fun getValue() = runCatching {
+        // try to get system ci property
+        val systemEnvProperty = System.getenv(envKey)
+        if (systemEnvProperty != null) return@runCatching systemEnvProperty
+        project.logger.warn("System.enviroment $envKey is missing. Getting it from local.properties")
+        // if not ci getting from local.properties
+        return@runCatching project.localProperties
+            .getProperty(key)
+            ?: throw GradleException("Required property $key not defined!")
     }
 }

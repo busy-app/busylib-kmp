@@ -5,8 +5,10 @@ plugins {
     id("flipper.publish")
 }
 
-val appleEnabled = project.findProperty("flipper.appleEnabled")?.toString()?.toBoolean() ?: true
-val macOSEnabled = project.findProperty("flipper.macOSEnabled")?.toString()?.toBoolean() ?: true
+pluginManager.apply(ru.astrainteractive.gradleplugin.plugin.AndroidSdkPlugin::class)
+pluginManager.apply(ru.astrainteractive.gradleplugin.plugin.AndroidJavaPlugin::class)
+pluginManager.apply(ru.astrainteractive.gradleplugin.plugin.AndroidNamespacePlugin::class)
+pluginManager.apply(ru.astrainteractive.gradleplugin.plugin.JavaVersionPlugin::class)
 
 kotlin {
     jvm()
