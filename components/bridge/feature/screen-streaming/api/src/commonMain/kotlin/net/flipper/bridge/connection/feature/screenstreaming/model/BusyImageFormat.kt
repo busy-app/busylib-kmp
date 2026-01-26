@@ -7,5 +7,4 @@ import kotlin.jvm.JvmInline
  * We need to convert is manually
  * Ask firmware developers for more
  */
-@JvmInline
-value class BusyImageFormat(val byteArray: ByteArray)
+class BusyImageFormat(val byteArray: ByteArray)
