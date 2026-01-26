@@ -14,6 +14,7 @@ kotlin {
 
         implementation(projects.components.bridge.transport.common.api)
         implementation(projects.components.bridge.transport.mock.api)
+        implementation(projects.components.bridge.transport.combined.api)
 
         implementation(libs.kotlin.coroutines)
     }

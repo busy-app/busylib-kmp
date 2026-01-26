@@ -3,6 +3,8 @@ package net.flipper.bridge.connection.connectionbuilder.impl
 import kotlinx.coroutines.CoroutineScope
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.connectionbuilder.api.FDeviceConfigToConnection
+import net.flipper.bridge.connection.transport.combined.CombinedConnectionApi
+import net.flipper.bridge.connection.transport.combined.FCombinedConnectionConfig
 import net.flipper.bridge.connection.transport.common.api.DeviceConnectionApi
 import net.flipper.bridge.connection.transport.common.api.DeviceConnectionApiHolder
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
@@ -15,13 +17,29 @@ import kotlin.reflect.KClass
 @Inject
 @ContributesBinding(BusyLibGraph::class, FDeviceConfigToConnection::class)
 class FDeviceConfigToConnectionImpl(
-    private val configToConnectionMap: Map<KClass<*>, DeviceConnectionApiHolder>
+    private val configToConnectionMap: Map<KClass<*>, DeviceConnectionApiHolder>,
+    private val combinedConnectionApi: CombinedConnectionApi
 ) : FDeviceConfigToConnection {
     override suspend fun <API : FConnectedDeviceApi, CONFIG : FDeviceConnectionConfig<API>> connect(
         scope: CoroutineScope,
         config: CONFIG,
         listener: FTransportConnectionStatusListener
     ): Result<API> = runCatching {
+        if (config is FCombinedConnectionConfig) {
+            val connectionApi = combinedConnectionApi
+                ?: throw NotImplementedError("Failed to find CombinedConnectionApi")
+
+            @Suppress("UNCHECKED_CAST")
+            val result = connectionApi.connect(
+                scope = scope,
+                config = config,
+                listener = listener,
+                connectionBuilder = this
+            ) as Result<API>
+
+            return@runCatching result.getOrThrow()
+        }
+
         val connectionApiUntyped = configToConnectionMap.entries.find { (qualifier, _) ->
             qualifier.isInstance(
                 config

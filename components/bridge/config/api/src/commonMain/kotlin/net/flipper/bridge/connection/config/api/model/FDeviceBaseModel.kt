@@ -34,6 +34,7 @@ sealed class FDeviceBaseModel {
 
     @Serializable
     class FDeviceBSBModelLan(
+        @SerialName("host")
         val host: String = "10.0.4.20",
     ) : FDeviceBaseModel() {
         override val uniqueId: String = host
@@ -42,12 +43,22 @@ sealed class FDeviceBaseModel {
 
     @Serializable
     class FDeviceBSBModelCloud(
+        @SerialName("auth_token")
         val authToken: String,
+        @SerialName("host")
         val host: String
     ) : FDeviceBaseModel() {
         override val uniqueId: String = authToken
         override val humanReadableName: String = "BUSY Bar"
     }
+
+    @Serializable
+    class FDeviceBSBModelCombined(
+        override val uniqueId: String = Uuid.random().toString(),
+        override val humanReadableName: String = models.first().humanReadableName,
+        @SerialName("models")
+        val models: List<FDeviceBaseModel>
+    ) : FDeviceBaseModel()
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -99,6 +110,13 @@ sealed class FDeviceBaseModel {
                     "humanReadableName='$humanReadableName'" +
                     ")"
             }
+
+            is FDeviceBSBModelCombined ->
+                return "FDeviceBSBModelCombined(" +
+                    "uniqueId='$uniqueId'," +
+                    "humanReadableName='$humanReadableName'," +
+                    "models=$models" +
+                    ")"
         }
     }
 }

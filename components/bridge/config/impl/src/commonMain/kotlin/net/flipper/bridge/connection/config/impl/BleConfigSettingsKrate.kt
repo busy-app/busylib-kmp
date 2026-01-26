@@ -32,7 +32,7 @@ class BleConfigSettingsKrateImpl(
                         json.decodeFromString(Serializer, stringValue)
                     }
                 }
-                .catch { null }
+                .catch { emit(Factory.create()) }
         },
         saver = { newSettings ->
             if (newSettings == null) {

@@ -1,13 +1,14 @@
 package net.flipper.bridge.connection.transport.combined
 
 import kotlinx.coroutines.CoroutineScope
-import net.flipper.bridge.connection.transport.common.api.DeviceConnectionApi
+import net.flipper.bridge.connection.connectionbuilder.api.FDeviceConfigToConnection
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 
-interface CombinedConnectionApi : DeviceConnectionApi<FCombinedConnectionApi, FCombinedConnectionConfig> {
-    override suspend fun connect(
+interface CombinedConnectionApi {
+    suspend fun connect(
         scope: CoroutineScope,
         config: FCombinedConnectionConfig,
-        listener: FTransportConnectionStatusListener
+        listener: FTransportConnectionStatusListener,
+        connectionBuilder: FDeviceConfigToConnection
     ): Result<FCombinedConnectionApi>
 }
