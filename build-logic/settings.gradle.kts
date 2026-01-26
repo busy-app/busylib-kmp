@@ -2,19 +2,19 @@ enableFeaturePreview("STABLE_CONFIGURATION_CACHE")
 
 pluginManagement {
     repositories {
+        mavenLocal()
         maven {
             url = uri("https://reposilite.flipp.dev/releases")
         }
-        mavenLocal()
     }
 }
 
 dependencyResolutionManagement {
     repositories {
+        mavenLocal()
         maven {
             url = uri("https://reposilite.flipp.dev/releases")
         }
-        mavenLocal()
     }
 
     versionCatalogs {

@@ -10,20 +10,20 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.unit.dp
+import busylibkmp.sample.cmp.generated.resources.Res
+import busylibkmp.sample.cmp.generated.resources.ic_close
+import busylibkmp.sample.cmp.generated.resources.material_ic_add_box
+import busylibkmp.sample.cmp.generated.resources.material_ic_delete
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.instancekeeper.getOrCreate
 import net.flipper.bridge.connection.screens.decompose.DecomposeOnBackParameter
 import net.flipper.bridge.connection.screens.decompose.ScreenDecomposeComponent
+import org.jetbrains.compose.resources.painterResource
 
 class ConnectionSearchDecomposeComponent(
     componentContext: ComponentContext,
@@ -45,7 +45,7 @@ class ConnectionSearchDecomposeComponent(
                         .clickable { onBack() }
                         .padding(16.dp)
                         .size(24.dp),
-                    painter = rememberVectorPainter(Icons.Default.Close),
+                    painter = painterResource(Res.drawable.ic_close),
                     contentDescription = null,
                     tint = MaterialTheme.colors.onBackground
                 )
@@ -75,11 +75,11 @@ class ConnectionSearchDecomposeComponent(
                                 .clickable { searchViewModel.onDeviceClick(searchItem) }
                                 .padding(16.dp)
                                 .size(24.dp),
-                            painter = rememberVectorPainter(
+                            painter = painterResource(
                                 if (searchItem.isAdded) {
-                                    Icons.Default.Delete
+                                    Res.drawable.material_ic_delete
                                 } else {
-                                    Icons.Default.Add
+                                    Res.drawable.material_ic_add_box
                                 }
                             ),
                             contentDescription = null,

@@ -1,6 +1,8 @@
 package net.flipper.bridge.connection.feature.events.impl
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.WhileSubscribed
@@ -9,6 +11,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.isActive
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.feature.events.api.ConsumableUpdateEvent
@@ -30,6 +33,13 @@ class FEventsFeatureApiImpl(
     override val TAG = "FEventsFeatureApi"
 
     private val sharedIndicationFlow = flow {
+        while (currentCoroutineContext().isActive) {
+            delay(5.seconds)
+            UpdateEvent.entries
+                .map(::ConsumableUpdateEvent)
+                .forEach { event -> emit(event) }
+            info { "#sharedIndicationFlow events is sent" }
+        }
         metaInfoApi.get(TransportMetaInfoKey.EVENTS_INDICATION)
             .onFailure { error(it) { "Failed receive ${TransportMetaInfoKey.EVENTS_INDICATION}" } }
             .getOrNull()
