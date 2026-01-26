@@ -126,6 +126,8 @@ kotlin {
     sourceSets.appleMain {
         dependencies {
             implementation(projects.components.bridge.config.impl)
+
+            implementation(projects.components.bridge.transport.combined.noop)
         }
         if (CURRENT_FLAVOR_TYPE.isMockEnabled) {
             kotlin.srcDir("src/appleMainMock/kotlin")
