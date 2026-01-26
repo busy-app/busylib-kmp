@@ -70,7 +70,6 @@ kotlin {
             implementation(projects.components.bridge.transport.tcp.cloud.impl)
         }
         implementation(projects.components.bridge.transport.tcp.lan.api)
-        implementation(projects.components.bridge.transport.combined.noop)
         implementation(projects.components.bridge.transportconfigbuilder.api)
         implementation(projects.components.bridge.transportconfigbuilder.impl)
         implementation(libs.kotlin.coroutines)
