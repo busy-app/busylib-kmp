@@ -51,3 +51,10 @@ sealed class CResult<out T> {
         is Failure -> Result.failure(error)
     }
 }
+
+fun <T> Result<T>.toCResult(): CResult<T> {
+    return fold(
+        onSuccess = { CResult.Success(it) },
+        onFailure = { CResult.Failure(it) }
+    )
+}
