@@ -11,8 +11,6 @@ import androidx.compose.material.ExposedDropdownMenuBox
 import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -21,10 +19,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.unit.dp
+import busylibkmp.sample.cmp.generated.resources.Res
+import busylibkmp.sample.cmp.generated.resources.ic_more
 import net.flipper.bridge.connection.config.api.model.FDeviceBaseModel
 import net.flipper.bridge.connection.screens.device.viewmodel.DevicesDropdownState
+import org.jetbrains.compose.resources.painterResource
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -109,7 +109,7 @@ fun FDeviceDropdownComposable(
 
         Icon(
             modifier = Modifier.padding(end = 16.dp),
-            painter = rememberVectorPainter(Icons.Default.MoreHoriz),
+            painter = painterResource(Res.drawable.ic_more),
             contentDescription = null,
             tint = MaterialTheme.colors.onBackground
         )

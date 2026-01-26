@@ -10,6 +10,8 @@ dependencies {
     implementation(libs.compose.multiplatform.gradle)
     implementation(libs.compose.gradle)
     implementation(libs.vaniktech)
+    implementation(libs.klibs.gradle.android)
+    implementation(libs.klibs.gradle.convention)
 
     implementation(files(libs.javaClass.superclass.protectionDomain.codeSource.location))
 }

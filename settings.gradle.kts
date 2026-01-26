@@ -88,5 +88,6 @@ include(
     ":components:cloud:api",
 
     ":entrypoint",
-    ":sample"
+    ":sample:cmp",
+    ":sample:android"
 )
