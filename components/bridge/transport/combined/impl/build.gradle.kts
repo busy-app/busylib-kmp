@@ -5,14 +5,15 @@ plugins {
 
 kotlin {
     sourceSets.commonMain.dependencies {
-        implementation(projects.components.bridge.connectionbuilder.api)
-
-        implementation(projects.components.core.di)
-
         implementation(projects.components.bridge.transport.common.api)
-        implementation(projects.components.bridge.transport.mock.api)
+        implementation(projects.components.bridge.transport.common.impl)
         implementation(projects.components.bridge.transport.combined.api)
+        implementation(projects.components.core.di)
+        implementation(projects.components.core.log)
 
         implementation(libs.kotlin.coroutines)
+        implementation(libs.ktor.client.core)
+
+        implementation(projects.components.bridge.connectionbuilder.api)
     }
 }

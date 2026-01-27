@@ -5,6 +5,7 @@ import net.flipper.bridge.connection.config.api.model.FDeviceBaseModel
 import net.flipper.bridge.connection.configbuilder.api.FDeviceConnectionConfigMapper
 import net.flipper.bridge.connection.configbuilder.impl.builders.BUSYBarBLEBuilderConfig
 import net.flipper.bridge.connection.configbuilder.impl.builders.BUSYBarCloudBuilderConfig
+import net.flipper.bridge.connection.configbuilder.impl.builders.BUSYBarCombinedBuilderConfig
 import net.flipper.bridge.connection.configbuilder.impl.builders.BUSYBarLanBuilderConfig
 import net.flipper.bridge.connection.configbuilder.impl.builders.BUSYBarMockBuilderConfig
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
@@ -17,7 +18,8 @@ class FDeviceConnectionConfigMapperImpl(
     private val mockBuilderConfig: BUSYBarMockBuilderConfig,
     private val bleBuilderConfig: BUSYBarBLEBuilderConfig,
     private val lanBuilderConfig: BUSYBarLanBuilderConfig,
-    private val cloudBuilderConfig: BUSYBarCloudBuilderConfig
+    private val cloudBuilderConfig: BUSYBarCloudBuilderConfig,
+    private val busyBarCombinedBuilderConfig: BUSYBarCombinedBuilderConfig
 ) : FDeviceConnectionConfigMapper {
     override fun getConnectionConfig(device: FDeviceBaseModel): FDeviceConnectionConfig<*> {
         return when (device) {
@@ -45,6 +47,13 @@ class FDeviceConnectionConfigMapperImpl(
                 authToken = device.authToken,
                 host = device.host,
                 name = device.humanReadableName
+            )
+
+            is FDeviceBaseModel.FDeviceBSBModelCombined -> busyBarCombinedBuilderConfig.build(
+                name = device.humanReadableName,
+                connectionConfigs = device.models.map {
+                    getConnectionConfig(it)
+                }
             )
         }
     }

@@ -26,6 +26,17 @@ class LanSearchViewModel(
                 FDeviceBaseModel.FDeviceBSBModelCloud(
                     authToken = "",
                     host = "proxy.dev.busy.app"
+                ),
+                FDeviceBaseModel.FDeviceBSBModelCombined(
+                    uniqueId = "BUSY Bar Combined",
+                    humanReadableName = "BUSY Bar Combined",
+                    models = listOf(
+                        FDeviceBaseModel.FDeviceBSBModelLan(),
+                        FDeviceBaseModel.FDeviceBSBModelCloud(
+                            authToken = "",
+                            host = "proxy.dev.busy.app"
+                        )
+                    ),
                 )
             )
         )
