@@ -6,7 +6,7 @@ import net.flipper.bridge.connection.transport.common.api.FTransportConnectionSt
 import net.flipper.bridge.connection.transport.tcp.lan.FLanDeviceConnectionConfig
 
 interface FLanConnectionMonitorApi {
-    fun startMonitoring(
+    suspend fun startMonitoring(
         scope: CoroutineScope,
         deviceApi: FConnectedDeviceApi
     )

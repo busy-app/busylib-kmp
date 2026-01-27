@@ -24,6 +24,9 @@ kotlin {
     }
 
     applyDefaultHierarchyTemplate()
+    compilerOptions {
+        freeCompilerArgs.add("-XXLanguage:+ExplicitBackingFields")
+    }
 }
 
 var configurations = arrayListOf(
