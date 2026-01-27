@@ -2,7 +2,6 @@ package net.flipper.bridge.connection.transport.combined.impl
 
 import io.ktor.client.engine.HttpClientEngine
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
@@ -36,7 +35,7 @@ class FCombinedConnectionApiImpl(
             }.launchIn(scope)
     }
 
-    private val httpEngine = FCombinedHttpEngine(connections)
+    private val httpEngine = FCombinedHttpEngine(scope, connections)
 
     override fun getDeviceHttpEngine(): HttpClientEngine {
         return httpEngine
