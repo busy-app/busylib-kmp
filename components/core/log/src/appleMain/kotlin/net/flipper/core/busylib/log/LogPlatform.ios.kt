@@ -5,7 +5,16 @@ actual inline fun error(tag: String?, logMessage: () -> String) {
 }
 
 actual inline fun error(tag: String?, error: Throwable, logMessage: () -> String) {
-    val message = "${logMessage()} | ${error.message}"
+    val message = buildString {
+        append(logMessage())
+        append(" | ")
+        append(error.message ?: "Unknown error")
+        val stackTrace = error.stackTraceToString()
+        if (stackTrace.isNotBlank()) {
+            append('\n')
+            append(stackTrace)
+        }
+    }
     AppleLoggerDelegate.logger.error(tag, message)
 }
 
