@@ -12,5 +12,6 @@ enum class FDeviceFeature {
     BLE,
     EVENTS,
     SETTINGS,
-    ON_CALL
+    ON_CALL,
+    SMART_HOME,
 }
