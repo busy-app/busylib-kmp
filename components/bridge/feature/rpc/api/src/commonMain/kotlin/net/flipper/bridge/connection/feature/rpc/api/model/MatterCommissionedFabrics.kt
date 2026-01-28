@@ -16,7 +16,7 @@ class MatterCommissionedFabrics(
     data class CommissioningStatus(
         @Serializable(InstantUtcSerializer::class)
         @SerialName("timestamp")
-        val timestamp: Instant,
+        val timestamp: Instant? = null,
         @SerialName("value")
         val value: CommissioningStatusType
     )
