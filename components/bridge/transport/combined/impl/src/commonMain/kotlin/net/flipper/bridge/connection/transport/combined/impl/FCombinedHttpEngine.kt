@@ -40,7 +40,7 @@ class FCombinedHttpEngine(
     @Suppress("ForbiddenComment")
     override suspend fun execute(data: HttpRequestData): HttpResponseData {
         val currentDelegates = delegates.value
-        check(currentDelegates.isEmpty()) { "No connected devices" }
+        check(currentDelegates.isNotEmpty()) { "No connected devices" }
 
         val (selectedDelegate, _) = currentDelegates.first() // TODO: Add logic to handle capabilities
         info { "Dispatch request $data to $selectedDelegate" }
