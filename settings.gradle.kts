@@ -86,6 +86,8 @@ include(
     ":components:bridge:feature:events:impl",
     ":components:bridge:feature:oncall:api",
     ":components:bridge:feature:oncall:impl",
+    ":components:bridge:feature:smarthome:api",
+    ":components:bridge:feature:smarthome:impl",
 
     ":components:principal:api",
     ":components:cloud:api",

@@ -56,6 +56,8 @@ kotlin {
         implementation(projects.components.bridge.feature.events.impl)
         api(projects.components.bridge.feature.oncall.api)
         implementation(projects.components.bridge.feature.oncall.impl)
+        api(projects.components.bridge.feature.smarthome.api)
+        implementation(projects.components.bridge.feature.smarthome.impl)
 
         implementation(projects.components.bridge.transport.ble.api)
         implementation(projects.components.bridge.transport.common.api)
@@ -118,6 +120,7 @@ kotlin {
                 export(projects.components.bridge.feature.settings.api)
                 export(projects.components.bridge.orchestrator.api)
                 export(projects.components.bridge.service.api)
+                export(projects.components.core.log)
 
                 xcFramework.add(this)
             }
