@@ -6,6 +6,7 @@ import net.flipper.bridge.connection.connectionbuilder.api.FDeviceConfigToConnec
 import net.flipper.bridge.connection.transport.combined.CombinedConnectionApi
 import net.flipper.bridge.connection.transport.combined.FCombinedConnectionApi
 import net.flipper.bridge.connection.transport.combined.FCombinedConnectionConfig
+import net.flipper.bridge.connection.transport.combined.impl.connections.AutoReconnectConnection
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.busylib.core.di.BusyLibGraph
@@ -22,14 +23,14 @@ class CombinedConnectionApiImpl : CombinedConnectionApi {
     ): Result<FCombinedConnectionApi> = runCatching {
         listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting)
 
-        @Suppress("UnusedPrivateProperty")
         val connections = config.connectionConfigs.map {
-            connectionBuilder.connect(
-                scope,
-                it,
-                listener
-            )
+            AutoReconnectConnection(scope, it, connectionBuilder)
         }
-        TODO()
+        return@runCatching FCombinedConnectionApiImpl(
+            scope = scope,
+            connections = connections,
+            listener = listener,
+            deviceName = config.name
+        )
     }
 }

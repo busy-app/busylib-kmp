@@ -33,7 +33,7 @@ class FLanApiImpl(
         )
     }
 
-    fun startMonitoring() {
+    suspend fun startMonitoring() {
         connectionMonitor.startMonitoring(
             scope = scope,
             deviceApi = this
