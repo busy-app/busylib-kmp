@@ -23,7 +23,6 @@ class CombinedConnectionApiImpl : CombinedConnectionApi {
     ): Result<FCombinedConnectionApi> = runCatching {
         listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting)
 
-        @Suppress("UnusedPrivateProperty")
         val connections = config.connectionConfigs.map {
             AutoReconnectConnection(scope, it, connectionBuilder)
         }
