@@ -15,6 +15,7 @@ import net.flipper.bridge.connection.feature.rpc.api.critical.FRpcCriticalFeatur
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.screenstreaming.api.FScreenStreamingFeatureApi
 import net.flipper.bridge.connection.feature.settings.api.FSettingsFeatureApi
+import net.flipper.bridge.connection.feature.smarthome.api.FSmartHomeFeatureApi
 import net.flipper.bridge.connection.feature.wifi.api.FWiFiFeatureApi
 import kotlin.reflect.KClass
 
@@ -37,6 +38,7 @@ object FZeroFeatureClassToEnumMapper {
             FDeviceFeature.EVENTS -> FEventsFeatureApi::class
             FDeviceFeature.SETTINGS -> FSettingsFeatureApi::class
             FDeviceFeature.ON_CALL -> FOnCallFeatureApi::class
+            FDeviceFeature.SMART_HOME -> FSmartHomeFeatureApi::class
         }
     }
 
