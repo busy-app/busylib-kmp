@@ -1,17 +1,15 @@
 package net.flipper.bridge.connection.transport.combined.impl.connections
 
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.yield
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.yield
 import net.flipper.bridge.connection.connectionbuilder.api.FDeviceConfigToConnection
 import net.flipper.bridge.connection.transport.combined.impl.connections.utils.ChildSupervisorScope
+import net.flipper.bridge.connection.transport.combined.impl.connections.utils.WrappedConnectionException
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
@@ -53,7 +51,7 @@ class WrappedConnectionInternal(
                 scope,
                 config,
                 this@WrappedConnectionInternal
-            ).getOrElse { throw RuntimeException(it) }
+            ).getOrElse { throw WrappedConnectionException(it) }
         }
     }
 

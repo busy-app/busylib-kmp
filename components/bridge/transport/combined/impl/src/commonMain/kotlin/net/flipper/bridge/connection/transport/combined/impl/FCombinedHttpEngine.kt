@@ -37,11 +37,11 @@ class FCombinedHttpEngine(
     }.stateIn(scope, SharingStarted.Eagerly, arrayOf())
 
     @InternalAPI
+    @Suppress("ForbiddenComment")
     override suspend fun execute(data: HttpRequestData): HttpResponseData {
         val currentDelegates = delegates.value
-        if (currentDelegates.isEmpty()) {
-            throw IllegalStateException("No connected devices")
-        }
+        check(currentDelegates.isEmpty()) { "No connected devices" }
+
         val (selectedDelegate, _) = currentDelegates.first() // TODO: Add logic to handle capabilities
         info { "Dispatch request $data to $selectedDelegate" }
 

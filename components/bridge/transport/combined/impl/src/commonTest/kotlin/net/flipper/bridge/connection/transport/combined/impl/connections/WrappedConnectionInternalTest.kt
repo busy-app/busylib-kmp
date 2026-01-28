@@ -1,7 +1,8 @@
+@file:Suppress("TooGenericExceptionThrown")
+
 package net.flipper.bridge.connection.transport.combined.impl.connections
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -23,7 +24,6 @@ import net.flipper.bridge.connection.transport.common.api.FTransportConnectionSt
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
-import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 /**
@@ -301,7 +301,7 @@ class WrappedConnectionInternalTest {
         val finalState = connection.stateFlow.value
         assertTrue(
             finalState == FInternalTransportConnectionStatus.Pairing ||
-                    finalState == FInternalTransportConnectionStatus.Connecting,
+                finalState == FInternalTransportConnectionStatus.Connecting,
             "Final state should be a valid state"
         )
     }
@@ -693,10 +693,11 @@ class WrappedConnectionInternalTest {
             val updateJobs = List(50) { i ->
                 async {
                     listener.onStatusUpdate(
-                        if (i % 2 == 0)
+                        if (i % 2 == 0) {
                             FInternalTransportConnectionStatus.Pairing
-                        else
+                        } else {
                             FInternalTransportConnectionStatus.Connecting
+                        }
                     )
                 }
             }

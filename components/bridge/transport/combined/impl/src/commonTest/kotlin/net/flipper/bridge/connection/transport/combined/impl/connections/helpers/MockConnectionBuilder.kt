@@ -9,7 +9,9 @@ import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfi
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 
 /**
- * Mock implementation of [net.flipper.bridge.connection.connectionbuilder.api.FDeviceConfigToConnection] for testing connection scenarios.
+ * Mock implementation of
+ * [net.flipper.bridge.connection.connectionbuilder.api.FDeviceConfigToConnection]
+ * for testing connection scenarios.
  *
  * Features:
  * - Track connection attempts count

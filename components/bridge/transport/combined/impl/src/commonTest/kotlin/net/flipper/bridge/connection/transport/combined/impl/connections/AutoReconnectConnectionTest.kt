@@ -2,7 +2,6 @@ package net.flipper.bridge.connection.transport.combined.impl.connections
 
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -38,16 +37,8 @@ import kotlin.time.Duration.Companion.seconds
  * - State flow transitions
  * - Disconnect behavior stopping reconnection loop
  * - Race conditions and edge cases
- *
- * **Note**: Some tests document expected behavior that may not be implemented correctly yet.
- * Failing tests indicate potential bugs in the implementation:
- *
- * Known issues identified by tests:
- * 1. Reconnection may not always trigger after disconnect state
- * 2. State transitions may not be properly propagated through the flow
- * 3. Exception handling during connection may not trigger proper retry behavior
- * 4. The retry counter reset logic may not work as expected after successful connection
  */
+@Suppress("LargeClass")
 class AutoReconnectConnectionTest {
 
     // region Initial Connection Tests
@@ -226,7 +217,6 @@ class AutoReconnectConnectionTest {
         )
 
         connectionBuilder.connectCalledDeferred.await()
-        val firstAttemptTime = testScheduler.currentTime
 
         // First retry delay is ~100ms (initial delay * 2^0)
         advanceTimeBy(150.milliseconds)
@@ -534,10 +524,11 @@ class AutoReconnectConnectionTest {
         val updateJobs = List(50) { i ->
             async {
                 listener.onStatusUpdate(
-                    if (i % 2 == 0)
+                    if (i % 2 == 0) {
                         FInternalTransportConnectionStatus.Pairing
-                    else
+                    } else {
                         FInternalTransportConnectionStatus.Connecting
+                    }
                 )
             }
         }
