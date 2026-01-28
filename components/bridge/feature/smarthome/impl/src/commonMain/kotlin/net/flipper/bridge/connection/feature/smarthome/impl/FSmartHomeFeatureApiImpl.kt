@@ -3,7 +3,6 @@ package net.flipper.bridge.connection.feature.smarthome.impl
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.isActive
@@ -20,6 +19,7 @@ import net.flipper.bridge.connection.feature.smarthome.model.SmartHomeState
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.core.wrapper.CResult
+import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.WrappedStateFlow
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.ktx.common.exponentialRetry
@@ -47,7 +47,7 @@ class FSmartHomeFeatureApiImpl : FSmartHomeFeatureApi, LogTagProvider {
         )
     }
 
-    override fun getPairCodeWithTimeLeft(): Flow<SmartHomePairCodeTimeLeftData?> {
+    override fun getPairCodeWithTimeLeft(): WrappedFlow<SmartHomePairCodeTimeLeftData?> {
         return flow {
             while (currentCoroutineContext().isActive) {
                 emit(null)
@@ -65,7 +65,7 @@ class FSmartHomeFeatureApiImpl : FSmartHomeFeatureApi, LogTagProvider {
                     delay(1.seconds)
                 } while (timeLeft > 0.seconds)
             }
-        }
+        }.wrap()
     }
 
     override suspend fun forgetAllPairings(): CResult<Unit> {

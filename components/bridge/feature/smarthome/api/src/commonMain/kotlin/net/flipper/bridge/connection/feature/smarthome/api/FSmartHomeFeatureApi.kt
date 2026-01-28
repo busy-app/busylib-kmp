@@ -1,11 +1,11 @@
 package net.flipper.bridge.connection.feature.smarthome.api
 
-import kotlinx.coroutines.flow.Flow
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.smarthome.model.SmartHomePairCodeData
 import net.flipper.bridge.connection.feature.smarthome.model.SmartHomePairCodeTimeLeftData
 import net.flipper.bridge.connection.feature.smarthome.model.SmartHomeState
 import net.flipper.busylib.core.wrapper.CResult
+import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.WrappedStateFlow
 
 interface FSmartHomeFeatureApi : FDeviceFeatureApi {
@@ -15,5 +15,5 @@ interface FSmartHomeFeatureApi : FDeviceFeatureApi {
     suspend fun forgetAllPairings(): CResult<Unit>
 
     // todo @Programistich check on iOS
-    fun getPairCodeWithTimeLeft(): Flow<SmartHomePairCodeTimeLeftData?>
+    fun getPairCodeWithTimeLeft(): WrappedFlow<SmartHomePairCodeTimeLeftData?>
 }
