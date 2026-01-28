@@ -1,61 +1,39 @@
 package net.flipper.core.busylib.log
 
-import platform.Foundation.NSLog
-
-fun String.escapeForNSLog(): String = replace("%", "%%")
-
 actual inline fun error(tag: String?, logMessage: () -> String) {
-    if (tag == null) {
-        NSLog(logMessage().escapeForNSLog())
-    } else {
-        NSLog("[$tag] ${logMessage()}".escapeForNSLog())
-    }
+    AppleLoggerDelegate.logger.error(tag, logMessage())
 }
 
 actual inline fun error(tag: String?, error: Throwable, logMessage: () -> String) {
-    if (tag == null) {
-        NSLog(logMessage().escapeForNSLog())
-    } else {
-        NSLog("[$tag] ${logMessage()}".escapeForNSLog())
+    val message = buildString {
+        append(logMessage())
+        append(" | ")
+        append(error.message ?: "Unknown error")
+        val stackTrace = error.stackTraceToString()
+        if (stackTrace.isNotBlank()) {
+            append('\n')
+            append(stackTrace)
+        }
     }
+    AppleLoggerDelegate.logger.error(tag, message)
 }
 
 actual inline fun info(tag: String?, logMessage: () -> String) {
-    if (tag == null) {
-        NSLog(logMessage().escapeForNSLog())
-    } else {
-        NSLog("[$tag] ${logMessage()}".escapeForNSLog())
-    }
+    AppleLoggerDelegate.logger.info(tag, logMessage())
 }
 
 actual inline fun verbose(tag: String?, logMessage: () -> String) {
-    if (tag == null) {
-        NSLog(logMessage().escapeForNSLog())
-    } else {
-        NSLog("[$tag] ${logMessage()}".escapeForNSLog())
-    }
+    AppleLoggerDelegate.logger.verbose(tag, logMessage())
 }
 
 actual inline fun warn(tag: String?, logMessage: () -> String) {
-    if (tag == null) {
-        NSLog(logMessage().escapeForNSLog())
-    } else {
-        NSLog("[$tag] ${logMessage()}".escapeForNSLog())
-    }
+    AppleLoggerDelegate.logger.warn(tag, logMessage())
 }
 
 actual inline fun debug(tag: String?, logMessage: () -> String) {
-    if (tag == null) {
-        NSLog(logMessage().escapeForNSLog())
-    } else {
-        NSLog("[$tag] ${logMessage()}".escapeForNSLog())
-    }
+    AppleLoggerDelegate.logger.debug(tag, logMessage())
 }
 
 actual inline fun wtf(tag: String?, logMessage: () -> String) {
-    if (tag == null) {
-        NSLog(logMessage().escapeForNSLog())
-    } else {
-        NSLog("[$tag] ${logMessage()}".escapeForNSLog())
-    }
+    AppleLoggerDelegate.logger.wtf(tag, logMessage())
 }

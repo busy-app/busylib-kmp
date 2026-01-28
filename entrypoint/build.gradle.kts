@@ -118,6 +118,7 @@ kotlin {
                 export(projects.components.bridge.feature.settings.api)
                 export(projects.components.bridge.orchestrator.api)
                 export(projects.components.bridge.service.api)
+                export(projects.components.core.log)
 
                 xcFramework.add(this)
             }
