@@ -2,7 +2,7 @@ package net.flipper.core.busylib.log
 
 import platform.Foundation.NSLog
 
-class DefaultAppleLogger: AppleLogger {
+class DefaultAppleLogger : AppleLogger {
     private fun String.escapeForNSLog(): String = replace("%", "%%")
 
     override fun error(tag: String?, message: String) {
