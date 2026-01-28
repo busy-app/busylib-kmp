@@ -84,6 +84,7 @@ class FRpcFeatureApiFactoryImpl : FDeviceFeatureApi.Factory, LogTagProvider {
             fRpcMatterApi = FRpcMatterApiImpl(
                 httpClient = httpClient,
                 dispatcher = dispatcher,
+                objectCache = objectCache
             )
         )
     }
