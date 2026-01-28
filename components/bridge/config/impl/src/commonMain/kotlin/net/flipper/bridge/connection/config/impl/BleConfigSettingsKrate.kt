@@ -29,10 +29,11 @@ class BleConfigSettingsKrateImpl(
                     if (stringValue.isNullOrBlank()) {
                         Factory.create()
                     } else {
-                        json.decodeFromString(Serializer, stringValue)
+                        runCatching { json.decodeFromString(Serializer, stringValue) }
+                            .getOrNull()
+                            ?: Factory.create()
                     }
                 }
-                .catch { emit(Factory.create()) }
         },
         saver = { newSettings ->
             if (newSettings == null) {
