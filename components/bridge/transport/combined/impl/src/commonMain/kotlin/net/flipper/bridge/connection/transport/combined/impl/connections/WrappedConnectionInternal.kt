@@ -7,6 +7,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.yield
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import net.flipper.bridge.connection.connectionbuilder.api.FDeviceConfigToConnection
@@ -58,6 +59,7 @@ class WrappedConnectionInternal(
 
     override suspend fun onStatusUpdate(status: FInternalTransportConnectionStatus) {
         stateFlow.value = status
+        yield() // Allow collectors to process the state before returning
     }
 
     suspend fun disconnect() {

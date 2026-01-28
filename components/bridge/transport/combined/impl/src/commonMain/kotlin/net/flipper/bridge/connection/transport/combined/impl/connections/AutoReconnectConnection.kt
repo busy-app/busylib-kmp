@@ -39,7 +39,6 @@ class AutoReconnectConnection(
         connectionJob = scope.launch {
             var retryCount = 0
             while (isActive) {
-                delay(getExponentialDelay(retryCount))
                 info { "AutoReconnectConnection: Connecting... $config" }
                 val connection = WrappedConnectionInternal(
                     config = config,
@@ -58,6 +57,7 @@ class AutoReconnectConnection(
                     .first()
                 connection.disconnect()
                 retryCount++
+                delay(getExponentialDelay(retryCount))
             }
         }
     }
