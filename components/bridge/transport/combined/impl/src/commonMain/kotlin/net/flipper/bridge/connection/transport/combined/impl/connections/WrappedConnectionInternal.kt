@@ -1,6 +1,7 @@
 package net.flipper.bridge.connection.transport.combined.impl.connections
 
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
@@ -8,7 +9,6 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.plus
 import net.flipper.bridge.connection.connectionbuilder.api.FDeviceConfigToConnection
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
@@ -34,17 +34,30 @@ class WrappedConnectionInternal(
         )
 
     private val scope = run {
-        val job = SupervisorJob(parent = parentScope.coroutineContext[Job]).apply {
+        // SupervisorJob without parent — complete isolation from parent hierarchy
+        val job = SupervisorJob().apply {
             invokeOnCompletion {
                 if (it == null) {
                     info { "Wrapped connection $config scope is being cancelled" }
-                    stateFlow.value = FInternalTransportConnectionStatus.Disconnected
                 } else {
                     error(it) { "Scope for connection $config was cancelled due to an error" }
                 }
+                stateFlow.value = FInternalTransportConnectionStatus.Disconnected
             }
         }
-        parentScope + dispatcher + job
+
+        // Link cancellation: when parentScope is cancelled, our scope will be cancelled too
+        parentScope.coroutineContext[Job]?.invokeOnCompletion {
+            job.cancel()
+        }
+
+        // Catch unhandled exceptions and destroy the scope
+        val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
+            error(throwable) { "Exception in connection $config scope" }
+            job.cancel()
+        }
+
+        CoroutineScope(dispatcher + job + exceptionHandler)
     }
 
     init {
@@ -53,7 +66,7 @@ class WrappedConnectionInternal(
                 scope,
                 config,
                 this@WrappedConnectionInternal
-            ).getOrThrow()
+            ).getOrElse { throw RuntimeException(it) }
         }
     }
 

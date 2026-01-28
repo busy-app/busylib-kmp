@@ -22,6 +22,7 @@ import net.flipper.bridge.connection.transport.common.api.FInternalTransportConn
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
@@ -32,14 +33,6 @@ import kotlin.test.assertTrue
  * - State transitions and race conditions
  * - Disconnection behavior
  * - Parent scope cancellation
- *
- * **Note**: Some tests document expected behavior that may not be implemented correctly yet.
- * Failing tests indicate potential bugs in the implementation:
- *
- * Known issues identified by tests:
- * 1. State doesn't always become Disconnected after disconnect() call
- * 2. Connection failure exceptions may not be handled gracefully
- * 3. Parent scope cancellation may not properly terminate the connection
  */
 class WrappedConnectionInternalTest {
 
@@ -154,9 +147,8 @@ class WrappedConnectionInternalTest {
         advanceUntilIdle()
 
         // Then - The internal scope should have been cancelled due to unhandled exception
-        // Note: This test documents expected behavior - the current implementation
-        // may not handle this case properly
         assertTrue(connectionBuilder.connectAttempts >= 1)
+        assertFalse(scopeCancelled)
     }
 
     @Test
