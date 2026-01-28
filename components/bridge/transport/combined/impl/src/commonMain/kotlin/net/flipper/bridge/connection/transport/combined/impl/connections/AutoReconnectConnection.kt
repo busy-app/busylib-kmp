@@ -1,5 +1,6 @@
 package net.flipper.bridge.connection.transport.combined.impl.connections
 
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
@@ -14,6 +15,7 @@ import kotlinx.coroutines.launch
 import net.flipper.bridge.connection.connectionbuilder.api.FDeviceConfigToConnection
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
+import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 import net.flipper.core.busylib.ktx.common.getExponentialDelay
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
@@ -21,7 +23,8 @@ import net.flipper.core.busylib.log.info
 class AutoReconnectConnection(
     scope: CoroutineScope,
     private val config: FDeviceConnectionConfig<*>,
-    private val connectionBuilder: FDeviceConfigToConnection
+    private val connectionBuilder: FDeviceConfigToConnection,
+    private val dispatcher: CoroutineDispatcher = FlipperDispatchers.default
 ) : LogTagProvider {
     override val TAG = "AutoReconnectConnection"
 
@@ -41,7 +44,8 @@ class AutoReconnectConnection(
                 val connection = WrappedConnectionInternal(
                     config = config,
                     connectionBuilder = connectionBuilder,
-                    parentScope = this
+                    parentScope = this,
+                    dispatcher = dispatcher
                 )
                 connection.stateFlow
                     .onEach {

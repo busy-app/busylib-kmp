@@ -1,5 +1,6 @@
 package net.flipper.bridge.connection.transport.combined.impl.connections
 
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
@@ -21,7 +22,8 @@ import net.flipper.core.busylib.log.info
 class WrappedConnectionInternal(
     private val config: FDeviceConnectionConfig<*>,
     parentScope: CoroutineScope,
-    private val connectionBuilder: FDeviceConfigToConnection
+    private val connectionBuilder: FDeviceConfigToConnection,
+    private val dispatcher: CoroutineDispatcher = FlipperDispatchers.default
 ) : LogTagProvider, FTransportConnectionStatusListener {
     override val TAG = "WrappedConnection"
 
@@ -42,7 +44,7 @@ class WrappedConnectionInternal(
                 }
             }
         }
-        parentScope + FlipperDispatchers.default + job
+        parentScope + dispatcher + job
     }
 
     init {
