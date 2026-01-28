@@ -88,7 +88,7 @@ class FSmartHomeFeatureApiImpl : FSmartHomeFeatureApi, LogTagProvider {
 
         @Provides
         @IntoMap
-        fun provideFWiFiFeatureFactory(
+        fun provideSmartHomeFeatureFactory(
             featureFactory: Factory
         ): Pair<FDeviceFeature, FDeviceFeatureApi.Factory> {
             return FDeviceFeature.SMART_HOME to featureFactory
