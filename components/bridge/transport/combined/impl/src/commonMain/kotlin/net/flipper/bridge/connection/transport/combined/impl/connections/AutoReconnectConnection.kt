@@ -56,8 +56,8 @@ class AutoReconnectConnection(
                     .filter { it == FInternalTransportConnectionStatus.Disconnected }
                     .first()
                 connection.disconnect()
-                retryCount++
                 delay(getExponentialDelay(retryCount))
+                retryCount++
             }
         }
     }
