@@ -3,6 +3,7 @@ package net.flipper.bridge.connection.feature.rpc.impl.exposed
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcAssetsApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcBleApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
+import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcMatterApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcSettingsApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcStreamingApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcSystemApi
@@ -17,5 +18,6 @@ class FRpcFeatureApiImpl(
     override val fRpcSettingsApi: FRpcSettingsApi,
     override val fRpcStreamingApi: FRpcStreamingApi,
     override val fRpcAssetsApi: FRpcAssetsApi,
-    override val fRpcUpdaterApi: FRpcUpdaterApi
+    override val fRpcUpdaterApi: FRpcUpdaterApi,
+    override val fRpcMatterApi: FRpcMatterApi
 ) : FRpcFeatureApi

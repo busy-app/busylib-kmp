@@ -11,4 +11,5 @@ interface FRpcFeatureApi : FDeviceFeatureApi {
     val fRpcStreamingApi: FRpcStreamingApi
     val fRpcAssetsApi: FRpcAssetsApi
     val fRpcUpdaterApi: FRpcUpdaterApi
+    val fRpcMatterApi: FRpcMatterApi
 }
