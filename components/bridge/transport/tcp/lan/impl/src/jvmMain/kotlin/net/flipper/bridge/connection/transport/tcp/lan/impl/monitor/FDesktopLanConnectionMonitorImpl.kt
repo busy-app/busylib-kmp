@@ -99,6 +99,7 @@ class FDesktopLanConnectionMonitorImpl(
         info { "Stopping connection monitoring for host: ${config.host}" }
         monitoringJob?.cancel()
         monitoringJob = null
+        isConnected = false
         httpClient.close()
     }
 
