@@ -89,9 +89,7 @@ class FDesktopLanConnectionMonitorImpl(
             val response = httpClient.get(url)
 
             // Check that response is successful and doesn't return "false"
-            val isAvailable = response.status.isSuccess()
-
-            isAvailable
+            return response.status.isSuccess()
         } catch (_: Exception) {
             false
         }
