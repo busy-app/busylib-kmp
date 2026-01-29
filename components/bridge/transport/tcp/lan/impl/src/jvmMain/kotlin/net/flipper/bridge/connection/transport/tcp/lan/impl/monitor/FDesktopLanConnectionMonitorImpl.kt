@@ -100,7 +100,6 @@ class FDesktopLanConnectionMonitorImpl(
         monitoringJob?.cancel()
         monitoringJob = null
         isConnected = false
-        httpClient.close()
     }
 
     @Inject
