@@ -2,6 +2,7 @@ package net.flipper.bridge.connection.transport.tcp.lan.impl.monitor
 
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.runBlocking
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
@@ -47,7 +48,7 @@ class FLanConnectionMonitorImpl(
     private val connectionLock = NSLock()
     private var connection: nw_connection_t? = null
 
-    override fun startMonitoring(
+    override suspend fun startMonitoring(
         scope: CoroutineScope,
         deviceApi: FConnectedDeviceApi
     ) {
@@ -67,12 +68,14 @@ class FLanConnectionMonitorImpl(
         }
 
         nw_connection_set_state_changed_handler(newConnection) { state, error ->
-            handleStateUpdate(
-                state,
-                error,
-                scope,
-                deviceApi
-            )
+            runBlocking {
+                handleStateUpdate(
+                    state,
+                    error,
+                    scope,
+                    deviceApi
+                )
+            }
         }
 
         nw_connection_set_queue(newConnection, queue)
@@ -89,7 +92,7 @@ class FLanConnectionMonitorImpl(
         info { "Stopped monitoring connection to ${config.host}" }
     }
 
-    private fun handleStateUpdate(
+    private suspend fun handleStateUpdate(
         state: UInt,
         error: nw_error_t?,
         scope: CoroutineScope,
@@ -105,20 +108,25 @@ class FLanConnectionMonitorImpl(
                     )
                 )
             }
+
             nw_connection_state_waiting -> {
                 debug { "Waiting for connection: ${error?.toString()}" }
             }
+
             nw_connection_state_failed -> {
                 error { "Connection failed: ${error?.toString()}" }
                 listener.onStatusUpdate(FInternalTransportConnectionStatus.Disconnected)
             }
+
             nw_connection_state_cancelled -> {
                 error { "Connection cancelled" }
                 listener.onStatusUpdate(FInternalTransportConnectionStatus.Disconnected)
             }
+
             nw_connection_state_preparing -> {
                 debug { "Connection preparing" }
             }
+
             else -> {
                 debug { "Connection unknown state: $state" }
             }

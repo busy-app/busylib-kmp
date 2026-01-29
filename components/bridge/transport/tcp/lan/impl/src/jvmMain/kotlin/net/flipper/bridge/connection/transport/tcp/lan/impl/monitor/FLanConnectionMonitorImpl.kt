@@ -19,7 +19,7 @@ class FLanConnectionMonitorImpl(
 ) : FLanConnectionMonitorApi, LogTagProvider {
     override val TAG: String = "FLanConnectionMonitor"
 
-    override fun startMonitoring(
+    override suspend fun startMonitoring(
         scope: CoroutineScope,
         deviceApi: FConnectedDeviceApi
     ) {
