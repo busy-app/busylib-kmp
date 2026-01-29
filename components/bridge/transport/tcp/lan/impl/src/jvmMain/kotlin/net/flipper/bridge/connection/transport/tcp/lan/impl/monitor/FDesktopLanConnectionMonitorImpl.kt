@@ -55,8 +55,8 @@ class FDesktopLanConnectionMonitorImpl(
         monitoringJob = scope.launch {
             info { "Starting connection monitoring for host: ${config.host}" }
             while (isActive) {
-                delay(MONITORING_INTERVAL)
                 checkHostAvailability(scope, deviceApi)
+                delay(MONITORING_INTERVAL)
             }
         }
     }
