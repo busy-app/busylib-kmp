@@ -3,7 +3,6 @@ package net.flipper.bridge.connection.transport.tcp.lan.impl.monitor
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.request.get
-import io.ktor.client.statement.bodyAsText
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -27,7 +26,7 @@ private val MONITORING_INTERVAL = 1.seconds
 private val HTTP_TIMEOUT = 3.seconds
 
 @Inject
-class FLanConnectionMonitorImpl(
+class FDesktopLanConnectionMonitorImpl(
     @Assisted private val listener: FTransportConnectionStatusListener,
     @Assisted private val config: FLanDeviceConnectionConfig
 ) : FLanConnectionMonitorApi, LogTagProvider {
