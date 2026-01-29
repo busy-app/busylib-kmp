@@ -110,7 +110,7 @@ class FDesktopLanConnectionMonitorImpl(
         private val factory: (
             FTransportConnectionStatusListener,
             FLanDeviceConnectionConfig
-        ) -> FLanConnectionMonitorImpl
+        ) -> FDesktopLanConnectionMonitorImpl
     ) : FLanConnectionMonitorApi.Factory {
         override operator fun invoke(
             listener: FTransportConnectionStatusListener,
