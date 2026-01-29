@@ -45,7 +45,7 @@ class FDesktopLanConnectionMonitorImpl(
         }
     }
 
-    override fun startMonitoring(
+    override suspend fun startMonitoring(
         scope: CoroutineScope,
         deviceApi: FConnectedDeviceApi
     ) {

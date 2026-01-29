@@ -2,7 +2,6 @@ package net.flipper.bridge.connection.config.impl
 
 import com.russhwolf.settings.ObservableSettings
 import com.russhwolf.settings.coroutines.toFlowSettings
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.Json
 import ru.astrainteractive.klibs.kstorage.api.value.ValueFactory
@@ -29,10 +28,11 @@ class BleConfigSettingsKrateImpl(
                     if (stringValue.isNullOrBlank()) {
                         Factory.create()
                     } else {
-                        json.decodeFromString(Serializer, stringValue)
+                        runCatching { json.decodeFromString(Serializer, stringValue) }
+                            .getOrNull()
+                            ?: Factory.create()
                     }
                 }
-                .catch { emit(Factory.create()) }
         },
         saver = { newSettings ->
             if (newSettings == null) {
