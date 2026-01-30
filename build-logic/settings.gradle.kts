@@ -3,18 +3,30 @@ enableFeaturePreview("STABLE_CONFIGURATION_CACHE")
 pluginManagement {
     repositories {
         mavenLocal()
-        maven {
-            url = uri("https://reposilite.flipp.dev/releases")
+        google {
+            content {
+                includeGroupByRegex("com\\.android.*")
+                includeGroupByRegex("com\\.google.*")
+                includeGroupByRegex("androidx.*")
+            }
         }
+        mavenCentral()
+        gradlePluginPortal()
     }
 }
 
 dependencyResolutionManagement {
     repositories {
         mavenLocal()
-        maven {
-            url = uri("https://reposilite.flipp.dev/releases")
+        google {
+            content {
+                includeGroupByRegex("com\\.android.*")
+                includeGroupByRegex("com\\.google.*")
+                includeGroupByRegex("androidx.*")
+            }
         }
+        mavenCentral()
+        gradlePluginPortal()
     }
 
     versionCatalogs {
