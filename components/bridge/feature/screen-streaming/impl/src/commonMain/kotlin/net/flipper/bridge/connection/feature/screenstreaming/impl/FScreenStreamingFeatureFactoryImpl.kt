@@ -25,7 +25,7 @@ class FScreenStreamingFeatureFactoryImpl(
             .get(FRpcFeatureApi::class)
             ?.await()
             ?: return null
-        return internalFactory(rpcApi)
+        return internalFactory(scope, rpcApi)
     }
 }
 

@@ -31,6 +31,7 @@ class FFirmwareUpdateFeatureFactoryImpl : FDeviceFeatureApi.Factory {
         return FFirmwareUpdateFeatureApiImpl(
             rpcFeatureApi = rpcApi,
             fEventsFeatureApi = fEventsFeatureApi,
+            scope = scope,
         )
     }
 }
