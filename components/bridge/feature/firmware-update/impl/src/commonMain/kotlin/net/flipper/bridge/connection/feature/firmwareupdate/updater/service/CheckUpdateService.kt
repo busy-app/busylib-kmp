@@ -51,6 +51,7 @@ class CheckUpdateService(
                         .first()
                         .featureApi
                         .startUpdateCheck()
+                        .toKotlinResult()
                 }
             }
             .launchIn(scope)
