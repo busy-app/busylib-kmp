@@ -20,6 +20,8 @@ import net.flipper.bridge.connection.feature.provider.api.getSync
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarVersion
 import net.flipper.busylib.core.di.BusyLibGraph
+import net.flipper.busylib.core.wrapper.WrappedStateFlow
+import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.mapCached
 import net.flipper.core.busylib.ktx.common.orNullable
@@ -43,7 +45,7 @@ class UpdaterApiImpl(
     private val changelogSharedFlow = availableVersionChangelogProvider.getLatestAvailableChangelogFlow()
         .shareIn(scope, SharingStarted.Eagerly, 1)
 
-    override val state: StateFlow<FwUpdateState> = fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
+    override val state: WrappedStateFlow<FwUpdateState> = fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
         .map { status ->
             status
                 .tryCast<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>()
@@ -73,6 +75,7 @@ class UpdaterApiImpl(
         }
         .onEach { info { "#state FwUpdateStateDiff: $it" } }
         .stateIn(scope, SharingStarted.Eagerly, FwUpdateState.Pending)
+        .wrap()
 
     init {
         checkUpdateService.onEnable()
