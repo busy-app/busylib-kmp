@@ -18,6 +18,7 @@ import net.flipper.bridge.connection.transport.common.api.meta.FTransportMetaInf
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
 import net.flipper.core.busylib.ktx.common.orEmpty
 import net.flipper.core.busylib.log.LogTagProvider
+import net.flipper.core.busylib.log.debug
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
 import kotlin.time.Duration.Companion.seconds
@@ -34,9 +35,9 @@ class FEventsFeatureApiImpl(
             .onFailure { error(it) { "Failed receive ${TransportMetaInfoKey.EVENTS_INDICATION}" } }
             .getOrNull()
             .orEmpty()
-            .onEach { info { "Receive ${it?.toBitsString()}" } }
+            .onEach { debug { "Receive ${it?.toBitsString()}" } }
             .mapNotNull { byteArray -> byteArray?.let(::parse) }
-            .onEach { info { "Receive updates: $it" } }
+            .onEach { debug { "Receive updates: $it" } }
             .map { updateEvents -> updateEvents.map(::ConsumableUpdateEvent) }
             .collect { updateEvents -> updateEvents.forEach { event -> emit(event) } }
     }.shareIn(scope, SharingStarted.WhileSubscribed(5.seconds))
