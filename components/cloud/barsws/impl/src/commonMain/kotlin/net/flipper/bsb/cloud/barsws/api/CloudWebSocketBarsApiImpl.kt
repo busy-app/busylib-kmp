@@ -2,7 +2,6 @@ package net.flipper.bsb.cloud.barsws.api
 
 import com.flipperdevices.core.network.BUSYLibNetworkStateApi
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
@@ -33,7 +32,8 @@ class CloudWebSocketBarsApiImpl(
     override val TAG = "CloudWebSocketBarsApiImpl"
 
     private val webSocketFactory = WebSocketFactory(
-        httpClient = getHttpClient(), logger = this
+        httpClient = getHttpClient(),
+        logger = this
     )
 
     private val wsStateFlow = combine(
@@ -45,10 +45,11 @@ class CloudWebSocketBarsApiImpl(
             wrapWebsocket {
                 webSocketFactory.open(principal, host)
             }
-        } else flowOf()
+        } else {
+            flowOf()
+        }
     }.flatMapLatest { it }
         .shareIn(scope, SharingStarted.WhileSubscribed())
-
 
     override fun getWSFlow() = wsStateFlow
 }

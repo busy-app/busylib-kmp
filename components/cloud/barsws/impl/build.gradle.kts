@@ -15,7 +15,6 @@ kotlin {
         implementation(projects.components.core.network)
         implementation(projects.components.core.wrapper)
 
-
         implementation(projects.components.principal.api)
         implementation(projects.components.cloud.api)
 

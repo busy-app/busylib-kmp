@@ -2,7 +2,6 @@ plugins {
     id("flipper.multiplatform")
 }
 
-
 kotlin {
     sourceSets {
         commonMain.dependencies {
@@ -21,5 +20,4 @@ kotlin {
             implementation(libs.ktor.client.darwin)
         }
     }
-
 }

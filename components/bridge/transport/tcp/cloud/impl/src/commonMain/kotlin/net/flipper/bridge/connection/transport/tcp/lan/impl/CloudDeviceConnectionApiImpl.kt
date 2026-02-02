@@ -14,6 +14,7 @@ import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 @Inject
 @ContributesBinding(BusyLibGraph::class, CloudDeviceConnectionApi::class)
 class CloudDeviceConnectionApiImpl(
+    @Suppress("UnusedPrivateProperty")
     private val webSocketBarsApi: CloudWebSocketBarsApi
 ) : CloudDeviceConnectionApi {
     override suspend fun connect(

@@ -1,14 +1,12 @@
 package net.flipper.busylib.di
 
 import com.flipperdevices.core.network.BUSYLibNetworkStateApi
-import com.flipperdevices.core.network.BUSYLibNetworkStateApiNoop
 import kotlinx.coroutines.CoroutineScope
 import me.tatarka.inject.annotations.Provides
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.cloud.api.BUSYLibBarsApi
 import net.flipper.bsb.cloud.api.BUSYLibHostApi
-import net.flipper.bsb.cloud.api.BUSYLibHostApiStub
 import net.flipper.busylib.BUSYLibMacOS
 import net.flipper.busylib.core.di.BusyLibGraph
 import software.amazon.lastmile.kotlin.inject.anvil.MergeComponent
@@ -27,6 +25,7 @@ abstract class BUSYLibGraphMacOS(
     abstract val busyLib: BUSYLibMacOS
 }
 
+@Suppress("LongParameterList")
 @MergeComponent.CreateComponent
 expect fun create(
     scope: CoroutineScope,

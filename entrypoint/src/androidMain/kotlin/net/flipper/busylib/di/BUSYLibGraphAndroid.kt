@@ -8,12 +8,12 @@ import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.cloud.api.BUSYLibBarsApi
 import net.flipper.bsb.cloud.api.BUSYLibHostApi
-import net.flipper.bsb.cloud.api.BUSYLibHostApiStub
 import net.flipper.busylib.BUSYLibAndroid
 import net.flipper.busylib.core.di.BusyLibGraph
 import software.amazon.lastmile.kotlin.inject.anvil.MergeComponent
 import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 
+@Suppress("LongParameterList")
 @MergeComponent(BusyLibGraph::class)
 @SingleIn(BusyLibGraph::class)
 abstract class BUSYLibGraphAndroid(

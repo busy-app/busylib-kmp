@@ -61,7 +61,6 @@ class WebSocketFactory(
     }
 }
 
-
 fun <T> LogTagProvider.wrapWebsocket(
     block: suspend () -> Flow<T>
 ) = flow<T> {

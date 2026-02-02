@@ -24,6 +24,7 @@ class BUSYLibDesktop(
     override val updaterApi: UpdaterApi
 ) : BUSYLib {
     companion object {
+        @Suppress("LongParameterList", "ForbiddenComment") // TODO: Move it to builder
         fun build(
             scope: CoroutineScope,
             principalApi: BUSYLibPrincipalApi,

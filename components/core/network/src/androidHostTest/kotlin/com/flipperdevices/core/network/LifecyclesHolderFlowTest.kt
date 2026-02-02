@@ -1,3 +1,5 @@
+@file:Suppress("FunctionNaming")
+
 package com.flipperdevices.core.network
 
 import androidx.lifecycle.Lifecycle
