@@ -2,6 +2,7 @@ package net.flipper.core.busylib.ktx.common
 
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -9,6 +10,8 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.isActive
@@ -206,12 +209,11 @@ class TransformWhileSubscribedSharedFlowTest {
 
             launch { sharedFlow.take(100).collect() }
                 .also { advanceTimeBy(1500) }
-                .also(Job::cancel)
+                .cancelAndJoin()
+                .also { println("Cancelled") }
                 .also { advanceTimeBy(6000) }
 
             val job2 = launch { sharedFlow.first() }
-
-            advanceTimeBy(1500)
 
             assertEquals(
                 expected = 0,
@@ -247,22 +249,37 @@ class TransformWhileSubscribedSharedFlowTest {
     @Test
     fun GIVEN_latest_subscriber_in_grace_period_WHEN_collects_THEN_values_equals() {
         runTest {
+            var transformationCount = 0
             val sharedFlow = createFlow().transformWhileSubscribed(
-                timeout = 5.seconds,
+                timeout = 500.seconds,
                 scope = backgroundScope,
-                transformFlow = { flow -> flow }
+                transformFlow = { flow ->
+                    flow.onEach {
+                        transformationCount++
+                    }.mapLatest { "mapped_$it" }
+                }
             )
 
             val firstDeferred = async { sharedFlow.drop(2).first() }
 
             advanceTimeBy(2000)
-            val secondDeferred = async { sharedFlow.drop(2).first() }
-            advanceTimeBy(2000)
+            advanceTimeBy(30.seconds)
+            firstDeferred.await()
 
+            val secondDeferred = async { sharedFlow.drop(2).first() }
+            secondDeferred.await()
             assertEquals(
-                expected = firstDeferred.await() * 2,
-                actual = secondDeferred.await(),
-                message = "Second subscriber should receive the value twice as the first subscriber"
+                expected = "mapped_2",
+                actual = firstDeferred.await()
+            )
+            assertEquals(
+                expected = "mapped_33",
+                actual = secondDeferred.await()
+            )
+            assertEquals(
+                expected = 5,
+                actual = transformationCount,
+                message = "Transformation should be applied only from [0;2] and [6;7]"
             )
         }
     }

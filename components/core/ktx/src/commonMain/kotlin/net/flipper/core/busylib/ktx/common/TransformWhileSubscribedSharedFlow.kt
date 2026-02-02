@@ -8,7 +8,14 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -30,19 +37,26 @@ private class TransformWhileSubscribedSharedFlow<T, R>(
     override val replayCache: List<R>
         get() = resultFlow.replayCache
     private val subscriberMutex = Mutex()
-    private var subscriberCount = 0
+    private var subscriberCountFlow = MutableStateFlow(0)
+    private val hasSubscribersFlow = subscriberCountFlow
+        .map { count -> count > 0 }
+        .distinctUntilChanged()
     private var upstreamJob: Job? = null
     private var timeoutJob: Job? = null
-
+    private suspend fun awaitForSubscribers() {
+        hasSubscribersFlow
+            .filter { hasSubscribers -> hasSubscribers }
+            .first()
+    }
     private suspend fun startUpstreamCollection() {
         upstreamJob?.cancelAndJoin()
         upstreamJob = scope.launch {
-            collector.invoke(upstreamFlow) { value ->
-                val shouldEmit = subscriberMutex.withLock { subscriberCount > 0 }
-                if (shouldEmit) {
-                    resultFlow.emit(value)
-                }
-            }
+            collector.invoke(
+                upstreamFlow.mapLatest { upstreamValue ->
+                    awaitForSubscribers()
+                    upstreamValue
+                },
+            ) { value -> resultFlow.emit(value) }
         }
     }
 
@@ -59,20 +73,23 @@ private class TransformWhileSubscribedSharedFlow<T, R>(
     private suspend fun startTimeout() {
         timeoutJob?.cancelAndJoin()
         timeoutJob = scope.launch {
+            debug { "#startTimeout $timeoutDuration" }
             delay(timeoutDuration)
             stopUpstreamCollection()
         }
     }
 
     private suspend fun cancelTimeout() {
+        debug { "#cancelTimeout" }
         timeoutJob?.cancelAndJoin()
         timeoutJob = null
     }
 
     override suspend fun collect(collector: FlowCollector<R>): Nothing {
-        subscriberMutex.withLock { subscriberCount++ }
-        debug { "#collect Subscriber added. Count: $subscriberCount" }
-
+        val count = subscriberMutex.withLock {
+            subscriberCountFlow.updateAndGet { count -> count + 1 }
+        }
+        debug { "#collect Subscriber added. Count: $count" }
         try {
             cancelTimeout()
 
@@ -84,9 +101,8 @@ private class TransformWhileSubscribedSharedFlow<T, R>(
             resultFlow.collect(collector)
         } finally {
             subscriberMutex.withLock {
-                subscriberCount--
-                debug { "#collect Subscriber removed. Count: $subscriberCount" }
-                if (subscriberCount == 0) {
+                val finalizedCount = subscriberCountFlow.updateAndGet { count -> count - 1 }
+                if (finalizedCount == 0) {
                     startTimeout()
                 }
             }
@@ -96,9 +112,13 @@ private class TransformWhileSubscribedSharedFlow<T, R>(
 
 /**
  * This operator is useful for scenarios where you want to:
- * - Avoid wasting resources collecting from upstream when no one is listening
+ * - Don't process values when no subscribers are present
  * - Provide a grace period for subscribers to reconnect without restarting upstream
  * - Transform values during collection while controlling emission timing
+ *
+ * Instead of immediate transform execution when there's no subscribers,
+ * this operator will await for subscribers and only after that,
+ * it will transform the latest value from original flow. This is the key difference from `shareIn(WhileSubscribed)`
  *
  * ## Behavior
  *
