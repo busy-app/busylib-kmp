@@ -26,6 +26,7 @@ include(
     ":components:core:log",
     ":components:core:ktx",
     ":components:core:wrapper",
+    ":components:core:network",
 
     ":components:bridge:config:api",
     ":components:bridge:config:impl",
