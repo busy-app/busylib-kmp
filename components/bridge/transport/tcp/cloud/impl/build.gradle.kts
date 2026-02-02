@@ -13,6 +13,8 @@ kotlin {
             implementation(projects.components.core.di)
             implementation(projects.components.core.log)
 
+            implementation(projects.components.cloud.barsws.api)
+
             implementation(libs.kotlin.coroutines)
             implementation(libs.ktor.client.core)
         }

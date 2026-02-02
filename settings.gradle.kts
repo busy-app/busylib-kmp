@@ -93,6 +93,9 @@ include(
     ":components:principal:api",
     ":components:cloud:api",
 
+    ":components:cloud:barsws:api",
+    ":components:cloud:barsws:impl",
+
     ":entrypoint",
     ":sample:cmp",
     ":sample:android"

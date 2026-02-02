@@ -21,6 +21,9 @@ kotlin {
         api(projects.components.principal.api)
         api(projects.components.cloud.api)
 
+        implementation(projects.components.cloud.barsws.api)
+        implementation(projects.components.cloud.barsws.impl)
+
         api(projects.components.bridge.config.api)
         implementation(projects.components.bridge.connectionbuilder.api)
         implementation(projects.components.bridge.connectionbuilder.impl)
