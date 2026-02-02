@@ -3,6 +3,7 @@ package net.flipper.core.busylib.ktx.common
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalForInheritanceCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -19,6 +20,7 @@ import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.TaggedLogger
 import net.flipper.core.busylib.log.debug
@@ -31,7 +33,7 @@ private class TransformWhileSubscribedSharedFlow<T, R>(
     private val upstreamFlow: Flow<T>,
     private val timeoutDuration: Duration = 5.seconds,
     private val collector: suspend Flow<T>.(collector: FlowCollector<R>) -> Unit,
-) : SharedFlow<R>, LogTagProvider by TaggedLogger("ConditionalTimeoutSharedFlow") {
+) : SharedFlow<R>, LogTagProvider by TaggedLogger("TransformWhileSubscribedSharedFlow") {
     private val resultFlow = MutableSharedFlow<R>(replay = 1, extraBufferCapacity = 0)
 
     override val replayCache: List<R>
@@ -100,10 +102,12 @@ private class TransformWhileSubscribedSharedFlow<T, R>(
 
             resultFlow.collect(collector)
         } finally {
-            subscriberMutex.withLock {
-                val finalizedCount = subscriberCountFlow.updateAndGet { count -> count - 1 }
-                if (finalizedCount == 0) {
-                    startTimeout()
+            withContext(NonCancellable) {
+                subscriberMutex.withLock {
+                    val finalizedCount = subscriberCountFlow.updateAndGet { count -> count - 1 }
+                    if (finalizedCount == 0) {
+                        startTimeout()
+                    }
                 }
             }
         }
@@ -131,12 +135,13 @@ private class TransformWhileSubscribedSharedFlow<T, R>(
  *
  * **Emission Strategy:**
  * - Values are only emitted to subscribers when at least one subscriber is present
- * - The latest value is always cached via `replay=1`, even when there are no subscribers
- * - Cached value is immediately delivered to new subscribers upon connection
- * - The replay cache is cleared after the timeout expires
+ * - The latest value is cached via `replay = 1` while upstream is active and
+ * during the grace period, even if there are temporarily no subscribers
+ * - Cached value is immediately delivered to new subscribers upon connection during this period
+ * - After the timeout expires with no subscribers, upstream stops and the replay cache is cleared
  *
  * **Transformation:**
- * - The [collector] lambda allows custom transformation logic during collection
+ * - The [transformFlow] lambda allows custom transformation logic during collection
  * - Use `collect { emit(transform(it)) }` for simple transformations
  * - Use `collectLatest { emit(transform(it)) }` for conflated values
  */

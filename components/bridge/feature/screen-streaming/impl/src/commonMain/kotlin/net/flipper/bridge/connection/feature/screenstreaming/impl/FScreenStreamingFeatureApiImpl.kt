@@ -12,6 +12,7 @@ import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.toCResult
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.ktx.common.TickFlow
+import net.flipper.core.busylib.ktx.common.asFlow
 import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.throttleLatest
 import net.flipper.core.busylib.ktx.common.transformWhileSubscribed
@@ -49,7 +50,7 @@ class FScreenStreamingFeatureApiImpl(
                     }
                 }
             }
-        ).map { value -> value }.wrap()
+        ).asFlow().wrap()
 
     @Inject
     class InternalFactory(

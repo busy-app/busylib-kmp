@@ -210,7 +210,6 @@ class TransformWhileSubscribedSharedFlowTest {
             launch { sharedFlow.take(100).collect() }
                 .also { advanceTimeBy(1500) }
                 .cancelAndJoin()
-                .also { println("Cancelled") }
                 .also { advanceTimeBy(6000) }
 
             val job2 = launch { sharedFlow.first() }
