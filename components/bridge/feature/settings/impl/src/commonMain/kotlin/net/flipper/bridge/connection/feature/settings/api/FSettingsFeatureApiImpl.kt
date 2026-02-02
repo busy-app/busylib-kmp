@@ -48,8 +48,8 @@ class FSettingsFeatureApiImpl(
             ?.getUpdateFlow(UpdateEvent.BRIGHTNESS)
             .orEmpty()
             .merge(flowOf(DefaultConsumable(false)))
-            .transformWhileSubscribed(scope = scope) { collector ->
-                throttleLatest { consumable ->
+            .transformWhileSubscribed(scope = scope) { flow ->
+                flow.throttleLatest { consumable ->
                     val couldConsume = consumable.tryConsume()
                     exponentialRetry {
                         rpcFeatureApi
@@ -58,7 +58,7 @@ class FSettingsFeatureApiImpl(
                             .map { it.toBsbBrightnessInfo() }
                             .onFailure { error(it) { "Failed to get Settings status" } }
                     }
-                }.collect(collector)
+                }
             }
             .map { value -> value }
             .wrap()
@@ -69,8 +69,8 @@ class FSettingsFeatureApiImpl(
             ?.getUpdateFlow(UpdateEvent.AUDIO_VOLUME)
             .orEmpty()
             .merge(flowOf(DefaultConsumable(false)))
-            .transformWhileSubscribed(scope = scope) { collector ->
-                throttleLatest { consumable ->
+            .transformWhileSubscribed(scope = scope) { flow ->
+                flow.throttleLatest { consumable ->
                     val couldConsume = consumable.tryConsume()
                     exponentialRetry {
                         info { "#getVolumeFlow getting volume flow" }
@@ -78,7 +78,7 @@ class FSettingsFeatureApiImpl(
                             .getAudioVolume(couldConsume)
                             .onFailure { error(it) { "Failed to get Settings status" } }
                     }
-                }.collect(collector)
+                }
             }
             .map { value -> value }
             .wrap()
@@ -97,8 +97,8 @@ class FSettingsFeatureApiImpl(
                 ?.getUpdateFlow(UpdateEvent.DEVICE_NAME)
                 .orEmpty()
                 .merge(flowOf(DefaultConsumable(false)))
-                .transformWhileSubscribed(scope = scope) { collector ->
-                    throttleLatest { consumable ->
+                .transformWhileSubscribed(scope = scope) { flow ->
+                    flow.throttleLatest { consumable ->
                         val couldConsume = consumable.tryConsume()
                         exponentialRetry {
                             rpcFeatureApi
@@ -106,7 +106,7 @@ class FSettingsFeatureApiImpl(
                                 .getName(couldConsume)
                                 .map { nameInfo -> nameInfo.name }
                         }
-                    }.collect(collector)
+                    }
                 }
                 .collect { deviceName -> emit(deviceName) }
         }.wrap()

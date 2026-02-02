@@ -37,15 +37,15 @@ class FFirmwareUpdateFeatureApiImpl(
             ?.getUpdateFlow(UpdateEvent.UPDATER_UPDATE_STATUS)
             .orEmpty()
             .merge(flowOf(DefaultConsumable(false)))
-            .transformWhileSubscribed(scope = scope) { collector ->
-                throttleLatest { consumable ->
+            .transformWhileSubscribed(scope = scope) { flow ->
+                flow.throttleLatest { consumable ->
                     val couldConsume = consumable.tryConsume()
                     exponentialRetry {
                         rpcFeatureApi.fRpcUpdaterApi
                             .getUpdateStatus(couldConsume)
                             .onFailure { throwable -> error(throwable) { "Failed to get update status" } }
                     }
-                }.collect { collector.emit(it) }
+                }
             }
             .map { value -> value }
             .wrap()

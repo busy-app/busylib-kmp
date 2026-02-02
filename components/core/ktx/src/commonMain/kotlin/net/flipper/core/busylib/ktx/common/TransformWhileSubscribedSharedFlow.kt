@@ -124,12 +124,12 @@ private class TransformWhileSubscribedSharedFlow<T, R>(
 fun <T, R> Flow<T>.transformWhileSubscribed(
     timeout: Duration = 30.seconds,
     scope: CoroutineScope,
-    collector: suspend Flow<T>.(collector: FlowCollector<R>) -> Unit,
+    transformFlow: (flow: Flow<T>) -> Flow<R>,
 ): SharedFlow<R> {
     return TransformWhileSubscribedSharedFlow(
         timeoutDuration = timeout,
         upstreamFlow = this,
         scope = scope,
-        collector = collector
+        collector = { collector -> transformFlow.invoke(this).collect(collector) }
     )
 }

@@ -85,8 +85,8 @@ class FWiFiFeatureApiImpl(
             ?.getUpdateFlow(UpdateEvent.WIFI_STATUS)
             .orEmpty()
             .merge(flowOf(DefaultConsumable(false)))
-            .transformWhileSubscribed(scope = scope) { collector ->
-                throttleLatest { consumable ->
+            .transformWhileSubscribed(scope = scope) { flow ->
+                flow.throttleLatest { consumable ->
                     val couldConsume = consumable.tryConsume()
                     exponentialRetry {
                         rpcFeatureApi
@@ -94,7 +94,7 @@ class FWiFiFeatureApiImpl(
                             .getWifiStatus(couldConsume)
                             .onFailure { error(it) { "Failed to get WiFi networks" } }
                     }
-                }.collect { collector.emit(it) }
+                }
             }
             .map { value -> value }
             .wrap()

@@ -45,7 +45,7 @@ class TransformWhileSubscribedSharedFlowTest {
             }.transformWhileSubscribed(
                 timeout = 5.seconds,
                 scope = backgroundScope,
-                collector = { collector -> collect { value -> collector.emit(value) } }
+                transformFlow = { flow -> flow }
             )
             advanceTimeBy(10000)
             assertEquals(
@@ -63,7 +63,7 @@ class TransformWhileSubscribedSharedFlowTest {
             val sharedFlow = createFlow().transformWhileSubscribed(
                 timeout = 5.seconds,
                 scope = backgroundScope,
-                collector = { collector -> collect { value -> collector.emit(value) } }
+                transformFlow = { flow -> flow }
             )
 
             async {
@@ -85,7 +85,7 @@ class TransformWhileSubscribedSharedFlowTest {
             val sharedFlow = createFlow().transformWhileSubscribed(
                 timeout = 5.seconds,
                 scope = backgroundScope,
-                collector = { collector -> collect { value -> collector.emit(value) } }
+                transformFlow = { flow -> flow }
             )
 
             val firstSubscriberValue = async {
@@ -118,7 +118,7 @@ class TransformWhileSubscribedSharedFlowTest {
             val sharedFlow = createFlow().transformWhileSubscribed(
                 timeout = 5.seconds,
                 scope = backgroundScope,
-                collector = { collector -> collect { value -> collector.emit(value) } }
+                transformFlow = { flow -> flow }
             )
             val job1 = launch { sharedFlow.take(100).collect() }
             val job2 = launch { sharedFlow.collect { emissionCount++ } }
@@ -145,7 +145,7 @@ class TransformWhileSubscribedSharedFlowTest {
             val sharedFlow = createFlow().transformWhileSubscribed(
                 timeout = 5.seconds,
                 scope = backgroundScope,
-                collector = { collector -> collect { value -> collector.emit(value) } }
+                transformFlow = { flow -> flow }
             )
 
             val job = launch { sharedFlow.take(100).collect() }
@@ -173,7 +173,7 @@ class TransformWhileSubscribedSharedFlowTest {
             val sharedFlow = createFlow().transformWhileSubscribed(
                 timeout = 5.seconds,
                 scope = backgroundScope,
-                collector = { collector -> collect { value -> collector.emit(value) } }
+                transformFlow = { flow -> flow }
             )
 
             val job = launch { sharedFlow.take(100).collect() }
@@ -201,7 +201,7 @@ class TransformWhileSubscribedSharedFlowTest {
             val sharedFlow = createFlow().transformWhileSubscribed(
                 timeout = 5.seconds,
                 scope = backgroundScope,
-                collector = { collector -> collect { value -> collector.emit(value) } }
+                transformFlow = { flow -> flow }
             )
 
             launch { sharedFlow.take(100).collect() }
@@ -229,7 +229,7 @@ class TransformWhileSubscribedSharedFlowTest {
             val sharedFlow = createFlow().transformWhileSubscribed(
                 timeout = 5.seconds,
                 scope = backgroundScope,
-                collector = { collector -> collect { value -> collector.emit(value) } }
+                transformFlow = { flow -> flow }
             )
 
             launch { sharedFlow.collect() }
@@ -250,7 +250,7 @@ class TransformWhileSubscribedSharedFlowTest {
             val sharedFlow = createFlow().transformWhileSubscribed(
                 timeout = 5.seconds,
                 scope = backgroundScope,
-                collector = { collector -> collect { value -> collector.emit(value * 100) } }
+                transformFlow = { flow -> flow }
             )
 
             val firstDeferred = async { sharedFlow.drop(2).first() }

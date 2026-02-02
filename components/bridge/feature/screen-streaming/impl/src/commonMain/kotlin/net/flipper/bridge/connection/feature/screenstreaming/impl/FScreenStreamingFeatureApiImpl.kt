@@ -40,14 +40,14 @@ class FScreenStreamingFeatureApiImpl(
         .transformWhileSubscribed(
             timeout = TICK_DELAY.minus(1.seconds),
             scope = scope,
-            collector = { collector ->
-                throttleLatest { _ ->
+            transformFlow = { flow ->
+                flow.throttleLatest { _ ->
                     exponentialRetry {
                         getBusyImageFormat()
                             .toKotlinResult()
                             .onFailure { throwable -> error(throwable) { "Failed to get busy image format" } }
                     }
-                }.collect { collector.emit(it) }
+                } // .collect { collector.emit(it) }
             }
         ).map { value -> value }.wrap()
 

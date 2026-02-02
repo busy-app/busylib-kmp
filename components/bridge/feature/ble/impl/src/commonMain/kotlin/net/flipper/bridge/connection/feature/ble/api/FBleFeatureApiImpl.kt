@@ -61,8 +61,8 @@ class FBleFeatureApiImpl(
             ?.getUpdateFlow(UpdateEvent.BLE_STATUS)
             .orEmpty()
             .merge(flowOf(DefaultConsumable(false)))
-            .transformWhileSubscribed(scope = scope) { collector ->
-                throttleLatest { consumable ->
+            .transformWhileSubscribed(scope = scope) { flow ->
+                flow.throttleLatest { consumable ->
                     val couldConsume = consumable.tryConsume()
                     exponentialRetry {
                         rpcFeatureApi.fRpcBleApi
@@ -70,7 +70,7 @@ class FBleFeatureApiImpl(
                             .onFailure { error(it) { "Failed to get Ble status" } }
                             .map { response -> response.toFBleStatus() }
                     }
-                }.collect { collector.emit(it) }
+                }
             }
             .map { value -> value }
             .wrap()
