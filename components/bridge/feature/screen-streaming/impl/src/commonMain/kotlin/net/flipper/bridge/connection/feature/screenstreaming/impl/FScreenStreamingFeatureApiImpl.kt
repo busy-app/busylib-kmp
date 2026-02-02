@@ -47,7 +47,7 @@ class FScreenStreamingFeatureApiImpl(
                             .toKotlinResult()
                             .onFailure { throwable -> error(throwable) { "Failed to get busy image format" } }
                     }
-                } // .collect { collector.emit(it) }
+                }
             }
         ).map { value -> value }.wrap()
 
