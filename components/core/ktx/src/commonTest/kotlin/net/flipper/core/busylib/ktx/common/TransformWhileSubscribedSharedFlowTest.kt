@@ -20,7 +20,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
 
-class TransformWhileSubscribedSharedFlow {
+class TransformWhileSubscribedSharedFlowTest {
 
     private fun createFlow(): Flow<Int> {
         return flow {

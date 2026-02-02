@@ -15,7 +15,9 @@ mavenPublishing {
         artifactId = project.name,
         version = projectInfo.versionString
     )
-    signAllPublications()
+    if (signPublications) {
+        signAllPublications()
+    }
     pom {
         this.name.set(publishInfo.libraryName)
         this.description.set(projectInfo.description)
