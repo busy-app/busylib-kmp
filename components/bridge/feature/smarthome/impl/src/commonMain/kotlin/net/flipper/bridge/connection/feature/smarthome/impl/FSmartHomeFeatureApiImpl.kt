@@ -53,13 +53,13 @@ class FSmartHomeFeatureApiImpl(
             ?.getUpdateFlow(UpdateEvent.SMART_HOME_STATUS_CHANGED)
             .orEmpty()
             .merge(flowOf(DefaultConsumable(false)))
-            .transformWhileSubscribed(scope = scope) { collector ->
-                throttleLatest { consumable ->
+            .transformWhileSubscribed(scope = scope) { flow ->
+                flow.throttleLatest { consumable ->
                     val couldConsume = consumable.tryConsume()
                     exponentialRetry {
                         fRpcMatterApi1.getMatterCommissioning(couldConsume)
                     }
-                }.collect { collector.emit(it) }
+                }
             }
             .map { value -> value }
             .wrap()
