@@ -16,7 +16,7 @@ import kotlin.time.Duration.Companion.seconds
 
 class DefaultObjectCache(
     private val scope: CoroutineScope,
-    private val aliveAfterRead: Duration = 15.seconds,
+    private val aliveAfterRead: Duration = 60.seconds,
     private val aliveAfterWrite: Duration = Duration.INFINITE,
     private val timeProvider: TimeProvider = SystemTimeProvider()
 ) : ObjectCache, LogTagProvider by TaggedLogger("DefaultObjectCache") {

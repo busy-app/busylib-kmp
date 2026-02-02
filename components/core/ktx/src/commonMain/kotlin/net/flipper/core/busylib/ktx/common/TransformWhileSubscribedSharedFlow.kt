@@ -122,7 +122,7 @@ private class TransformWhileSubscribedSharedFlow<T, R>(
  */
 @DelicateBusyLibApi
 fun <T, R> Flow<T>.transformWhileSubscribed(
-    timeout: Duration = 5.seconds,
+    timeout: Duration = 30.seconds,
     scope: CoroutineScope,
     collector: suspend Flow<T>.(collector: FlowCollector<R>) -> Unit,
 ): SharedFlow<R> {
