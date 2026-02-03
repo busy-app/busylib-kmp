@@ -18,7 +18,9 @@ import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
 import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
 import net.flipper.bsb.cloud.api.BUSYLibBarsApi
+import net.flipper.busylib.core.wrapper.CResult
 import net.flipper.busylib.core.wrapper.WrappedFlow
+import net.flipper.busylib.core.wrapper.toCResult
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.ktx.common.SingleJobMode
 import net.flipper.core.busylib.ktx.common.asSingleJobScope
@@ -118,9 +120,10 @@ class FLinkInfoOnReadyFeatureApiImpl(
         info { "Completed authorization for BUSY Bar" }
     }
 
-    override suspend fun deleteAccount(): Result<SuccessResponse> {
+    override suspend fun deleteAccount(): CResult<SuccessResponse> {
         return rpcFeatureApi.deleteAccount()
             .onSuccess { tryCheckLinkedInfo() }
+            .toCResult()
     }
 
     @Inject

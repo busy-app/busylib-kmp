@@ -16,7 +16,9 @@ import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.feature.info.api.FDeviceInfoFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarStatusSystem
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
+import net.flipper.busylib.core.wrapper.CResult
 import net.flipper.busylib.core.wrapper.WrappedFlow
+import net.flipper.busylib.core.wrapper.toCResult
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -432,7 +434,7 @@ class FBSBDeviceApiImplRaceConditionTest {
 
     // Test implementations
     private open class TestFeatureApi : FDeviceInfoFeatureApi {
-        override suspend fun getDeviceInfo(): Result<BusyBarStatusSystem> {
+        override suspend fun getDeviceInfo(): CResult<BusyBarStatusSystem> {
             return Result.success(
                 BusyBarStatusSystem(
                     branch = "",
@@ -441,7 +443,7 @@ class FBSBDeviceApiImplRaceConditionTest {
                     commitHash = "",
                     uptime = ""
                 )
-            )
+            ).toCResult()
         }
     }
 

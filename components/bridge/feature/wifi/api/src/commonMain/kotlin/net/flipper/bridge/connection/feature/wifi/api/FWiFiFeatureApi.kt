@@ -5,6 +5,7 @@ import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.StatusResponse
 import net.flipper.bridge.connection.feature.wifi.api.model.WiFiNetwork
 import net.flipper.bridge.connection.feature.wifi.api.model.WiFiSecurity
+import net.flipper.busylib.core.wrapper.CResult
 import net.flipper.busylib.core.wrapper.WrappedFlow
 
 interface FWiFiFeatureApi : FDeviceFeatureApi {
@@ -16,7 +17,7 @@ interface FWiFiFeatureApi : FDeviceFeatureApi {
         ssid: String,
         password: String,
         security: WiFiSecurity.Supported
-    ): Result<Unit>
+    ): CResult<Unit>
 
-    suspend fun disconnect(): Result<Unit>
+    suspend fun disconnect(): CResult<Unit>
 }

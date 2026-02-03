@@ -19,6 +19,7 @@ import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.transport.ble.api.MAX_ATTRIBUTE_SIZE
 import net.flipper.bridge.connection.transport.ble.common.exception.BLEConnectionPermissionException
 import net.flipper.core.busylib.log.LogTagProvider
+import net.flipper.core.busylib.log.debug
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
 import no.nordicsemi.kotlin.ble.client.RemoteCharacteristic
@@ -78,7 +79,7 @@ class FSerialUnsafeApiImpl(
             .first()
 
         data.chunked(MAX_ATTRIBUTE_SIZE).forEach {
-            info { "Write chunk with ${it.size} with max size $MAX_ATTRIBUTE_SIZE" }
+            debug { "Write chunk with ${it.size} with max size $MAX_ATTRIBUTE_SIZE" }
             writeCharacteristic.write(it, WriteType.WITH_RESPONSE)
         }
     }
