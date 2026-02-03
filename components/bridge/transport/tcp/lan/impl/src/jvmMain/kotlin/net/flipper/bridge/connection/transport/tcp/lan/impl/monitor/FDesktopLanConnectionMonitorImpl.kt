@@ -15,6 +15,8 @@ import net.flipper.bridge.connection.transport.common.api.FTransportConnectionSt
 import net.flipper.bridge.connection.transport.tcp.common.engine.getPlatformEngineFactory
 import net.flipper.bridge.connection.transport.tcp.lan.FLanApi
 import net.flipper.bridge.connection.transport.tcp.lan.FLanDeviceConnectionConfig
+import net.flipper.core.busylib.ktx.common.SingleJobMode
+import net.flipper.core.busylib.ktx.common.asSingleJobScope
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
 import kotlin.time.Duration.Companion.seconds
@@ -30,6 +32,7 @@ class FDesktopLanConnectionMonitorImpl(
 ) : FLanConnectionMonitorApi, LogTagProvider {
     override val TAG: String = "FLanConnectionMonitor"
 
+    private val singleJobScope = scope.asSingleJobScope()
     private var monitoringJob: Job? = null
     private var isConnected: Boolean = false
 
@@ -47,7 +50,7 @@ class FDesktopLanConnectionMonitorImpl(
         listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting)
 
         // Start monitoring coroutine
-        monitoringJob = scope.launch {
+        monitoringJob = singleJobScope.launch(SingleJobMode.CANCEL_PREVIOUS) {
             info { "Starting connection monitoring for host: ${config.host}" }
             while (isActive) {
                 checkHostAvailability(scope, deviceApi)
