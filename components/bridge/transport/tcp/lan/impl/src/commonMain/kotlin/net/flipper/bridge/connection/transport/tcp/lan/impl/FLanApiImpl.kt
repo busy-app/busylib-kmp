@@ -8,21 +8,22 @@ import net.flipper.bridge.connection.transport.common.api.serial.FHTTPTransportC
 import net.flipper.bridge.connection.transport.tcp.lan.FLanApi
 import net.flipper.bridge.connection.transport.tcp.lan.FLanDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.tcp.lan.impl.engine.BUSYBarHttpEngine
-import net.flipper.bridge.connection.transport.tcp.lan.impl.monitor.FLanConnectionMonitorApi
+import net.flipper.bridge.connection.transport.tcp.lan.impl.monitor.getConnectionMonitorApi
 import net.flipper.core.ktor.getPlatformEngineFactory
 
 class FLanApiImpl(
     private val listener: FTransportConnectionStatusListener,
-    connectionMonitor: FLanConnectionMonitorApi.Factory,
     config: FLanDeviceConnectionConfig,
     private val scope: CoroutineScope
 ) : FLanApi {
     private val httpEngineOriginal = getPlatformEngineFactory().create()
     private val httpEngine = BUSYBarHttpEngine(httpEngineOriginal, config.host)
 
-    private val connectionMonitor = connectionMonitor.invoke(
-        listener,
-        config
+    private val connectionMonitor = getConnectionMonitorApi(
+        listener = listener,
+        config = config,
+        scope = scope,
+        deviceApi = this
     )
 
     override val deviceName = config.host
@@ -34,10 +35,7 @@ class FLanApiImpl(
     }
 
     suspend fun startMonitoring() {
-        connectionMonitor.startMonitoring(
-            scope = scope,
-            deviceApi = this
-        )
+        connectionMonitor.startMonitoring()
     }
 
     override suspend fun disconnect() {

@@ -12,6 +12,7 @@ import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
 import net.flipper.bridge.connection.feature.screenstreaming.api.FScreenStreamingFeatureApi
 import net.flipper.bridge.connection.feature.settings.api.FSettingsFeatureApi
+import net.flipper.bridge.connection.feature.smarthome.api.FSmartHomeFeatureApi
 import net.flipper.bridge.connection.feature.wifi.api.FWiFiFeatureApi
 import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.wrap
@@ -95,4 +96,13 @@ fun FFeatureProvider.getScreenStreamingFeature(): WrappedFlow<FFeatureStatus<FSc
 
 suspend fun FFeatureProvider.getScreenStreamingFeatureSync(): FScreenStreamingFeatureApi? {
     return this.getSync(FScreenStreamingFeatureApi::class)
+}
+
+// Smart Home Feature
+fun FFeatureProvider.getSmartHomeFeature(): WrappedFlow<FFeatureStatus<FSmartHomeFeatureApi>> {
+    return get(FSmartHomeFeatureApi::class).wrap()
+}
+
+suspend fun FFeatureProvider.getSmartHomeFeatureSync(): FSmartHomeFeatureApi? {
+    return this.getSync(FSmartHomeFeatureApi::class)
 }

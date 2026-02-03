@@ -16,5 +16,8 @@ kotlin {
             implementation(libs.kotlin.coroutines)
             implementation(libs.ktor.client.core)
         }
+        jvmMain.dependencies {
+            implementation(projects.components.core.ktx)
+        }
     }
 }
