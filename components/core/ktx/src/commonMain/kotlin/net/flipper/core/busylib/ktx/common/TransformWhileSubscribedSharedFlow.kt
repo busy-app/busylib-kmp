@@ -18,7 +18,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import net.flipper.core.busylib.log.LogTagProvider
@@ -53,20 +52,18 @@ private class TransformWhileSubscribedSharedFlow<T, R>(
     private suspend fun startUpstreamCollectionUnsafe() {
         upstreamJob?.cancelAndJoin()
         upstreamJob = scope.launch {
-            supervisorScope {
-                try {
-                    collector.invoke(
-                        upstreamFlow.mapLatest { upstreamValue ->
-                            awaitForSubscribers()
-                            upstreamValue
-                        },
-                        resultFlow
-                    )
-                } catch (_: CancellationException) {
-                    resultFlow.resetReplayCache()
-                } catch (e: Exception) {
-                    error(e) { "#startUpstreamCollectionUnsafe" }
-                }
+            try {
+                collector.invoke(
+                    upstreamFlow.mapLatest { upstreamValue ->
+                        awaitForSubscribers()
+                        upstreamValue
+                    },
+                    resultFlow
+                )
+            } catch (_: CancellationException) {
+                resultFlow.resetReplayCache()
+            } catch (e: Exception) {
+                error(e) { "#startUpstreamCollectionUnsafe" }
             }
         }
     }
