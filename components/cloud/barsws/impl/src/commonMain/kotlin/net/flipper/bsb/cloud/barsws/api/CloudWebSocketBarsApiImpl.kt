@@ -49,7 +49,7 @@ class CloudWebSocketBarsApiImpl(
             flowOf()
         }
     }.flatMapLatest { it }
-        .shareIn(scope, SharingStarted.WhileSubscribed())
+        .shareIn(scope, SharingStarted.WhileSubscribed(), replay = 1)
 
     override fun getWSFlow() = wsStateFlow
 }
