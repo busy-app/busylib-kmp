@@ -9,26 +9,24 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import me.tatarka.inject.annotations.Assisted
-import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.bridge.connection.transport.tcp.common.engine.getPlatformEngineFactory
+import net.flipper.bridge.connection.transport.tcp.lan.FLanApi
 import net.flipper.bridge.connection.transport.tcp.lan.FLanDeviceConnectionConfig
-import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 import kotlin.time.Duration.Companion.seconds
 
 private val MONITORING_INTERVAL = 1.seconds
 private val HTTP_TIMEOUT = 3.seconds
 
-@Inject
 class FDesktopLanConnectionMonitorImpl(
-    @Assisted private val listener: FTransportConnectionStatusListener,
-    @Assisted private val config: FLanDeviceConnectionConfig
+    private val listener: FTransportConnectionStatusListener,
+    private val config: FLanDeviceConnectionConfig,
+    private val scope: CoroutineScope,
+    private val deviceApi: FLanApi
 ) : FLanConnectionMonitorApi, LogTagProvider {
     override val TAG: String = "FLanConnectionMonitor"
 
@@ -45,10 +43,7 @@ class FDesktopLanConnectionMonitorImpl(
         }
     }
 
-    override suspend fun startMonitoring(
-        scope: CoroutineScope,
-        deviceApi: FConnectedDeviceApi
-    ) {
+    override suspend fun startMonitoring() {
         listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting)
 
         // Start monitoring coroutine
@@ -101,18 +96,18 @@ class FDesktopLanConnectionMonitorImpl(
         monitoringJob = null
         isConnected = false
     }
+}
 
-    @Inject
-    @ContributesBinding(BusyLibGraph::class, FLanConnectionMonitorApi.Factory::class)
-    class InternalFactory(
-        private val factory: (
-            FTransportConnectionStatusListener,
-            FLanDeviceConnectionConfig
-        ) -> FDesktopLanConnectionMonitorImpl
-    ) : FLanConnectionMonitorApi.Factory {
-        override operator fun invoke(
-            listener: FTransportConnectionStatusListener,
-            config: FLanDeviceConnectionConfig
-        ): FLanConnectionMonitorApi = factory(listener, config)
-    }
+actual fun getConnectionMonitorApi(
+    listener: FTransportConnectionStatusListener,
+    config: FLanDeviceConnectionConfig,
+    scope: CoroutineScope,
+    deviceApi: FLanApi
+): FLanConnectionMonitorApi {
+    return FDesktopLanConnectionMonitorImpl(
+        listener,
+        config,
+        scope,
+        deviceApi
+    )
 }
