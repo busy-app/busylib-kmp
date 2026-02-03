@@ -1,5 +1,6 @@
 package net.flipper.core.busylib.ktx.common
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalForInheritanceCoroutinesApi
 import kotlinx.coroutines.Job
@@ -17,11 +18,13 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.TaggedLogger
 import net.flipper.core.busylib.log.debug
+import net.flipper.core.busylib.log.error
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -50,13 +53,21 @@ private class TransformWhileSubscribedSharedFlow<T, R>(
     private suspend fun startUpstreamCollectionUnsafe() {
         upstreamJob?.cancelAndJoin()
         upstreamJob = scope.launch {
-            collector.invoke(
-                upstreamFlow.mapLatest { upstreamValue ->
-                    awaitForSubscribers()
-                    upstreamValue
-                },
-                resultFlow
-            )
+            supervisorScope {
+                try {
+                    collector.invoke(
+                        upstreamFlow.mapLatest { upstreamValue ->
+                            awaitForSubscribers()
+                            upstreamValue
+                        },
+                        resultFlow
+                    )
+                } catch (_: CancellationException) {
+                    resultFlow.resetReplayCache()
+                } catch (e: Exception) {
+                    error(e) { "#startUpstreamCollectionUnsafe" }
+                }
+            }
         }
     }
 
@@ -67,7 +78,6 @@ private class TransformWhileSubscribedSharedFlow<T, R>(
         }
         upstreamJob?.cancelAndJoin()
         upstreamJob = null
-        resultFlow.resetReplayCache()
     }
 
     private suspend fun stopUpstreamCollection() {

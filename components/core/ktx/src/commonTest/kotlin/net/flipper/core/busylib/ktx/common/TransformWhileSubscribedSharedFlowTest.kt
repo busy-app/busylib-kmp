@@ -148,7 +148,10 @@ class TransformWhileSubscribedSharedFlowTest {
             val sharedFlow = createFlow().transformWhileSubscribed(
                 timeout = 5.seconds,
                 scope = backgroundScope,
-                transformFlow = { flow -> flow }
+                transformFlow = { flow ->
+                    transformationCount++
+                    flow
+                }
             )
 
             val job = launch { sharedFlow.take(100).collect() }
