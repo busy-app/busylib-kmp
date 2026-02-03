@@ -3,24 +3,22 @@ package net.flipper.core.busylib.ktx.common
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalForInheritanceCoroutinesApi
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
-import kotlinx.coroutines.flow.updateAndGet
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.TaggedLogger
 import net.flipper.core.busylib.log.debug
@@ -39,9 +37,8 @@ private class TransformWhileSubscribedSharedFlow<T, R>(
     override val replayCache: List<R>
         get() = resultFlow.replayCache
     private val subscriberMutex = Mutex()
-    private var subscriberCountFlow = MutableStateFlow(0)
-    private val hasSubscribersFlow = subscriberCountFlow
-        .map { count -> count > 0 }
+    private val hasSubscribersFlow = resultFlow.subscriptionCount
+        .map { count -> count != 0 }
         .distinctUntilChanged()
     private var upstreamJob: Job? = null
     private var timeoutJob: Job? = null
@@ -51,7 +48,6 @@ private class TransformWhileSubscribedSharedFlow<T, R>(
             .first()
     }
     private suspend fun startUpstreamCollectionUnsafe() {
-        if (subscriberCountFlow.first() == 0) return
         upstreamJob?.cancelAndJoin()
         upstreamJob = scope.launch {
             collector.invoke(
@@ -59,12 +55,12 @@ private class TransformWhileSubscribedSharedFlow<T, R>(
                     awaitForSubscribers()
                     upstreamValue
                 },
-            ) { value -> resultFlow.emit(value) }
+                resultFlow
+            )
         }
     }
 
     private suspend fun stopUpstreamCollectionUnsafe() {
-        if (subscriberCountFlow.first() > 0) return
         debug {
             "#stopUpstreamCollection Stopping upstream collection " +
                 "after $timeoutDuration seconds of no subscribers"
@@ -74,52 +70,65 @@ private class TransformWhileSubscribedSharedFlow<T, R>(
         resultFlow.resetReplayCache()
     }
 
-    private suspend fun startTimeoutUnsafe() {
-        if (subscriberCountFlow.first() > 0) return
-        timeoutJob?.cancelAndJoin()
-        timeoutJob = scope.launch {
-            debug { "#startTimeout $timeoutDuration" }
-            delay(timeoutDuration)
-            subscriberMutex.withLock { stopUpstreamCollectionUnsafe() }
+    private suspend fun stopUpstreamCollection() {
+        subscriberMutex.withLock {
+            if (hasSubscribersFlow.first()) return
+            stopUpstreamCollectionUnsafe()
         }
     }
 
-    private suspend fun cancelTimeoutUnsafe() {
-        if (subscriberCountFlow.first() == 0 && timeoutJob == null) return
+    private suspend fun startTimeoutUnsafe() {
+        timeoutJob?.cancelAndJoin()
+        timeoutJob = scope.launch {
+            debug { "#startTimeoutUnsafe $timeoutDuration" }
+            delay(timeoutDuration)
+            stopUpstreamCollection()
+        }
+    }
+
+    private suspend fun stopTimeoutUnsafe() {
         debug { "#cancelTimeout" }
         timeoutJob?.cancelAndJoin()
         timeoutJob = null
     }
 
     private suspend fun onSubscriberAddedUnsafe() {
-        val count = subscriberCountFlow.updateAndGet { count -> count + 1 }
-        cancelTimeoutUnsafe()
+        stopTimeoutUnsafe()
 
+        val count = resultFlow.subscriptionCount.first()
         debug { "#onSubscriberAddedUnsage Subscriber added. Count: $count" }
 
-        if (upstreamJob?.isActive != true) {
-            debug { "#onSubscriberAddedUnsage Starting upstream collection due to new subscriber" }
-            startUpstreamCollectionUnsafe()
-        }
+        if (upstreamJob?.isActive == true)return
+
+        debug { "#onSubscriberAddedUnsage Starting upstream collection due to new subscriber" }
+        startUpstreamCollectionUnsafe()
     }
 
     private suspend fun onSubscriberRemovedUnsafe() {
-        val count = subscriberCountFlow.updateAndGet { count -> count - 1 }
+        val count = resultFlow.subscriptionCount.first()
         debug { "#onSubscriberRemovedUnsafe Subscriber removed. Count: $count" }
-        if (count == 0) {
-            startTimeoutUnsafe()
-        }
+        if (count > 0) return
+        startTimeoutUnsafe()
+    }
+
+    private fun startSubscriberCountJob() {
+        hasSubscribersFlow
+            .onEach { hasSubscribers ->
+                if (hasSubscribers) {
+                    subscriberMutex.withLock { onSubscriberAddedUnsafe() }
+                } else {
+                    subscriberMutex.withLock { onSubscriberRemovedUnsafe() }
+                }
+            }
+            .launchIn(scope)
     }
 
     override suspend fun collect(collector: FlowCollector<R>): Nothing {
-        try {
-            subscriberMutex.withLock { onSubscriberAddedUnsafe() }
-            resultFlow.collect(collector)
-        } finally {
-            withContext(NonCancellable) {
-                subscriberMutex.withLock { onSubscriberRemovedUnsafe() }
-            }
-        }
+        resultFlow.collect(collector)
+    }
+
+    init {
+        startSubscriberCountJob()
     }
 }
 
