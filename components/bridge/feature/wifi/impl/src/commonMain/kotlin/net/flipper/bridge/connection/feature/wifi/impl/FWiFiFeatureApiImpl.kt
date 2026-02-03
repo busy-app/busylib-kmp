@@ -22,7 +22,9 @@ import net.flipper.bridge.connection.feature.rpc.api.model.WifiSecurityMethod
 import net.flipper.bridge.connection.feature.wifi.api.FWiFiFeatureApi
 import net.flipper.bridge.connection.feature.wifi.api.model.WiFiNetwork
 import net.flipper.bridge.connection.feature.wifi.api.model.WiFiSecurity
+import net.flipper.busylib.core.wrapper.CResult
 import net.flipper.busylib.core.wrapper.WrappedFlow
+import net.flipper.busylib.core.wrapper.toCResult
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.ktx.common.DefaultConsumable
 import net.flipper.core.busylib.ktx.common.exponentialRetry
@@ -98,7 +100,7 @@ class FWiFiFeatureApiImpl(
         ssid: String,
         password: String,
         security: WiFiSecurity.Supported
-    ): Result<Unit> {
+    ): CResult<Unit> {
         return rpcFeatureApi.fRpcWifiApi.connectWifi(
             ConnectRequestConfig(
                 ssid = ssid,
@@ -108,11 +110,11 @@ class FWiFiFeatureApiImpl(
                     ipMethod = WifiIpMethod.DHCP
                 )
             )
-        ).map { }
+        ).map { }.toCResult()
     }
 
-    override suspend fun disconnect(): Result<Unit> {
-        return rpcFeatureApi.fRpcWifiApi.disconnectWifi().map { }
+    override suspend fun disconnect(): CResult<Unit> {
+        return rpcFeatureApi.fRpcWifiApi.disconnectWifi().map { }.toCResult()
     }
 
     @Inject

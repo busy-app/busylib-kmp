@@ -5,6 +5,8 @@ import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.feature.info.api.FDeviceInfoFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarStatusSystem
+import net.flipper.busylib.core.wrapper.CResult
+import net.flipper.busylib.core.wrapper.toCResult
 import net.flipper.core.busylib.log.LogTagProvider
 
 @Inject
@@ -13,8 +15,8 @@ class FDeviceInfoFeatureApiImpl(
 ) : FDeviceInfoFeatureApi, LogTagProvider {
     override val TAG = "FDeviceInfoFeatureApi"
 
-    override suspend fun getDeviceInfo(): Result<BusyBarStatusSystem> {
-        return rpcFeatureApi.fRpcSystemApi.getStatusSystem()
+    override suspend fun getDeviceInfo(): CResult<BusyBarStatusSystem> {
+        return rpcFeatureApi.fRpcSystemApi.getStatusSystem().toCResult()
     }
 
     @Inject

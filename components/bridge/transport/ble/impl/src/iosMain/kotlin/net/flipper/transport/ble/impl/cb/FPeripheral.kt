@@ -203,7 +203,7 @@ class FPeripheral(
         debug { "Peripheral writeValue bytes=${data.size} id=${identifier.UUIDString}" }
 
         data.chunked(MAX_ATTRIBUTE_SIZE).forEach { chunk ->
-            info { "Write chunk with ${chunk.size} with max size $MAX_ATTRIBUTE_SIZE" }
+            debug { "Write chunk with ${chunk.size} with max size $MAX_ATTRIBUTE_SIZE" }
             peripheral.writeValue(
                 chunk.toNSData(),
                 forCharacteristic = characteristic,
@@ -294,7 +294,7 @@ class FPeripheral(
         val characteristicUUID = characteristic.UUID.toKotlinUUID()
         val data = characteristic.value
 
-        info { "Received value for $characteristicUUID" }
+        debug { "Received value for $characteristicUUID" }
 
         if (error != null) {
             onError(error)

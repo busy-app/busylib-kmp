@@ -45,7 +45,7 @@ class AvailableVersionChangelogProvider(
                         null
                     } else {
                         exponentialRetry {
-                            featureApi.getVersionChangelog(version)
+                            featureApi.getVersionChangelog(version).toKotlinResult()
                         }
                     }
                 }

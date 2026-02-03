@@ -8,7 +8,9 @@ import net.flipper.bridge.connection.feature.firmwareupdate.api.FFirmwareUpdateF
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbVersionChangelog
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.UpdateStatus
+import net.flipper.busylib.core.wrapper.CResult
 import net.flipper.busylib.core.wrapper.WrappedFlow
+import net.flipper.busylib.core.wrapper.toCResult
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.ktx.common.DefaultConsumable
 import net.flipper.core.busylib.ktx.common.exponentialRetry
@@ -42,21 +44,22 @@ class FFirmwareUpdateFeatureApiImpl(
             .wrap()
     }
 
-    override suspend fun startUpdateCheck(): Result<Unit> {
+    override suspend fun startUpdateCheck(): CResult<Unit> {
         return rpcFeatureApi.fRpcUpdaterApi.startUpdateCheck()
             .onFailure { throwable -> error(throwable) { "#startUpdateCheck could not start update check" } }
             .map { }
+            .toCResult()
     }
 
-    override suspend fun startVersionInstall(version: String): Result<Unit> {
-        return rpcFeatureApi.fRpcUpdaterApi.startUpdateInstall(version).map { }
+    override suspend fun startVersionInstall(version: String): CResult<Unit> {
+        return rpcFeatureApi.fRpcUpdaterApi.startUpdateInstall(version).map { }.toCResult()
     }
 
-    override suspend fun stopFirmwareUpdate(): Result<Unit> {
-        return rpcFeatureApi.fRpcUpdaterApi.startUpdateAbortDownload().map { }
+    override suspend fun stopFirmwareUpdate(): CResult<Unit> {
+        return rpcFeatureApi.fRpcUpdaterApi.startUpdateAbortDownload().map { }.toCResult()
     }
 
-    override suspend fun getVersionChangelog(version: String): Result<BsbVersionChangelog> {
+    override suspend fun getVersionChangelog(version: String): CResult<BsbVersionChangelog> {
         return rpcFeatureApi.fRpcUpdaterApi
             .getUpdateChangelog(version)
             .map { changelog ->
@@ -64,6 +67,6 @@ class FFirmwareUpdateFeatureApiImpl(
                     version = version,
                     changelog = changelog.changelog
                 )
-            }
+            }.toCResult()
     }
 }
