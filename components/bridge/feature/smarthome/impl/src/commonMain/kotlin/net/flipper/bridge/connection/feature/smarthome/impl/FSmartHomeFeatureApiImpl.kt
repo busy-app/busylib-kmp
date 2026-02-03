@@ -28,10 +28,12 @@ import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.toCResult
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.ktx.common.DefaultConsumable
+import net.flipper.core.busylib.ktx.common.asFlow
 import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.merge
 import net.flipper.core.busylib.ktx.common.orEmpty
 import net.flipper.core.busylib.ktx.common.throttleLatest
+import net.flipper.core.busylib.ktx.common.transformWhileSubscribed
 import net.flipper.core.busylib.ktx.common.tryConsume
 import net.flipper.core.busylib.log.LogTagProvider
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
@@ -39,6 +41,7 @@ import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 
 class FSmartHomeFeatureApiImpl(
+    private val scope: CoroutineScope,
     private val fRpcMatterApi1: FRpcMatterApi,
     private val fEventsFeatureApi: FEventsFeatureApi?,
 ) : FSmartHomeFeatureApi,
@@ -50,12 +53,15 @@ class FSmartHomeFeatureApiImpl(
             ?.getUpdateFlow(UpdateEvent.SMART_HOME_STATUS_CHANGED)
             .orEmpty()
             .merge(flowOf(DefaultConsumable(false)))
-            .throttleLatest { consumable ->
-                val couldConsume = consumable.tryConsume()
-                exponentialRetry {
-                    fRpcMatterApi1.getMatterCommissioning(couldConsume)
+            .transformWhileSubscribed(scope = scope) { flow ->
+                flow.throttleLatest { consumable ->
+                    val couldConsume = consumable.tryConsume()
+                    exponentialRetry {
+                        fRpcMatterApi1.getMatterCommissioning(couldConsume)
+                    }
                 }
             }
+            .asFlow()
             .wrap()
     }
 
@@ -105,7 +111,11 @@ class FSmartHomeFeatureApiImpl(
                 val fEventsFeatureApi = unsafeFeatureDeviceApi
                     .get(FEventsFeatureApi::class)
                     ?.await()
-                return FSmartHomeFeatureApiImpl(fRpcMatterApi, fEventsFeatureApi)
+                return FSmartHomeFeatureApiImpl(
+                    scope = scope,
+                    fRpcMatterApi1 = fRpcMatterApi,
+                    fEventsFeatureApi = fEventsFeatureApi
+                )
             }
         }
 

@@ -21,10 +21,12 @@ import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.ktx.common.DefaultConsumable
+import net.flipper.core.busylib.ktx.common.asFlow
 import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.merge
 import net.flipper.core.busylib.ktx.common.orEmpty
 import net.flipper.core.busylib.ktx.common.throttleLatest
+import net.flipper.core.busylib.ktx.common.transformWhileSubscribed
 import net.flipper.core.busylib.ktx.common.tryConsume
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
@@ -60,15 +62,18 @@ class FBleFeatureApiImpl(
             ?.getUpdateFlow(UpdateEvent.BLE_STATUS)
             .orEmpty()
             .merge(flowOf(DefaultConsumable(false)))
-            .throttleLatest { consumable ->
-                val couldConsume = consumable.tryConsume()
-                exponentialRetry {
-                    rpcFeatureApi.fRpcBleApi
-                        .getBleStatus(couldConsume)
-                        .onFailure { error(it) { "Failed to get Ble status" } }
-                        .map { response -> response.toFBleStatus() }
+            .transformWhileSubscribed(scope = scope) { flow ->
+                flow.throttleLatest { consumable ->
+                    val couldConsume = consumable.tryConsume()
+                    exponentialRetry {
+                        rpcFeatureApi.fRpcBleApi
+                            .getBleStatus(couldConsume)
+                            .onFailure { error(it) { "Failed to get Ble status" } }
+                            .map { response -> response.toFBleStatus() }
+                    }
                 }
             }
+            .asFlow()
             .wrap()
     }
 

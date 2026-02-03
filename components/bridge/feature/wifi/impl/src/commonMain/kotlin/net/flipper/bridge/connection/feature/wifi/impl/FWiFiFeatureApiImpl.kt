@@ -27,10 +27,12 @@ import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.toCResult
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.ktx.common.DefaultConsumable
+import net.flipper.core.busylib.ktx.common.asFlow
 import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.merge
 import net.flipper.core.busylib.ktx.common.orEmpty
 import net.flipper.core.busylib.ktx.common.throttleLatest
+import net.flipper.core.busylib.ktx.common.transformWhileSubscribed
 import net.flipper.core.busylib.ktx.common.tryConsume
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
@@ -84,15 +86,18 @@ class FWiFiFeatureApiImpl(
             ?.getUpdateFlow(UpdateEvent.WIFI_STATUS)
             .orEmpty()
             .merge(flowOf(DefaultConsumable(false)))
-            .throttleLatest { consumable ->
-                val couldConsume = consumable.tryConsume()
-                exponentialRetry {
-                    rpcFeatureApi
-                        .fRpcWifiApi
-                        .getWifiStatus(couldConsume)
-                        .onFailure { error(it) { "Failed to get WiFi networks" } }
+            .transformWhileSubscribed(scope = scope) { flow ->
+                flow.throttleLatest { consumable ->
+                    val couldConsume = consumable.tryConsume()
+                    exponentialRetry {
+                        rpcFeatureApi
+                            .fRpcWifiApi
+                            .getWifiStatus(couldConsume)
+                            .onFailure { error(it) { "Failed to get WiFi networks" } }
+                    }
                 }
             }
+            .asFlow()
             .wrap()
     }
 
