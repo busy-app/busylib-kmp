@@ -1,6 +1,7 @@
 @file:Suppress("Filename")
 
 import net.flipper.property.AnyPropertyValue
+import net.flipper.property.SecretPropertyValue
 import org.gradle.accessors.dm.LibrariesForLibs
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.the
@@ -29,6 +30,13 @@ val Project.appleEnabled: Boolean
 
 val Project.macOSEnabled: Boolean
     get() = AnyPropertyValue(this, "flipper.macOSEnabled")
+        .getValue()
+        .getOrNull()
+        ?.toBoolean()
+        ?: true
+
+val Project.signPublications: Boolean
+    get() = SecretPropertyValue(this, "flipper.signPublications")
         .getValue()
         .getOrNull()
         ?.toBoolean()

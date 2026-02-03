@@ -24,10 +24,12 @@ import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.ktx.common.DefaultConsumable
+import net.flipper.core.busylib.ktx.common.asFlow
 import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.merge
 import net.flipper.core.busylib.ktx.common.orEmpty
 import net.flipper.core.busylib.ktx.common.throttleLatest
+import net.flipper.core.busylib.ktx.common.transformWhileSubscribed
 import net.flipper.core.busylib.ktx.common.tryConsume
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
@@ -47,16 +49,19 @@ class FSettingsFeatureApiImpl(
             ?.getUpdateFlow(UpdateEvent.BRIGHTNESS)
             .orEmpty()
             .merge(flowOf(DefaultConsumable(false)))
-            .throttleLatest { consumable ->
-                val couldConsume = consumable.tryConsume()
-                exponentialRetry {
-                    rpcFeatureApi
-                        .fRpcSettingsApi
-                        .getDisplayBrightness(couldConsume)
-                        .map { it.toBsbBrightnessInfo() }
-                        .onFailure { error(it) { "Failed to get Settings status" } }
+            .transformWhileSubscribed(scope = scope) { flow ->
+                flow.throttleLatest { consumable ->
+                    val couldConsume = consumable.tryConsume()
+                    exponentialRetry {
+                        rpcFeatureApi
+                            .fRpcSettingsApi
+                            .getDisplayBrightness(couldConsume)
+                            .map { it.toBsbBrightnessInfo() }
+                            .onFailure { error(it) { "Failed to get Settings status" } }
+                    }
                 }
             }
+            .asFlow()
             .wrap()
     }
 
@@ -65,15 +70,18 @@ class FSettingsFeatureApiImpl(
             ?.getUpdateFlow(UpdateEvent.AUDIO_VOLUME)
             .orEmpty()
             .merge(flowOf(DefaultConsumable(false)))
-            .throttleLatest { consumable ->
-                val couldConsume = consumable.tryConsume()
-                exponentialRetry {
-                    info { "#getVolumeFlow getting volume flow" }
-                    rpcFeatureApi.fRpcSettingsApi
-                        .getAudioVolume(couldConsume)
-                        .onFailure { error(it) { "Failed to get Settings status" } }
+            .transformWhileSubscribed(scope = scope) { flow ->
+                flow.throttleLatest { consumable ->
+                    val couldConsume = consumable.tryConsume()
+                    exponentialRetry {
+                        info { "#getVolumeFlow getting volume flow" }
+                        rpcFeatureApi.fRpcSettingsApi
+                            .getAudioVolume(couldConsume)
+                            .onFailure { error(it) { "Failed to get Settings status" } }
+                    }
                 }
             }
+            .asFlow()
             .wrap()
     }
 
@@ -90,13 +98,15 @@ class FSettingsFeatureApiImpl(
                 ?.getUpdateFlow(UpdateEvent.DEVICE_NAME)
                 .orEmpty()
                 .merge(flowOf(DefaultConsumable(false)))
-                .throttleLatest { consumable ->
-                    val couldConsume = consumable.tryConsume()
-                    exponentialRetry {
-                        rpcFeatureApi
-                            .fRpcSettingsApi
-                            .getName(couldConsume)
-                            .map { nameInfo -> nameInfo.name }
+                .transformWhileSubscribed(scope = scope) { flow ->
+                    flow.throttleLatest { consumable ->
+                        val couldConsume = consumable.tryConsume()
+                        exponentialRetry {
+                            rpcFeatureApi
+                                .fRpcSettingsApi
+                                .getName(couldConsume)
+                                .map { nameInfo -> nameInfo.name }
+                        }
                     }
                 }
                 .collect { deviceName -> emit(deviceName) }
