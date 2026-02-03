@@ -1,6 +1,8 @@
 package net.flipper.bridge.connection.feature.firmwareupdate.impl
 
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
 import net.flipper.bridge.connection.feature.events.api.UpdateEvent
 import net.flipper.bridge.connection.feature.events.api.getUpdateFlow
@@ -13,16 +15,19 @@ import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.toCResult
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.ktx.common.DefaultConsumable
+import net.flipper.core.busylib.ktx.common.asFlow
 import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.merge
 import net.flipper.core.busylib.ktx.common.orEmpty
 import net.flipper.core.busylib.ktx.common.throttleLatest
+import net.flipper.core.busylib.ktx.common.transformWhileSubscribed
 import net.flipper.core.busylib.ktx.common.tryConsume
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 
 @Suppress("UnusedPrivateProperty")
 class FFirmwareUpdateFeatureApiImpl(
+    private val scope: CoroutineScope,
     private val rpcFeatureApi: FRpcFeatureApi,
     private val fEventsFeatureApi: FEventsFeatureApi?,
 ) : FFirmwareUpdateFeatureApi, LogTagProvider {
@@ -33,14 +38,17 @@ class FFirmwareUpdateFeatureApiImpl(
             ?.getUpdateFlow(UpdateEvent.UPDATER_UPDATE_STATUS)
             .orEmpty()
             .merge(flowOf(DefaultConsumable(false)))
-            .throttleLatest { consumable ->
-                val couldConsume = consumable.tryConsume()
-                exponentialRetry {
-                    rpcFeatureApi.fRpcUpdaterApi
-                        .getUpdateStatus(couldConsume)
-                        .onFailure { throwable -> error(throwable) { "Failed to get update status" } }
+            .transformWhileSubscribed(scope = scope) { flow ->
+                flow.throttleLatest { consumable ->
+                    val couldConsume = consumable.tryConsume()
+                    exponentialRetry {
+                        rpcFeatureApi.fRpcUpdaterApi
+                            .getUpdateStatus(couldConsume)
+                            .onFailure { throwable -> error(throwable) { "Failed to get update status" } }
+                    }
                 }
             }
+            .asFlow()
             .wrap()
     }
 
