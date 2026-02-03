@@ -8,17 +8,16 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
-import net.flipper.bridge.connection.transport.tcp.common.engine.getPlatformEngineFactory
 import net.flipper.bridge.connection.transport.tcp.lan.FLanApi
 import net.flipper.bridge.connection.transport.tcp.lan.FLanDeviceConnectionConfig
 import net.flipper.core.busylib.ktx.common.SingleJobMode
 import net.flipper.core.busylib.ktx.common.asSingleJobScope
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
+import net.flipper.core.ktor.getPlatformEngineFactory
 import kotlin.time.Duration.Companion.seconds
 
 private val MONITORING_INTERVAL = 1.seconds

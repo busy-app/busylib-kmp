@@ -1,7 +1,8 @@
 [versions]
 agp = "9.0.0"
-androidx-activityCompose = "1.12.2"
+androidx-activityCompose = "1.12.3"
 androidx-core = "1.17.0"
+lifecycle = "2.10.0" # https://developer.android.com/jetpack/androidx/releases/lifecycle
 google-services = "4.4.4"
 appcompat = "1.7.1" # https://developer.android.com/jetpack/androidx/releases/appcompat
 compose-plugin = "1.10.0"
@@ -42,9 +43,10 @@ kotlin-gradle = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.
 compose-gradle = { module = "org.jetbrains.kotlin:compose-compiler-gradle-plugin", version.ref = "kotlin" }
 klibs-kstorage = { module = "ru.astrainteractive.klibs:kstorage", version.ref = "klibs-kstorage" }
 
-# Linters
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidx-core" }
+androidx-lifecycle = { module = "androidx.lifecycle:lifecycle-common", version.ref = "lifecycle" }
+androidx-lifecycle-process = { module = "androidx.lifecycle:lifecycle-process", version.ref = "lifecycle" }
 appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
 
 # kotlin-inject dependencies
@@ -92,6 +94,7 @@ ktor-client-mock = { module = "io.ktor:ktor-client-mock", version.ref = "ktor" }
 ktor-client-js = { module = "io.ktor:ktor-client-js-wasm-js", version.ref = "ktor" }
 ktor-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
 ktor-serialization = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
+ktor-client-websockets = { module = "io.ktor:ktor-client-websockets", version.ref = "ktor" }
 ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "ktor" }
 ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
 ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
