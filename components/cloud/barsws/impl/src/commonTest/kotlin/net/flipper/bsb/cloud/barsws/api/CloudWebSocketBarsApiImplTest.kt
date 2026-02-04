@@ -39,7 +39,6 @@ import kotlin.test.assertNull
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.seconds
 
 /**
  * Comprehensive tests for CloudWebSocketBarsApiImpl covering:
@@ -479,7 +478,7 @@ class CloudWebSocketBarsApiImplTest {
             principal = BUSYLibUserPrincipal.Token("test-token"),
             onWebSocketCreated = {
                 connectionAttempts.update { it + 1 }
-                throw RuntimeException("Connection failed")
+                error("Connection failed")
             }
         )
 
@@ -780,6 +779,7 @@ class CloudWebSocketBarsApiImplTest {
         val testScope: CoroutineScope
     )
 
+    @Suppress("LongParameterList")
     private fun TestScope.createTestSetup(
         isNetworkAvailable: Boolean = false,
         networkFlow: MutableStateFlow<Boolean>? = null,

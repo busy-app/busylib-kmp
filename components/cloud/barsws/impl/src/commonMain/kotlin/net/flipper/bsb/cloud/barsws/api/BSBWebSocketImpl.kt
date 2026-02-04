@@ -16,9 +16,9 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerializationException
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
+import net.flipper.bsb.cloud.barsws.api.model.InternalWebSocketRequest
 import net.flipper.bsb.cloud.barsws.api.model.toInternal
 import net.flipper.bsb.cloud.barsws.api.model.toPublic
-import net.flipper.bsb.cloud.barsws.api.utils.addAuthHeader
 import net.flipper.bsb.cloud.barsws.api.utils.wrappers.BSBWebSocketSession
 import net.flipper.bsb.cloud.barsws.api.utils.wrappers.KtorBSBWebSocketSession
 import net.flipper.core.busylib.ktx.common.launchOnCompletion
@@ -58,6 +58,7 @@ class BSBWebSocketImpl(
     }
 }
 
+@Suppress("LongParameterList")
 suspend fun getBSBWebSocket(
     httpClient: HttpClient,
     logger: LogTagProvider,
@@ -72,8 +73,8 @@ suspend fun getBSBWebSocket(
                 host = busyHost
                 path("/api/v1/bars/ws")
                 protocol = URLProtocol.WSS
+                port = 443
             }
-            addAuthHeader(principal)
         }
 
         val session = KtorBSBWebSocketSession(webSocketSession)
@@ -81,6 +82,8 @@ suspend fun getBSBWebSocket(
         scope.launchOnCompletion {
             session.close()
         }
+
+        session.send(InternalWebSocketRequest.Authorization(principal.token))
 
         return@withContext BSBWebSocketImpl(session, logger, scope, dispatcher)
     }

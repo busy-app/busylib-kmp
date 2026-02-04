@@ -4,6 +4,7 @@ import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfi
 
 data class FCloudDeviceConnectionConfig(
     val authToken: String,
+    val deviceId: String,
     val host: String,
     val name: String
 ) : FDeviceConnectionConfig<FCloudApi>()

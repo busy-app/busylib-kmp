@@ -5,11 +5,13 @@ import net.flipper.bridge.connection.transport.common.api.FTransportConnectionSt
 import net.flipper.bridge.connection.transport.tcp.cloud.api.FCloudApi
 import net.flipper.bridge.connection.transport.tcp.cloud.api.FCloudDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.tcp.lan.impl.engine.BUSYCloudHttpEngine
+import net.flipper.bridge.connection.transport.tcp.lan.impl.monitor.CloudDeviceMonitor
 import net.flipper.core.ktor.getPlatformEngineFactory
 
 class FCloudApiImpl(
     private val listener: FTransportConnectionStatusListener,
-    config: FCloudDeviceConnectionConfig
+    config: FCloudDeviceConnectionConfig,
+    cloudDeviceMonitor: CloudDeviceMonitor
 ) : FCloudApi {
     private val httpEngineOriginal = getPlatformEngineFactory().create()
     private val httpEngine = BUSYCloudHttpEngine(
@@ -17,6 +19,10 @@ class FCloudApiImpl(
         authToken = config.authToken,
         host = config.host
     )
+
+    init {
+        cloudDeviceMonitor.launch(this, config.deviceId)
+    }
 
     override val deviceName = config.name
 

@@ -22,6 +22,7 @@ kotlin {
         implementation(libs.ktor.negotiation)
         implementation(libs.ktor.serialization)
         implementation(libs.ktor.client.websockets)
+        implementation(libs.ktor.client.logging)
 
         implementation(libs.kotlin.coroutines)
         implementation(libs.kotlin.serialization.json)

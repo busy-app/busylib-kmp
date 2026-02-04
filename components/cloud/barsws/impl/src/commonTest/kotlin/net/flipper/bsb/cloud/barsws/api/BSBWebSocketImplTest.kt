@@ -51,7 +51,7 @@ class BSBWebSocketImplTest {
         val mockSession = MockBSBWebSocketSession()
         val testDispatcher = StandardTestDispatcher(testScheduler)
         val testScope = CoroutineScope(testDispatcher + Job())
-        
+
         val webSocket = BSBWebSocketImpl(
             session = mockSession,
             logger = testLogger,
@@ -83,7 +83,7 @@ class BSBWebSocketImplTest {
             val mockSession = MockBSBWebSocketSession()
             val testDispatcher = StandardTestDispatcher(testScheduler)
             val testScope = CoroutineScope(testDispatcher + Job())
-            
+
             val webSocket = BSBWebSocketImpl(
                 session = mockSession,
                 logger = testLogger,
@@ -117,7 +117,7 @@ class BSBWebSocketImplTest {
         // Create a dedicated scope with the test dispatcher for proper coroutine control
         val testDispatcher = StandardTestDispatcher(testScheduler)
         val testScopeForWebSocket = CoroutineScope(testDispatcher + Job())
-        
+
         val webSocket = BSBWebSocketImpl(
             session = mockSession,
             logger = testLogger,
@@ -157,7 +157,7 @@ class BSBWebSocketImplTest {
         val mockSession = MockBSBWebSocketSession()
         val testDispatcher = StandardTestDispatcher(testScheduler)
         val testScope = CoroutineScope(testDispatcher + Job())
-        
+
         val webSocket = BSBWebSocketImpl(
             session = mockSession,
             logger = testLogger,
@@ -274,7 +274,7 @@ class BSBWebSocketImplTest {
             val mockSession = MockBSBWebSocketSession()
             val testDispatcher = StandardTestDispatcher(testScheduler)
             val testScope = CoroutineScope(testDispatcher + Job())
-            
+
             val webSocket = BSBWebSocketImpl(
                 session = mockSession,
                 logger = testLogger,
@@ -333,7 +333,7 @@ class BSBWebSocketImplTest {
         val mockSession = MockBSBWebSocketSession()
         val testDispatcher = StandardTestDispatcher(testScheduler)
         val cancellableScope = CoroutineScope(testDispatcher + Job())
-        
+
         val webSocket = BSBWebSocketImpl(
             session = mockSession,
             logger = testLogger,
@@ -372,7 +372,7 @@ class BSBWebSocketImplTest {
             val mockSession = MockBSBWebSocketSession()
             val testDispatcher = StandardTestDispatcher(testScheduler)
             val testScope = CoroutineScope(testDispatcher + Job())
-            
+
             val webSocket = BSBWebSocketImpl(
                 session = mockSession,
                 logger = testLogger,
@@ -408,7 +408,7 @@ class BSBWebSocketImplTest {
         val mockSession = MockBSBWebSocketSession()
         val testDispatcher = StandardTestDispatcher(testScheduler)
         val testScope = CoroutineScope(testDispatcher + Job())
-        
+
         val webSocket = BSBWebSocketImpl(
             session = mockSession,
             logger = testLogger,
@@ -438,7 +438,7 @@ class BSBWebSocketImplTest {
         val mockSession = MockBSBWebSocketSession()
         val testDispatcher = StandardTestDispatcher(testScheduler)
         val testScope = CoroutineScope(testDispatcher + Job())
-        
+
         val webSocket = BSBWebSocketImpl(
             session = mockSession,
             logger = testLogger,
@@ -481,7 +481,7 @@ class BSBWebSocketImplTest {
         val mockSession = MockBSBWebSocketSession()
         val testDispatcher = StandardTestDispatcher(testScheduler)
         val testScope = CoroutineScope(testDispatcher + Job())
-        
+
         val webSocket = BSBWebSocketImpl(
             session = mockSession,
             logger = testLogger,
@@ -518,7 +518,7 @@ class BSBWebSocketImplTest {
         val mockSession = MockBSBWebSocketSession()
         val testDispatcher = StandardTestDispatcher(testScheduler)
         val cancellableScope = CoroutineScope(testDispatcher + Job())
-        
+
         val webSocket = BSBWebSocketImpl(
             session = mockSession,
             logger = testLogger,
@@ -552,7 +552,7 @@ class BSBWebSocketImplTest {
             val mockSession = MockBSBWebSocketSession()
             val testDispatcher = StandardTestDispatcher(testScheduler)
             val testScope = CoroutineScope(testDispatcher + Job())
-            
+
             val webSocket = BSBWebSocketImpl(
                 session = mockSession,
                 logger = testLogger,
@@ -589,7 +589,7 @@ class BSBWebSocketImplTest {
         val mockSession = MockBSBWebSocketSession()
         val testDispatcher = StandardTestDispatcher(testScheduler)
         val testScope = CoroutineScope(testDispatcher + Job())
-        
+
         val webSocket = BSBWebSocketImpl(
             session = mockSession,
             logger = testLogger,
@@ -635,7 +635,7 @@ class BSBWebSocketImplTest {
         val mockSession = MockBSBWebSocketSession()
         val testDispatcher = StandardTestDispatcher(testScheduler)
         val testScope = CoroutineScope(testDispatcher + Job())
-        
+
         val webSocket = BSBWebSocketImpl(
             session = mockSession,
             logger = testLogger,
@@ -713,7 +713,7 @@ class BSBWebSocketImplTest {
 
         override suspend fun send(request: InternalWebSocketRequest) {
             if (failOnSend) {
-                throw RuntimeException("Mock send failure")
+                error("Mock send failure")
             }
             sentRequests.add(request)
         }

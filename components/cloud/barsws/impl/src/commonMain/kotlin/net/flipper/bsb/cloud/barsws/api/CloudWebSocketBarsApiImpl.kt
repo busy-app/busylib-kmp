@@ -19,6 +19,7 @@ import net.flipper.bsb.cloud.barsws.api.utils.wrappers.BSBWebSocketFactory
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 import net.flipper.core.busylib.log.LogTagProvider
+import net.flipper.core.busylib.log.info
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 
@@ -56,7 +57,12 @@ class CloudWebSocketBarsApiImpl(
                 }
             }
         } else {
-            flowOf()
+            info {
+                "Failed to init websocket. " +
+                    "isNetworkAvailable: $isNetworkAvailable, " +
+                    "principal: $principal, host: $host"
+            }
+            flowOf<BSBWebSocket?>(null)
         }
     }.flatMapLatest { it }
         .shareIn(scope, SharingStarted.WhileSubscribed(), replay = 1)
