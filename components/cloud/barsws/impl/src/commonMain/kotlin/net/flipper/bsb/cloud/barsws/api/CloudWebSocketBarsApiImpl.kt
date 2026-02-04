@@ -3,6 +3,7 @@ package net.flipper.bsb.cloud.barsws.api
 import com.flipperdevices.core.network.BUSYLibNetworkStateApi
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.combine
@@ -51,6 +52,7 @@ class CloudWebSocketBarsApiImpl(
                         scope = this,
                         dispatcher = dispatcher
                     ).let { send(it) }
+                    awaitClose()
                 }
             }
         } else {

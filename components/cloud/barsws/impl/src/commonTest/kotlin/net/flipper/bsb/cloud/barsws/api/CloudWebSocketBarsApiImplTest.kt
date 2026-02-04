@@ -16,7 +16,6 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.job
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -40,6 +39,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Comprehensive tests for CloudWebSocketBarsApiImpl covering:
@@ -63,7 +63,6 @@ class CloudWebSocketBarsApiImplTest {
         runTest {
             // Given
             val testSetup = createTestSetup(
-                scope = backgroundScope,
                 isNetworkAvailable = true,
                 principal = BUSYLibUserPrincipal.Token("test-token")
             )
@@ -79,7 +78,7 @@ class CloudWebSocketBarsApiImplTest {
                             webSockets.add(ws)
                         }
                     }
-                    .launchIn(backgroundScope)
+                    .launchIn(testSetup.testScope)
             }
 
             advanceUntilIdle()
@@ -93,6 +92,7 @@ class CloudWebSocketBarsApiImplTest {
             }
 
             jobs.forEach { it.cancel() }
+            testSetup.testScope.cancel()
         }
 
     @Test
@@ -100,7 +100,6 @@ class CloudWebSocketBarsApiImplTest {
         runTest {
             // Given
             val testSetup = createTestSetup(
-                scope = backgroundScope,
                 isNetworkAvailable = true,
                 principal = BUSYLibUserPrincipal.Token("test-token")
             )
@@ -109,7 +108,7 @@ class CloudWebSocketBarsApiImplTest {
             var firstWs: BSBWebSocket? = null
             val job1 = testSetup.api.getWSFlow()
                 .onEach { firstWs = it }
-                .launchIn(backgroundScope)
+                .launchIn(testSetup.testScope)
 
             advanceUntilIdle()
 
@@ -117,7 +116,7 @@ class CloudWebSocketBarsApiImplTest {
             var lateWs: BSBWebSocket? = null
             val job2 = testSetup.api.getWSFlow()
                 .onEach { lateWs = it }
-                .launchIn(backgroundScope)
+                .launchIn(testSetup.testScope)
 
             advanceUntilIdle()
 
@@ -128,6 +127,7 @@ class CloudWebSocketBarsApiImplTest {
 
             job1.cancel()
             job2.cancel()
+            testSetup.testScope.cancel()
         }
 
     @Test
@@ -136,7 +136,6 @@ class CloudWebSocketBarsApiImplTest {
             // Given
             val factoryCallCount = MutableStateFlow(0)
             val testSetup = createTestSetup(
-                scope = backgroundScope,
                 isNetworkAvailable = true,
                 principal = BUSYLibUserPrincipal.Token("test-token"),
                 onWebSocketCreated = { factoryCallCount.update { it + 1 } }
@@ -163,6 +162,7 @@ class CloudWebSocketBarsApiImplTest {
             )
 
             jobs.forEach { it.cancel() }
+            testSetup.testScope.cancel()
         }
 
     // endregion
@@ -175,14 +175,13 @@ class CloudWebSocketBarsApiImplTest {
             // Given
             val closedFlow = MutableStateFlow(false)
             val testSetup = createTestSetup(
-                scope = backgroundScope,
                 isNetworkAvailable = true,
                 principal = BUSYLibUserPrincipal.Token("test-token"),
                 onWebSocketClosed = { closedFlow.value = true }
             )
 
             // When - subscribe then unsubscribe
-            val job = testSetup.api.getWSFlow().launchIn(backgroundScope)
+            val job = testSetup.api.getWSFlow().launchIn(testSetup.testScope)
             advanceUntilIdle()
 
             job.cancel()
@@ -193,26 +192,25 @@ class CloudWebSocketBarsApiImplTest {
                 true,
                 "WebSocket should be closed when no subscribers remain"
             )
+            testSetup.testScope.cancel()
         }
 
     @Test
     fun GIVEN_websocket_WHEN_scope_is_cancelled_THEN_all_resources_are_cleaned_up() = runTest {
         // Given
-        val cancellableScope = CoroutineScope(Job(backgroundScope.coroutineContext.job))
         val cleanupCalled = MutableStateFlow(false)
 
         val testSetup = createTestSetup(
-            scope = cancellableScope,
             isNetworkAvailable = true,
             principal = BUSYLibUserPrincipal.Token("test-token"),
             onWebSocketClosed = { cleanupCalled.value = true }
         )
 
-        val job = testSetup.api.getWSFlow().launchIn(cancellableScope)
+        val job = testSetup.api.getWSFlow().launchIn(testSetup.testScope)
         advanceUntilIdle()
 
         // When - cancel the scope
-        cancellableScope.cancel()
+        testSetup.testScope.cancel()
         advanceUntilIdle()
 
         // Then - resources should be cleaned up
@@ -224,24 +222,25 @@ class CloudWebSocketBarsApiImplTest {
         runTest {
             // Given
             val testSetup = createTestSetup(
-                scope = backgroundScope,
+
                 isNetworkAvailable = true,
                 principal = BUSYLibUserPrincipal.Token("test-token")
             )
 
             // When - rapid subscribe/unsubscribe
             repeat(50) {
-                val job = testSetup.api.getWSFlow().launchIn(backgroundScope)
+                val job = testSetup.api.getWSFlow().launchIn(testSetup.testScope)
                 advanceUntilIdle()
                 job.cancel()
                 advanceUntilIdle()
             }
 
             // Then - should not crash or leak resources
-            val finalJob = testSetup.api.getWSFlow().launchIn(backgroundScope)
+            val finalJob = testSetup.api.getWSFlow().launchIn(testSetup.testScope)
             advanceUntilIdle()
             assertNotNull(finalJob)
             finalJob.cancel()
+            testSetup.testScope.cancel()
         }
 
     // endregion
@@ -252,7 +251,7 @@ class CloudWebSocketBarsApiImplTest {
     fun GIVEN_network_unavailable_WHEN_subscribing_THEN_no_websocket_emitted() = runTest {
         // Given
         val testSetup = createTestSetup(
-            scope = backgroundScope,
+
             isNetworkAvailable = false,
             principal = BUSYLibUserPrincipal.Token("test-token")
         )
@@ -261,20 +260,21 @@ class CloudWebSocketBarsApiImplTest {
         var receivedWs: BSBWebSocket? = null
         val job = testSetup.api.getWSFlow()
             .onEach { receivedWs = it }
-            .launchIn(backgroundScope)
+            .launchIn(testSetup.testScope)
 
         advanceUntilIdle()
 
         // Then - no WebSocket should be emitted when network is unavailable
         assertNull(receivedWs, "No WebSocket should be emitted when network unavailable")
         job.cancel()
+        testSetup.testScope.cancel()
     }
 
     @Test
     fun GIVEN_user_not_authenticated_WHEN_subscribing_THEN_no_websocket_emitted() = runTest {
         // Given
         val testSetup = createTestSetup(
-            scope = backgroundScope,
+
             isNetworkAvailable = true,
             principal = BUSYLibUserPrincipal.Empty
         )
@@ -283,20 +283,21 @@ class CloudWebSocketBarsApiImplTest {
         var receivedWs: BSBWebSocket? = null
         val job = testSetup.api.getWSFlow()
             .onEach { receivedWs = it }
-            .launchIn(backgroundScope)
+            .launchIn(testSetup.testScope)
 
         advanceUntilIdle()
 
         // Then
         assertNull(receivedWs, "No WebSocket should be emitted when user not authenticated")
         job.cancel()
+        testSetup.testScope.cancel()
     }
 
     @Test
     fun GIVEN_user_loading_WHEN_subscribing_THEN_no_websocket_emitted() = runTest {
         // Given
         val testSetup = createTestSetup(
-            scope = backgroundScope,
+
             isNetworkAvailable = true,
             principal = BUSYLibUserPrincipal.Loading
         )
@@ -305,13 +306,14 @@ class CloudWebSocketBarsApiImplTest {
         var receivedWs: BSBWebSocket? = null
         val job = testSetup.api.getWSFlow()
             .onEach { receivedWs = it }
-            .launchIn(backgroundScope)
+            .launchIn(testSetup.testScope)
 
         advanceUntilIdle()
 
         // Then
         assertNull(receivedWs, "No WebSocket should be emitted when principal is loading")
         job.cancel()
+        testSetup.testScope.cancel()
     }
 
     @Test
@@ -320,7 +322,6 @@ class CloudWebSocketBarsApiImplTest {
             // Given
             val networkFlow = MutableStateFlow(false)
             val testSetup = createTestSetup(
-                scope = backgroundScope,
                 networkFlow = networkFlow,
                 principal = BUSYLibUserPrincipal.Token("test-token")
             )
@@ -328,7 +329,7 @@ class CloudWebSocketBarsApiImplTest {
             val receivedWebSockets = mutableListOf<BSBWebSocket>()
             val job = testSetup.api.getWSFlow()
                 .onEach { receivedWebSockets.add(it) }
-                .launchIn(backgroundScope)
+                .launchIn(testSetup.testScope)
 
             advanceUntilIdle()
 
@@ -342,6 +343,7 @@ class CloudWebSocketBarsApiImplTest {
             // Then - WebSocket should be emitted
             assertTrue(receivedWebSockets.isNotEmpty(), "WebSocket should be emitted when network becomes available")
             job.cancel()
+            testSetup.testScope.cancel()
         }
 
     @Test
@@ -349,7 +351,7 @@ class CloudWebSocketBarsApiImplTest {
         // Given
         val principalFlow = MutableStateFlow<BUSYLibUserPrincipal>(BUSYLibUserPrincipal.Empty)
         val testSetup = createTestSetup(
-            scope = backgroundScope,
+
             isNetworkAvailable = true,
             principalFlow = principalFlow
         )
@@ -357,7 +359,7 @@ class CloudWebSocketBarsApiImplTest {
         val receivedWebSockets = mutableListOf<BSBWebSocket>()
         val job = testSetup.api.getWSFlow()
             .onEach { receivedWebSockets.add(it) }
-            .launchIn(backgroundScope)
+            .launchIn(testSetup.testScope)
 
         advanceUntilIdle()
 
@@ -371,6 +373,7 @@ class CloudWebSocketBarsApiImplTest {
         // Then - WebSocket should be emitted
         assertTrue(receivedWebSockets.isNotEmpty(), "WebSocket should be emitted when user logs in")
         job.cancel()
+        testSetup.testScope.cancel()
     }
 
     @Test
@@ -378,7 +381,7 @@ class CloudWebSocketBarsApiImplTest {
         // Given
         val networkFlow = MutableStateFlow(true)
         val testSetup = createTestSetup(
-            scope = backgroundScope,
+
             networkFlow = networkFlow,
             principal = BUSYLibUserPrincipal.Token("test-token")
         )
@@ -386,7 +389,7 @@ class CloudWebSocketBarsApiImplTest {
         val receivedWebSockets = mutableListOf<BSBWebSocket>()
         val job = testSetup.api.getWSFlow()
             .onEach { receivedWebSockets.add(it) }
-            .launchIn(backgroundScope)
+            .launchIn(testSetup.testScope)
 
         advanceUntilIdle()
 
@@ -397,6 +400,7 @@ class CloudWebSocketBarsApiImplTest {
         // Then - the flow should switch to empty (flatMapLatest to flowOf())
         // No new websockets should be created after network disconnect
         job.cancel()
+        testSetup.testScope.cancel()
     }
 
     @Test
@@ -405,7 +409,7 @@ class CloudWebSocketBarsApiImplTest {
         val principalFlow =
             MutableStateFlow<BUSYLibUserPrincipal>(BUSYLibUserPrincipal.Token("test-token"))
         val testSetup = createTestSetup(
-            scope = backgroundScope,
+
             isNetworkAvailable = true,
             principalFlow = principalFlow
         )
@@ -413,7 +417,7 @@ class CloudWebSocketBarsApiImplTest {
         var wsCount = 0
         val job = testSetup.api.getWSFlow()
             .onEach { wsCount++ }
-            .launchIn(backgroundScope)
+            .launchIn(testSetup.testScope)
 
         advanceUntilIdle()
 
@@ -423,6 +427,7 @@ class CloudWebSocketBarsApiImplTest {
 
         // Then - flow should stop emitting (switches to flowOf())
         job.cancel()
+        testSetup.testScope.cancel()
     }
 
     @Test
@@ -433,7 +438,7 @@ class CloudWebSocketBarsApiImplTest {
         val createdHosts = mutableListOf<String>()
 
         val testSetup = createTestSetup(
-            scope = backgroundScope,
+
             isNetworkAvailable = true,
             principal = BUSYLibUserPrincipal.Token("test-token"),
             hostFlow = hostFlow,
@@ -446,7 +451,7 @@ class CloudWebSocketBarsApiImplTest {
             }
         )
 
-        val job = testSetup.api.getWSFlow().launchIn(backgroundScope)
+        val job = testSetup.api.getWSFlow().launchIn(testSetup.testScope)
         advanceUntilIdle()
 
         // When - host changes
@@ -457,6 +462,7 @@ class CloudWebSocketBarsApiImplTest {
         // The combine operator should trigger a new websocket creation
         assertTrue(createdHosts.size >= 1, "At least one WebSocket should be created")
         job.cancel()
+        testSetup.testScope.cancel()
     }
 
     // endregion
@@ -468,7 +474,7 @@ class CloudWebSocketBarsApiImplTest {
         // Given
         val connectionAttempts = MutableStateFlow(0)
         val testSetup = createTestSetup(
-            scope = backgroundScope,
+
             isNetworkAvailable = true,
             principal = BUSYLibUserPrincipal.Token("test-token"),
             onWebSocketCreated = {
@@ -478,17 +484,14 @@ class CloudWebSocketBarsApiImplTest {
         )
 
         // When - subscribe and let it retry
-        val job = testSetup.api.getWSFlow().launchIn(backgroundScope)
+        val job = testSetup.api.getWSFlow().launchIn(testSetup.testScope)
 
         // Advance time to allow retries with exponential backoff
         advanceTimeBy(100.milliseconds)
-        advanceUntilIdle()
 
         advanceTimeBy(200.milliseconds)
-        advanceUntilIdle()
 
         advanceTimeBy(400.milliseconds)
-        advanceUntilIdle()
 
         // Then - should have attempted multiple retries
         assertTrue(
@@ -497,6 +500,7 @@ class CloudWebSocketBarsApiImplTest {
         )
 
         job.cancel()
+        testSetup.testScope.cancel()
     }
 
     @Test
@@ -505,18 +509,19 @@ class CloudWebSocketBarsApiImplTest {
             // Given
             val connectionAttempts = MutableStateFlow(0)
             val testSetup = createTestSetup(
-                scope = backgroundScope,
+
                 isNetworkAvailable = true,
                 principal = BUSYLibUserPrincipal.Token("test-token"),
                 onWebSocketCreated = { connectionAttempts.update { it + 1 } }
             )
 
-            val job = testSetup.api.getWSFlow().launchIn(backgroundScope)
+            val job = testSetup.api.getWSFlow().launchIn(testSetup.testScope)
             advanceUntilIdle()
 
             // Note: Due to wrapWebsocket's infinite loop with retry logic,
             // reconnection should happen automatically on failure
             job.cancel()
+            testSetup.testScope.cancel()
         }
 
     // endregion
@@ -532,7 +537,7 @@ class CloudWebSocketBarsApiImplTest {
                 MutableStateFlow<BUSYLibUserPrincipal>(BUSYLibUserPrincipal.Token("test-token"))
 
             val testSetup = createTestSetup(
-                scope = backgroundScope,
+
                 networkFlow = networkFlow,
                 principalFlow = principalFlow
             )
@@ -542,11 +547,11 @@ class CloudWebSocketBarsApiImplTest {
 
             val job1 = testSetup.api.getWSFlow()
                 .onEach { subscriber1Results.add(it) }
-                .launchIn(backgroundScope)
+                .launchIn(testSetup.testScope)
 
             val job2 = testSetup.api.getWSFlow()
                 .onEach { subscriber2Results.add(it) }
-                .launchIn(backgroundScope)
+                .launchIn(testSetup.testScope)
 
             advanceUntilIdle()
 
@@ -563,6 +568,7 @@ class CloudWebSocketBarsApiImplTest {
             // Then - both subscribers should have received consistent state
             job1.cancel()
             job2.cancel()
+            testSetup.testScope.cancel()
         }
 
     @Test
@@ -570,7 +576,7 @@ class CloudWebSocketBarsApiImplTest {
         runTest {
             // Given
             val testSetup = createTestSetup(
-                scope = backgroundScope,
+
                 isNetworkAvailable = true,
                 principal = BUSYLibUserPrincipal.Token("test-token")
             )
@@ -578,7 +584,7 @@ class CloudWebSocketBarsApiImplTest {
             // When - high concurrency subscribe/unsubscribe
             val jobs = List(100) {
                 async {
-                    val job = testSetup.api.getWSFlow().launchIn(backgroundScope)
+                    val job = testSetup.api.getWSFlow().launchIn(testSetup.testScope)
                     delay(10.milliseconds)
                     job.cancel()
                 }
@@ -593,10 +599,11 @@ class CloudWebSocketBarsApiImplTest {
             }
 
             // Then - no deadlock, system should be responsive
-            val finalJob = testSetup.api.getWSFlow().launchIn(backgroundScope)
+            val finalJob = testSetup.api.getWSFlow().launchIn(testSetup.testScope)
             advanceUntilIdle()
             assertNotNull(finalJob, "Should be able to subscribe after high concurrency")
             finalJob.cancel()
+            testSetup.testScope.cancel()
         }
 
     @Test
@@ -609,13 +616,13 @@ class CloudWebSocketBarsApiImplTest {
             val hostFlow = MutableStateFlow("host.example.com")
 
             val testSetup = createTestSetup(
-                scope = backgroundScope,
+
                 networkFlow = networkFlow,
                 principalFlow = principalFlow,
                 hostFlow = hostFlow
             )
 
-            val job = testSetup.api.getWSFlow().launchIn(backgroundScope)
+            val job = testSetup.api.getWSFlow().launchIn(testSetup.testScope)
             advanceUntilIdle()
 
             // When - concurrent changes while connecting
@@ -651,6 +658,7 @@ class CloudWebSocketBarsApiImplTest {
 
             // Then - should handle all changes without crashing
             job.cancel()
+            testSetup.testScope.cancel()
         }
 
     // endregion
@@ -661,7 +669,7 @@ class CloudWebSocketBarsApiImplTest {
     fun GIVEN_empty_host_WHEN_subscribing_THEN_handles_gracefully() = runTest {
         // Given
         val testSetup = createTestSetup(
-            scope = backgroundScope,
+
             isNetworkAvailable = true,
             principal = BUSYLibUserPrincipal.Token("test-token"),
             host = ""
@@ -670,12 +678,13 @@ class CloudWebSocketBarsApiImplTest {
         // When
         val job = testSetup.api.getWSFlow()
             .onEach { }
-            .launchIn(backgroundScope)
+            .launchIn(testSetup.testScope)
 
         advanceUntilIdle()
 
         // Then - should handle empty host gracefully
         job.cancel()
+        testSetup.testScope.cancel()
     }
 
     @Test
@@ -688,24 +697,25 @@ class CloudWebSocketBarsApiImplTest {
         )
 
         val testSetup = createTestSetup(
-            scope = backgroundScope,
+
             isNetworkAvailable = true,
             principal = fullPrincipal
         )
 
         // When
-        val job = testSetup.api.getWSFlow().launchIn(backgroundScope)
+        val job = testSetup.api.getWSFlow().launchIn(testSetup.testScope)
         advanceUntilIdle()
 
         // Then - should use the token from Full principal
         job.cancel()
+        testSetup.testScope.cancel()
     }
 
     @Test
     fun GIVEN_flow_never_emits_WHEN_timeout_waiting_THEN_handles_gracefully() = runTest {
         // Given
         val testSetup = createTestSetup(
-            scope = backgroundScope,
+
             isNetworkAvailable = false,
             principal = BUSYLibUserPrincipal.Empty
         )
@@ -717,6 +727,7 @@ class CloudWebSocketBarsApiImplTest {
 
         // Then
         assertNull(result, "Should timeout when conditions not met")
+        testSetup.testScope.cancel()
     }
 
     @Test
@@ -728,13 +739,13 @@ class CloudWebSocketBarsApiImplTest {
                 MutableStateFlow<BUSYLibUserPrincipal>(BUSYLibUserPrincipal.Token("same-token"))
 
             val testSetup = createTestSetup(
-                scope = backgroundScope,
+
                 isNetworkAvailable = true,
                 principalFlow = principalFlow,
                 onWebSocketCreated = { connectionAttempts.update { it + 1 } }
             )
 
-            val job = testSetup.api.getWSFlow().launchIn(backgroundScope)
+            val job = testSetup.api.getWSFlow().launchIn(testSetup.testScope)
             advanceUntilIdle()
 
             val initialAttempts = connectionAttempts.value
@@ -753,6 +764,7 @@ class CloudWebSocketBarsApiImplTest {
                 "No reconnection for same token value"
             )
             job.cancel()
+            testSetup.testScope.cancel()
         }
 
     // endregion
@@ -764,11 +776,11 @@ class CloudWebSocketBarsApiImplTest {
         val networkStateApi: BUSYLibNetworkStateApi,
         val principalApi: BUSYLibPrincipalApi,
         val hostApi: BUSYLibHostApi,
-        val webSocketFactory: MockBSBWebSocketFactory
+        val webSocketFactory: MockBSBWebSocketFactory,
+        val testScope: CoroutineScope
     )
 
     private fun TestScope.createTestSetup(
-        scope: CoroutineScope,
         isNetworkAvailable: Boolean = false,
         networkFlow: MutableStateFlow<Boolean>? = null,
         principal: BUSYLibUserPrincipal = BUSYLibUserPrincipal.Empty,
@@ -802,13 +814,17 @@ class CloudWebSocketBarsApiImplTest {
             onWebSocketCreatedForHost = onWebSocketCreatedForHost
         )
 
+        // Create a dedicated scope with the test dispatcher for proper coroutine control
+        val testDispatcher = StandardTestDispatcher(testScheduler)
+        val testScopeForApi = CoroutineScope(testDispatcher + Job())
+
         val api = CloudWebSocketBarsApiImpl(
             networkStateApi = networkStateApi,
             principalApi = principalApi,
             hostApi = hostApi,
             webSocketFactory = webSocketFactory,
-            scope = scope,
-            dispatcher = StandardTestDispatcher(testScheduler)
+            scope = testScopeForApi,
+            dispatcher = testDispatcher
         )
 
         return TestSetup(
@@ -816,7 +832,8 @@ class CloudWebSocketBarsApiImplTest {
             networkStateApi = networkStateApi,
             principalApi = principalApi,
             hostApi = hostApi,
-            webSocketFactory = webSocketFactory
+            webSocketFactory = webSocketFactory,
+            testScope = testScopeForApi
         )
     }
 
