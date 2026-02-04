@@ -26,4 +26,10 @@ kotlin {
         implementation(libs.kotlin.coroutines)
         implementation(libs.kotlin.serialization.json)
     }
+
+    sourceSets.commonTest.dependencies {
+        implementation(libs.kotlin.test)
+        implementation(libs.kotlin.coroutines.test)
+        implementation(libs.ktor.client.mock)
+    }
 }

@@ -1,13 +1,9 @@
 package net.flipper.bsb.cloud.barsws.api
 
 import io.ktor.client.HttpClient
-import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
-import io.ktor.client.plugins.websocket.receiveDeserialized
-import io.ktor.client.plugins.websocket.sendSerialized
 import io.ktor.client.plugins.websocket.webSocketSession
 import io.ktor.http.URLProtocol
 import io.ktor.http.path
-import io.ktor.websocket.close
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.currentCoroutineContext
@@ -20,17 +16,18 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerializationException
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
-import net.flipper.bsb.cloud.barsws.api.model.InternalWebSocketEvent
 import net.flipper.bsb.cloud.barsws.api.model.toInternal
 import net.flipper.bsb.cloud.barsws.api.model.toPublic
 import net.flipper.bsb.cloud.barsws.api.utils.addAuthHeader
+import net.flipper.bsb.cloud.barsws.api.utils.wrappers.BSBWebSocketSession
+import net.flipper.bsb.cloud.barsws.api.utils.wrappers.KtorBSBWebSocketSession
 import net.flipper.core.busylib.ktx.common.launchOnCompletion
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
 
 class BSBWebSocketImpl(
-    private val webSocketSession: DefaultClientWebSocketSession,
+    private val session: BSBWebSocketSession,
     logger: LogTagProvider,
     scope: CoroutineScope,
     dispatcher: CoroutineDispatcher
@@ -38,7 +35,7 @@ class BSBWebSocketImpl(
     private val eventsFlow = channelFlow {
         while (currentCoroutineContext().isActive) {
             val message = try {
-                webSocketSession.receiveDeserialized<InternalWebSocketEvent>()
+                session.receive()
             } catch (e: SerializationException) {
                 error(e) { "Failed deserialize message from websocket" }
                 null
@@ -57,7 +54,7 @@ class BSBWebSocketImpl(
     override suspend fun send(request: WebSocketRequest) {
         val requestInternal = request.toInternal()
         info { "Send $requestInternal" }
-        webSocketSession.sendSerialized(requestInternal)
+        session.send(requestInternal)
     }
 }
 
@@ -79,10 +76,12 @@ suspend fun getBSBWebSocket(
             addAuthHeader(principal)
         }
 
+        val session = KtorBSBWebSocketSession(webSocketSession)
+
         scope.launchOnCompletion {
-            webSocketSession.close()
+            session.close()
         }
 
-        return@withContext BSBWebSocketImpl(webSocketSession, logger, scope, dispatcher)
+        return@withContext BSBWebSocketImpl(session, logger, scope, dispatcher)
     }
 }

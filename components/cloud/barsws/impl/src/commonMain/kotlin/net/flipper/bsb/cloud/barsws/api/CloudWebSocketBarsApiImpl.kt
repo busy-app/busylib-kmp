@@ -13,8 +13,8 @@ import me.tatarka.inject.annotations.Inject
 import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
 import net.flipper.bsb.cloud.api.BUSYLibHostApi
-import net.flipper.bsb.cloud.barsws.api.utils.getHttpClient
 import net.flipper.bsb.cloud.barsws.api.utils.wrapWebsocket
+import net.flipper.bsb.cloud.barsws.api.utils.wrappers.BSBWebSocketFactory
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 import net.flipper.core.busylib.log.LogTagProvider
@@ -30,12 +30,11 @@ class CloudWebSocketBarsApiImpl(
     networkStateApi: BUSYLibNetworkStateApi,
     principalApi: BUSYLibPrincipalApi,
     hostApi: BUSYLibHostApi,
+    private val webSocketFactory: BSBWebSocketFactory,
     scope: CoroutineScope,
     dispatcher: CoroutineDispatcher = NETWORK_DISPATCHER
 ) : CloudWebSocketBarsApi, LogTagProvider {
     override val TAG = "CloudWebSocketBarsApiImpl"
-
-    private val httpClient = getHttpClient()
 
     private val wsStateFlow = combine(
         networkStateApi.isNetworkAvailableFlow,
@@ -45,13 +44,12 @@ class CloudWebSocketBarsApiImpl(
         if (isNetworkAvailable && principal is BUSYLibUserPrincipal.Token) {
             wrapWebsocket {
                 channelFlow {
-                    getBSBWebSocket(
-                        httpClient = httpClient,
+                    webSocketFactory.create(
                         logger = this@CloudWebSocketBarsApiImpl,
                         principal = principal,
                         busyHost = host,
                         scope = this,
-                        dispatcher
+                        dispatcher = dispatcher
                     ).let { send(it) }
                 }
             }
