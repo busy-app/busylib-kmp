@@ -210,7 +210,7 @@ class BSBWebSocketImplTest {
         )
 
         // When
-        val request = WebSocketRequest()
+        val request = WebSocketRequest.Subscribe(deviceId = "test-device")
         webSocket.send(request)
         advanceUntilIdle()
 
@@ -231,7 +231,7 @@ class BSBWebSocketImplTest {
 
         // When
         repeat(10) {
-            webSocket.send(WebSocketRequest())
+            webSocket.send(WebSocketRequest.Subscribe(deviceId = "test-device-$it"))
         }
         advanceUntilIdle()
 
@@ -253,7 +253,7 @@ class BSBWebSocketImplTest {
         // When - concurrent sends
         val jobs = List(50) {
             async {
-                webSocket.send(WebSocketRequest())
+                webSocket.send(WebSocketRequest.Subscribe(deviceId = "test-device-$it"))
             }
         }
         jobs.awaitAll()
@@ -315,7 +315,7 @@ class BSBWebSocketImplTest {
         // When/Then - send should throw
         var errorOccurred = false
         try {
-            webSocket.send(WebSocketRequest())
+            webSocket.send(WebSocketRequest.Subscribe(deviceId = "test-device"))
         } catch (_: Exception) {
             errorOccurred = true
         }
@@ -456,7 +456,7 @@ class BSBWebSocketImplTest {
         // When - concurrent send and receive
         val sendJobs = List(20) {
             async {
-                webSocket.send(WebSocketRequest())
+                webSocket.send(WebSocketRequest.Subscribe(deviceId = "test-device-$it"))
             }
         }
 
@@ -533,7 +533,7 @@ class BSBWebSocketImplTest {
         // Then - should handle gracefully (either complete or throw CancellationException)
         var exceptionThrown = false
         try {
-            webSocket.send(WebSocketRequest())
+            webSocket.send(WebSocketRequest.Subscribe(deviceId = "test-device"))
         } catch (_: CancellationException) {
             exceptionThrown = true
         } catch (_: Exception) {

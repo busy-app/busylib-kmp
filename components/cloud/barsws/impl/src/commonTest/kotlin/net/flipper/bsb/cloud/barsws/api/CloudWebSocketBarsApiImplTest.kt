@@ -325,7 +325,7 @@ class CloudWebSocketBarsApiImplTest {
                 principal = BUSYLibUserPrincipal.Token("test-token")
             )
 
-            val receivedWebSockets = mutableListOf<BSBWebSocket>()
+            val receivedWebSockets = mutableListOf<BSBWebSocket?>()
             val job = testSetup.api.getWSFlow()
                 .onEach { receivedWebSockets.add(it) }
                 .launchIn(testSetup.testScope)
@@ -333,14 +333,17 @@ class CloudWebSocketBarsApiImplTest {
             advanceUntilIdle()
 
             // Initially no WebSocket
-            assertTrue(receivedWebSockets.isEmpty(), "No WebSocket initially")
+            assertTrue(receivedWebSockets.all { it == null }, "No WebSocket initially")
 
             // When - network becomes available
             networkFlow.value = true
             advanceUntilIdle()
 
             // Then - WebSocket should be emitted
-            assertTrue(receivedWebSockets.isNotEmpty(), "WebSocket should be emitted when network becomes available")
+            assertTrue(
+                receivedWebSockets.any { it != null },
+                "WebSocket should be emitted when network becomes available"
+            )
             job.cancel()
             testSetup.testScope.cancel()
         }
@@ -355,7 +358,7 @@ class CloudWebSocketBarsApiImplTest {
             principalFlow = principalFlow
         )
 
-        val receivedWebSockets = mutableListOf<BSBWebSocket>()
+        val receivedWebSockets = mutableListOf<BSBWebSocket?>()
         val job = testSetup.api.getWSFlow()
             .onEach { receivedWebSockets.add(it) }
             .launchIn(testSetup.testScope)
@@ -363,14 +366,14 @@ class CloudWebSocketBarsApiImplTest {
         advanceUntilIdle()
 
         // Initially no WebSocket
-        assertTrue(receivedWebSockets.isEmpty(), "No WebSocket initially")
+        assertTrue(receivedWebSockets.all { it == null }, "No WebSocket initially")
 
         // When - user logs in
         principalFlow.value = BUSYLibUserPrincipal.Token("new-token")
         advanceUntilIdle()
 
         // Then - WebSocket should be emitted
-        assertTrue(receivedWebSockets.isNotEmpty(), "WebSocket should be emitted when user logs in")
+        assertTrue(receivedWebSockets.any { it != null }, "WebSocket should be emitted when user logs in")
         job.cancel()
         testSetup.testScope.cancel()
     }
@@ -385,7 +388,7 @@ class CloudWebSocketBarsApiImplTest {
             principal = BUSYLibUserPrincipal.Token("test-token")
         )
 
-        val receivedWebSockets = mutableListOf<BSBWebSocket>()
+        val receivedWebSockets = mutableListOf<BSBWebSocket?>()
         val job = testSetup.api.getWSFlow()
             .onEach { receivedWebSockets.add(it) }
             .launchIn(testSetup.testScope)
