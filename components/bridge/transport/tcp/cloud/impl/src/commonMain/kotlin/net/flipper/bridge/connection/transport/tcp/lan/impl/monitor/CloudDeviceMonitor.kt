@@ -24,7 +24,7 @@ import net.flipper.core.busylib.log.info
 import kotlin.concurrent.Volatile
 import kotlin.time.Duration.Companion.seconds
 
-private val INACTIVITY_TIMEOUT = 5.seconds
+private val INACTIVITY_TIMEOUT = 10.seconds
 
 class CloudDeviceMonitor(
     private val webSocketBarsApi: CloudWebSocketBarsApi,
