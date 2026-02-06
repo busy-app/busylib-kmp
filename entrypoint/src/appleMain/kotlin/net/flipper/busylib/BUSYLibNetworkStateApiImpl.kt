@@ -12,6 +12,6 @@ class BUSYLibNetworkStateApiImpl : BUSYLibNetworkStateApi {
         isNetworkAvailableMutableFlow.emit(value)
     }
 
-    override val isNetworkAvailableFlow: WrappedStateFlow<Boolean>
-        get() = isNetworkAvailableMutableFlow.wrap()
+    override val isNetworkAvailableFlow: WrappedStateFlow<Boolean> =
+        isNetworkAvailableMutableFlow.wrap()
 }
