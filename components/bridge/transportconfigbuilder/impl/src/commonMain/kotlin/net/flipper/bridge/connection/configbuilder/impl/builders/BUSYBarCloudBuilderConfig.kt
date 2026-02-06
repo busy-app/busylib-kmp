@@ -8,12 +8,14 @@ class BUSYBarCloudBuilderConfig {
     fun build(
         authToken: String,
         host: String,
-        name: String
+        name: String,
+        deviceId: String
     ): FCloudDeviceConnectionConfig {
         return FCloudDeviceConnectionConfig(
             authToken = authToken,
             host = host,
-            name = name
+            name = name,
+            deviceId = deviceId
         )
     }
 }

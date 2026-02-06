@@ -46,10 +46,12 @@ sealed class FDeviceBaseModel {
         @SerialName("auth_token")
         val authToken: String,
         @SerialName("host")
-        val host: String
+        val host: String,
+        @SerialName("device_id")
+        val deviceId: String
     ) : FDeviceBaseModel() {
         override val uniqueId: String = authToken
-        override val humanReadableName: String = "BUSY Bar"
+        override val humanReadableName: String = "BUSY Bar Cloud"
     }
 
     @Serializable

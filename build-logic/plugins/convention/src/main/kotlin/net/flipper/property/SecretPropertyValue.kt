@@ -18,7 +18,7 @@ class SecretPropertyValue(
         // try to get system ci property
         val systemEnvProperty = System.getenv(envKey)
         if (systemEnvProperty != null) return@runCatching systemEnvProperty
-        project.logger.warn("System.enviroment $envKey is missing. Getting it from local.properties")
+        project.logger.debug("System.enviroment $envKey is missing. Getting it from local.properties")
         // if not ci getting from local.properties
         return@runCatching project.localProperties
             .getProperty(key)

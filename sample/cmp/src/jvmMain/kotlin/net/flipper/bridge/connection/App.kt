@@ -13,6 +13,7 @@ import androidx.compose.ui.window.rememberWindowState
 import com.arkivanov.decompose.DefaultComponentContext
 import com.arkivanov.decompose.extensions.compose.lifecycle.LifecycleController
 import com.arkivanov.essenty.lifecycle.LifecycleRegistry
+import com.flipperdevices.core.network.BUSYLibNetworkStateApiNoop
 import com.russhwolf.settings.PreferencesSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
@@ -20,9 +21,12 @@ import net.flipper.bridge.connection.config.impl.FDevicePersistedStorageImpl
 import net.flipper.bridge.connection.screens.di.getRootDecomposeComponent
 import net.flipper.bridge.connection.screens.search.LanSearchViewModel
 import net.flipper.bridge.connection.utils.PermissionCheckerNoop
+import net.flipper.bridge.connection.utils.Secrets
 import net.flipper.bridge.connection.utils.cloud.BUSYLibBarsApiNoop
 import net.flipper.bridge.connection.utils.principal.impl.UserPrincipalApiNoop
 import net.flipper.bridge.connection.utils.runOnUiThread
+import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
+import net.flipper.bsb.cloud.api.BUSYLibHostApiStub
 import net.flipper.busylib.BUSYLibDesktop
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 import java.util.prefs.Preferences
@@ -38,9 +42,15 @@ fun main() {
     )
     val busyLib = BUSYLibDesktop.build(
         scope = applicationScope,
-        principalApi = UserPrincipalApiNoop(),
+        principalApi = UserPrincipalApiNoop(
+            BUSYLibUserPrincipal.Token(
+                token = Secrets.AUTH_TOKEN
+            )
+        ),
         busyLibBarsApi = BUSYLibBarsApiNoop(),
-        persistedStorage = persistedStorage
+        persistedStorage = persistedStorage,
+        networkStateApi = BUSYLibNetworkStateApiNoop(defaultState = true),
+        hostApi = BUSYLibHostApiStub("cloud.dev.busy.app")
     )
 
     busyLib.connectionService.onApplicationInit()

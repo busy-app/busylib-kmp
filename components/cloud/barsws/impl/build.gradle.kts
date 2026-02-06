@@ -22,8 +22,15 @@ kotlin {
         implementation(libs.ktor.negotiation)
         implementation(libs.ktor.serialization)
         implementation(libs.ktor.client.websockets)
+        implementation(libs.ktor.client.logging)
 
         implementation(libs.kotlin.coroutines)
         implementation(libs.kotlin.serialization.json)
+    }
+
+    sourceSets.commonTest.dependencies {
+        implementation(libs.kotlin.test)
+        implementation(libs.kotlin.coroutines.test)
+        implementation(libs.ktor.client.mock)
     }
 }

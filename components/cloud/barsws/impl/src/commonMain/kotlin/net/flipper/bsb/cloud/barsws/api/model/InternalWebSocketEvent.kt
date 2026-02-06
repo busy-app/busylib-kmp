@@ -4,6 +4,6 @@ import kotlinx.serialization.Serializable
 import net.flipper.bsb.cloud.barsws.api.WebSocketEvent
 
 @Serializable
-class InternalWebsocketEvent
+class InternalWebSocketEvent
 
-fun InternalWebsocketEvent.toPublic() = WebSocketEvent()
+fun InternalWebSocketEvent.toPublic() = WebSocketEvent()

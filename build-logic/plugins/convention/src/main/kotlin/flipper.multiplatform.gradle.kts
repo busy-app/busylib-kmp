@@ -10,6 +10,10 @@ pluginManager.apply(ru.astrainteractive.gradleplugin.plugin.AndroidJavaPlugin::c
 pluginManager.apply(ru.astrainteractive.gradleplugin.plugin.AndroidNamespacePlugin::class)
 pluginManager.apply(ru.astrainteractive.gradleplugin.plugin.JavaVersionPlugin::class)
 
+tasks.withType<TestReport>().configureEach {
+    enabled = false
+}
+
 kotlin {
     jvm()
     androidLibrary {}
