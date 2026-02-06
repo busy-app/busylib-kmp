@@ -6,6 +6,7 @@ plugins {
 kotlin {
     sourceSets.commonMain.dependencies {
         implementation(projects.components.core.di)
+        implementation(projects.components.core.wrapper)
 
         implementation(libs.kotlin.coroutines)
     }
