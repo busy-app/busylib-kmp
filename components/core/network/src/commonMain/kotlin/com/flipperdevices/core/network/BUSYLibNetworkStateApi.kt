@@ -1,7 +1,7 @@
 package com.flipperdevices.core.network
 
-import kotlinx.coroutines.flow.StateFlow
+import net.flipper.busylib.core.wrapper.WrappedStateFlow
 
 interface BUSYLibNetworkStateApi {
-    val isNetworkAvailableFlow: StateFlow<Boolean>
+    val isNetworkAvailableFlow: WrappedStateFlow<Boolean>
 }
