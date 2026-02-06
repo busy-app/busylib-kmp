@@ -6,7 +6,7 @@ import net.flipper.busylib.core.wrapper.WrappedStateFlow
 import net.flipper.busylib.core.wrapper.wrap
 
 class BUSYLibNetworkStateApiImpl : BUSYLibNetworkStateApi {
-    val isNetworkAvailableMutableFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    private val isNetworkAvailableMutableFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
     suspend fun update(value: Boolean) {
         isNetworkAvailableMutableFlow.emit(value)
