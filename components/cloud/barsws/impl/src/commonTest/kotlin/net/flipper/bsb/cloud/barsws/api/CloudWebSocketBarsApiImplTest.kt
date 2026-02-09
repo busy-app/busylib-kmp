@@ -799,7 +799,7 @@ class CloudWebSocketBarsApiImplTest {
         val actualHostFlow = hostFlow ?: MutableStateFlow(host)
 
         val networkStateApi = object : BUSYLibNetworkStateApi {
-            override val isNetworkAvailableFlow = actualNetworkFlow
+            override val isNetworkAvailableFlow = actualNetworkFlow.wrap()
         }
 
         val principalApi = object : BUSYLibPrincipalApi {
