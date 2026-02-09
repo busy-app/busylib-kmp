@@ -21,6 +21,7 @@ kotlin {
         implementation(projects.components.bridge.feature.wifi.api)
         implementation(projects.components.bridge.feature.ble.api)
         implementation(projects.components.bridge.feature.settings.api)
+        implementation(projects.components.bridge.feature.timezone.api)
         implementation(projects.components.bridge.feature.link.api)
         implementation(projects.components.bridge.feature.screenStreaming.api)
         implementation(projects.components.bridge.feature.firmwareUpdate.api)
