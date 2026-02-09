@@ -22,15 +22,14 @@ class CloudDeviceConnectionApiImpl(
         config: FCloudDeviceConnectionConfig,
         listener: FTransportConnectionStatusListener
     ): Result<FCloudApi> = runCatching {
-        val cloudDeviceMonitor = CloudDeviceMonitor(
+        val cloudDeviceMonitorFactory = CloudDeviceMonitor.Factory(
             webSocketBarsApi = webSocketBarsApi,
-            listener = listener,
             scope = scope
         )
         val lanApi = FCloudApiImpl(
             listener = listener,
             config = config,
-            cloudDeviceMonitor = cloudDeviceMonitor
+            cloudDeviceMonitorFactory = cloudDeviceMonitorFactory
         )
         return@runCatching lanApi
     }

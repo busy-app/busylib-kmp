@@ -11,7 +11,7 @@ import net.flipper.core.ktor.getPlatformEngineFactory
 class FCloudApiImpl(
     private val listener: FTransportConnectionStatusListener,
     config: FCloudDeviceConnectionConfig,
-    cloudDeviceMonitor: CloudDeviceMonitor
+    cloudDeviceMonitorFactory: CloudDeviceMonitor.Factory
 ) : FCloudApi {
     private val httpEngineOriginal = getPlatformEngineFactory().create()
     private val httpEngine = BUSYCloudHttpEngine(
@@ -19,9 +19,13 @@ class FCloudApiImpl(
         authToken = config.authToken,
         host = config.host
     )
+    private val cloudDeviceMonitor = cloudDeviceMonitorFactory.create(
+        deviceApi = this,
+        deviceId = config.deviceId
+    )
 
     init {
-        cloudDeviceMonitor.launch(this, config.deviceId)
+        cloudDeviceMonitor.subscribe(listener)
     }
 
     override val deviceName = config.name

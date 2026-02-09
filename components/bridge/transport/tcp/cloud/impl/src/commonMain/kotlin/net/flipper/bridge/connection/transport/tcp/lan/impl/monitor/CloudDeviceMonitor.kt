@@ -2,83 +2,88 @@ package net.flipper.bridge.connection.transport.tcp.lan.impl.monitor
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.flow.stateIn
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.bridge.connection.transport.tcp.cloud.api.FCloudApi
-import net.flipper.bsb.cloud.barsws.api.BSBWebSocket
 import net.flipper.bsb.cloud.barsws.api.CloudWebSocketBarsApi
-import net.flipper.bsb.cloud.barsws.api.WebSocketEvent
 import net.flipper.bsb.cloud.barsws.api.WebSocketRequest
 import net.flipper.core.busylib.ktx.common.launchOnCompletion
+import net.flipper.core.busylib.ktx.common.onLatest
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.debug
 import net.flipper.core.busylib.log.info
-import kotlin.concurrent.Volatile
 import kotlin.time.Duration.Companion.seconds
 
 private val INACTIVITY_TIMEOUT = 10.seconds
 
 class CloudDeviceMonitor(
     private val webSocketBarsApi: CloudWebSocketBarsApi,
-    private val listener: FTransportConnectionStatusListener,
     private val scope: CoroutineScope,
+    private val deviceApi: FCloudApi,
+    private val deviceId: String
 ) : LogTagProvider {
     override val TAG = "CloudDeviceMonitor"
-    private val connectingState = MutableStateFlow<FInternalTransportConnectionStatus>(
+    private val currentWebSocketFlow = webSocketBarsApi
+        .getWSFlow()
+        .shareIn(scope, SharingStarted.Lazily, 1)
+    private val wsEventFlow = currentWebSocketFlow
+        .flatMapLatest { it?.getEventsFlow() ?: flowOf() }
+        .shareIn(scope, SharingStarted.Lazily, 1)
+
+    private val connectingState = wsEventFlow.mapLatest {
+        FInternalTransportConnectionStatus.Connected(
+            scope = scope,
+            deviceApi = deviceApi
+        )
+        delay(INACTIVITY_TIMEOUT) // Should be interrupted by any event from websocket
         FInternalTransportConnectionStatus.Connecting
-    )
-    private val wsEventFlow = MutableSharedFlow<WebSocketEvent>(replay = 1)
+    }.stateIn(scope, SharingStarted.Lazily, FInternalTransportConnectionStatus.Connecting)
 
-    @Volatile
-    private var currentWebSocket: BSBWebSocket? = null
+    private fun collectWebSocketChange() {
+        currentWebSocketFlow
+            .onLatest { it?.send(WebSocketRequest.Subscribe(deviceId)) }
+            .launchIn(scope)
+    }
 
-    fun launch(
-        deviceApi: FCloudApi,
-        deviceId: String
-    ) {
+    init {
+        collectWebSocketChange()
+
+        scope.launchOnCompletion {
+            currentWebSocketFlow.firstOrNull()?.send(WebSocketRequest.Unsubscribe(deviceId))
+        }
+    }
+
+    fun subscribe(listener: FTransportConnectionStatusListener) {
         info { "Start monitoring for $deviceId" }
         connectingState
             .onEach { debug { "Change connecting state for $deviceId to $it" } }
             .onEach(listener::onStatusUpdate)
             .launchIn(scope)
+    }
 
-        webSocketBarsApi.getWSFlow()
-            .flatMapLatest {
-                debug { "Receive websocket $it, try to subscribe to it" }
-                currentWebSocket = it
-                it?.send(WebSocketRequest.Subscribe(deviceId))
-                it?.getEventsFlow() ?: flowOf()
-            }
-            .onEach { debug { "Receive event $it from websocket" } }
-            .onEach(wsEventFlow::emit)
-            .launchIn(scope)
-
-        scope.launchOnCompletion {
-            currentWebSocket?.send(WebSocketRequest.Unsubscribe(deviceId))
-        }
-
-        scope.launch {
-            wsEventFlow
-                .collectLatest {
-                    connectingState.emit(
-                        FInternalTransportConnectionStatus.Connected(
-                            scope = scope,
-                            deviceApi = deviceApi
-                        )
-                    )
-                    delay(INACTIVITY_TIMEOUT) // Should be interrupted by any event from websocket
-                    connectingState.emit(
-                        FInternalTransportConnectionStatus.Connecting
-                    )
-                }
+    class Factory(
+        private val webSocketBarsApi: CloudWebSocketBarsApi,
+        private val scope: CoroutineScope,
+    ) {
+        fun create(
+            deviceApi: FCloudApi,
+            deviceId: String
+        ): CloudDeviceMonitor {
+            return CloudDeviceMonitor(
+                webSocketBarsApi = webSocketBarsApi,
+                scope = scope,
+                deviceApi = deviceApi,
+                deviceId = deviceId
+            )
         }
     }
 }
