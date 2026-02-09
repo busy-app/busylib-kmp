@@ -46,7 +46,8 @@ class FDeviceConnectionConfigMapperImpl(
             is FDeviceBaseModel.FDeviceBSBModelCloud -> cloudBuilderConfig.build(
                 authToken = device.authToken,
                 host = device.host,
-                name = device.humanReadableName
+                name = device.humanReadableName,
+                deviceId = device.deviceId
             )
 
             is FDeviceBaseModel.FDeviceBSBModelCombined -> busyBarCombinedBuilderConfig.build(

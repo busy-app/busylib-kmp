@@ -1,8 +1,11 @@
 package net.flipper.bsb.cloud.barsws.api
 
 import com.flipperdevices.core.network.BUSYLibNetworkStateApi
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -11,14 +14,16 @@ import me.tatarka.inject.annotations.Inject
 import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
 import net.flipper.bsb.cloud.api.BUSYLibHostApi
-import net.flipper.bsb.cloud.barsws.api.utils.getHttpClient
+import net.flipper.bsb.cloud.barsws.api.utils.wrapWebsocket
+import net.flipper.bsb.cloud.barsws.api.utils.wrappers.BSBWebSocketFactory
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 import net.flipper.core.busylib.log.LogTagProvider
+import net.flipper.core.busylib.log.info
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 
-internal val NETWORK_DISPATCHER = FlipperDispatchers.default
+private val NETWORK_DISPATCHER = FlipperDispatchers.default
 
 @Inject
 @SingleIn(BusyLibGraph::class)
@@ -27,14 +32,11 @@ class CloudWebSocketBarsApiImpl(
     networkStateApi: BUSYLibNetworkStateApi,
     principalApi: BUSYLibPrincipalApi,
     hostApi: BUSYLibHostApi,
-    scope: CoroutineScope
+    private val webSocketFactory: BSBWebSocketFactory,
+    scope: CoroutineScope,
+    dispatcher: CoroutineDispatcher = NETWORK_DISPATCHER
 ) : CloudWebSocketBarsApi, LogTagProvider {
     override val TAG = "CloudWebSocketBarsApiImpl"
-
-    private val webSocketFactory = WebSocketFactory(
-        httpClient = getHttpClient(),
-        logger = this
-    )
 
     private val wsStateFlow = combine(
         networkStateApi.isNetworkAvailableFlow,
@@ -43,10 +45,24 @@ class CloudWebSocketBarsApiImpl(
     ) { isNetworkAvailable, principal, host ->
         if (isNetworkAvailable && principal is BUSYLibUserPrincipal.Token) {
             wrapWebsocket {
-                webSocketFactory.open(principal, host)
+                channelFlow {
+                    webSocketFactory.create(
+                        logger = this@CloudWebSocketBarsApiImpl,
+                        principal = principal,
+                        busyHost = host,
+                        scope = this,
+                        dispatcher = dispatcher
+                    ).let { send(it) }
+                    awaitClose()
+                }
             }
         } else {
-            flowOf()
+            info {
+                "Failed to init websocket. " +
+                    "isNetworkAvailable: $isNetworkAvailable, " +
+                    "principal: $principal, host: $host"
+            }
+            flowOf<BSBWebSocket?>(null)
         }
     }.flatMapLatest { it }
         .shareIn(scope, SharingStarted.WhileSubscribed(), replay = 1)

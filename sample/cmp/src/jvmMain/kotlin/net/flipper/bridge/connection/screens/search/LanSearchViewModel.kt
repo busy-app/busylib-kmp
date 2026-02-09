@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.config.api.model.FDeviceBaseModel
+import net.flipper.bridge.connection.utils.Secrets
 import net.flipper.busylib.core.wrapper.WrappedStateFlow
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.log.LogTagProvider
@@ -24,8 +25,10 @@ class LanSearchViewModel(
             listOf(
                 FDeviceBaseModel.FDeviceBSBModelLan(),
                 FDeviceBaseModel.FDeviceBSBModelCloud(
-                    authToken = "",
-                    host = "proxy.dev.busy.app"
+
+                    authToken = Secrets.DEVICE_TOKEN,
+                    host = "proxy.dev.busy.app",
+                    deviceId = Secrets.DEVICE_ID
                 ),
                 FDeviceBaseModel.FDeviceBSBModelCombined(
                     uniqueId = "BUSY Bar Combined",
@@ -33,8 +36,9 @@ class LanSearchViewModel(
                     models = listOf(
                         FDeviceBaseModel.FDeviceBSBModelLan(),
                         FDeviceBaseModel.FDeviceBSBModelCloud(
-                            authToken = "",
-                            host = "proxy.dev.busy.app"
+                            authToken = Secrets.DEVICE_TOKEN,
+                            host = "proxy.dev.busy.app",
+                            deviceId = Secrets.DEVICE_ID
                         )
                     ),
                 )
