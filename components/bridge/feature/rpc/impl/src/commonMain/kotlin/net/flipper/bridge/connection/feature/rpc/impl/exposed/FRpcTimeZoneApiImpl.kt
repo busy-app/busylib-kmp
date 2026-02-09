@@ -33,7 +33,7 @@ class FRpcTimeZoneApiImpl(
             httpClient.post("/api/time/timestamp") {
                 parameter("timestamp", timestampInfo.timestamp)
             }.body<SuccessResponse>()
-        }
+        }.map { }
     }
 
     override suspend fun getTimeTimezone(ignoreCache: Boolean): Result<TimezoneInfo> {
@@ -49,7 +49,7 @@ class FRpcTimeZoneApiImpl(
             httpClient.post("/api/time/timezone") {
                 this.parameter("timezone", timezoneInfo.timezone)
             }.body<SuccessResponse>()
-        }
+        }.map { }
     }
 
     override suspend fun getTimeTzList(): Result<TimezoneListResponse> {
