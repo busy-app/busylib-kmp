@@ -1,4 +1,4 @@
-package net.flipper.bridge.connection.feature.settings.api
+package net.flipper.bridge.connection.feature.timezone.api
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.flowOf
@@ -37,7 +37,7 @@ class FTimeZoneFeatureApiImpl(
     private val rpcFeatureApi: FRpcFeatureApi,
     private val fEventsFeatureApi: FEventsFeatureApi?,
 ) : FTimeZoneFeatureApi, LogTagProvider {
-    override val TAG: String = "FSettingsFeatureApi"
+    override val TAG: String = "FTimeZoneFeatureApi"
 
     override fun getTimestampInfoFlow(): WrappedFlow<TimestampInfo> {
         return fEventsFeatureApi

@@ -1,4 +1,4 @@
-package net.flipper.bridge.connection.feature.settings.api
+package net.flipper.bridge.connection.feature.timezone.api
 
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.TimestampInfo
