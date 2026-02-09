@@ -24,5 +24,7 @@ enum class FlavorType(
         isMockEnabled = true,
         isCloudEnabled = true
     ),
-    PROD(),
+    PROD(
+        isLogEnabled = true,
+    ),
 }

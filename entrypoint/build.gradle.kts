@@ -52,6 +52,8 @@ kotlin {
         implementation(projects.components.bridge.feature.ble.impl)
         api(projects.components.bridge.feature.settings.api)
         implementation(projects.components.bridge.feature.settings.impl)
+        api(projects.components.bridge.feature.timezone.api)
+        implementation(projects.components.bridge.feature.timezone.impl)
         api(projects.components.bridge.orchestrator.api)
         implementation(projects.components.bridge.orchestrator.impl)
         api(projects.components.bridge.service.api)

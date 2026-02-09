@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
 
@@ -32,7 +33,7 @@ class BUSYLibNetworkStateApiImpl(
     ) { isNetworkAvailable, isAllLifecyclesOnStart ->
         info { "Is network available: $isNetworkAvailable, is all lifecycle on start: $isAllLifecyclesOnStart" }
         isNetworkAvailable && isAllLifecyclesOnStart
-    }.stateIn(scope, SharingStarted.Eagerly, false)
+    }.stateIn(scope, SharingStarted.Eagerly, false).wrap()
 
     init {
         val connectivityManager =
