@@ -14,4 +14,5 @@ enum class FDeviceFeature {
     SETTINGS,
     ON_CALL,
     SMART_HOME,
+    TIME_ZONE,
 }
