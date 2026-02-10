@@ -13,6 +13,7 @@ import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
 import net.flipper.bridge.connection.feature.screenstreaming.api.FScreenStreamingFeatureApi
 import net.flipper.bridge.connection.feature.settings.api.FSettingsFeatureApi
 import net.flipper.bridge.connection.feature.smarthome.api.FSmartHomeFeatureApi
+import net.flipper.bridge.connection.feature.timezone.api.FTimeZoneFeatureApi
 import net.flipper.bridge.connection.feature.wifi.api.FWiFiFeatureApi
 import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.wrap
@@ -105,4 +106,13 @@ fun FFeatureProvider.getSmartHomeFeature(): WrappedFlow<FFeatureStatus<FSmartHom
 
 suspend fun FFeatureProvider.getSmartHomeFeatureSync(): FSmartHomeFeatureApi? {
     return this.getSync(FSmartHomeFeatureApi::class)
+}
+
+// TimeZone Feature
+fun FFeatureProvider.getTimeZoneFeature(): WrappedFlow<FFeatureStatus<FTimeZoneFeatureApi>> {
+    return get(FTimeZoneFeatureApi::class).wrap()
+}
+
+suspend fun FFeatureProvider.getTimeZoneFeatureSync(): FTimeZoneFeatureApi? {
+    return this.getSync(FTimeZoneFeatureApi::class)
 }
