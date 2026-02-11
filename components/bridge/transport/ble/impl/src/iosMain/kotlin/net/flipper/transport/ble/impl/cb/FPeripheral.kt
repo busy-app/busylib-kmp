@@ -211,7 +211,11 @@ class FPeripheral(
             warn { "#writeValue cannot write because state not connected" }
             return
         }
-        val characteristic = serialWrite ?: return
+        val characteristic = serialWrite
+        if (characteristic == null) {
+            warn { "#writeValue cannot write because serialWrite characteristic is null" }
+            return
+        }
         debug { "Peripheral writeValue bytes=${data.size} id=${identifier.UUIDString}" }
         withLock(writeMutex, "writeValue") {
             data.chunked(MAX_ATTRIBUTE_SIZE).forEach { chunk ->
