@@ -93,11 +93,9 @@ class BLEDeviceConnectionApiImpl(
         info { "Waiting for peripheral in connected stream (timeout: ${timeout.inWholeSeconds}s)..." }
 
         info { "Waiting for BLE to be powered on, current: ${centralManager.bleStatusStream.value}" }
-        if (centralManager.bleStatusStream.value != FBLEStatus.POWERED_ON) {
-            centralManager
-                .bleStatusStream
-                .first { status -> status == FBLEStatus.POWERED_ON }
-        }
+        centralManager
+            .bleStatusStream
+            .first { status -> status == FBLEStatus.POWERED_ON }
 
         info { "Waiting for previous connections to disconnect..." }
         centralManager.disconnect(deviceIdentifier)
