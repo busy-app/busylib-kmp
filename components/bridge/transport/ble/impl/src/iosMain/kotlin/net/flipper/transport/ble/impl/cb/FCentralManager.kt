@@ -249,9 +249,9 @@ class FCentralManager(
 
         if (error == null) {
             error { "CB didFailToConnect without error id=${peripheral.identifier}" }
-            return
+        } else {
+            device.onError(error)
         }
-        device.onError(error)
         _connectedStream.emit(connected - peripheral.identifier)
         error { "CB didFailToConnect id=${peripheral.identifier} error=$error" }
     }
