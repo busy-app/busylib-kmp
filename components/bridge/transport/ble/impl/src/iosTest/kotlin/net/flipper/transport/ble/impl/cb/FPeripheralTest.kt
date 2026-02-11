@@ -52,7 +52,7 @@ class FPeripheralTest {
     }
 
     @Test
-    fun GIVEN_discover_services_without_error_WHEN_services_exist_THEN_characteristics_discovery_requested_for_each_service() =
+    fun GIVEN_discover_services_without_error_WHEN_services_exist_THEN_discover_characteristics_per_service() =
         runTest {
             val sut = createSut()
             val service1 = newService(META_SERVICE_SHORT_UUID, emptyList())
@@ -91,7 +91,7 @@ class FPeripheralTest {
     }
 
     @Test
-    fun GIVEN_serial_characteristics_and_meta_value_WHEN_discovered_and_updated_THEN_write_and_connected_state_work_end_to_end() =
+    fun GIVEN_serial_characteristics_and_meta_value_WHEN_updated_THEN_write_and_connected_state_work() =
         runTest {
             val sut = createSut()
             val rx = newCharacteristic(SERIAL_RX_SHORT_UUID)
@@ -148,7 +148,7 @@ class FPeripheralTest {
     }
 
     @Test
-    fun GIVEN_non_matching_ack_WHEN_write_waits_for_response_THEN_it_is_ignored_until_matching_characteristic_arrives() =
+    fun GIVEN_non_matching_ack_WHEN_waiting_for_write_response_THEN_ignore_until_matching_characteristic() =
         runTest {
             val sut = createConnectedSut()
             val writeJob = async { sut.sut.writeValue(byteArrayOf(5, 4, 3, 2, 1)) }
@@ -284,7 +284,7 @@ class FPeripheralTest {
     }
 
     @Test
-    fun GIVEN_meta_characteristic_update_WHEN_didUpdateValue_called_THEN_meta_map_updates_and_state_becomes_connected() = runTest {
+    fun GIVEN_meta_characteristic_update_WHEN_didUpdateValue_called_THEN_meta_updates_and_state_connected() = runTest {
         val sut = createSut().sut
         val payload = "BusyBar".encodeToByteArray()
         val metaCharacteristic = newCharacteristic(DEVICE_NAME_SHORT_UUID, payload = payload)
@@ -309,7 +309,7 @@ class FPeripheralTest {
     }
 
     @Test
-    fun GIVEN_meta_service_with_known_and_unknown_characteristics_WHEN_discovered_THEN_only_known_entries_are_read_and_battery_is_subscribed() =
+    fun GIVEN_meta_service_known_and_unknown_chars_WHEN_discovered_THEN_known_reads_and_battery_subscribed() =
         runTest {
             val config = createConfig(
                 macAddress = RecordingPeripheral().identifier.UUIDString,

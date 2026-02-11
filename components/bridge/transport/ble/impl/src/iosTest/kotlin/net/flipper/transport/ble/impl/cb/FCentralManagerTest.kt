@@ -55,7 +55,7 @@ class FCentralManagerTest {
     }
 
     @Test
-    fun GIVEN_connected_entry_WHEN_disconnect_called_and_callback_arrives_THEN_disconnect_finishes_and_device_removed() = runTest {
+    fun GIVEN_connected_entry_WHEN_disconnect_callback_arrives_THEN_entry_is_removed() = runTest {
         val sut = createSut()
         val peripheral = RecordingPeripheral()
         sut.manager.registerPeripheral(peripheral)
@@ -78,7 +78,7 @@ class FCentralManagerTest {
     }
 
     @Test
-    fun GIVEN_failed_connect_with_pairing_error_WHEN_callback_arrives_THEN_device_removed_and_state_is_updated() = runTest {
+    fun GIVEN_pairing_error_on_connect_WHEN_callback_arrives_THEN_entry_removed_and_state_updated() = runTest {
         val sut = createSut()
         val peripheral = RecordingPeripheral()
         sut.manager.registerPeripheral(peripheral)
@@ -135,7 +135,7 @@ class FCentralManagerTest {
     }
 
     @Test
-    fun GIVEN_scanning_and_discovered_devices_WHEN_stopScan_called_THEN_scanning_stops_and_discovered_is_cleared() = runTest {
+    fun GIVEN_scanning_with_devices_WHEN_stopScan_called_THEN_scanning_stops_and_discovered_clears() = runTest {
         val sut = createSut()
         val peripheral = RecordingPeripheral()
 
@@ -164,7 +164,7 @@ class FCentralManagerTest {
     }
 
     @Test
-    fun GIVEN_connected_and_discovered_entries_WHEN_ble_state_changes_to_powered_off_THEN_everything_is_disconnected_and_cleared() =
+    fun GIVEN_connected_and_discovered_entries_WHEN_ble_powers_off_THEN_everything_disconnects_and_clears() =
         runTest {
             val sut = createSut()
             val peripheral = RecordingPeripheral()
