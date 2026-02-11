@@ -2,20 +2,24 @@ package net.flipper.transport.ble.impl.cb
 
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.ObjCSignatureOverride
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.withTimeout
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.ble.api.MAX_ATTRIBUTE_SIZE
+import net.flipper.bridge.connection.transport.ble.api.WRITE_ACK_TIMEOUT_MS
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
 import net.flipper.busylib.core.wrapper.WrappedSharedFlow
 import net.flipper.busylib.core.wrapper.WrappedStateFlow
 import net.flipper.busylib.core.wrapper.wrap
+import net.flipper.core.busylib.ktx.common.withLock
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.debug
 import net.flipper.core.busylib.log.error
@@ -120,6 +124,8 @@ class FPeripheral(
         _metaInfoKeysStream.asStateFlow().wrap()
 
     private var serialWrite: CBCharacteristic? = null
+    private val writeMutex = Mutex()
+    private var writeCompletionDeferred: CompletableDeferred<Unit>? = null
 
     private val delegate = FPeripheralDelegate(
         didDiscoverServices = { peripheral, error ->
@@ -159,8 +165,14 @@ class FPeripheral(
         if (stateStream.value == FPeripheralState.PAIRING_FAILED ||
             stateStream.value == FPeripheralState.INVALID_PAIRING
         ) {
+            debug { "#onDisconnect by reason PAIRING_FAILED or INVALID_PAIRING" }
             return
         }
+
+        writeCompletionDeferred?.completeExceptionally(
+            kotlinx.coroutines.CancellationException("Disconnected")
+        )
+        writeCompletionDeferred = null
 
         serialWrite = null
         _metaInfoKeysStream.emit(emptyMap())
@@ -169,6 +181,7 @@ class FPeripheral(
     }
 
     override suspend fun onError(error: NSError) {
+        error { "#onError ${error.localizedDescription}" }
         val domain = error.domain
         val code = error.code
 
@@ -183,40 +196,50 @@ class FPeripheral(
             7L -> _stateStream.emit(FPeripheralState.INVALID_PAIRING) // CBErrorPeerRemovedPairingInformation
             17L -> _stateStream.emit(FPeripheralState.DISCONNECTED) // CBErrorEncryptionTimedOut
         }
-        warn { "Peripheral CBError id=${identifier.UUIDString} code=$code" }
+        error { "Peripheral CBError id=${identifier.UUIDString} code=$code" }
     }
 
     private suspend fun handleCBATTError(code: Long) {
         when (code) {
             15L -> _stateStream.emit(FPeripheralState.PAIRING_FAILED) // CBATTErrorInsufficientEncryption
         }
-        warn { "Peripheral CBATTError id=${identifier.UUIDString} code=$code" }
+        error { "Peripheral CBATTError id=${identifier.UUIDString} code=$code" }
     }
 
     override suspend fun writeValue(data: ByteArray) {
         if (stateStream.value != FPeripheralState.CONNECTED) {
+            warn { "#writeValue cannot write because state not connected" }
             return
         }
-
         val characteristic = serialWrite ?: return
-
         debug { "Peripheral writeValue bytes=${data.size} id=${identifier.UUIDString}" }
+        withLock(writeMutex, "writeValue") {
+            data.chunked(MAX_ATTRIBUTE_SIZE).forEach { chunk ->
+                if (stateStream.value != FPeripheralState.CONNECTED) {
+                    warn { "#writeValue aborting — disconnected during chunked write" }
+                    return@withLock
+                }
+                debug { "Write chunk with ${chunk.size} with max size $MAX_ATTRIBUTE_SIZE" }
 
-        data.chunked(MAX_ATTRIBUTE_SIZE).forEach { chunk ->
-            debug { "Write chunk with ${chunk.size} with max size $MAX_ATTRIBUTE_SIZE" }
-            peripheral.writeValue(
-                chunk.toNSData(),
-                forCharacteristic = characteristic,
-                type = 0L // CBCharacteristicWriteWithResponse
-            )
-            // TODO MOB-2061
-            delay(500L)
+                val deferred = CompletableDeferred<Unit>()
+                writeCompletionDeferred = deferred
+
+                peripheral.writeValue(
+                    chunk.toNSData(),
+                    forCharacteristic = characteristic,
+                    type = 0L // CBCharacteristicWriteWithResponse
+                )
+
+                withTimeout(WRITE_ACK_TIMEOUT_MS) {
+                    deferred.await()
+                }
+            }
         }
     }
 
     internal suspend fun handleDidDiscoverServices(
         peripheral: CBPeripheral,
-        @Suppress("UnusedParameter") didDiscoverServices: NSError?
+        didDiscoverServices: NSError?
     ) {
         if (didDiscoverServices != null) {
             error { "Service discovery failed id=${identifier.UUIDString} error=$didDiscoverServices" }
@@ -297,6 +320,7 @@ class FPeripheral(
         debug { "Received value for $characteristicUUID" }
 
         if (error != null) {
+            error { "#didUpdateValue failed ${error.localizedDescription}" }
             onError(error)
             return
         }
@@ -325,7 +349,7 @@ class FPeripheral(
     }
 
     private fun updateMetaInfo(key: TransportMetaInfoKey, data: ByteArray?) {
-        debug { "Update meta info key=$key" }
+        debug { "Update meta info key=$key content ${data?.decodeToString()}" }
 
         _metaInfoKeysStream.update {
             val newMap = it.toMutableMap()
@@ -338,10 +362,15 @@ class FPeripheral(
         didWriteValueForCharacteristic: CBCharacteristic,
         error: NSError?
     ) {
-        if (error != null) {
-            error { "Write failed: ${error.localizedDescription}" }
-        } else {
-            debug { "Write succeeded for ${didWriteValueForCharacteristic.UUID.UUIDString}" }
+        val writeCharacteristic = serialWrite ?: return
+        if (didWriteValueForCharacteristic.UUID.toKotlinUUID() == writeCharacteristic.UUID.toKotlinUUID()) {
+            val deferred = writeCompletionDeferred ?: return
+            writeCompletionDeferred = null
+            if (error != null) {
+                deferred.completeExceptionally(Exception(error.localizedDescription))
+            } else {
+                deferred.complete(Unit)
+            }
         }
     }
 }
