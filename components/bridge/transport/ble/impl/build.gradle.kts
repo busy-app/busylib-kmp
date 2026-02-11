@@ -22,6 +22,11 @@ kotlin {
         implementation(libs.ktor.client.cio)
     }
 
+    sourceSets.commonTest.dependencies {
+        implementation(libs.kotlin.test)
+        implementation(libs.kotlin.coroutines.test)
+    }
+
     sourceSets.androidMain.dependencies {
         implementation(libs.ble.client)
     }
