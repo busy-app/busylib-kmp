@@ -3,14 +3,10 @@ package net.flipper.bridge.connection.ble.impl
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.job
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.connectionbuilder.api.FDeviceConfigToConnection
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
@@ -68,7 +64,9 @@ class FDeviceHolder<API : FConnectedDeviceApi>(
     )
     private var deviceApi: Deferred<API> = scope.async {
         deviceConnectionHelper.connect(
-            scope, config, transportConnectionListener
+            scope,
+            config,
+            transportConnectionListener
         ).onFailure {
             onConnectError(this@FDeviceHolder, it)
         }.getOrThrow()

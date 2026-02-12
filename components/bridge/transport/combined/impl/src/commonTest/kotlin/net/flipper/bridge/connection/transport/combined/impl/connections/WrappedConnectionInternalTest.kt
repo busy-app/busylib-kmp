@@ -301,7 +301,7 @@ class WrappedConnectionInternalTest {
         val finalState = connection.stateFlow.value
         assertTrue(
             finalState == FInternalTransportConnectionStatus.Pairing ||
-                    finalState == FInternalTransportConnectionStatus.Connecting,
+                finalState == FInternalTransportConnectionStatus.Connecting,
             "Final state should be a valid state"
         )
     }
