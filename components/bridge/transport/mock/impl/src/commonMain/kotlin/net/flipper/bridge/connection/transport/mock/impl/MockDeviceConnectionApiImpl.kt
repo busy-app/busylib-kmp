@@ -27,7 +27,7 @@ class MockDeviceConnectionApiImpl : MockDeviceConnectionApi {
         var currentConfig = config
         val mockApi = object : FMockApi, FTransportMetaInfoApi by MockFTransportMetaInfoApiImpl() {
             val bsbMockEngine = getBSBMockHttpEngine()
-            override val deviceName = currentConfig.deviceName
+            override val deviceName get() = currentConfig.deviceName
 
             override suspend fun tryUpdateConnectionConfig(config: FDeviceConnectionConfig<*>): Result<Unit> {
                 if (config !is FMockDeviceConnectionConfig) {
