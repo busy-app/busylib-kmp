@@ -13,16 +13,24 @@ import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.cloud.api.BUSYLibBarsApi
 import net.flipper.bsb.cloud.api.BUSYLibHostApi
 import net.flipper.bsb.cloud.api.BUSYLibHostApiStub
+import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
 import net.flipper.busylib.di.BUSYLibGraphDesktop
 import net.flipper.busylib.di.create
+import kotlin.collections.forEach
 
 @Inject
 class BUSYLibDesktop(
     override val connectionService: FConnectionService,
     override val orchestrator: FDeviceOrchestrator,
     override val featureProvider: FFeatureProvider,
-    override val updaterApi: UpdaterApi
+    override val updaterApi: UpdaterApi,
+    private val startUpListeners: Set<InternalBUSYLibStartupListener>
 ) : BUSYLib {
+    override fun launch() {
+        startUpListeners.forEach {
+            it.onLaunch()
+        }
+    }
     companion object {
         @Suppress("LongParameterList", "ForbiddenComment") // TODO: Move it to builder
         fun build(

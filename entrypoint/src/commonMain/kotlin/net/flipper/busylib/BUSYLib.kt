@@ -10,4 +10,6 @@ interface BUSYLib {
     val orchestrator: FDeviceOrchestrator
     val featureProvider: FFeatureProvider
     val updaterApi: UpdaterApi
+
+    fun launch()
 }
