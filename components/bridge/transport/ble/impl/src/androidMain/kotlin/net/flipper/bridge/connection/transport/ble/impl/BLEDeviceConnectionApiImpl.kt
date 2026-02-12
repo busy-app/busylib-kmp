@@ -97,7 +97,7 @@ class BLEDeviceConnectionApiImpl(
             scope = scope,
             services = services,
             serialApi = serialApi,
-            config = config,
+            currentConfig = config,
             listener = listener
         )
         return bleApi
