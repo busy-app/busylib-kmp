@@ -53,7 +53,7 @@ fun main() {
         hostApi = BUSYLibHostApiStub("cloud.dev.busy.app")
     )
 
-    busyLib.connectionService.onApplicationInit()
+    busyLib.launch()
 
     val root = runOnUiThread {
         getRootDecomposeComponent(

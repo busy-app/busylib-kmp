@@ -9,6 +9,10 @@ plugins {
     alias(libs.plugins.skie)
 }
 
+afterEvaluate {
+    tasks.withType<AbstractPublishToMaven>().configureEach { enabled = false }
+}
+
 kotlin {
     targets
         .filterIsInstance<KotlinNativeTarget>()
