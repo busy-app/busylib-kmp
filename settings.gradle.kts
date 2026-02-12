@@ -114,7 +114,6 @@ include(
     ":components:cloud:barsws:impl",
 
     ":components:watchers:api",
-    ":components:watchers:changename",
 
     ":entrypoint",
     ":sample:cmp",
