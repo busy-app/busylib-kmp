@@ -301,7 +301,7 @@ class WrappedConnectionInternalTest {
         val finalState = connection.stateFlow.value
         assertTrue(
             finalState == FInternalTransportConnectionStatus.Pairing ||
-                finalState == FInternalTransportConnectionStatus.Connecting,
+                    finalState == FInternalTransportConnectionStatus.Connecting,
             "Final state should be a valid state"
         )
     }
@@ -591,6 +591,10 @@ class WrappedConnectionInternalTest {
             // Given
             val throwingDeviceApi = object : FConnectedDeviceApi {
                 override val deviceName = "ThrowingDevice"
+                override suspend fun tryUpdateConnectionConfig(
+                    config: FDeviceConnectionConfig<*>
+                ): Result<Unit> = throw NotImplementedError()
+
                 override suspend fun disconnect() {
                     throw RuntimeException("Disconnect failed")
                 }

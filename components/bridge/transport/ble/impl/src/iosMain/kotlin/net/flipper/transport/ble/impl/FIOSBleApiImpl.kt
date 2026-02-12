@@ -10,6 +10,7 @@ import net.flipper.bridge.connection.transport.ble.api.FBleApi
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.ble.api.FSerialBleApi
 import net.flipper.bridge.connection.transport.ble.http.FHttpBLEEngine
+import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.bridge.connection.transport.common.api.meta.FTransportMetaInfoApi
@@ -19,10 +20,10 @@ import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 import net.flipper.transport.ble.impl.cb.FPeripheralApi
 import net.flipper.transport.ble.impl.cb.FPeripheralState
 
-class FBleApiImpl(
+class FIOSBleApiImpl(
     serialApi: FSerialBleApi,
-    val config: FBleDeviceConnectionConfig,
-    val peripheral: FPeripheralApi,
+    private var currentConfig: FBleDeviceConnectionConfig,
+    private val peripheral: FPeripheralApi,
     private val scope: CoroutineScope,
     private val listener: FTransportConnectionStatusListener,
     private val onDisconnect: suspend () -> Unit,
@@ -56,14 +57,28 @@ class FBleApiImpl(
             .launchIn(scope + FlipperDispatchers.default)
     }
 
-    override val deviceName = peripheral.name ?: config.deviceName
+    override val deviceName = peripheral.name ?: currentConfig.deviceName
+
+    override suspend fun tryUpdateConnectionConfig(config: FDeviceConnectionConfig<*>): Result<Unit> {
+        if (config !is FBleDeviceConnectionConfig) {
+            return Result.failure(IllegalArgumentException("Config $config has different type"))
+        }
+        if (currentConfig == config) {
+            return Result.success(Unit)
+        }
+        if (currentConfig.copy(deviceName = config.deviceName) == config) {
+            currentConfig = config
+            return Result.success(Unit)
+        }
+        return Result.failure(IllegalArgumentException("Config $config has different non-name fields"))
+    }
 
     override suspend fun disconnect() {
         onDisconnect()
     }
 
     override fun get(key: TransportMetaInfoKey): Result<Flow<ByteArray?>> {
-        if (config.metaInfoGattMap.containsKey(key)) {
+        if (currentConfig.metaInfoGattMap.containsKey(key)) {
             val flow = peripheral.metaInfoKeysStream.map { metaMap ->
                 metaMap[key]
             }

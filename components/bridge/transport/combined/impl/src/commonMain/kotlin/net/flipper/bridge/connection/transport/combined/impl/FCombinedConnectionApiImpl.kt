@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import net.flipper.bridge.connection.transport.combined.FCombinedConnectionApi
 import net.flipper.bridge.connection.transport.combined.impl.connections.AutoReconnectConnection
+import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 
@@ -33,6 +34,10 @@ class FCombinedConnectionApiImpl(
                     listener.onStatusUpdate(it)
                 }
             }.launchIn(scope)
+    }
+
+    override suspend fun tryUpdateConnectionConfig(config: FDeviceConnectionConfig<*>): Result<Unit> {
+        return Result.failure(NotImplementedError())
     }
 
     private val httpEngine = FCombinedHttpEngine(scope, connections)

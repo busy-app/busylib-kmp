@@ -2,6 +2,7 @@ package net.flipper.bridge.connection.transport.tcp.lan.impl
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPTransportCapability
@@ -13,20 +14,20 @@ import net.flipper.core.ktor.getPlatformEngineFactory
 
 class FLanApiImpl(
     private val listener: FTransportConnectionStatusListener,
-    config: FLanDeviceConnectionConfig,
+    private var currentConfig: FLanDeviceConnectionConfig,
     private val scope: CoroutineScope
 ) : FLanApi {
     private val httpEngineOriginal = getPlatformEngineFactory().create()
-    private val httpEngine = BUSYBarHttpEngine(httpEngineOriginal, config.host)
+    private val httpEngine = BUSYBarHttpEngine(httpEngineOriginal, currentConfig.host)
 
     private val connectionMonitor = getConnectionMonitorApi(
         listener = listener,
-        config = config,
+        config = currentConfig,
         scope = scope,
         deviceApi = this
     )
 
-    override val deviceName = config.host
+    override val deviceName = currentConfig.host
 
     override fun getCapabilities(): MutableStateFlow<List<FHTTPTransportCapability>> {
         return MutableStateFlow(
@@ -36,6 +37,20 @@ class FLanApiImpl(
 
     suspend fun startMonitoring() {
         connectionMonitor.startMonitoring()
+    }
+
+    override suspend fun tryUpdateConnectionConfig(config: FDeviceConnectionConfig<*>): Result<Unit> {
+        if (config !is FLanDeviceConnectionConfig) {
+            return Result.failure(IllegalArgumentException("Config $config has different type"))
+        }
+        if (currentConfig == config) {
+            return Result.success(Unit)
+        }
+        if (currentConfig.copy(name = config.name) == config) {
+            currentConfig = config
+            return Result.success(Unit)
+        }
+        return Result.failure(IllegalArgumentException("Config $config has different non-name fields"))
     }
 
     override suspend fun disconnect() {

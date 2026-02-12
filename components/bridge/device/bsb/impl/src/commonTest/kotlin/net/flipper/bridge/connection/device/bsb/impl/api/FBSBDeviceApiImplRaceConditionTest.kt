@@ -16,6 +16,7 @@ import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.feature.info.api.FDeviceInfoFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarStatusSystem
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
+import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import net.flipper.busylib.core.wrapper.CResult
 import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.toCResult
@@ -415,6 +416,9 @@ class FBSBDeviceApiImplRaceConditionTest {
     ): FBSBDeviceApiImpl {
         val mockConnectedDevice = object : FConnectedDeviceApi {
             override val deviceName: String = "TestDevice"
+            override suspend fun tryUpdateConnectionConfig(
+                config: FDeviceConnectionConfig<*>
+            ): Result<Unit> = throw NotImplementedError()
 
             override suspend fun disconnect() = Unit
         }
