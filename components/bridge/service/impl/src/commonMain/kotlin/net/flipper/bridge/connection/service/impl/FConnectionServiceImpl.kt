@@ -26,7 +26,6 @@ import net.flipper.core.busylib.log.warn
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 
-
 @SingleIn(BusyLibGraph::class)
 @Inject
 @ContributesBinding(BusyLibGraph::class, FConnectionService::class)

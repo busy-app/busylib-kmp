@@ -18,9 +18,9 @@ val busyLib = BUSYLibAndroid.build(
     context = this
 )
 ```
-2. Init connection service
+2. Init BUSY Lib background services
 ```kotlin
-busyLib.connectionService.onApplicationInit()
+busyLib.launch()
 ```
 3. Use BUSY Lib:
 ```kotlin

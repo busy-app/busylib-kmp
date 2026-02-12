@@ -21,6 +21,7 @@ import net.flipper.busylib.di.create
 import no.nordicsemi.kotlin.ble.client.android.CentralManager
 
 @Inject
+@Suppress("LongParameterList")
 class BUSYLibAndroid(
     override val connectionService: FConnectionService,
     override val orchestrator: FDeviceOrchestrator,

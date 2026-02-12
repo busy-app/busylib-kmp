@@ -15,6 +15,11 @@ plugins {
     alias(libs.plugins.klibs.gradle.android.namespace)
     alias(libs.plugins.klibs.gradle.java.version)
 }
+
+afterEvaluate {
+    tasks.withType<AbstractPublishToMaven>().configureEach { enabled = false }
+}
+
 dependencies {
     implementation(libs.jetbrains.compose.runtime)
     implementation(libs.jetbrains.compose.foundation)
