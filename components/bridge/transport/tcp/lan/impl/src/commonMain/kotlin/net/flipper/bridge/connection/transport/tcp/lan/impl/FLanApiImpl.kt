@@ -27,7 +27,8 @@ class FLanApiImpl(
         deviceApi = this
     )
 
-    override val deviceName = currentConfig.host
+    override val deviceName: String
+        get() = currentConfig.name
 
     override fun getCapabilities(): MutableStateFlow<List<FHTTPTransportCapability>> {
         return MutableStateFlow(
