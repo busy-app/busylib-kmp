@@ -19,7 +19,7 @@ class LanDeviceConnectionApiImpl : LanDeviceConnectionApi {
     ): Result<FLanApi> = runCatching {
         val lanApi = FLanApiImpl(
             listener = listener,
-            config = config,
+            currentConfig = config,
             scope = scope
         )
         lanApi.startMonitoring()

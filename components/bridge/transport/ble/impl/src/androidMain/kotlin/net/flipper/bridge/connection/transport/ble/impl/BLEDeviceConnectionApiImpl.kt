@@ -13,7 +13,7 @@ import net.flipper.bridge.connection.transport.ble.common.BleConstants
 import net.flipper.bridge.connection.transport.ble.common.exception.BLEConnectionPermissionException
 import net.flipper.bridge.connection.transport.ble.common.exception.FailedConnectToDeviceException
 import net.flipper.bridge.connection.transport.ble.common.exception.NoFoundDeviceException
-import net.flipper.bridge.connection.transport.ble.impl.api.FBleApiImpl
+import net.flipper.bridge.connection.transport.ble.impl.api.FAndroidBleApiImpl
 import net.flipper.bridge.connection.transport.ble.impl.api.http.serial.SerialApiFactory
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
@@ -92,12 +92,12 @@ class BLEDeviceConnectionApiImpl(
             scope = scope
         )
 
-        val bleApi = FBleApiImpl(
+        val bleApi = FAndroidBleApiImpl(
             peripheral = device,
             scope = scope,
             services = services,
             serialApi = serialApi,
-            config = config,
+            currentConfig = config,
             listener = listener
         )
         return bleApi

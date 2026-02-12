@@ -8,6 +8,7 @@ import net.flipper.bridge.connection.transport.ble.api.FBleDeviceConnectionConfi
 import net.flipper.bridge.connection.transport.ble.api.FSerialBleApi
 import net.flipper.bridge.connection.transport.ble.http.FHttpBLEEngine
 import net.flipper.bridge.connection.transport.ble.impl.meta.FTransportMetaInfoApiImpl
+import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.bridge.connection.transport.common.api.meta.FTransportMetaInfoApi
@@ -20,16 +21,16 @@ import no.nordicsemi.kotlin.ble.client.android.Peripheral
 import no.nordicsemi.kotlin.ble.core.BondState
 import no.nordicsemi.kotlin.ble.core.ConnectionState
 
-class FBleApiImpl(
+class FAndroidBleApiImpl(
     private val peripheral: Peripheral,
     private val scope: CoroutineScope,
     private val listener: FTransportConnectionStatusListener,
     services: WrappedStateFlow<List<RemoteService>?>,
     serialApi: FSerialBleApi,
-    config: FBleDeviceConnectionConfig,
+    private var currentConfig: FBleDeviceConnectionConfig,
 ) : FBleApi,
     FHTTPDeviceApi,
-    FTransportMetaInfoApi by FTransportMetaInfoApiImpl(services, config.metaInfoGattMap),
+    FTransportMetaInfoApi by FTransportMetaInfoApiImpl(services, currentConfig.metaInfoGattMap),
     LogTagProvider {
     override val TAG = "FBleApi"
     private val bleHttpEngine = FHttpBLEEngine(serialApi)
@@ -47,7 +48,7 @@ class FBleApiImpl(
 
                         BondState.BONDED -> FInternalTransportConnectionStatus.Connected(
                             scope = scope,
-                            deviceApi = this@FBleApiImpl
+                            deviceApi = this@FAndroidBleApiImpl
                         )
                     }
 
@@ -62,7 +63,21 @@ class FBleApiImpl(
         }
     }
 
-    override val deviceName = peripheral.name ?: config.deviceName
+    override val deviceName = peripheral.name ?: currentConfig.deviceName
+
+    override suspend fun tryUpdateConnectionConfig(config: FDeviceConnectionConfig<*>): Result<Unit> {
+        if (config !is FBleDeviceConnectionConfig) {
+            return Result.failure(IllegalArgumentException("Config $config has different type"))
+        }
+        if (currentConfig == config) {
+            return Result.success(Unit)
+        }
+        if (currentConfig.copy(deviceName = config.deviceName) == config) {
+            currentConfig = config
+            return Result.success(Unit)
+        }
+        return Result.failure(IllegalArgumentException("Config $config has different non-name fields"))
+    }
 
     override fun getDeviceHttpEngine() = bleHttpEngine
 

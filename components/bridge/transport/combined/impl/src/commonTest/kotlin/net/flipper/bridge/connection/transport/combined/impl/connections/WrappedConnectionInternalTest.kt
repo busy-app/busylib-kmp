@@ -591,6 +591,10 @@ class WrappedConnectionInternalTest {
             // Given
             val throwingDeviceApi = object : FConnectedDeviceApi {
                 override val deviceName = "ThrowingDevice"
+                override suspend fun tryUpdateConnectionConfig(
+                    config: FDeviceConnectionConfig<*>
+                ): Result<Unit> = throw NotImplementedError()
+
                 override suspend fun disconnect() {
                     throw RuntimeException("Disconnect failed")
                 }

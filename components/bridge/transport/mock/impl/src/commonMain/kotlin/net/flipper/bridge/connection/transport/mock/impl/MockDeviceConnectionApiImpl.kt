@@ -3,6 +3,7 @@ package net.flipper.bridge.connection.transport.mock.impl
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import me.tatarka.inject.annotations.Inject
+import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.bridge.connection.transport.common.api.meta.FTransportMetaInfoApi
@@ -23,9 +24,24 @@ class MockDeviceConnectionApiImpl : MockDeviceConnectionApi {
         listener: FTransportConnectionStatusListener
     ): Result<FMockApi> = runCatching {
         listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting)
+        var currentConfig = config
         val mockApi = object : FMockApi, FTransportMetaInfoApi by MockFTransportMetaInfoApiImpl() {
             val bsbMockEngine = getBSBMockHttpEngine()
-            override val deviceName = config.deviceName
+            override val deviceName get() = currentConfig.deviceName
+
+            override suspend fun tryUpdateConnectionConfig(config: FDeviceConnectionConfig<*>): Result<Unit> {
+                if (config !is FMockDeviceConnectionConfig) {
+                    return Result.failure(IllegalArgumentException("Config $config has different type"))
+                }
+                if (currentConfig == config) {
+                    return Result.success(Unit)
+                }
+                if (currentConfig.copy(deviceName = config.deviceName) == config) {
+                    currentConfig = config
+                    return Result.success(Unit)
+                }
+                return Result.failure(IllegalArgumentException("Config $config has different non-name fields"))
+            }
 
             override suspend fun disconnect() {
                 listener.onStatusUpdate(FInternalTransportConnectionStatus.Disconnected)

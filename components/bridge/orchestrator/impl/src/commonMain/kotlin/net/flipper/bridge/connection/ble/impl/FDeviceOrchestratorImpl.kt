@@ -35,16 +35,23 @@ class FDeviceOrchestratorImpl(
         info { "Request connect for config $config" }
 
         val connectionConfig = deviceConnectionConfigMapper.getConnectionConfig(config)
+        val currentDeviceHolder = currentDevice
 
-        if (currentDevice?.config == connectionConfig) {
-            info { "Device already connected, so skip connection" }
-            return@withLock
+        if (currentDeviceHolder != null && currentDeviceHolder.uniqueId == config.uniqueId) {
+            val result = currentDeviceHolder.tryToUpdateConnectionConfig(connectionConfig)
+            if (result.isSuccess) {
+                info { "Device already connected, so skip connection" }
+                return@withLock
+            } else {
+                info { "Failed to update current connect, request full reconnection: ${result.exceptionOrNull()}" }
+            }
         }
 
         disconnectInternalUnsafe()
 
         info { "Create new device" }
         currentDevice = deviceHolderFactory.build(
+            uniqueId = config.uniqueId,
             config = deviceConnectionConfigMapper.getConnectionConfig(config),
             listener = { deviceHolder, status ->
                 if (status is FInternalTransportConnectionStatus.Disconnected) {

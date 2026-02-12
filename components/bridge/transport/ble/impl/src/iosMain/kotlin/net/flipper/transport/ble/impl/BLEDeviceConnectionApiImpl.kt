@@ -73,9 +73,9 @@ class BLEDeviceConnectionApiImpl(
             fPeripheralApi = peripheral
         )
 
-        val bleApi = FBleApiImpl(
+        val bleApi = FIOSBleApiImpl(
             serialApi = serialApi,
-            config = config,
+            currentConfig = config,
             peripheral = peripheral,
             scope = scope,
             listener = listener,

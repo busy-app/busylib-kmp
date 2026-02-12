@@ -28,7 +28,7 @@ class CloudDeviceConnectionApiImpl(
         )
         val lanApi = FCloudApiImpl(
             listener = listener,
-            config = config,
+            currentConfig = config,
             cloudDeviceMonitorFactory = cloudDeviceMonitorFactory
         )
         return@runCatching lanApi

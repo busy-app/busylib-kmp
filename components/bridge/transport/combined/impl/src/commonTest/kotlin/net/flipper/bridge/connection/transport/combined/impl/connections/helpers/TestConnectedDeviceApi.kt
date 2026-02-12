@@ -3,6 +3,7 @@ package net.flipper.bridge.connection.transport.combined.impl.connections.helper
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.delay
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
+import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
 
 /**
  * Mock implementation of [FConnectedDeviceApi] for testing.
@@ -12,6 +13,10 @@ import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 class TestConnectedDeviceApi(
     override val deviceName: String = "TestDevice"
 ) : FConnectedDeviceApi {
+    override suspend fun tryUpdateConnectionConfig(config: FDeviceConnectionConfig<*>): Result<Unit> {
+        return Result.success(Unit)
+    }
+
     var disconnectCalled = false
     var disconnectDelay: Long = 0L
     val disconnectCalledDeferred = CompletableDeferred<Unit>()
