@@ -1,7 +1,6 @@
 package net.flipper.bridge.connection.screens.search
 
 import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.cinterop.value
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.persistentListOf
@@ -17,7 +16,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
-import net.flipper.bridge.connection.config.api.model.FDeviceBaseModel
+import net.flipper.bridge.connection.config.api.model.FDeviceCombined
 import net.flipper.bridge.connection.service.api.FConnectionService
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.log.LogTagProvider
@@ -29,7 +28,6 @@ import platform.AccessorySetupKit.ASAccessorySession
 import platform.AccessorySetupKit.ASDiscoveryDescriptor
 import platform.AccessorySetupKit.ASPickerDisplayItem
 import platform.CoreBluetooth.CBUUID
-import platform.Foundation.NSError
 import platform.Foundation.NSUUID
 import platform.UIKit.UIImage
 import platform.darwin.dispatch_get_main_queue
@@ -43,7 +41,7 @@ class IOSSearchViewModel(
 
     private val mockDevice = ConnectionSearchItem(
         address = "busy_bar_mock",
-        deviceModel = FDeviceBaseModel.FDeviceBSBModelMock(humanReadableName = "BUSY Bar Mock"),
+        deviceModel = FDeviceCombined.FDeviceBSBModelMock(humanReadableName = "BUSY Bar Mock"),
         isAdded = false,
     )
 
@@ -107,13 +105,13 @@ class IOSSearchViewModel(
             persistedStorage.getAllDevices()
         ) { accessoriesMap, savedDevices ->
             val existedUuids = savedDevices
-                .filterIsInstance<FDeviceBaseModel.FDeviceBSBModelBLEiOS>()
+                .filterIsInstance<FDeviceCombined.FDeviceBSBModelBLEiOS>()
                 .associateBy { it.uniqueId }
 
             accessoriesMap.map { (uuid, accessory) ->
                 ConnectionSearchItem(
                     address = uuid,
-                    deviceModel = existedUuids[uuid] ?: FDeviceBaseModel.FDeviceBSBModelBLEiOS(
+                    deviceModel = existedUuids[uuid] ?: FDeviceCombined.FDeviceBSBModelBLEiOS(
                         uniqueId = uuid,
                         humanReadableName = accessory.displayName
                     ),

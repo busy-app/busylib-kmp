@@ -12,11 +12,11 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import me.tatarka.inject.annotations.Inject
+import net.flipper.bridge.connection.device.bsb.api.FBSBDeviceApi
 import net.flipper.bridge.connection.device.common.api.FDeviceApi
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
-import net.flipper.bridge.connection.feature.provider.impl.utils.FDeviceConnectStatusToDeviceApi
 import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
 import net.flipper.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
 import net.flipper.busylib.core.di.BusyLibGraph
@@ -30,7 +30,7 @@ import kotlin.reflect.KClass
 @ContributesBinding(BusyLibGraph::class, FFeatureProvider::class)
 class FFeatureProviderImpl(
     private val orchestrator: FDeviceOrchestrator,
-    private val deviceApiMapper: FDeviceConnectStatusToDeviceApi
+    private val fBSBDeviceApiFactory: FBSBDeviceApi.Factory
 ) : FFeatureProvider {
     private val scope = CoroutineScope(FlipperDispatchers.default)
 
@@ -39,7 +39,10 @@ class FFeatureProviderImpl(
     init {
         orchestrator.getState().map { status ->
             when (status) {
-                is FDeviceConnectStatus.Connected -> deviceApiMapper.get(status)
+                is FDeviceConnectStatus.Connected -> fBSBDeviceApiFactory(
+                    scope = status.scope,
+                    connectedDevice = status.deviceApi
+                )
                 is FDeviceConnectStatus.Connecting,
                 is FDeviceConnectStatus.Disconnecting,
                 is FDeviceConnectStatus.Disconnected -> null

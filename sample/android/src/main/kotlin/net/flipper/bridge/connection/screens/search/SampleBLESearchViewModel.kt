@@ -14,7 +14,7 @@ import net.flipper.bridge.api.scanner.DiscoveredBluetoothDevice
 import net.flipper.bridge.api.scanner.FlipperScanner
 import net.flipper.bridge.api.utils.Constants.UNKNOWN_NAME
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
-import net.flipper.bridge.connection.config.api.model.FDeviceBaseModel
+import net.flipper.bridge.connection.config.api.model.FDeviceCombined
 import net.flipper.busylib.core.wrapper.WrappedStateFlow
 import net.flipper.busylib.core.wrapper.wrap
 
@@ -40,7 +40,7 @@ class SampleBLESearchViewModel(
             persistedStorage.getAllDevices()
         ) { searchDevices, savedDevices ->
             val existedMacAddresses = savedDevices
-                .filterIsInstance<FDeviceBaseModel.FDeviceBSBModelBLE>()
+                .filterIsInstance<FDeviceCombined.FDeviceBSBModelBLE>()
                 .associateBy { it.address }
             searchDevices.map { bleDevice ->
                 ConnectionSearchItem(
@@ -60,16 +60,16 @@ class SampleBLESearchViewModel(
     override fun getDevicesFlow(): WrappedStateFlow<ImmutableList<ConnectionSearchItem>> =
         devicesFlow.asStateFlow().wrap()
 }
-private fun DiscoveredBluetoothDevice.toFDeviceModel(): FDeviceBaseModel {
+private fun DiscoveredBluetoothDevice.toFDeviceModel(): FDeviceCombined {
     val id = address
 
     return when (this) {
-        is DiscoveredBluetoothDevice.MockDiscoveredBluetoothDevice -> FDeviceBaseModel.FDeviceBSBModelMock(
+        is DiscoveredBluetoothDevice.MockDiscoveredBluetoothDevice -> FDeviceCombined.FDeviceBSBModelMock(
             uniqueId = id,
             humanReadableName = name ?: UNKNOWN_NAME
         )
 
-        is DiscoveredBluetoothDevice.RealDiscoveredBluetoothDevice -> FDeviceBaseModel.FDeviceBSBModelBLE(
+        is DiscoveredBluetoothDevice.RealDiscoveredBluetoothDevice -> FDeviceCombined.FDeviceBSBModelBLE(
             address = device.address,
             uniqueId = id,
             humanReadableName = device.name ?: UNKNOWN_NAME

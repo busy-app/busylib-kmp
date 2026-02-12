@@ -4,7 +4,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import me.tatarka.inject.annotations.Inject
-import net.flipper.bridge.connection.config.api.model.FDeviceBaseModel
+import net.flipper.bridge.connection.config.api.model.FDeviceCombined
 import net.flipper.bridge.connection.configbuilder.api.FDeviceConnectionConfigMapper
 import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
@@ -31,7 +31,7 @@ class FDeviceOrchestratorImpl(
     private var currentDevice: FDeviceHolder<*>? = null
     private val mutex = Mutex()
 
-    override suspend fun connectIfNot(config: FDeviceBaseModel) = withLock(mutex, "connect") {
+    override suspend fun connectIfNot(config: FDeviceCombined) = withLock(mutex, "connect") {
         info { "Request connect for config $config" }
 
         val connectionConfig = deviceConnectionConfigMapper.getConnectionConfig(config)

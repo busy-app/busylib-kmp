@@ -10,12 +10,12 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
-import net.flipper.bridge.connection.config.api.model.FDeviceBaseModel
+import net.flipper.bridge.connection.config.api.model.FDeviceCombined
 import net.flipper.bridge.connection.screens.decompose.DecomposeViewModel
 
 data class DevicesDropdownState(
-    val currentDevice: FDeviceBaseModel?,
-    val devices: ImmutableList<FDeviceBaseModel>
+    val currentDevice: FDeviceCombined?,
+    val devices: ImmutableList<FDeviceCombined>
 )
 
 class FDevicesViewModel(
@@ -43,7 +43,7 @@ class FDevicesViewModel(
 
     fun getState() = devicesState.asStateFlow()
 
-    fun onSelectDevice(device: FDeviceBaseModel) {
+    fun onSelectDevice(device: FDeviceCombined) {
         viewModelScope.launch {
             devicePersistedStorage.setCurrentDevice(device.uniqueId)
         }
