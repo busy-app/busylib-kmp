@@ -15,6 +15,7 @@ import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.cloud.api.BUSYLibBarsApi
 import net.flipper.bsb.cloud.api.BUSYLibHostApi
 import net.flipper.bsb.cloud.api.BUSYLibHostApiStub
+import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
 import net.flipper.busylib.di.BUSYLibGraphAndroid
 import net.flipper.busylib.di.create
 import no.nordicsemi.kotlin.ble.client.android.CentralManager
@@ -26,8 +27,16 @@ class BUSYLibAndroid(
     override val featureProvider: FFeatureProvider,
     override val updaterApi: UpdaterApi,
     val flipperScanner: FlipperScanner,
-    val centralManager: CentralManager
+    val centralManager: CentralManager,
+    private val startUpListeners: Set<InternalBUSYLibStartupListener>
 ) : BUSYLib {
+
+    override fun launch() {
+        startUpListeners.forEach {
+            it.onLaunch()
+        }
+    }
+
     companion object {
         @Suppress("LongParameterList", "ForbiddenComment") // TODO: Move it to builder
         fun build(

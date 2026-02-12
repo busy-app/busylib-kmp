@@ -14,10 +14,10 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
-import net.flipper.bridge.connection.config.api.model.FDeviceBaseModel
 import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
 import net.flipper.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
 import net.flipper.bridge.connection.service.api.FConnectionService
+import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 import net.flipper.core.busylib.log.LogTagProvider
@@ -26,19 +26,15 @@ import net.flipper.core.busylib.log.warn
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 
-sealed interface ExpectedState {
-    data object Disconnected : ExpectedState
-
-    data class Connected(val device: FDeviceBaseModel) : ExpectedState
-}
 
 @SingleIn(BusyLibGraph::class)
 @Inject
 @ContributesBinding(BusyLibGraph::class, FConnectionService::class)
+@ContributesBinding(BusyLibGraph::class, InternalBUSYLibStartupListener::class, multibinding = true)
 class FConnectionServiceImpl(
     private val orchestrator: FDeviceOrchestrator,
     private val fDevicePersistedStorage: FDevicePersistedStorage
-) : FConnectionService, LogTagProvider {
+) : FConnectionService, LogTagProvider, InternalBUSYLibStartupListener {
     override val TAG: String = "FConnectionService"
 
     private val scope = CoroutineScope(SupervisorJob() + FlipperDispatchers.default)
@@ -93,7 +89,7 @@ class FConnectionServiceImpl(
         }.launchIn(scope)
     }
 
-    override fun onApplicationInit() {
+    override fun onLaunch() {
         scope.launch {
             if (mutex.isLocked) {
                 warn { "#onApplicationInit tried to init connection service again" }

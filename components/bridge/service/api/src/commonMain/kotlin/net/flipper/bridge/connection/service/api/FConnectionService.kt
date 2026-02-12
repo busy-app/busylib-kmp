@@ -5,11 +5,6 @@ package net.flipper.bridge.connection.service.api
  */
 interface FConnectionService {
     /**
-     * Should be called once on application start
-     */
-    fun onApplicationInit()
-
-    /**
      * Reconnect to last known device after being force disconnected
      */
     fun connectCurrent()

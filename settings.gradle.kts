@@ -113,6 +113,9 @@ include(
     ":components:cloud:barsws:api",
     ":components:cloud:barsws:impl",
 
+    ":components:watchers:api",
+    ":components:watchers:changename",
+
     ":entrypoint",
     ":sample:cmp",
     ":sample:android"
