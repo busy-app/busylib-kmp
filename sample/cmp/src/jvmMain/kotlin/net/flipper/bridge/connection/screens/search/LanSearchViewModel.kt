@@ -23,24 +23,31 @@ class LanSearchViewModel(
         persistedStorage.getAllDevices(),
         flowOf(
             listOf(
-                FDeviceCombined.FDeviceBSBModelLan(),
-                FDeviceCombined.FDeviceBSBModelCloud(
-
-                    authToken = Secrets.DEVICE_TOKEN,
-                    host = "proxy.dev.busy.app",
-                    deviceId = Secrets.DEVICE_ID
+                FDeviceCombined(
+                    humanReadableName = "BUSY Bar LAN",
+                    models = listOf(FDeviceCombined.DeviceModel.FDeviceBSBModelLan())
                 ),
-                FDeviceCombined.FDeviceBSBModelCombined(
-                    uniqueId = "BUSY Bar Combined",
-                    humanReadableName = "BUSY Bar Combined",
+                FDeviceCombined(
+                    humanReadableName = "BUSY Bar Cloud",
                     models = listOf(
-                        FDeviceCombined.FDeviceBSBModelLan(),
-                        FDeviceCombined.FDeviceBSBModelCloud(
+                        FDeviceCombined.DeviceModel.FDeviceBSBModelCloud(
                             authToken = Secrets.DEVICE_TOKEN,
                             host = "proxy.dev.busy.app",
                             deviceId = Secrets.DEVICE_ID
                         )
-                    ),
+                    )
+                ),
+                FDeviceCombined(
+                    uniqueId = "BUSY Bar Combined",
+                    humanReadableName = "BUSY Bar Combined",
+                    models = listOf(
+                        FDeviceCombined.DeviceModel.FDeviceBSBModelLan(),
+                        FDeviceCombined.DeviceModel.FDeviceBSBModelCloud(
+                            authToken = Secrets.DEVICE_TOKEN,
+                            host = "proxy.dev.busy.app",
+                            deviceId = Secrets.DEVICE_ID
+                        )
+                    )
                 )
             )
         )

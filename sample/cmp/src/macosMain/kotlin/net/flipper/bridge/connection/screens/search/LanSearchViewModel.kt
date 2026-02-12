@@ -20,11 +20,18 @@ class LanSearchViewModel(
 
     private val searchItems = combine(
         persistedStorage.getAllDevices(),
-        flowOf(listOf(FDeviceCombined.FDeviceBSBModelLan()))
+        flowOf(
+            listOf(
+                FDeviceCombined(
+                    humanReadableName = "BUSY Bar LAN",
+                    models = listOf(FDeviceCombined.DeviceModel.FDeviceBSBModelLan())
+                )
+            )
+        )
     ) { savedDevices, foundDevices ->
         foundDevices.map { device ->
             ConnectionSearchItem(
-                address = device.host,
+                address = device.humanReadableName,
                 deviceModel = device,
                 isAdded = savedDevices.find { it.uniqueId == device.uniqueId } != null
             )

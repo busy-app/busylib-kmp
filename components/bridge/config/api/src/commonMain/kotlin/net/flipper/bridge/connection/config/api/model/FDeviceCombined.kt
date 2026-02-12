@@ -2,13 +2,14 @@ package net.flipper.bridge.connection.config.api.model
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlin.uuid.Uuid
 
 @Serializable
 data class FDeviceCombined(
     @SerialName("human_readable_name")
     val humanReadableName: String,
     @SerialName("unique_id")
-    val uniqueId: String,
+    val uniqueId: String = Uuid.random().toString(),
     @SerialName("models")
     val models: List<DeviceModel>
 ) {
@@ -33,8 +34,7 @@ data class FDeviceCombined(
         data class FDeviceBSBModelLan(
             @SerialName("host")
             val host: String = "10.0.4.20",
-        ) : DeviceModel {
-        }
+        ) : DeviceModel
 
         @Serializable
         data class FDeviceBSBModelCloud(
@@ -44,9 +44,6 @@ data class FDeviceCombined(
             val host: String,
             @SerialName("device_id")
             val deviceId: String
-        ) : DeviceModel {
-        }
-
-
+        ) : DeviceModel
     }
 }

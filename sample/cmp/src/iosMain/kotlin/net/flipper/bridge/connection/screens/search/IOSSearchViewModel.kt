@@ -41,7 +41,10 @@ class IOSSearchViewModel(
 
     private val mockDevice = ConnectionSearchItem(
         address = "busy_bar_mock",
-        deviceModel = FDeviceCombined.FDeviceBSBModelMock(humanReadableName = "BUSY Bar Mock"),
+        deviceModel = FDeviceCombined(
+            humanReadableName = "BUSY Bar Mock",
+            models = listOf(FDeviceCombined.DeviceModel.FDeviceBSBModelMock)
+        ),
         isAdded = false,
     )
 
@@ -105,15 +108,16 @@ class IOSSearchViewModel(
             persistedStorage.getAllDevices()
         ) { accessoriesMap, savedDevices ->
             val existedUuids = savedDevices
-                .filterIsInstance<FDeviceCombined.FDeviceBSBModelBLEiOS>()
+                .filter { device -> device.models.any { it is FDeviceCombined.DeviceModel.FDeviceBSBModelBLEiOS } }
                 .associateBy { it.uniqueId }
 
             accessoriesMap.map { (uuid, accessory) ->
                 ConnectionSearchItem(
                     address = uuid,
-                    deviceModel = existedUuids[uuid] ?: FDeviceCombined.FDeviceBSBModelBLEiOS(
+                    deviceModel = existedUuids[uuid] ?: FDeviceCombined(
                         uniqueId = uuid,
-                        humanReadableName = accessory.displayName
+                        humanReadableName = accessory.displayName,
+                        models = listOf(FDeviceCombined.DeviceModel.FDeviceBSBModelBLEiOS(address = uuid))
                     ),
                     isAdded = existedUuids.containsKey(uuid)
                 )

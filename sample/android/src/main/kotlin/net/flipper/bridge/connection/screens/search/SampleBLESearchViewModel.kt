@@ -40,8 +40,11 @@ class SampleBLESearchViewModel(
             persistedStorage.getAllDevices()
         ) { searchDevices, savedDevices ->
             val existedMacAddresses = savedDevices
-                .filterIsInstance<FDeviceCombined.FDeviceBSBModelBLE>()
-                .associateBy { it.address }
+                .flatMap { device ->
+                    device.models
+                        .filterIsInstance<FDeviceCombined.DeviceModel.FDeviceBSBModelBLE>()
+                        .map { it.address to device }
+                }.toMap()
             searchDevices.map { bleDevice ->
                 ConnectionSearchItem(
                     address = bleDevice.address,
@@ -64,15 +67,16 @@ private fun DiscoveredBluetoothDevice.toFDeviceModel(): FDeviceCombined {
     val id = address
 
     return when (this) {
-        is DiscoveredBluetoothDevice.MockDiscoveredBluetoothDevice -> FDeviceCombined.FDeviceBSBModelMock(
+        is DiscoveredBluetoothDevice.MockDiscoveredBluetoothDevice -> FDeviceCombined(
             uniqueId = id,
-            humanReadableName = name ?: UNKNOWN_NAME
+            humanReadableName = name ?: UNKNOWN_NAME,
+            models = listOf(FDeviceCombined.DeviceModel.FDeviceBSBModelMock)
         )
 
-        is DiscoveredBluetoothDevice.RealDiscoveredBluetoothDevice -> FDeviceCombined.FDeviceBSBModelBLE(
-            address = device.address,
+        is DiscoveredBluetoothDevice.RealDiscoveredBluetoothDevice -> FDeviceCombined(
             uniqueId = id,
-            humanReadableName = device.name ?: UNKNOWN_NAME
+            humanReadableName = device.name ?: UNKNOWN_NAME,
+            models = listOf(FDeviceCombined.DeviceModel.FDeviceBSBModelBLE(address = device.address))
         )
     }
 }
