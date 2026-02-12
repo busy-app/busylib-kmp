@@ -29,7 +29,8 @@ class FCloudApiImpl(
         cloudDeviceMonitor.subscribe(listener)
     }
 
-    override val deviceName = currentConfig.name
+    override val deviceName: String
+        get() = currentConfig.name
 
     override suspend fun tryUpdateConnectionConfig(config: FDeviceConnectionConfig<*>): Result<Unit> {
         if (config !is FCloudDeviceConnectionConfig) {
