@@ -62,7 +62,7 @@ class FDeviceHolder<API : FConnectedDeviceApi>(
             exceptionHandler(this, throwable)
         }
     )
-    private var deviceApi: Deferred<API> = scope.async {
+    private val deviceApi: Deferred<API> = scope.async {
         deviceConnectionHelper.connect(
             scope,
             config,
