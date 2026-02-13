@@ -36,10 +36,9 @@ sealed class FDeviceBaseModel {
     class FDeviceBSBModelLan(
         @SerialName("host")
         val host: String = "10.0.4.20",
-    ) : FDeviceBaseModel() {
-        override val uniqueId: String = host
-        override val humanReadableName: String = "BUSY Bar LAN"
-    }
+        override val uniqueId: String = host,
+        override val humanReadableName: String = "BUSY Bar LAN",
+    ) : FDeviceBaseModel()
 
     @Serializable
     class FDeviceBSBModelCloud(
@@ -48,11 +47,10 @@ sealed class FDeviceBaseModel {
         @SerialName("host")
         val host: String,
         @SerialName("device_id")
-        val deviceId: String
-    ) : FDeviceBaseModel() {
-        override val uniqueId: String = authToken
-        override val humanReadableName: String = "BUSY Bar Cloud"
-    }
+        val deviceId: String,
+        override val uniqueId: String = authToken,
+        override val humanReadableName: String = "BUSY Bar Cloud",
+    ) : FDeviceBaseModel()
 
     @Serializable
     class FDeviceBSBModelCombined(

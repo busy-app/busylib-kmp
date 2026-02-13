@@ -5,6 +5,7 @@ import net.flipper.bridge.connection.feature.rpc.api.model.AudioVolumeInfo
 import net.flipper.bridge.connection.feature.rpc.api.model.BsbBrightness
 import net.flipper.bridge.connection.feature.rpc.api.model.BsbBrightnessInfo
 import net.flipper.busylib.core.wrapper.WrappedFlow
+import net.flipper.busylib.core.wrapper.WrappedStateFlow
 
 interface FSettingsFeatureApi : FDeviceFeatureApi {
     fun getVolumeFlow(): WrappedFlow<AudioVolumeInfo>
@@ -16,6 +17,6 @@ interface FSettingsFeatureApi : FDeviceFeatureApi {
 
     suspend fun setVolume(volume: Int): Result<Unit>
 
-    fun getDeviceName(): WrappedFlow<String>
+    fun getDeviceName(): WrappedStateFlow<String>
     suspend fun setDeviceName(name: String): Result<Unit>
 }

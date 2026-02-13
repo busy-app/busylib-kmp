@@ -1,9 +1,11 @@
 package net.flipper.bridge.connection.feature.settings.api
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import me.tatarka.inject.annotations.Inject
 import me.tatarka.inject.annotations.IntoMap
 import me.tatarka.inject.annotations.Provides
@@ -22,6 +24,7 @@ import net.flipper.bridge.connection.feature.rpc.api.model.toBsbBrightnessInfo
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.core.wrapper.WrappedFlow
+import net.flipper.busylib.core.wrapper.WrappedStateFlow
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.ktx.common.DefaultConsumable
 import net.flipper.core.busylib.ktx.common.asFlow
@@ -43,6 +46,22 @@ class FSettingsFeatureApiImpl(
     private val connectedDevice: FConnectedDeviceApi,
 ) : FSettingsFeatureApi, LogTagProvider {
     override val TAG: String = "FSettingsFeatureApi"
+
+    private val deviceNameFlow = fEventsFeatureApi
+        ?.getUpdateFlow(UpdateEvent.DEVICE_NAME)
+        .orEmpty()
+        .merge(flowOf(DefaultConsumable(false)))
+        .transformWhileSubscribed(scope = scope) { flow ->
+            flow.throttleLatest { consumable ->
+                val couldConsume = consumable.tryConsume()
+                exponentialRetry {
+                    rpcFeatureApi
+                        .fRpcSettingsApi
+                        .getName(couldConsume)
+                        .map { nameInfo -> nameInfo.name }
+                }
+            }
+        }.stateIn(scope, SharingStarted.Lazily, connectedDevice.deviceName)
 
     override fun getBrightnessInfoFlow(): WrappedFlow<BsbBrightnessInfo> {
         return fEventsFeatureApi
@@ -91,26 +110,8 @@ class FSettingsFeatureApiImpl(
             .map { }
     }
 
-    override fun getDeviceName(): WrappedFlow<String> {
-        return flow {
-            emit(connectedDevice.deviceName)
-            fEventsFeatureApi
-                ?.getUpdateFlow(UpdateEvent.DEVICE_NAME)
-                .orEmpty()
-                .merge(flowOf(DefaultConsumable(false)))
-                .transformWhileSubscribed(scope = scope) { flow ->
-                    flow.throttleLatest { consumable ->
-                        val couldConsume = consumable.tryConsume()
-                        exponentialRetry {
-                            rpcFeatureApi
-                                .fRpcSettingsApi
-                                .getName(couldConsume)
-                                .map { nameInfo -> nameInfo.name }
-                        }
-                    }
-                }
-                .collect { deviceName -> emit(deviceName) }
-        }.wrap()
+    override fun getDeviceName(): WrappedStateFlow<String> {
+        return deviceNameFlow.wrap()
     }
 
     override suspend fun setDeviceName(name: String): Result<Unit> {
