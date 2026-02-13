@@ -43,11 +43,6 @@ class FDeviceConnectionConfigMapperImpl(
                 deviceName = humanReadableName
             )
 
-            is FDeviceCombined.DeviceModel.FDeviceBSBModelBLEiOS -> bleBuilderConfig.build(
-                address = device.address,
-                deviceName = humanReadableName
-            )
-
             is FDeviceCombined.DeviceModel.FDeviceBSBModelCloud -> cloudBuilderConfig.build(
                 authToken = device.authToken,
                 host = device.host,

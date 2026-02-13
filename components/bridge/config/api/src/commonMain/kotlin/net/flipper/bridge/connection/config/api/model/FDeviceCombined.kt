@@ -22,12 +22,6 @@ data class FDeviceCombined(
         ) : DeviceModel
 
         @Serializable
-        data class FDeviceBSBModelBLEiOS(
-            @SerialName("address")
-            val address: String
-        ) : DeviceModel
-
-        @Serializable
         data object FDeviceBSBModelMock : DeviceModel
 
         @Serializable

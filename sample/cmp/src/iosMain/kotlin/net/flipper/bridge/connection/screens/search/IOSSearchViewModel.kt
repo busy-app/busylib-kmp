@@ -108,7 +108,7 @@ class IOSSearchViewModel(
             persistedStorage.getAllDevices()
         ) { accessoriesMap, savedDevices ->
             val existedUuids = savedDevices
-                .filter { device -> device.models.any { it is FDeviceCombined.DeviceModel.FDeviceBSBModelBLEiOS } }
+                .filter { device -> device.models.any { it is FDeviceCombined.DeviceModel.FDeviceBSBModelBLE } }
                 .associateBy { it.uniqueId }
 
             accessoriesMap.map { (uuid, accessory) ->
@@ -117,7 +117,7 @@ class IOSSearchViewModel(
                     deviceModel = existedUuids[uuid] ?: FDeviceCombined(
                         uniqueId = uuid,
                         humanReadableName = accessory.displayName,
-                        models = listOf(FDeviceCombined.DeviceModel.FDeviceBSBModelBLEiOS(address = uuid))
+                        models = listOf(FDeviceCombined.DeviceModel.FDeviceBSBModelBLE(address = uuid))
                     ),
                     isAdded = existedUuids.containsKey(uuid)
                 )
