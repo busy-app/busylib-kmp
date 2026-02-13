@@ -29,8 +29,8 @@ class ProxyTokenProvider(
     private var cachedToken: String? = null
     private var lastTokenUpdate: Instant = Instant.DISTANT_PAST
 
-    suspend fun getToken(force: Boolean): String = mutex.withLock {
-        if (force || shouldUpdateToken()) {
+    suspend fun getToken(failedToken: String? = null): String = mutex.withLock {
+        if (failedToken == cachedToken || shouldUpdateToken()) {
             return@withLock generateToken()
         }
 
