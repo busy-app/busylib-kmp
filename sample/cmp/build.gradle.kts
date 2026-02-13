@@ -59,6 +59,11 @@ kotlin {
         implementation(libs.appcompat)
     }
     sourceSets.jvmMain.dependencies {
+        implementation(projects.components.core.ktor)
+
+        implementation(libs.ktor.client.core)
+        implementation(libs.kotlin.serialization.json)
+
         implementation(compose.desktop.currentOs)
     }
 }

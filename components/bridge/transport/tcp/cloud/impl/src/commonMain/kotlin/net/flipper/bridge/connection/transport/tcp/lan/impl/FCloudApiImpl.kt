@@ -5,20 +5,25 @@ import net.flipper.bridge.connection.transport.common.api.FInternalTransportConn
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.bridge.connection.transport.tcp.cloud.api.FCloudApi
 import net.flipper.bridge.connection.transport.tcp.cloud.api.FCloudDeviceConnectionConfig
-import net.flipper.bridge.connection.transport.tcp.lan.impl.engine.BUSYCloudHttpEngine
+import net.flipper.bridge.connection.transport.tcp.lan.impl.engine.BUSYCloudHttpEngineFactory
+import net.flipper.bridge.connection.transport.tcp.lan.impl.engine.token.ProxyTokenProviderFactory
 import net.flipper.bridge.connection.transport.tcp.lan.impl.monitor.CloudDeviceMonitor
 import net.flipper.core.ktor.getPlatformEngineFactory
 
 class FCloudApiImpl(
     private val listener: FTransportConnectionStatusListener,
     private var currentConfig: FCloudDeviceConnectionConfig,
-    cloudDeviceMonitorFactory: CloudDeviceMonitor.Factory
+    cloudDeviceMonitorFactory: CloudDeviceMonitor.Factory,
+    tokenProviderFactory: ProxyTokenProviderFactory,
+    cloudEngineFactory: BUSYCloudHttpEngineFactory
 ) : FCloudApi {
     private val httpEngineOriginal = getPlatformEngineFactory().create()
-    private val httpEngine = BUSYCloudHttpEngine(
+    private val httpEngine = cloudEngineFactory(
         httpEngineOriginal,
-        authToken = currentConfig.authToken,
-        host = currentConfig.host
+        tokenProviderFactory(
+            httpEngineOriginal,
+            currentConfig.deviceId
+        )
     )
     private val cloudDeviceMonitor = cloudDeviceMonitorFactory.create(
         deviceApi = this,

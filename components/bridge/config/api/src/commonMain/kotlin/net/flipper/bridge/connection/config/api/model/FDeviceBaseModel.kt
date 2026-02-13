@@ -43,14 +43,10 @@ sealed class FDeviceBaseModel {
 
     @Serializable
     class FDeviceBSBModelCloud(
-        @SerialName("auth_token")
-        val authToken: String,
-        @SerialName("host")
-        val host: String,
         @SerialName("device_id")
         val deviceId: String
     ) : FDeviceBaseModel() {
-        override val uniqueId: String = authToken
+        override val uniqueId: String = deviceId
         override val humanReadableName: String = "BUSY Bar Cloud"
     }
 
@@ -106,8 +102,6 @@ sealed class FDeviceBaseModel {
 
             is FDeviceBSBModelCloud -> {
                 return "FDeviceBSBModelCloud(" +
-                    "authToken='$authToken', " +
-                    "host='$host', " +
                     "uniqueId='$uniqueId', " +
                     "humanReadableName='$humanReadableName'" +
                     ")"
