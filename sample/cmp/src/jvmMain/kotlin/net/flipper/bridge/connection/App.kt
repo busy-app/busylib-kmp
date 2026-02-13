@@ -44,7 +44,6 @@ suspend fun main() {
     )
     val hostApi = BUSYLibHostApiStub(
         host = "cloud.dev.busy.app",
-        proxyHost = "proxy.dev.busy.app"
     )
     val busyLib = BUSYLibDesktop.build(
         scope = applicationScope,

@@ -1,9 +1,11 @@
 package net.flipper.bridge.connection.transport.tcp.lan.impl.engine.token
 
+import io.ktor.client.call.body
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.HttpHeaders
+import io.ktor.http.URLProtocol
 import io.ktor.http.path
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -16,8 +18,6 @@ import net.flipper.core.ktor.getHttpClient
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
-
-private val TOKEN_DURATION = 600.seconds
 
 typealias ProxyTokenProviderFactory = (httpEngine: HttpClientEngine, deviceId: String) -> ProxyTokenProvider
 
@@ -32,10 +32,9 @@ class ProxyTokenProvider(
     private val mutex = Mutex()
 
     private var cachedToken: String? = null
-    private var lastTokenUpdate: Instant = Instant.DISTANT_PAST
+    private var tokenExpireTime: Instant = Instant.DISTANT_PAST
 
     suspend fun getToken(failedToken: String? = null): String = mutex.withLock {
-        return@withLock "TRASH"
         if (failedToken == cachedToken || shouldUpdateToken()) {
             return@withLock generateToken()
         }
@@ -47,7 +46,7 @@ class ProxyTokenProvider(
         if (cachedToken == null) {
             return true
         }
-        if (lastTokenUpdate - Clock.System.now() > TOKEN_DURATION) {
+        if (tokenExpireTime < Clock.System.now()) {
             return true
         }
 
@@ -59,14 +58,22 @@ class ProxyTokenProvider(
         if (principal !is BUSYLibUserPrincipal.Token) {
             error("Not found user principal")
         }
-        httpClient.post {
+        val requestTimestamp = Clock.System.now()
+        val response = httpClient.post {
             url {
-                host = hostApi.getProxyHost().value
+                host = hostApi.getHost().value
+                protocol = URLProtocol.HTTPS
+                port = 443
+
                 path("/api/v0/bars/$deviceId/access-token")
             }
-            setBody(ProxyTokenRequest(ttlSeconds = TOKEN_DURATION.inWholeSeconds))
+            setBody(ProxyTokenRequest())
             headers[HttpHeaders.Authorization] = "Bearer ${principal.token}"
-        }
-        TODO()
+        }.body<ProxyTokenResponse>()
+
+        cachedToken = response.accessToken
+        tokenExpireTime = requestTimestamp + response.expiresInSec.seconds
+
+        return response.accessToken
     }
 }

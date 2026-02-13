@@ -38,10 +38,7 @@ class BUSYLibDesktop(
             principalApi: BUSYLibPrincipalApi,
             busyLibBarsApi: BUSYLibBarsApi,
             persistedStorage: FDevicePersistedStorage,
-            hostApi: BUSYLibHostApi = BUSYLibHostApiStub(
-                host = "cloud.busy.app",
-                proxyHost = "proxy.busy.app"
-            ),
+            hostApi: BUSYLibHostApi = BUSYLibHostApiStub("cloud.busy.app"),
             networkStateApi: BUSYLibNetworkStateApi = BUSYLibNetworkStateApiNoop()
         ): BUSYLibDesktop {
             val graph = BUSYLibGraphDesktop::class.create(

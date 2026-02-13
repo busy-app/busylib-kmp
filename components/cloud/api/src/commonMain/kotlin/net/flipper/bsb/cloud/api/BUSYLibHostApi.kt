@@ -6,14 +6,8 @@ import net.flipper.busylib.core.wrapper.wrap
 
 interface BUSYLibHostApi {
     fun getHost(): WrappedStateFlow<String>
-    fun getProxyHost(): WrappedStateFlow<String>
 }
 
-class BUSYLibHostApiStub(
-    val host: String,
-    val proxyHost: String
-) : BUSYLibHostApi {
+class BUSYLibHostApiStub(val host: String) : BUSYLibHostApi {
     override fun getHost() = MutableStateFlow(host).wrap()
-
-    override fun getProxyHost() = MutableStateFlow(proxyHost).wrap()
 }

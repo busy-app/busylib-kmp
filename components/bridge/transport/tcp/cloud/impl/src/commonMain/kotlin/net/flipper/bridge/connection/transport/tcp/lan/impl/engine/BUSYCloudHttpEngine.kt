@@ -7,7 +7,9 @@ import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.HttpRequestData
 import io.ktor.client.request.HttpResponseData
 import io.ktor.client.request.takeFrom
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.URLProtocol
+import io.ktor.http.encodedPath
 import io.ktor.utils.io.InternalAPI
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
@@ -29,10 +31,11 @@ class BUSYCloudHttpEngine(
 
     @InternalAPI
     override suspend fun execute(data: HttpRequestData): HttpResponseData {
-        val result = try {
-            makeRequest(data, tokenProvider.getToken())
-        } catch (e: Throwable) {
-            throw e
+        val token = tokenProvider.getToken()
+        var result = makeRequest(data, token)
+        if (result.statusCode == HttpStatusCode.Forbidden) {
+            info { "Failed to request because of forbidden, try to refresh token" }
+            result = makeRequest(data, tokenProvider.getToken(token))
         }
 
         return result
@@ -45,9 +48,10 @@ class BUSYCloudHttpEngine(
     ): HttpResponseData {
         val newRequest = HttpRequestBuilder().takeFrom(data)
 
-        newRequest.url.host = hostApi.getProxyHost().value
+        newRequest.url.host = hostApi.getHost().value
         newRequest.url.protocol = URLProtocol.HTTPS
         newRequest.url.port = 443
+        newRequest.url.encodedPath = "/device" + newRequest.url.encodedPath
         newRequest.headers["Authorization"] = "Bearer $token"
 
         val newRequestData = newRequest.build()

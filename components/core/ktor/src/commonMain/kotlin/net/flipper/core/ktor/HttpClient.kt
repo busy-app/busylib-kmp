@@ -35,6 +35,7 @@ fun getHttpClient(
         isLenient = true
         ignoreUnknownKeys = true
         coerceInputValues = true
+        encodeDefaults = true
     }
 
     install(ContentNegotiation) {

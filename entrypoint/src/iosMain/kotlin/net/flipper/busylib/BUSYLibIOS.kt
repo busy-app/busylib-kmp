@@ -39,10 +39,7 @@ class BUSYLibIOS(
             busyLibBarsApi: BUSYLibBarsApi,
             persistedStorage: FDevicePersistedStorage,
             manager: CBCentralManager,
-            hostApi: BUSYLibHostApi = BUSYLibHostApiStub(
-                host = "cloud.busy.app",
-                proxyHost = "proxy.busy.app"
-            ),
+            hostApi: BUSYLibHostApi = BUSYLibHostApiStub("cloud.busy.app"),
             networkStateApi: BUSYLibNetworkStateApi = BUSYLibNetworkStateApiNoop()
         ): BUSYLibIOS {
             val graph = create(

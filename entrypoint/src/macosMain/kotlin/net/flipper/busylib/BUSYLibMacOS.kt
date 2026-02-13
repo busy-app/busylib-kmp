@@ -29,6 +29,7 @@ class BUSYLibMacOS(
             it.onLaunch()
         }
     }
+
     companion object {
         @Suppress("LongParameterList", "ForbiddenComment") // TODO: Move it to builder
         fun build(
@@ -36,10 +37,7 @@ class BUSYLibMacOS(
             principalApi: BUSYLibPrincipalApi,
             busyLibBarsApi: BUSYLibBarsApi,
             persistedStorage: FDevicePersistedStorage,
-            hostApi: BUSYLibHostApi = BUSYLibHostApiStub(
-                host = "cloud.busy.app",
-                proxyHost = "proxy.busy.app"
-            ),
+            hostApi: BUSYLibHostApi = BUSYLibHostApiStub("cloud.busy.app"),
             networkStateApi: BUSYLibNetworkStateApi = BUSYLibNetworkStateApiNoop()
         ): BUSYLibMacOS {
             val graph = create(

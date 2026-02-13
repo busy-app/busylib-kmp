@@ -8,5 +8,5 @@ data class ProxyTokenRequest(
     @SerialName("scope")
     val scopes: List<String> = listOf("http:read", "http:write", "http:delete"),
     @SerialName("ttl_seconds")
-    val ttlSeconds: Long
+    val ttlSeconds: Long = 600 // Seconds
 )
