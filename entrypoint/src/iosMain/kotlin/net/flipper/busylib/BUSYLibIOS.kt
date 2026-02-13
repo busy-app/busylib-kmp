@@ -30,6 +30,7 @@ class BUSYLibIOS(
             it.onLaunch()
         }
     }
+
     companion object {
         @Suppress("LongParameterList", "ForbiddenComment") // TODO: Move it to builder
         fun build(
@@ -38,7 +39,10 @@ class BUSYLibIOS(
             busyLibBarsApi: BUSYLibBarsApi,
             persistedStorage: FDevicePersistedStorage,
             manager: CBCentralManager,
-            hostApi: BUSYLibHostApi = BUSYLibHostApiStub("cloud.busy.app"),
+            hostApi: BUSYLibHostApi = BUSYLibHostApiStub(
+                host = "cloud.busy.app",
+                proxyHost = "proxy.busy.app"
+            ),
             networkStateApi: BUSYLibNetworkStateApi = BUSYLibNetworkStateApiNoop()
         ): BUSYLibIOS {
             val graph = create(

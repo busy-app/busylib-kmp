@@ -23,6 +23,8 @@ class BUSYCloudHttpEngine(
     @InternalAPI
     override suspend fun execute(data: HttpRequestData): HttpResponseData {
         val newRequest = HttpRequestBuilder().takeFrom(data)
+        // TODO add rerequest token if token expire (too much requests?)
+        // Debug api
 
         newRequest.url.host = host
         newRequest.url.protocol = URLProtocol.HTTPS

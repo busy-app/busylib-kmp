@@ -47,7 +47,10 @@ class BUSYLibAndroid(
             persistedStorage: FDevicePersistedStorage,
             // Android-specific factory
             context: Context,
-            hostApi: BUSYLibHostApi = BUSYLibHostApiStub("cloud.busy.app"),
+            hostApi: BUSYLibHostApi = BUSYLibHostApiStub(
+                host = "cloud.busy.app",
+                proxyHost = "proxy.busy.app"
+            ),
             networkStateApi: BUSYLibNetworkStateApi = BUSYLibNetworkStateApiNoop()
         ): BUSYLibAndroid {
             val graph = BUSYLibGraphAndroid::class.create(

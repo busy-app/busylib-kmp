@@ -50,7 +50,10 @@ fun main() {
         busyLibBarsApi = BUSYLibBarsApiNoop(),
         persistedStorage = persistedStorage,
         networkStateApi = BUSYLibNetworkStateApiNoop(defaultState = true),
-        hostApi = BUSYLibHostApiStub("cloud.dev.busy.app")
+        hostApi = BUSYLibHostApiStub(
+            host = "cloud.dev.busy.app",
+            proxyHost = "proxy.dev.busy.app"
+        )
     )
 
     busyLib.launch()
