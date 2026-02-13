@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
-import net.flipper.bridge.connection.config.api.model.FDeviceCombined
+import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.service.api.FConnectionService
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.log.LogTagProvider
@@ -41,9 +41,9 @@ class IOSSearchViewModel(
 
     private val mockDevice = ConnectionSearchItem(
         address = "busy_bar_mock",
-        deviceModel = FDeviceCombined(
+        deviceModel = BUSYBar(
             humanReadableName = "BUSY Bar Mock",
-            models = listOf(FDeviceCombined.DeviceModel.FDeviceBSBModelMock)
+            models = listOf(BUSYBar.ConnectionWayModel.FConnectionWayBSBModelMock)
         ),
         isAdded = false,
     )
@@ -108,16 +108,16 @@ class IOSSearchViewModel(
             persistedStorage.getAllDevices()
         ) { accessoriesMap, savedDevices ->
             val existedUuids = savedDevices
-                .filter { device -> device.models.any { it is FDeviceCombined.DeviceModel.FDeviceBSBModelBLE } }
+                .filter { device -> device.models.any { it is BUSYBar.ConnectionWayModel.FConnectionWayBSBModelBLE } }
                 .associateBy { it.uniqueId }
 
             accessoriesMap.map { (uuid, accessory) ->
                 ConnectionSearchItem(
                     address = uuid,
-                    deviceModel = existedUuids[uuid] ?: FDeviceCombined(
+                    deviceModel = existedUuids[uuid] ?: BUSYBar(
                         uniqueId = uuid,
                         humanReadableName = accessory.displayName,
-                        models = listOf(FDeviceCombined.DeviceModel.FDeviceBSBModelBLE(address = uuid))
+                        models = listOf(BUSYBar.ConnectionWayModel.FConnectionWayBSBModelBLE(address = uuid))
                     ),
                     isAdded = existedUuids.containsKey(uuid)
                 )

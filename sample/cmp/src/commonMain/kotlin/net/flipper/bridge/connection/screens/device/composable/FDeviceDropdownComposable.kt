@@ -22,7 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import busylibkmp.sample.cmp.generated.resources.Res
 import busylibkmp.sample.cmp.generated.resources.ic_more
-import net.flipper.bridge.connection.config.api.model.FDeviceCombined
+import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.screens.device.viewmodel.DevicesDropdownState
 import org.jetbrains.compose.resources.painterResource
 
@@ -31,7 +31,7 @@ import org.jetbrains.compose.resources.painterResource
 @Suppress("LongMethod")
 fun FDeviceDropdownComposable(
     devicesState: DevicesDropdownState,
-    onDeviceSelect: (FDeviceCombined) -> Unit,
+    onDeviceSelect: (BUSYBar) -> Unit,
     onOpenSearch: () -> Unit,
     onDisconnect: () -> Unit,
     modifier: Modifier = Modifier

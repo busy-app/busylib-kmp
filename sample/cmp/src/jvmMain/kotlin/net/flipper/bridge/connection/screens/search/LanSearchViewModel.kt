@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
-import net.flipper.bridge.connection.config.api.model.FDeviceCombined
+import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.utils.Secrets
 import net.flipper.busylib.core.wrapper.WrappedStateFlow
 import net.flipper.busylib.core.wrapper.wrap
@@ -23,28 +23,28 @@ class LanSearchViewModel(
         persistedStorage.getAllDevices(),
         flowOf(
             listOf(
-                FDeviceCombined(
+                BUSYBar(
                     uniqueId = "BUSY_Bar_LAN",
                     humanReadableName = "BUSY Bar LAN",
-                    models = listOf(FDeviceCombined.DeviceModel.FDeviceBSBModelLan())
+                    models = listOf(BUSYBar.ConnectionWayModel.FConnectionWayBSBModelLan())
                 ),
-                FDeviceCombined(
+                BUSYBar(
                     uniqueId = "BUSY_Bar_Cloud",
                     humanReadableName = "BUSY Bar Cloud",
                     models = listOf(
-                        FDeviceCombined.DeviceModel.FDeviceBSBModelCloud(
+                        BUSYBar.ConnectionWayModel.FConnectionWayBSBModelCloud(
                             authToken = Secrets.DEVICE_TOKEN,
                             host = "proxy.dev.busy.app",
                             deviceId = Secrets.DEVICE_ID
                         )
                     )
                 ),
-                FDeviceCombined(
+                BUSYBar(
                     uniqueId = "BUSY Bar Combined",
                     humanReadableName = "BUSY Bar Combined",
                     models = listOf(
-                        FDeviceCombined.DeviceModel.FDeviceBSBModelLan(),
-                        FDeviceCombined.DeviceModel.FDeviceBSBModelCloud(
+                        BUSYBar.ConnectionWayModel.FConnectionWayBSBModelLan(),
+                        BUSYBar.ConnectionWayModel.FConnectionWayBSBModelCloud(
                             authToken = Secrets.DEVICE_TOKEN,
                             host = "proxy.dev.busy.app",
                             deviceId = Secrets.DEVICE_ID

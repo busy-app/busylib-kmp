@@ -1,13 +1,13 @@
 package net.flipper.bridge.connection.config.api
 
 import kotlinx.coroutines.flow.Flow
-import net.flipper.bridge.connection.config.api.model.FDeviceCombined
+import net.flipper.bridge.connection.config.api.model.BUSYBar
 
 interface FDevicePersistedStorage {
-    fun getCurrentDevice(): Flow<FDeviceCombined?>
+    fun getCurrentDevice(): Flow<BUSYBar?>
     suspend fun setCurrentDevice(id: String?)
-    suspend fun addDevice(device: FDeviceCombined)
+    suspend fun addDevice(device: BUSYBar)
     suspend fun removeDevice(id: String)
-    fun getAllDevices(): Flow<List<FDeviceCombined>>
-    suspend fun updateCurrentDevice(block: (FDeviceCombined) -> FDeviceCombined)
+    fun getAllDevices(): Flow<List<BUSYBar>>
+    suspend fun updateCurrentDevice(block: (BUSYBar) -> BUSYBar)
 }

@@ -1,7 +1,7 @@
 package net.flipper.bridge.connection.configbuilder.impl
 
 import me.tatarka.inject.annotations.Inject
-import net.flipper.bridge.connection.config.api.model.FDeviceCombined
+import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.configbuilder.api.FDeviceConnectionConfigMapper
 import net.flipper.bridge.connection.configbuilder.impl.builders.BUSYBarBLEBuilderConfig
 import net.flipper.bridge.connection.configbuilder.impl.builders.BUSYBarCloudBuilderConfig
@@ -21,7 +21,7 @@ class FDeviceConnectionConfigMapperImpl(
     private val cloudBuilderConfig: BUSYBarCloudBuilderConfig,
     private val busyBarCombinedBuilderConfig: BUSYBarCombinedBuilderConfig
 ) : FDeviceConnectionConfigMapper {
-    override fun getConnectionConfig(device: FDeviceCombined): FDeviceConnectionConfig<*> {
+    override fun getConnectionConfig(device: BUSYBar): FDeviceConnectionConfig<*> {
         return busyBarCombinedBuilderConfig.build(
             name = device.humanReadableName,
             connectionConfigs = device.models.map {
@@ -34,28 +34,28 @@ class FDeviceConnectionConfigMapperImpl(
     }
 
     private fun map(
-        device: FDeviceCombined.DeviceModel,
+        device: BUSYBar.ConnectionWayModel,
         humanReadableName: String
     ): FDeviceConnectionConfig<*> {
         return when (device) {
-            is FDeviceCombined.DeviceModel.FDeviceBSBModelBLE -> bleBuilderConfig.build(
+            is BUSYBar.ConnectionWayModel.FConnectionWayBSBModelBLE -> bleBuilderConfig.build(
                 address = device.address,
                 deviceName = humanReadableName
             )
 
-            is FDeviceCombined.DeviceModel.FDeviceBSBModelCloud -> cloudBuilderConfig.build(
+            is BUSYBar.ConnectionWayModel.FConnectionWayBSBModelCloud -> cloudBuilderConfig.build(
                 authToken = device.authToken,
                 host = device.host,
                 name = humanReadableName,
                 deviceId = device.deviceId
             )
 
-            is FDeviceCombined.DeviceModel.FDeviceBSBModelLan -> lanBuilderConfig.build(
+            is BUSYBar.ConnectionWayModel.FConnectionWayBSBModelLan -> lanBuilderConfig.build(
                 host = device.host,
                 name = humanReadableName
             )
 
-            FDeviceCombined.DeviceModel.FDeviceBSBModelMock -> mockBuilderConfig.build(
+            BUSYBar.ConnectionWayModel.FConnectionWayBSBModelMock -> mockBuilderConfig.build(
                 name = humanReadableName
             )
         }

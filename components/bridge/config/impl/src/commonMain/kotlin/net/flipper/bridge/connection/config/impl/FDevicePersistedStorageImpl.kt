@@ -4,7 +4,7 @@ import com.russhwolf.settings.ObservableSettings
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
-import net.flipper.bridge.connection.config.api.model.FDeviceCombined
+import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
 import net.flipper.core.busylib.log.warn
@@ -19,7 +19,7 @@ class FDevicePersistedStorageImpl(
         observableSettings: ObservableSettings
     ) : this(BleConfigSettingsKrateImpl(observableSettings))
 
-    override fun getCurrentDevice(): Flow<FDeviceCombined?> {
+    override fun getCurrentDevice(): Flow<BUSYBar?> {
         return bleConfigKrate.flow.map { config ->
             val deviceId = config.currentSelectedDeviceId
             if (deviceId.isNullOrBlank()) {
@@ -40,7 +40,7 @@ class FDevicePersistedStorageImpl(
         }
     }
 
-    override suspend fun addDevice(device: FDeviceCombined) = bleConfigKrate.save { settings ->
+    override suspend fun addDevice(device: BUSYBar) = bleConfigKrate.save { settings ->
         info { "Add device $device" }
 
         settings.copy(
@@ -62,12 +62,12 @@ class FDevicePersistedStorageImpl(
         }
     }
 
-    override fun getAllDevices(): Flow<List<FDeviceCombined>> {
+    override fun getAllDevices(): Flow<List<BUSYBar>> {
         return bleConfigKrate.flow.map { it.devices }
     }
 
     override suspend fun updateCurrentDevice(
-        block: (FDeviceCombined) -> FDeviceCombined
+        block: (BUSYBar) -> BUSYBar
     ) = bleConfigKrate.save { settings ->
         settings.copy(
             devices = settings.devices

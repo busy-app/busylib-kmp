@@ -14,7 +14,7 @@ import net.flipper.bridge.api.scanner.DiscoveredBluetoothDevice
 import net.flipper.bridge.api.scanner.FlipperScanner
 import net.flipper.bridge.api.utils.Constants.UNKNOWN_NAME
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
-import net.flipper.bridge.connection.config.api.model.FDeviceCombined
+import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.busylib.core.wrapper.WrappedStateFlow
 import net.flipper.busylib.core.wrapper.wrap
 
@@ -42,7 +42,7 @@ class SampleBLESearchViewModel(
             val existedMacAddresses = savedDevices
                 .flatMap { device ->
                     device.models
-                        .filterIsInstance<FDeviceCombined.DeviceModel.FDeviceBSBModelBLE>()
+                        .filterIsInstance<BUSYBar.ConnectionWayModel.FConnectionWayBSBModelBLE>()
                         .map { it.address to device }
                 }.toMap()
             searchDevices.map { bleDevice ->
@@ -63,20 +63,20 @@ class SampleBLESearchViewModel(
     override fun getDevicesFlow(): WrappedStateFlow<ImmutableList<ConnectionSearchItem>> =
         devicesFlow.asStateFlow().wrap()
 }
-private fun DiscoveredBluetoothDevice.toFDeviceModel(): FDeviceCombined {
+private fun DiscoveredBluetoothDevice.toFDeviceModel(): BUSYBar {
     val id = address
 
     return when (this) {
-        is DiscoveredBluetoothDevice.MockDiscoveredBluetoothDevice -> FDeviceCombined(
+        is DiscoveredBluetoothDevice.MockDiscoveredBluetoothDevice -> BUSYBar(
             uniqueId = id,
             humanReadableName = name ?: UNKNOWN_NAME,
-            models = listOf(FDeviceCombined.DeviceModel.FDeviceBSBModelMock)
+            models = listOf(BUSYBar.ConnectionWayModel.FConnectionWayBSBModelMock)
         )
 
-        is DiscoveredBluetoothDevice.RealDiscoveredBluetoothDevice -> FDeviceCombined(
+        is DiscoveredBluetoothDevice.RealDiscoveredBluetoothDevice -> BUSYBar(
             uniqueId = id,
             humanReadableName = device.name ?: UNKNOWN_NAME,
-            models = listOf(FDeviceCombined.DeviceModel.FDeviceBSBModelBLE(address = device.address))
+            models = listOf(BUSYBar.ConnectionWayModel.FConnectionWayBSBModelBLE(address = device.address))
         )
     }
 }

@@ -5,39 +5,39 @@ import kotlinx.serialization.Serializable
 import kotlin.uuid.Uuid
 
 @Serializable
-data class FDeviceCombined(
+data class BUSYBar(
     @SerialName("human_readable_name")
     val humanReadableName: String,
     @SerialName("unique_id")
     val uniqueId: String = Uuid.random().toString(),
     @SerialName("models")
-    val models: List<DeviceModel>
+    val models: List<ConnectionWayModel>
 ) {
     @Serializable
-    sealed interface DeviceModel {
+    sealed interface ConnectionWayModel {
         @Serializable
-        data class FDeviceBSBModelBLE(
+        data class FConnectionWayBSBModelBLE(
             @SerialName("address")
             val address: String
-        ) : DeviceModel
+        ) : ConnectionWayModel
 
         @Serializable
-        data object FDeviceBSBModelMock : DeviceModel
+        data object FConnectionWayBSBModelMock : ConnectionWayModel
 
         @Serializable
-        data class FDeviceBSBModelLan(
+        data class FConnectionWayBSBModelLan(
             @SerialName("host")
             val host: String = "10.0.4.20",
-        ) : DeviceModel
+        ) : ConnectionWayModel
 
         @Serializable
-        data class FDeviceBSBModelCloud(
+        data class FConnectionWayBSBModelCloud(
             @SerialName("auth_token")
             val authToken: String,
             @SerialName("host")
             val host: String,
             @SerialName("device_id")
             val deviceId: String
-        ) : DeviceModel
+        ) : ConnectionWayModel
     }
 }
