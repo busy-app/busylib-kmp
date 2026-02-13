@@ -10,7 +10,6 @@ kotlin {
             implementation(libs.kotlin.coroutines)
             implementation(libs.ktor.client.core)
 
-            implementation(libs.ktor.client.core)
             implementation(libs.ktor.negotiation)
             implementation(libs.ktor.serialization)
             implementation(libs.ktor.client.websockets)

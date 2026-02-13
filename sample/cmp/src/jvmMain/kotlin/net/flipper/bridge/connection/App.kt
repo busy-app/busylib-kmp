@@ -57,11 +57,6 @@ suspend fun main() {
 
     busyLib.launch()
 
-    applicationScope.launch {
-        val principal = getUserPrincipal(hostApi)
-        println("UserPrincipal: $principal")
-    }
-
     val root = runOnUiThread {
         getRootDecomposeComponent(
             componentContext = DefaultComponentContext(lifecycle = lifecycle),
