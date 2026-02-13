@@ -25,7 +25,7 @@ class LanSearchViewModel(
                 BUSYBar(
                     uniqueId = "BUSY_Bar_LAN",
                     humanReadableName = "BUSY Bar LAN",
-                    models = listOf(BUSYBar.ConnectionWayModel.FConnectionWayBSBModelLan())
+                    models = listOf(BUSYBar.ConnectionWay.Lan())
                 )
             )
         )

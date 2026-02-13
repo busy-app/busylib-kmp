@@ -34,28 +34,28 @@ class FDeviceConnectionConfigMapperImpl(
     }
 
     private fun map(
-        device: BUSYBar.ConnectionWayModel,
+        device: BUSYBar.ConnectionWay,
         humanReadableName: String
     ): FDeviceConnectionConfig<*> {
         return when (device) {
-            is BUSYBar.ConnectionWayModel.FConnectionWayBSBModelBLE -> bleBuilderConfig.build(
+            is BUSYBar.ConnectionWay.BLE -> bleBuilderConfig.build(
                 address = device.address,
                 deviceName = humanReadableName
             )
 
-            is BUSYBar.ConnectionWayModel.FConnectionWayBSBModelCloud -> cloudBuilderConfig.build(
+            is BUSYBar.ConnectionWay.Cloud -> cloudBuilderConfig.build(
                 authToken = device.authToken,
                 host = device.host,
                 name = humanReadableName,
                 deviceId = device.deviceId
             )
 
-            is BUSYBar.ConnectionWayModel.FConnectionWayBSBModelLan -> lanBuilderConfig.build(
+            is BUSYBar.ConnectionWay.Lan -> lanBuilderConfig.build(
                 host = device.host,
                 name = humanReadableName
             )
 
-            BUSYBar.ConnectionWayModel.FConnectionWayBSBModelMock -> mockBuilderConfig.build(
+            BUSYBar.ConnectionWay.Mock -> mockBuilderConfig.build(
                 name = humanReadableName
             )
         }

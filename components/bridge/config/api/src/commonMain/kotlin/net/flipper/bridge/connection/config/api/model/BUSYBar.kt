@@ -11,33 +11,33 @@ data class BUSYBar(
     @SerialName("unique_id")
     val uniqueId: String = Uuid.random().toString(),
     @SerialName("models")
-    val models: List<ConnectionWayModel>
+    val models: List<ConnectionWay>
 ) {
     @Serializable
-    sealed interface ConnectionWayModel {
+    sealed interface ConnectionWay {
         @Serializable
-        data class FConnectionWayBSBModelBLE(
+        data class BLE(
             @SerialName("address")
             val address: String
-        ) : ConnectionWayModel
+        ) : ConnectionWay
 
         @Serializable
-        data object FConnectionWayBSBModelMock : ConnectionWayModel
+        data object Mock : ConnectionWay
 
         @Serializable
-        data class FConnectionWayBSBModelLan(
+        data class Lan(
             @SerialName("host")
             val host: String = "10.0.4.20",
-        ) : ConnectionWayModel
+        ) : ConnectionWay
 
         @Serializable
-        data class FConnectionWayBSBModelCloud(
+        data class Cloud(
             @SerialName("auth_token")
             val authToken: String,
             @SerialName("host")
             val host: String,
             @SerialName("device_id")
             val deviceId: String
-        ) : ConnectionWayModel
+        ) : ConnectionWay
     }
 }
