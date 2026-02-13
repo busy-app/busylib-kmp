@@ -7,9 +7,9 @@ import me.tatarka.inject.annotations.Inject
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
 import net.flipper.bsb.cloud.barsws.api.BSBWebSocket
 import net.flipper.bsb.cloud.barsws.api.getBSBWebSocket
-import net.flipper.core.ktor.getHttpClient
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.log.LogTagProvider
+import net.flipper.core.ktor.getHttpClient
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 

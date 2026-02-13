@@ -13,20 +13,24 @@ sealed interface InternalWebSocketRequest {
     ) : InternalWebSocketRequest
 
     @Serializable
-    data class SubscriptionState(
+    data class SubscribeState(
         @SerialName("subscribe")
-        val idsToSubscribe: List<String>? = null,
+        val idsToSubscribe: List<String>,
+    ) : InternalWebSocketRequest
+
+    @Serializable
+    data class UnsubscribeState(
         @SerialName("unsubscribe")
-        val idsToUnsubscribe: List<String>? = null
+        val idsToUnsubscribe: List<String>
     ) : InternalWebSocketRequest
 }
 
 fun WebSocketRequest.toInternal() = when (this) {
-    is WebSocketRequest.Subscribe -> InternalWebSocketRequest.SubscriptionState(
+    is WebSocketRequest.Subscribe -> InternalWebSocketRequest.SubscribeState(
         idsToSubscribe = listOf(deviceId)
     )
 
-    is WebSocketRequest.Unsubscribe -> InternalWebSocketRequest.SubscriptionState(
+    is WebSocketRequest.Unsubscribe -> InternalWebSocketRequest.UnsubscribeState(
         idsToUnsubscribe = listOf(deviceId)
     )
 }

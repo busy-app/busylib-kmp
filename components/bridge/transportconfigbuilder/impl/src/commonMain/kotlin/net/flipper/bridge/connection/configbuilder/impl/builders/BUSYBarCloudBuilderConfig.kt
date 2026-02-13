@@ -6,8 +6,6 @@ import net.flipper.bridge.connection.transport.tcp.cloud.api.FCloudDeviceConnect
 @Inject
 class BUSYBarCloudBuilderConfig {
     fun build(
-        authToken: String,
-        host: String,
         name: String,
         deviceId: String
     ): FCloudDeviceConnectionConfig {

@@ -7,10 +7,10 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.transformLatest
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.bridge.connection.transport.tcp.cloud.api.FCloudApi
@@ -19,7 +19,6 @@ import net.flipper.bsb.cloud.barsws.api.WebSocketRequest
 import net.flipper.core.busylib.ktx.common.launchOnCompletion
 import net.flipper.core.busylib.ktx.common.onLatest
 import net.flipper.core.busylib.log.LogTagProvider
-import net.flipper.core.busylib.log.debug
 import net.flipper.core.busylib.log.info
 import kotlin.time.Duration.Companion.seconds
 
@@ -67,7 +66,7 @@ class CloudDeviceMonitor(
     fun subscribe(listener: FTransportConnectionStatusListener) {
         info { "Start monitoring for $deviceId" }
         connectingState
-            .onEach { debug { "Change connecting state for $deviceId to $it" } }
+            .onEach { info { "Change connecting state for $deviceId to $it" } }
             .onEach(listener::onStatusUpdate)
             .launchIn(scope)
     }

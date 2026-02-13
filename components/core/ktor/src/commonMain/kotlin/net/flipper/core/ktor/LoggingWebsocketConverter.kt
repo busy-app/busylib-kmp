@@ -8,7 +8,6 @@ import io.ktor.websocket.Frame
 import io.ktor.websocket.readText
 import kotlinx.serialization.json.Json
 import net.flipper.core.busylib.log.LogTagProvider
-import net.flipper.core.busylib.log.info
 import net.flipper.core.busylib.log.verbose
 
 internal class LoggingWebsocketConverter(
