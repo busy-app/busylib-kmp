@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
-import net.flipper.bridge.connection.config.api.model.FDeviceBaseModel
+import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.utils.Secrets
 import net.flipper.busylib.core.wrapper.WrappedStateFlow
 import net.flipper.busylib.core.wrapper.wrap
@@ -23,31 +23,40 @@ class LanSearchViewModel(
         persistedStorage.getAllDevices(),
         flowOf(
             listOf(
-                FDeviceBaseModel.FDeviceBSBModelLan(),
-                FDeviceBaseModel.FDeviceBSBModelCloud(
-
-                    authToken = Secrets.DEVICE_TOKEN,
-                    host = "proxy.dev.busy.app",
-                    deviceId = Secrets.DEVICE_ID
+                BUSYBar(
+                    uniqueId = "BUSY_Bar_LAN",
+                    humanReadableName = "BUSY Bar LAN",
+                    models = listOf(BUSYBar.ConnectionWay.Lan())
                 ),
-                FDeviceBaseModel.FDeviceBSBModelCombined(
-                    uniqueId = "BUSY Bar Combined",
-                    humanReadableName = "BUSY Bar Combined",
+                BUSYBar(
+                    uniqueId = "BUSY_Bar_Cloud",
+                    humanReadableName = "BUSY Bar Cloud",
                     models = listOf(
-                        FDeviceBaseModel.FDeviceBSBModelLan(),
-                        FDeviceBaseModel.FDeviceBSBModelCloud(
+                        BUSYBar.ConnectionWay.Cloud(
                             authToken = Secrets.DEVICE_TOKEN,
                             host = "proxy.dev.busy.app",
                             deviceId = Secrets.DEVICE_ID
                         )
-                    ),
+                    )
+                ),
+                BUSYBar(
+                    uniqueId = "BUSY Bar Combined",
+                    humanReadableName = "BUSY Bar Combined",
+                    models = listOf(
+                        BUSYBar.ConnectionWay.Lan(),
+                        BUSYBar.ConnectionWay.Cloud(
+                            authToken = Secrets.DEVICE_TOKEN,
+                            host = "proxy.dev.busy.app",
+                            deviceId = Secrets.DEVICE_ID
+                        )
+                    )
                 )
             )
         )
     ) { savedDevices, foundDevices ->
         foundDevices.map { device ->
             ConnectionSearchItem(
-                address = device.humanReadableName,
+                address = device.uniqueId,
                 deviceModel = device,
                 isAdded = savedDevices.find { it.uniqueId == device.uniqueId } != null
             )

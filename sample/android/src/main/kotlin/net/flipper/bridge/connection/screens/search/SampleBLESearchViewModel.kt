@@ -14,7 +14,7 @@ import net.flipper.bridge.api.scanner.DiscoveredBluetoothDevice
 import net.flipper.bridge.api.scanner.FlipperScanner
 import net.flipper.bridge.api.utils.Constants.UNKNOWN_NAME
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
-import net.flipper.bridge.connection.config.api.model.FDeviceBaseModel
+import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.busylib.core.wrapper.WrappedStateFlow
 import net.flipper.busylib.core.wrapper.wrap
 
@@ -40,8 +40,11 @@ class SampleBLESearchViewModel(
             persistedStorage.getAllDevices()
         ) { searchDevices, savedDevices ->
             val existedMacAddresses = savedDevices
-                .filterIsInstance<FDeviceBaseModel.FDeviceBSBModelBLE>()
-                .associateBy { it.address }
+                .flatMap { device ->
+                    device.models
+                        .filterIsInstance<BUSYBar.ConnectionWay.BLE>()
+                        .map { it.address to device }
+                }.toMap()
             searchDevices.map { bleDevice ->
                 ConnectionSearchItem(
                     address = bleDevice.address,
@@ -60,19 +63,20 @@ class SampleBLESearchViewModel(
     override fun getDevicesFlow(): WrappedStateFlow<ImmutableList<ConnectionSearchItem>> =
         devicesFlow.asStateFlow().wrap()
 }
-private fun DiscoveredBluetoothDevice.toFDeviceModel(): FDeviceBaseModel {
+private fun DiscoveredBluetoothDevice.toFDeviceModel(): BUSYBar {
     val id = address
 
     return when (this) {
-        is DiscoveredBluetoothDevice.MockDiscoveredBluetoothDevice -> FDeviceBaseModel.FDeviceBSBModelMock(
+        is DiscoveredBluetoothDevice.MockDiscoveredBluetoothDevice -> BUSYBar(
             uniqueId = id,
-            humanReadableName = name ?: UNKNOWN_NAME
+            humanReadableName = name ?: UNKNOWN_NAME,
+            models = listOf(BUSYBar.ConnectionWay.Mock)
         )
 
-        is DiscoveredBluetoothDevice.RealDiscoveredBluetoothDevice -> FDeviceBaseModel.FDeviceBSBModelBLE(
-            address = device.address,
+        is DiscoveredBluetoothDevice.RealDiscoveredBluetoothDevice -> BUSYBar(
             uniqueId = id,
-            humanReadableName = device.name ?: UNKNOWN_NAME
+            humanReadableName = device.name ?: UNKNOWN_NAME,
+            models = listOf(BUSYBar.ConnectionWay.BLE(address = device.address))
         )
     }
 }
