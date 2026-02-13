@@ -23,6 +23,7 @@ class LanSearchViewModel(
         flowOf(
             listOf(
                 FDeviceCombined(
+                    uniqueId = "BUSY_Bar_LAN",
                     humanReadableName = "BUSY Bar LAN",
                     models = listOf(FDeviceCombined.DeviceModel.FDeviceBSBModelLan())
                 )
