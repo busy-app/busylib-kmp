@@ -32,7 +32,7 @@ class LanSearchViewModel(
     ) { savedDevices, foundDevices ->
         foundDevices.map { device ->
             ConnectionSearchItem(
-                address = device.humanReadableName,
+                address = device.uniqueId,
                 deviceModel = device,
                 isAdded = savedDevices.find { it.uniqueId == device.uniqueId } != null
             )

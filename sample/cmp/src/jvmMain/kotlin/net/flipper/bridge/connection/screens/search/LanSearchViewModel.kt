@@ -24,10 +24,12 @@ class LanSearchViewModel(
         flowOf(
             listOf(
                 FDeviceCombined(
+                    uniqueId = "BUSY_Bar_LAN",
                     humanReadableName = "BUSY Bar LAN",
                     models = listOf(FDeviceCombined.DeviceModel.FDeviceBSBModelLan())
                 ),
                 FDeviceCombined(
+                    uniqueId = "BUSY_Bar_Cloud",
                     humanReadableName = "BUSY Bar Cloud",
                     models = listOf(
                         FDeviceCombined.DeviceModel.FDeviceBSBModelCloud(
@@ -54,7 +56,7 @@ class LanSearchViewModel(
     ) { savedDevices, foundDevices ->
         foundDevices.map { device ->
             ConnectionSearchItem(
-                address = device.humanReadableName,
+                address = device.uniqueId,
                 deviceModel = device,
                 isAdded = savedDevices.find { it.uniqueId == device.uniqueId } != null
             )
