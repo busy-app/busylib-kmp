@@ -12,8 +12,6 @@ class BUSYBarCloudBuilderConfig {
         deviceId: String
     ): FCloudDeviceConnectionConfig {
         return FCloudDeviceConnectionConfig(
-            authToken = authToken,
-            host = host,
             name = name,
             deviceId = deviceId
         )

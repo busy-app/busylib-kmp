@@ -23,15 +23,17 @@ import net.flipper.bridge.connection.screens.search.LanSearchViewModel
 import net.flipper.bridge.connection.utils.PermissionCheckerNoop
 import net.flipper.bridge.connection.utils.Secrets
 import net.flipper.bridge.connection.utils.cloud.BUSYLibBarsApiNoop
+import net.flipper.bridge.connection.utils.getUserPrincipal
 import net.flipper.bridge.connection.utils.principal.impl.UserPrincipalApiNoop
 import net.flipper.bridge.connection.utils.runOnUiThread
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
 import net.flipper.bsb.cloud.api.BUSYLibHostApiStub
 import net.flipper.busylib.BUSYLibDesktop
+import kotlinx.coroutines.launch
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 import java.util.prefs.Preferences
 
-fun main() {
+suspend fun main() {
     val lifecycle = LifecycleRegistry()
     val applicationScope = CoroutineScope(
         SupervisorJob() + FlipperDispatchers.default
@@ -40,23 +42,27 @@ fun main() {
     val persistedStorage = FDevicePersistedStorageImpl(
         PreferencesSettings(Preferences.userRoot())
     )
+    val hostApi = BUSYLibHostApiStub(
+        host = "cloud.dev.busy.app",
+        proxyHost = "proxy.dev.busy.app"
+    )
     val busyLib = BUSYLibDesktop.build(
         scope = applicationScope,
         principalApi = UserPrincipalApiNoop(
-            BUSYLibUserPrincipal.Token(
-                token = Secrets.AUTH_TOKEN
-            )
+            getUserPrincipal(hostApi)
         ),
         busyLibBarsApi = BUSYLibBarsApiNoop(),
         persistedStorage = persistedStorage,
         networkStateApi = BUSYLibNetworkStateApiNoop(defaultState = true),
-        hostApi = BUSYLibHostApiStub(
-            host = "cloud.dev.busy.app",
-            proxyHost = "proxy.dev.busy.app"
-        )
+        hostApi = hostApi
     )
 
     busyLib.launch()
+
+    applicationScope.launch {
+        val principal = getUserPrincipal(hostApi)
+        println("UserPrincipal: $principal")
+    }
 
     val root = runOnUiThread {
         getRootDecomposeComponent(

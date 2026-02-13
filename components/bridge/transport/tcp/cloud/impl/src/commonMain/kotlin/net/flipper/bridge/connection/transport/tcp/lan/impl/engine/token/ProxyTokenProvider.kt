@@ -7,6 +7,8 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.path
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import me.tatarka.inject.annotations.Assisted
+import me.tatarka.inject.annotations.Inject
 import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
 import net.flipper.bsb.cloud.api.BUSYLibHostApi
@@ -17,10 +19,13 @@ import kotlin.time.Instant
 
 private val TOKEN_DURATION = 600.seconds
 
+typealias ProxyTokenProviderFactory = (httpEngine: HttpClientEngine, deviceId: String) -> ProxyTokenProvider
+
+@Inject
 class ProxyTokenProvider(
-    httpEngine: HttpClientEngine,
+    @Assisted httpEngine: HttpClientEngine,
+    @Assisted private val deviceId: String,
     private val principalApi: BUSYLibPrincipalApi,
-    private val deviceId: String,
     private val hostApi: BUSYLibHostApi
 ) {
     private val httpClient = getHttpClient(httpEngine)
@@ -30,6 +35,7 @@ class ProxyTokenProvider(
     private var lastTokenUpdate: Instant = Instant.DISTANT_PAST
 
     suspend fun getToken(failedToken: String? = null): String = mutex.withLock {
+        return@withLock "TRASH"
         if (failedToken == cachedToken || shouldUpdateToken()) {
             return@withLock generateToken()
         }
@@ -61,5 +67,6 @@ class ProxyTokenProvider(
             setBody(ProxyTokenRequest(ttlSeconds = TOKEN_DURATION.inWholeSeconds))
             headers[HttpHeaders.Authorization] = "Bearer ${principal.token}"
         }
+        TODO()
     }
 }

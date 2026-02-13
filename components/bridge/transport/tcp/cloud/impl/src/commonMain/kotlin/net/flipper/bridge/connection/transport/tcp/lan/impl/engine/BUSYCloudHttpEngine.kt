@@ -9,21 +9,33 @@ import io.ktor.client.request.HttpResponseData
 import io.ktor.client.request.takeFrom
 import io.ktor.http.URLProtocol
 import io.ktor.utils.io.InternalAPI
+import me.tatarka.inject.annotations.Assisted
+import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.transport.tcp.lan.impl.engine.token.ProxyTokenProvider
+import net.flipper.bsb.cloud.api.BUSYLibHostApi
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
 
+typealias BUSYCloudHttpEngineFactory = (HttpClientEngine, ProxyTokenProvider) -> BUSYCloudHttpEngine
+
+@Inject
 class BUSYCloudHttpEngine(
-    private val delegate: HttpClientEngine,
-    private val host: String,
-    private val tokenProvider: ProxyTokenProvider
+    @Assisted private val delegate: HttpClientEngine,
+    @Assisted private val tokenProvider: ProxyTokenProvider,
+    private val hostApi: BUSYLibHostApi
 ) : HttpClientEngineBase("busy-bar"), LogTagProvider {
     override val TAG = "BUSYCloudHttpEngine"
     override val config: HttpClientEngineConfig = delegate.config
 
     @InternalAPI
     override suspend fun execute(data: HttpRequestData): HttpResponseData {
-        return makeRequest(data, tokenProvider.getToken())
+        val result = try {
+            makeRequest(data, tokenProvider.getToken())
+        } catch (e: Throwable) {
+            throw e
+        }
+
+        return result
     }
 
     @InternalAPI
@@ -33,7 +45,7 @@ class BUSYCloudHttpEngine(
     ): HttpResponseData {
         val newRequest = HttpRequestBuilder().takeFrom(data)
 
-        newRequest.url.host = host
+        newRequest.url.host = hostApi.getProxyHost().value
         newRequest.url.protocol = URLProtocol.HTTPS
         newRequest.url.port = 443
         newRequest.headers["Authorization"] = "Bearer $token"

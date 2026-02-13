@@ -20,7 +20,7 @@ enum class FlavorType(
         isLogEnabled = true,
         crashAppOnFailedChecks = true,
         isSensitiveLogEnabled = true,
-        isVerboseLogEnabled = true,
+        isVerboseLogEnabled = false,
         isMockEnabled = true,
         isCloudEnabled = true
     ),

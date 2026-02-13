@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
@@ -39,13 +39,15 @@ class CloudDeviceMonitor(
         .flatMapLatest { it?.getEventsFlow() ?: flowOf() }
         .shareIn(scope, SharingStarted.Lazily, 1)
 
-    private val connectingState = wsEventFlow.mapLatest {
-        FInternalTransportConnectionStatus.Connected(
-            scope = scope,
-            deviceApi = deviceApi
+    private val connectingState = wsEventFlow.transformLatest {
+        emit(
+            FInternalTransportConnectionStatus.Connected(
+                scope = scope,
+                deviceApi = deviceApi
+            )
         )
         delay(INACTIVITY_TIMEOUT) // Should be interrupted by any event from websocket
-        FInternalTransportConnectionStatus.Connecting
+        emit(FInternalTransportConnectionStatus.Connecting)
     }.stateIn(scope, SharingStarted.Lazily, FInternalTransportConnectionStatus.Connecting)
 
     private fun collectWebSocketChange() {
