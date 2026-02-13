@@ -39,7 +39,7 @@ class ProxyTokenProvider(
             return@withLock generateToken()
         }
 
-        return@withLock cachedToken!!
+        return@withLock cachedToken ?: error("Token should not be null")
     }
 
     private fun shouldUpdateToken(): Boolean {
