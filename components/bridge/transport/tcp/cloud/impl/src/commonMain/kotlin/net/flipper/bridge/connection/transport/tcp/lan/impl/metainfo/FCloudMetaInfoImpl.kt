@@ -4,7 +4,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapConcat
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.serialization.json.JsonPrimitive
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.transport.common.api.meta.FTransportMetaInfoApi
@@ -22,6 +24,9 @@ class FCloudMetaInfoImpl(
     private val webSocketBarsApi: CloudWebSocketBarsApi,
 ) : FTransportMetaInfoApi {
     override fun get(key: TransportMetaInfoKey): Flow<Result<Flow<TransportMetaInfoData?>>> {
+        if (key != TransportMetaInfoKey.WS_EVENT) {
+            return flowOf(Result.failure(NotImplementedError()))
+        }
         return webSocketBarsApi.getWSFlow()
             .map { ws ->
                 if (ws == null) {
@@ -37,7 +42,11 @@ class FCloudMetaInfoImpl(
             .flatMapConcat { list ->
                 list.values.toList().asFlow()
             }.map {
-                TransportMetaInfoData.Pair(it.first, it.second)
+                var value = it.second
+                if (value is JsonPrimitive) {
+                    value = value.content
+                }
+                TransportMetaInfoData.Pair(it.first, value)
             }
     }
 }
