@@ -7,5 +7,6 @@ enum class TransportMetaInfoKey {
     SOFTWARE_VERSION,
     BATTERY_LEVEL,
     BATTERY_POWER_STATE,
-    EVENTS_INDICATION
+    EVENTS_INDICATION,
+    WS_EVENT
 }

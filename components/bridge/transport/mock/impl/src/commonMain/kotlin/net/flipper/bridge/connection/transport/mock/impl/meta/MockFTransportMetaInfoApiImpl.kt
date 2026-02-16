@@ -8,10 +8,11 @@ import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfo
 
 class MockFTransportMetaInfoApiImpl : FTransportMetaInfoApi {
     override fun get(key: TransportMetaInfoKey): Result<Flow<ByteArray?>> {
-        return Result.success(flowOf(getData(key)))
+        val mockData = getData(key) ?: return Result.failure(NotImplementedError())
+        return Result.success(flowOf(mockData))
     }
 
-    private fun getData(key: TransportMetaInfoKey): ByteArray {
+    private fun getData(key: TransportMetaInfoKey): ByteArray? {
         return when (key) {
             TransportMetaInfoKey.DEVICE_NAME -> "Busy Bar".toByteArray()
             TransportMetaInfoKey.MANUFACTURER -> "Flipper Devices Inc.".toByteArray()
@@ -20,6 +21,7 @@ class MockFTransportMetaInfoApiImpl : FTransportMetaInfoApi {
             TransportMetaInfoKey.BATTERY_LEVEL -> byteArrayOf(0.5.toInt().toByte())
             TransportMetaInfoKey.BATTERY_POWER_STATE -> byteArrayOf(0)
             TransportMetaInfoKey.EVENTS_INDICATION -> byteArrayOf(0)
+            TransportMetaInfoKey.WS_EVENT -> null
         }
     }
 }
