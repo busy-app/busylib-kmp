@@ -44,13 +44,13 @@ class FCombinedConnectionApiImpl(
     }
 
     private val httpEngine = FCombinedHttpEngine(scope, connections)
-    private val metaInfoApi = CombinedMetaInfoApiImpl(scope, connections)
+    private val metaInfoApi = CombinedMetaInfoApiImpl(connections)
 
     override fun getDeviceHttpEngine(): HttpClientEngine {
         return httpEngine
     }
 
-    override fun get(key: TransportMetaInfoKey): Result<Flow<ByteArray?>> {
+    override fun get(key: TransportMetaInfoKey): Flow<Result<Flow<ByteArray?>>> {
         return metaInfoApi.get(key)
     }
 

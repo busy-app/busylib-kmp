@@ -1,5 +1,6 @@
 package net.flipper.bridge.connection.feature.battery.impl
 
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
@@ -15,9 +16,9 @@ import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.PowerState
 import net.flipper.bridge.connection.transport.common.api.meta.FTransportMetaInfoApi
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
+import net.flipper.bridge.connection.transport.common.api.meta.getOrEmpty
 import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.wrap
-import net.flipper.core.busylib.ktx.common.orEmpty
 import kotlin.experimental.and
 
 @Inject
@@ -26,11 +27,10 @@ class FDeviceBatteryInfoFeatureApiImpl(
     @Assisted private val metaInfoApi: FTransportMetaInfoApi?,
 ) : FDeviceBatteryInfoFeatureApi {
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     private fun getBatteryLevelFlow(): Flow<Int?> {
         return metaInfoApi
-            ?.get(TransportMetaInfoKey.BATTERY_LEVEL)
-            ?.getOrNull()
-            .orEmpty()
+            .getOrEmpty(TransportMetaInfoKey.BATTERY_LEVEL)
             .map { byteArray ->
                 byteArray?.firstOrNull()
                     ?.toFloat()
@@ -41,11 +41,10 @@ class FDeviceBatteryInfoFeatureApiImpl(
             }
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     private fun getBatteryPowerStateFlow(): Flow<BSBDeviceBatteryInfo.BSBBatteryState?> {
         return metaInfoApi
-            ?.get(TransportMetaInfoKey.BATTERY_POWER_STATE)
-            ?.getOrNull()
-            .orEmpty()
+            .getOrEmpty(TransportMetaInfoKey.BATTERY_POWER_STATE)
             .map { byteArray ->
                 // https://github.com/flipperdevices/bsb-firmware/blob/9acca0c947e764bb0fbdabb4b7b513afa6519de7/applications/services/ble/service/battery/ble_service_battery_i.h#L13
                 val stateByte = byteArray?.getOrNull(1) ?: return@map null
