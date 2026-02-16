@@ -9,7 +9,6 @@ import net.flipper.bridge.connection.transport.tcp.cloud.api.FCloudDeviceConnect
 import net.flipper.bridge.connection.transport.tcp.lan.impl.engine.BUSYCloudHttpEngineFactory
 import net.flipper.bridge.connection.transport.tcp.lan.impl.engine.token.ProxyTokenProviderFactory
 import net.flipper.bridge.connection.transport.tcp.lan.impl.metainfo.FCloudMetaInfoFactory
-import net.flipper.bridge.connection.transport.tcp.lan.impl.metainfo.FCloudMetaInfoImpl
 import net.flipper.bridge.connection.transport.tcp.lan.impl.monitor.CloudDeviceMonitor
 import net.flipper.core.ktor.getPlatformEngineFactory
 

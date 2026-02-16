@@ -2,13 +2,9 @@ package net.flipper.bridge.connection.feature.screenstreaming.impl
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.shareIn
-import me.tatarka.inject.annotations.Assisted
-import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.screenstreaming.api.FScreenStreamingFeatureApi
 import net.flipper.bridge.connection.feature.screenstreaming.impl.delegates.MetaInfoScreenFramesProvider
@@ -17,20 +13,10 @@ import net.flipper.bridge.connection.feature.screenstreaming.impl.delegates.Tick
 import net.flipper.bridge.connection.feature.screenstreaming.model.BusyImageFormat
 import net.flipper.bridge.connection.transport.common.api.meta.FTransportMetaInfoApi
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
-import net.flipper.busylib.core.wrapper.CResult
 import net.flipper.busylib.core.wrapper.WrappedFlow
-import net.flipper.busylib.core.wrapper.toCResult
 import net.flipper.busylib.core.wrapper.wrap
-import net.flipper.core.busylib.ktx.common.TickFlow
-import net.flipper.core.busylib.ktx.common.asFlow
-import net.flipper.core.busylib.ktx.common.exponentialRetry
-import net.flipper.core.busylib.ktx.common.throttleLatest
-import net.flipper.core.busylib.ktx.common.transformWhileSubscribed
 import net.flipper.core.busylib.log.LogTagProvider
-import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
-import kotlin.io.encoding.Base64
-import kotlin.time.Duration.Companion.seconds
 
 class FScreenStreamingFeatureApiImpl(
     private val scope: CoroutineScope,

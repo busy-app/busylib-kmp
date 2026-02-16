@@ -19,7 +19,6 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import kotlin.uuid.Uuid
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
 import net.flipper.bsb.cloud.barsws.api.model.InternalTicketRequest
 import net.flipper.bsb.cloud.barsws.api.model.InternalWebSocketRequest
@@ -34,6 +33,7 @@ import net.flipper.core.busylib.log.info
 import net.flipper.core.busylib.log.sensitive
 import net.flipper.core.busylib.log.verbose
 import net.flipper.core.busylib.log.warn
+import kotlin.uuid.Uuid
 
 private const val JSON_KEY_BAR_ID = "bar_id"
 

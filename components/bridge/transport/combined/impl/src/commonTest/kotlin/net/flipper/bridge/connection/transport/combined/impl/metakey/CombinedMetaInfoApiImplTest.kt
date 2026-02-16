@@ -104,7 +104,8 @@ class CombinedMetaInfoApiImplTest {
 
             val metaDeviceApi = TestMetaInfoDeviceApi(
                 supportedKeys = mapOf(
-                    TransportMetaInfoKey.DEVICE_NAME to flowOf(TransportMetaInfoData.RawBytes("Test".encodeToByteArray()))
+                    TransportMetaInfoKey.DEVICE_NAME
+                        to flowOf(TransportMetaInfoData.RawBytes("Test".encodeToByteArray()))
                 )
             )
             connectionBuilder.latestListener()!!.onStatusUpdate(
@@ -118,7 +119,10 @@ class CombinedMetaInfoApiImplTest {
             val sut = CombinedMetaInfoApiImpl(listOf(connection))
             val result = sut.get(TransportMetaInfoKey.BATTERY_LEVEL).first()
 
-            assertTrue(result.isFailure, "Should be failure when transport does not support the key")
+            assertTrue(
+                result.isFailure,
+                "Should be failure when transport does not support the key"
+            )
 
             connection.disconnect()
             advanceUntilIdle()
@@ -150,7 +154,10 @@ class CombinedMetaInfoApiImplTest {
         val sut = CombinedMetaInfoApiImpl(listOf(connection))
         val result = sut.get(TransportMetaInfoKey.DEVICE_NAME).first()
 
-        assertTrue(result.isFailure, "Should be failure when device does not implement FTransportMetaInfoApi")
+        assertTrue(
+            result.isFailure,
+            "Should be failure when device does not implement FTransportMetaInfoApi"
+        )
 
         connection.disconnect()
         advanceUntilIdle()
@@ -183,7 +190,9 @@ class CombinedMetaInfoApiImplTest {
 
             val meta1 = TestMetaInfoDeviceApi(
                 supportedKeys = mapOf(
-                    TransportMetaInfoKey.DEVICE_NAME to flowOf(TransportMetaInfoData.RawBytes("Device1".encodeToByteArray()))
+                    TransportMetaInfoKey.DEVICE_NAME to flowOf(
+                        TransportMetaInfoData.RawBytes("Device1".encodeToByteArray())
+                    )
                 )
             )
             builder1.latestListener()!!.onStatusUpdate(
@@ -235,7 +244,9 @@ class CombinedMetaInfoApiImplTest {
 
             val metaDeviceApi = TestMetaInfoDeviceApi(
                 supportedKeys = mapOf(
-                    TransportMetaInfoKey.DEVICE_NAME to flowOf(TransportMetaInfoData.RawBytes("Test".encodeToByteArray()))
+                    TransportMetaInfoKey.DEVICE_NAME to flowOf(
+                        TransportMetaInfoData.RawBytes("Test".encodeToByteArray())
+                    )
                 )
             )
             val listener = connectionBuilder.latestListener()!!

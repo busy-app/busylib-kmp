@@ -25,6 +25,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+import kotlin.uuid.Uuid
 
 /**
  * Comprehensive tests for BSBWebSocketImpl to ensure correct behavior of:
@@ -211,7 +212,7 @@ class BSBWebSocketImplTest {
         )
 
         // When
-        val request = WebSocketRequest.Subscribe(deviceId = "test-device")
+        val request = WebSocketRequest.Subscribe(deviceId = TEST_DEVICE_ID)
         webSocket.send(request)
         advanceUntilIdle()
 
@@ -232,7 +233,7 @@ class BSBWebSocketImplTest {
 
         // When
         repeat(10) {
-            webSocket.send(WebSocketRequest.Subscribe(deviceId = "test-device-$it"))
+            webSocket.send(WebSocketRequest.Subscribe(deviceId = TEST_DEVICE_ID))
         }
         advanceUntilIdle()
 
@@ -254,7 +255,7 @@ class BSBWebSocketImplTest {
         // When - concurrent sends
         val jobs = List(50) {
             async {
-                webSocket.send(WebSocketRequest.Subscribe(deviceId = "test-device-$it"))
+                webSocket.send(WebSocketRequest.Subscribe(deviceId = TEST_DEVICE_ID))
             }
         }
         jobs.awaitAll()
@@ -316,7 +317,7 @@ class BSBWebSocketImplTest {
         // When/Then - send should throw
         var errorOccurred = false
         try {
-            webSocket.send(WebSocketRequest.Subscribe(deviceId = "test-device"))
+            webSocket.send(WebSocketRequest.Subscribe(deviceId = TEST_DEVICE_ID))
         } catch (_: Exception) {
             errorOccurred = true
         }
@@ -457,7 +458,7 @@ class BSBWebSocketImplTest {
         // When - concurrent send and receive
         val sendJobs = List(20) {
             async {
-                webSocket.send(WebSocketRequest.Subscribe(deviceId = "test-device-$it"))
+                webSocket.send(WebSocketRequest.Subscribe(deviceId = TEST_DEVICE_ID))
             }
         }
 
@@ -534,7 +535,7 @@ class BSBWebSocketImplTest {
         // Then - should handle gracefully (either complete or throw CancellationException)
         var exceptionThrown = false
         try {
-            webSocket.send(WebSocketRequest.Subscribe(deviceId = "test-device"))
+            webSocket.send(WebSocketRequest.Subscribe(deviceId = TEST_DEVICE_ID))
         } catch (_: CancellationException) {
             exceptionThrown = true
         } catch (_: Exception) {
@@ -729,6 +730,7 @@ class BSBWebSocketImplTest {
 
     companion object {
         private const val TEST_BAR_ID = "00000000-0000-0000-0000-000000000001"
+        private val TEST_DEVICE_ID = Uuid.parse("00000000-0000-0000-0000-000000000002")
 
         private fun createMockEvent(
             barId: String = TEST_BAR_ID
