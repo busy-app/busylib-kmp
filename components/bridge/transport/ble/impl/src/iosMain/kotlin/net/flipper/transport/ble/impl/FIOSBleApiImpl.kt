@@ -15,6 +15,7 @@ import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfi
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.bridge.connection.transport.common.api.meta.FTransportMetaInfoApi
+import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoData
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPDeviceApi
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
@@ -78,10 +79,10 @@ class FIOSBleApiImpl(
         onDisconnect()
     }
 
-    override fun get(key: TransportMetaInfoKey): Flow<Result<Flow<ByteArray?>>> {
+    override fun get(key: TransportMetaInfoKey): Flow<Result<Flow<TransportMetaInfoData?>>> {
         if (currentConfig.metaInfoGattMap.containsKey(key)) {
             val innerFlow = peripheral.metaInfoKeysStream.map { metaMap ->
-                metaMap[key]
+                metaMap[key]?.let { TransportMetaInfoData.RawBytes(it) }
             }
             return flowOf(Result.success(innerFlow))
         }

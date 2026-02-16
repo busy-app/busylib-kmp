@@ -15,9 +15,10 @@ import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.meta.FTransportMetaInfoApi
+import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoData
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
 import kotlin.test.Test
-import kotlin.test.assertContentEquals
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -61,7 +62,7 @@ class CombinedMetaInfoApiImplTest {
             connectionBuilder.connectCalledDeferred.await()
             advanceUntilIdle()
 
-            val expectedData = "TestDevice".encodeToByteArray()
+            val expectedData = TransportMetaInfoData.RawBytes("TestDevice".encodeToByteArray())
             val metaDeviceApi = TestMetaInfoDeviceApi(
                 supportedKeys = mapOf(
                     TransportMetaInfoKey.DEVICE_NAME to flowOf(expectedData)
@@ -80,7 +81,7 @@ class CombinedMetaInfoApiImplTest {
 
             assertTrue(result.isSuccess, "Should be success when transport supports the key")
             val dataFlow = result.getOrThrow()
-            assertContentEquals(expectedData, dataFlow.first())
+            assertEquals(expectedData, dataFlow.first())
 
             connection.disconnect()
             advanceUntilIdle()
@@ -103,7 +104,7 @@ class CombinedMetaInfoApiImplTest {
 
             val metaDeviceApi = TestMetaInfoDeviceApi(
                 supportedKeys = mapOf(
-                    TransportMetaInfoKey.DEVICE_NAME to flowOf("Test".encodeToByteArray())
+                    TransportMetaInfoKey.DEVICE_NAME to flowOf(TransportMetaInfoData.RawBytes("Test".encodeToByteArray()))
                 )
             )
             connectionBuilder.latestListener()!!.onStatusUpdate(
@@ -182,7 +183,7 @@ class CombinedMetaInfoApiImplTest {
 
             val meta1 = TestMetaInfoDeviceApi(
                 supportedKeys = mapOf(
-                    TransportMetaInfoKey.DEVICE_NAME to flowOf("Device1".encodeToByteArray())
+                    TransportMetaInfoKey.DEVICE_NAME to flowOf(TransportMetaInfoData.RawBytes("Device1".encodeToByteArray()))
                 )
             )
             builder1.latestListener()!!.onStatusUpdate(
@@ -192,7 +193,7 @@ class CombinedMetaInfoApiImplTest {
                 )
             )
 
-            val expectedBattery = byteArrayOf(50)
+            val expectedBattery = TransportMetaInfoData.RawBytes(byteArrayOf(50))
             val meta2 = TestMetaInfoDeviceApi(
                 supportedKeys = mapOf(
                     TransportMetaInfoKey.BATTERY_LEVEL to flowOf(expectedBattery)
@@ -210,7 +211,7 @@ class CombinedMetaInfoApiImplTest {
             val result = sut.get(TransportMetaInfoKey.BATTERY_LEVEL).first()
 
             assertTrue(result.isSuccess, "Should find key from second connection")
-            assertContentEquals(expectedBattery, result.getOrThrow().first())
+            assertEquals(expectedBattery, result.getOrThrow().first())
 
             connection1.disconnect()
             connection2.disconnect()
@@ -234,7 +235,7 @@ class CombinedMetaInfoApiImplTest {
 
             val metaDeviceApi = TestMetaInfoDeviceApi(
                 supportedKeys = mapOf(
-                    TransportMetaInfoKey.DEVICE_NAME to flowOf("Test".encodeToByteArray())
+                    TransportMetaInfoKey.DEVICE_NAME to flowOf(TransportMetaInfoData.RawBytes("Test".encodeToByteArray()))
                 )
             )
             val listener = connectionBuilder.latestListener()!!
@@ -287,7 +288,7 @@ class CombinedMetaInfoApiImplTest {
         assertTrue(result1.isFailure, "Should fail when not connected")
 
         // Connect
-        val expectedData = "Reconnected".encodeToByteArray()
+        val expectedData = TransportMetaInfoData.RawBytes("Reconnected".encodeToByteArray())
         val metaDeviceApi = TestMetaInfoDeviceApi(
             supportedKeys = mapOf(
                 TransportMetaInfoKey.DEVICE_NAME to flowOf(expectedData)
@@ -304,7 +305,7 @@ class CombinedMetaInfoApiImplTest {
         // Now should succeed
         val result2 = sut.get(TransportMetaInfoKey.DEVICE_NAME).first()
         assertTrue(result2.isSuccess, "Should succeed after reconnect")
-        assertContentEquals(expectedData, result2.getOrThrow().first())
+        assertEquals(expectedData, result2.getOrThrow().first())
 
         connection.disconnect()
         advanceUntilIdle()
@@ -316,10 +317,10 @@ class CombinedMetaInfoApiImplTest {
  */
 private class TestMetaInfoDeviceApi(
     override val deviceName: String = "TestMetaDevice",
-    private val supportedKeys: Map<TransportMetaInfoKey, Flow<ByteArray?>> = emptyMap()
+    private val supportedKeys: Map<TransportMetaInfoKey, Flow<TransportMetaInfoData?>> = emptyMap()
 ) : FConnectedDeviceApi, FTransportMetaInfoApi {
 
-    override fun get(key: TransportMetaInfoKey): Flow<Result<Flow<ByteArray?>>> {
+    override fun get(key: TransportMetaInfoKey): Flow<Result<Flow<TransportMetaInfoData?>>> {
         val flow = supportedKeys[key]
             ?: return flowOf(Result.failure(NoSuchElementException("Key $key not supported")))
         return flowOf(Result.success(flow))

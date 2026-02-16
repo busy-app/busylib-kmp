@@ -17,6 +17,7 @@ import net.flipper.bridge.connection.feature.events.api.ConsumableUpdateEvent
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
 import net.flipper.bridge.connection.feature.events.api.UpdateEvent
 import net.flipper.bridge.connection.transport.common.api.meta.FTransportMetaInfoApi
+import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoData
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
 import net.flipper.core.busylib.ktx.common.orEmpty
 import net.flipper.core.busylib.log.LogTagProvider
@@ -39,8 +40,8 @@ class FEventsFeatureApiImpl(
                 .getOrNull()
                 .orEmpty()
         }
-        .onEach { debug { "Receive ${it?.toBitsString()}" } }
-        .mapNotNull { byteArray -> byteArray?.let(::parse) }
+        .onEach { debug { "Receive $it" } }
+        .mapNotNull { data -> (data as? TransportMetaInfoData.RawBytes)?.bytes?.let(::parse) }
         .onEach { debug { "Receive updates: $it" } }
         .map { updateEvents -> updateEvents.map(::ConsumableUpdateEvent) }
         .flatMapLatest { updateEvents ->
