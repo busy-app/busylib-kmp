@@ -1,9 +1,11 @@
 package net.flipper.bridge.connection.feature.events.impl
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.WhileSubscribed
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
@@ -29,17 +31,22 @@ class FEventsFeatureApiImpl(
 ) : FEventsFeatureApi, LogTagProvider {
     override val TAG = "FEventsFeatureApi"
 
-    private val sharedIndicationFlow = flow {
-        metaInfoApi.get(TransportMetaInfoKey.EVENTS_INDICATION)
-            .onFailure { error(it) { "Failed receive ${TransportMetaInfoKey.EVENTS_INDICATION}" } }
-            .getOrNull()
-            .orEmpty()
-            .onEach { debug { "Receive ${it?.toBitsString()}" } }
-            .mapNotNull { byteArray -> byteArray?.let(::parse) }
-            .onEach { debug { "Receive updates: $it" } }
-            .map { updateEvents -> updateEvents.map(::ConsumableUpdateEvent) }
-            .collect { updateEvents -> updateEvents.forEach { event -> emit(event) } }
-    }.shareIn(scope, SharingStarted.WhileSubscribed(5.seconds))
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val sharedIndicationFlow = metaInfoApi.get(TransportMetaInfoKey.EVENTS_INDICATION)
+        .flatMapLatest { result ->
+            result
+                .onFailure { error(it) { "Failed receive ${TransportMetaInfoKey.EVENTS_INDICATION}" } }
+                .getOrNull()
+                .orEmpty()
+        }
+        .onEach { debug { "Receive ${it?.toBitsString()}" } }
+        .mapNotNull { byteArray -> byteArray?.let(::parse) }
+        .onEach { debug { "Receive updates: $it" } }
+        .map { updateEvents -> updateEvents.map(::ConsumableUpdateEvent) }
+        .flatMapLatest { updateEvents ->
+            flow { updateEvents.forEach { event -> emit(event) } }
+        }
+        .shareIn(scope, SharingStarted.WhileSubscribed(5.seconds))
 
     override fun getUpdatesFlow(): Flow<ConsumableUpdateEvent> = sharedIndicationFlow
 

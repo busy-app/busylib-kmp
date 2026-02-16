@@ -33,8 +33,6 @@ class LanSearchViewModel(
                     humanReadableName = "BUSY Bar Cloud",
                     connectionWays = listOf(
                         BUSYBar.ConnectionWay.Cloud(
-                            authToken = Secrets.DEVICE_TOKEN,
-                            host = "proxy.dev.busy.app",
                             deviceId = Secrets.DEVICE_ID
                         )
                     )
@@ -45,8 +43,6 @@ class LanSearchViewModel(
                     connectionWays = listOf(
                         BUSYBar.ConnectionWay.Lan(),
                         BUSYBar.ConnectionWay.Cloud(
-                            authToken = Secrets.DEVICE_TOKEN,
-                            host = "proxy.dev.busy.app",
                             deviceId = Secrets.DEVICE_ID
                         )
                     )

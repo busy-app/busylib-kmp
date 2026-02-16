@@ -1,4 +1,4 @@
-package net.flipper.bsb.cloud.barsws.api.utils
+package net.flipper.core.ktor
 
 import io.ktor.serialization.WebsocketContentConverter
 import io.ktor.serialization.kotlinx.KotlinxWebsocketSerializationConverter
@@ -8,9 +8,9 @@ import io.ktor.websocket.Frame
 import io.ktor.websocket.readText
 import kotlinx.serialization.json.Json
 import net.flipper.core.busylib.log.LogTagProvider
-import net.flipper.core.busylib.log.info
+import net.flipper.core.busylib.log.verbose
 
-class LoggingWebsocketConverter(
+internal class LoggingWebsocketConverter(
     json: Json,
 ) : WebsocketContentConverter, LogTagProvider {
     override val TAG = "LoggingWebsocketConverter"
@@ -22,7 +22,7 @@ class LoggingWebsocketConverter(
         value: Any?
     ): Frame {
         val frame = delegate.serialize(charset, typeInfo, value)
-        info { ">>>>>>> $frame" }
+        verbose { ">>>>>>> $frame" }
         return frame
     }
 
@@ -36,7 +36,7 @@ class LoggingWebsocketConverter(
 
             else -> content.toString()
         }
-        info { "<<<<<<< $text" }
+        verbose { "<<<<<<< $text" }
         if (delegate.isApplicable(content)) {
             val result = delegate.deserialize(charset, typeInfo, content)
             return result

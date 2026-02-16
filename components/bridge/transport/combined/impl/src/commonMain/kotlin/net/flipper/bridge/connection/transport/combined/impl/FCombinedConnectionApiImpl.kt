@@ -2,15 +2,18 @@ package net.flipper.bridge.connection.transport.combined.impl
 
 import io.ktor.client.engine.HttpClientEngine
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import net.flipper.bridge.connection.transport.combined.FCombinedConnectionApi
 import net.flipper.bridge.connection.transport.combined.impl.connections.AutoReconnectConnection
+import net.flipper.bridge.connection.transport.combined.impl.metakey.CombinedMetaInfoApiImpl
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
+import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
 
 class FCombinedConnectionApiImpl(
     override val deviceName: String,
@@ -41,9 +44,14 @@ class FCombinedConnectionApiImpl(
     }
 
     private val httpEngine = FCombinedHttpEngine(scope, connections)
+    private val metaInfoApi = CombinedMetaInfoApiImpl(connections)
 
     override fun getDeviceHttpEngine(): HttpClientEngine {
         return httpEngine
+    }
+
+    override fun get(key: TransportMetaInfoKey): Flow<Result<Flow<ByteArray?>>> {
+        return metaInfoApi.get(key)
     }
 
     override suspend fun disconnect() {

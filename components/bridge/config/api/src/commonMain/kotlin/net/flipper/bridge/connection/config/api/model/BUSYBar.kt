@@ -32,10 +32,6 @@ data class BUSYBar(
 
         @Serializable
         data class Cloud(
-            @SerialName("auth_token")
-            val authToken: String,
-            @SerialName("host")
-            val host: String,
             @SerialName("device_id")
             val deviceId: String
         ) : ConnectionWay

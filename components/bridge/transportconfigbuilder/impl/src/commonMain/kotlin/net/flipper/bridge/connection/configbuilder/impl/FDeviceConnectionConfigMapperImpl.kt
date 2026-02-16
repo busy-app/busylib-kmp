@@ -44,8 +44,6 @@ class FDeviceConnectionConfigMapperImpl(
             )
 
             is BUSYBar.ConnectionWay.Cloud -> cloudBuilderConfig.build(
-                authToken = device.authToken,
-                host = device.host,
                 name = humanReadableName,
                 deviceId = device.deviceId
             )

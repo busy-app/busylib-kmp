@@ -1,6 +1,7 @@
 plugins {
     id("flipper.multiplatform")
     id("flipper.anvil-multiplatform")
+    id("org.jetbrains.kotlin.plugin.serialization")
 }
 
 kotlin {
@@ -15,10 +16,13 @@ kotlin {
             implementation(projects.components.core.ktx)
             implementation(projects.components.core.wrapper)
 
+            implementation(projects.components.cloud.api)
             implementation(projects.components.cloud.barsws.api)
+            implementation(projects.components.principal.api)
 
             implementation(libs.kotlin.coroutines)
             implementation(libs.ktor.client.core)
+            implementation(libs.kotlin.serialization.json)
         }
     }
 }

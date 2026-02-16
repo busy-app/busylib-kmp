@@ -6,6 +6,8 @@ import net.flipper.bridge.connection.transport.common.api.FTransportConnectionSt
 import net.flipper.bridge.connection.transport.tcp.cloud.api.CloudDeviceConnectionApi
 import net.flipper.bridge.connection.transport.tcp.cloud.api.FCloudApi
 import net.flipper.bridge.connection.transport.tcp.cloud.api.FCloudDeviceConnectionConfig
+import net.flipper.bridge.connection.transport.tcp.lan.impl.engine.BUSYCloudHttpEngineFactory
+import net.flipper.bridge.connection.transport.tcp.lan.impl.engine.token.ProxyTokenProviderFactory
 import net.flipper.bridge.connection.transport.tcp.lan.impl.monitor.CloudDeviceMonitor
 import net.flipper.bsb.cloud.barsws.api.CloudWebSocketBarsApi
 import net.flipper.busylib.core.di.BusyLibGraph
@@ -14,8 +16,9 @@ import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 @Inject
 @ContributesBinding(BusyLibGraph::class, CloudDeviceConnectionApi::class)
 class CloudDeviceConnectionApiImpl(
-    @Suppress("UnusedPrivateProperty")
-    private val webSocketBarsApi: CloudWebSocketBarsApi
+    private val webSocketBarsApi: CloudWebSocketBarsApi,
+    private val proxyTokenProvider: ProxyTokenProviderFactory,
+    private val cloudEngineFactory: BUSYCloudHttpEngineFactory
 ) : CloudDeviceConnectionApi {
     override suspend fun connect(
         scope: CoroutineScope,
@@ -29,7 +32,9 @@ class CloudDeviceConnectionApiImpl(
         val lanApi = FCloudApiImpl(
             listener = listener,
             currentConfig = config,
-            cloudDeviceMonitorFactory = cloudDeviceMonitorFactory
+            cloudDeviceMonitorFactory = cloudDeviceMonitorFactory,
+            tokenProviderFactory = proxyTokenProvider,
+            cloudEngineFactory = cloudEngineFactory
         )
         return@runCatching lanApi
     }

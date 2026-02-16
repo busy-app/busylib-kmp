@@ -31,6 +31,7 @@ import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
 import net.flipper.core.busylib.log.sensitive
+import net.flipper.core.busylib.log.verbose
 
 class BSBWebSocketImpl(
     private val session: BSBWebSocketSession,
@@ -47,7 +48,7 @@ class BSBWebSocketImpl(
                 null
             }
 
-            info { "Received message: $message" }
+            verbose { "Received message: $message" }
             message?.let { send(it.toPublic()) }
         }
     }.flowOn(dispatcher)
