@@ -25,14 +25,14 @@ class FTransportMetaInfoApiImpl(
     override val TAG = "FTransportMetaInfoApi"
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    override fun get(key: TransportMetaInfoKey): Result<Flow<ByteArray?>> = runCatching {
+    override fun get(key: TransportMetaInfoKey): Flow<Result<Flow<ByteArray?>>> {
         val address = metaInfoGattMap[key]
-            ?: return Result.failure(RuntimeException("Can't found provider for $key"))
+            ?: return flowOf(Result.failure(RuntimeException("Can't found provider for $key")))
 
-        val flow = services.flatMapLatest {
+        val innerFlow = services.flatMapLatest {
             getFlow(it, address)
         }
-        return@runCatching flow
+        return flowOf(Result.success(innerFlow))
     }
 
     @SuppressLint("MissingPermission")

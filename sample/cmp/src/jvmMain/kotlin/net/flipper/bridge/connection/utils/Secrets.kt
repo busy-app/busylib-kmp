@@ -8,6 +8,5 @@ package net.flipper.bridge.connection.utils
  */
 object Secrets {
     const val DEVICE_ID = "REPLACE_WITH_DEVICE_ID"
-    const val DEVICE_TOKEN = "REPLACE_WITH_DEVICE_TOKEN"
     const val AUTH_TOKEN = "REPLACE_WITH_AUTH_TOKEN"
 }
