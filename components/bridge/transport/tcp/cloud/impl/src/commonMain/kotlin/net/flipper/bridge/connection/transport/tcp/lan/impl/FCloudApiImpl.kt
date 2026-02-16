@@ -3,10 +3,13 @@ package net.flipper.bridge.connection.transport.tcp.lan.impl
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
+import net.flipper.bridge.connection.transport.common.api.meta.FTransportMetaInfoApi
 import net.flipper.bridge.connection.transport.tcp.cloud.api.FCloudApi
 import net.flipper.bridge.connection.transport.tcp.cloud.api.FCloudDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.tcp.lan.impl.engine.BUSYCloudHttpEngineFactory
 import net.flipper.bridge.connection.transport.tcp.lan.impl.engine.token.ProxyTokenProviderFactory
+import net.flipper.bridge.connection.transport.tcp.lan.impl.metainfo.FCloudMetaInfoFactory
+import net.flipper.bridge.connection.transport.tcp.lan.impl.metainfo.FCloudMetaInfoImpl
 import net.flipper.bridge.connection.transport.tcp.lan.impl.monitor.CloudDeviceMonitor
 import net.flipper.core.ktor.getPlatformEngineFactory
 
@@ -15,8 +18,9 @@ class FCloudApiImpl(
     private var currentConfig: FCloudDeviceConnectionConfig,
     cloudDeviceMonitorFactory: CloudDeviceMonitor.Factory,
     tokenProviderFactory: ProxyTokenProviderFactory,
-    cloudEngineFactory: BUSYCloudHttpEngineFactory
-) : FCloudApi {
+    cloudEngineFactory: BUSYCloudHttpEngineFactory,
+    cloudMetaInfoFactory: FCloudMetaInfoFactory
+) : FCloudApi, FTransportMetaInfoApi by cloudMetaInfoFactory(currentConfig.deviceId) {
     private val httpEngineOriginal = getPlatformEngineFactory().create()
     private val httpEngine = cloudEngineFactory(
         httpEngineOriginal,

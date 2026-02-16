@@ -19,4 +19,9 @@ sealed interface TransportMetaInfoData {
             return bytes.contentHashCode()
         }
     }
+
+    data class Pair(
+        val key: String,
+        val value: Any
+    ) : TransportMetaInfoData
 }
