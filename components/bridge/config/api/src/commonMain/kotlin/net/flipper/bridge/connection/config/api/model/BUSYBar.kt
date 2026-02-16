@@ -10,8 +10,8 @@ data class BUSYBar(
     val humanReadableName: String,
     @SerialName("unique_id")
     val uniqueId: String = Uuid.random().toString(),
-    @SerialName("models")
-    val models: List<ConnectionWay>
+    @SerialName("connection_ways")
+    val connectionWays: List<ConnectionWay>
 ) {
     @Serializable
     sealed interface ConnectionWay {

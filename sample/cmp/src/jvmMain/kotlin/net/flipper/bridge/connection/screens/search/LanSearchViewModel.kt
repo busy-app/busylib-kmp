@@ -26,12 +26,12 @@ class LanSearchViewModel(
                 BUSYBar(
                     uniqueId = "BUSY_Bar_LAN",
                     humanReadableName = "BUSY Bar LAN",
-                    models = listOf(BUSYBar.ConnectionWay.Lan())
+                    connectionWays = listOf(BUSYBar.ConnectionWay.Lan())
                 ),
                 BUSYBar(
                     uniqueId = "BUSY_Bar_Cloud",
                     humanReadableName = "BUSY Bar Cloud",
-                    models = listOf(
+                    connectionWays = listOf(
                         BUSYBar.ConnectionWay.Cloud(
                             authToken = Secrets.DEVICE_TOKEN,
                             host = "proxy.dev.busy.app",
@@ -42,7 +42,7 @@ class LanSearchViewModel(
                 BUSYBar(
                     uniqueId = "BUSY Bar Combined",
                     humanReadableName = "BUSY Bar Combined",
-                    models = listOf(
+                    connectionWays = listOf(
                         BUSYBar.ConnectionWay.Lan(),
                         BUSYBar.ConnectionWay.Cloud(
                             authToken = Secrets.DEVICE_TOKEN,

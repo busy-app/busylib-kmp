@@ -24,7 +24,7 @@ class FDeviceConnectionConfigMapperImpl(
     override fun getConnectionConfig(device: BUSYBar): FDeviceConnectionConfig<*> {
         return busyBarCombinedBuilderConfig.build(
             name = device.humanReadableName,
-            connectionConfigs = device.models.map {
+            connectionConfigs = device.connectionWays.map {
                 map(
                     device = it,
                     device.humanReadableName

@@ -41,7 +41,7 @@ class SampleBLESearchViewModel(
         ) { searchDevices, savedDevices ->
             val existedMacAddresses = savedDevices
                 .flatMap { device ->
-                    device.models
+                    device.connectionWays
                         .filterIsInstance<BUSYBar.ConnectionWay.BLE>()
                         .map { it.address to device }
                 }.toMap()
@@ -70,13 +70,13 @@ private fun DiscoveredBluetoothDevice.toFDeviceModel(): BUSYBar {
         is DiscoveredBluetoothDevice.MockDiscoveredBluetoothDevice -> BUSYBar(
             uniqueId = id,
             humanReadableName = name ?: UNKNOWN_NAME,
-            models = listOf(BUSYBar.ConnectionWay.Mock)
+            connectionWays = listOf(BUSYBar.ConnectionWay.Mock)
         )
 
         is DiscoveredBluetoothDevice.RealDiscoveredBluetoothDevice -> BUSYBar(
             uniqueId = id,
             humanReadableName = device.name ?: UNKNOWN_NAME,
-            models = listOf(BUSYBar.ConnectionWay.BLE(address = device.address))
+            connectionWays = listOf(BUSYBar.ConnectionWay.BLE(address = device.address))
         )
     }
 }
