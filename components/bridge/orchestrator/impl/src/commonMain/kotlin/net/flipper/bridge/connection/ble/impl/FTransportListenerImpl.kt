@@ -4,7 +4,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
-import net.flipper.bridge.connection.config.api.model.FDeviceBaseModel
+import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.orchestrator.api.model.ConnectingStatus
 import net.flipper.bridge.connection.orchestrator.api.model.DisconnectStatus
 import net.flipper.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
@@ -25,7 +25,7 @@ class FTransportListenerImpl : LogTagProvider {
 
     fun getState() = state.asStateFlow()
 
-    fun onErrorDuringConnect(device: FDeviceBaseModel, throwable: Throwable) {
+    fun onErrorDuringConnect(device: BUSYBar, throwable: Throwable) {
         @Suppress("UNUSED_EXPRESSION")
         when (throwable) {
             else -> {
@@ -40,7 +40,7 @@ class FTransportListenerImpl : LogTagProvider {
         }
     }
 
-    fun onStatusUpdate(device: FDeviceBaseModel, status: FInternalTransportConnectionStatus) {
+    fun onStatusUpdate(device: BUSYBar, status: FInternalTransportConnectionStatus) {
         val newState = state.updateAndGet { currentStatus ->
             when (status) {
                 is FInternalTransportConnectionStatus.Connected -> FDeviceConnectStatus.Connected(
