@@ -2,6 +2,7 @@ package net.flipper.transport.ble.impl
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -77,13 +78,13 @@ class FIOSBleApiImpl(
         onDisconnect()
     }
 
-    override fun get(key: TransportMetaInfoKey): Result<Flow<ByteArray?>> {
+    override fun get(key: TransportMetaInfoKey): Flow<Result<Flow<ByteArray?>>> {
         if (currentConfig.metaInfoGattMap.containsKey(key)) {
-            val flow = peripheral.metaInfoKeysStream.map { metaMap ->
+            val innerFlow = peripheral.metaInfoKeysStream.map { metaMap ->
                 metaMap[key]
             }
-            return Result.success(flow)
+            return flowOf(Result.success(innerFlow))
         }
-        return Result.failure(IllegalArgumentException("Key $key is not supported"))
+        return flowOf(Result.failure(IllegalArgumentException("Key $key is not supported")))
     }
 }
