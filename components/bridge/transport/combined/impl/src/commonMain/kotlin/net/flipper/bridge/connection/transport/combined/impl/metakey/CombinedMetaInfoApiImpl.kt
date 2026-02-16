@@ -4,6 +4,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import net.flipper.bridge.connection.transport.combined.impl.connections.AutoReconnectConnection
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.meta.FTransportMetaInfoApi
@@ -27,9 +28,16 @@ class CombinedMetaInfoApiImpl(
         return delegates.flatMapLatest { currentDelegates ->
             info { "Get meta info key $key from ${currentDelegates.size} delegates" }
 
-            combine(
-                currentDelegates.map { it.get(key) }
-            ) { results ->
+            val flows = currentDelegates.map { it.get(key) }
+            if (flows.isEmpty()) {
+                return@flatMapLatest flowOf(
+                    Result.failure(
+                        NoSuchElementException("No connected transport supports meta info key $key")
+                    )
+                )
+            }
+
+            combine(flows) { results ->
                 results.find { it.isSuccess } ?: Result.failure(
                     NoSuchElementException("No connected transport supports meta info key $key")
                 )
