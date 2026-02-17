@@ -12,6 +12,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import net.flipper.bridge.connection.connectionbuilder.api.FDeviceConfigToConnection
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
@@ -22,12 +24,13 @@ import net.flipper.core.busylib.log.info
 
 class AutoReconnectConnection(
     scope: CoroutineScope,
-    private var config: FDeviceConnectionConfig<*>,
+    var config: FDeviceConnectionConfig<*>, // Visible for testing
     private val connectionBuilder: FDeviceConfigToConnection,
     private val dispatcher: CoroutineDispatcher = FlipperDispatchers.default
 ) : LogTagProvider {
     override val TAG = "AutoReconnectConnection"
 
+    private val updateMutex = Mutex()
     private val connectionJob: Job
 
     val stateFlow: StateFlow<FInternalTransportConnectionStatus>
@@ -41,12 +44,14 @@ class AutoReconnectConnection(
             while (isActive) {
                 val currentConfig = config
                 info { "AutoReconnectConnection: Connecting... $currentConfig" }
+                // One WrappedConnectionInternal, one device api always
                 val connection = WrappedConnectionInternal(
                     config = currentConfig,
                     connectionBuilder = connectionBuilder,
                     parentScope = this,
                     dispatcher = dispatcher
                 )
+
                 connection.stateFlow
                     .onEach {
                         stateFlow.value = it
@@ -65,17 +70,15 @@ class AutoReconnectConnection(
 
     suspend fun tryUpdateConnectionConfig(
         newConfig: FDeviceConnectionConfig<*>
-    ): Result<Unit> {
-        config = newConfig
+    ): Result<Unit> = updateMutex.withLock {
         val currentState = stateFlow.value
-        if (currentState is FInternalTransportConnectionStatus.Connected) {
-            return runCatching {
-                currentState.deviceApi.tryUpdateConnectionConfig(newConfig).getOrThrow()
-            }
+        if (currentState !is FInternalTransportConnectionStatus.Connected) {
+            return@withLock Result.failure(
+                IllegalStateException("Cannot tryUpdateConnectionConfig: not connected")
+            )
         }
-        return Result.failure(
-            IllegalStateException("Cannot tryUpdateConnectionConfig: not connected")
-        )
+
+        return@withLock currentState.deviceApi.tryUpdateConnectionConfig(newConfig)
     }
 
     suspend fun disconnect() {

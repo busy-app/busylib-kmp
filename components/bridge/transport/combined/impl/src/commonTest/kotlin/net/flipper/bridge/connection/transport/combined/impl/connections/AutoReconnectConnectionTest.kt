@@ -987,4 +987,257 @@ class AutoReconnectConnectionTest {
     }
 
     // endregion
+
+    // region Race Condition Breakage Tests
+
+    /**
+     * TOCTOU Race: tryUpdateConnectionConfig reads Connected(deviceApi1),
+     * but while deviceApi1.tryUpdateConnectionConfig() is executing (suspended),
+     * the connection disconnects and reconnects with deviceApi2.
+     *
+     * Expected correct behavior: if the connection changed mid-update, the method
+     * should either return failure or propagate the update to the new active connection.
+     * It must NOT silently succeed while the active connection has stale config.
+     */
+    @Test
+    fun GIVEN_connected_WHEN_disconnect_during_slow_config_update_THEN_update_should_fail_or_reach_new_connection() =
+        runTest {
+            val testDispatcher = StandardTestDispatcher(testScheduler)
+
+            val api1UpdateStarted = CompletableDeferred<Unit>()
+            val api1UpdateContinue = CompletableDeferred<Unit>()
+            val deviceApi1 = object : FConnectedDeviceApi {
+                override val deviceName = "Device-1"
+                override suspend fun tryUpdateConnectionConfig(
+                    config: FDeviceConnectionConfig<*>
+                ): Result<Unit> {
+                    api1UpdateStarted.complete(Unit)
+                    api1UpdateContinue.await()
+                    return Result.success(Unit)
+                }
+
+                override suspend fun disconnect() {}
+            }
+
+            var api2UpdatedConfig: FDeviceConnectionConfig<*>? = null
+            val deviceApi2 = object : FConnectedDeviceApi {
+                override val deviceName = "Device-2"
+                override suspend fun tryUpdateConnectionConfig(
+                    config: FDeviceConnectionConfig<*>
+                ): Result<Unit> {
+                    api2UpdatedConfig = config
+                    return Result.success(Unit)
+                }
+
+                override suspend fun disconnect() {}
+            }
+
+            var connectCount = 0
+            val firstConnectDeferred = CompletableDeferred<Unit>()
+            val secondConnectDeferred = CompletableDeferred<Unit>()
+            val listeners = mutableListOf<FTransportConnectionStatusListener>()
+
+            val connectionBuilder = object : FDeviceConfigToConnection {
+                override suspend fun <API : FConnectedDeviceApi, CONFIG : FDeviceConnectionConfig<API>> connect(
+                    scope: CoroutineScope,
+                    config: CONFIG,
+                    listener: FTransportConnectionStatusListener
+                ): Result<API> {
+                    connectCount++
+                    listeners.add(listener)
+                    when (connectCount) {
+                        1 -> {
+                            firstConnectDeferred.complete(Unit)
+                            @Suppress("UNCHECKED_CAST")
+                            return Result.success(deviceApi1 as API)
+                        }
+                        else -> {
+                            secondConnectDeferred.complete(Unit)
+                            @Suppress("UNCHECKED_CAST")
+                            return Result.success(deviceApi2 as API)
+                        }
+                    }
+                }
+            }
+
+            val parentJob = SupervisorJob()
+            val testScope = CoroutineScope(parentJob + testDispatcher)
+            val autoReconnect = AutoReconnectConnection(
+                scope = testScope,
+                config = TestConfig("initial"),
+                connectionBuilder = connectionBuilder,
+                dispatcher = testDispatcher
+            )
+
+            firstConnectDeferred.await()
+            advanceUntilIdle()
+
+            // Establish connection 1
+            listeners[0].onStatusUpdate(
+                FInternalTransportConnectionStatus.Connected(
+                    scope = testScope,
+                    deviceApi = deviceApi1
+                )
+            )
+            advanceUntilIdle()
+            assertIs<FInternalTransportConnectionStatus.Connected>(autoReconnect.stateFlow.value)
+
+            // Launch tryUpdateConnectionConfig - reads Connected(deviceApi1) and pauses
+            val updateResult = CompletableDeferred<Result<Unit>>()
+            launch(testDispatcher) {
+                updateResult.complete(
+                    autoReconnect.tryUpdateConnectionConfig(TestConfig("new-config"))
+                )
+            }
+            advanceUntilIdle()
+            api1UpdateStarted.await()
+
+            // While deviceApi1 is paused, disconnect connection 1
+            listeners[0].onStatusUpdate(FInternalTransportConnectionStatus.Disconnected)
+            advanceUntilIdle()
+
+            // Wait for reconnection (past backoff delay)
+            advanceTimeBy(1.seconds)
+            advanceUntilIdle()
+            secondConnectDeferred.await()
+
+            // Establish connection 2
+            listeners.last().onStatusUpdate(
+                FInternalTransportConnectionStatus.Connected(
+                    scope = testScope,
+                    deviceApi = deviceApi2
+                )
+            )
+            advanceUntilIdle()
+
+            // Let deviceApi1's update finish
+            api1UpdateContinue.complete(Unit)
+            advanceUntilIdle()
+
+            val result = updateResult.await()
+
+            // Correct behavior: either the result should be failure (connection changed),
+            // or the new active deviceApi2 should have received the config update.
+            assertTrue(
+                result.isFailure || api2UpdatedConfig == TestConfig("new-config"),
+                "Should either fail (connection changed) or propagate update to new connection. " +
+                    "Got: result=${result}, api2UpdatedConfig=$api2UpdatedConfig"
+            )
+
+            parentJob.cancel()
+        }
+
+    /**
+     * Concurrent Race: Two simultaneous tryUpdateConnectionConfig calls
+     * interleave such that the first call's deviceApi update executes AFTER
+     * the second call's update.
+     *
+     * Expected correct behavior: the config field and the last config applied
+     * to the device must be consistent. If both succeed, the device must end up
+     * with the same config that the config field holds.
+     */
+    @Test
+    fun GIVEN_connected_WHEN_concurrent_config_updates_with_slow_first_THEN_config_field_consistent_with_device() =
+        runTest {
+            val testDispatcher = StandardTestDispatcher(testScheduler)
+
+            val configHistory = mutableListOf<FDeviceConnectionConfig<*>>()
+            val firstCallStarted = CompletableDeferred<Unit>()
+            val firstCallContinue = CompletableDeferred<Unit>()
+            var callCount = 0
+
+            val deviceApi = object : FConnectedDeviceApi {
+                override val deviceName = "RacyDevice"
+                override suspend fun tryUpdateConnectionConfig(
+                    config: FDeviceConnectionConfig<*>
+                ): Result<Unit> {
+                    callCount++
+                    if (callCount == 1) {
+                        firstCallStarted.complete(Unit)
+                        firstCallContinue.await()
+                    }
+                    configHistory.add(config)
+                    return Result.success(Unit)
+                }
+
+                override suspend fun disconnect() {}
+            }
+
+            val connectDeferred = CompletableDeferred<Unit>()
+            var storedListener: FTransportConnectionStatusListener? = null
+
+            val connectionBuilder = object : FDeviceConfigToConnection {
+                override suspend fun <API : FConnectedDeviceApi, CONFIG : FDeviceConnectionConfig<API>> connect(
+                    scope: CoroutineScope,
+                    config: CONFIG,
+                    listener: FTransportConnectionStatusListener
+                ): Result<API> {
+                    storedListener = listener
+                    connectDeferred.complete(Unit)
+                    @Suppress("UNCHECKED_CAST")
+                    return Result.success(deviceApi as API)
+                }
+            }
+
+            val parentJob = SupervisorJob()
+            val testScope = CoroutineScope(parentJob + testDispatcher)
+            val autoReconnect = AutoReconnectConnection(
+                scope = testScope,
+                config = TestConfig("initial"),
+                connectionBuilder = connectionBuilder,
+                dispatcher = testDispatcher
+            )
+
+            connectDeferred.await()
+            advanceUntilIdle()
+
+            storedListener!!.onStatusUpdate(
+                FInternalTransportConnectionStatus.Connected(
+                    scope = testScope,
+                    deviceApi = deviceApi
+                )
+            )
+            advanceUntilIdle()
+
+            // Launch two concurrent config updates
+            val resultA = CompletableDeferred<Result<Unit>>()
+            val resultB = CompletableDeferred<Result<Unit>>()
+
+            launch(testDispatcher) {
+                resultA.complete(
+                    autoReconnect.tryUpdateConnectionConfig(TestConfig("config-A"))
+                )
+            }
+            launch(testDispatcher) {
+                resultB.complete(
+                    autoReconnect.tryUpdateConnectionConfig(TestConfig("config-B"))
+                )
+            }
+            advanceUntilIdle()
+
+            // Call A is paused in deviceApi, call B has already completed
+            firstCallStarted.await()
+
+            // Let call A's deviceApi finish
+            firstCallContinue.complete(Unit)
+            advanceUntilIdle()
+
+            resultA.await()
+            resultB.await()
+
+            // Correct behavior: the last config applied to the device must match
+            // the config field. They should be consistent for the next reconnect.
+            val lastDeviceConfig = configHistory.last()
+            assertEquals(
+                autoReconnect.config,
+                lastDeviceConfig,
+                "Config field and device config must be consistent. " +
+                    "Config field=${autoReconnect.config}, last device config=$lastDeviceConfig, " +
+                    "full history=$configHistory"
+            )
+
+            parentJob.cancel()
+        }
+
+    // endregion
 }

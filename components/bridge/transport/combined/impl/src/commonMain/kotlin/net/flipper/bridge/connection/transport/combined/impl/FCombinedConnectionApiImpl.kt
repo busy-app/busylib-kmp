@@ -23,6 +23,7 @@ import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfi
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
+import net.flipper.core.busylib.ktx.common.runSuspendCatching
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class FCombinedConnectionApiImpl(
@@ -90,18 +91,6 @@ class FCombinedConnectionApiImpl(
                 for (newChildConfig in config.connectionConfigs) {
                     var matched = false
 
-                    // 1. Exact config match — reuse without calling tryUpdateConnectionConfig
-                    for ((idx, oldConn) in oldConnections.withIndex()) {
-                        if (idx in matchedOldIndices) continue
-                        if (oldConn.config == newChildConfig) {
-                            newConnectionsList.add(oldConn)
-                            matchedOldIndices.add(idx)
-                            matched = true
-                            break
-                        }
-                    }
-                    if (matched) continue
-
                     // 2. Try tryUpdateConnectionConfig on unmatched existing connections
                     for ((idx, oldConn) in oldConnections.withIndex()) {
                         if (idx in matchedOldIndices) continue
@@ -134,7 +123,7 @@ class FCombinedConnectionApiImpl(
                 // Disconnect removed connections
                 for ((idx, oldConn) in oldConnections.withIndex()) {
                     if (idx !in matchedOldIndices) {
-                        runCatching { oldConn.disconnect() }
+                        runSuspendCatching { oldConn.disconnect() }
                     }
                 }
             }
@@ -154,7 +143,7 @@ class FCombinedConnectionApiImpl(
 
     override suspend fun disconnect() {
         _connections.value.forEach {
-            runCatching { it.disconnect() }
+            runSuspendCatching { it.disconnect() }
         }
     }
 }
