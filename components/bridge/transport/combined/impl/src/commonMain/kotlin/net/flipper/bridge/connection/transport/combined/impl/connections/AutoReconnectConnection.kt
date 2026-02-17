@@ -48,7 +48,7 @@ class AutoReconnectConnection(
                 // Mutex prevents creating a new WrappedConnectionInternal
                 // while tryUpdateConnectionConfig is in progress
                 val connection = withLockResult(updateMutex) {
-                    val currentConfig = initialConfig
+                    val currentConfig = config
                     info { "AutoReconnectConnection: Connecting... $currentConfig" }
                     // One WrappedConnectionInternal, one device api always
                     WrappedConnectionInternal(
