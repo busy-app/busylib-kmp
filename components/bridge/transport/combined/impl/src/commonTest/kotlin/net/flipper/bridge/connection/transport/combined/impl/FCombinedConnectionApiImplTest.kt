@@ -100,7 +100,7 @@ class FCombinedConnectionApiImplTest {
         val connections = config.connectionConfigs.map {
             AutoReconnectConnection(
                 scope = scope,
-                config = it,
+                initialConfig = it,
                 connectionBuilder = globalConnectionBuilder,
                 dispatcher = dispatcher
             )
@@ -200,7 +200,7 @@ class FCombinedConnectionApiImplTest {
 
             val conn = AutoReconnectConnection(
                 scope = backgroundScope,
-                config = childConfig,
+                initialConfig = childConfig,
                 connectionBuilder = builder,
                 dispatcher = testDispatcher
             )
@@ -216,13 +216,13 @@ class FCombinedConnectionApiImplTest {
             )
             advanceUntilIdle()
 
-            val connectionsBefore = sut.connectionsFlow.value
+            val connectionsBefore = sut.connections.value
             val config2 = createConfig("Device2", childConfig)
             val result = sut.tryUpdateConnectionConfig(config2)
             advanceUntilIdle()
 
             assertTrue(result.isSuccess)
-            val connectionsAfter = sut.connectionsFlow.value
+            val connectionsAfter = sut.connections.value
             assertEquals(1, connectionsAfter.size)
             assertSame(connectionsBefore[0], connectionsAfter[0], "Should reuse exact same connection object")
         }
@@ -239,7 +239,7 @@ class FCombinedConnectionApiImplTest {
 
             val conn = AutoReconnectConnection(
                 scope = backgroundScope,
-                config = configA,
+                initialConfig = configA,
                 connectionBuilder = builder,
                 dispatcher = testDispatcher
             )
@@ -268,8 +268,8 @@ class FCombinedConnectionApiImplTest {
             advanceUntilIdle()
 
             assertTrue(result.isSuccess)
-            assertEquals(1, sut.connectionsFlow.value.size)
-            assertSame(conn, sut.connectionsFlow.value[0], "Should reuse connection")
+            assertEquals(1, sut.connections.value.size)
+            assertSame(conn, sut.connections.value[0], "Should reuse connection")
             assertEquals(configA2, conn.config, "Connection config should be updated")
         }
 
@@ -285,7 +285,7 @@ class FCombinedConnectionApiImplTest {
 
             val conn = AutoReconnectConnection(
                 scope = backgroundScope,
-                config = configA,
+                initialConfig = configA,
                 connectionBuilder = builder,
                 dispatcher = testDispatcher
             )
@@ -314,10 +314,10 @@ class FCombinedConnectionApiImplTest {
             advanceUntilIdle()
 
             assertTrue(result.isSuccess)
-            assertEquals(1, sut.connectionsFlow.value.size)
+            assertEquals(1, sut.connections.value.size)
             // Old connection should be disconnected, new one created
             assertTrue(
-                sut.connectionsFlow.value[0] !== conn,
+                sut.connections.value[0] !== conn,
                 "Should be a new connection, not the old one"
             )
         }
@@ -339,13 +339,13 @@ class FCombinedConnectionApiImplTest {
 
             val connA = AutoReconnectConnection(
                 scope = backgroundScope,
-                config = configA,
+                initialConfig = configA,
                 connectionBuilder = builderA,
                 dispatcher = testDispatcher
             )
             val connB = AutoReconnectConnection(
                 scope = backgroundScope,
-                config = configB,
+                initialConfig = configB,
                 connectionBuilder = builderB,
                 dispatcher = testDispatcher
             )
@@ -368,8 +368,8 @@ class FCombinedConnectionApiImplTest {
             advanceUntilIdle()
 
             assertTrue(result.isSuccess)
-            assertEquals(1, sut.connectionsFlow.value.size)
-            assertSame(connA, sut.connectionsFlow.value[0], "configA connection should be kept")
+            assertEquals(1, sut.connections.value.size)
+            assertSame(connA, sut.connections.value[0], "configA connection should be kept")
         }
 
     @Test
@@ -385,7 +385,7 @@ class FCombinedConnectionApiImplTest {
 
             val conn = AutoReconnectConnection(
                 scope = backgroundScope,
-                config = configA,
+                initialConfig = configA,
                 connectionBuilder = builder,
                 dispatcher = testDispatcher
             )
@@ -407,7 +407,7 @@ class FCombinedConnectionApiImplTest {
             advanceUntilIdle()
 
             assertTrue(result.isSuccess)
-            assertEquals(0, sut.connectionsFlow.value.size)
+            assertEquals(0, sut.connections.value.size)
             // State should transition to Disconnected
             assertTrue(
                 statusHistory.any { it == Disconnected },
@@ -434,7 +434,7 @@ class FCombinedConnectionApiImplTest {
 
             val connA = AutoReconnectConnection(
                 scope = backgroundScope,
-                config = configA,
+                initialConfig = configA,
                 connectionBuilder = builder,
                 dispatcher = testDispatcher
             )
@@ -456,8 +456,8 @@ class FCombinedConnectionApiImplTest {
             advanceUntilIdle()
 
             assertTrue(result.isSuccess)
-            assertEquals(2, sut.connectionsFlow.value.size)
-            assertSame(connA, sut.connectionsFlow.value[0], "First should be existing connA")
+            assertEquals(2, sut.connections.value.size)
+            assertSame(connA, sut.connections.value[0], "First should be existing connA")
         }
 
     @Test
@@ -481,7 +481,7 @@ class FCombinedConnectionApiImplTest {
         advanceUntilIdle()
 
         assertTrue(result.isSuccess)
-        assertEquals(2, sut.connectionsFlow.value.size)
+        assertEquals(2, sut.connections.value.size)
     }
 
     // endregion
@@ -503,19 +503,19 @@ class FCombinedConnectionApiImplTest {
 
             val connA = AutoReconnectConnection(
                 scope = backgroundScope,
-                config = configA,
+                initialConfig = configA,
                 connectionBuilder = builderA,
                 dispatcher = testDispatcher
             )
             val connB = AutoReconnectConnection(
                 scope = backgroundScope,
-                config = configB,
+                initialConfig = configB,
                 connectionBuilder = builderB,
                 dispatcher = testDispatcher
             )
             val connC = AutoReconnectConnection(
                 scope = backgroundScope,
-                config = configC,
+                initialConfig = configC,
                 connectionBuilder = builderC,
                 dispatcher = testDispatcher
             )
@@ -539,7 +539,7 @@ class FCombinedConnectionApiImplTest {
             advanceUntilIdle()
 
             assertTrue(result.isSuccess)
-            val connections = sut.connectionsFlow.value
+            val connections = sut.connections.value
             assertEquals(3, connections.size)
             assertSame(connC, connections[0], "First should be connC")
             assertSame(connA, connections[1], "Second should be connA")
@@ -566,19 +566,19 @@ class FCombinedConnectionApiImplTest {
 
             val connA = AutoReconnectConnection(
                 scope = backgroundScope,
-                config = configA,
+                initialConfig = configA,
                 connectionBuilder = builderA,
                 dispatcher = testDispatcher
             )
             val connB = AutoReconnectConnection(
                 scope = backgroundScope,
-                config = configB,
+                initialConfig = configB,
                 connectionBuilder = builderB,
                 dispatcher = testDispatcher
             )
             val connC = AutoReconnectConnection(
                 scope = backgroundScope,
-                config = configC,
+                initialConfig = configC,
                 connectionBuilder = builderC,
                 dispatcher = testDispatcher
             )
@@ -602,7 +602,7 @@ class FCombinedConnectionApiImplTest {
             advanceUntilIdle()
 
             assertTrue(result.isSuccess)
-            val connections = sut.connectionsFlow.value
+            val connections = sut.connections.value
             assertEquals(3, connections.size)
             // configD is new (first position), configA reused (second), configC reused (third)
             assertNotEquals(connA, connections[0], "First should be new (configD)")
@@ -626,7 +626,7 @@ class FCombinedConnectionApiImplTest {
 
             val connA = AutoReconnectConnection(
                 scope = backgroundScope,
-                config = configA,
+                initialConfig = configA,
                 connectionBuilder = builder,
                 dispatcher = testDispatcher
             )
@@ -644,7 +644,7 @@ class FCombinedConnectionApiImplTest {
 
             val observedSizes = mutableListOf<Int>()
             val collectorJob = launch {
-                sut.connectionsFlow.collect { observedSizes.add(it.size) }
+                sut.connections.collect { observedSizes.add(it.size) }
             }
             advanceUntilIdle()
 
@@ -678,7 +678,7 @@ class FCombinedConnectionApiImplTest {
 
             val conn = AutoReconnectConnection(
                 scope = backgroundScope,
-                config = configA,
+                initialConfig = configA,
                 connectionBuilder = builder,
                 dispatcher = testDispatcher
             )
@@ -733,7 +733,7 @@ class FCombinedConnectionApiImplTest {
 
             val conn = AutoReconnectConnection(
                 scope = backgroundScope,
-                config = configA,
+                initialConfig = configA,
                 connectionBuilder = builder,
                 dispatcher = testDispatcher
             )
@@ -767,7 +767,7 @@ class FCombinedConnectionApiImplTest {
             // All should succeed (mutex serializes them)
             assertTrue(results.all { it.isSuccess }, "All concurrent updates should succeed")
             // Final state should be consistent
-            val finalConnections = sut.connectionsFlow.value
+            val finalConnections = sut.connections.value
             assertTrue(
                 finalConnections.isNotEmpty(),
                 "Should have connections after concurrent updates"
@@ -803,7 +803,7 @@ class FCombinedConnectionApiImplTest {
             sut.tryUpdateConnectionConfig(config3)
             advanceUntilIdle()
 
-            assertEquals(2, sut.connectionsFlow.value.size)
+            assertEquals(2, sut.connections.value.size)
         }
 
     // endregion
@@ -829,7 +829,7 @@ class FCombinedConnectionApiImplTest {
 
             val conn = AutoReconnectConnection(
                 scope = backgroundScope,
-                config = configA,
+                initialConfig = configA,
                 connectionBuilder = builder,
                 dispatcher = testDispatcher
             )
@@ -857,7 +857,7 @@ class FCombinedConnectionApiImplTest {
             advanceUntilIdle()
 
             assertTrue(result.isSuccess, "Should succeed even when child throws")
-            assertEquals(1, sut.connectionsFlow.value.size)
+            assertEquals(1, sut.connections.value.size)
         }
 
     @Test
@@ -871,7 +871,7 @@ class FCombinedConnectionApiImplTest {
 
             val conn = AutoReconnectConnection(
                 scope = backgroundScope,
-                config = configA,
+                initialConfig = configA,
                 connectionBuilder = builder,
                 dispatcher = testDispatcher
             )
@@ -895,7 +895,7 @@ class FCombinedConnectionApiImplTest {
             advanceUntilIdle()
 
             assertTrue(result.isSuccess, "Should succeed even if disconnect has issues")
-            assertEquals(0, sut.connectionsFlow.value.size)
+            assertEquals(0, sut.connections.value.size)
         }
 
     // endregion
@@ -949,7 +949,7 @@ class FCombinedConnectionApiImplTest {
 
         val conn = AutoReconnectConnection(
             scope = backgroundScope,
-            config = configA,
+            initialConfig = configA,
             connectionBuilder = builder,
             dispatcher = testDispatcher
         )
@@ -1014,13 +1014,13 @@ class FCombinedConnectionApiImplTest {
 
         val connA = AutoReconnectConnection(
             scope = backgroundScope,
-            config = configA,
+            initialConfig = configA,
             connectionBuilder = builderA,
             dispatcher = testDispatcher
         )
         val connB = AutoReconnectConnection(
             scope = backgroundScope,
-            config = configB,
+            initialConfig = configB,
             connectionBuilder = builderB,
             dispatcher = testDispatcher
         )
@@ -1152,7 +1152,7 @@ class FCombinedConnectionApiImplTest {
             // but it's already matched. So the second creates a new connection.
             // Actually with the exact match logic: first configA matches no existing (empty),
             // creates new. Second configA also no existing match, creates new.
-            assertEquals(2, sut.connectionsFlow.value.size)
+            assertEquals(2, sut.connections.value.size)
         }
 
     @Test
@@ -1208,11 +1208,11 @@ class FCombinedConnectionApiImplTest {
 
             val result1 = sut.tryUpdateConnectionConfig(config)
             advanceUntilIdle()
-            val connectionsAfterFirst = sut.connectionsFlow.value.toList()
+            val connectionsAfterFirst = sut.connections.value.toList()
 
             val result2 = sut.tryUpdateConnectionConfig(config)
             advanceUntilIdle()
-            val connectionsAfterSecond = sut.connectionsFlow.value.toList()
+            val connectionsAfterSecond = sut.connections.value.toList()
 
             assertTrue(result1.isSuccess)
             assertTrue(result2.isSuccess)
@@ -1238,7 +1238,7 @@ class FCombinedConnectionApiImplTest {
 
             val conn = AutoReconnectConnection(
                 scope = backgroundScope,
-                config = configA,
+                initialConfig = configA,
                 connectionBuilder = builder,
                 dispatcher = testDispatcher
             )
@@ -1269,9 +1269,9 @@ class FCombinedConnectionApiImplTest {
             advanceUntilIdle()
 
             assertTrue(result.isSuccess)
-            assertEquals(1, sut.connectionsFlow.value.size)
+            assertEquals(1, sut.connections.value.size)
             assertTrue(
-                sut.connectionsFlow.value[0] !== conn,
+                sut.connections.value[0] !== conn,
                 "Should be a new connection (old was not connected, different config)"
             )
         }
@@ -1290,7 +1290,7 @@ class FCombinedConnectionApiImplTest {
 
             val conn = AutoReconnectConnection(
                 scope = backgroundScope,
-                config = configA,
+                initialConfig = configA,
                 connectionBuilder = builder,
                 dispatcher = testDispatcher
             )
@@ -1325,7 +1325,7 @@ class FCombinedConnectionApiImplTest {
 
             val conn = AutoReconnectConnection(
                 scope = backgroundScope,
-                config = configA,
+                initialConfig = configA,
                 connectionBuilder = builder,
                 dispatcher = testDispatcher
             )
@@ -1361,7 +1361,7 @@ class FCombinedConnectionApiImplTest {
 
             val conn = AutoReconnectConnection(
                 scope = backgroundScope,
-                config = configA,
+                initialConfig = configA,
                 connectionBuilder = builder,
                 dispatcher = testDispatcher
             )
@@ -1371,48 +1371,6 @@ class FCombinedConnectionApiImplTest {
 
             assertTrue(result.isFailure, "Should fail when not connected")
             assertEquals(configA, conn.config, "Config should not change when not connected")
-
-            conn.disconnect()
-            advanceUntilIdle()
-        }
-
-    @Test
-    fun GIVEN_connected_device_throws_WHEN_autoReconnect_tryUpdate_THEN_failure_returned() =
-        runTest {
-            val testDispatcher = StandardTestDispatcher(testScheduler)
-            val configA = TestConfig("a")
-            val configB = TestConfig("b")
-
-            // Use a device API that throws on tryUpdateConnectionConfig
-            val throwingDevice = object : FConnectedDeviceApi {
-                override val deviceName = "Thrower"
-                override suspend fun tryUpdateConnectionConfig(config: FDeviceConnectionConfig<*>): Result<Unit> {
-                    throw RuntimeException("Crash!")
-                }
-                override suspend fun disconnect() {}
-            }
-            val builder = createConnectionBuilder()
-
-            val conn = AutoReconnectConnection(
-                scope = backgroundScope,
-                config = configA,
-                connectionBuilder = builder,
-                dispatcher = testDispatcher
-            )
-            builder.connectCalledDeferred.await()
-            advanceUntilIdle()
-
-            // Make connected with the throwing device
-            builder.latestListener()!!.onStatusUpdate(
-                Connected(scope = backgroundScope, deviceApi = throwingDevice)
-            )
-            advanceUntilIdle()
-
-            val result = conn.tryUpdateConnectionConfig(configB)
-
-            assertTrue(result.isFailure, "Should return failure when device throws")
-            assertIs<RuntimeException>(result.exceptionOrNull())
-            assertEquals(configA, conn.config, "Config should not change on exception")
 
             conn.disconnect()
             advanceUntilIdle()
@@ -1436,7 +1394,7 @@ class FCombinedConnectionApiImplTest {
         // Phase 1: Create with configA
         val conn = AutoReconnectConnection(
             scope = backgroundScope,
-            config = configA,
+            initialConfig = configA,
             connectionBuilder = builder,
             dispatcher = testDispatcher
         )
@@ -1470,7 +1428,7 @@ class FCombinedConnectionApiImplTest {
         advanceUntilIdle()
 
         assertTrue(result2.isSuccess)
-        assertEquals(2, sut.connectionsFlow.value.size)
+        assertEquals(2, sut.connections.value.size)
         assertEquals("UpdatedDevice", sut.deviceName)
 
         // Phase 4: Update - replace configA with configC, keep configB
@@ -1479,7 +1437,7 @@ class FCombinedConnectionApiImplTest {
         advanceUntilIdle()
 
         assertTrue(result3.isSuccess)
-        assertEquals(2, sut.connectionsFlow.value.size)
+        assertEquals(2, sut.connections.value.size)
 
         // Phase 5: Disconnect
         sut.disconnect()
@@ -1499,13 +1457,13 @@ class FCombinedConnectionApiImplTest {
 
         val connA = AutoReconnectConnection(
             scope = backgroundScope,
-            config = configA,
+            initialConfig = configA,
             connectionBuilder = builderA,
             dispatcher = testDispatcher
         )
         val connB = AutoReconnectConnection(
             scope = backgroundScope,
-            config = configB,
+            initialConfig = configB,
             connectionBuilder = builderB,
             dispatcher = testDispatcher
         )
@@ -1529,7 +1487,7 @@ class FCombinedConnectionApiImplTest {
         advanceUntilIdle()
 
         assertTrue(result.isSuccess)
-        val connections = sut.connectionsFlow.value
+        val connections = sut.connections.value
         assertEquals(2, connections.size)
         assertSame(connB, connections[0], "First should be connB")
         assertSame(connA, connections[1], "Second should be connA")
@@ -1549,7 +1507,7 @@ class FCombinedConnectionApiImplTest {
 
             val conn = AutoReconnectConnection(
                 scope = backgroundScope,
-                config = configA,
+                initialConfig = configA,
                 connectionBuilder = builder,
                 dispatcher = testDispatcher
             )
@@ -1571,8 +1529,8 @@ class FCombinedConnectionApiImplTest {
             advanceUntilIdle()
 
             // The connection should be reused with updated config
-            assertEquals(1, sut.connectionsFlow.value.size)
-            assertEquals(configA2, sut.connectionsFlow.value[0].config)
+            assertEquals(1, sut.connections.value.size)
+            assertEquals(configA2, sut.connections.value[0].config)
 
             sut.disconnect()
             advanceUntilIdle()

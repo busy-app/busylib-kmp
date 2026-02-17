@@ -54,7 +54,7 @@ class AutoReconnectConnectionTest {
         // When
         val autoReconnect = AutoReconnectConnection(
             scope = backgroundScope,
-            config = TestConfig(),
+            initialConfig = TestConfig(),
             connectionBuilder = connectionBuilder,
             dispatcher = testDispatcher
         )
@@ -76,7 +76,7 @@ class AutoReconnectConnectionTest {
         // When
         AutoReconnectConnection(
             scope = backgroundScope,
-            config = TestConfig(),
+            initialConfig = TestConfig(),
             connectionBuilder = connectionBuilder,
             dispatcher = testDispatcher
         )
@@ -97,7 +97,7 @@ class AutoReconnectConnectionTest {
             val connectionBuilder = MockConnectionBuilder()
             val autoReconnect = AutoReconnectConnection(
                 scope = backgroundScope,
-                config = TestConfig(),
+                initialConfig = TestConfig(),
                 connectionBuilder = connectionBuilder,
                 dispatcher = testDispatcher
             )
@@ -132,7 +132,7 @@ class AutoReconnectConnectionTest {
         val connectionBuilder = MockConnectionBuilder()
         val autoReconnect = AutoReconnectConnection(
             scope = backgroundScope,
-            config = TestConfig(),
+            initialConfig = TestConfig(),
             connectionBuilder = connectionBuilder,
             dispatcher = testDispatcher
         )
@@ -180,7 +180,7 @@ class AutoReconnectConnectionTest {
         // When
         AutoReconnectConnection(
             scope = backgroundScope,
-            config = TestConfig(),
+            initialConfig = TestConfig(),
             connectionBuilder = connectionBuilder,
             dispatcher = testDispatcher
         )
@@ -211,7 +211,7 @@ class AutoReconnectConnectionTest {
         // When
         AutoReconnectConnection(
             scope = backgroundScope,
-            config = TestConfig(),
+            initialConfig = TestConfig(),
             connectionBuilder = connectionBuilder,
             dispatcher = testDispatcher
         )
@@ -260,7 +260,7 @@ class AutoReconnectConnectionTest {
 
         val autoReconnect = AutoReconnectConnection(
             scope = backgroundScope,
-            config = TestConfig(),
+            initialConfig = TestConfig(),
             connectionBuilder = connectionBuilder,
             dispatcher = testDispatcher
         )
@@ -319,7 +319,7 @@ class AutoReconnectConnectionTest {
 
         val autoReconnect = AutoReconnectConnection(
             scope = backgroundScope,
-            config = TestConfig(),
+            initialConfig = TestConfig(),
             connectionBuilder = connectionBuilder,
             dispatcher = testDispatcher
         )
@@ -355,7 +355,7 @@ class AutoReconnectConnectionTest {
 
         val autoReconnect = AutoReconnectConnection(
             scope = backgroundScope,
-            config = TestConfig(),
+            initialConfig = TestConfig(),
             connectionBuilder = connectionBuilder,
             dispatcher = testDispatcher
         )
@@ -387,7 +387,7 @@ class AutoReconnectConnectionTest {
             val connectionBuilder = MockConnectionBuilder()
             val autoReconnect = AutoReconnectConnection(
                 scope = backgroundScope,
-                config = TestConfig(),
+                initialConfig = TestConfig(),
                 connectionBuilder = connectionBuilder,
                 dispatcher = testDispatcher
             )
@@ -412,7 +412,7 @@ class AutoReconnectConnectionTest {
         val connectionBuilder = MockConnectionBuilder()
         val autoReconnect = AutoReconnectConnection(
             scope = backgroundScope,
-            config = TestConfig(),
+            initialConfig = TestConfig(),
             connectionBuilder = connectionBuilder,
             dispatcher = testDispatcher
         )
@@ -452,7 +452,7 @@ class AutoReconnectConnectionTest {
 
         val autoReconnect = AutoReconnectConnection(
             scope = backgroundScope,
-            config = TestConfig(),
+            initialConfig = TestConfig(),
             connectionBuilder = connectionBuilder,
             dispatcher = testDispatcher
         )
@@ -504,7 +504,7 @@ class AutoReconnectConnectionTest {
         val connectionBuilder = MockConnectionBuilder()
         val autoReconnect = AutoReconnectConnection(
             scope = backgroundScope,
-            config = TestConfig(),
+            initialConfig = TestConfig(),
             connectionBuilder = connectionBuilder,
             dispatcher = testDispatcher
         )
@@ -554,7 +554,7 @@ class AutoReconnectConnectionTest {
 
         val autoReconnect = AutoReconnectConnection(
             scope = backgroundScope,
-            config = TestConfig(),
+            initialConfig = TestConfig(),
             connectionBuilder = connectionBuilder,
             dispatcher = testDispatcher
         )
@@ -610,7 +610,7 @@ class AutoReconnectConnectionTest {
         val testDispatcher = StandardTestDispatcher(testScheduler)
         val autoReconnect = AutoReconnectConnection(
             scope = backgroundScope,
-            config = TestConfig(),
+            initialConfig = TestConfig(),
             connectionBuilder = connectionBuilder,
             dispatcher = testDispatcher
         )
@@ -635,7 +635,7 @@ class AutoReconnectConnectionTest {
             val connectionBuilder = MockConnectionBuilder()
             val autoReconnect = AutoReconnectConnection(
                 scope = backgroundScope,
-                config = TestConfig(),
+                initialConfig = TestConfig(),
                 connectionBuilder = connectionBuilder,
                 dispatcher = testDispatcher
             )
@@ -678,7 +678,7 @@ class AutoReconnectConnectionTest {
             val connectionBuilder = MockConnectionBuilder()
             val autoReconnect = AutoReconnectConnection(
                 scope = parentScope,
-                config = TestConfig(),
+                initialConfig = TestConfig(),
                 connectionBuilder = connectionBuilder,
                 dispatcher = testDispatcher
             )
@@ -709,7 +709,7 @@ class AutoReconnectConnectionTest {
         val connectionBuilder = MockConnectionBuilder()
         AutoReconnectConnection(
             scope = parentScope,
-            config = TestConfig(),
+            initialConfig = TestConfig(),
             connectionBuilder = connectionBuilder,
             dispatcher = testDispatcher
         )
@@ -749,7 +749,7 @@ class AutoReconnectConnectionTest {
         // When
         AutoReconnectConnection(
             scope = backgroundScope,
-            config = TestConfig(),
+            initialConfig = TestConfig(),
             connectionBuilder = connectionBuilder,
             dispatcher = testDispatcher
         )
@@ -772,7 +772,7 @@ class AutoReconnectConnectionTest {
 
             val autoReconnect = AutoReconnectConnection(
                 scope = backgroundScope,
-                config = TestConfig(),
+                initialConfig = TestConfig(),
                 connectionBuilder = connectionBuilder,
                 dispatcher = testDispatcher
             )
@@ -815,7 +815,7 @@ class AutoReconnectConnectionTest {
 
         AutoReconnectConnection(
             scope = backgroundScope,
-            config = TestConfig(),
+            initialConfig = TestConfig(),
             connectionBuilder = connectionBuilder,
             dispatcher = testDispatcher
         )
@@ -844,7 +844,7 @@ class AutoReconnectConnectionTest {
 
             val autoReconnect = AutoReconnectConnection(
                 scope = backgroundScope,
-                config = TestConfig(),
+                initialConfig = TestConfig(),
                 connectionBuilder = connectionBuilder,
                 dispatcher = testDispatcher
             )
@@ -890,7 +890,7 @@ class AutoReconnectConnectionTest {
 
         val autoReconnect = AutoReconnectConnection(
             scope = backgroundScope,
-            config = TestConfig(),
+            initialConfig = TestConfig(),
             connectionBuilder = connectionBuilder,
             dispatcher = testDispatcher
         )
@@ -954,7 +954,7 @@ class AutoReconnectConnectionTest {
         val connectionBuilder = MockConnectionBuilder()
         val autoReconnect = AutoReconnectConnection(
             scope = backgroundScope,
-            config = TestConfig(),
+            initialConfig = TestConfig(),
             connectionBuilder = connectionBuilder,
             dispatcher = testDispatcher
         )
@@ -1046,7 +1046,7 @@ class AutoReconnectConnectionTest {
             val testScope = CoroutineScope(parentJob + testDispatcher)
             val autoReconnect = AutoReconnectConnection(
                 scope = testScope,
-                config = TestConfig("initial"),
+                initialConfig = TestConfig("initial"),
                 connectionBuilder = connectionBuilder,
                 dispatcher = testDispatcher
             )
@@ -1088,6 +1088,13 @@ class AutoReconnectConnectionTest {
             assertTrue(
                 result.isFailure,
                 "Update should fail when connection drops mid-update. Got: $result"
+            )
+
+            // Config must remain unchanged
+            assertEquals(
+                TestConfig("initial"),
+                autoReconnect.config,
+                "Config should not change on failed update"
             )
 
             parentJob.cancel()
@@ -1149,7 +1156,7 @@ class AutoReconnectConnectionTest {
             val testScope = CoroutineScope(parentJob + testDispatcher)
             val autoReconnect = AutoReconnectConnection(
                 scope = testScope,
-                config = TestConfig("initial"),
+                initialConfig = TestConfig("initial"),
                 connectionBuilder = connectionBuilder,
                 dispatcher = testDispatcher
             )

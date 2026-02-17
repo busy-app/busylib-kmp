@@ -30,7 +30,7 @@ class CombinedMetaInfoApiImplTest {
         val connectionBuilder = MockConnectionBuilder()
         val connection = AutoReconnectConnection(
             scope = backgroundScope,
-            config = TestConfig(),
+            initialConfig = TestConfig(),
             connectionBuilder = connectionBuilder,
             dispatcher = testDispatcher
         )
@@ -54,7 +54,7 @@ class CombinedMetaInfoApiImplTest {
             val connectionBuilder = MockConnectionBuilder()
             val connection = AutoReconnectConnection(
                 scope = backgroundScope,
-                config = TestConfig(),
+                initialConfig = TestConfig(),
                 connectionBuilder = connectionBuilder,
                 dispatcher = testDispatcher
             )
@@ -94,7 +94,7 @@ class CombinedMetaInfoApiImplTest {
             val connectionBuilder = MockConnectionBuilder()
             val connection = AutoReconnectConnection(
                 scope = backgroundScope,
-                config = TestConfig(),
+                initialConfig = TestConfig(),
                 connectionBuilder = connectionBuilder,
                 dispatcher = testDispatcher
             )
@@ -130,7 +130,7 @@ class CombinedMetaInfoApiImplTest {
         val connectionBuilder = MockConnectionBuilder()
         val connection = AutoReconnectConnection(
             scope = backgroundScope,
-            config = TestConfig(),
+            initialConfig = TestConfig(),
             connectionBuilder = connectionBuilder,
             dispatcher = testDispatcher
         )
@@ -164,7 +164,7 @@ class CombinedMetaInfoApiImplTest {
             val builder1 = MockConnectionBuilder()
             val connection1 = AutoReconnectConnection(
                 scope = backgroundScope,
-                config = TestConfig(),
+                initialConfig = TestConfig(),
                 connectionBuilder = builder1,
                 dispatcher = testDispatcher
             )
@@ -174,7 +174,7 @@ class CombinedMetaInfoApiImplTest {
             val builder2 = MockConnectionBuilder()
             val connection2 = AutoReconnectConnection(
                 scope = backgroundScope,
-                config = TestConfig(),
+                initialConfig = TestConfig(),
                 connectionBuilder = builder2,
                 dispatcher = testDispatcher
             )
@@ -225,7 +225,7 @@ class CombinedMetaInfoApiImplTest {
             val connectionBuilder = MockConnectionBuilder()
             val connection = AutoReconnectConnection(
                 scope = backgroundScope,
-                config = TestConfig(),
+                initialConfig = TestConfig(),
                 connectionBuilder = connectionBuilder,
                 dispatcher = testDispatcher
             )
@@ -271,7 +271,7 @@ class CombinedMetaInfoApiImplTest {
         val connectionBuilder = MockConnectionBuilder()
         val connection = AutoReconnectConnection(
             scope = backgroundScope,
-            config = TestConfig(),
+            initialConfig = TestConfig(),
             connectionBuilder = connectionBuilder,
             dispatcher = testDispatcher
         )

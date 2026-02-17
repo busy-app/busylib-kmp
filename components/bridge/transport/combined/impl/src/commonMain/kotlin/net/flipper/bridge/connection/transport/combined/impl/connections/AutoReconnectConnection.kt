@@ -13,22 +13,25 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import net.flipper.bridge.connection.connectionbuilder.api.FDeviceConfigToConnection
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 import net.flipper.core.busylib.ktx.common.getExponentialDelay
+import net.flipper.core.busylib.ktx.common.withLockResult
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
 
 class AutoReconnectConnection(
     scope: CoroutineScope,
-    var config: FDeviceConnectionConfig<*>, // Visible for testing
+    initialConfig: FDeviceConnectionConfig<*>,
     private val connectionBuilder: FDeviceConfigToConnection,
     private val dispatcher: CoroutineDispatcher = FlipperDispatchers.default
 ) : LogTagProvider {
     override val TAG = "AutoReconnectConnection"
+
+    var config: FDeviceConnectionConfig<*> = initialConfig
+        private set
 
     private val updateMutex = Mutex()
     private val connectionJob: Job
@@ -44,8 +47,8 @@ class AutoReconnectConnection(
             while (isActive) {
                 // Mutex prevents creating a new WrappedConnectionInternal
                 // while tryUpdateConnectionConfig is in progress
-                val connection = updateMutex.withLock {
-                    val currentConfig = config
+                val connection = withLockResult(updateMutex) {
+                    val currentConfig = initialConfig
                     info { "AutoReconnectConnection: Connecting... $currentConfig" }
                     // One WrappedConnectionInternal, one device api always
                     WrappedConnectionInternal(
@@ -74,11 +77,10 @@ class AutoReconnectConnection(
 
     suspend fun tryUpdateConnectionConfig(
         newConfig: FDeviceConnectionConfig<*>
-    ): Result<Unit> = updateMutex.withLock {
-        config = newConfig
+    ): Result<Unit> = withLockResult(updateMutex) {
         val currentState = stateFlow.value
         if (currentState !is FInternalTransportConnectionStatus.Connected) {
-            return@withLock if (config == newConfig) {
+            return@withLockResult if (config == newConfig) {
                 Result.success(Unit)
             } else {
                 Result.failure(
@@ -87,7 +89,9 @@ class AutoReconnectConnection(
             }
         }
 
-        return@withLock currentState.deviceApi.tryUpdateConnectionConfig(newConfig)
+        return@withLockResult currentState.deviceApi.tryUpdateConnectionConfig(newConfig).onSuccess {
+            config = newConfig
+        }
     }
 
     suspend fun disconnect() {
