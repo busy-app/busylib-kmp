@@ -81,7 +81,7 @@ class FDevicePersistedStorageImpl(
         )
     }
 
-    override suspend fun updateDevice(id: String, block: (FDeviceBaseModel) -> FDeviceBaseModel) {
+    override suspend fun updateDevice(id: String, block: (BUSYBar) -> BUSYBar) {
         bleConfigKrate.save { settings ->
             settings.copy(
                 devices = settings.devices
@@ -92,7 +92,6 @@ class FDevicePersistedStorageImpl(
                             device
                         }
                     }
-                    .toSet()
             )
         }
     }

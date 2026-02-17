@@ -9,6 +9,7 @@ kotlin {
 
         implementation(projects.components.core.di)
         implementation(projects.components.core.log)
+        implementation(projects.components.core.ktx)
         implementation(projects.components.core.wrapper)
 
         implementation(projects.components.bridge.config.api)

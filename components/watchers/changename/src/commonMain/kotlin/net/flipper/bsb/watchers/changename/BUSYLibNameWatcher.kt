@@ -5,8 +5,8 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
-import net.flipper.bridge.connection.config.api.model.FDeviceBaseModel
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
 import net.flipper.bridge.connection.feature.provider.api.get
@@ -20,6 +20,7 @@ import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 
+@Inject
 @ContributesBinding(BusyLibGraph::class, InternalBUSYLibStartupListener::class, multibinding = true)
 class BUSYLibNameWatcher(
     scope: CoroutineScope,
@@ -31,8 +32,8 @@ class BUSYLibNameWatcher(
 
     private val singleJobScope = scope.asSingleJobScope()
 
-
     override fun onLaunch() {
+        info { "Launched" }
         singleJobScope.launch {
             combine(
                 orchestrator.getState(),
@@ -50,7 +51,9 @@ class BUSYLibNameWatcher(
                             }
                         }
                     }
-                } else flowOf()
+                } else {
+                    flowOf()
+                }
             }.flatMapLatest { it }
                 .collect { (deviceName, deviceId) ->
                     info { "Receive $deviceName for $deviceId" }
@@ -61,14 +64,7 @@ class BUSYLibNameWatcher(
 
     private suspend fun updateDeviceName(deviceId: String, deviceName: String) {
         persistedStorage.updateDevice(deviceId) {
-            when (it) {
-                is FDeviceBaseModel.FDeviceBSBModelBLE -> FDeviceBaseModel.FDeviceBSBModelBLE(it.address, it.uniqueId, deviceName)
-                is FDeviceBaseModel.FDeviceBSBModelBLEiOS -> FDeviceBaseModel.FDeviceBSBModelBLEiOS(it.uniqueId, deviceName)
-                is FDeviceBaseModel.FDeviceBSBModelCloud -> FDeviceBaseModel.FDeviceBSBModelCloud(it.authToken, it.host, it.deviceId, it.uniqueId, deviceName)
-                is FDeviceBaseModel.FDeviceBSBModelCombined -> FDeviceBaseModel.FDeviceBSBModelCombined(it.uniqueId, deviceName, it.models)
-                is FDeviceBaseModel.FDeviceBSBModelLan -> FDeviceBaseModel.FDeviceBSBModelLan(it.host, it.uniqueId, deviceName)
-                is FDeviceBaseModel.FDeviceBSBModelMock -> FDeviceBaseModel.FDeviceBSBModelMock(it.uniqueId, deviceName)
-            }
+            it.copy(humanReadableName = deviceName)
         }
     }
 }
