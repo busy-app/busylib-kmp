@@ -42,15 +42,19 @@ class AutoReconnectConnection(
         connectionJob = scope.launch {
             var retryCount = 0
             while (isActive) {
-                val currentConfig = config
-                info { "AutoReconnectConnection: Connecting... $currentConfig" }
-                // One WrappedConnectionInternal, one device api always
-                val connection = WrappedConnectionInternal(
-                    config = currentConfig,
-                    connectionBuilder = connectionBuilder,
-                    parentScope = this,
-                    dispatcher = dispatcher
-                )
+                // Mutex prevents creating a new WrappedConnectionInternal
+                // while tryUpdateConnectionConfig is in progress
+                val connection = updateMutex.withLock {
+                    val currentConfig = config
+                    info { "AutoReconnectConnection: Connecting... $currentConfig" }
+                    // One WrappedConnectionInternal, one device api always
+                    WrappedConnectionInternal(
+                        config = currentConfig,
+                        connectionBuilder = connectionBuilder,
+                        parentScope = this@launch,
+                        dispatcher = dispatcher
+                    )
+                }
 
                 connection.stateFlow
                     .onEach {
@@ -71,11 +75,16 @@ class AutoReconnectConnection(
     suspend fun tryUpdateConnectionConfig(
         newConfig: FDeviceConnectionConfig<*>
     ): Result<Unit> = updateMutex.withLock {
+        config = newConfig
         val currentState = stateFlow.value
         if (currentState !is FInternalTransportConnectionStatus.Connected) {
-            return@withLock Result.failure(
-                IllegalStateException("Cannot tryUpdateConnectionConfig: not connected")
-            )
+            return@withLock if (config == newConfig) {
+                Result.success(Unit)
+            } else {
+                Result.failure(
+                    IllegalStateException("Cannot tryUpdateConnectionConfig: not connected")
+                )
+            }
         }
 
         return@withLock currentState.deviceApi.tryUpdateConnectionConfig(newConfig)

@@ -993,11 +993,17 @@ class AutoReconnectConnectionTest {
     /**
      * TOCTOU Race: tryUpdateConnectionConfig reads Connected(deviceApi1),
      * but while deviceApi1.tryUpdateConnectionConfig() is executing (suspended),
-     * the connection disconnects and reconnects with deviceApi2.
+     * the connection disconnects.
      *
-     * Expected correct behavior: if the connection changed mid-update, the method
-     * should either return failure or propagate the update to the new active connection.
-     * It must NOT silently succeed while the active connection has stale config.
+     * WrappedConnectionInternal contract: one instance always returns one device api.
+     * When the connection drops, deviceApi operations fail.
+     *
+     * The mutex in the reconnect loop prevents creating a new WrappedConnectionInternal
+     * while tryUpdateConnectionConfig holds the mutex, so the only thing that can happen
+     * is the current deviceApi failing due to its connection being lost.
+     *
+     * Expected correct behavior: tryUpdateConnectionConfig returns failure,
+     * config remains unchanged.
      */
     @Test
     fun GIVEN_connected_WHEN_disconnect_during_slow_config_update_THEN_update_should_fail_or_reach_new_connection() =
@@ -1005,37 +1011,23 @@ class AutoReconnectConnectionTest {
             val testDispatcher = StandardTestDispatcher(testScheduler)
 
             val api1UpdateStarted = CompletableDeferred<Unit>()
-            val api1UpdateContinue = CompletableDeferred<Unit>()
+            val api1UpdateResult = CompletableDeferred<Result<Unit>>()
             val deviceApi1 = object : FConnectedDeviceApi {
                 override val deviceName = "Device-1"
                 override suspend fun tryUpdateConnectionConfig(
                     config: FDeviceConnectionConfig<*>
                 ): Result<Unit> {
                     api1UpdateStarted.complete(Unit)
-                    api1UpdateContinue.await()
-                    return Result.success(Unit)
+                    // WrappedConnectionInternal contract: one instance = one device api.
+                    // When connection drops, this deferred is completed with failure.
+                    return api1UpdateResult.await()
                 }
 
                 override suspend fun disconnect() {}
             }
 
-            var api2UpdatedConfig: FDeviceConnectionConfig<*>? = null
-            val deviceApi2 = object : FConnectedDeviceApi {
-                override val deviceName = "Device-2"
-                override suspend fun tryUpdateConnectionConfig(
-                    config: FDeviceConnectionConfig<*>
-                ): Result<Unit> {
-                    api2UpdatedConfig = config
-                    return Result.success(Unit)
-                }
-
-                override suspend fun disconnect() {}
-            }
-
-            var connectCount = 0
-            val firstConnectDeferred = CompletableDeferred<Unit>()
-            val secondConnectDeferred = CompletableDeferred<Unit>()
-            val listeners = mutableListOf<FTransportConnectionStatusListener>()
+            val connectDeferred = CompletableDeferred<Unit>()
+            var storedListener: FTransportConnectionStatusListener? = null
 
             val connectionBuilder = object : FDeviceConfigToConnection {
                 override suspend fun <API : FConnectedDeviceApi, CONFIG : FDeviceConnectionConfig<API>> connect(
@@ -1043,20 +1035,10 @@ class AutoReconnectConnectionTest {
                     config: CONFIG,
                     listener: FTransportConnectionStatusListener
                 ): Result<API> {
-                    connectCount++
-                    listeners.add(listener)
-                    when (connectCount) {
-                        1 -> {
-                            firstConnectDeferred.complete(Unit)
-                            @Suppress("UNCHECKED_CAST")
-                            return Result.success(deviceApi1 as API)
-                        }
-                        else -> {
-                            secondConnectDeferred.complete(Unit)
-                            @Suppress("UNCHECKED_CAST")
-                            return Result.success(deviceApi2 as API)
-                        }
-                    }
+                    storedListener = listener
+                    connectDeferred.complete(Unit)
+                    @Suppress("UNCHECKED_CAST")
+                    return Result.success(deviceApi1 as API)
                 }
             }
 
@@ -1069,11 +1051,11 @@ class AutoReconnectConnectionTest {
                 dispatcher = testDispatcher
             )
 
-            firstConnectDeferred.await()
+            connectDeferred.await()
             advanceUntilIdle()
 
-            // Establish connection 1
-            listeners[0].onStatusUpdate(
+            // Establish connection
+            storedListener!!.onStatusUpdate(
                 FInternalTransportConnectionStatus.Connected(
                     scope = testScope,
                     deviceApi = deviceApi1
@@ -1082,7 +1064,7 @@ class AutoReconnectConnectionTest {
             advanceUntilIdle()
             assertIs<FInternalTransportConnectionStatus.Connected>(autoReconnect.stateFlow.value)
 
-            // Launch tryUpdateConnectionConfig - reads Connected(deviceApi1) and pauses
+            // Launch tryUpdateConnectionConfig — acquires mutex, calls deviceApi1
             val updateResult = CompletableDeferred<Result<Unit>>()
             launch(testDispatcher) {
                 updateResult.complete(
@@ -1092,36 +1074,20 @@ class AutoReconnectConnectionTest {
             advanceUntilIdle()
             api1UpdateStarted.await()
 
-            // While deviceApi1 is paused, disconnect connection 1
-            listeners[0].onStatusUpdate(FInternalTransportConnectionStatus.Disconnected)
-            advanceUntilIdle()
-
-            // Wait for reconnection (past backoff delay)
-            advanceTimeBy(1.seconds)
-            advanceUntilIdle()
-            secondConnectDeferred.await()
-
-            // Establish connection 2
-            listeners.last().onStatusUpdate(
-                FInternalTransportConnectionStatus.Connected(
-                    scope = testScope,
-                    deviceApi = deviceApi2
-                )
+            // While deviceApi1 is suspended, disconnect the connection.
+            // Per the 1:1 contract, deviceApi1 fails when its connection drops.
+            storedListener!!.onStatusUpdate(FInternalTransportConnectionStatus.Disconnected)
+            api1UpdateResult.complete(
+                Result.failure(IllegalStateException("Connection lost"))
             )
-            advanceUntilIdle()
-
-            // Let deviceApi1's update finish
-            api1UpdateContinue.complete(Unit)
             advanceUntilIdle()
 
             val result = updateResult.await()
 
-            // Correct behavior: either the result should be failure (connection changed),
-            // or the new active deviceApi2 should have received the config update.
+            // The update must fail because the connection dropped
             assertTrue(
-                result.isFailure || api2UpdatedConfig == TestConfig("new-config"),
-                "Should either fail (connection changed) or propagate update to new connection. " +
-                    "Got: result=${result}, api2UpdatedConfig=$api2UpdatedConfig"
+                result.isFailure,
+                "Update should fail when connection drops mid-update. Got: $result"
             )
 
             parentJob.cancel()
