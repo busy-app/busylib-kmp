@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapConcat
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.serialization.json.JsonPrimitive
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
@@ -41,12 +42,12 @@ class FCloudMetaInfoImpl(
         return webSocket.getEventsFlow().filter { it.barId == deviceId }
             .flatMapConcat { list ->
                 list.values.toList().asFlow()
-            }.map {
-                var value = it.second
+            }.mapNotNull { (key, value) ->
                 if (value is JsonPrimitive) {
-                    value = value.content
+                    TransportMetaInfoData.StringValue(key, value.content)
+                } else {
+                    null
                 }
-                TransportMetaInfoData.Pair(it.first, value)
             }
     }
 }

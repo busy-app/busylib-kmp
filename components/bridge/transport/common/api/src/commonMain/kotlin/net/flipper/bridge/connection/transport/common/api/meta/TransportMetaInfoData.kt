@@ -10,9 +10,7 @@ sealed interface TransportMetaInfoData {
 
             other as RawBytes
 
-            if (!bytes.contentEquals(other.bytes)) return false
-
-            return true
+            return bytes.contentEquals(other.bytes)
         }
 
         override fun hashCode(): Int {
@@ -20,8 +18,8 @@ sealed interface TransportMetaInfoData {
         }
     }
 
-    data class Pair(
+    data class StringValue(
         val key: String,
-        val value: Any
+        val value: String
     ) : TransportMetaInfoData
 }

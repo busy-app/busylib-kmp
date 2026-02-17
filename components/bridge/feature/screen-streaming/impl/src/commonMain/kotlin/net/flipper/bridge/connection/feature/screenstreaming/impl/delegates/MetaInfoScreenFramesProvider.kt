@@ -23,10 +23,9 @@ class MetaInfoScreenFramesProvider(
         return screenFlow
             .onEach { verbose { "Receive event: $it" } }
             .filterNotNull()
-            .filterIsInstance<TransportMetaInfoData.Pair>()
+            .filterIsInstance<TransportMetaInfoData.StringValue>()
             .filter { it.key == KEY_SCREEN }
-            .mapNotNull { it.value as? String }
-            .mapNotNull { runCatching { Base64.decode(it) }.getOrNull() }
+            .mapNotNull { runCatching { Base64.decode(it.value) }.getOrNull() }
             .map { BusyImageFormat(it) }
     }
 }
