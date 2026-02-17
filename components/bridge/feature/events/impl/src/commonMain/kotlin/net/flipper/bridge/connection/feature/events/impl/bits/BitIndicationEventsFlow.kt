@@ -13,7 +13,7 @@ import net.flipper.core.busylib.ktx.common.orEmpty
 import net.flipper.core.busylib.log.debug
 import net.flipper.core.busylib.log.error
 
-class BitIndicationEventsFlow() {
+class BitIndicationEventsFlow {
     private val cache = UpdateEvent.entries.filter { it.bitIndex != null }
         .associateBy { it.bitIndex }
 

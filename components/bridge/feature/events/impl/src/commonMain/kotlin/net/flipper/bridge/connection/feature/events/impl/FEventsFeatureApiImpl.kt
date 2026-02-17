@@ -19,7 +19,6 @@ import net.flipper.bridge.connection.feature.events.impl.ws.WSEventsFlow
 import net.flipper.bridge.connection.transport.common.api.meta.FTransportMetaInfoApi
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
 import net.flipper.core.busylib.log.LogTagProvider
-import net.flipper.core.busylib.log.info
 import net.flipper.core.busylib.log.verbose
 import kotlin.time.Duration.Companion.seconds
 

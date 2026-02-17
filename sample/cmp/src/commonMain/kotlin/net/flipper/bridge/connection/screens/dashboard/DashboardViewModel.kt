@@ -5,7 +5,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
@@ -13,11 +12,9 @@ import net.flipper.bridge.connection.feature.oncall.api.FOnCallFeatureApi
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
 import net.flipper.bridge.connection.feature.screenstreaming.api.FScreenStreamingFeatureApi
-import net.flipper.bridge.connection.feature.screenstreaming.model.BusyImageFormat
 import net.flipper.bridge.connection.feature.settings.api.FSettingsFeatureApi
 import net.flipper.bridge.connection.screens.decompose.DecomposeViewModel
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
-import net.flipper.core.busylib.ktx.common.asFlow
 import kotlin.collections.get
 
 class DashboardViewModel(
@@ -66,5 +63,3 @@ class DashboardViewModel(
         }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
     }
 }
-
-
