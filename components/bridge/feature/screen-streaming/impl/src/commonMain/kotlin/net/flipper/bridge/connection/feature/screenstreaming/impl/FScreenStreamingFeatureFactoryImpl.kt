@@ -9,13 +9,12 @@ import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
+import net.flipper.bridge.connection.transport.common.api.meta.FTransportMetaInfoApi
 import net.flipper.busylib.core.di.BusyLibGraph
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
 
 @Inject
-class FScreenStreamingFeatureFactoryImpl(
-    private val internalFactory: FScreenStreamingFeatureApiImpl.InternalFactory
-) : FDeviceFeatureApi.Factory {
+class FScreenStreamingFeatureFactoryImpl : FDeviceFeatureApi.Factory {
     override suspend fun invoke(
         unsafeFeatureDeviceApi: FUnsafeDeviceFeatureApi,
         scope: CoroutineScope,
@@ -25,7 +24,11 @@ class FScreenStreamingFeatureFactoryImpl(
             .get(FRpcFeatureApi::class)
             ?.await()
             ?: return null
-        return internalFactory(scope, rpcApi)
+        return FScreenStreamingFeatureApiImpl(
+            scope,
+            rpcApi,
+            connectedDevice as? FTransportMetaInfoApi
+        )
     }
 }
 

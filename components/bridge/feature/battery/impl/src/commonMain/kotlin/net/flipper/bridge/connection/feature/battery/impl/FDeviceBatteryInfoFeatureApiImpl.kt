@@ -15,6 +15,7 @@ import net.flipper.bridge.connection.feature.battery.model.BSBDeviceBatteryInfo
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.PowerState
 import net.flipper.bridge.connection.transport.common.api.meta.FTransportMetaInfoApi
+import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoData
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
 import net.flipper.bridge.connection.transport.common.api.meta.getOrEmpty
 import net.flipper.busylib.core.wrapper.WrappedFlow
@@ -31,7 +32,8 @@ class FDeviceBatteryInfoFeatureApiImpl(
     private fun getBatteryLevelFlow(): Flow<Int?> {
         return metaInfoApi
             .getOrEmpty(TransportMetaInfoKey.BATTERY_LEVEL)
-            .map { byteArray ->
+            .map { data ->
+                val byteArray = (data as? TransportMetaInfoData.RawBytes)?.bytes
                 byteArray?.firstOrNull()
                     ?.toFloat()
                     ?.div(MAX_BATTERY_LEVEL)
@@ -45,7 +47,8 @@ class FDeviceBatteryInfoFeatureApiImpl(
     private fun getBatteryPowerStateFlow(): Flow<BSBDeviceBatteryInfo.BSBBatteryState?> {
         return metaInfoApi
             .getOrEmpty(TransportMetaInfoKey.BATTERY_POWER_STATE)
-            .map { byteArray ->
+            .map { data ->
+                val byteArray = (data as? TransportMetaInfoData.RawBytes)?.bytes
                 // https://github.com/flipperdevices/bsb-firmware/blob/9acca0c947e764bb0fbdabb4b7b513afa6519de7/applications/services/ble/service/battery/ble_service_battery_i.h#L13
                 val stateByte = byteArray?.getOrNull(1) ?: return@map null
 

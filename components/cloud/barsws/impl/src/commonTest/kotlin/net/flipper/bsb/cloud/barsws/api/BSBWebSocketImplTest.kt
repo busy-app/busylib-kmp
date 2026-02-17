@@ -16,7 +16,8 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.SerializationException
-import net.flipper.bsb.cloud.barsws.api.model.InternalWebSocketEvent
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import net.flipper.bsb.cloud.barsws.api.model.InternalWebSocketRequest
 import net.flipper.bsb.cloud.barsws.api.utils.wrappers.BSBWebSocketSession
 import net.flipper.core.busylib.log.LogTagProvider
@@ -24,6 +25,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+import kotlin.uuid.Uuid
 
 /**
  * Comprehensive tests for BSBWebSocketImpl to ensure correct behavior of:
@@ -67,7 +69,7 @@ class BSBWebSocketImplTest {
 
         advanceUntilIdle()
 
-        mockSession.emitEvent(InternalWebSocketEvent())
+        mockSession.emitEvent(createMockEvent())
         advanceUntilIdle()
 
         // Then
@@ -100,7 +102,7 @@ class BSBWebSocketImplTest {
             advanceUntilIdle()
 
             repeat(5) {
-                mockSession.emitEvent(InternalWebSocketEvent())
+                mockSession.emitEvent(createMockEvent())
             }
             advanceUntilIdle()
 
@@ -139,7 +141,7 @@ class BSBWebSocketImplTest {
 
         advanceUntilIdle()
 
-        mockSession.emitEvent(InternalWebSocketEvent())
+        mockSession.emitEvent(createMockEvent())
         advanceUntilIdle()
 
         // Then - both should receive the event
@@ -173,7 +175,7 @@ class BSBWebSocketImplTest {
 
         advanceUntilIdle()
 
-        mockSession.emitEvent(InternalWebSocketEvent())
+        mockSession.emitEvent(createMockEvent())
         advanceUntilIdle()
 
         assertEquals(1, firstSubscriberEvents.size, "First subscriber should receive the event")
@@ -210,7 +212,7 @@ class BSBWebSocketImplTest {
         )
 
         // When
-        val request = WebSocketRequest.Subscribe(deviceId = "test-device")
+        val request = WebSocketRequest.Subscribe(deviceId = TEST_DEVICE_ID)
         webSocket.send(request)
         advanceUntilIdle()
 
@@ -231,7 +233,7 @@ class BSBWebSocketImplTest {
 
         // When
         repeat(10) {
-            webSocket.send(WebSocketRequest.Subscribe(deviceId = "test-device-$it"))
+            webSocket.send(WebSocketRequest.Subscribe(deviceId = TEST_DEVICE_ID))
         }
         advanceUntilIdle()
 
@@ -253,7 +255,7 @@ class BSBWebSocketImplTest {
         // When - concurrent sends
         val jobs = List(50) {
             async {
-                webSocket.send(WebSocketRequest.Subscribe(deviceId = "test-device-$it"))
+                webSocket.send(WebSocketRequest.Subscribe(deviceId = TEST_DEVICE_ID))
             }
         }
         jobs.awaitAll()
@@ -292,7 +294,7 @@ class BSBWebSocketImplTest {
             // When - emit invalid message followed by valid message
             mockSession.emitSerializationError()
             advanceUntilIdle()
-            mockSession.emitEvent(InternalWebSocketEvent())
+            mockSession.emitEvent(createMockEvent())
             advanceUntilIdle()
 
             // Then - should still receive the valid message after error
@@ -315,7 +317,7 @@ class BSBWebSocketImplTest {
         // When/Then - send should throw
         var errorOccurred = false
         try {
-            webSocket.send(WebSocketRequest.Subscribe(deviceId = "test-device"))
+            webSocket.send(WebSocketRequest.Subscribe(deviceId = TEST_DEVICE_ID))
         } catch (_: Exception) {
             errorOccurred = true
         }
@@ -348,7 +350,7 @@ class BSBWebSocketImplTest {
 
         advanceUntilIdle()
 
-        mockSession.emitEvent(InternalWebSocketEvent())
+        mockSession.emitEvent(createMockEvent())
         advanceUntilIdle()
 
         assertEquals(1, receivedEvents.size)
@@ -359,7 +361,7 @@ class BSBWebSocketImplTest {
 
         // Then - no more events should be received after cancellation
         val countBefore = receivedEvents.size
-        mockSession.emitEvent(InternalWebSocketEvent())
+        mockSession.emitEvent(createMockEvent())
         advanceUntilIdle()
 
         assertEquals(countBefore, receivedEvents.size, "Should not receive events after scope cancellation")
@@ -456,13 +458,13 @@ class BSBWebSocketImplTest {
         // When - concurrent send and receive
         val sendJobs = List(20) {
             async {
-                webSocket.send(WebSocketRequest.Subscribe(deviceId = "test-device-$it"))
+                webSocket.send(WebSocketRequest.Subscribe(deviceId = TEST_DEVICE_ID))
             }
         }
 
         // Emit events concurrently
         repeat(20) {
-            mockSession.emitEvent(InternalWebSocketEvent())
+            mockSession.emitEvent(createMockEvent())
         }
 
         sendJobs.awaitAll()
@@ -498,7 +500,7 @@ class BSBWebSocketImplTest {
 
         // When - high frequency events
         repeat(1000) {
-            mockSession.emitEvent(InternalWebSocketEvent())
+            mockSession.emitEvent(createMockEvent())
         }
         advanceUntilIdle()
 
@@ -533,7 +535,7 @@ class BSBWebSocketImplTest {
         // Then - should handle gracefully (either complete or throw CancellationException)
         var exceptionThrown = false
         try {
-            webSocket.send(WebSocketRequest.Subscribe(deviceId = "test-device"))
+            webSocket.send(WebSocketRequest.Subscribe(deviceId = TEST_DEVICE_ID))
         } catch (_: CancellationException) {
             exceptionThrown = true
         } catch (_: Exception) {
@@ -569,7 +571,7 @@ class BSBWebSocketImplTest {
 
                 advanceUntilIdle()
 
-                mockSession.emitEvent(InternalWebSocketEvent())
+                mockSession.emitEvent(createMockEvent())
                 advanceUntilIdle()
 
                 // Should receive at least one event (might be more due to replay)
@@ -617,7 +619,7 @@ class BSBWebSocketImplTest {
 
         // When
         repeat(5) {
-            mockSession.emitEvent(InternalWebSocketEvent())
+            mockSession.emitEvent(createMockEvent())
         }
         advanceUntilIdle()
 
@@ -650,7 +652,7 @@ class BSBWebSocketImplTest {
 
         advanceUntilIdle()
 
-        mockSession.emitEvent(InternalWebSocketEvent())
+        mockSession.emitEvent(createMockEvent())
         advanceUntilIdle()
 
         assertEquals(1, receivedEvents.size)
@@ -679,13 +681,13 @@ class BSBWebSocketImplTest {
     private class MockBSBWebSocketSession(
         private val failOnSend: Boolean = false
     ) : BSBWebSocketSession {
-        private val _eventChannel = Channel<InternalWebSocketEvent>(Channel.UNLIMITED)
+        private val _eventChannel = Channel<JsonObject>(Channel.UNLIMITED)
         private var _shouldThrowSerializationError = false
         private var _isClosed = false
 
         val sentRequests = mutableListOf<InternalWebSocketRequest>()
 
-        suspend fun emitEvent(event: InternalWebSocketEvent) {
+        suspend fun emitEvent(event: JsonObject) {
             if (!_isClosed) {
                 _eventChannel.send(event)
             }
@@ -700,7 +702,7 @@ class BSBWebSocketImplTest {
             _eventChannel.close()
         }
 
-        override suspend fun receive(): InternalWebSocketEvent {
+        override suspend fun receive(): JsonObject {
             if (_shouldThrowSerializationError) {
                 _shouldThrowSerializationError = false
                 throw SerializationException("Mock deserialization error")
@@ -725,4 +727,15 @@ class BSBWebSocketImplTest {
     }
 
     // endregion
+
+    companion object {
+        private const val TEST_BAR_ID = "00000000-0000-0000-0000-000000000001"
+        private val TEST_DEVICE_ID = Uuid.parse("00000000-0000-0000-0000-000000000002")
+
+        private fun createMockEvent(
+            barId: String = TEST_BAR_ID
+        ): JsonObject = JsonObject(
+            mapOf("bar_id" to JsonPrimitive(barId))
+        )
+    }
 }

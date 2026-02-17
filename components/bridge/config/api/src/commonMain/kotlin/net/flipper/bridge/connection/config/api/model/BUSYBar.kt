@@ -33,7 +33,7 @@ data class BUSYBar(
         @Serializable
         data class Cloud(
             @SerialName("device_id")
-            val deviceId: String
+            val deviceId: Uuid
         ) : ConnectionWay
     }
 }
