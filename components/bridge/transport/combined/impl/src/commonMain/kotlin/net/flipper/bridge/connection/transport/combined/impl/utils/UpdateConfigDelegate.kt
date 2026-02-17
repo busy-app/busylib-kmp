@@ -63,7 +63,7 @@ object UpdateConfigDelegate : LogTagProvider {
             if (idx in matchedOldIndices) continue
             if (oldConn.tryUpdateConnectionConfig(newChildConfig).isSuccess) {
                 matchedOldIndices.add(idx)
-                info { "Successfully updated $newChildConfig with ${oldConn.config}" }
+                info { "Successfully updated ${oldConn.config} with $newChildConfig" }
                 return oldConn
             }
         }
