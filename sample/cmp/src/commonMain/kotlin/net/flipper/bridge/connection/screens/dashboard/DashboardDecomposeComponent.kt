@@ -36,8 +36,13 @@ class DashboardDecomposeComponent(
                 .safeDrawingPadding(),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            val deviceName by viewModel.getDeviceName().collectAsState()
+            val deviceName by viewModel.deviceNameFlow.collectAsState()
             Text("Device Name: $deviceName")
+            val brightness by viewModel.brightnessFlow.collectAsState()
+            Text("Brightness: $brightness")
+            val volume by viewModel.volumeFlow.collectAsState()
+            Text("Brightness: $volume")
+
 
             Button(
                 onClick = viewModel::startOnCall
@@ -61,7 +66,7 @@ class DashboardDecomposeComponent(
 
     @Composable
     private fun ScreenStreamingBlock(modifier: Modifier) {
-        val image by remember { viewModel.getScreenStreamingImages() }.collectAsState(null)
+        val image by viewModel.screenStreamingImagesFlow.collectAsState(null)
         val painter = rememberBusyImagePainter(image)
         painter?.let {
             Image(

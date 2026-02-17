@@ -1,4 +1,4 @@
-package net.flipper.bridge.connection.feature.events.impl
+package net.flipper.bridge.connection.feature.events.impl.bits
 
 import dev.dokky.bitvector.BitVector
 import dev.dokky.bitvector.MutableBitVector
