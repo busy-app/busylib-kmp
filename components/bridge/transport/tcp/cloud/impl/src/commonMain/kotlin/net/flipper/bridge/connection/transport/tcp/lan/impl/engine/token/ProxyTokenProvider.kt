@@ -18,13 +18,14 @@ import net.flipper.core.ktor.getHttpClient
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
+import kotlin.uuid.Uuid
 
-typealias ProxyTokenProviderFactory = (httpEngine: HttpClientEngine, deviceId: String) -> ProxyTokenProvider
+typealias ProxyTokenProviderFactory = (httpEngine: HttpClientEngine, deviceId: Uuid) -> ProxyTokenProvider
 
 @Inject
 class ProxyTokenProvider(
     @Assisted httpEngine: HttpClientEngine,
-    @Assisted private val deviceId: String,
+    @Assisted private val deviceId: Uuid,
     private val principalApi: BUSYLibPrincipalApi,
     private val hostApi: BUSYLibHostApi
 ) {

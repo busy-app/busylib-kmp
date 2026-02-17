@@ -7,9 +7,11 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import net.flipper.bridge.connection.transport.ble.api.GATTCharacteristicAddress
 import net.flipper.bridge.connection.transport.common.api.meta.FTransportMetaInfoApi
+import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoData
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
 import net.flipper.busylib.core.wrapper.WrappedStateFlow
 import net.flipper.core.busylib.log.LogTagProvider
@@ -25,7 +27,7 @@ class FTransportMetaInfoApiImpl(
     override val TAG = "FTransportMetaInfoApi"
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    override fun get(key: TransportMetaInfoKey): Flow<Result<Flow<ByteArray?>>> {
+    override fun get(key: TransportMetaInfoKey): Flow<Result<Flow<TransportMetaInfoData?>>> {
         val address = metaInfoGattMap[key]
             ?: return flowOf(Result.failure(RuntimeException("Can't found provider for $key")))
 
@@ -39,7 +41,7 @@ class FTransportMetaInfoApiImpl(
     private suspend fun getFlow(
         bleGattServices: List<RemoteService>?,
         address: GATTCharacteristicAddress
-    ): Flow<ByteArray?> {
+    ): Flow<TransportMetaInfoData?> {
         val bleGattService = bleGattServices?.find { it.uuid == address.serviceAddress }
         info { "Found ble gatt service: ${bleGattService?.uuid}" }
         val characteristic = bleGattService?.characteristics?.find {
@@ -50,7 +52,6 @@ class FTransportMetaInfoApiImpl(
             warn { "Failed found gatt characteristic for $address" }
             return flowOf(null)
         }
-        characteristic
 
         if (characteristic.properties.contains(CharacteristicProperty.NOTIFY).not() &&
             characteristic.properties.contains(CharacteristicProperty.INDICATE).not() &&
@@ -60,13 +61,13 @@ class FTransportMetaInfoApiImpl(
                 "Not found PROPERTY_NOTIFY or PROPERTY_INDICATE for property $address, " +
                     "so fallback on one-time read value"
             }
-            return flowOf(characteristic.read())
+            return flowOf(TransportMetaInfoData.RawBytes(characteristic.read()))
         }
         info { "Subscribe on $address characteristic" }
         // Don't block one flow by another
         return listOf(
             flow { emit(characteristic.read()) },
             characteristic.subscribe()
-        ).merge()
+        ).merge().map { TransportMetaInfoData.RawBytes(it) }
     }
 }

@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.flowOf
 import net.flipper.bridge.connection.transport.combined.impl.connections.AutoReconnectConnection
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.meta.FTransportMetaInfoApi
+import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoData
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
@@ -32,7 +33,7 @@ class CombinedMetaInfoApiImpl(
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    override fun get(key: TransportMetaInfoKey): Flow<Result<Flow<ByteArray?>>> {
+    override fun get(key: TransportMetaInfoKey): Flow<Result<Flow<TransportMetaInfoData?>>> {
         return delegates.flatMapLatest { currentDelegates ->
             info { "Get meta info key $key from ${currentDelegates.size} delegates" }
 

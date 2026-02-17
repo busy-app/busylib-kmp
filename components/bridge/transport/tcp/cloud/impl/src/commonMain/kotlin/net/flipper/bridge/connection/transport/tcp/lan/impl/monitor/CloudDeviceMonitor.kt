@@ -21,6 +21,7 @@ import net.flipper.core.busylib.ktx.common.onLatest
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
 import kotlin.time.Duration.Companion.seconds
+import kotlin.uuid.Uuid
 
 private val INACTIVITY_TIMEOUT = 10.seconds
 
@@ -28,7 +29,7 @@ class CloudDeviceMonitor(
     private val webSocketBarsApi: CloudWebSocketBarsApi,
     private val scope: CoroutineScope,
     private val deviceApi: FCloudApi,
-    private val deviceId: String
+    private val deviceId: Uuid
 ) : LogTagProvider {
     override val TAG = "CloudDeviceMonitor"
     private val currentWebSocketFlow = webSocketBarsApi
@@ -77,7 +78,7 @@ class CloudDeviceMonitor(
     ) {
         fun create(
             deviceApi: FCloudApi,
-            deviceId: String
+            deviceId: Uuid
         ): CloudDeviceMonitor {
             return CloudDeviceMonitor(
                 webSocketBarsApi = webSocketBarsApi,

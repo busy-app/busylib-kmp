@@ -22,6 +22,7 @@ import net.flipper.bridge.connection.transport.combined.impl.utils.UpdateConfigD
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
+import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoData
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.busylib.ktx.common.withLockResult
@@ -108,7 +109,7 @@ class FCombinedConnectionApiImpl(
         return httpEngine
     }
 
-    override fun get(key: TransportMetaInfoKey): Flow<Result<Flow<ByteArray?>>> {
+    override fun get(key: TransportMetaInfoKey): Flow<Result<Flow<TransportMetaInfoData?>>> {
         return metaInfoApi.get(key)
     }
 
