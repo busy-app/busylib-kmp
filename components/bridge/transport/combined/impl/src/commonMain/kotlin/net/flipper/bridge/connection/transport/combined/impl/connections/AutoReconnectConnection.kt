@@ -22,7 +22,7 @@ import net.flipper.core.busylib.log.info
 
 class AutoReconnectConnection(
     scope: CoroutineScope,
-    private val config: FDeviceConnectionConfig<*>,
+    private var config: FDeviceConnectionConfig<*>,
     private val connectionBuilder: FDeviceConfigToConnection,
     private val dispatcher: CoroutineDispatcher = FlipperDispatchers.default
 ) : LogTagProvider {
@@ -39,9 +39,10 @@ class AutoReconnectConnection(
         connectionJob = scope.launch {
             var retryCount = 0
             while (isActive) {
-                info { "AutoReconnectConnection: Connecting... $config" }
+                val currentConfig = config
+                info { "AutoReconnectConnection: Connecting... $currentConfig" }
                 val connection = WrappedConnectionInternal(
-                    config = config,
+                    config = currentConfig,
                     connectionBuilder = connectionBuilder,
                     parentScope = this,
                     dispatcher = dispatcher
@@ -60,6 +61,21 @@ class AutoReconnectConnection(
                 retryCount++
             }
         }
+    }
+
+    suspend fun tryUpdateConnectionConfig(
+        newConfig: FDeviceConnectionConfig<*>
+    ): Result<Unit> {
+        config = newConfig
+        val currentState = stateFlow.value
+        if (currentState is FInternalTransportConnectionStatus.Connected) {
+            return runCatching {
+                currentState.deviceApi.tryUpdateConnectionConfig(newConfig).getOrThrow()
+            }
+        }
+        return Result.failure(
+            IllegalStateException("Cannot tryUpdateConnectionConfig: not connected")
+        )
     }
 
     suspend fun disconnect() {

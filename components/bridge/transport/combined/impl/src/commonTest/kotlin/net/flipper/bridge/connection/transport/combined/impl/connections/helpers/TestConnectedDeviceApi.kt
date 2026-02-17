@@ -13,8 +13,14 @@ import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfi
 class TestConnectedDeviceApi(
     override val deviceName: String = "TestDevice"
 ) : FConnectedDeviceApi {
+    var tryUpdateResult: Result<Unit> = Result.success(Unit)
+    var tryUpdateConfigReceived: FDeviceConnectionConfig<*>? = null
+    var tryUpdateCallCount = 0
+
     override suspend fun tryUpdateConnectionConfig(config: FDeviceConnectionConfig<*>): Result<Unit> {
-        return Result.success(Unit)
+        tryUpdateCallCount++
+        tryUpdateConfigReceived = config
+        return tryUpdateResult
     }
 
     var disconnectCalled = false
