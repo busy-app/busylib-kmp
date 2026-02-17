@@ -16,7 +16,6 @@ import net.flipper.bridge.connection.transport.combined.impl.connections.AutoRec
 import net.flipper.bridge.connection.transport.combined.impl.connections.helpers.MockConnectionBuilder
 import net.flipper.bridge.connection.transport.combined.impl.connections.helpers.TestConfig
 import net.flipper.bridge.connection.transport.combined.impl.connections.helpers.TestConnectedDeviceApi
-import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus.Connected
@@ -62,23 +61,6 @@ class FCombinedConnectionApiImplTest {
         name = name,
         connectionConfigs = childConfigs.toList()
     )
-
-    private suspend fun connectAndReport(
-        builder: MockConnectionBuilder,
-        scope: CoroutineScope,
-        deviceName: String = "Device"
-    ): TestConnectedDeviceApi {
-        builder.connectCalledDeferred.await()
-        val listener = builder.latestListener()!!
-        val deviceApi = builder.deviceApis.lastOrNull() ?: TestConnectedDeviceApi(deviceName)
-        listener.onStatusUpdate(
-            Connected(
-                scope = scope,
-                deviceApi = deviceApi
-            )
-        )
-        return deviceApi
-    }
 
     /**
      * Creates a [FCombinedConnectionApiImpl] with pre-established [AutoReconnectConnection]s.

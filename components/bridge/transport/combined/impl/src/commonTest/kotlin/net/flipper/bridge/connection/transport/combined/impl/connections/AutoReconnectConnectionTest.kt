@@ -1023,7 +1023,7 @@ class AutoReconnectConnectionTest {
                     return api1UpdateResult.await()
                 }
 
-                override suspend fun disconnect() {}
+                override suspend fun disconnect() = Unit
             }
 
             val connectDeferred = CompletableDeferred<Unit>()
@@ -1133,7 +1133,7 @@ class AutoReconnectConnectionTest {
                     return Result.success(Unit)
                 }
 
-                override suspend fun disconnect() {}
+                override suspend fun disconnect() = Unit
             }
 
             val connectDeferred = CompletableDeferred<Unit>()

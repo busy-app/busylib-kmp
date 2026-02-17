@@ -41,8 +41,11 @@ class FCombinedHttpEngine(
                         deviceApi.getCapabilities().map { deviceApi to it }
                     }
             }.flatMapLatest { apis ->
-                if (apis.isEmpty()) flowOf(arrayOf())
-                else combine(apis) { it }
+                if (apis.isEmpty()) {
+                    flowOf(arrayOf())
+                } else {
+                    combine(apis) { it }
+                }
             }
         }
     }.stateIn(scope, SharingStarted.Eagerly, arrayOf())

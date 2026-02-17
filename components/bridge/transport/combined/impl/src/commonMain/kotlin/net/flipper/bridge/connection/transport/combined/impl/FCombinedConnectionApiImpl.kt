@@ -13,18 +13,17 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import net.flipper.bridge.connection.connectionbuilder.api.FDeviceConfigToConnection
 import net.flipper.bridge.connection.transport.combined.FCombinedConnectionApi
 import net.flipper.bridge.connection.transport.combined.FCombinedConnectionConfig
 import net.flipper.bridge.connection.transport.combined.impl.connections.AutoReconnectConnection
 import net.flipper.bridge.connection.transport.combined.impl.metakey.CombinedMetaInfoApiImpl
+import net.flipper.bridge.connection.transport.combined.impl.utils.UpdateConfigDelegate
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
-import net.flipper.core.busylib.ktx.common.withLock
 import net.flipper.core.busylib.ktx.common.withLockResult
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
@@ -91,63 +90,13 @@ class FCombinedConnectionApiImpl(
             }
 
             runSuspendCatching {
-                updateConnectionConfigUnsafe(config)
-            }
-        }
-    }
-
-    private suspend fun updateConnectionConfigUnsafe(config: FCombinedConnectionConfig) {
-        val oldConnections = connections.value
-        val matchedOldIndices = mutableSetOf<Int>()
-        val newConnectionsList = mutableListOf<AutoReconnectConnection>()
-
-        for (newChildConfig in config.connectionConfigs) {
-            var matched = false
-            // 1. Exact config match — reuse without calling tryUpdateConnectionConfig
-            for ((idx, oldConn) in oldConnections.withIndex()) {
-                if (idx in matchedOldIndices) continue
-                if (oldConn.config == newChildConfig) {
-                    newConnectionsList.add(oldConn)
-                    matchedOldIndices.add(idx)
-                    matched = true
-                    info { "Found exact match for $newChildConfig" }
-                    break
-                }
-            }
-            if (matched) continue
-
-            // 2. Try tryUpdateConnectionConfig on unmatched existing connections
-            for ((idx, oldConn) in oldConnections.withIndex()) {
-                val result = oldConn.tryUpdateConnectionConfig(newChildConfig)
-                if (result.isSuccess) {
-                    newConnectionsList.add(oldConn)
-                    matchedOldIndices.add(idx)
-                    matched = true
-                    info { "Successfully updated $newChildConfig with ${oldConn.config}" }
-                    break
-                }
-            }
-            if (matched) continue
-
-            info { "Create new connection for $newChildConfig" }
-            // 3. Create new AutoReconnectConnection
-            newConnectionsList.add(
-                AutoReconnectConnection(
-                    scope = scope,
-                    initialConfig = newChildConfig,
-                    connectionBuilder = connectionBuilder
+                val newConnections = UpdateConfigDelegate.updateConnectionConfigUnsafe(
+                    oldConnections = connections.value,
+                    config = config,
+                    factory = { AutoReconnectConnection(scope, it, connectionBuilder) }
                 )
-            )
-        }
-
-        // Update connections flow first so consumers see new list immediately
-        connections.value = newConnectionsList
-        currentConfig = config
-
-        // Disconnect removed connections
-        for ((idx, oldConn) in oldConnections.withIndex()) {
-            if (idx !in matchedOldIndices) {
-                runSuspendCatching { oldConn.disconnect() }
+                connections.value = newConnections
+                currentConfig = config
             }
         }
     }
