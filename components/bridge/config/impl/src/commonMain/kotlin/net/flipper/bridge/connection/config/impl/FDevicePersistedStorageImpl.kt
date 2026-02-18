@@ -80,4 +80,19 @@ class FDevicePersistedStorageImpl(
                 }
         )
     }
+
+    override suspend fun updateDevice(id: String, block: (BUSYBar) -> BUSYBar) {
+        bleConfigKrate.save { settings ->
+            settings.copy(
+                devices = settings.devices
+                    .map { device ->
+                        if (device.uniqueId == id) {
+                            block(device)
+                        } else {
+                            device
+                        }
+                    }
+            )
+        }
+    }
 }

@@ -54,7 +54,7 @@ class AutoReconnectConnectionTest {
         // When
         val autoReconnect = AutoReconnectConnection(
             scope = backgroundScope,
-            config = TestConfig(),
+            initialConfig = TestConfig(),
             connectionBuilder = connectionBuilder,
             dispatcher = testDispatcher
         )
@@ -76,7 +76,7 @@ class AutoReconnectConnectionTest {
         // When
         AutoReconnectConnection(
             scope = backgroundScope,
-            config = TestConfig(),
+            initialConfig = TestConfig(),
             connectionBuilder = connectionBuilder,
             dispatcher = testDispatcher
         )
@@ -97,7 +97,7 @@ class AutoReconnectConnectionTest {
             val connectionBuilder = MockConnectionBuilder()
             val autoReconnect = AutoReconnectConnection(
                 scope = backgroundScope,
-                config = TestConfig(),
+                initialConfig = TestConfig(),
                 connectionBuilder = connectionBuilder,
                 dispatcher = testDispatcher
             )
@@ -132,7 +132,7 @@ class AutoReconnectConnectionTest {
         val connectionBuilder = MockConnectionBuilder()
         val autoReconnect = AutoReconnectConnection(
             scope = backgroundScope,
-            config = TestConfig(),
+            initialConfig = TestConfig(),
             connectionBuilder = connectionBuilder,
             dispatcher = testDispatcher
         )
@@ -180,7 +180,7 @@ class AutoReconnectConnectionTest {
         // When
         AutoReconnectConnection(
             scope = backgroundScope,
-            config = TestConfig(),
+            initialConfig = TestConfig(),
             connectionBuilder = connectionBuilder,
             dispatcher = testDispatcher
         )
@@ -211,7 +211,7 @@ class AutoReconnectConnectionTest {
         // When
         AutoReconnectConnection(
             scope = backgroundScope,
-            config = TestConfig(),
+            initialConfig = TestConfig(),
             connectionBuilder = connectionBuilder,
             dispatcher = testDispatcher
         )
@@ -260,7 +260,7 @@ class AutoReconnectConnectionTest {
 
         val autoReconnect = AutoReconnectConnection(
             scope = backgroundScope,
-            config = TestConfig(),
+            initialConfig = TestConfig(),
             connectionBuilder = connectionBuilder,
             dispatcher = testDispatcher
         )
@@ -319,7 +319,7 @@ class AutoReconnectConnectionTest {
 
         val autoReconnect = AutoReconnectConnection(
             scope = backgroundScope,
-            config = TestConfig(),
+            initialConfig = TestConfig(),
             connectionBuilder = connectionBuilder,
             dispatcher = testDispatcher
         )
@@ -355,7 +355,7 @@ class AutoReconnectConnectionTest {
 
         val autoReconnect = AutoReconnectConnection(
             scope = backgroundScope,
-            config = TestConfig(),
+            initialConfig = TestConfig(),
             connectionBuilder = connectionBuilder,
             dispatcher = testDispatcher
         )
@@ -387,7 +387,7 @@ class AutoReconnectConnectionTest {
             val connectionBuilder = MockConnectionBuilder()
             val autoReconnect = AutoReconnectConnection(
                 scope = backgroundScope,
-                config = TestConfig(),
+                initialConfig = TestConfig(),
                 connectionBuilder = connectionBuilder,
                 dispatcher = testDispatcher
             )
@@ -412,7 +412,7 @@ class AutoReconnectConnectionTest {
         val connectionBuilder = MockConnectionBuilder()
         val autoReconnect = AutoReconnectConnection(
             scope = backgroundScope,
-            config = TestConfig(),
+            initialConfig = TestConfig(),
             connectionBuilder = connectionBuilder,
             dispatcher = testDispatcher
         )
@@ -452,7 +452,7 @@ class AutoReconnectConnectionTest {
 
         val autoReconnect = AutoReconnectConnection(
             scope = backgroundScope,
-            config = TestConfig(),
+            initialConfig = TestConfig(),
             connectionBuilder = connectionBuilder,
             dispatcher = testDispatcher
         )
@@ -504,7 +504,7 @@ class AutoReconnectConnectionTest {
         val connectionBuilder = MockConnectionBuilder()
         val autoReconnect = AutoReconnectConnection(
             scope = backgroundScope,
-            config = TestConfig(),
+            initialConfig = TestConfig(),
             connectionBuilder = connectionBuilder,
             dispatcher = testDispatcher
         )
@@ -554,7 +554,7 @@ class AutoReconnectConnectionTest {
 
         val autoReconnect = AutoReconnectConnection(
             scope = backgroundScope,
-            config = TestConfig(),
+            initialConfig = TestConfig(),
             connectionBuilder = connectionBuilder,
             dispatcher = testDispatcher
         )
@@ -610,7 +610,7 @@ class AutoReconnectConnectionTest {
         val testDispatcher = StandardTestDispatcher(testScheduler)
         val autoReconnect = AutoReconnectConnection(
             scope = backgroundScope,
-            config = TestConfig(),
+            initialConfig = TestConfig(),
             connectionBuilder = connectionBuilder,
             dispatcher = testDispatcher
         )
@@ -635,7 +635,7 @@ class AutoReconnectConnectionTest {
             val connectionBuilder = MockConnectionBuilder()
             val autoReconnect = AutoReconnectConnection(
                 scope = backgroundScope,
-                config = TestConfig(),
+                initialConfig = TestConfig(),
                 connectionBuilder = connectionBuilder,
                 dispatcher = testDispatcher
             )
@@ -678,7 +678,7 @@ class AutoReconnectConnectionTest {
             val connectionBuilder = MockConnectionBuilder()
             val autoReconnect = AutoReconnectConnection(
                 scope = parentScope,
-                config = TestConfig(),
+                initialConfig = TestConfig(),
                 connectionBuilder = connectionBuilder,
                 dispatcher = testDispatcher
             )
@@ -709,7 +709,7 @@ class AutoReconnectConnectionTest {
         val connectionBuilder = MockConnectionBuilder()
         AutoReconnectConnection(
             scope = parentScope,
-            config = TestConfig(),
+            initialConfig = TestConfig(),
             connectionBuilder = connectionBuilder,
             dispatcher = testDispatcher
         )
@@ -749,7 +749,7 @@ class AutoReconnectConnectionTest {
         // When
         AutoReconnectConnection(
             scope = backgroundScope,
-            config = TestConfig(),
+            initialConfig = TestConfig(),
             connectionBuilder = connectionBuilder,
             dispatcher = testDispatcher
         )
@@ -772,7 +772,7 @@ class AutoReconnectConnectionTest {
 
             val autoReconnect = AutoReconnectConnection(
                 scope = backgroundScope,
-                config = TestConfig(),
+                initialConfig = TestConfig(),
                 connectionBuilder = connectionBuilder,
                 dispatcher = testDispatcher
             )
@@ -815,7 +815,7 @@ class AutoReconnectConnectionTest {
 
         AutoReconnectConnection(
             scope = backgroundScope,
-            config = TestConfig(),
+            initialConfig = TestConfig(),
             connectionBuilder = connectionBuilder,
             dispatcher = testDispatcher
         )
@@ -844,7 +844,7 @@ class AutoReconnectConnectionTest {
 
             val autoReconnect = AutoReconnectConnection(
                 scope = backgroundScope,
-                config = TestConfig(),
+                initialConfig = TestConfig(),
                 connectionBuilder = connectionBuilder,
                 dispatcher = testDispatcher
             )
@@ -890,7 +890,7 @@ class AutoReconnectConnectionTest {
 
         val autoReconnect = AutoReconnectConnection(
             scope = backgroundScope,
-            config = TestConfig(),
+            initialConfig = TestConfig(),
             connectionBuilder = connectionBuilder,
             dispatcher = testDispatcher
         )
@@ -954,7 +954,7 @@ class AutoReconnectConnectionTest {
         val connectionBuilder = MockConnectionBuilder()
         val autoReconnect = AutoReconnectConnection(
             scope = backgroundScope,
-            config = TestConfig(),
+            initialConfig = TestConfig(),
             connectionBuilder = connectionBuilder,
             dispatcher = testDispatcher
         )
@@ -985,6 +985,232 @@ class AutoReconnectConnectionTest {
             "Late subscriber should get current Connected state"
         )
     }
+
+    // endregion
+
+    // region Race Condition Breakage Tests
+
+    /**
+     * TOCTOU Race: tryUpdateConnectionConfig reads Connected(deviceApi1),
+     * but while deviceApi1.tryUpdateConnectionConfig() is executing (suspended),
+     * the connection disconnects.
+     *
+     * WrappedConnectionInternal contract: one instance always returns one device api.
+     * When the connection drops, deviceApi operations fail.
+     *
+     * The mutex in the reconnect loop prevents creating a new WrappedConnectionInternal
+     * while tryUpdateConnectionConfig holds the mutex, so the only thing that can happen
+     * is the current deviceApi failing due to its connection being lost.
+     *
+     * Expected correct behavior: tryUpdateConnectionConfig returns failure,
+     * config remains unchanged.
+     */
+    @Test
+    fun GIVEN_connected_WHEN_disconnect_during_slow_config_update_THEN_update_should_fail_or_reach_new_connection() =
+        runTest {
+            val testDispatcher = StandardTestDispatcher(testScheduler)
+
+            val api1UpdateStarted = CompletableDeferred<Unit>()
+            val api1UpdateResult = CompletableDeferred<Result<Unit>>()
+            val deviceApi1 = object : FConnectedDeviceApi {
+                override val deviceName = "Device-1"
+                override suspend fun tryUpdateConnectionConfig(
+                    config: FDeviceConnectionConfig<*>
+                ): Result<Unit> {
+                    api1UpdateStarted.complete(Unit)
+                    // WrappedConnectionInternal contract: one instance = one device api.
+                    // When connection drops, this deferred is completed with failure.
+                    return api1UpdateResult.await()
+                }
+
+                override suspend fun disconnect() = Unit
+            }
+
+            val connectDeferred = CompletableDeferred<Unit>()
+            var storedListener: FTransportConnectionStatusListener? = null
+
+            val connectionBuilder = object : FDeviceConfigToConnection {
+                override suspend fun <API : FConnectedDeviceApi, CONFIG : FDeviceConnectionConfig<API>> connect(
+                    scope: CoroutineScope,
+                    config: CONFIG,
+                    listener: FTransportConnectionStatusListener
+                ): Result<API> {
+                    storedListener = listener
+                    connectDeferred.complete(Unit)
+                    @Suppress("UNCHECKED_CAST")
+                    return Result.success(deviceApi1 as API)
+                }
+            }
+
+            val parentJob = SupervisorJob()
+            val testScope = CoroutineScope(parentJob + testDispatcher)
+            val autoReconnect = AutoReconnectConnection(
+                scope = testScope,
+                initialConfig = TestConfig("initial"),
+                connectionBuilder = connectionBuilder,
+                dispatcher = testDispatcher
+            )
+
+            connectDeferred.await()
+            advanceUntilIdle()
+
+            // Establish connection
+            storedListener!!.onStatusUpdate(
+                FInternalTransportConnectionStatus.Connected(
+                    scope = testScope,
+                    deviceApi = deviceApi1
+                )
+            )
+            advanceUntilIdle()
+            assertIs<FInternalTransportConnectionStatus.Connected>(autoReconnect.stateFlow.value)
+
+            // Launch tryUpdateConnectionConfig — acquires mutex, calls deviceApi1
+            val updateResult = CompletableDeferred<Result<Unit>>()
+            launch(testDispatcher) {
+                updateResult.complete(
+                    autoReconnect.tryUpdateConnectionConfig(TestConfig("new-config"))
+                )
+            }
+            advanceUntilIdle()
+            api1UpdateStarted.await()
+
+            // While deviceApi1 is suspended, disconnect the connection.
+            // Per the 1:1 contract, deviceApi1 fails when its connection drops.
+            storedListener!!.onStatusUpdate(FInternalTransportConnectionStatus.Disconnected)
+            api1UpdateResult.complete(
+                Result.failure(IllegalStateException("Connection lost"))
+            )
+            advanceUntilIdle()
+
+            val result = updateResult.await()
+
+            // The update must fail because the connection dropped
+            assertTrue(
+                result.isFailure,
+                "Update should fail when connection drops mid-update. Got: $result"
+            )
+
+            // Config must remain unchanged
+            assertEquals(
+                TestConfig("initial"),
+                autoReconnect.config,
+                "Config should not change on failed update"
+            )
+
+            parentJob.cancel()
+        }
+
+    /**
+     * Concurrent Race: Two simultaneous tryUpdateConnectionConfig calls
+     * interleave such that the first call's deviceApi update executes AFTER
+     * the second call's update.
+     *
+     * Expected correct behavior: the config field and the last config applied
+     * to the device must be consistent. If both succeed, the device must end up
+     * with the same config that the config field holds.
+     */
+    @Test
+    fun GIVEN_connected_WHEN_concurrent_config_updates_with_slow_first_THEN_config_field_consistent_with_device() =
+        runTest {
+            val testDispatcher = StandardTestDispatcher(testScheduler)
+
+            val configHistory = mutableListOf<FDeviceConnectionConfig<*>>()
+            val firstCallStarted = CompletableDeferred<Unit>()
+            val firstCallContinue = CompletableDeferred<Unit>()
+            var callCount = 0
+
+            val deviceApi = object : FConnectedDeviceApi {
+                override val deviceName = "RacyDevice"
+                override suspend fun tryUpdateConnectionConfig(
+                    config: FDeviceConnectionConfig<*>
+                ): Result<Unit> {
+                    callCount++
+                    if (callCount == 1) {
+                        firstCallStarted.complete(Unit)
+                        firstCallContinue.await()
+                    }
+                    configHistory.add(config)
+                    return Result.success(Unit)
+                }
+
+                override suspend fun disconnect() = Unit
+            }
+
+            val connectDeferred = CompletableDeferred<Unit>()
+            var storedListener: FTransportConnectionStatusListener? = null
+
+            val connectionBuilder = object : FDeviceConfigToConnection {
+                override suspend fun <API : FConnectedDeviceApi, CONFIG : FDeviceConnectionConfig<API>> connect(
+                    scope: CoroutineScope,
+                    config: CONFIG,
+                    listener: FTransportConnectionStatusListener
+                ): Result<API> {
+                    storedListener = listener
+                    connectDeferred.complete(Unit)
+                    @Suppress("UNCHECKED_CAST")
+                    return Result.success(deviceApi as API)
+                }
+            }
+
+            val parentJob = SupervisorJob()
+            val testScope = CoroutineScope(parentJob + testDispatcher)
+            val autoReconnect = AutoReconnectConnection(
+                scope = testScope,
+                initialConfig = TestConfig("initial"),
+                connectionBuilder = connectionBuilder,
+                dispatcher = testDispatcher
+            )
+
+            connectDeferred.await()
+            advanceUntilIdle()
+
+            storedListener!!.onStatusUpdate(
+                FInternalTransportConnectionStatus.Connected(
+                    scope = testScope,
+                    deviceApi = deviceApi
+                )
+            )
+            advanceUntilIdle()
+
+            // Launch two concurrent config updates
+            val resultA = CompletableDeferred<Result<Unit>>()
+            val resultB = CompletableDeferred<Result<Unit>>()
+
+            launch(testDispatcher) {
+                resultA.complete(
+                    autoReconnect.tryUpdateConnectionConfig(TestConfig("config-A"))
+                )
+            }
+            launch(testDispatcher) {
+                resultB.complete(
+                    autoReconnect.tryUpdateConnectionConfig(TestConfig("config-B"))
+                )
+            }
+            advanceUntilIdle()
+
+            // Call A is paused in deviceApi, call B has already completed
+            firstCallStarted.await()
+
+            // Let call A's deviceApi finish
+            firstCallContinue.complete(Unit)
+            advanceUntilIdle()
+
+            resultA.await()
+            resultB.await()
+
+            // Correct behavior: the last config applied to the device must match
+            // the config field. They should be consistent for the next reconnect.
+            val lastDeviceConfig = configHistory.last()
+            assertEquals(
+                autoReconnect.config,
+                lastDeviceConfig,
+                "Config field and device config must be consistent. " +
+                    "Config field=${autoReconnect.config}, last device config=$lastDeviceConfig, " +
+                    "full history=$configHistory"
+            )
+
+            parentJob.cancel()
+        }
 
     // endregion
 }

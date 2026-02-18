@@ -4,5 +4,9 @@ import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfi
 
 /**
  * Test configuration for connection tests.
+ *
+ * @property id Unique identifier for distinguishing configs in tests
  */
-class TestConfig : FDeviceConnectionConfig<TestConnectedDeviceApi>()
+data class TestConfig(
+    val id: String = ""
+) : FDeviceConnectionConfig<TestConnectedDeviceApi>()

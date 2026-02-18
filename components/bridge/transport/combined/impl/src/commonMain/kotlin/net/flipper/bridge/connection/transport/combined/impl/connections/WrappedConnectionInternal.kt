@@ -15,6 +15,7 @@ import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfi
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
+import net.flipper.core.busylib.ktx.common.launchOnCompletion
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
@@ -53,6 +54,9 @@ class WrappedConnectionInternal(
                 this@WrappedConnectionInternal
             ).getOrElse { throw WrappedConnectionException(it) }
         }
+        scope.launchOnCompletion {
+            connectionApi?.disconnect()
+        }
     }
 
     override suspend fun onStatusUpdate(status: FInternalTransportConnectionStatus) {
@@ -61,7 +65,6 @@ class WrappedConnectionInternal(
     }
 
     suspend fun disconnect() {
-        connectionApi?.disconnect()
         scope.cancel()
     }
 }

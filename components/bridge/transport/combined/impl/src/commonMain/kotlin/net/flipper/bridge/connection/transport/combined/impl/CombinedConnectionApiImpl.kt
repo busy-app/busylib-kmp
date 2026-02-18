@@ -28,9 +28,10 @@ class CombinedConnectionApiImpl : CombinedConnectionApi {
         }
         return@runCatching FCombinedConnectionApiImpl(
             scope = scope,
-            connections = connections,
+            initialConnections = connections,
             listener = listener,
-            deviceName = config.name
+            currentConfig = config,
+            connectionBuilder = connectionBuilder
         )
     }
 }

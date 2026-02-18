@@ -83,6 +83,7 @@ kotlin {
         implementation(projects.components.bridge.transportconfigbuilder.impl)
 
         implementation(projects.components.watchers.api)
+        implementation(projects.components.watchers.changename)
 
         implementation(libs.kotlin.coroutines)
         implementation(libs.ktor.client.core)

@@ -2,6 +2,7 @@ package net.flipper.bridge.connection.transport.combined.impl.metakey
 
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -14,14 +15,21 @@ import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
 
 class CombinedMetaInfoApiImpl(
-    connections: List<AutoReconnectConnection>,
+    connectionsFlow: StateFlow<List<AutoReconnectConnection>>,
 ) : FTransportMetaInfoApi, LogTagProvider {
     override val TAG = "CombinedMetaInfoApi"
 
-    private val delegates = combine(connections.map { it.stateFlow }) { states ->
-        states.filterIsInstance<FInternalTransportConnectionStatus.Connected>()
-            .map { it.deviceApi }
-            .filterIsInstance<FTransportMetaInfoApi>()
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val delegates = connectionsFlow.flatMapLatest { connections ->
+        if (connections.isEmpty()) {
+            flowOf(emptyList())
+        } else {
+            combine(connections.map { it.stateFlow }) { states ->
+                states.filterIsInstance<FInternalTransportConnectionStatus.Connected>()
+                    .map { it.deviceApi }
+                    .filterIsInstance<FTransportMetaInfoApi>()
+            }
+        }
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
