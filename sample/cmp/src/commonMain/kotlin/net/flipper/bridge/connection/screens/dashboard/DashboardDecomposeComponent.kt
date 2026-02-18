@@ -12,7 +12,6 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -36,8 +35,12 @@ class DashboardDecomposeComponent(
                 .safeDrawingPadding(),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            val deviceName by viewModel.getDeviceName().collectAsState()
+            val deviceName by viewModel.deviceNameFlow.collectAsState()
             Text("Device Name: $deviceName")
+            val brightness by viewModel.brightnessFlow.collectAsState()
+            Text("Brightness: $brightness")
+            val volume by viewModel.volumeFlow.collectAsState()
+            Text("Volume: $volume")
 
             Button(
                 onClick = viewModel::startOnCall
@@ -61,7 +64,7 @@ class DashboardDecomposeComponent(
 
     @Composable
     private fun ScreenStreamingBlock(modifier: Modifier) {
-        val image by remember { viewModel.getScreenStreamingImages() }.collectAsState(null)
+        val image by viewModel.screenStreamingImagesFlow.collectAsState(null)
         val painter = rememberBusyImagePainter(image)
         painter?.let {
             Image(

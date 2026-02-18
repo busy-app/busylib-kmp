@@ -8,4 +8,7 @@ import net.flipper.core.busylib.ktx.common.MutexConsumable
  *
  * @see Consumable
  */
-class ConsumableUpdateEvent(val updateEvent: UpdateEvent) : Consumable by MutexConsumable()
+data class ConsumableUpdateEvent(
+    val updateEvent: UpdateEvent,
+    val value: String?
+) : Consumable by MutexConsumable()
