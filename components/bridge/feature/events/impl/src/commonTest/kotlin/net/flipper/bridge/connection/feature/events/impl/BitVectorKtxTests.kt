@@ -1,5 +1,6 @@
 package net.flipper.bridge.connection.feature.events.impl
 
+import net.flipper.bridge.connection.feature.events.impl.bits.bitsOf
 import kotlin.test.Test
 import kotlin.test.assertTrue
 

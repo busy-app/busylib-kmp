@@ -9,4 +9,6 @@ data class DisplayBrightnessInfo(
     val front: String,
     @SerialName("back")
     val back: String
-)
+) {
+    constructor(brightness: String) : this(brightness, brightness)
+}
