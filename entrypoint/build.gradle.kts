@@ -71,6 +71,7 @@ kotlin {
         implementation(projects.components.bridge.transport.mock.api)
         implementation(projects.components.bridge.transport.tcp.cloud.api)
         implementation(projects.components.bridge.transport.combined.api)
+        implementation(projects.components.bridge.transport.combined.impl)
         if (CURRENT_FLAVOR_TYPE.isMockEnabled) {
             implementation(projects.components.bridge.transport.mock.impl)
         }
@@ -90,13 +91,10 @@ kotlin {
         api(projects.components.bridge.device.firstpair.connection.api)
         implementation(projects.components.bridge.device.firstpair.connection.impl)
         implementation(projects.components.bridge.transport.ble.impl)
-        implementation(projects.components.bridge.transport.combined.noop)
         implementation(libs.ble.client)
     }
     sourceSets.jvmMain.dependencies {
         implementation(projects.components.bridge.transport.tcp.lan.impl)
-
-        implementation(projects.components.bridge.transport.combined.impl)
     }
 }
 
@@ -138,8 +136,6 @@ kotlin {
     sourceSets.appleMain {
         dependencies {
             implementation(projects.components.bridge.config.impl)
-
-            implementation(projects.components.bridge.transport.combined.noop)
         }
         if (CURRENT_FLAVOR_TYPE.isMockEnabled) {
             kotlin.srcDir("src/appleMainMock/kotlin")
