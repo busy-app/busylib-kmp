@@ -40,7 +40,7 @@ class DashboardDecomposeComponent(
             val brightness by viewModel.brightnessFlow.collectAsState()
             Text("Brightness: $brightness")
             val volume by viewModel.volumeFlow.collectAsState()
-            Text("Brightness: $volume")
+            Text("Volume: $volume")
 
             Button(
                 onClick = viewModel::startOnCall
