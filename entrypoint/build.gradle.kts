@@ -25,6 +25,7 @@ kotlin {
         implementation(projects.components.cloud.barsws.impl)
 
         api(projects.components.bridge.config.api)
+        api(projects.components.bridge.config.impl)
         implementation(projects.components.bridge.connectionbuilder.api)
         implementation(projects.components.bridge.connectionbuilder.impl)
         implementation(projects.components.bridge.device.bsb.api)
@@ -135,9 +136,6 @@ kotlin {
         }
 
     sourceSets.appleMain {
-        dependencies {
-            implementation(projects.components.bridge.config.impl)
-        }
         if (CURRENT_FLAVOR_TYPE.isMockEnabled) {
             kotlin.srcDir("src/appleMainMock/kotlin")
         }
