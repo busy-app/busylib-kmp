@@ -72,9 +72,9 @@ class IOSSearchViewModel(
                     warn { "Accessory with UUID ${searchItem.address} not found in map" }
                 }
 
-                persistedStorage.removeDevice(searchItem.deviceModel.uniqueId)
+                persistedStorage.transaction { removeDevice(searchItem.deviceModel.uniqueId) }
             } else {
-                persistedStorage.addDevice(searchItem.deviceModel)
+                persistedStorage.transaction { addOrReplace(searchItem.deviceModel) }
             }
         }
     }
@@ -105,7 +105,7 @@ class IOSSearchViewModel(
     init {
         combine(
             searchItems,
-            persistedStorage.getAllDevices()
+            persistedStorage.getAllDevicesFlow()
         ) { accessoriesMap, savedDevices ->
             val existedUuids = savedDevices
                 .filter { device -> device.connectionWays.any { it is BUSYBar.ConnectionWay.BLE } }
@@ -211,19 +211,21 @@ class IOSSearchViewModel(
             info { "Emitting updated map without $uuidString" }
             searchItems.emit(updatedMap.toImmutableMap())
             info { "Emitted updated map without $uuidString" }
-            val currentDevice = persistedStorage.getCurrentDevice().first()
-            val isCurrentDevice = currentDevice?.uniqueId == uuidString
-            val existingDevices = persistedStorage.getAllDevices().first()
-            val deviceExists = existingDevices.any { it.uniqueId == uuidString }
+            persistedStorage.transaction {
+                val currentDevice = getCurrentDevice()
+                val isCurrentDevice = currentDevice?.uniqueId == uuidString
+                val existingDevices = getAllDevices()
+                val deviceExists = existingDevices.any { it.uniqueId == uuidString }
 
-            if (isCurrentDevice) {
-                info { "Accessory is current device, stopping connection attempts" }
-                connectionService.forgetCurrentDevice()
-            } else if (deviceExists) {
-                info { "Device found in storage, removing..." }
-                persistedStorage.removeDevice(uuidString)
-            } else {
-                info { "Device not in storage, skipping removal" }
+                if (isCurrentDevice) {
+                    info { "Accessory is current device, stopping connection attempts" }
+                    connectionService.forgetCurrentDevice()
+                } else if (deviceExists) {
+                    info { "Device found in storage, removing..." }
+                    removeDevice(uuidString)
+                } else {
+                    info { "Device not in storage, skipping removal" }
+                }
             }
         }
     }

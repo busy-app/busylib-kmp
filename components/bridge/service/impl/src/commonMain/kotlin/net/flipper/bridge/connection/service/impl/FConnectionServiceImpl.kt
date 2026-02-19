@@ -43,7 +43,7 @@ class FConnectionServiceImpl(
     private fun getExpectedState(): Flow<ExpectedState> {
         return combine(
             isForceDisconnectedFlow,
-            fDevicePersistedStorage.getCurrentDevice()
+            fDevicePersistedStorage.getCurrentDeviceFlow()
         ) { isForceDisconnected, currentDevice ->
             if (isForceDisconnected) {
                 return@combine ExpectedState.Disconnected
@@ -116,11 +116,9 @@ class FConnectionServiceImpl(
     override fun forgetCurrentDevice() {
         scope.launch {
             isForceDisconnectedFlow.emit(true)
-            fDevicePersistedStorage.getCurrentDevice()
-                .first()
-                ?.let { currentDevice ->
-                    fDevicePersistedStorage.removeDevice(currentDevice.uniqueId)
-                }
+            fDevicePersistedStorage.transaction {
+                getCurrentDevice()?.let { removeDevice(it.uniqueId) }
+            }
         }
     }
 }

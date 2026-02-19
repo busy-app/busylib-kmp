@@ -30,8 +30,8 @@ class FDevicesViewModel(
 
     init {
         combine(
-            devicePersistedStorage.getAllDevices(),
-            devicePersistedStorage.getCurrentDevice()
+            devicePersistedStorage.getAllDevicesFlow(),
+            devicePersistedStorage.getCurrentDeviceFlow()
         ) { devices, currentDevice ->
             DevicesDropdownState(
                 currentDevice = currentDevice,
@@ -45,13 +45,13 @@ class FDevicesViewModel(
 
     fun onSelectDevice(device: BUSYBar) {
         viewModelScope.launch {
-            devicePersistedStorage.setCurrentDevice(device.uniqueId)
+            devicePersistedStorage.transaction { setCurrentDevice(device.uniqueId) }
         }
     }
 
     fun onDisconnect() {
         viewModelScope.launch {
-            devicePersistedStorage.setCurrentDevice(null)
+            devicePersistedStorage.transaction { setCurrentDevice(null) }
         }
     }
 }

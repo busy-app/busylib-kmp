@@ -13,9 +13,9 @@ abstract class ConnectionSearchViewModel(
     open fun onDeviceClick(searchItem: ConnectionSearchItem) {
         viewModelScope.launch {
             if (searchItem.isAdded) {
-                persistedStorage.removeDevice(searchItem.deviceModel.uniqueId)
+                persistedStorage.transaction { removeDevice(searchItem.deviceModel.uniqueId) }
             } else {
-                persistedStorage.addDevice(searchItem.deviceModel)
+                persistedStorage.transaction { addOrReplace(searchItem.deviceModel) }
             }
         }
     }

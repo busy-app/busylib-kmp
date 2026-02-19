@@ -20,7 +20,7 @@ class LanSearchViewModel(
     override val TAG = "LanSearchViewModel"
 
     private val searchItems = combine(
-        persistedStorage.getAllDevices(),
+        persistedStorage.getAllDevicesFlow(),
         flowOf(
             listOf(
                 BUSYBar(
