@@ -1,6 +1,7 @@
 plugins {
     id("flipper.multiplatform")
     id("flipper.anvil-multiplatform")
+    id("kotlinx-serialization")
 }
 
 kotlin {
@@ -23,5 +24,6 @@ kotlin {
         implementation(projects.components.principal.api)
 
         implementation(libs.kotlin.coroutines)
+        implementation(libs.ktor.client.core)
     }
 }

@@ -27,25 +27,6 @@ class LanSearchViewModel(
                     uniqueId = "BUSY_Bar_LAN",
                     humanReadableName = "BUSY Bar LAN",
                     connectionWays = listOf(BUSYBar.ConnectionWay.Lan())
-                ),
-                BUSYBar(
-                    uniqueId = "BUSY_Bar_Cloud",
-                    humanReadableName = "BUSY Bar Cloud",
-                    connectionWays = listOf(
-                        BUSYBar.ConnectionWay.Cloud(
-                            deviceId = Secrets.DEVICE_ID
-                        )
-                    )
-                ),
-                BUSYBar(
-                    uniqueId = "BUSY Bar Combined",
-                    humanReadableName = "BUSY Bar Combined",
-                    connectionWays = listOf(
-                        BUSYBar.ConnectionWay.Lan(),
-                        BUSYBar.ConnectionWay.Cloud(
-                            deviceId = Secrets.DEVICE_ID
-                        )
-                    )
                 )
             )
         )

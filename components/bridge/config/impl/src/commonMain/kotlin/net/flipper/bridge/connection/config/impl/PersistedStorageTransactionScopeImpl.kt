@@ -45,7 +45,12 @@ class PersistedStorageTransactionScopeImpl(
             settings
         } else {
             settings.copy(
-                devices = settings.devices.filter { it.uniqueId != id }
+                devices = settings.devices.filter { it.uniqueId != id },
+                currentSelectedDeviceId = if (id == settings.currentSelectedDeviceId) {
+                    null
+                } else {
+                    settings.currentSelectedDeviceId
+                }
             )
         }
     }

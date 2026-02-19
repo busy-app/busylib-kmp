@@ -41,6 +41,7 @@ suspend fun main() {
     val persistedStorage = FDevicePersistedStorageImpl(
         PreferencesSettings(Preferences.userRoot())
     )
+    persistedStorage.transaction { getAllDevices().forEach { removeDevice(it.uniqueId) } }
     val hostApi = BUSYLibHostApiStub(
         host = "cloud.dev.busy.app",
     )
