@@ -15,6 +15,9 @@ kotlin {
         implementation(projects.components.bridge.config.api)
         implementation(projects.components.watchers.api)
 
+        implementation(projects.components.bridge.feature.link.api)
+        implementation(projects.components.bridge.feature.provider.api)
+
         implementation(libs.kotlin.coroutines)
     }
 }

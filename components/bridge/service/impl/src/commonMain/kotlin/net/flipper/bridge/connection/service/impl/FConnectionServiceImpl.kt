@@ -15,11 +15,16 @@ import kotlinx.coroutines.sync.withLock
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.config.api.model.BUSYBar
+import net.flipper.bridge.connection.feature.link.check.ondemand.api.FLinkedInfoOnDemandFeatureApi
+import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
+import net.flipper.bridge.connection.feature.provider.api.getSync
 import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
 import net.flipper.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
 import net.flipper.bridge.connection.service.api.FConnectionService
 import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
 import net.flipper.busylib.core.di.BusyLibGraph
+import net.flipper.busylib.core.wrapper.CResult
+import net.flipper.busylib.core.wrapper.map
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
@@ -33,7 +38,8 @@ import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 @ContributesBinding(BusyLibGraph::class, InternalBUSYLibStartupListener::class, multibinding = true)
 class FConnectionServiceImpl(
     private val orchestrator: FDeviceOrchestrator,
-    private val fDevicePersistedStorage: FDevicePersistedStorage
+    private val fDevicePersistedStorage: FDevicePersistedStorage,
+    private val fFeatureProvider: FFeatureProvider
 ) : FConnectionService, LogTagProvider, InternalBUSYLibStartupListener {
     override val TAG: String = "FConnectionService"
 
@@ -114,7 +120,7 @@ class FConnectionServiceImpl(
         }
     }
 
-    override suspend fun forgetDevice(device: BUSYBar): Result<Unit> {
+    override suspend fun forgetDevice(device: BUSYBar): CResult<Unit> {
         val devices = fDevicePersistedStorage
             .getAllDevices()
             .first()
@@ -134,16 +140,12 @@ class FConnectionServiceImpl(
             .filterIsInstance<BUSYBar.ConnectionWay.Cloud>()
             .isNotEmpty()
         if (hasCloudConnection) {
-            // todo unlink request
+            val fLinkFeature = fFeatureProvider.getSync<FLinkedInfoOnDemandFeatureApi>()
+                ?: return CResult.failure(IllegalStateException("FLinkedInfoOnDemandFeatureApi is not found"))
+            val result = fLinkFeature.deleteAccount().map { Unit }
+            if (result.exceptionOrNull() != null) return result
         }
         fDevicePersistedStorage.removeDevice(device.uniqueId)
-        return Result.success(Unit)
-    }
-
-    override suspend fun forgetCurrentDevice(): Result<Unit> {
-        return fDevicePersistedStorage.getCurrentDevice()
-            .first()
-            ?.let { currentDevice -> forgetDevice(currentDevice) }
-            ?: Result.failure(IllegalStateException("Device not found"))
+        return CResult.success(Unit)
     }
 }
