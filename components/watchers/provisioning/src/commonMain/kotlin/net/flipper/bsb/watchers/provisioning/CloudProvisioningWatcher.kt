@@ -6,9 +6,9 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
+import net.flipper.bridge.connection.config.api.getDevice
 import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
@@ -73,8 +73,10 @@ class CloudProvisioningWatcher(
 
     private suspend fun onNewLinkedInfo(linkedInfo: RpcLinkedAccountInfo?, deviceId: String) {
         val cloudId = linkedInfo?.cloudId?.let(Uuid::parse) ?: return
-        persistedStorage.updateDevice(deviceId) { device ->
-            getNewBUSYBar(cloudId, device)
+        persistedStorage.transaction {
+            getDevice(deviceId)?.let {
+                addOrReplace(getNewBUSYBar(cloudId, it))
+            }
         }
     }
 
@@ -90,7 +92,7 @@ class CloudProvisioningWatcher(
                     "For device $device linked to cloud with id $cloudId, " +
                             "but current connection is with " +
                             "device with id ${cloudConnection.deviceId}"
-                }
+                } // TODO fix this
             }
         }
         info { "Found new cloud connection for device $device with id $cloudId" }
