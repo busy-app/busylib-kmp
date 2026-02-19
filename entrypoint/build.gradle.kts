@@ -15,7 +15,7 @@ kotlin {
     sourceSets.commonMain.dependencies {
         implementation(projects.components.core.di)
         implementation(projects.components.core.ktx)
-        implementation(projects.components.core.log)
+        api(projects.components.core.log)
         api(projects.components.core.network)
         api(projects.components.core.wrapper)
         api(projects.components.principal.api)
