@@ -14,6 +14,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
+import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
 import net.flipper.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
 import net.flipper.bridge.connection.service.api.FConnectionService
@@ -113,14 +114,36 @@ class FConnectionServiceImpl(
         }
     }
 
-    override fun forgetCurrentDevice() {
-        scope.launch {
+    override suspend fun forgetDevice(device: BUSYBar): Result<Unit> {
+        val devices = fDevicePersistedStorage
+            .getAllDevices()
+            .first()
+        val currentDevice = fDevicePersistedStorage
+            .getCurrentDevice()
+            .first()
+        if (currentDevice?.uniqueId == device.uniqueId) {
             isForceDisconnectedFlow.emit(true)
-            fDevicePersistedStorage.getCurrentDevice()
-                .first()
-                ?.let { currentDevice ->
-                    fDevicePersistedStorage.unpairDevice(currentDevice)
-                }
         }
+        val isDeviceExists = devices
+            .firstOrNull { listDevice -> listDevice.uniqueId == device.uniqueId } != null
+        if (!isDeviceExists) {
+            warn { "#unpairDevice Can't find device $device" }
+            Result.success(Unit)
+        }
+        val hasCloudConnection = device.connectionWays
+            .filterIsInstance<BUSYBar.ConnectionWay.Cloud>()
+            .isNotEmpty()
+        if (hasCloudConnection) {
+            // todo unlink request
+        }
+        fDevicePersistedStorage.removeDevice(device.uniqueId)
+        return Result.success(Unit)
+    }
+
+    override suspend fun forgetCurrentDevice(): Result<Unit> {
+        return fDevicePersistedStorage.getCurrentDevice()
+            .first()
+            ?.let { currentDevice -> forgetDevice(currentDevice) }
+            ?: Result.failure(IllegalStateException("Device not found"))
     }
 }

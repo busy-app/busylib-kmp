@@ -13,7 +13,7 @@ abstract class ConnectionSearchViewModel(
     open fun onDeviceClick(searchItem: ConnectionSearchItem) {
         viewModelScope.launch {
             if (searchItem.isAdded) {
-                persistedStorage.unpairDevice(searchItem.deviceModel)
+                persistedStorage.removeDevice(searchItem.deviceModel.uniqueId)
             } else {
                 persistedStorage.addDevice(searchItem.deviceModel)
             }

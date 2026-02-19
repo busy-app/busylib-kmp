@@ -50,33 +50,16 @@ class FDevicePersistedStorageImpl(
         )
     }
 
-    override suspend fun unpairDevice(device: BUSYBar): Result<Unit> {
-        val isDeviceExists = bleConfigKrate.getValue()
-            .devices
-            .firstOrNull { listDevice -> listDevice.uniqueId == device.uniqueId } != null
-        if (!isDeviceExists) {
-            warn { "#unpairDevice Can't find device $device" }
-            Result.success(Unit)
-        }
-        val hasCloudConnection = device.connectionWays
-            .filterIsInstance<BUSYBar.ConnectionWay.Cloud>()
-            .isNotEmpty()
-        if (hasCloudConnection) {
-            // todo unlink request
-        }
-
-        bleConfigKrate.save { settings ->
-            val devices = settings
-                .devices
-                .filter { listDevice -> listDevice.uniqueId != device.uniqueId }
+    override suspend fun removeDevice(id: String) = bleConfigKrate.save { settings ->
+        val deviceExists = settings.devices.any { it.uniqueId == id }
+        if (!deviceExists) {
+            warn { "Can't find device with id $id" }
+            settings
+        } else {
             settings.copy(
-                devices = devices,
-                currentSelectedDeviceId = devices
-                    .firstOrNull()
-                    ?.uniqueId,
+                devices = settings.devices.filter { it.uniqueId != id }
             )
         }
-        return Result.success(Unit)
     }
 
     override fun getAllDevices(): Flow<List<BUSYBar>> {
