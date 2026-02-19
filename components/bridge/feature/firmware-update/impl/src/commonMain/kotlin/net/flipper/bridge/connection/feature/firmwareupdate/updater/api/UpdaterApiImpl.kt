@@ -57,6 +57,7 @@ class UpdaterApiImpl(
                 changelogOrNull = changelogOrNull
             )
         }
+        .onEach { info { "#state FwUpdateStatusMapper: $it" } }
         .mapCached { currentFwUpdateState, previousFwUpdateState: FwUpdateState? ->
             FwUpdateStateDiff.combineDiff(
                 previous = previousFwUpdateState,
