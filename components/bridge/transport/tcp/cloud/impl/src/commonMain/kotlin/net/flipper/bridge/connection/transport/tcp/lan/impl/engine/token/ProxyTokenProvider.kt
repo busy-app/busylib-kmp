@@ -7,6 +7,8 @@ import io.ktor.client.request.setBody
 import io.ktor.http.HttpHeaders
 import io.ktor.http.URLProtocol
 import io.ktor.http.path
+import kotlinx.coroutines.flow.filterNot
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import me.tatarka.inject.annotations.Assisted
@@ -55,7 +57,9 @@ class ProxyTokenProvider(
     }
 
     private suspend fun generateToken(): String {
-        val principal = principalApi.getPrincipalFlow().value
+        val principal = principalApi.getPrincipalFlow()
+            .filterNot { it is BUSYLibUserPrincipal.Loading }
+            .first()
         if (principal !is BUSYLibUserPrincipal.Token) {
             error("Not found user principal")
         }
