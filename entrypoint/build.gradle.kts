@@ -85,6 +85,7 @@ kotlin {
 
         implementation(projects.components.watchers.api)
         implementation(projects.components.watchers.changename)
+        implementation(projects.components.watchers.provisioning)
 
         implementation(libs.kotlin.coroutines)
         implementation(libs.ktor.client.core)
