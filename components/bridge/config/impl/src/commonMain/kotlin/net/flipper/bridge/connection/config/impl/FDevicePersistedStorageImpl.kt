@@ -10,7 +10,6 @@ import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.core.busylib.ktx.common.withLock
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
-import net.flipper.core.busylib.log.warn
 import ru.astrainteractive.klibs.kstorage.util.save
 
 class FDevicePersistedStorageImpl(
@@ -44,9 +43,23 @@ class FDevicePersistedStorageImpl(
         bleConfigKrate.save { original ->
             val scope = PersistedStorageTransactionScopeImpl(original)
             block(scope)
+            scope.postTransaction()
             scope.get().also {
                 info { "Result of transaction: $it from $original" }
             }
         }
+    }
+
+    private fun PersistedStorageTransactionScope.postTransaction() {
+        // Set current active device
+        if (getCurrentDevice() != null) {
+            return
+        }
+        val cloud = getAllDevices().find { device ->
+            device.connectionWays.any {
+                it is BUSYBar.ConnectionWay.Cloud
+            }
+        } ?: return
+        setCurrentDevice(cloud.uniqueId)
     }
 }
