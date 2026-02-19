@@ -28,7 +28,6 @@ import net.flipper.core.busylib.log.wtf
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 import kotlin.uuid.Uuid
 
-
 @Inject
 @ContributesBinding(BusyLibGraph::class, InternalBUSYLibStartupListener::class, multibinding = true)
 class CloudProvisioningWatcher(
@@ -90,8 +89,8 @@ class CloudProvisioningWatcher(
             } else {
                 wtf {
                     "For device $device linked to cloud with id $cloudId, " +
-                            "but current connection is with " +
-                            "device with id ${cloudConnection.deviceId}"
+                        "but current connection is with " +
+                        "device with id ${cloudConnection.deviceId}"
                 } // TODO fix this
             }
         }

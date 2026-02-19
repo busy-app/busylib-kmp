@@ -3,8 +3,6 @@ package net.flipper.bsb.watchers.provisioning.api
 import com.flipperdevices.core.network.BUSYLibNetworkStateApi
 import io.ktor.client.call.body
 import io.ktor.client.request.get
-import io.ktor.client.request.post
-import io.ktor.client.request.setBody
 import io.ktor.http.HttpHeaders
 import io.ktor.http.URLProtocol
 import io.ktor.http.path
@@ -15,7 +13,6 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import me.tatarka.inject.annotations.Inject
-import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
 import net.flipper.bsb.cloud.api.BUSYLibHostApi
@@ -43,7 +40,9 @@ class CloudFetcher(
         ) { principal, host, isNetworkAvailable ->
             if (isNetworkAvailable && principal is BUSYLibUserPrincipal.Token) {
                 getBarsFlow(principal, host)
-            } else emptyFlow()
+            } else {
+                emptyFlow()
+            }
         }.flatMapLatest { it }
     }
 
