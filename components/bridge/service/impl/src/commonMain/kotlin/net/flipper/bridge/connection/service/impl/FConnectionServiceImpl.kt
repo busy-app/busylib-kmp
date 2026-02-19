@@ -15,16 +15,14 @@ import kotlinx.coroutines.sync.withLock
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.config.api.model.BUSYBar
-import net.flipper.bridge.connection.feature.link.check.ondemand.api.FLinkedInfoOnDemandFeatureApi
-import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
-import net.flipper.bridge.connection.feature.provider.api.getSync
 import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
 import net.flipper.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
 import net.flipper.bridge.connection.service.api.FConnectionService
+import net.flipper.bsb.cloud.rest.api.BusyCloudRestApi
 import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.core.wrapper.CResult
-import net.flipper.busylib.core.wrapper.map
+import net.flipper.busylib.core.wrapper.toCResult
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
@@ -39,7 +37,7 @@ import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 class FConnectionServiceImpl(
     private val orchestrator: FDeviceOrchestrator,
     private val fDevicePersistedStorage: FDevicePersistedStorage,
-    private val fFeatureProvider: FFeatureProvider
+    private val busyCloudRestApi: BusyCloudRestApi
 ) : FConnectionService, LogTagProvider, InternalBUSYLibStartupListener {
     override val TAG: String = "FConnectionService"
 
@@ -140,9 +138,9 @@ class FConnectionServiceImpl(
             .filterIsInstance<BUSYBar.ConnectionWay.Cloud>()
             .isNotEmpty()
         if (hasCloudConnection) {
-            val fLinkFeature = fFeatureProvider.getSync<FLinkedInfoOnDemandFeatureApi>()
-                ?: return CResult.failure(IllegalStateException("FLinkedInfoOnDemandFeatureApi is not found"))
-            val result = fLinkFeature.deleteAccount().map { Unit }
+            val result = busyCloudRestApi.barsApi
+                .unlinkBusyBar(device.uniqueId)
+                .toCResult()
             if (result.exceptionOrNull() != null) return result
         }
         fDevicePersistedStorage.removeDevice(device.uniqueId)
