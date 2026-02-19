@@ -12,7 +12,6 @@ interface FRpcSettingsApi {
     suspend fun getDisplayBrightness(ignoreCache: Boolean): Result<DisplayBrightnessInfo>
     suspend fun setDisplayBrightness(
         front: BsbBrightness,
-        back: BsbBrightness
     ): Result<SuccessResponse>
 
     suspend fun getAudioVolume(ignoreCache: Boolean): Result<AudioVolumeInfo>

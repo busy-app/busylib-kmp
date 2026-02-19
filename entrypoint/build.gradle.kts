@@ -25,6 +25,7 @@ kotlin {
         implementation(projects.components.cloud.barsws.impl)
 
         api(projects.components.bridge.config.api)
+        // To access FDevicePersistedStorageImpl
         api(projects.components.bridge.config.impl)
         implementation(projects.components.bridge.connectionbuilder.api)
         implementation(projects.components.bridge.connectionbuilder.impl)

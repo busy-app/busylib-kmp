@@ -119,7 +119,7 @@ class FConnectionServiceImpl(
             fDevicePersistedStorage.getCurrentDevice()
                 .first()
                 ?.let { currentDevice ->
-                    fDevicePersistedStorage.removeDevice(currentDevice.uniqueId)
+                    fDevicePersistedStorage.unpairDevice(currentDevice)
                 }
         }
     }
