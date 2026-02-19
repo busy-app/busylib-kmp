@@ -5,6 +5,7 @@ on:
       - 'dev'
       - 'main'
       - 'prerelease/*'
+      - '*'
 
 
 # Concurrency strategy:
