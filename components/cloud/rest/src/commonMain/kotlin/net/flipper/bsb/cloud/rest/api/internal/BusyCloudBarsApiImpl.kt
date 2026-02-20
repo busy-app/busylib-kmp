@@ -37,10 +37,9 @@ class BusyCloudBarsApiImpl(
                 url("${bsbHostApi.getHost().value}/api/v0/bars/$uuid")
                 addAuthHeader(principalApi.requireTokenPrincipal())
             }
-
             when (response.status) {
-                HttpStatusCode.OK -> Result.success(Unit)
-                else -> Result.failure(Exception("Failed to delete bar ${response.bodyAsText()}"))
+                HttpStatusCode.OK -> Unit
+                else -> error("Failed to delete bar ${response.bodyAsText()}")
             }
         }
     }
