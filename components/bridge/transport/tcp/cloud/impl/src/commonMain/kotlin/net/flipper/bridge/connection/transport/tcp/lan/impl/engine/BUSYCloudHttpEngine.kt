@@ -11,6 +11,8 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.URLProtocol
 import io.ktor.http.encodedPath
 import io.ktor.utils.io.InternalAPI
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.transport.tcp.lan.impl.engine.token.ProxyTokenProvider
@@ -28,17 +30,19 @@ class BUSYCloudHttpEngine(
 ) : HttpClientEngineBase("busy-bar"), LogTagProvider {
     override val TAG = "BUSYCloudHttpEngine"
     override val config: HttpClientEngineConfig = delegate.config
+    private val mutex = Mutex() // This is workaround for bug from server side
 
     @InternalAPI
     override suspend fun execute(data: HttpRequestData): HttpResponseData {
-        val token = tokenProvider.getToken()
-        var result = makeRequest(data, token)
-        if (result.statusCode == HttpStatusCode.Forbidden) {
-            info { "Failed to request because of forbidden, try to refresh token" }
-            result = makeRequest(data, tokenProvider.getToken(token))
+        return mutex.withLock {
+            val token = tokenProvider.getToken()
+            var result = makeRequest(data, token)
+            if (result.statusCode == HttpStatusCode.Forbidden) {
+                info { "Failed to request because of forbidden, try to refresh token" }
+                result = makeRequest(data, tokenProvider.getToken(token))
+            }
+            result
         }
-
-        return result
     }
 
     @InternalAPI
