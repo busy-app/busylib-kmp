@@ -9,6 +9,7 @@ import net.flipper.bridge.connection.feature.events.api.getUpdateFlow
 import net.flipper.bridge.connection.feature.firmwareupdate.api.FFirmwareUpdateFeatureApi
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbVersionChangelog
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
+import net.flipper.bridge.connection.feature.rpc.api.model.AutoUpdateRequest
 import net.flipper.bridge.connection.feature.rpc.api.model.UpdateStatus
 import net.flipper.busylib.core.wrapper.CResult
 import net.flipper.busylib.core.wrapper.WrappedFlow
@@ -59,6 +60,17 @@ class FFirmwareUpdateFeatureApiImpl(
             .toCResult()
     }
 
+    override suspend fun setAutoUpdate(isEnabled: Boolean): CResult<Unit> {
+        val request = AutoUpdateRequest(
+            isEnabled = isEnabled,
+            intervalStart = DEFAULT_AUTO_UPDATE_INTERVAL_START,
+            intervalEnd = DEFAULT_AUTO_UPDATE_INTERVAL_END
+        )
+        return rpcFeatureApi.fRpcUpdaterApi.setAutoUpdate(request)
+            .map { }
+            .toCResult()
+    }
+
     override suspend fun startVersionInstall(version: String): CResult<Unit> {
         return rpcFeatureApi.fRpcUpdaterApi.startUpdateInstall(version).map { }.toCResult()
     }
@@ -78,3 +90,6 @@ class FFirmwareUpdateFeatureApiImpl(
             }.toCResult()
     }
 }
+
+private const val DEFAULT_AUTO_UPDATE_INTERVAL_START = "00:00"
+private const val DEFAULT_AUTO_UPDATE_INTERVAL_END = "08:00"
