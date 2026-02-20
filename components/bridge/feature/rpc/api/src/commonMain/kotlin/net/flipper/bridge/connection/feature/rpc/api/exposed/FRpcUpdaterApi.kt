@@ -1,7 +1,7 @@
 package net.flipper.bridge.connection.feature.rpc.api.exposed
 
-import net.flipper.bridge.connection.feature.rpc.api.model.GetUpdateChangelogResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.AutoUpdateRequest
+import net.flipper.bridge.connection.feature.rpc.api.model.GetUpdateChangelogResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.UpdateStatus
 
