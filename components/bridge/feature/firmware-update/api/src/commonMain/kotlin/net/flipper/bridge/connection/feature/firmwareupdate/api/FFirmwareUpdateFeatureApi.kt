@@ -9,6 +9,7 @@ import net.flipper.busylib.core.wrapper.WrappedFlow
 interface FFirmwareUpdateFeatureApi : FDeviceFeatureApi {
     fun getUpdateStatusFlow(): WrappedFlow<UpdateStatus>
     suspend fun startUpdateCheck(): CResult<Unit>
+    suspend fun setAutoUpdate(isEnabled: Boolean): CResult<Unit>
     suspend fun startVersionInstall(version: String): CResult<Unit>
 
     /**

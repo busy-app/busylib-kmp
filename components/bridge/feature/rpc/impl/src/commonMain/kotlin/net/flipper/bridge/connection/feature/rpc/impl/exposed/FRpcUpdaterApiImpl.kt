@@ -5,8 +5,10 @@ import io.ktor.client.call.body
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import io.ktor.client.request.post
+import io.ktor.client.request.setBody
 import kotlinx.coroutines.CoroutineDispatcher
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcUpdaterApi
+import net.flipper.bridge.connection.feature.rpc.api.model.AutoUpdateRequest
 import net.flipper.bridge.connection.feature.rpc.api.model.GetUpdateChangelogResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.UpdateStatus
@@ -22,6 +24,14 @@ class FRpcUpdaterApiImpl(
     override suspend fun startUpdateCheck(): Result<SuccessResponse> {
         return runSuspendCatching(dispatcher) {
             httpClient.post("/api/update/check").body<SuccessResponse>()
+        }
+    }
+
+    override suspend fun setAutoUpdate(request: AutoUpdateRequest): Result<SuccessResponse> {
+        return runSuspendCatching(dispatcher) {
+            httpClient.post("/api/update/autoupdate") {
+                setBody(request)
+            }.body<SuccessResponse>()
         }
     }
 
