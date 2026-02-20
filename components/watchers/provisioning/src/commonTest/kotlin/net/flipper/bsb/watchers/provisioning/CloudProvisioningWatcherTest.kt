@@ -342,10 +342,10 @@ class CloudProvisioningWatcherTest {
 
         fun findDevice(id: String): BUSYBar? = devices.find { it.uniqueId == id }
 
-        override fun getCurrentDeviceFlow() = flowOf(currentDevice)
-        override fun getAllDevicesFlow() = flowOf(devices.toList())
+        override fun getCurrentDeviceFlow() = flowOf(currentDevice).wrap()
+        override fun getAllDevicesFlow() = flowOf(devices.toList()).wrap()
 
-        override suspend fun transaction(block: PersistedStorageTransactionScope.() -> Unit) {
+        override suspend fun <T> transaction(block: suspend PersistedStorageTransactionScope.() -> T): T {
             val scope = object : PersistedStorageTransactionScope {
                 override fun getCurrentDevice() = this@FakePersistedStorage.currentDevice
                 override fun getAllDevices() = this@FakePersistedStorage.devices.toList()
@@ -363,7 +363,7 @@ class CloudProvisioningWatcherTest {
                     this@FakePersistedStorage.devices.removeAll { it.uniqueId == id }
                 }
             }
-            scope.block()
+            return scope.block()
         }
     }
 
