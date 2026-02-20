@@ -1,4 +1,4 @@
-package com.flipperdevices.core.network
+package com.flipperdevices.busylib.core.network
 
 import android.content.Context
 import android.net.ConnectivityManager

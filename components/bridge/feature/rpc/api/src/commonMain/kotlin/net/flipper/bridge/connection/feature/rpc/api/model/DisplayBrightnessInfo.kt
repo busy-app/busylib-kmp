@@ -7,8 +7,4 @@ import kotlinx.serialization.Serializable
 data class DisplayBrightnessInfo(
     @SerialName("front")
     val front: String,
-    @SerialName("back")
-    val back: String
-) {
-    constructor(brightness: String) : this(brightness, brightness)
-}
+)

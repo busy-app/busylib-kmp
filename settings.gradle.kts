@@ -111,6 +111,7 @@ include(
 
     ":components:cloud:barsws:api",
     ":components:cloud:barsws:impl",
+    ":components:cloud:rest",
 
     ":components:watchers:api",
     ":components:watchers:changename",

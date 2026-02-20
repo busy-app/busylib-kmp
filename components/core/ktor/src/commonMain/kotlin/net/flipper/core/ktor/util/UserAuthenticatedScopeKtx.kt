@@ -1,4 +1,4 @@
-package net.flipper.bsb.cloud.barsws.api.utils
+package net.flipper.core.ktor.util
 
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.http.HttpHeaders

@@ -1,4 +1,4 @@
-package com.flipperdevices.core.network
+package com.flipperdevices.busylib.core.network
 
 import androidx.lifecycle.Lifecycle
 import kotlinx.coroutines.flow.Flow

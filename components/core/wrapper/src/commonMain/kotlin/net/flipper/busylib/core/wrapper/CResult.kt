@@ -31,6 +31,11 @@ sealed class CResult<out T> {
         is Failure -> error
     }
 
+    val isFailure: Boolean = when (this) {
+        is Failure -> true
+        is Success<*> -> false
+    }
+
     inline fun onFailure(action: (Throwable) -> Unit): CResult<T> {
         if (this is Failure) action(error)
         return this
@@ -57,4 +62,11 @@ fun <T> Result<T>.toCResult(): CResult<T> {
         onSuccess = { CResult.Success(it) },
         onFailure = { CResult.Failure(it) }
     )
+}
+
+inline fun <R, T> CResult<T>.map(transform: (value: T) -> R): CResult<R> {
+    return when (this) {
+        is CResult.Success<*> -> CResult.success(transform(this.value as T))
+        is CResult.Failure -> CResult.Failure(this.error)
+    }
 }

@@ -1,6 +1,7 @@
-package com.flipperdevices.core.network
+package com.flipperdevices.busylib.core.network
 
 import androidx.lifecycle.Lifecycle
+import com.flipperdevices.core.network.BUSYLibNetworkStateApi
 
 interface BUSYLibAndroidNetworkStateApi : BUSYLibNetworkStateApi {
     /**

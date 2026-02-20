@@ -14,6 +14,7 @@ import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.WrappedStateFlow
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.ktx.common.withLock
+import net.flipper.core.busylib.ktx.common.withLockResult
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
 import ru.astrainteractive.klibs.kstorage.util.save
@@ -45,20 +46,21 @@ class FDevicePersistedStorageImpl(
         return bleConfigKrate.flow.map { it.devices }.wrap()
     }
 
-    override suspend fun transaction(
-        block: PersistedStorageTransactionScope.() -> Unit
-    ) = withLock(mutex, "transaction") {
-        bleConfigKrate.save { original ->
-            val scope = PersistedStorageTransactionScopeImpl(original)
-            block(scope)
-            hooks.forEach {
-                with(it) {
-                    scope.postTransaction()
-                }
-            }
-            scope.get().also {
-                info { "Result of transaction: $it from $original" }
+    override suspend fun <T> transaction(
+        block: suspend PersistedStorageTransactionScope.() -> T
+    ): T = withLockResult(mutex, "transaction") {
+        val original = bleConfigKrate.getValue()
+        val scope = PersistedStorageTransactionScopeImpl(original)
+        val result = block(scope)
+        hooks.forEach {
+            with(it) {
+                scope.postTransaction()
             }
         }
+
+        bleConfigKrate.save(scope.get().also {
+            info { "Result of transaction: $it from $original" }
+        })
+        return@withLockResult result
     }
 }

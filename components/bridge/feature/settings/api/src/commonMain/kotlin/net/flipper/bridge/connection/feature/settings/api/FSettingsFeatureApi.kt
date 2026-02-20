@@ -12,7 +12,6 @@ interface FSettingsFeatureApi : FDeviceFeatureApi {
     fun getBrightnessInfoFlow(): WrappedFlow<BsbBrightnessInfo>
     suspend fun setBrightness(
         front: BsbBrightness,
-        back: BsbBrightness
     ): Result<Unit>
 
     suspend fun setVolume(volume: Int): Result<Unit>

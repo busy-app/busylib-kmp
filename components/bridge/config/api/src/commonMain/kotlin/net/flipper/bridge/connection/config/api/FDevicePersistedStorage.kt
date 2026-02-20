@@ -8,5 +8,5 @@ interface FDevicePersistedStorage {
     fun getCurrentDeviceFlow(): WrappedFlow<BUSYBar?>
     fun getAllDevicesFlow(): WrappedFlow<List<BUSYBar>>
 
-    suspend fun transaction(block: PersistedStorageTransactionScope.() -> Unit)
+    suspend fun <T> transaction(block: suspend PersistedStorageTransactionScope.() -> T): T
 }

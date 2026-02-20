@@ -163,6 +163,7 @@ class IOSSearchViewModel(
                 info { "Accessory changed: ${event.accessory}" }
                 // saveAccessory(event.accessory)
             }
+
             else -> {
                 warn { "Received unknown event type ${event.eventType}" }
             }
@@ -216,15 +217,14 @@ class IOSSearchViewModel(
                 val existingDevices = getAllDevices()
                 val deviceExists = existingDevices.any { it.uniqueId == uuidString }
 
+            if (currentDevice != null && deviceExists) {
                 if (isCurrentDevice) {
                     info { "Accessory is current device, stopping connection attempts" }
-                    connectionService.forgetCurrentDevice()
-                } else if (deviceExists) {
-                    info { "Device found in storage, removing..." }
-                    removeDevice(uuidString)
-                } else {
-                    info { "Device not in storage, skipping removal" }
                 }
+                connectionService.forgetDevice(currentDevice)
+                info { "Device found in storage, removing..." }
+            } else {
+                info { "Device not in storage, skipping removal" }
             }
         }
     }
