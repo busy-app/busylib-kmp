@@ -156,7 +156,7 @@ class FConnectionServiceImpl(
             }
             removeDevice(device.uniqueId)
 
-            return@transaction  CResult.success(Unit)
+            return@transaction CResult.success(Unit)
         }
     }
 }

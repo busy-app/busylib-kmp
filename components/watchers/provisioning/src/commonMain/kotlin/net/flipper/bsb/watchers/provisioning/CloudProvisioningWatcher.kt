@@ -87,7 +87,8 @@ class CloudProvisioningWatcher(
      * - Only local transport, connected to cloud - add cloud transport to current device
      * - Only local transport, not connected to cloud - skip
      * - Local and cloud transport, cloud linked to current device - skip
-     * - Local and cloud transport, cloud linked to different device - add new device with cloud device (if not exist already) and switched to it
+     * - Local and cloud transport, cloud linked to different device - add
+     *          new device with cloud device (if not exist already) and switched to it
      * - Local and cloud, not connected to cloud - remove cloud connection
      */
     private fun PersistedStorageTransactionScope.updateBUSYBar(cloudId: Uuid?, original: BUSYBar) {
@@ -122,8 +123,12 @@ class CloudProvisioningWatcher(
         }
 
         // Cloud connection exist, but different. It can be when connected by LAN/USB two BUSY Bars
-        // Local and cloud transport, cloud linked to different device - add new device with cloud device (if not exist already) and switched to it
-        info { "Found new cloud connection for device $original, but it is already connected to cloud with id $cloudId" }
+        // Local and cloud transport, cloud linked to different device - add
+        //      new device with cloud device (if not exist already) and switched to it
+        info {
+            "Found new cloud connection for device $original, " +
+                "but it is already connected to cloud with id $cloudId"
+        }
         val allDevices = getAllDevices()
         val existedDevice = allDevices.find { deviceFromStorage ->
             deviceFromStorage.connectionWays.any {

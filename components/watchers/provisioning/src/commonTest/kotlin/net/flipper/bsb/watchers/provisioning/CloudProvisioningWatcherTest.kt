@@ -119,7 +119,7 @@ class CloudProvisioningWatcherTest {
         }
 
     @Test
-    fun GIVEN_local_and_cloud_WHEN_cloud_linked_to_different_device_and_no_existing_THEN_creates_new_device_and_switches() =
+    fun GIVEN_local_and_cloud_WHEN_linked_to_different_device_THEN_creates_new_and_switches() =
         runTest {
             val originalCloudId = Uuid.random()
             val newCloudId = Uuid.random()

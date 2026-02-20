@@ -217,14 +217,15 @@ class IOSSearchViewModel(
                 val existingDevices = getAllDevices()
                 val deviceExists = existingDevices.any { it.uniqueId == uuidString }
 
-            if (currentDevice != null && deviceExists) {
-                if (isCurrentDevice) {
-                    info { "Accessory is current device, stopping connection attempts" }
+                if (currentDevice != null && deviceExists) {
+                    if (isCurrentDevice) {
+                        info { "Accessory is current device, stopping connection attempts" }
+                    }
+                    connectionService.forgetDevice(currentDevice)
+                    info { "Device found in storage, removing..." }
+                } else {
+                    info { "Device not in storage, skipping removal" }
                 }
-                connectionService.forgetDevice(currentDevice)
-                info { "Device found in storage, removing..." }
-            } else {
-                info { "Device not in storage, skipping removal" }
             }
         }
     }

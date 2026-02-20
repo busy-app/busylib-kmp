@@ -1,7 +1,6 @@
 package net.flipper.bridge.connection.config.api
 
 import net.flipper.bridge.connection.config.api.model.BUSYBar
-import net.flipper.busylib.core.wrapper.CResult
 
 interface PersistedStorageTransactionScope {
     fun getCurrentDevice(): BUSYBar?
