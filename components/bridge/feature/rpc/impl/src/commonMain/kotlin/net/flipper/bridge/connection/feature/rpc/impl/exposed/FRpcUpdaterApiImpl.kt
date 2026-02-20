@@ -29,7 +29,7 @@ class FRpcUpdaterApiImpl(
 
     override suspend fun setAutoUpdate(request: AutoUpdateRequest): Result<SuccessResponse> {
         return runSuspendCatching(dispatcher) {
-            httpClient.post("/api/update/autoupdate/") {
+            httpClient.post("/api/update/autoupdate") {
                 setBody(request)
             }.body<SuccessResponse>()
         }
