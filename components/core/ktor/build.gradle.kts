@@ -1,14 +1,18 @@
 plugins {
     id("flipper.multiplatform")
+    id("flipper.anvil-multiplatform")
 }
 
 kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(projects.components.core.log)
+            implementation(projects.components.core.ktx)
+            implementation(projects.components.principal.api)
 
             implementation(libs.kotlin.coroutines)
             implementation(libs.ktor.client.core)
+            implementation(projects.components.core.di)
 
             implementation(libs.ktor.negotiation)
             implementation(libs.ktor.serialization)

@@ -16,6 +16,7 @@ kotlin {
         implementation(projects.components.core.di)
         implementation(projects.components.core.ktx)
         implementation(projects.components.core.log)
+        implementation(projects.components.core.ktor)
         api(projects.components.core.network)
         api(projects.components.core.wrapper)
         api(projects.components.principal.api)
@@ -23,8 +24,10 @@ kotlin {
 
         implementation(projects.components.cloud.barsws.api)
         implementation(projects.components.cloud.barsws.impl)
+        implementation(projects.components.cloud.rest)
 
         api(projects.components.bridge.config.api)
+        // To access FDevicePersistedStorageImpl
         api(projects.components.bridge.config.impl)
         implementation(projects.components.bridge.connectionbuilder.api)
         implementation(projects.components.bridge.connectionbuilder.impl)

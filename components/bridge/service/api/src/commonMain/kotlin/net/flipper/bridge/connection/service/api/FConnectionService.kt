@@ -1,5 +1,8 @@
 package net.flipper.bridge.connection.service.api
 
+import net.flipper.bridge.connection.config.api.model.BUSYBar
+import net.flipper.busylib.core.wrapper.CResult
+
 /**
  * This service handle connection for current flipper device
  */
@@ -15,7 +18,7 @@ interface FConnectionService {
     fun disconnect()
 
     /**
-     * Forget current device and disconnect from it as side effect
+     * Forget selected [device] and disconnect from it
      */
-    fun forgetCurrentDevice()
+    suspend fun forgetDevice(device: BUSYBar): CResult<Unit>
 }

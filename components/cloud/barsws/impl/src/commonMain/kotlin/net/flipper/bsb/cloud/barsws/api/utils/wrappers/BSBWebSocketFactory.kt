@@ -9,7 +9,7 @@ import net.flipper.bsb.cloud.barsws.api.BSBWebSocket
 import net.flipper.bsb.cloud.barsws.api.getBSBWebSocket
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.log.LogTagProvider
-import net.flipper.core.ktor.getHttpClient
+import net.flipper.core.ktor.di.qualifier.KtorNetworkClientQualifier
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 
@@ -43,8 +43,10 @@ interface BSBWebSocketFactory {
 @Inject
 @SingleIn(BusyLibGraph::class)
 @ContributesBinding(BusyLibGraph::class, BSBWebSocketFactory::class)
-class BSBWebSocketFactoryImpl : BSBWebSocketFactory {
-    private val httpClient: HttpClient = getHttpClient()
+class BSBWebSocketFactoryImpl(
+    @KtorNetworkClientQualifier
+    private val httpClient: HttpClient
+) : BSBWebSocketFactory {
 
     override suspend fun create(
         logger: LogTagProvider,

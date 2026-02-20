@@ -78,6 +78,7 @@ private fun getConnectionDeviceScreenDecomposeComponentFactory(
             FCurrentDeviceViewModel(
                 orchestrator,
                 fService,
+                persistedStorage
             )
         },
         pingViewModelProvider = { PingViewModel(featureProvider, orchestrator) }

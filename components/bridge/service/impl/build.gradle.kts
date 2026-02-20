@@ -9,11 +9,16 @@ kotlin {
         implementation(projects.components.core.ktx)
         implementation(projects.components.core.log)
         implementation(projects.components.core.di)
+        implementation(projects.components.principal.api)
 
         implementation(projects.components.bridge.service.api)
         implementation(projects.components.bridge.orchestrator.api)
         implementation(projects.components.bridge.config.api)
+        implementation(projects.components.cloud.rest)
         implementation(projects.components.watchers.api)
+
+        implementation(projects.components.bridge.feature.link.api)
+        implementation(projects.components.bridge.feature.provider.api)
 
         implementation(libs.kotlin.coroutines)
     }
