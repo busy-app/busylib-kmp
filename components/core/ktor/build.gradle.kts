@@ -8,6 +8,7 @@ kotlin {
         commonMain.dependencies {
             implementation(projects.components.core.log)
             implementation(projects.components.core.ktx)
+            implementation(projects.components.principal.api)
 
             implementation(libs.kotlin.coroutines)
             implementation(libs.ktor.client.core)

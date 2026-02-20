@@ -9,6 +9,7 @@ kotlin {
         implementation(projects.components.core.ktx)
         implementation(projects.components.core.log)
         implementation(projects.components.core.di)
+        implementation(projects.components.principal.api)
 
         implementation(projects.components.bridge.service.api)
         implementation(projects.components.bridge.orchestrator.api)

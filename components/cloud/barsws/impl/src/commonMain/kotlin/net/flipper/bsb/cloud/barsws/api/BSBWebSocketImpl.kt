@@ -23,7 +23,6 @@ import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
 import net.flipper.bsb.cloud.barsws.api.model.InternalTicketRequest
 import net.flipper.bsb.cloud.barsws.api.model.InternalWebSocketRequest
 import net.flipper.bsb.cloud.barsws.api.model.toInternal
-import net.flipper.bsb.cloud.barsws.api.utils.addAuthHeader
 import net.flipper.bsb.cloud.barsws.api.utils.wrappers.BSBWebSocketSession
 import net.flipper.bsb.cloud.barsws.api.utils.wrappers.KtorBSBWebSocketSession
 import net.flipper.core.busylib.ktx.common.launchOnCompletion
@@ -33,6 +32,7 @@ import net.flipper.core.busylib.log.info
 import net.flipper.core.busylib.log.sensitive
 import net.flipper.core.busylib.log.verbose
 import net.flipper.core.busylib.log.warn
+import net.flipper.core.ktor.util.addAuthHeader
 import kotlin.uuid.Uuid
 
 private const val JSON_KEY_BAR_ID = "bar_id"

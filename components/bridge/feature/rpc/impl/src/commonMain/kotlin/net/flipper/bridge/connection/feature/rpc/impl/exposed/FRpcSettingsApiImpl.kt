@@ -62,7 +62,6 @@ class FRpcSettingsApiImpl(
     ): Result<SuccessResponse> {
         return runSuspendCatching(dispatcher) {
             httpClient.post("/api/display/brightness") {
-                contentType(ContentType.Application.Json)
                 setBody(front.asInternalBrightnessInfo())
             }.body<SuccessResponse>()
         }

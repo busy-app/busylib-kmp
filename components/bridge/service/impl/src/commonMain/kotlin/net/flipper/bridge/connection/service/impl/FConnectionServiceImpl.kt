@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.launch
@@ -18,6 +19,8 @@ import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
 import net.flipper.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
 import net.flipper.bridge.connection.service.api.FConnectionService
+import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
+import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
 import net.flipper.bsb.cloud.rest.api.BusyCloudRestApi
 import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
 import net.flipper.busylib.core.di.BusyLibGraph
@@ -37,7 +40,8 @@ import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 class FConnectionServiceImpl(
     private val orchestrator: FDeviceOrchestrator,
     private val fDevicePersistedStorage: FDevicePersistedStorage,
-    private val busyCloudRestApi: BusyCloudRestApi
+    private val busyCloudRestApi: BusyCloudRestApi,
+    private val principalApi: BUSYLibPrincipalApi
 ) : FConnectionService, LogTagProvider, InternalBUSYLibStartupListener {
     override val TAG: String = "FConnectionService"
 
@@ -139,8 +143,14 @@ class FConnectionServiceImpl(
             .firstOrNull()
             ?.deviceId
         if (deviceId != null) {
+            val principal = principalApi.getPrincipalFlow()
+                .filter { principal -> principal !is BUSYLibUserPrincipal.Loading }
+                .first() as? BUSYLibUserPrincipal.Token
+            if (principal == null) {
+                return CResult.failure(IllegalStateException("User not authorized"))
+            }
             val result = busyCloudRestApi.barsApi
-                .unlinkBusyBar(deviceId)
+                .unlinkBusyBar(principal, deviceId)
                 .toCResult()
             if (result.isFailure) return result
         }
