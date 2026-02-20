@@ -6,7 +6,7 @@ data class BsbBrightnessInfo(
 
 fun DisplayBrightnessInfo.toBsbBrightnessInfo(): BsbBrightnessInfo {
     return BsbBrightnessInfo(
-        front = this.front.toIntOrNull()
+        front = this.value.toIntOrNull()
             ?.let(BsbBrightness::Number)
             ?: BsbBrightness.Auto,
     )

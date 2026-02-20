@@ -5,6 +5,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class DisplayBrightnessInfo(
-    @SerialName("front")
-    val front: String,
+    @SerialName("value")
+    val value: String,
 )

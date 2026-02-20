@@ -119,10 +119,10 @@ class FSettingsFeatureApiImpl(
     }
 
     override suspend fun setBrightness(
-        front: BsbBrightness,
+        value: BsbBrightness,
     ): Result<Unit> {
         return rpcFeatureApi.fRpcSettingsApi
-            .setDisplayBrightness(front = front)
+            .setDisplayBrightness(value = value)
             .map { }
     }
 
