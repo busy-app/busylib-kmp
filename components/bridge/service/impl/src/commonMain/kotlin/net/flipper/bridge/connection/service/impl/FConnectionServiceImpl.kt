@@ -132,7 +132,7 @@ class FConnectionServiceImpl(
             .firstOrNull { listDevice -> listDevice.uniqueId == device.uniqueId } != null
         if (!isDeviceExists) {
             warn { "#unpairDevice Can't find device $device" }
-            Result.success(Unit)
+            return CResult.success(Unit)
         }
         val deviceId = device.connectionWays
             .filterIsInstance<BUSYBar.ConnectionWay.Cloud>()

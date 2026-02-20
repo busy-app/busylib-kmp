@@ -66,7 +66,7 @@ fun <T> Result<T>.toCResult(): CResult<T> {
 
 inline fun <R, T> CResult<T>.map(transform: (value: T) -> R): CResult<R> {
     return when (this) {
-        is CResult.Success<T> -> CResult.success(transform(this.value))
+        is CResult.Success<*> -> CResult.success(transform(this.value as T))
         is CResult.Failure -> CResult.Failure(this.error)
     }
 }
