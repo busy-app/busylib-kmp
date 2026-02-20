@@ -2,6 +2,7 @@ package net.flipper.bridge.connection.config.impl
 
 import net.flipper.bridge.connection.config.api.PersistedStorageTransactionScope
 import net.flipper.bridge.connection.config.api.model.BUSYBar
+import net.flipper.busylib.core.wrapper.toCResult
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
 import net.flipper.core.busylib.log.warn
@@ -18,14 +19,17 @@ class PersistedStorageTransactionScopeImpl(
         return settings.devices
     }
 
-    override fun setCurrentDevice(id: String?) {
-        settings = if (id == null) {
-            settings.copy(currentSelectedDeviceId = null)
-        } else if (settings.devices.none { it.uniqueId == id }) {
-            error("Can't find device with id $id")
-        } else {
-            settings.copy(currentSelectedDeviceId = id)
+    override fun setCurrentDevice(device: BUSYBar?) {
+        if (device == null) {
+            settings = settings.copy(currentSelectedDeviceId = null)
+            return
         }
+
+        if (settings.devices.none { it.uniqueId == device.uniqueId }) {
+            addOrReplace(device)
+        }
+
+        settings = settings.copy(currentSelectedDeviceId = device.uniqueId)
     }
 
     override fun addOrReplace(device: BUSYBar) {

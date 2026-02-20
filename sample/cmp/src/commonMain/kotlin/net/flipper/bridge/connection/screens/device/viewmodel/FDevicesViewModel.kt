@@ -45,7 +45,7 @@ class FDevicesViewModel(
 
     fun onSelectDevice(device: BUSYBar) {
         viewModelScope.launch {
-            devicePersistedStorage.transaction { setCurrentDevice(device.uniqueId) }
+            devicePersistedStorage.transaction { setCurrentDevice(device) }
         }
     }
 

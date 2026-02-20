@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
+import net.flipper.bridge.connection.config.api.PersistedStorageTransactionScope
 import net.flipper.bridge.connection.config.api.getDevice
 import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
@@ -24,7 +25,6 @@ import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
-import net.flipper.core.busylib.log.wtf
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 import kotlin.uuid.Uuid
 
@@ -71,29 +71,83 @@ class CloudProvisioningWatcher(
     }
 
     private suspend fun onNewLinkedInfo(linkedInfo: RpcLinkedAccountInfo?, deviceId: String) {
-        val cloudId = linkedInfo?.cloudId?.let(Uuid::parse) ?: return
+        if (linkedInfo == null) {
+            return
+        }
+        val cloudId = linkedInfo.cloudId?.let(Uuid::parseOrNull)
         persistedStorage.transaction {
             getDevice(deviceId)?.let {
-                addOrReplace(getNewBUSYBar(cloudId, it))
+                updateBUSYBar(cloudId, it)
             }
         }
     }
 
-    private fun getNewBUSYBar(cloudId: Uuid, device: BUSYBar): BUSYBar {
-        val cloudConnection = device
+    /**
+     * Can be this options:
+     * - Only local transport, connected to cloud - add cloud transport to current device
+     * - Only local transport, not connected to cloud - skip
+     * - Local and cloud transport, cloud linked to current device - skip
+     * - Local and cloud transport, cloud linked to different device - add new device with cloud device (if not exist already) and switched to it
+     * - Local and cloud, not connected to cloud - remove cloud connection
+     */
+    private fun PersistedStorageTransactionScope.updateBUSYBar(cloudId: Uuid?, original: BUSYBar) {
+        val cloudConnection = original
             .connectionWays
             .filterIsInstance<BUSYBar.ConnectionWay.Cloud>().firstOrNull()
-        if (cloudConnection != null) {
-            if (cloudConnection.deviceId == cloudId) {
-                return device
-            } else {
-                wtf {
-                    "For device $device linked to cloud with id $cloudId, " +
-                        "but current connection is with " +
-                        "device with id ${cloudConnection.deviceId}"
-                } // TODO fix this
+        if (cloudConnection == null) {
+            if (cloudId != null) { // Only local transport, connected to cloud - add cloud transport to current device
+                info { "Found new cloud connection for device $original with id $cloudId" }
+
+                addOrReplace(getConnectedBUSYBar(cloudId, original))
+                return
+            }
+            // Only local transport, not connected to cloud - skip
+            return
+        }
+        // cloudConnection != null
+
+        if (cloudConnection.deviceId == cloudId) {
+            return // Local and cloud transport, cloud linked to current device - skip
+        }
+
+        if (cloudId == null) { // Local and cloud, not connected to cloud - remove cloud connection
+            addOrReplace(
+                original.copy(
+                    connectionWays = original.connectionWays.filterNot {
+                        it is BUSYBar.ConnectionWay.Cloud
+                    }
+                )
+            )
+            return
+        }
+
+        // Cloud connection exist, but different. It can be when connected by LAN/USB two BUSY Bars
+        // Local and cloud transport, cloud linked to different device - add new device with cloud device (if not exist already) and switched to it
+        info { "Found new cloud connection for device $original, but it is already connected to cloud with id $cloudId" }
+        val allDevices = getAllDevices()
+        val existedDevice = allDevices.find { deviceFromStorage ->
+            deviceFromStorage.connectionWays.any {
+                (it as? BUSYBar.ConnectionWay.Cloud)?.deviceId == cloudId
             }
         }
+        if (existedDevice != null) {
+            info { "Found existed device connected to cloud with id $cloudId" }
+            setCurrentDevice(existedDevice)
+            return
+        }
+        info { "Create new device for cloud connection with id $cloudId" }
+        val newBUSYBar = getConnectedBUSYBar(
+            cloudId,
+            BUSYBar(
+                humanReadableName = original.humanReadableName,
+                connectionWays = original.connectionWays
+            )
+        )
+        addOrReplace(newBUSYBar)
+        setCurrentDevice(newBUSYBar)
+    }
+
+    private fun getConnectedBUSYBar(cloudId: Uuid, device: BUSYBar): BUSYBar {
         info { "Found new cloud connection for device $device with id $cloudId" }
         val newConnections = device.connectionWays
             .filter { it !is BUSYBar.ConnectionWay.Cloud }

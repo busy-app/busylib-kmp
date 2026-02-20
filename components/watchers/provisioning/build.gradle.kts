@@ -26,4 +26,10 @@ kotlin {
         implementation(libs.kotlin.coroutines)
         implementation(libs.ktor.client.core)
     }
+
+    sourceSets.commonTest.dependencies {
+        implementation(libs.kotlin.test)
+        implementation(libs.kotlin.coroutines.test)
+        implementation(projects.components.bridge.transport.common.api)
+    }
 }

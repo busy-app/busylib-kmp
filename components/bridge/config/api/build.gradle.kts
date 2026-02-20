@@ -6,6 +6,8 @@ plugins {
 
 kotlin {
     sourceSets.commonMain.dependencies {
+        api(projects.components.core.wrapper)
+
         implementation(libs.kotlin.coroutines)
         implementation(libs.kotlin.serialization.json)
     }

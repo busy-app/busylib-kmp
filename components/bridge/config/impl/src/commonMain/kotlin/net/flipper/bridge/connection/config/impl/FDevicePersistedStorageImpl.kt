@@ -60,6 +60,6 @@ class FDevicePersistedStorageImpl(
                 it is BUSYBar.ConnectionWay.Cloud
             }
         } ?: return
-        setCurrentDevice(cloud.uniqueId)
+        setCurrentDevice(cloud)
     }
 }
