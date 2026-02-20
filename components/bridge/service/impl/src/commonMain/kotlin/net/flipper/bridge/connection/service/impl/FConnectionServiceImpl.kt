@@ -134,14 +134,15 @@ class FConnectionServiceImpl(
             warn { "#unpairDevice Can't find device $device" }
             Result.success(Unit)
         }
-        val hasCloudConnection = device.connectionWays
+        val deviceId = device.connectionWays
             .filterIsInstance<BUSYBar.ConnectionWay.Cloud>()
-            .isNotEmpty()
-        if (hasCloudConnection) {
+            .firstOrNull()
+            ?.deviceId
+        if (deviceId != null) {
             val result = busyCloudRestApi.barsApi
-                .unlinkBusyBar(device.uniqueId)
+                .unlinkBusyBar(deviceId)
                 .toCResult()
-            if (result.exceptionOrNull() != null) return result
+            if (result.isFailure) return result
         }
         fDevicePersistedStorage.removeDevice(device.uniqueId)
         return CResult.success(Unit)

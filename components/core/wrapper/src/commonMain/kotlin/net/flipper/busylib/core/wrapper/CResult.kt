@@ -31,6 +31,11 @@ sealed class CResult<out T> {
         is Failure -> error
     }
 
+    val isFailure: Boolean = when (this) {
+        is Failure -> true
+        is Success<*> -> false
+    }
+
     inline fun onFailure(action: (Throwable) -> Unit): CResult<T> {
         if (this is Failure) action(error)
         return this
