@@ -61,7 +61,4 @@ class FDevicePersistedStorageImpl(
             }
         }
     }
-
-    private fun PersistedStorageTransactionScope.postTransaction() {
-    }
 }
