@@ -19,7 +19,7 @@ class FCurrentDeviceViewModel(
     }
 
     fun forget() = viewModelScope.launch {
-        val device = fDevicePersistedStorage.getCurrentDevice()
+        val device = fDevicePersistedStorage.getCurrentDeviceFlow()
             .firstOrNull()
             ?: return@launch
         service.forgetDevice(device)
