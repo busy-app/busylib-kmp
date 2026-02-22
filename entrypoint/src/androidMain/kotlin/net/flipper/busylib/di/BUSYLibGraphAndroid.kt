@@ -2,6 +2,7 @@ package net.flipper.busylib.di
 
 import android.content.Context
 import com.flipperdevices.core.network.BUSYLibNetworkStateApi
+import com.russhwolf.settings.Settings
 import kotlinx.coroutines.CoroutineScope
 import me.tatarka.inject.annotations.Provides
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
@@ -24,7 +25,8 @@ abstract class BUSYLibGraphAndroid(
     // Android-specific factory
     @get:Provides protected val context: Context,
     @get:Provides protected val hostApi: BUSYLibHostApi,
-    @get:Provides protected val networkStateApi: BUSYLibNetworkStateApi
+    @get:Provides protected val networkStateApi: BUSYLibNetworkStateApi,
+    @get:Provides protected val settings: Settings
 ) {
     abstract val busyLib: BUSYLibAndroid
 }

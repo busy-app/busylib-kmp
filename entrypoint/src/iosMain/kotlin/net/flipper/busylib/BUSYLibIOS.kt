@@ -2,6 +2,7 @@ package net.flipper.busylib
 
 import com.flipperdevices.core.network.BUSYLibNetworkStateApi
 import com.flipperdevices.core.network.BUSYLibNetworkStateApiNoop
+import com.russhwolf.settings.NSUserDefaultsSettings
 import kotlinx.coroutines.CoroutineScope
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
@@ -49,7 +50,8 @@ class BUSYLibIOS(
                 persistedStorage,
                 manager,
                 hostApi,
-                networkStateApi
+                networkStateApi,
+                NSUserDefaultsSettings.Factory().create("busylib_settings")
             )
             return graph.busyLib
         }
