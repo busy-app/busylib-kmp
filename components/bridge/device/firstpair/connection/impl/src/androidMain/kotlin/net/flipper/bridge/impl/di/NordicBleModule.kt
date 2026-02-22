@@ -21,7 +21,7 @@ interface NordicBleModule {
     fun provideCentralManager(context: Context, scope: CoroutineScope): CentralManager {
         val environment = NativeAndroidEnvironment.getInstance(
             context = context,
-            isNeverForLocationFlagSet = false
+            isNeverForLocationFlagSet = true
         )
         return CentralManager.native(environment, scope)
     }
