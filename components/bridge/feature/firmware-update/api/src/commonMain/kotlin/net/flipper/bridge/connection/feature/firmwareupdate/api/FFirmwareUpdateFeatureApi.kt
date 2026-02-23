@@ -10,6 +10,7 @@ interface FFirmwareUpdateFeatureApi : FDeviceFeatureApi {
     fun getUpdateStatusFlow(): WrappedFlow<UpdateStatus>
     suspend fun startUpdateCheck(): CResult<Unit>
     suspend fun setAutoUpdate(isEnabled: Boolean): CResult<Unit>
+    suspend fun getAutoUpdate(): CResult<Boolean>
     suspend fun startVersionInstall(version: String): CResult<Unit>
 
     /**

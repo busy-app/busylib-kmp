@@ -4,7 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class AutoUpdateRequest(
+data class AutoUpdate(
     @SerialName("is_enabled")
     val isEnabled: Boolean,
     @SerialName("interval_start")
