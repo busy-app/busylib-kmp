@@ -40,7 +40,7 @@ class FirmwareDownloaderApiImpl(
     override val state: StateFlow<FirmwareDownloaderState> = _state.asStateFlow()
 
     private fun getTemporalFile(): Path {
-        return Path(SystemTemporaryDirectory, "temp")
+        return Path(SystemTemporaryDirectory, "temp_firmware_update_file")
     }
 
     private fun getTemporalFileSink(): RawSink {

@@ -23,6 +23,7 @@ fun RawSource.asFlow(
         }
     } catch (t: Throwable) {
         error(t) { "#asFlow Could not read from source" }
+        throw t
     } finally {
         close()
     }

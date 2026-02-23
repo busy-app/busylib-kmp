@@ -40,6 +40,18 @@ class FirmwareUploaderApiImpl(
     private val _state = MutableStateFlow<FirmwareUploaderState>(FirmwareUploaderState.Pending)
     override val state: StateFlow<FirmwareUploaderState> = _state.asStateFlow()
 
+    private suspend fun awaitDeviceDisconnected() {
+        fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
+            .filter { it !is FFeatureStatus.Supported<*> }
+            .first()
+    }
+
+    private suspend fun awaitDeviceConnected() {
+        fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
+            .filterIsInstance<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>()
+            .first()
+    }
+
     override suspend fun uploadAndInstall(clientFilePath: Path) {
         fFeatureProvider.get<FRpcFeatureApi>()
             .onEach { _state.emit(FirmwareUploaderState.Pending) }
@@ -73,13 +85,9 @@ class FirmwareUploaderApiImpl(
             .first()
         if (_state.first() is FirmwareUploaderState.Pending) return
         info { "uploadAndInstall upload finished!" }
-        fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
-            .filter { it !is FFeatureStatus.Supported<*> }
-            .first()
+        awaitDeviceDisconnected()
         info { "uploadAndInstall device disconnected" }
-        fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
-            .filterIsInstance<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>()
-            .first()
+        awaitDeviceConnected()
         _state.emit(FirmwareUploaderState.Pending)
     }
 }

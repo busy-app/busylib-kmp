@@ -26,5 +26,6 @@ fun ByteReadChannel.asFlow(
         }
     } catch (t: Throwable) {
         error(t) { "#asFlow error" }
+        throw t
     }
 }
