@@ -2,8 +2,10 @@ package net.flipper.bridge.connection.transport.combined.impl
 
 import io.ktor.client.engine.HttpClientEngineBase
 import io.ktor.client.engine.HttpClientEngineConfig
+import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.HttpRequestData
 import io.ktor.client.request.HttpResponseData
+import io.ktor.client.request.takeFrom
 import io.ktor.utils.io.InternalAPI
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -18,8 +20,12 @@ import kotlinx.coroutines.flow.stateIn
 import net.flipper.bridge.connection.transport.combined.impl.connections.AutoReconnectConnection
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPDeviceApi
+import net.flipper.bridge.connection.transport.common.api.serial.FHTTPTransportCapability
+import net.flipper.bridge.connection.transport.common.api.serial.HEADER_NAME_REQUEST_CAPABILITY
 import net.flipper.core.busylib.log.LogTagProvider
+import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
+import net.flipper.core.busylib.log.verbose
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class FCombinedHttpEngine(
@@ -51,14 +57,45 @@ class FCombinedHttpEngine(
     }.stateIn(scope, SharingStarted.Eagerly, arrayOf())
 
     @InternalAPI
-    @Suppress("ForbiddenComment")
     override suspend fun execute(data: HttpRequestData): HttpResponseData {
         val currentDelegates = delegates.value
         check(currentDelegates.isNotEmpty()) { "No connected devices" }
 
-        val (selectedDelegate, _) = currentDelegates.first() // TODO: Add logic to handle capabilities
-        info { "Dispatch request $data to $selectedDelegate" }
+        val requestedCapability = data.headers[HEADER_NAME_REQUEST_CAPABILITY]?.toIntOrNull()?.let {
+            FHTTPTransportCapability.entries.getOrNull(it)
+        }
 
-        return selectedDelegate.getDeviceHttpEngine().execute(data)
+        val filteredDelegates = if (requestedCapability == null) {
+            currentDelegates.toList()
+        } else {
+            currentDelegates.filter { it.second.contains(requestedCapability) }.also {
+                if (it.isEmpty()) {
+                    error("No delegate with capability $requestedCapability")
+                }
+            }
+        }.map { it.first }
+
+        val requestBuilder = HttpRequestBuilder()
+            .takeFrom(data)
+        requestBuilder.headers.remove(HEADER_NAME_REQUEST_CAPABILITY)
+        return executeWithRetry(requestBuilder.build(), filteredDelegates)
+    }
+
+    @InternalAPI
+    private suspend fun executeWithRetry(
+        data: HttpRequestData,
+        filteredDelegates: List<FHTTPDeviceApi>
+    ): HttpResponseData {
+        var lastException: Throwable? = null
+        for (delegate in filteredDelegates) {
+            try {
+                verbose { "Dispatch request $data to $delegate" }
+                return delegate.getDeviceHttpEngine().execute(data)
+            } catch (e: Throwable) {
+                error(e) { "Delegate $delegate failed, trying next" }
+                lastException = e
+            }
+        }
+        throw lastException ?: error("No delegates available")
     }
 }
