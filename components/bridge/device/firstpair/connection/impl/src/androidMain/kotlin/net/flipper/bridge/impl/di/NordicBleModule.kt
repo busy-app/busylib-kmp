@@ -10,6 +10,7 @@ import me.tatarka.inject.annotations.Provides
 import net.flipper.busylib.core.di.BusyLibGraph
 import no.nordicsemi.kotlin.ble.client.android.CentralManager
 import no.nordicsemi.kotlin.ble.client.android.native
+import no.nordicsemi.kotlin.ble.environment.android.NativeAndroidEnvironment
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
 import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 
@@ -18,7 +19,11 @@ interface NordicBleModule {
     @Provides
     @SingleIn(BusyLibGraph::class)
     fun provideCentralManager(context: Context, scope: CoroutineScope): CentralManager {
-        return CentralManager.native(context, scope)
+        val environment = NativeAndroidEnvironment.getInstance(
+            context = context,
+            isNeverForLocationFlagSet = true
+        )
+        return CentralManager.native(environment, scope)
     }
 
     @Provides
