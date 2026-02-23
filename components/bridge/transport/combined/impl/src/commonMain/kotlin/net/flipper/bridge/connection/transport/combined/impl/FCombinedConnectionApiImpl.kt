@@ -24,7 +24,6 @@ import net.flipper.bridge.connection.transport.common.api.FInternalTransportConn
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoData
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
-import net.flipper.bridge.connection.transport.common.api.serial.FHTTPTransportCapability
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.busylib.ktx.common.withLockResult
 import net.flipper.core.busylib.log.LogTagProvider
@@ -118,10 +117,6 @@ class FCombinedConnectionApiImpl(
         connections.value.forEach {
             runSuspendCatching { it.disconnect() }
         }
-    }
-
-    override fun getCapabilities(): StateFlow<List<FHTTPTransportCapability>> {
-        return MutableStateFlow(listOf(FHTTPTransportCapability.BB_WEBSOCKET_SUPPORTED)) // TODO debug
     }
 }
 

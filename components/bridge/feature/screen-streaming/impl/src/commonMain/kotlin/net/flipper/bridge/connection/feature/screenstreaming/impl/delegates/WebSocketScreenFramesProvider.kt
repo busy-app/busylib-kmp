@@ -1,6 +1,5 @@
 package net.flipper.bridge.connection.feature.screenstreaming.impl.delegates
 
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi

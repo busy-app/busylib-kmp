@@ -3,7 +3,6 @@ package net.flipper.bridge.connection.transport.combined.impl
 import io.ktor.client.engine.HttpClientEngineBase
 import io.ktor.client.engine.HttpClientEngineCapability
 import io.ktor.client.engine.HttpClientEngineConfig
-import io.ktor.client.plugins.websocket.WebSocketCapability
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.HttpRequestData
 import io.ktor.client.request.HttpResponseData
@@ -26,7 +25,6 @@ import net.flipper.bridge.connection.transport.common.api.serial.FHTTPTransportC
 import net.flipper.bridge.connection.transport.common.api.serial.HEADER_NAME_REQUEST_CAPABILITY
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
-import net.flipper.core.busylib.log.info
 import net.flipper.core.busylib.log.verbose
 
 @OptIn(ExperimentalCoroutinesApi::class)

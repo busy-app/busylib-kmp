@@ -25,6 +25,7 @@ import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
 class FRpcFeatureApiFactoryImpl : FDeviceFeatureApi.Factory, LogTagProvider {
     override val TAG = "FRpcFeatureApiFactory"
 
+    @Suppress("LongMethod")
     override suspend fun invoke(
         unsafeFeatureDeviceApi: FUnsafeDeviceFeatureApi,
         scope: CoroutineScope,
