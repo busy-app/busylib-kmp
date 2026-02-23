@@ -12,7 +12,7 @@ object ApiStatusResponse {
                 "build_date": "2025-08-27",
                 "commit_hash": "053912da",
                 "uptime": "00d 04h 48m 56s",
-                "boot_time": 1767225620000
+                "boot_time": 0
               },
               "power": {
                 "state": "discharging",
