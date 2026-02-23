@@ -217,12 +217,15 @@ class FFinishSetupFeatureApiImpl(
             connectedDevice: FConnectedDeviceApi
         ): FDeviceFeatureApi? {
             val fBleFeatureApi = when (BusyLibPlatform.currentPlatform) {
-                BusyLibPlatform.MACOS -> null
-                else ->
+                BusyLibPlatform.ANDROID, BusyLibPlatform.IOS -> {
                     unsafeFeatureDeviceApi
                         .get(FBleFeatureApi::class)
                         ?.await()
                         ?: return null
+                }
+
+                BusyLibPlatform.JVM,
+                BusyLibPlatform.MACOS -> null
             }
             val fLinkedInfoOnDemandFeatureApi = unsafeFeatureDeviceApi
                 .get(FLinkedInfoOnDemandFeatureApi::class)
