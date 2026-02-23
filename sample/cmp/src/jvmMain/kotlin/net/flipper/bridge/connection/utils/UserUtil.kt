@@ -24,7 +24,10 @@ private data class AuthMeUser(
     val email: String
 )
 
-suspend fun getUserPrincipal(hostApi: BUSYLibHostApi): BUSYLibUserPrincipal.Full {
+suspend fun getUserPrincipal(hostApi: BUSYLibHostApi): BUSYLibUserPrincipal {
+    if (Secrets.AUTH_TOKEN.isBlank()) {
+        return BUSYLibUserPrincipal.Empty
+    }
     val httpClient = getHttpClient()
     val response = httpClient.get("https://${hostApi.getHost().value}/api/v0/auth/me") {
         header("Authorization", "Bearer ${Secrets.AUTH_TOKEN}")

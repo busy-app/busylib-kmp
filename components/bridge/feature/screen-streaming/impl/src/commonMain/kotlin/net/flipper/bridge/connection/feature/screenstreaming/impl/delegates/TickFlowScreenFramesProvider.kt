@@ -19,7 +19,7 @@ class TickFlowScreenFramesProvider(
     private val scope: CoroutineScope,
     private val rpcFeatureApi: FRpcFeatureApi
 ) : ScreenFramesProvider {
-    override fun getScreens(): Flow<BusyImageFormat> {
+    override suspend fun getScreens(): Flow<BusyImageFormat> {
         return TickFlow(TICK_DELAY)
             .transformWhileSubscribed(
                 timeout = TICK_DELAY.minus(1.seconds),

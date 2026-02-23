@@ -5,11 +5,13 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.screenstreaming.api.FScreenStreamingFeatureApi
 import net.flipper.bridge.connection.feature.screenstreaming.impl.delegates.MetaInfoScreenFramesProvider
 import net.flipper.bridge.connection.feature.screenstreaming.impl.delegates.ScreenFramesProvider
 import net.flipper.bridge.connection.feature.screenstreaming.impl.delegates.TickFlowScreenFramesProvider
+import net.flipper.bridge.connection.feature.screenstreaming.impl.delegates.WebSocketScreenFramesProvider
 import net.flipper.bridge.connection.feature.screenstreaming.model.BusyImageFormat
 import net.flipper.bridge.connection.transport.common.api.meta.FTransportMetaInfoApi
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
@@ -21,7 +23,8 @@ import net.flipper.core.busylib.log.info
 class FScreenStreamingFeatureApiImpl(
     private val scope: CoroutineScope,
     private val rpcFeatureApi: FRpcFeatureApi,
-    private val metaKeyTransport: FTransportMetaInfoApi?
+    private val metaKeyTransport: FTransportMetaInfoApi?,
+    private val isWebSocketSupportedFlow: Flow<Boolean>
 ) : FScreenStreamingFeatureApi, LogTagProvider {
     override val TAG: String = "FScreenStreamingFeatureApi"
 
@@ -34,16 +37,22 @@ class FScreenStreamingFeatureApiImpl(
             info { "Meta key transport is null, so return default provider" }
             return flowOf(TickFlowScreenFramesProvider(scope, rpcFeatureApi))
         }
-        return metaKeyTransport.get(TransportMetaInfoKey.WS_EVENT)
-            .map { it.getOrNull() }
-            .map { flow ->
-                if (flow == null) {
-                    info { "Web socket events is null, so return default provider" }
-                    TickFlowScreenFramesProvider(scope, rpcFeatureApi)
-                } else {
-                    info { "Received web socket events flow, so return MetaInfoScreenFramesProvider" }
-                    MetaInfoScreenFramesProvider(flow)
+
+        return isWebSocketSupportedFlow.flatMapLatest { isWebSocketSupported ->
+            if (isWebSocketSupported) {
+                info { "Web socket supported, so return WebSocketScreenFramesProvider" }
+                flowOf(WebSocketScreenFramesProvider(rpcFeatureApi))
+            } else metaKeyTransport.get(TransportMetaInfoKey.WS_EVENT)
+                .map { it.getOrNull() }
+                .map { flow ->
+                    if (flow == null) {
+                        info { "Web socket events is null, so return default provider" }
+                        TickFlowScreenFramesProvider(scope, rpcFeatureApi)
+                    } else {
+                        info { "Received web socket events flow, so return MetaInfoScreenFramesProvider" }
+                        MetaInfoScreenFramesProvider(flow)
+                    }
                 }
-            }
+        }
     }
 }
