@@ -1,6 +1,6 @@
-package net.flipper.bridge.connection.feature.firmwareupdate.updater.api
+package net.flipper.bridge.device.firmwareupdate.updater.diff
 
-import net.flipper.bridge.connection.feature.firmwareupdate.updater.model.FwUpdateState
+import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateState
 
 object FwUpdateStateDiff {
     suspend fun combineDiff(
@@ -35,8 +35,10 @@ object FwUpdateStateDiff {
                 }
             }
 
+            is FwUpdateState.Uploading,
             is FwUpdateState.Downloading -> {
                 when (latest) {
+                    is FwUpdateState.Uploading,
                     is FwUpdateState.UpdateFailed,
                     is FwUpdateState.UpdateFinished,
                     FwUpdateState.Busy,
@@ -51,8 +53,14 @@ object FwUpdateStateDiff {
 
                     FwUpdateState.Pending -> {
                         FwUpdateState.Updating(
-                            targetVersion = previous.targetVersion,
-                            bsbVersionChangelog = previous.bsbVersionChangelog
+                            targetVersion = when (previous) {
+                                is FwUpdateState.Downloading -> previous.targetVersion
+                                is FwUpdateState.Uploading -> previous.targetVersion
+                            },
+                            bsbVersionChangelog = when (previous) {
+                                is FwUpdateState.Downloading -> previous.bsbVersionChangelog
+                                is FwUpdateState.Uploading -> previous.bsbVersionChangelog
+                            }
                         )
                     }
                 }

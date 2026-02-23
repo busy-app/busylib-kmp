@@ -4,18 +4,12 @@ import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbVersionChangelog
 import net.flipper.bridge.connection.feature.rpc.api.model.UpdateStatus
 import net.flipper.busylib.core.wrapper.CResult
-import net.flipper.busylib.core.wrapper.WrappedFlow
+import net.flipper.busylib.core.wrapper.WrappedSharedFlow
 
 interface FFirmwareUpdateFeatureApi : FDeviceFeatureApi {
-    fun getUpdateStatusFlow(): WrappedFlow<UpdateStatus>
-    suspend fun startUpdateCheck(): CResult<Unit>
+    val updateStatusFlow: WrappedSharedFlow<UpdateStatus>
     suspend fun setAutoUpdate(isEnabled: Boolean): CResult<Unit>
     suspend fun getAutoUpdate(): CResult<Boolean>
-    suspend fun startVersionInstall(version: String): CResult<Unit>
 
-    /**
-     * Force stop firmware download if possible
-     */
-    suspend fun stopFirmwareUpdate(): CResult<Unit>
     suspend fun getVersionChangelog(version: String): CResult<BsbVersionChangelog>
 }

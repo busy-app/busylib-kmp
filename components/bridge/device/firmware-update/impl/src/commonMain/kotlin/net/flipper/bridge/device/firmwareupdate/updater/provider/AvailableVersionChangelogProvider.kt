@@ -1,4 +1,4 @@
-package net.flipper.bridge.connection.feature.firmwareupdate.updater.api
+package net.flipper.bridge.device.firmwareupdate.updater.provider
 
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
@@ -28,7 +28,7 @@ class AvailableVersionChangelogProvider(
         }
         .flatMapLatest { featureApi ->
             if (featureApi == null) return@flatMapLatest flowOf(null)
-            featureApi.getUpdateStatusFlow()
+            featureApi.updateStatusFlow
                 .filter { status ->
                     when (status.check.status) {
                         UpdateStatus.Check.CheckResult.NOT_AVAILABLE,

@@ -1,4 +1,4 @@
-package net.flipper.bridge.connection.feature.firmwareupdate.updater.model
+package net.flipper.bridge.device.firmwareupdate.updater.model
 
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbVersionChangelog
 
@@ -28,6 +28,12 @@ sealed interface FwUpdateState {
     data class UpdateAvailable(
         val targetVersion: String,
         val bsbVersionChangelog: BsbVersionChangelog?
+    ) : FwUpdateState
+
+    data class Uploading(
+        val targetVersion: String,
+        val bsbVersionChangelog: BsbVersionChangelog?,
+        val progress: Float
     ) : FwUpdateState
 
     data class Downloading(

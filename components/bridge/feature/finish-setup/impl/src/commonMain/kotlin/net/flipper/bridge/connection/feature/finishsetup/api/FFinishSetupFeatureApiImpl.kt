@@ -131,7 +131,7 @@ class FFinishSetupFeatureApiImpl(
         flow = fBleFeatureApi?.getBleStatus().orNullable(),
         flow2 = fLinkedInfoOnDemandFeatureApi.status,
         flow3 = fWiFiFeatureApi.getWifiStatusFlow(),
-        flow4 = fFirmwareUpdateFeatureApi.getUpdateStatusFlow(),
+        flow4 = fFirmwareUpdateFeatureApi.updateStatusFlow,
         flow5 = setupFinishedBeforeKrate.cachedStateFlow,
         transform = ::TasksDependencies
     ).transformWhileSubscribed(

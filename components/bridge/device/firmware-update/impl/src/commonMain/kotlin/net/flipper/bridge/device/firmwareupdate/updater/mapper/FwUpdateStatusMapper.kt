@@ -1,8 +1,10 @@
-package net.flipper.bridge.connection.feature.firmwareupdate.updater.api
+package net.flipper.bridge.device.firmwareupdate.updater.mapper
 
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbVersionChangelog
-import net.flipper.bridge.connection.feature.firmwareupdate.updater.model.FwUpdateState
 import net.flipper.bridge.connection.feature.rpc.api.model.UpdateStatus
+import net.flipper.bridge.device.firmwareupdate.downloader.model.FirmwareDownloaderState
+import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateState
+import net.flipper.bridge.device.firmwareupdate.uploader.model.FirmwareUploaderState
 
 object FwUpdateStatusMapper {
     private fun fromCheckStatus(
@@ -102,15 +104,44 @@ object FwUpdateStatusMapper {
 
     fun toFwUpdateState(
         updateStatus: UpdateStatus?,
-        changelogOrNull: BsbVersionChangelog?
+        changelogOrNull: BsbVersionChangelog?,
+        uploaderState: FirmwareUploaderState,
+        downloaderState: FirmwareDownloaderState
     ): FwUpdateState {
-        if (updateStatus == null) {
-            return FwUpdateState.Pending
-        }
+        return when {
+            downloaderState is FirmwareDownloaderState.Downloading -> {
+                FwUpdateState.Downloading(
+                    targetVersion = updateStatus?.check?.availableVersion.orEmpty(),
+                    bsbVersionChangelog = changelogOrNull,
+                    progress = downloaderState.progress
+                )
+            }
 
-        return fromInstallStatus(
-            updateStatus = updateStatus,
-            changelogOrNull = changelogOrNull
-        )
+            uploaderState is FirmwareUploaderState.Uploading -> {
+                FwUpdateState.Uploading(
+                    targetVersion = updateStatus?.check?.availableVersion.orEmpty(),
+                    bsbVersionChangelog = changelogOrNull,
+                    progress = uploaderState.progress
+                )
+            }
+
+            uploaderState is FirmwareUploaderState.Uploaded -> {
+                FwUpdateState.Updating(
+                    targetVersion = updateStatus?.check?.availableVersion.orEmpty(),
+                    bsbVersionChangelog = changelogOrNull,
+                )
+            }
+
+            updateStatus == null -> {
+                FwUpdateState.Pending
+            }
+
+            else -> {
+                fromInstallStatus(
+                    updateStatus = updateStatus,
+                    changelogOrNull = changelogOrNull
+                )
+            }
+        }
     }
 }

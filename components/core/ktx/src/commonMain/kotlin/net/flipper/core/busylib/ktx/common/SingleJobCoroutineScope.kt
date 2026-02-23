@@ -121,6 +121,10 @@ private class MutexSingleJobCoroutineScope(
     }
 }
 
+fun SingleJobCoroutineScope.cancelPrevious() {
+    launch(mode = SingleJobMode.CANCEL_PREVIOUS, block = {})
+}
+
 fun CoroutineScope.asSingleJobScope(): SingleJobCoroutineScope {
     return MutexSingleJobCoroutineScope(this)
 }

@@ -9,6 +9,8 @@ import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.StackNavigator
 import com.arkivanov.decompose.router.stack.pushNew
 import com.arkivanov.essenty.instancekeeper.getOrCreate
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import net.flipper.bridge.connection.screens.decompose.ScreenDecomposeComponent
 import net.flipper.bridge.connection.screens.device.composable.FCurrentDeviceComposable
 import net.flipper.bridge.connection.screens.device.composable.FDeviceDropdownComposable
@@ -17,13 +19,15 @@ import net.flipper.bridge.connection.screens.device.viewmodel.FCurrentDeviceView
 import net.flipper.bridge.connection.screens.device.viewmodel.FDevicesViewModel
 import net.flipper.bridge.connection.screens.device.viewmodel.PingViewModel
 import net.flipper.bridge.connection.screens.models.ConnectionRootConfig
+import net.flipper.bridge.device.firmwareupdate.updater.api.FirmwareUpdaterApi
 
 class ConnectionDeviceScreenDecomposeComponent(
     componentContext: ComponentContext,
     private val navigation: StackNavigator<ConnectionRootConfig>,
     private val devicesViewModelProvider: () -> FDevicesViewModel,
     private val currentDeviceViewModelProvider: () -> FCurrentDeviceViewModel,
-    private val pingViewModelProvider: () -> PingViewModel
+    private val pingViewModelProvider: () -> PingViewModel,
+    private val firmwareUpdaterApi: FirmwareUpdaterApi
 ) : ScreenDecomposeComponent(componentContext) {
     private val devicesViewModel = instanceKeeper.getOrCreate {
         devicesViewModelProvider.invoke()
@@ -56,6 +60,13 @@ class ConnectionDeviceScreenDecomposeComponent(
                 onConnect = currentDeviceViewModel::connect,
                 toDashboard = {
                     navigation.pushNew(ConnectionRootConfig.Dashboard)
+                },
+                onStartDownloadUpdate = {
+                    GlobalScope.launch {
+                        firmwareUpdaterApi.startVersionDownloadAndInstall(
+                            ""
+                        )
+                    }
                 }
             )
         }
@@ -64,7 +75,8 @@ class ConnectionDeviceScreenDecomposeComponent(
     class Factory(
         private val devicesViewModelProvider: () -> FDevicesViewModel,
         private val currentDeviceViewModelProvider: () -> FCurrentDeviceViewModel,
-        private val pingViewModelProvider: () -> PingViewModel
+        private val pingViewModelProvider: () -> PingViewModel,
+        private val firmwareUpdaterApi: FirmwareUpdaterApi
     ) {
         operator fun invoke(
             componentContext: ComponentContext,
@@ -75,7 +87,8 @@ class ConnectionDeviceScreenDecomposeComponent(
                 navigation = navigation,
                 devicesViewModelProvider = devicesViewModelProvider,
                 currentDeviceViewModelProvider = currentDeviceViewModelProvider,
-                pingViewModelProvider = pingViewModelProvider
+                pingViewModelProvider = pingViewModelProvider,
+                firmwareUpdaterApi = firmwareUpdaterApi
             )
         }
     }

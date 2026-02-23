@@ -32,8 +32,10 @@ vaniktech = "0.36.0" #https://github.com/vanniktech/gradle-maven-publish-plugin
 buildkonfig = "6.0.7"
 skie = "0.10.10" # https://github.com/touchlab/SKIE/releases
 bitvector = "0.9.2"
+okio = "3.16.4"
 
 [libraries]
+okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
 vaniktech = { module = "com.vanniktech:gradle-maven-publish-plugin", version.ref = "vaniktech" }
 android-gradle = { module = "com.android.tools.build:gradle", version.ref = "agp" }
 kotlin-ksp-gradle = { module = "com.google.devtools.ksp:com.google.devtools.ksp.gradle.plugin", version.ref = "ksp" }
