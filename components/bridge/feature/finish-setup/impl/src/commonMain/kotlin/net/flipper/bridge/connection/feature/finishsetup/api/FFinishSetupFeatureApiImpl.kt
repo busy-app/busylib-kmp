@@ -25,6 +25,9 @@ import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.core.wrapper.WrappedSharedFlow
 import net.flipper.busylib.core.wrapper.wrap
+import net.flipper.core.busylib.ktx.common.orNullable
+import net.flipper.core.busylib.ktx.common.platform.BusyLibPlatform
+import net.flipper.core.busylib.ktx.common.platform.currentPlatform
 import net.flipper.core.busylib.ktx.common.throttleLatest
 import net.flipper.core.busylib.ktx.common.transformWhileSubscribed
 import net.flipper.core.busylib.log.LogTagProvider
@@ -34,7 +37,7 @@ import kotlin.time.Duration.Companion.seconds
 
 class FFinishSetupFeatureApiImpl(
     private val scope: CoroutineScope,
-    private val fBleFeatureApi: FBleFeatureApi,
+    private val fBleFeatureApi: FBleFeatureApi?,
     private val fLinkedInfoOnDemandFeatureApi: FLinkedInfoOnDemandFeatureApi,
     private val fWiFiFeatureApi: FWiFiFeatureApi,
     private val fFirmwareUpdateFeatureApi: FFirmwareUpdateFeatureApi,
@@ -43,7 +46,7 @@ class FFinishSetupFeatureApiImpl(
     override val TAG: String = "FFinishSetupFeatureApi"
 
     private data class TasksDependencies(
-        val bleStatus: FBleStatus,
+        val bleStatus: FBleStatus?,
         val linkedAccountInfo: LinkedAccountInfo,
         val wifiStatus: StatusResponse,
         val updateStatus: UpdateStatus,
@@ -125,7 +128,7 @@ class FFinishSetupFeatureApiImpl(
     }
 
     override val taskListResourceFlow: WrappedSharedFlow<FFinishSetupState> = combine(
-        flow = fBleFeatureApi.getBleStatus(),
+        flow = fBleFeatureApi?.getBleStatus().orNullable(),
         flow2 = fLinkedInfoOnDemandFeatureApi.status,
         flow3 = fWiFiFeatureApi.getWifiStatusFlow(),
         flow4 = fFirmwareUpdateFeatureApi.getUpdateStatusFlow(),
@@ -151,10 +154,13 @@ class FFinishSetupFeatureApiImpl(
                 if (bleStatus == null && linkedAccountInfo == null && wifiStatus == null) {
                     return@throttleLatest FFinishSetupState.Loading
                 }
-                if (bleStatus == null || linkedAccountInfo == null || wifiStatus == null) {
+                if (linkedAccountInfo == null || wifiStatus == null) {
                     return@throttleLatest FFinishSetupState.Loading
                 }
-                if (bleStatus is FBleStatus.Initialization) {
+                if (fBleFeatureApi != null && bleStatus == null) {
+                    return@throttleLatest FFinishSetupState.Loading
+                }
+                if (fBleFeatureApi != null && bleStatus is FBleStatus.Initialization) {
                     verbose { "#taskListResourceFlow BLE is not initialized" }
                     return@throttleLatest FFinishSetupState.Loading
                 }
@@ -171,7 +177,7 @@ class FFinishSetupFeatureApiImpl(
                     StatusResponse.State.UNKNOWN -> Unit
                 }
 
-                val pairBleTask = createPairBleTask(bleStatus)
+                val pairBleTask = bleStatus?.let(::createPairBleTask)
                 val connectWifiTask = createConnectWifiTask(wifiStatus)
                 val linkAccountTask = createLinkAccountTask(
                     linkedAccountInfo = linkedAccountInfo,
@@ -181,7 +187,7 @@ class FFinishSetupFeatureApiImpl(
                     updateStatus = updateStatus,
                     connectWifiTaskStatus = connectWifiTask.status
                 )
-                val tasks = listOf(
+                val tasks = listOfNotNull(
                     pairBleTask,
                     connectWifiTask,
                     linkAccountTask,
@@ -210,10 +216,14 @@ class FFinishSetupFeatureApiImpl(
             scope: CoroutineScope,
             connectedDevice: FConnectedDeviceApi
         ): FDeviceFeatureApi? {
-            val fBleFeatureApi = unsafeFeatureDeviceApi
-                .get(FBleFeatureApi::class)
-                ?.await()
-                ?: return null
+            val fBleFeatureApi = when (BusyLibPlatform.currentPlatform) {
+                BusyLibPlatform.MACOS -> null
+                else ->
+                    unsafeFeatureDeviceApi
+                        .get(FBleFeatureApi::class)
+                        ?.await()
+                        ?: return null
+            }
             val fLinkedInfoOnDemandFeatureApi = unsafeFeatureDeviceApi
                 .get(FLinkedInfoOnDemandFeatureApi::class)
                 ?.await()
@@ -240,10 +250,10 @@ class FFinishSetupFeatureApiImpl(
     }
 
     @ContributesTo(BusyLibGraph::class)
-    interface FBleFeatureComponent {
+    interface FFeatureComponent {
         @Provides
         @IntoMap
-        fun provideFBleFeatureFactory(
+        fun provideFeatureFactory(
             fBleFeatureFactory: FDeviceFeatureApiFactory
         ): Pair<FDeviceFeature, FDeviceFeatureApi.Factory> {
             return FDeviceFeature.FINISH_SETUP to fBleFeatureFactory

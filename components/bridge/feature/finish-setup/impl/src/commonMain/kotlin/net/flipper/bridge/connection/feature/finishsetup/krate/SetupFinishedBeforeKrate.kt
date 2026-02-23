@@ -7,6 +7,10 @@ import ru.astrainteractive.klibs.kstorage.suspend.impl.DefaultStateFlowSuspendMu
 
 private const val KEY = "setup_was_finished_before"
 
+/**
+ * Here set true in factory because we don't want to display it when
+ * it's in loading state
+ */
 @Inject
 class SetupFinishedBeforeKrate(
     private val settings: Settings
