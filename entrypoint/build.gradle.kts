@@ -68,6 +68,8 @@ kotlin {
         implementation(projects.components.bridge.feature.oncall.impl)
         api(projects.components.bridge.feature.smarthome.api)
         implementation(projects.components.bridge.feature.smarthome.impl)
+        api(projects.components.bridge.feature.finishSetup.api)
+        implementation(projects.components.bridge.feature.finishSetup.impl)
 
         implementation(projects.components.bridge.transport.ble.api)
         implementation(projects.components.bridge.transport.common.api)
@@ -92,6 +94,10 @@ kotlin {
 
         implementation(libs.kotlin.coroutines)
         implementation(libs.ktor.client.core)
+
+        implementation(libs.settings)
+        implementation(libs.settings.observable)
+        implementation(libs.settings.coroutines)
     }
     sourceSets.androidMain.dependencies {
         api(projects.components.bridge.device.firstpair.connection.api)

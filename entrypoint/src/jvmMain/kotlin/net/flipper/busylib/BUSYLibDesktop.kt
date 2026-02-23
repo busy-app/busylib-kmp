@@ -2,6 +2,7 @@ package net.flipper.busylib
 
 import com.flipperdevices.core.network.BUSYLibNetworkStateApi
 import com.flipperdevices.core.network.BUSYLibNetworkStateApiNoop
+import com.russhwolf.settings.PreferencesSettings
 import kotlinx.coroutines.CoroutineScope
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
@@ -31,6 +32,7 @@ class BUSYLibDesktop(
             it.onLaunch()
         }
     }
+
     companion object {
         @Suppress("LongParameterList", "ForbiddenComment") // TODO: Move it to builder
         fun build(
@@ -47,7 +49,8 @@ class BUSYLibDesktop(
                 busyLibBarsApi,
                 persistedStorage,
                 hostApi,
-                networkStateApi
+                networkStateApi,
+                PreferencesSettings.Factory().create("busylib_settings")
             )
             return graph.busyLib
         }

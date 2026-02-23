@@ -1,6 +1,7 @@
 package net.flipper.busylib.di
 
 import com.flipperdevices.core.network.BUSYLibNetworkStateApi
+import com.russhwolf.settings.Settings
 import kotlinx.coroutines.CoroutineScope
 import me.tatarka.inject.annotations.Provides
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
@@ -14,13 +15,15 @@ import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 
 @SingleIn(BusyLibGraph::class)
 @MergeComponent(BusyLibGraph::class)
+@Suppress("LongParameterList")
 abstract class BUSYLibGraphMacOS(
     @get:Provides protected val scope: CoroutineScope,
     @get:Provides protected val principalApi: BUSYLibPrincipalApi,
     @get:Provides protected val busyLibBarsApi: BUSYLibBarsApi,
     @get:Provides protected val persistedStorage: FDevicePersistedStorage,
     @get:Provides protected val hostApi: BUSYLibHostApi,
-    @get:Provides protected val networkStateApi: BUSYLibNetworkStateApi
+    @get:Provides protected val networkStateApi: BUSYLibNetworkStateApi,
+    @get:Provides protected val settings: Settings
 ) {
     abstract val busyLib: BUSYLibMacOS
 }
@@ -33,5 +36,6 @@ expect fun create(
     busyLibBarsApi: BUSYLibBarsApi,
     persistedStorage: FDevicePersistedStorage,
     hostApi: BUSYLibHostApi,
-    networkStateApi: BUSYLibNetworkStateApi
+    networkStateApi: BUSYLibNetworkStateApi,
+    settings: Settings
 ): BUSYLibGraphMacOS

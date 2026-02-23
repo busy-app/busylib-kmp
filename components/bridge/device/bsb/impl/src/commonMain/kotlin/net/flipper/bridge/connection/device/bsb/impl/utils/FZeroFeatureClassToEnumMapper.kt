@@ -7,6 +7,7 @@ import net.flipper.bridge.connection.feature.ble.api.FBleFeatureApi
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
+import net.flipper.bridge.connection.feature.finishsetup.api.FFinishSetupFeatureApi
 import net.flipper.bridge.connection.feature.firmwareupdate.api.FFirmwareUpdateFeatureApi
 import net.flipper.bridge.connection.feature.info.api.FDeviceInfoFeatureApi
 import net.flipper.bridge.connection.feature.link.check.ondemand.api.FLinkedInfoOnDemandFeatureApi
@@ -41,6 +42,7 @@ object FZeroFeatureClassToEnumMapper {
             FDeviceFeature.ON_CALL -> FOnCallFeatureApi::class
             FDeviceFeature.SMART_HOME -> FSmartHomeFeatureApi::class
             FDeviceFeature.TIME_ZONE -> FTimeZoneFeatureApi::class
+            FDeviceFeature.FINISH_SETUP -> FFinishSetupFeatureApi::class
         }
     }
 

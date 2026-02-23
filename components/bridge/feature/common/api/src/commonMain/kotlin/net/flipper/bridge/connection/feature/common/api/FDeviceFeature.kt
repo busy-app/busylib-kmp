@@ -15,4 +15,5 @@ enum class FDeviceFeature {
     ON_CALL,
     SMART_HOME,
     TIME_ZONE,
+    FINISH_SETUP
 }

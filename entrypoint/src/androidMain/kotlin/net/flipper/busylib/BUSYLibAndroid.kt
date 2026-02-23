@@ -3,6 +3,7 @@ package net.flipper.busylib
 import android.content.Context
 import com.flipperdevices.core.network.BUSYLibNetworkStateApi
 import com.flipperdevices.core.network.BUSYLibNetworkStateApiNoop
+import com.russhwolf.settings.SharedPreferencesSettings
 import kotlinx.coroutines.CoroutineScope
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.api.scanner.FlipperScanner
@@ -57,7 +58,8 @@ class BUSYLibAndroid(
                 persistedStorage,
                 context,
                 hostApi,
-                networkStateApi
+                networkStateApi,
+                SharedPreferencesSettings.Factory(context).create("busylib_settings")
             )
             return graph.busyLib
         }
