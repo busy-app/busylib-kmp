@@ -1,7 +1,9 @@
 package net.flipper.bridge.connection.transport.combined.impl
 
 import io.ktor.client.engine.HttpClientEngineBase
+import io.ktor.client.engine.HttpClientEngineCapability
 import io.ktor.client.engine.HttpClientEngineConfig
+import io.ktor.client.plugins.websocket.WebSocketCapability
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.HttpRequestData
 import io.ktor.client.request.HttpResponseData
@@ -98,4 +100,8 @@ class FCombinedHttpEngine(
         }
         throw lastException ?: error("No delegates available")
     }
+
+    override val supportedCapabilities: Set<HttpClientEngineCapability<*>>
+        get() = delegates.value.map { it.first }
+            .flatMap { it.getDeviceHttpEngine().supportedCapabilities }.toSet()
 }

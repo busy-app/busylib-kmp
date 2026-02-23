@@ -16,11 +16,16 @@ import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcWebSocketApi
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPTransportCapability
 import net.flipper.bridge.connection.transport.common.api.serial.HEADER_NAME_REQUEST_CAPABILITY
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
+import net.flipper.core.busylib.log.LogTagProvider
+import net.flipper.core.busylib.log.info
+import net.flipper.core.busylib.log.verbose
 
 class FRpcWebSocketApiImpl(
     private val httpClient: HttpClient,
     private val dispatcher: CoroutineDispatcher
-) : FRpcWebSocketApi {
+) : FRpcWebSocketApi, LogTagProvider {
+    override val TAG = "FRpcWebSocketApi"
+
     override suspend fun getScreenFrames(): Result<Flow<ByteArray>> {
         return runSuspendCatching(dispatcher) {
             channelFlow {
@@ -30,8 +35,10 @@ class FRpcWebSocketApiImpl(
                         headers[HEADER_NAME_REQUEST_CAPABILITY] =
                             FHTTPTransportCapability.BB_WEBSOCKET_SUPPORTED.ordinal.toString()
                     }
+                    info { "Init websocket $session" }
                     session.send(Frame.Text("{\"display\":0}"))
                     for (frame in session.incoming) {
+                        verbose { "Received frame $frame" }
                         if (frame is Frame.Binary) {
                             send(frame.readBytes())
                         }
