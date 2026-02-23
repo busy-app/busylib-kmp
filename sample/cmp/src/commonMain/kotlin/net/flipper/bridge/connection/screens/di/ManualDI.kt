@@ -11,6 +11,7 @@ import net.flipper.bridge.connection.screens.device.ConnectionDeviceScreenDecomp
 import net.flipper.bridge.connection.screens.device.viewmodel.FCurrentDeviceViewModel
 import net.flipper.bridge.connection.screens.device.viewmodel.FDevicesViewModel
 import net.flipper.bridge.connection.screens.device.viewmodel.PingViewModel
+import net.flipper.bridge.connection.screens.device.viewmodel.UpdaterViewModel
 import net.flipper.bridge.connection.screens.search.ConnectionSearchDecomposeComponent
 import net.flipper.bridge.connection.screens.search.ConnectionSearchViewModel
 import net.flipper.bridge.connection.screens.utils.PermissionChecker
@@ -87,7 +88,8 @@ private fun getConnectionDeviceScreenDecomposeComponentFactory(
             )
         },
         pingViewModelProvider = { PingViewModel(featureProvider, orchestrator) },
-        firmwareUpdaterApi = firmwareUpdaterApi
+        updaterViewModelProvider = { UpdaterViewModel(firmwareUpdaterApi) }
+
     )
 }
 

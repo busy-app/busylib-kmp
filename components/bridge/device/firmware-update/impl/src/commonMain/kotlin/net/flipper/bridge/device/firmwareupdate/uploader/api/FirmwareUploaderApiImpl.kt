@@ -71,6 +71,7 @@ class FirmwareUploaderApiImpl(
                 _state.emit(FirmwareUploaderState.Pending)
             }
             .first()
+        if (_state.first() is FirmwareUploaderState.Pending) return
         info { "uploadAndInstall upload finished!" }
         fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
             .filter { it !is FFeatureStatus.Supported<*> }
