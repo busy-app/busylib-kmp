@@ -2,14 +2,13 @@ package net.flipper.bridge.connection.feature.firmwareupdate.impl
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
 import net.flipper.bridge.connection.feature.events.api.UpdateEvent
 import net.flipper.bridge.connection.feature.events.api.getUpdateFlow
 import net.flipper.bridge.connection.feature.firmwareupdate.api.FFirmwareUpdateFeatureApi
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbVersionChangelog
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
-import net.flipper.bridge.connection.feature.rpc.api.model.AutoUpdateRequest
+import net.flipper.bridge.connection.feature.rpc.api.model.AutoUpdate
 import net.flipper.bridge.connection.feature.rpc.api.model.UpdateStatus
 import net.flipper.busylib.core.wrapper.CResult
 import net.flipper.busylib.core.wrapper.WrappedFlow
@@ -61,13 +60,19 @@ class FFirmwareUpdateFeatureApiImpl(
     }
 
     override suspend fun setAutoUpdate(isEnabled: Boolean): CResult<Unit> {
-        val request = AutoUpdateRequest(
+        val request = AutoUpdate(
             isEnabled = isEnabled,
             intervalStart = DEFAULT_AUTO_UPDATE_INTERVAL_START,
             intervalEnd = DEFAULT_AUTO_UPDATE_INTERVAL_END
         )
         return rpcFeatureApi.fRpcUpdaterApi.setAutoUpdate(request)
             .map { }
+            .toCResult()
+    }
+
+    override suspend fun getAutoUpdate(): CResult<Boolean> {
+        return rpcFeatureApi.fRpcUpdaterApi.getAutoUpdate()
+            .map { it.isEnabled }
             .toCResult()
     }
 
