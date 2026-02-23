@@ -5,11 +5,14 @@ object ApiStatusResponse {
         return """
             {
               "system": {
+                "serial_number": "2036384854315004002c001e",
+                "api_semver": "6.3.0",
                 "version": "mock",
                 "branch": "dev",
                 "build_date": "2025-08-27",
                 "commit_hash": "053912da",
-                "uptime": "00d 04h 48m 56s"
+                "uptime": "00d 04h 48m 56s",
+                "boot_time": 1767225620000
               },
               "power": {
                 "state": "discharging",

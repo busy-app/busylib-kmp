@@ -24,6 +24,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertSame
+import kotlin.time.Instant
 
 /**
  * Tests to prevent race conditions in FBSBDeviceApiImpl public API.
@@ -441,11 +442,14 @@ class FBSBDeviceApiImplRaceConditionTest {
         override suspend fun getDeviceInfo(): CResult<BusyBarStatusSystem> {
             return Result.success(
                 BusyBarStatusSystem(
+                    serialNumber = "",
+                    apiSemver = "6.3.0",
                     branch = "",
                     version = "1.0.0",
                     buildDate = "",
                     commitHash = "",
-                    uptime = ""
+                    uptime = "",
+                    bootTime = Instant.fromEpochMilliseconds(0)
                 )
             ).toCResult()
         }
