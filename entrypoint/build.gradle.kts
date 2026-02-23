@@ -15,8 +15,8 @@ kotlin {
     sourceSets.commonMain.dependencies {
         implementation(projects.components.core.di)
         implementation(projects.components.core.ktx)
-        implementation(projects.components.core.log)
         implementation(projects.components.core.ktor)
+        api(projects.components.core.log)
         api(projects.components.core.network)
         api(projects.components.core.wrapper)
         api(projects.components.principal.api)
@@ -88,6 +88,7 @@ kotlin {
 
         implementation(projects.components.watchers.api)
         implementation(projects.components.watchers.changename)
+        implementation(projects.components.watchers.provisioning)
 
         implementation(libs.kotlin.coroutines)
         implementation(libs.ktor.client.core)

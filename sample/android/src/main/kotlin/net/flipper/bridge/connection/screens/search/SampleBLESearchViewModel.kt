@@ -37,7 +37,7 @@ class SampleBLESearchViewModel(
         combine(
             flipperScanner
                 .findFlipperDevices(),
-            persistedStorage.getAllDevices()
+            persistedStorage.getAllDevicesFlow()
         ) { searchDevices, savedDevices ->
             val existedMacAddresses = savedDevices
                 .flatMap { device ->

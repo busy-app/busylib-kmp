@@ -1,25 +1,34 @@
 package net.flipper.bridge.connection.config.impl
 
 import com.russhwolf.settings.ObservableSettings
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.sync.Mutex
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
+import net.flipper.bridge.connection.config.api.PersistedStorageTransactionScope
 import net.flipper.bridge.connection.config.api.model.BUSYBar
+import net.flipper.bridge.connection.config.impl.hooks.CloudAlwaysActiveHook
+import net.flipper.bridge.connection.config.impl.hooks.DeduplicateConnectionWaysHook
+import net.flipper.bridge.connection.config.impl.hooks.TransactionHook
+import net.flipper.busylib.core.wrapper.WrappedFlow
+import net.flipper.busylib.core.wrapper.wrap
+import net.flipper.core.busylib.ktx.common.withLockResult
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
-import net.flipper.core.busylib.log.warn
 import ru.astrainteractive.klibs.kstorage.util.save
 
 class FDevicePersistedStorageImpl(
     private val bleConfigKrate: BleConfigSettingsKrate
 ) : FDevicePersistedStorage, LogTagProvider {
     override val TAG = "FDevicePersistedStorage"
+    private val mutex = Mutex()
+    private val hooks =
+        listOf<TransactionHook>(CloudAlwaysActiveHook(), DeduplicateConnectionWaysHook())
 
     constructor(
         observableSettings: ObservableSettings
     ) : this(BleConfigSettingsKrateImpl(observableSettings))
 
-    override fun getCurrentDevice(): Flow<BUSYBar?> {
+    override fun getCurrentDeviceFlow(): WrappedFlow<BUSYBar?> {
         return bleConfigKrate.flow.map { config ->
             val deviceId = config.currentSelectedDeviceId
             if (deviceId.isNullOrBlank()) {
@@ -27,72 +36,30 @@ class FDevicePersistedStorageImpl(
             } else {
                 config.devices.find { it.uniqueId == deviceId }
             }
-        }
+        }.wrap()
     }
 
-    override suspend fun setCurrentDevice(id: String?) = bleConfigKrate.save { settings ->
-        if (id == null) {
-            settings.copy(currentSelectedDeviceId = null)
-        } else if (settings.devices.none { it.uniqueId == id }) {
-            error("Can't find device with id $id")
-        } else {
-            settings.copy(currentSelectedDeviceId = id)
-        }
+    override fun getAllDevicesFlow(): WrappedFlow<List<BUSYBar>> {
+        return bleConfigKrate.flow.map { it.devices }.wrap()
     }
 
-    override suspend fun addDevice(device: BUSYBar) = bleConfigKrate.save { settings ->
-        info { "Add device $device" }
+    override suspend fun <T> transaction(
+        block: suspend PersistedStorageTransactionScope.() -> T
+    ): T = withLockResult(mutex, "transaction") {
+        val original = bleConfigKrate.getValue()
+        val scope = PersistedStorageTransactionScopeImpl(original)
+        val result = block(scope)
+        hooks.forEach {
+            with(it) {
+                scope.postTransaction()
+            }
+        }
 
-        settings.copy(
-            devices = settings.devices.filter {
-                it.uniqueId != device.uniqueId
-            }.plus(device)
+        bleConfigKrate.save(
+            scope.get().also {
+                info { "Result of transaction: $it from $original" }
+            }
         )
-    }
-
-    override suspend fun removeDevice(id: String) = bleConfigKrate.save { settings ->
-        val deviceExists = settings.devices.any { it.uniqueId == id }
-        if (!deviceExists) {
-            warn { "Can't find device with id $id" }
-            settings
-        } else {
-            settings.copy(
-                devices = settings.devices.filter { it.uniqueId != id }
-            )
-        }
-    }
-
-    override fun getAllDevices(): Flow<List<BUSYBar>> {
-        return bleConfigKrate.flow.map { it.devices }
-    }
-
-    override suspend fun updateCurrentDevice(
-        block: (BUSYBar) -> BUSYBar
-    ) = bleConfigKrate.save { settings ->
-        settings.copy(
-            devices = settings.devices
-                .map { device ->
-                    if (device.uniqueId == settings.currentSelectedDeviceId) {
-                        block(device)
-                    } else {
-                        device
-                    }
-                }
-        )
-    }
-
-    override suspend fun updateDevice(id: String, block: (BUSYBar) -> BUSYBar) {
-        bleConfigKrate.save { settings ->
-            settings.copy(
-                devices = settings.devices
-                    .map { device ->
-                        if (device.uniqueId == id) {
-                            block(device)
-                        } else {
-                            device
-                        }
-                    }
-            )
-        }
+        return@withLockResult result
     }
 }

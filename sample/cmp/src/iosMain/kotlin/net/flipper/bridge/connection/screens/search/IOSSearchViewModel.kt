@@ -10,7 +10,6 @@ import kotlinx.collections.immutable.toImmutableMap
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -72,9 +71,9 @@ class IOSSearchViewModel(
                     warn { "Accessory with UUID ${searchItem.address} not found in map" }
                 }
 
-                persistedStorage.removeDevice(searchItem.deviceModel.uniqueId)
+                persistedStorage.transaction { removeDevice(searchItem.deviceModel.uniqueId) }
             } else {
-                persistedStorage.addDevice(searchItem.deviceModel)
+                persistedStorage.transaction { addOrReplace(searchItem.deviceModel) }
             }
         }
     }
@@ -105,7 +104,7 @@ class IOSSearchViewModel(
     init {
         combine(
             searchItems,
-            persistedStorage.getAllDevices()
+            persistedStorage.getAllDevicesFlow()
         ) { accessoriesMap, savedDevices ->
             val existedUuids = savedDevices
                 .filter { device -> device.connectionWays.any { it is BUSYBar.ConnectionWay.BLE } }
@@ -212,19 +211,21 @@ class IOSSearchViewModel(
             info { "Emitting updated map without $uuidString" }
             searchItems.emit(updatedMap.toImmutableMap())
             info { "Emitted updated map without $uuidString" }
-            val currentDevice = persistedStorage.getCurrentDevice().first()
-            val isCurrentDevice = currentDevice?.uniqueId == uuidString
-            val existingDevices = persistedStorage.getAllDevices().first()
-            val deviceExists = existingDevices.any { it.uniqueId == uuidString }
+            persistedStorage.transaction {
+                val currentDevice = getCurrentDevice()
+                val isCurrentDevice = currentDevice?.uniqueId == uuidString
+                val existingDevices = getAllDevices()
+                val deviceExists = existingDevices.any { it.uniqueId == uuidString }
 
-            if (currentDevice != null && deviceExists) {
-                if (isCurrentDevice) {
-                    info { "Accessory is current device, stopping connection attempts" }
+                if (currentDevice != null && deviceExists) {
+                    if (isCurrentDevice) {
+                        info { "Accessory is current device, stopping connection attempts" }
+                    }
+                    connectionService.forgetDevice(currentDevice)
+                    info { "Device found in storage, removing..." }
+                } else {
+                    info { "Device not in storage, skipping removal" }
                 }
-                connectionService.forgetDevice(currentDevice)
-                info { "Device found in storage, removing..." }
-            } else {
-                info { "Device not in storage, skipping removal" }
             }
         }
     }

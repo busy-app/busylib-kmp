@@ -115,6 +115,7 @@ include(
 
     ":components:watchers:api",
     ":components:watchers:changename",
+    ":components:watchers:provisioning",
 
     ":entrypoint",
     ":sample:cmp",

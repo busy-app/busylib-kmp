@@ -5,6 +5,7 @@ import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.HttpClientEngineConfig
 import io.ktor.client.engine.HttpClientEngineFactory
 import io.ktor.client.plugins.DefaultRequest
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logger
@@ -18,6 +19,7 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 import net.flipper.core.busylib.log.TaggedLogger
 import net.flipper.core.busylib.log.info
+import kotlin.time.Duration.Companion.seconds
 
 private val ktorTimber = TaggedLogger("Ktor")
 
@@ -58,5 +60,10 @@ fun getHttpClient(
             }
         }
         level = LogLevel.ALL
+    }
+    install(HttpTimeout) {
+        connectTimeoutMillis = 30.seconds.inWholeMilliseconds
+        requestTimeoutMillis = 30.seconds.inWholeMilliseconds
+        socketTimeoutMillis = 30.seconds.inWholeMilliseconds
     }
 }

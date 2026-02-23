@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
+import net.flipper.bridge.connection.config.api.getDevice
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
 import net.flipper.bridge.connection.feature.provider.api.get
@@ -63,8 +64,10 @@ class BUSYLibNameWatcher(
     }
 
     private suspend fun updateDeviceName(deviceId: String, deviceName: String) {
-        persistedStorage.updateDevice(deviceId) {
-            it.copy(humanReadableName = deviceName)
+        persistedStorage.transaction {
+            getDevice(deviceId)?.let {
+                addOrReplace(it.copy(humanReadableName = deviceName))
+            }
         }
     }
 }

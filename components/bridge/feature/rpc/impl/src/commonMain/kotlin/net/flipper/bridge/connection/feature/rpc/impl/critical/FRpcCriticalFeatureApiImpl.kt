@@ -5,6 +5,8 @@ import io.ktor.client.call.body
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.post
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
@@ -27,12 +29,17 @@ class FRpcCriticalFeatureApiImpl(
 ) : FRpcCriticalFeatureApi, LogTagProvider {
     override val TAG = "FRpcCriticalFeatureApi"
     override val clientModeApi: FRpcClientModeApi = FRpcClientModeApiImpl()
+    private val _currentAccountInfo = MutableStateFlow<RpcLinkedAccountInfo?>(null)
+    override val currentAccountInfo = _currentAccountInfo.asStateFlow()
+
     private val dispatcher = FlipperDispatchers.default
 
     override suspend fun invalidateLinkedUser(userId: Uuid?): Result<RpcLinkedAccountInfo> {
         return withContext(dispatcher) {
             return@withContext runSuspendCatching {
                 client.get("/api/account/info").body<RpcLinkedAccountInfo>()
+            }.onSuccess {
+                _currentAccountInfo.emit(it)
             }.onSuccess { response -> clientModeApi.updateClientMode(response, userId) }
         }
     }

@@ -52,7 +52,7 @@ class FConnectionServiceImpl(
     private fun getExpectedState(): Flow<ExpectedState> {
         return combine(
             isForceDisconnectedFlow,
-            fDevicePersistedStorage.getCurrentDevice()
+            fDevicePersistedStorage.getCurrentDeviceFlow()
         ) { isForceDisconnected, currentDevice ->
             if (isForceDisconnected) {
                 return@combine ExpectedState.Disconnected
@@ -122,39 +122,41 @@ class FConnectionServiceImpl(
         }
     }
 
-    override suspend fun forgetDevice(device: BUSYBar): CResult<Unit> {
-        val devices = fDevicePersistedStorage
-            .getAllDevices()
-            .first()
-        val currentDevice = fDevicePersistedStorage
-            .getCurrentDevice()
-            .first()
-        if (currentDevice?.uniqueId == device.uniqueId) {
-            isForceDisconnectedFlow.emit(true)
-        }
-        val isDeviceExists = devices
-            .firstOrNull { listDevice -> listDevice.uniqueId == device.uniqueId } != null
-        if (!isDeviceExists) {
-            warn { "#unpairDevice Can't find device $device" }
-            return CResult.success(Unit)
-        }
-        val deviceId = device.connectionWays
-            .filterIsInstance<BUSYBar.ConnectionWay.Cloud>()
-            .firstOrNull()
-            ?.deviceId
-        if (deviceId != null) {
-            val principal = principalApi.getPrincipalFlow()
-                .filter { principal -> principal !is BUSYLibUserPrincipal.Loading }
-                .first() as? BUSYLibUserPrincipal.Token
-            if (principal == null) {
-                return CResult.failure(IllegalStateException("User not authorized"))
+    override suspend fun forgetDevice(
+        device: BUSYBar
+    ): CResult<Unit> {
+        return fDevicePersistedStorage.transaction {
+            val devices = getAllDevices()
+            val currentDevice = getCurrentDevice()
+
+            if (currentDevice?.uniqueId == device.uniqueId) {
+                isForceDisconnectedFlow.emit(true)
             }
-            val result = busyCloudRestApi.barsApi
-                .unlinkBusyBar(principal, deviceId)
-                .toCResult()
-            if (result.isFailure) return result
+            val isDeviceExists = devices
+                .firstOrNull { listDevice -> listDevice.uniqueId == device.uniqueId } != null
+            if (!isDeviceExists) {
+                warn { "#unpairDevice Can't find device $device" }
+                return@transaction CResult.success(Unit)
+            }
+            val deviceId = device.connectionWays
+                .filterIsInstance<BUSYBar.ConnectionWay.Cloud>()
+                .firstOrNull()
+                ?.deviceId
+            if (deviceId != null) {
+                val principal = principalApi.getPrincipalFlow()
+                    .filter { principal -> principal !is BUSYLibUserPrincipal.Loading }
+                    .first() as? BUSYLibUserPrincipal.Token
+                if (principal == null) {
+                    return@transaction CResult.failure(IllegalStateException("User not authorized"))
+                }
+                val result = busyCloudRestApi.barsApi
+                    .unlinkBusyBar(principal, deviceId)
+                    .toCResult()
+                if (result.isFailure) return@transaction result
+            }
+            removeDevice(device.uniqueId)
+
+            return@transaction CResult.success(Unit)
         }
-        fDevicePersistedStorage.removeDevice(device.uniqueId)
-        return CResult.success(Unit)
     }
 }

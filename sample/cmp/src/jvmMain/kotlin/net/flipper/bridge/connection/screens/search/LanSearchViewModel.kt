@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.config.api.model.BUSYBar
-import net.flipper.bridge.connection.utils.Secrets
 import net.flipper.busylib.core.wrapper.WrappedStateFlow
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.log.LogTagProvider
@@ -20,32 +19,13 @@ class LanSearchViewModel(
     override val TAG = "LanSearchViewModel"
 
     private val searchItems = combine(
-        persistedStorage.getAllDevices(),
+        persistedStorage.getAllDevicesFlow(),
         flowOf(
             listOf(
                 BUSYBar(
                     uniqueId = "BUSY_Bar_LAN",
                     humanReadableName = "BUSY Bar LAN",
                     connectionWays = listOf(BUSYBar.ConnectionWay.Lan())
-                ),
-                BUSYBar(
-                    uniqueId = "BUSY_Bar_Cloud",
-                    humanReadableName = "BUSY Bar Cloud",
-                    connectionWays = listOf(
-                        BUSYBar.ConnectionWay.Cloud(
-                            deviceId = Secrets.DEVICE_ID
-                        )
-                    )
-                ),
-                BUSYBar(
-                    uniqueId = "BUSY Bar Combined",
-                    humanReadableName = "BUSY Bar Combined",
-                    connectionWays = listOf(
-                        BUSYBar.ConnectionWay.Lan(),
-                        BUSYBar.ConnectionWay.Cloud(
-                            deviceId = Secrets.DEVICE_ID
-                        )
-                    )
                 )
             )
         )

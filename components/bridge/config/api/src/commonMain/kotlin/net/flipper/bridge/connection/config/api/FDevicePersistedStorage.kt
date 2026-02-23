@@ -1,14 +1,11 @@
 package net.flipper.bridge.connection.config.api
 
-import kotlinx.coroutines.flow.Flow
 import net.flipper.bridge.connection.config.api.model.BUSYBar
+import net.flipper.busylib.core.wrapper.WrappedFlow
 
 interface FDevicePersistedStorage {
-    fun getCurrentDevice(): Flow<BUSYBar?>
-    suspend fun setCurrentDevice(id: String?)
-    suspend fun addDevice(device: BUSYBar)
-    suspend fun removeDevice(id: String)
-    fun getAllDevices(): Flow<List<BUSYBar>>
-    suspend fun updateCurrentDevice(block: (BUSYBar) -> BUSYBar)
-    suspend fun updateDevice(id: String, block: (BUSYBar) -> BUSYBar)
+    fun getCurrentDeviceFlow(): WrappedFlow<BUSYBar?>
+    fun getAllDevicesFlow(): WrappedFlow<List<BUSYBar>>
+
+    suspend fun <T> transaction(block: suspend PersistedStorageTransactionScope.() -> T): T
 }
