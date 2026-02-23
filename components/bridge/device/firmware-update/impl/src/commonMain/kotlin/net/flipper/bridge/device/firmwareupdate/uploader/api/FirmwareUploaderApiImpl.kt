@@ -5,11 +5,14 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
+import kotlinx.io.files.Path
+import kotlinx.io.files.SystemFileSystem
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.feature.firmwareupdate.api.FFirmwareUpdateFeatureApi
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
@@ -25,9 +28,6 @@ import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.TaggedLogger
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
-import okio.FileSystem
-import okio.Path
-import okio.SYSTEM
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 
@@ -48,7 +48,8 @@ class FirmwareUploaderApiImpl(
             .filterNotNull()
             .onLatest { fFeatureApi ->
                 _state.emit(FirmwareUploaderState.Uploading(0, 0))
-                val size = FileSystem.SYSTEM.metadata(clientFilePath).size ?: 0L
+
+                val size = SystemFileSystem.metadataOrNull(clientFilePath)?.size ?: 0L
                 if (size == 0L) {
                     error { "#uploadAndInstall: could not read file size" }
                     return@onLatest
@@ -56,7 +57,7 @@ class FirmwareUploaderApiImpl(
                 _state.emit(FirmwareUploaderState.Uploading(0, size))
                 fFeatureApi.postUpdate(
                     totalBytes = size,
-                    bytesFlow = FileSystem.SYSTEM.source(clientFilePath).asFlow(),
+                    bytesFlow = SystemFileSystem.source(clientFilePath).asFlow(),
                     onTransferred = { bytesUploaded ->
                         _state.update { FirmwareUploaderState.Uploading(bytesUploaded, size) }
                         info { "#uploadAndInstall uploaded: $bytesUploaded/$size" }
@@ -75,6 +76,9 @@ class FirmwareUploaderApiImpl(
             .filter { it !is FFeatureStatus.Supported<*> }
             .first()
         info { "uploadAndInstall device disconnected" }
+        fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
+            .filterIsInstance<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>()
+            .first()
         _state.emit(FirmwareUploaderState.Pending)
     }
 }

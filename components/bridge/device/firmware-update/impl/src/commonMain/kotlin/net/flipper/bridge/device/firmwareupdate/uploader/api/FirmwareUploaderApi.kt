@@ -1,8 +1,8 @@
 package net.flipper.bridge.device.firmwareupdate.uploader.api
 
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.io.files.Path
 import net.flipper.bridge.device.firmwareupdate.uploader.model.FirmwareUploaderState
-import okio.Path
 
 interface FirmwareUploaderApi {
     val state: StateFlow<FirmwareUploaderState>

@@ -5,21 +5,20 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.yield
+import kotlinx.io.Buffer
+import kotlinx.io.RawSource
+import kotlinx.io.readByteArray
 import net.flipper.core.busylib.log.error
-import okio.Buffer
-import okio.Source
 
-fun Source.asFlow(
+fun RawSource.asFlow(
     bufferSize: Long = 1 * 1024
 ): Flow<ByteArray> = flow {
     val buffer = Buffer()
     try {
         while (currentCoroutineContext().isActive) {
-            val bytesRead = read(buffer, bufferSize)
+            val bytesRead = readAtMostTo(buffer, bufferSize)
             if (bytesRead == -1L || bytesRead <= 0L) break
-
-            val bytes = buffer.readByteArray(bytesRead)
-            emit(bytes)
+            emit(buffer.readByteArray())
             yield()
         }
     } catch (t: Throwable) {

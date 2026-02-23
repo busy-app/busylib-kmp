@@ -25,6 +25,5 @@ kotlin {
         implementation(libs.kotlin.coroutines)
         implementation(libs.kotlin.immutable)
         implementation(libs.ktor.client.core)
-        implementation(libs.okio)
     }
 }

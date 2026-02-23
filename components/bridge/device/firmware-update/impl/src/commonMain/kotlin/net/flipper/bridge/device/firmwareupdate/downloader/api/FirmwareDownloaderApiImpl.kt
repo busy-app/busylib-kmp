@@ -11,8 +11,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
+import kotlinx.io.Buffer
+import kotlinx.io.RawSink
+import kotlinx.io.files.Path
+import kotlinx.io.files.SystemFileSystem
+import kotlinx.io.files.SystemTemporaryDirectory
 import me.tatarka.inject.annotations.Inject
-import net.flipper.bridge.connection.feature.provider.api.get
 import net.flipper.bridge.device.firmwareupdate.downloader.model.FirmwareDownloaderState
 import net.flipper.bridge.device.firmwareupdate.uploader.api.FirmwareUploaderApi
 import net.flipper.busylib.core.di.BusyLibGraph
@@ -22,12 +26,6 @@ import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
 import net.flipper.core.ktor.di.qualifier.KtorNetworkClientQualifier
 import net.flipper.core.ktor.util.asFlow
-import okio.Buffer
-import okio.FileSystem
-import okio.Path
-import okio.SYSTEM
-import okio.Sink
-import okio.use
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 
@@ -42,17 +40,16 @@ class FirmwareDownloaderApiImpl(
     override val state: StateFlow<FirmwareDownloaderState> = _state.asStateFlow()
 
     private fun getTemporalFile(): Path {
-        return FileSystem.SYSTEM_TEMPORARY_DIRECTORY.resolve("temp")
+        return Path(SystemTemporaryDirectory, "temp")
     }
 
-    private fun getTemporalFileSink(): Sink {
+    private fun getTemporalFileSink(): RawSink {
         val file = getTemporalFile()
-        FileSystem.SYSTEM.delete(path = file, mustExist = false)
-        return FileSystem.SYSTEM.sink(file = file, mustCreate = true)
+        return SystemFileSystem.sink(path = file, append = false)
     }
 
     private suspend fun downloadIntoFile(
-        sink: Sink,
+        sink: RawSink,
         bytesFlow: Flow<ByteArray>,
         totalBytes: Long
     ) {
@@ -70,7 +67,9 @@ class FirmwareDownloaderApiImpl(
                     info { "downloaded: $downloadedBytes/$totalBytes" }
                 }
                 .onEach { chunk ->
-                    val buffer = Buffer().write(chunk)
+                    val buffer = Buffer().apply {
+                        write(chunk)
+                    }
                     sink.write(buffer, buffer.size)
                 }
                 .onCompletion { _state.emit(FirmwareDownloaderState.Pending) }
