@@ -2,6 +2,7 @@ package net.flipper.core.busylib.ktx.common
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
@@ -25,4 +26,16 @@ inline fun <T, R> Flow<T>.mapCached(
         latest = current
         emit(current)
     }
+}
+
+inline fun <reified T> List<Flow<T>>.combine(): Flow<List<T>> {
+    if (this.isEmpty()) return flowOf(emptyList())
+    return combine(
+        flows = this,
+        transform = { flows -> flows.toList() }
+    )
+}
+
+inline fun <reified T> Flow<List<List<T>>>.flatten(): Flow<List<T>> {
+    return this.map { list -> list.flatten() }
 }
