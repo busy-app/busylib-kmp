@@ -13,16 +13,13 @@ import net.flipper.busylib.core.di.BusyLibGraph
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
 
 @Inject
-class FEventsFeatureFactoryImpl(
-    private val eventsFeatureFactory: FEventsFeatureApiImpl.InternalFactory
-) : FDeviceFeatureApi.Factory {
+class FEventsFeatureFactoryImpl : FDeviceFeatureApi.Factory {
     override suspend fun invoke(
         unsafeFeatureDeviceApi: FUnsafeDeviceFeatureApi,
         scope: CoroutineScope,
         connectedDevice: FConnectedDeviceApi
-    ): FDeviceFeatureApi? {
-        return eventsFeatureFactory(
-            metaInfoApi = connectedDevice as? FTransportMetaInfoApi ?: return null,
+    ): FDeviceFeatureApi {
+        return FEventsFeatureApiImpl(
             scope = scope
         )
     }

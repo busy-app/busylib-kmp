@@ -23,7 +23,6 @@ import kotlin.time.Duration.Companion.seconds
 
 @Inject
 class FEventsFeatureApiImpl(
-    @Assisted private val metaInfoApi: FTransportMetaInfoApi,
     @Assisted private val scope: CoroutineScope
 ) : FEventsFeatureApi, LogTagProvider {
     override val TAG = "FEventsFeatureApi"
@@ -63,15 +62,5 @@ class FEventsFeatureApiImpl(
         }
 
         return events
-    }
-
-    @Inject
-    class InternalFactory(
-        private val factory: (FTransportMetaInfoApi, CoroutineScope) -> FEventsFeatureApiImpl
-    ) {
-        operator fun invoke(
-            metaInfoApi: FTransportMetaInfoApi,
-            scope: CoroutineScope
-        ): FEventsFeatureApiImpl = factory(metaInfoApi, scope)
     }
 }
