@@ -4,10 +4,11 @@ import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarVersion
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateState
 
 object FwUpdateStateDiff {
-    suspend fun combineDiff(
+    fun combineDiff(
         previous: FwUpdateState?,
         latest: FwUpdateState,
         currentVersion: BusyBarVersion,
+        previousVersion: BusyBarVersion?
     ): FwUpdateState {
         return when (previous) {
             null -> latest
@@ -23,15 +24,10 @@ object FwUpdateStateDiff {
             FwUpdateState.Busy -> latest
 
             is FwUpdateState.Updating -> {
-                if (currentVersion.version == previous.targetVersion) {
-                    FwUpdateState.UpdateFinished(
-                        previous.targetVersion,
-                        previous.bsbVersionChangelog
-                    )
+                if (currentVersion.version == previousVersion?.version) {
+                    FwUpdateState.UpdateFinished
                 } else {
-                    FwUpdateState.UpdateFailed(
-                        targetVersion = previous.targetVersion
-                    )
+                    FwUpdateState.UpdateFailed
                 }
             }
 
@@ -52,16 +48,7 @@ object FwUpdateStateDiff {
                     is FwUpdateState.UpdateAvailable -> latest
 
                     FwUpdateState.Pending -> {
-                        FwUpdateState.Updating(
-                            targetVersion = when (previous) {
-                                is FwUpdateState.Downloading -> previous.targetVersion
-                                is FwUpdateState.Uploading -> previous.targetVersion
-                            },
-                            bsbVersionChangelog = when (previous) {
-                                is FwUpdateState.Downloading -> previous.bsbVersionChangelog
-                                is FwUpdateState.Uploading -> previous.bsbVersionChangelog
-                            }
-                        )
+                        FwUpdateState.Updating
                     }
                 }
             }

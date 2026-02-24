@@ -1,6 +1,5 @@
 package net.flipper.bridge.device.firmwareupdate.updater.mapper
 
-import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbVersionChangelog
 import net.flipper.bridge.connection.feature.rpc.api.model.UpdateStatus
 import net.flipper.bridge.device.firmwareupdate.downloader.model.FirmwareDownloaderState
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateState
@@ -9,14 +8,10 @@ import net.flipper.bridge.device.firmwareupdate.uploader.model.FirmwareUploaderS
 object FwUpdateStatusMapper {
     private fun fromCheckStatus(
         updateStatus: UpdateStatus,
-        changelogOrNull: BsbVersionChangelog?
     ): FwUpdateState {
         return when (updateStatus.check.status) {
             UpdateStatus.Check.CheckResult.AVAILABLE -> {
-                FwUpdateState.UpdateAvailable(
-                    targetVersion = updateStatus.check.availableVersion,
-                    bsbVersionChangelog = changelogOrNull
-                )
+                FwUpdateState.UpdateAvailable
             }
 
             UpdateStatus.Check.CheckResult.NOT_AVAILABLE -> {
@@ -35,7 +30,6 @@ object FwUpdateStatusMapper {
 
     private fun fromInstallAction(
         updateStatus: UpdateStatus,
-        changelogOrNull: BsbVersionChangelog?
     ): FwUpdateState {
         return when (updateStatus.install.action) {
             UpdateStatus.Install.Action.DOWNLOAD,
@@ -44,8 +38,6 @@ object FwUpdateStatusMapper {
             UpdateStatus.Install.Action.APPLY,
             UpdateStatus.Install.Action.PREPARE -> {
                 FwUpdateState.Downloading(
-                    targetVersion = updateStatus.check.availableVersion, // todo here we need the version from firmware
-                    bsbVersionChangelog = changelogOrNull,
                     progress = updateStatus.install.download.totalBytes
                         .toFloat()
                         .takeIf { total -> total > 0 }
@@ -66,7 +58,6 @@ object FwUpdateStatusMapper {
                     UpdateStatus.Check.CheckEvent.STOP -> {
                         fromCheckStatus(
                             updateStatus = updateStatus,
-                            changelogOrNull = changelogOrNull
                         )
                     }
                 }
@@ -76,14 +67,12 @@ object FwUpdateStatusMapper {
 
     private fun fromInstallStatus(
         updateStatus: UpdateStatus,
-        changelogOrNull: BsbVersionChangelog?
     ): FwUpdateState {
         return when (updateStatus.install.status) {
             UpdateStatus.Install.Status.BUSY,
             UpdateStatus.Install.Status.OK -> {
                 fromInstallAction(
                     updateStatus = updateStatus,
-                    changelogOrNull = changelogOrNull
                 )
             }
 
@@ -104,32 +93,24 @@ object FwUpdateStatusMapper {
 
     fun toFwUpdateState(
         updateStatus: UpdateStatus?,
-        changelogOrNull: BsbVersionChangelog?,
         uploaderState: FirmwareUploaderState,
         downloaderState: FirmwareDownloaderState
     ): FwUpdateState {
         return when {
             downloaderState is FirmwareDownloaderState.Downloading -> {
                 FwUpdateState.Downloading(
-                    targetVersion = updateStatus?.check?.availableVersion.orEmpty(),
-                    bsbVersionChangelog = changelogOrNull,
                     progress = downloaderState.progress
                 )
             }
 
             uploaderState is FirmwareUploaderState.Uploading -> {
                 FwUpdateState.Uploading(
-                    targetVersion = updateStatus?.check?.availableVersion.orEmpty(),
-                    bsbVersionChangelog = changelogOrNull,
                     progress = uploaderState.progress
                 )
             }
 
             uploaderState is FirmwareUploaderState.Uploaded -> {
-                FwUpdateState.Updating(
-                    targetVersion = updateStatus?.check?.availableVersion.orEmpty(),
-                    bsbVersionChangelog = changelogOrNull,
-                )
+                FwUpdateState.Updating
             }
 
             updateStatus == null -> {
@@ -139,7 +120,6 @@ object FwUpdateStatusMapper {
             else -> {
                 fromInstallStatus(
                     updateStatus = updateStatus,
-                    changelogOrNull = changelogOrNull
                 )
             }
         }

@@ -13,5 +13,4 @@ data class BsbFirmwareUpdateChannel(
     val description: String,
     @SerialName("versions")
     val versions: List<BsbFirmwareUpdateVersion>
-) {
-}
+)

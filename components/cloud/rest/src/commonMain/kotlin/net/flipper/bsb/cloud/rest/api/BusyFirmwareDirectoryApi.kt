@@ -6,6 +6,6 @@ interface BusyFirmwareDirectoryApi {
     suspend fun getFirmwareDirectory(): Result<BusyFirmwareDirectory>
 
     companion object {
-        internal val URL = "https://update.flipperzero.one/busybar-firmware/directory.json"
+        internal const val URL = "https://update.flipperzero.one/busybar-firmware/directory.json"
     }
 }

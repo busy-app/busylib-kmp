@@ -13,6 +13,4 @@ data class BsbFirmwareUpdateFileEntry(
     val type: BsbFirmwareUpdateFileType,
     @SerialName("sha256")
     val sha256: String
-){
-
-}
+)

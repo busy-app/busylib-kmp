@@ -13,5 +13,4 @@ data class BsbFirmwareUpdateVersion(
     val timestamp: Long,
     @SerialName("files")
     val files: List<BsbFirmwareUpdateFileEntry>
-) {
-}
+)

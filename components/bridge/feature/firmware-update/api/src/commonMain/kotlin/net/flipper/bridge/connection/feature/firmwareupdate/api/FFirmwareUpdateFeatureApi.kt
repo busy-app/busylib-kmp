@@ -2,7 +2,6 @@ package net.flipper.bridge.connection.feature.firmwareupdate.api
 
 import kotlinx.coroutines.flow.Flow
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
-import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbVersionChangelog
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarVersion
 import net.flipper.bridge.connection.feature.rpc.api.model.UpdateStatus
 import net.flipper.busylib.core.wrapper.CResult
@@ -13,6 +12,6 @@ interface FFirmwareUpdateFeatureApi : FDeviceFeatureApi {
     suspend fun setAutoUpdate(isEnabled: Boolean): CResult<Unit>
     suspend fun getAutoUpdate(): CResult<Boolean>
 
-    suspend fun getVersionChangelog(version: String): CResult<BsbVersionChangelog>
     val updateVersionFlow: Flow<BusyBarVersion>
+    val updateVersionChangelog: Flow<String>
 }

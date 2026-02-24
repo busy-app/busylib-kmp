@@ -5,8 +5,6 @@ import io.ktor.client.call.body
 import io.ktor.client.request.get
 import kotlinx.coroutines.CoroutineDispatcher
 import me.tatarka.inject.annotations.Inject
-import net.flipper.bsb.cloud.api.BUSYLibHostApi
-import net.flipper.bsb.cloud.rest.api.BusyCloudRestApi
 import net.flipper.bsb.cloud.rest.api.BusyFirmwareDirectoryApi
 import net.flipper.bsb.cloud.rest.model.BusyFirmwareDirectory
 import net.flipper.busylib.core.di.BusyLibGraph

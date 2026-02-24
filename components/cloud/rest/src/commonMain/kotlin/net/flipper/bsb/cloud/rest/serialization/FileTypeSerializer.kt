@@ -8,7 +8,6 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import net.flipper.bsb.cloud.rest.model.BsbFirmwareUpdateFileType
 
-
 internal object FileTypeSerializer : KSerializer<BsbFirmwareUpdateFileType> {
 
     override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor(

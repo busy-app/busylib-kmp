@@ -7,6 +7,4 @@ import kotlinx.serialization.Serializable
 data class BusyFirmwareDirectory(
     @SerialName("channels")
     val channels: List<BsbFirmwareUpdateChannel>
-) {
-}
-
+)

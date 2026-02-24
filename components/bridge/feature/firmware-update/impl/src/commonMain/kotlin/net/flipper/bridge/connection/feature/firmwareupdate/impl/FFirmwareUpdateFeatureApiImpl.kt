@@ -1,6 +1,7 @@
 package net.flipper.bridge.connection.feature.firmwareupdate.impl
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
@@ -19,17 +20,18 @@ import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
 import net.flipper.bridge.connection.feature.events.api.UpdateEvent
 import net.flipper.bridge.connection.feature.events.api.getUpdateFlow
 import net.flipper.bridge.connection.feature.firmwareupdate.api.FFirmwareUpdateFeatureApi
-import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbVersionChangelog
 import net.flipper.bridge.connection.feature.info.api.FDeviceInfoFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.AutoUpdate
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarVersion
+import net.flipper.bridge.connection.feature.rpc.api.model.GetUpdateChangelogResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.UpdateStatus
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPDeviceApi
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPTransportCapability
 import net.flipper.bridge.connection.transport.common.api.serial.hasCapability
 import net.flipper.bsb.cloud.rest.api.BusyFirmwareDirectoryApi
+import net.flipper.bsb.cloud.rest.model.BsbFirmwareUpdateVersion
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.core.wrapper.CResult
 import net.flipper.busylib.core.wrapper.WrappedSharedFlow
@@ -93,20 +95,7 @@ class FFirmwareUpdateFeatureApiImpl(
             .toCResult()
     }
 
-    override suspend fun getVersionChangelog(version: String): CResult<BsbVersionChangelog> {
-        return rpcFeatureApi.fRpcUpdaterApi
-            .getUpdateChangelog(version)
-            .map { changelog ->
-                BsbVersionChangelog(
-                    version = version,
-                    changelog = changelog.changelog
-                )
-            }
-            .toCResult()
-    }
-
-
-    private suspend fun requireVersionFromRestApi(): BusyBarVersion {
+    private suspend fun requireVersionFromRestApi(): BsbFirmwareUpdateVersion {
         return exponentialRetry {
             runCatching {
                 busyFirmwareDirectoryApi.getFirmwareDirectory()
@@ -115,8 +104,6 @@ class FFirmwareUpdateFeatureApiImpl(
                     .firstOrNull { channel -> channel.id == "development" }
                     ?.versions
                     ?.maxByOrNull { version -> version.timestamp }
-                    ?.version
-                    ?.let(::BusyBarVersion)
                     ?: error("No development version found")
             }
         }
@@ -132,7 +119,7 @@ class FFirmwareUpdateFeatureApiImpl(
                 .distinctUntilChanged()
                 .flatMapLatest { useRestApiVersion ->
                     if (useRestApiVersion) {
-                        flowOf(requireVersionFromRestApi())
+                        flowOf(requireVersionFromRestApi().version.let(::BusyBarVersion))
                     } else {
                         updateStatusFlow
                             .map { status -> status.check.availableVersion }
@@ -143,8 +130,30 @@ class FFirmwareUpdateFeatureApiImpl(
                 }
                 .filter { updateVersion -> updateVersion != currentVersion }
         }
+        .onEach { info { "#updateVersionFlow: $it" } }
         .shareIn(scope, SharingStarted.Eagerly, 1)
 
+    override val updateVersionChangelog: Flow<String> = updateVersionFlow
+        .distinctUntilChanged()
+        .flatMapLatest { busyBarVersion ->
+            deviceApi
+                .tryCast<FHTTPDeviceApi>()
+                ?.hasCapability(FHTTPTransportCapability.BB_DOWNLOAD_UPDATE_SUPPORTED)
+                .orElse { false }
+                .map { useRestApiChangelog ->
+                    if (useRestApiChangelog) {
+                        requireVersionFromRestApi().changelog
+                    } else {
+                        exponentialRetry {
+                            rpcFeatureApi.fRpcUpdaterApi
+                                .getUpdateChangelog(busyBarVersion.version)
+                                .map(GetUpdateChangelogResponse::changelog)
+                        }
+                    }
+                }
+        }
+        .onEach { info { "#updateVersionChangelog: $it" } }
+        .shareIn(scope, SharingStarted.Eagerly, 1)
 
     @Inject
     class FDeviceFeatureApiFactory(

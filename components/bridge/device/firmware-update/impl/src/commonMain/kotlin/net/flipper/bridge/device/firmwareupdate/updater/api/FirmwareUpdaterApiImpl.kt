@@ -2,10 +2,13 @@ package net.flipper.bridge.device.firmwareupdate.updater.api
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.shareIn
@@ -17,6 +20,7 @@ import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
 import net.flipper.bridge.connection.feature.provider.api.get
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
+import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarVersion
 import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
 import net.flipper.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPDeviceApi
@@ -26,7 +30,6 @@ import net.flipper.bridge.device.firmwareupdate.downloader.api.FirmwareDownloade
 import net.flipper.bridge.device.firmwareupdate.updater.diff.FwUpdateStateDiff
 import net.flipper.bridge.device.firmwareupdate.updater.mapper.FwUpdateStatusMapper
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateState
-import net.flipper.bridge.device.firmwareupdate.updater.provider.AvailableVersionChangelogProvider
 import net.flipper.bridge.device.firmwareupdate.uploader.api.FirmwareUploaderApi
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.core.wrapper.CResult
@@ -37,6 +40,7 @@ import net.flipper.core.busylib.ktx.common.SingleJobMode
 import net.flipper.core.busylib.ktx.common.asSingleJobScope
 import net.flipper.core.busylib.ktx.common.cancelPrevious
 import net.flipper.core.busylib.ktx.common.mapCached
+import net.flipper.core.busylib.ktx.common.merge
 import net.flipper.core.busylib.ktx.common.orNullable
 import net.flipper.core.busylib.ktx.common.tryCast
 import net.flipper.core.busylib.log.LogTagProvider
@@ -44,7 +48,6 @@ import net.flipper.core.busylib.log.TaggedLogger
 import net.flipper.core.busylib.log.info
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
-import kotlin.map
 
 @Inject
 @SingleIn(BusyLibGraph::class)
@@ -52,33 +55,53 @@ import kotlin.map
 class FirmwareUpdaterApiImpl(
     private val fFeatureProvider: FFeatureProvider,
     private val scope: CoroutineScope,
-    private val availableVersionChangelogProvider: AvailableVersionChangelogProvider,
     private val firmwareDownloaderApi: FirmwareDownloaderApi,
     private val firmwareUploaderApi: FirmwareUploaderApi,
     private val fDeviceOrchestrator: FDeviceOrchestrator
 ) : FirmwareUpdaterApi, LogTagProvider by TaggedLogger("UpdaterApi") {
     private val lanUpdaterScope = scope.asSingleJobScope()
-    private val changelogSharedFlow = availableVersionChangelogProvider
-        .getLatestAvailableChangelogFlow()
+    private val previousVersionsFlow = flow {
+        var previousVersionOrNull: BusyBarVersion? = null
+        var currentVersionOrNull: BusyBarVersion? = null
+        fFeatureProvider.get<FDeviceInfoFeatureApi>()
+            .filterIsInstance<FFeatureStatus.Supported<FDeviceInfoFeatureApi>>()
+            .flatMapLatest { status -> status.featureApi.deviceVersionFlow }
+            .onEach { newCurrentVersion ->
+                when {
+                    currentVersionOrNull == null -> {
+                        previousVersionOrNull = newCurrentVersion
+                        currentVersionOrNull = newCurrentVersion
+                    }
+
+                    currentVersionOrNull == newCurrentVersion -> {
+                        // nothing
+                    }
+
+                    currentVersionOrNull != newCurrentVersion -> {
+                        previousVersionOrNull = currentVersionOrNull
+                        currentVersionOrNull = newCurrentVersion
+                    }
+                }
+                emit(previousVersionOrNull)
+            }
+            .collect()
+    }
+        .onEach { info { "#previousVersionsFlow: $it" } }
+        .merge(flowOf(null))
         .shareIn(scope, SharingStarted.Eagerly, 1)
 
     override val state: WrappedStateFlow<FwUpdateState> = combine(
         flow = fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
-            .map { status ->
-                status
-                    .tryCast<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>()
-                    ?.featureApi
-            }
+            .map { status -> status.tryCast<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>() }
+            .map { status -> status?.featureApi }
             .flatMapLatest { feature -> feature?.updateStatusFlow.orNullable() },
-        flow2 = changelogSharedFlow,
-        flow3 = firmwareDownloaderApi.state,
-        flow4 = firmwareUploaderApi.state,
-        transform = { updateStatus, changelogOrNull, downloaderState, uploaderState ->
+        flow2 = firmwareDownloaderApi.state,
+        flow3 = firmwareUploaderApi.state,
+        transform = { updateStatus, downloaderState, uploaderState ->
             FwUpdateStatusMapper.toFwUpdateState(
                 updateStatus = updateStatus,
-                changelogOrNull = changelogOrNull,
                 downloaderState = downloaderState,
-                uploaderState = uploaderState
+                uploaderState = uploaderState,
             )
         }
     )
@@ -91,7 +114,8 @@ class FirmwareUpdaterApiImpl(
                     .first()
                     .featureApi
                     .deviceVersionFlow
-                    .first()
+                    .first(),
+                previousVersion = previousVersionsFlow.first()
             )
         }
         .onEach { info { "#state FwUpdateStateDiff: $it" } }
@@ -123,7 +147,6 @@ class FirmwareUpdaterApiImpl(
             .first()
 
         info { "#startVersionInstall $canDownloadUpdate ${deviceApi.getCapabilities().value}" }
-        return CResult.failure(IllegalStateException(""))
         if (canDownloadUpdate) {
             lanUpdaterScope.launch(SingleJobMode.CANCEL_PREVIOUS) {
                 firmwareDownloaderApi.downloadAndUpload(version)
