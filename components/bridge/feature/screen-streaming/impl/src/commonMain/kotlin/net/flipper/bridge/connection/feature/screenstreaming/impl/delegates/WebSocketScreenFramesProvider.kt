@@ -4,18 +4,16 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.screenstreaming.model.BusyImageFormat
-import net.flipper.core.busylib.ktx.common.exponentialRetry
 
 private const val BLK_SIZE = 3
 
 class WebSocketScreenFramesProvider(
     private val rpcFeatureApi: FRpcFeatureApi
 ) : ScreenFramesProvider {
-    override suspend fun getScreens(): Flow<BusyImageFormat> {
-        return exponentialRetry {
-            rpcFeatureApi.fRpcWebSocketApi
-                .getScreenFrames()
-        }.map { rleDecompress(it, BLK_SIZE) }
+    override fun getScreens(): Flow<BusyImageFormat> {
+        return rpcFeatureApi.fRpcWebSocketApi
+            .getScreenFrames()
+            .map { rleDecompress(it, BLK_SIZE) }
             .map(::BusyImageFormat)
     }
 }

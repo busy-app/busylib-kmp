@@ -19,7 +19,7 @@ class MetaInfoScreenFramesProvider(
     private val screenFlow: Flow<TransportMetaInfoData?>
 ) : ScreenFramesProvider, LogTagProvider {
     override val TAG = "MetaInfoScreenFramesProvider"
-    override suspend fun getScreens(): Flow<BusyImageFormat> {
+    override fun getScreens(): Flow<BusyImageFormat> {
         return screenFlow
             .onEach { verbose { "Receive event: $it" } }
             .filterNotNull()
