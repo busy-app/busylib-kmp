@@ -68,6 +68,7 @@ fun rememberBusyImagePainter(imageResource: BusyImageFormat?): Painter? {
     val painter = remember { mutableStateOf<Painter?>(null) }
     LaunchedEffect(imageResource, density) {
         val byteArray = imageResource?.byteArray
+
         if (byteArray == null) {
             painter.value = null
             return@LaunchedEffect
@@ -76,7 +77,7 @@ fun rememberBusyImagePainter(imageResource: BusyImageFormat?): Painter? {
             painter.value = runCatching {
                 val bitmap = toImageBitmap(byteArray)
                 BitmapPainter(bitmap)
-            }.getOrNull()
+            }.onFailure { it.printStackTrace() }.getOrNull()
         }
     }
     return painter.value

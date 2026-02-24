@@ -13,4 +13,5 @@ interface FRpcFeatureApi : FDeviceFeatureApi {
     val fRpcUpdaterApi: FRpcUpdaterApi
     val fRpcMatterApi: FRpcMatterApi
     val fRpcTimeZoneApi: FRpcTimeZoneApi
+    val fRpcWebSocketApi: FRpcWebSocketApi
 }

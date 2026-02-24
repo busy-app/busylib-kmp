@@ -7,5 +7,5 @@ package net.flipper.bridge.connection.utils
  * against a real backend or authentication service.
  */
 object Secrets {
-    const val AUTH_TOKEN = "REPLACE_WITH_AUTH_TOKEN"
+    const val AUTH_TOKEN = ""
 }

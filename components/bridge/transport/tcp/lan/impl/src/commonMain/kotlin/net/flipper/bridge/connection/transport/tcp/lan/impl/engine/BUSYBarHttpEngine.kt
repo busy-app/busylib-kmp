@@ -2,6 +2,7 @@ package net.flipper.bridge.connection.transport.tcp.lan.impl.engine
 
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.HttpClientEngineBase
+import io.ktor.client.engine.HttpClientEngineCapability
 import io.ktor.client.engine.HttpClientEngineConfig
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.HttpRequestData
@@ -30,4 +31,7 @@ class BUSYBarHttpEngine(
         delegate.close()
         super.close()
     }
+
+    override val supportedCapabilities: Set<HttpClientEngineCapability<*>>
+        get() = delegate.supportedCapabilities
 }
