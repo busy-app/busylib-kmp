@@ -19,6 +19,7 @@ import net.flipper.bridge.connection.feature.info.api.FDeviceInfoFeatureApi
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
 import net.flipper.bridge.connection.feature.provider.api.get
+import net.flipper.bridge.connection.feature.provider.api.getSync
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarVersion
 import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
@@ -134,7 +135,7 @@ class FirmwareUpdaterApiImpl(
             .toCResult()
     }
 
-    override suspend fun startVersionInstall(version: String): CResult<Unit> {
+    override suspend fun startUpdateInstall(): CResult<Unit> {
         val deviceApi = fDeviceOrchestrator.getState()
             .first()
             .tryCast<FDeviceConnectStatus.Connected>()
@@ -147,6 +148,12 @@ class FirmwareUpdaterApiImpl(
             .first()
 
         info { "#startVersionInstall $canDownloadUpdate ${deviceApi.getCapabilities().value}" }
+        val version = fFeatureProvider
+            .getSync<FFirmwareUpdateFeatureApi>()
+            ?.updateVersionFlow
+            ?.first()
+            ?.version
+            ?: return CResult.failure(IllegalStateException("Could not get version"))
         if (canDownloadUpdate) {
             lanUpdaterScope.launch(SingleJobMode.CANCEL_PREVIOUS) {
                 firmwareDownloaderApi.downloadAndUpload(version)

@@ -11,5 +11,5 @@ interface FirmwareUpdaterApi {
      * Force stop firmware download if possible
      */
     suspend fun stopFirmwareUpdate(): CResult<Unit>
-    suspend fun startVersionInstall(version: String): CResult<Unit>
+    suspend fun startUpdateInstall(): CResult<Unit>
 }
