@@ -4,7 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class TimezoneInfo(
-    @SerialName("timezone")
-    val timezone: String
+data class RpcTimestampInfo(
+    @SerialName("timestamp")
+    val timestamp: String
 )

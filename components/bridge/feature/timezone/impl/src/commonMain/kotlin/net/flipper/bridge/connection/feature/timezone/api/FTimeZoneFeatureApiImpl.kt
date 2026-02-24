@@ -2,6 +2,7 @@ package net.flipper.bridge.connection.feature.timezone.api
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import me.tatarka.inject.annotations.Inject
 import me.tatarka.inject.annotations.IntoMap
 import me.tatarka.inject.annotations.Provides
@@ -12,9 +13,9 @@ import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
 import net.flipper.bridge.connection.feature.events.api.UpdateEvent
 import net.flipper.bridge.connection.feature.events.api.getUpdateFlow
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
-import net.flipper.bridge.connection.feature.rpc.api.model.TimestampInfo
-import net.flipper.bridge.connection.feature.rpc.api.model.TimezoneInfo
-import net.flipper.bridge.connection.feature.rpc.api.model.TimezoneListResponse
+import net.flipper.bridge.connection.feature.timezone.api.model.TimestampInfo
+import net.flipper.bridge.connection.feature.timezone.api.model.TimezoneInfo
+import net.flipper.bridge.connection.feature.timezone.api.model.TimezoneListItem
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.core.wrapper.CResult
@@ -53,11 +54,12 @@ class FTimeZoneFeatureApiImpl(
                 }
             }
             .asFlow()
+            .map { it.toPublic() }
             .wrap()
     }
 
     override suspend fun setTimestamp(timestampInfo: TimestampInfo): CResult<Unit> {
-        return rpcFeatureApi.fRpcTimeZoneApi.postTimeTimestamp(timestampInfo).toCResult()
+        return rpcFeatureApi.fRpcTimeZoneApi.postTimeTimestamp(timestampInfo.toInternal()).toCResult()
     }
 
     override fun getTimeZoneInfoFlow(): WrappedFlow<TimezoneInfo> {
@@ -74,15 +76,16 @@ class FTimeZoneFeatureApiImpl(
                 }
             }
             .asFlow()
+            .map { it.toPublic() }
             .wrap()
     }
 
     override suspend fun setTimezone(timezoneInfo: TimezoneInfo): CResult<Unit> {
-        return rpcFeatureApi.fRpcTimeZoneApi.postTimeTimezone(timezoneInfo).toCResult()
+        return rpcFeatureApi.fRpcTimeZoneApi.postTimeTimezone(timezoneInfo.toInternal()).toCResult()
     }
 
-    override suspend fun getTimezones(): CResult<TimezoneListResponse> {
-        return rpcFeatureApi.fRpcTimeZoneApi.getTimeTzList().toCResult()
+    override suspend fun getTimezones(): CResult<List<TimezoneListItem>> {
+        return rpcFeatureApi.fRpcTimeZoneApi.getTimeTzList().map { it.toPublic() }.toCResult()
     }
 
     @Inject
