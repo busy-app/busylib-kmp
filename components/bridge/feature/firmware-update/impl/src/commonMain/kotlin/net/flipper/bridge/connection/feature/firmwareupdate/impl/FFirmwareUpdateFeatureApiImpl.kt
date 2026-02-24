@@ -1,15 +1,36 @@
 package net.flipper.bridge.connection.feature.firmwareupdate.impl
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.shareIn
+import me.tatarka.inject.annotations.Inject
+import me.tatarka.inject.annotations.IntoMap
+import me.tatarka.inject.annotations.Provides
+import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
+import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
+import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
 import net.flipper.bridge.connection.feature.events.api.UpdateEvent
 import net.flipper.bridge.connection.feature.events.api.getUpdateFlow
 import net.flipper.bridge.connection.feature.firmwareupdate.api.FFirmwareUpdateFeatureApi
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbVersionChangelog
+import net.flipper.bridge.connection.feature.info.api.FDeviceInfoFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.AutoUpdate
+import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarVersion
 import net.flipper.bridge.connection.feature.rpc.api.model.UpdateStatus
+import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
+import net.flipper.bridge.connection.transport.common.api.serial.FHTTPDeviceApi
+import net.flipper.bridge.connection.transport.common.api.serial.FHTTPTransportCapability
+import net.flipper.bridge.connection.transport.common.api.serial.hasCapability
+import net.flipper.bsb.cloud.rest.api.BusyFirmwareDirectoryApi
+import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.core.wrapper.CResult
 import net.flipper.busylib.core.wrapper.WrappedSharedFlow
 import net.flipper.busylib.core.wrapper.toCResult
@@ -17,18 +38,25 @@ import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.ktx.common.DefaultConsumable
 import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.merge
+import net.flipper.core.busylib.ktx.common.orElse
 import net.flipper.core.busylib.ktx.common.orEmpty
 import net.flipper.core.busylib.ktx.common.throttleLatest
 import net.flipper.core.busylib.ktx.common.transformWhileSubscribed
+import net.flipper.core.busylib.ktx.common.tryCast
 import net.flipper.core.busylib.ktx.common.tryConsume
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
+import net.flipper.core.busylib.log.info
+import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
 
 @Suppress("UnusedPrivateProperty")
 class FFirmwareUpdateFeatureApiImpl(
     private val scope: CoroutineScope,
     private val rpcFeatureApi: FRpcFeatureApi,
     private val fEventsFeatureApi: FEventsFeatureApi?,
+    private val deviceApi: FConnectedDeviceApi,
+    private val busyFirmwareDirectoryApi: BusyFirmwareDirectoryApi,
+    private val fDeviceInfoFeatureApi: FDeviceInfoFeatureApi
 ) : FFirmwareUpdateFeatureApi, LogTagProvider {
     override val TAG: String = "FFirmwareUpdateFeatureApi"
 
@@ -75,6 +103,89 @@ class FFirmwareUpdateFeatureApiImpl(
                 )
             }
             .toCResult()
+    }
+
+
+    private suspend fun requireVersionFromRestApi(): BusyBarVersion {
+        return exponentialRetry {
+            runCatching {
+                busyFirmwareDirectoryApi.getFirmwareDirectory()
+                    .getOrThrow()
+                    .channels
+                    .firstOrNull { channel -> channel.id == "development" }
+                    ?.versions
+                    ?.maxByOrNull { version -> version.timestamp }
+                    ?.version
+                    ?.let(::BusyBarVersion)
+                    ?: error("No development version found")
+            }
+        }
+    }
+
+    override val updateVersionFlow = fDeviceInfoFeatureApi
+        .deviceVersionFlow
+        .flatMapLatest { currentVersion ->
+            deviceApi
+                .tryCast<FHTTPDeviceApi>()
+                ?.hasCapability(FHTTPTransportCapability.BB_DOWNLOAD_UPDATE_SUPPORTED)
+                .orElse { false }
+                .distinctUntilChanged()
+                .flatMapLatest { useRestApiVersion ->
+                    if (useRestApiVersion) {
+                        flowOf(requireVersionFromRestApi())
+                    } else {
+                        updateStatusFlow
+                            .map { status -> status.check.availableVersion }
+                            .filter { versionString -> versionString.isNotBlank() }
+                            .filter { versionString -> versionString.isNotEmpty() }
+                            .map(::BusyBarVersion)
+                    }
+                }
+                .filter { updateVersion -> updateVersion != currentVersion }
+        }
+        .shareIn(scope, SharingStarted.Eagerly, 1)
+
+
+    @Inject
+    class FDeviceFeatureApiFactory(
+        private val busyFirmwareDirectoryApi: BusyFirmwareDirectoryApi
+    ) : FDeviceFeatureApi.Factory {
+        override suspend fun invoke(
+            unsafeFeatureDeviceApi: FUnsafeDeviceFeatureApi,
+            scope: CoroutineScope,
+            connectedDevice: FConnectedDeviceApi
+        ): FDeviceFeatureApi? {
+            val rpcApi = unsafeFeatureDeviceApi
+                .get(FRpcFeatureApi::class)
+                ?.await()
+                ?: return null
+            val fEventsFeatureApi = unsafeFeatureDeviceApi
+                .get(FEventsFeatureApi::class)
+                ?.await()
+            val fDeviceInfoFeatureApi = unsafeFeatureDeviceApi
+                .get(FDeviceInfoFeatureApi::class)
+                ?.await()
+                ?: return null
+            return FFirmwareUpdateFeatureApiImpl(
+                rpcFeatureApi = rpcApi,
+                fEventsFeatureApi = fEventsFeatureApi,
+                scope = scope,
+                busyFirmwareDirectoryApi = busyFirmwareDirectoryApi,
+                deviceApi = connectedDevice,
+                fDeviceInfoFeatureApi = fDeviceInfoFeatureApi
+            )
+        }
+    }
+
+    @ContributesTo(BusyLibGraph::class)
+    interface FFeatureComponent {
+        @Provides
+        @IntoMap
+        fun provideFeatureFactory(
+            fDeviceFeatureApiFactory: FDeviceFeatureApiFactory
+        ): Pair<FDeviceFeature, FDeviceFeatureApi.Factory> {
+            return FDeviceFeature.FIRMWARE_UPDATE to fDeviceFeatureApiFactory
+        }
     }
 }
 

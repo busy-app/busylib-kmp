@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 
 fun <T> Flow<T>?.orEmpty(): Flow<T> = this ?: emptyFlow()
+fun <T> Flow<T>?.orElse(block: () -> T): Flow<T> = this ?: flow { emit(block.invoke()) }
 
 fun <T> Flow<T>.merge(flow: Flow<T>): Flow<T> = listOf(this, flow).merge()
 

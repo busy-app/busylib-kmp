@@ -12,12 +12,11 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.feature.firmwareupdate.api.FFirmwareUpdateFeatureApi
+import net.flipper.bridge.connection.feature.info.api.FDeviceInfoFeatureApi
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
 import net.flipper.bridge.connection.feature.provider.api.get
-import net.flipper.bridge.connection.feature.provider.api.getSync
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
-import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarVersion
 import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
 import net.flipper.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPDeviceApi
@@ -37,7 +36,6 @@ import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.ktx.common.SingleJobMode
 import net.flipper.core.busylib.ktx.common.asSingleJobScope
 import net.flipper.core.busylib.ktx.common.cancelPrevious
-import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.mapCached
 import net.flipper.core.busylib.ktx.common.orNullable
 import net.flipper.core.busylib.ktx.common.tryCast
@@ -88,15 +86,12 @@ class FirmwareUpdaterApiImpl(
             FwUpdateStateDiff.combineDiff(
                 previous = previousFwUpdateState,
                 latest = currentFwUpdateState,
-                getCurrentVersion = {
-                    exponentialRetry {
-                        fFeatureProvider.getSync<FRpcFeatureApi>()
-                            ?.fRpcSystemApi
-                            ?.getVersion()
-                            ?.map(BusyBarVersion::version)
-                            ?: error("Could not get FRpcFeatureApi")
-                    }
-                }
+                currentVersion = fFeatureProvider.get<FDeviceInfoFeatureApi>()
+                    .filterIsInstance<FFeatureStatus.Supported<FDeviceInfoFeatureApi>>()
+                    .first()
+                    .featureApi
+                    .deviceVersionFlow
+                    .first()
             )
         }
         .onEach { info { "#state FwUpdateStateDiff: $it" } }
