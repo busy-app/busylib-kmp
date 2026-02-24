@@ -19,6 +19,9 @@ import kotlinx.io.files.SystemTemporaryDirectory
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.device.firmwareupdate.downloader.model.FirmwareDownloaderState
 import net.flipper.bridge.device.firmwareupdate.uploader.api.FirmwareUploaderApi
+import net.flipper.bsb.cloud.rest.api.BusyFirmwareDirectoryApi
+import net.flipper.bsb.cloud.rest.model.BsbFirmwareUpdateFileType
+import net.flipper.bsb.cloud.rest.model.BsbFirmwareUpdateTarget
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.TaggedLogger
@@ -33,6 +36,7 @@ import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 @SingleIn(BusyLibGraph::class)
 @ContributesBinding(BusyLibGraph::class, FirmwareDownloaderApi::class)
 class FirmwareDownloaderApiImpl(
+    private val busyFirmwareDirectoryApi: BusyFirmwareDirectoryApi,
     private val firmwareUploaderApi: FirmwareUploaderApi,
     @KtorNetworkClientQualifier private val httpClient: HttpClient,
 ) : FirmwareDownloaderApi, LogTagProvider by TaggedLogger("FirmwareDownloaderApi") {
@@ -77,6 +81,20 @@ class FirmwareDownloaderApiImpl(
         }
     }
 
+    private suspend fun requireUpdateFileUrl(): String {
+        return busyFirmwareDirectoryApi.getFirmwareDirectory()
+            .getOrThrow()
+            .channels
+            .firstOrNull { channel -> channel.id == "development" }
+            ?.versions
+            ?.maxByOrNull { version -> version.timestamp }
+            ?.files
+            ?.filter { it.target == BsbFirmwareUpdateTarget.F21 }
+            ?.firstOrNull { it.type == BsbFirmwareUpdateFileType.UPDATE_TGZ }
+            ?.url
+            ?: error("No update file found")
+    }
+
     override suspend fun downloadAndUpload(version: String) {
         _state.emit(FirmwareDownloaderState.Pending)
         try {
@@ -86,7 +104,8 @@ class FirmwareDownloaderApiImpl(
                     totalBytes = 0L
                 )
             )
-            httpClient.prepareGet(UPDATE_URL).execute { response ->
+
+            httpClient.prepareGet(requireUpdateFileUrl()).execute { response ->
                 val totalBytes = response.contentLength() ?: 0L
                 if (totalBytes == 0L) {
                     error { "#downloadAndUpload size cannot be 0" }
@@ -110,14 +129,5 @@ class FirmwareDownloaderApiImpl(
         } finally {
             _state.emit(FirmwareDownloaderState.Pending)
         }
-    }
-
-    companion object {
-        private const val UPDATE_URL = "https://update.flipperzero.one/" +
-            "builds/" +
-            "busybar-firmware/" +
-            "reborned/" +
-            "ble_stabilization/" +
-            "busybar-f21-update-reborned_ble_stabilization-20022026-b3efa9c1.tgz"
     }
 }
