@@ -32,7 +32,10 @@ class FLanApiImpl(
 
     override fun getCapabilities(): MutableStateFlow<List<FHTTPTransportCapability>> {
         return MutableStateFlow(
-            listOf(FHTTPTransportCapability.BB_WEBSOCKET_SUPPORTED)
+            listOf(
+                FHTTPTransportCapability.BB_WEBSOCKET_SUPPORTED,
+                FHTTPTransportCapability.BB_DOWNLOAD_UPDATE_SUPPORTED
+            )
         )
     }
 

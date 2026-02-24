@@ -12,6 +12,4 @@ interface FirmwareUpdaterApi {
      */
     suspend fun stopFirmwareUpdate(): CResult<Unit>
     suspend fun startVersionInstall(version: String): CResult<Unit>
-
-    suspend fun startVersionDownloadAndInstall(version: String)
 }

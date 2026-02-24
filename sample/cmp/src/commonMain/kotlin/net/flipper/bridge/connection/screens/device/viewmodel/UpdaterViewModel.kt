@@ -9,7 +9,7 @@ class UpdaterViewModel(
 ) : DecomposeViewModel() {
     fun startUpdate() {
         viewModelScope.launch {
-            firmwareUpdaterApi.startVersionDownloadAndInstall("")
+            firmwareUpdaterApi.startVersionInstall("")
         }
     }
 }

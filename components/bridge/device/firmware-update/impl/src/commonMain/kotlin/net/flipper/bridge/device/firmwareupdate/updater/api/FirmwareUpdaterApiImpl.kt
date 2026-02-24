@@ -18,6 +18,11 @@ import net.flipper.bridge.connection.feature.provider.api.get
 import net.flipper.bridge.connection.feature.provider.api.getSync
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarVersion
+import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
+import net.flipper.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
+import net.flipper.bridge.connection.transport.common.api.serial.FHTTPDeviceApi
+import net.flipper.bridge.connection.transport.common.api.serial.FHTTPTransportCapability
+import net.flipper.bridge.connection.transport.common.api.serial.hasCapability
 import net.flipper.bridge.device.firmwareupdate.downloader.api.FirmwareDownloaderApi
 import net.flipper.bridge.device.firmwareupdate.updater.diff.FwUpdateStateDiff
 import net.flipper.bridge.device.firmwareupdate.updater.mapper.FwUpdateStatusMapper
@@ -51,7 +56,8 @@ class FirmwareUpdaterApiImpl(
     private val scope: CoroutineScope,
     private val availableVersionChangelogProvider: AvailableVersionChangelogProvider,
     private val firmwareDownloaderApi: FirmwareDownloaderApi,
-    private val firmwareUploaderApi: FirmwareUploaderApi
+    private val firmwareUploaderApi: FirmwareUploaderApi,
+    private val fDeviceOrchestrator: FDeviceOrchestrator
 ) : FirmwareUpdaterApi, LogTagProvider by TaggedLogger("UpdaterApi") {
     private val lanUpdaterScope = scope.asSingleJobScope()
     private val changelogSharedFlow = availableVersionChangelogProvider
@@ -110,19 +116,33 @@ class FirmwareUpdaterApiImpl(
     }
 
     override suspend fun startVersionInstall(version: String): CResult<Unit> {
-        return fFeatureProvider.get<FRpcFeatureApi>()
-            .filterIsInstance<FFeatureStatus.Supported<FRpcFeatureApi>>()
+        val deviceApi = fDeviceOrchestrator.getState()
             .first()
-            .featureApi
-            .fRpcUpdaterApi
-            .startUpdateInstall(version)
-            .map { }
-            .toCResult()
-    }
+            .tryCast<FDeviceConnectStatus.Connected>()
+            ?.deviceApi
+            ?.tryCast<FHTTPDeviceApi>()
+            ?: return CResult.failure(IllegalStateException("Device is not connected"))
 
-    override suspend fun startVersionDownloadAndInstall(version: String) {
-        lanUpdaterScope.launch(SingleJobMode.CANCEL_PREVIOUS) {
-            firmwareDownloaderApi.downloadAndUpload(version)
+        val canDownloadUpdate = deviceApi
+            .hasCapability(FHTTPTransportCapability.BB_DOWNLOAD_UPDATE_SUPPORTED)
+            .first()
+
+        info { "#startVersionInstall $canDownloadUpdate ${deviceApi.getCapabilities().value}" }
+        return CResult.failure(IllegalStateException(""))
+        if (canDownloadUpdate) {
+            lanUpdaterScope.launch(SingleJobMode.CANCEL_PREVIOUS) {
+                firmwareDownloaderApi.downloadAndUpload(version)
+            }
+            return CResult.success(Unit)
+        } else {
+            return fFeatureProvider.get<FRpcFeatureApi>()
+                .filterIsInstance<FFeatureStatus.Supported<FRpcFeatureApi>>()
+                .first()
+                .featureApi
+                .fRpcUpdaterApi
+                .startUpdateInstall(version)
+                .map { }
+                .toCResult()
         }
     }
 }
