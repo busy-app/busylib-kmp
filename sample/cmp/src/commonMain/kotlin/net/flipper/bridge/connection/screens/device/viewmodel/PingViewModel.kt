@@ -15,6 +15,7 @@ import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
 import net.flipper.bridge.connection.feature.provider.api.get
 import net.flipper.bridge.connection.feature.provider.api.getSync
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
+import net.flipper.bridge.connection.feature.timezone.api.FTimeZoneFeatureApi
 import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
 import net.flipper.bridge.connection.screens.decompose.DecomposeViewModel
 import net.flipper.core.busylib.log.LogTagProvider
@@ -50,15 +51,14 @@ class PingViewModel(
 
     fun sendPing() = viewModelScope.launch {
         log("Request send wifi request")
-        val requestApi = featureProvider.getSync<FRpcFeatureApi>()
+        val requestApi = featureProvider.getSync<FTimeZoneFeatureApi>()
         info { "Receive requestApi: $requestApi" }
         if (requestApi == null) {
             log("Failed receive request api")
         } else {
-            requestApi.fRpcWifiApi
-                .getWifiNetworks()
+            requestApi.getTimezones()
                 .onSuccess {
-                    log("Response wifi request successful $it")
+                    log("Response wifi request successful ${it.first()}")
                 }.onFailure {
                     error(it) { "Failed to receive wifi request" }
                     log("Failed receive wifi request")

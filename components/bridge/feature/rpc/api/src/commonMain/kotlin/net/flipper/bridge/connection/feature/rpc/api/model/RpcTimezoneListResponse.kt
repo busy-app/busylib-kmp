@@ -3,7 +3,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class TimezoneListItem(
+data class RpcTimezoneListItem(
     @SerialName("name")
     val name: String,
 
@@ -14,4 +14,8 @@ data class TimezoneListItem(
     val abbr: String
 )
 
-typealias TimezoneListResponse = List<TimezoneListItem>
+@Serializable
+data class RpcTimezoneListResponse(
+    @Serializable
+    val list: List<RpcTimezoneListItem>
+)
