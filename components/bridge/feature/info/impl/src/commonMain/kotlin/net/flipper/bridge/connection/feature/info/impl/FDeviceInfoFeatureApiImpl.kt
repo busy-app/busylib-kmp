@@ -37,8 +37,8 @@ class FDeviceInfoFeatureApiImpl(
         val version = exponentialRetry {
             rpcFeatureApi
                 .fRpcSystemApi
-                .getVersion()
-        }
+                .getStatusSystem()
+        }.commitHash.let(::BusyBarVersion) // todo remove after version changed
         emit(version)
     }.shareIn(scope, SharingStarted.Eagerly, 1)
 
