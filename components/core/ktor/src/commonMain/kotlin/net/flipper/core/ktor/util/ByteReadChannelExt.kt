@@ -1,6 +1,7 @@
 package net.flipper.core.ktor.util
 
 import io.ktor.utils.io.ByteReadChannel
+import io.ktor.utils.io.ClosedByteChannelException
 import io.ktor.utils.io.readAvailable
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow
@@ -15,17 +16,18 @@ fun ByteReadChannel.asFlow(
     val buffer = ByteArray(bufferSize)
     try {
         while (!isClosedForRead && currentCoroutineContext().isActive) {
-            awaitContent()
             val bytesRead = readAvailable(buffer)
-            if (bytesRead == -1 || bytesRead <= 0) {
+            if (bytesRead == 0) {
                 error { "#asFlow received invalid bytesRead: $bytesRead" }
-                break
+                awaitContent()
             }
-            emit(buffer.copyOf(bytesRead))
+            if (bytesRead == -1) break
+            else emit(buffer.copyOf(bytesRead))
             yield()
         }
+    } catch (_: ClosedByteChannelException) {
     } catch (t: Throwable) {
-        error(t) { "#asFlow error" }
+        error(t) { "#asFlow unhandled error" }
         throw t
     }
 }
