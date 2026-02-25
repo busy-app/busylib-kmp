@@ -32,13 +32,7 @@ internal fun getHttpClient(httpClientEngine: HttpClientEngine) = HttpClient(http
     install(Logging) {
         logger = object : Logger {
             override fun log(message: String) {
-                info {
-                    if (message.length > 1000) {
-                        message.dropLast(message.length.minus(1000))
-                    } else {
-                        message
-                    }
-                }
+                info { message }
             }
         }
         level = LogLevel.ALL

@@ -56,10 +56,7 @@ fun getHttpClient(
     install(Logging) {
         logger = object : Logger {
             override fun log(message: String) {
-                ktorTimber.info {
-                    if (message.length > 1000) message.dropLast(message.length.minus(1000))
-                    else message
-                }
+                ktorTimber.info { message }
             }
         }
         level = LogLevel.ALL
