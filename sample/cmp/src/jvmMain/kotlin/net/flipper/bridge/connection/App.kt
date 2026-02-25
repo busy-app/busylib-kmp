@@ -26,7 +26,6 @@ import net.flipper.bridge.connection.utils.cloud.BUSYLibBarsApiNoop
 import net.flipper.bridge.connection.utils.getUserPrincipal
 import net.flipper.bridge.connection.utils.principal.impl.UserPrincipalApiNoop
 import net.flipper.bridge.connection.utils.runOnUiThread
-import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
 import net.flipper.bsb.cloud.api.BUSYLibHostApiStub
 import net.flipper.busylib.BUSYLibDesktop
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
@@ -49,8 +48,7 @@ suspend fun main() {
     val busyLib = BUSYLibDesktop.build(
         scope = applicationScope,
         principalApi = UserPrincipalApiNoop(
-            defaultState = runCatching { getUserPrincipal(hostApi) }
-                .getOrElse { BUSYLibUserPrincipal.Empty }
+            defaultState = getUserPrincipal(hostApi)
         ),
         busyLibBarsApi = BUSYLibBarsApiNoop(),
         persistedStorage = persistedStorage,
