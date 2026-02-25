@@ -14,6 +14,7 @@ import io.ktor.utils.io.writeFully
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcUpdaterApi
+import net.flipper.bridge.connection.feature.rpc.api.model.ApiResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.AutoUpdate
 import net.flipper.bridge.connection.feature.rpc.api.model.GetUpdateChangelogResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
@@ -27,9 +28,9 @@ class FRpcUpdaterApiImpl(
     private val dispatcher: CoroutineDispatcher,
     private val objectCache: ObjectCache
 ) : FRpcUpdaterApi {
-    override suspend fun startUpdateCheck(): Result<SuccessResponse> {
+    override suspend fun startUpdateCheck(): Result<ApiResponse> {
         return runSuspendCatching(dispatcher) {
-            httpClient.post("/api/update/check").body<SuccessResponse>()
+            httpClient.post("/api/update/check").body<ApiResponse>()
         }
     }
 
