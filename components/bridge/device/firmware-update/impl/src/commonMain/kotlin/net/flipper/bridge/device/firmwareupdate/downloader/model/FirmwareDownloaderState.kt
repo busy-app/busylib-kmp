@@ -1,6 +1,7 @@
 package net.flipper.bridge.device.firmwareupdate.downloader.model
 
 sealed interface FirmwareDownloaderState {
+    data object Downloaded : FirmwareDownloaderState
     data object Pending : FirmwareDownloaderState
     data class Downloading(
         val bytesReceived: Long,

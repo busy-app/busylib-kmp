@@ -92,13 +92,19 @@ class FirmwareUpdaterApiImpl(
             .map { status -> status.tryCast<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>() }
             .map { status -> status?.featureApi }
             .flatMapLatest { feature -> feature?.updateStatusFlow.orNullable() },
-        flow2 = firmwareDownloaderApi.state,
-        flow3 = firmwareUploaderApi.state,
-        transform = { updateStatus, downloaderState, uploaderState ->
+        flow2 = fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
+            .map { status -> status.tryCast<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>() }
+            .map { status -> status?.featureApi }
+            .flatMapLatest { feature -> feature?.updateVersionFlow.orNullable() }
+            .map { bsbUpdateVersion -> bsbUpdateVersion?.tryCast<BsbUpdateVersion.Url>() },
+        flow3 = firmwareDownloaderApi.state,
+        flow4 = firmwareUploaderApi.state,
+        transform = { updateStatus, bsbUrlUpdateVersion, downloaderState, uploaderState ->
             FwUpdateStatusMapper.toFwUpdateState(
                 updateStatus = updateStatus,
                 downloaderState = downloaderState,
                 uploaderState = uploaderState,
+                bsbUrlUpdateVersion = bsbUrlUpdateVersion
             )
         }
     )
@@ -143,6 +149,7 @@ class FirmwareUpdaterApiImpl(
             .flatMapLatest { status -> status?.featureApi?.updateVersionFlow.orNullable() }
             .filterNotNull()
             .mapLatest { bsbUpdateVersion ->
+                firmwareDownloaderApi.reset()
                 info { "#startUpdateInstall bsbUpdateVersion: $bsbUpdateVersion" }
                 when (bsbUpdateVersion) {
                     is BsbUpdateVersion.Default -> {
@@ -166,6 +173,7 @@ class FirmwareUpdaterApiImpl(
                                     .onFailure { t -> error(t) { "#startUpdateInstall could not upload" } }
                                     .getOrThrow()
                             }
+                            .also { firmwareDownloaderApi.reset() }
                     }
                 }
             }

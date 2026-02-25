@@ -1,5 +1,6 @@
 package net.flipper.bridge.device.firmwareupdate.updater.mapper
 
+import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateVersion
 import net.flipper.bridge.connection.feature.rpc.api.model.UpdateStatus
 import net.flipper.bridge.device.firmwareupdate.downloader.model.FirmwareDownloaderState
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateState
@@ -94,27 +95,32 @@ object FwUpdateStatusMapper {
     fun toFwUpdateState(
         updateStatus: UpdateStatus?,
         uploaderState: FirmwareUploaderState,
-        downloaderState: FirmwareDownloaderState
+        downloaderState: FirmwareDownloaderState,
+        bsbUrlUpdateVersion: BsbUpdateVersion.Url?
     ): FwUpdateState {
         return when {
-            downloaderState is FirmwareDownloaderState.Downloading -> {
-                FwUpdateState.Downloading(
-                    progress = downloaderState.progress
-                )
-            }
-
             uploaderState is FirmwareUploaderState.Uploading -> {
-                FwUpdateState.Uploading(
-                    progress = uploaderState.progress
-                )
+                FwUpdateState.Uploading(progress = uploaderState.progress)
             }
 
             uploaderState is FirmwareUploaderState.Uploaded -> {
                 FwUpdateState.Updating
             }
 
+            downloaderState is FirmwareDownloaderState.Downloading -> {
+                FwUpdateState.Downloading(progress = downloaderState.progress)
+            }
+
+            downloaderState is FirmwareDownloaderState.Downloaded -> {
+                FwUpdateState.Downloading(progress = 1f)
+            }
+
             updateStatus == null -> {
                 FwUpdateState.Pending
+            }
+
+            bsbUrlUpdateVersion != null -> {
+                FwUpdateState.UpdateAvailable
             }
 
             else -> {

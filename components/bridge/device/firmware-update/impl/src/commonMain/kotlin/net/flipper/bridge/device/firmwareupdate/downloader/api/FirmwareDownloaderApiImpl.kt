@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.update
 import kotlinx.io.Buffer
 import kotlinx.io.RawSink
 import kotlinx.io.files.Path
@@ -64,9 +65,13 @@ class FirmwareDownloaderApiImpl(
                     }
                     sink.write(buffer, buffer.size)
                 }
-                .onCompletion { _state.emit(FirmwareDownloaderState.Pending) }
+                .onCompletion { _state.emit(FirmwareDownloaderState.Downloaded) }
                 .collect()
         }
+    }
+
+    override fun reset() {
+        _state.update { FirmwareDownloaderState.Pending }
     }
 
     override suspend fun download(bsbUpdateVersion: BsbUpdateVersion.Url): Result<Path> {
@@ -81,11 +86,13 @@ class FirmwareDownloaderApiImpl(
 
             val temporalFilePath = getTemporalPath()
             httpClient.prepareGet(bsbUpdateVersion.url).execute { response ->
+
                 val totalBytes = response.contentLength() ?: 0L
                 if (totalBytes == 0L) {
                     error { "#downloadAndUpload size cannot be 0" }
                     return@execute
                 }
+
                 _state.emit(
                     value = FirmwareDownloaderState.Downloading(
                         bytesReceived = 0L,
@@ -100,13 +107,12 @@ class FirmwareDownloaderApiImpl(
             }
 
             info { "#downloadAndUpload download finished!" }
-            _state.emit(FirmwareDownloaderState.Pending)
+            _state.emit(FirmwareDownloaderState.Downloaded)
             Result.success(temporalFilePath)
         } catch (t: Throwable) {
             error(t) { "#downloadAndUpload could not finish download" }
-            Result.failure(t)
-        } finally {
             _state.emit(FirmwareDownloaderState.Pending)
+            Result.failure(t)
         }
     }
 }
