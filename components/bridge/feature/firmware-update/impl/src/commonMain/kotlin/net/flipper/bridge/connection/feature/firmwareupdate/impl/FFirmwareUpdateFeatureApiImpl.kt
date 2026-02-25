@@ -142,7 +142,7 @@ class FFirmwareUpdateFeatureApiImpl(
                             .map(BsbUpdateVersion::Default)
                     }
                 }
-                .filter { updateVersion -> updateVersion.version != currentVersion.version }
+//                .filter { updateVersion -> updateVersion.version != currentVersion.version }
         }
         .onEach { info { "#updateVersionFlow: $it" } }
         .shareIn(scope, SharingStarted.Eagerly, 1)

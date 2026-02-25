@@ -16,9 +16,11 @@ import kotlinx.io.Buffer
 import kotlinx.io.RawSink
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
+import kotlinx.io.files.SystemTemporaryDirectory
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateVersion
 import net.flipper.bridge.device.firmwareupdate.downloader.model.FirmwareDownloaderState
+import net.flipper.bridge.device.firmwareupdate.downloader.util.sha256
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.TaggedLogger
@@ -39,7 +41,7 @@ class FirmwareDownloaderApiImpl(
     override val state: StateFlow<FirmwareDownloaderState> = _state.asStateFlow()
 
     private fun getTemporalPath(): Path {
-        return Path("/Users/makeevrserg/Desktop/tempfile")
+        return Path(SystemTemporaryDirectory, "temp_firmware_update_file")
     }
 
     private suspend fun downloadIntoFile(
@@ -48,7 +50,7 @@ class FirmwareDownloaderApiImpl(
         totalBytes: Long
     ) {
         var downloadedBytes = 0L
-        sink.use { sink ->
+        try {
             bytesFlow
                 .onEach { chunk ->
                     downloadedBytes += chunk.size
@@ -67,6 +69,8 @@ class FirmwareDownloaderApiImpl(
                 }
                 .onCompletion { _state.emit(FirmwareDownloaderState.Downloaded) }
                 .collect()
+        } finally {
+            sink.close()
         }
     }
 
@@ -107,6 +111,9 @@ class FirmwareDownloaderApiImpl(
             }
 
             info { "#downloadAndUpload download finished!" }
+            if (temporalFilePath.sha256() != bsbUpdateVersion.sha256) {
+                error("Downloaded file hash does not match expected hash")
+            }
             _state.emit(FirmwareDownloaderState.Downloaded)
             Result.success(temporalFilePath)
         } catch (t: Throwable) {

@@ -29,5 +29,7 @@ kotlin {
         implementation(libs.kotlin.coroutines)
         implementation(libs.kotlin.immutable)
         implementation(libs.ktor.client.core)
+        implementation(libs.kotlinx.crypto)
+        implementation(libs.kotlinx.crypto.provider)
     }
 }
