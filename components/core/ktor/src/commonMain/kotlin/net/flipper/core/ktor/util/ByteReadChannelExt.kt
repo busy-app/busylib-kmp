@@ -18,16 +18,18 @@ fun ByteReadChannel.asFlow(
         while (!isClosedForRead && currentCoroutineContext().isActive) {
             val bytesRead = readAvailable(buffer)
             if (bytesRead == 0) {
-                error { "#asFlow received invalid bytesRead: $bytesRead" }
+                error { "#ByteReadChannel.asFlow received invalid bytesRead: $bytesRead" }
                 awaitContent()
+            } else if (bytesRead == -1) {
+                break
+            } else {
+                emit(buffer.copyOf(bytesRead))
+                yield()
             }
-            if (bytesRead == -1) break
-            else emit(buffer.copyOf(bytesRead))
-            yield()
         }
     } catch (_: ClosedByteChannelException) {
     } catch (t: Throwable) {
-        error(t) { "#asFlow unhandled error" }
+        error(t) { "#ByteReadChannel.asFlow unhandled error" }
         throw t
     }
 }
