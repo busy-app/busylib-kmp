@@ -1,6 +1,7 @@
 package net.flipper.bridge.device.firmwareupdate.uploader.model
 
 sealed interface FirmwareUploaderState {
+    data object Failed : FirmwareUploaderState
     data object Pending : FirmwareUploaderState
     data object Uploaded : FirmwareUploaderState
     data class Uploading(

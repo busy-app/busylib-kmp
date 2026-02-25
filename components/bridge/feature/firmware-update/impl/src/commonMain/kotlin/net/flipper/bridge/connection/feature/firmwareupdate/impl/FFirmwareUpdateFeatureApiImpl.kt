@@ -20,10 +20,10 @@ import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
 import net.flipper.bridge.connection.feature.events.api.UpdateEvent
 import net.flipper.bridge.connection.feature.events.api.getUpdateFlow
 import net.flipper.bridge.connection.feature.firmwareupdate.api.FFirmwareUpdateFeatureApi
+import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateVersion
 import net.flipper.bridge.connection.feature.info.api.FDeviceInfoFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.AutoUpdate
-import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarVersion
 import net.flipper.bridge.connection.feature.rpc.api.model.GetUpdateChangelogResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.UpdateStatus
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
@@ -31,7 +31,8 @@ import net.flipper.bridge.connection.transport.common.api.serial.FHTTPDeviceApi
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPTransportCapability
 import net.flipper.bridge.connection.transport.common.api.serial.hasCapability
 import net.flipper.bsb.cloud.rest.api.BusyFirmwareDirectoryApi
-import net.flipper.bsb.cloud.rest.model.BsbFirmwareUpdateVersion
+import net.flipper.bsb.cloud.rest.model.BsbFirmwareUpdateFileType
+import net.flipper.bsb.cloud.rest.model.BsbFirmwareUpdateTarget
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.core.wrapper.CResult
 import net.flipper.busylib.core.wrapper.WrappedSharedFlow
@@ -50,6 +51,7 @@ import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
+import kotlin.collections.filter
 
 @Suppress("UnusedPrivateProperty")
 class FFirmwareUpdateFeatureApiImpl(
@@ -95,16 +97,27 @@ class FFirmwareUpdateFeatureApiImpl(
             .toCResult()
     }
 
-    private suspend fun requireVersionFromRestApi(): BsbFirmwareUpdateVersion {
+    private suspend fun requireVersionFromRestApi(): BsbUpdateVersion.Url {
         return exponentialRetry {
             runCatching {
-                busyFirmwareDirectoryApi.getFirmwareDirectory()
+                val bsbFirmwareUpdateVersion = busyFirmwareDirectoryApi.getFirmwareDirectory()
                     .getOrThrow()
                     .channels
                     .firstOrNull { channel -> channel.id == "development" }
                     ?.versions
                     ?.maxByOrNull { version -> version.timestamp }
                     ?: error("No development version found")
+                val updateFile = bsbFirmwareUpdateVersion
+                    .files
+                    .filter { it.target == BsbFirmwareUpdateTarget.F21 }
+                    .firstOrNull { it.type == BsbFirmwareUpdateFileType.UPDATE_TGZ }
+                    ?: error("No update file found")
+                BsbUpdateVersion.Url(
+                    version = bsbFirmwareUpdateVersion.version,
+                    url = updateFile.url,
+                    sha256 = updateFile.sha256,
+                    changelog = bsbFirmwareUpdateVersion.changelog
+                )
             }
         }
     }
@@ -118,14 +131,15 @@ class FFirmwareUpdateFeatureApiImpl(
                 .orElse { false }
                 .distinctUntilChanged()
                 .flatMapLatest { useRestApiVersion ->
+                    info { "#updateVersionFlow useRestApiVersion: $useRestApiVersion" }
                     if (useRestApiVersion) {
-                        flowOf(requireVersionFromRestApi().version.let(::BusyBarVersion))
+                        flowOf(requireVersionFromRestApi())
                     } else {
                         updateStatusFlow
                             .map { status -> status.check.availableVersion }
                             .filter { versionString -> versionString.isNotBlank() }
                             .filter { versionString -> versionString.isNotEmpty() }
-                            .map(::BusyBarVersion)
+                            .map(BsbUpdateVersion::Default)
                     }
                 }
                 .filter { updateVersion -> updateVersion != currentVersion }
@@ -135,22 +149,20 @@ class FFirmwareUpdateFeatureApiImpl(
 
     override val updateVersionChangelog: Flow<String> = updateVersionFlow
         .distinctUntilChanged()
-        .flatMapLatest { busyBarVersion ->
-            deviceApi
-                .tryCast<FHTTPDeviceApi>()
-                ?.hasCapability(FHTTPTransportCapability.BB_DOWNLOAD_UPDATE_SUPPORTED)
-                .orElse { false }
-                .map { useRestApiChangelog ->
-                    if (useRestApiChangelog) {
-                        requireVersionFromRestApi().changelog
-                    } else {
-                        exponentialRetry {
-                            rpcFeatureApi.fRpcUpdaterApi
-                                .getUpdateChangelog(busyBarVersion.version)
-                                .map(GetUpdateChangelogResponse::changelog)
-                        }
+        .map { busyBarVersion ->
+            when (busyBarVersion) {
+                is BsbUpdateVersion.Default -> {
+                    exponentialRetry {
+                        rpcFeatureApi.fRpcUpdaterApi
+                            .getUpdateChangelog(busyBarVersion.version)
+                            .map(GetUpdateChangelogResponse::changelog)
                     }
                 }
+
+                is BsbUpdateVersion.Url -> {
+                    busyBarVersion.changelog
+                }
+            }
         }
         .onEach { info { "#updateVersionChangelog: $it" } }
         .shareIn(scope, SharingStarted.Eagerly, 1)

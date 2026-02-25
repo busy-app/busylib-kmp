@@ -20,7 +20,6 @@ import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
 import net.flipper.bridge.connection.feature.provider.api.get
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.device.firmwareupdate.uploader.model.FirmwareUploaderState
-import net.flipper.bridge.device.firmwareupdate.uploader.util.asFlow
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.ktx.common.onLatest
 import net.flipper.core.busylib.ktx.common.tryCast
@@ -28,6 +27,7 @@ import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.TaggedLogger
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
+import net.flipper.core.ktor.util.asFlow
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 
@@ -52,7 +52,7 @@ class FirmwareUploaderApiImpl(
             .first()
     }
 
-    override suspend fun uploadAndInstall(clientFilePath: Path) {
+    override suspend fun uploadAndInstall(clientFilePath: Path): Result<Unit> {
         fFeatureProvider.get<FRpcFeatureApi>()
             .onEach { _state.emit(FirmwareUploaderState.Pending) }
             .map { fFeatureStatus -> fFeatureStatus.tryCast<FFeatureStatus.Supported<FRpcFeatureApi>>() }
@@ -63,8 +63,7 @@ class FirmwareUploaderApiImpl(
 
                 val size = SystemFileSystem.metadataOrNull(clientFilePath)?.size ?: 0L
                 if (size == 0L) {
-                    error { "#uploadAndInstall: could not read file size" }
-                    return@onLatest
+                    error("#uploadAndInstall: could not read file size")
                 }
                 _state.emit(FirmwareUploaderState.Uploading(0, size))
                 fFeatureApi.postUpdate(
@@ -72,7 +71,6 @@ class FirmwareUploaderApiImpl(
                     bytesFlow = SystemFileSystem.source(clientFilePath).asFlow(),
                     onTransferred = { bytesUploaded ->
                         _state.update { FirmwareUploaderState.Uploading(bytesUploaded, size) }
-                        info { "#uploadAndInstall uploaded: $bytesUploaded/$size" }
                     }
                 ).getOrThrow()
                 _state.emit(FirmwareUploaderState.Uploaded)
@@ -80,14 +78,17 @@ class FirmwareUploaderApiImpl(
             .catch { t ->
                 // don't reset state without throwable!
                 error(t) { "#uploadAndInstall could not post update" }
-                _state.emit(FirmwareUploaderState.Pending)
+                _state.emit(FirmwareUploaderState.Failed)
             }
             .first()
-        if (_state.first() is FirmwareUploaderState.Pending) return
+        if (_state.first() is FirmwareUploaderState.Failed) {
+            return Result.failure(Exception("Upload failed"))
+        }
         info { "uploadAndInstall upload finished!" }
         awaitDeviceDisconnected()
         info { "uploadAndInstall device disconnected" }
         awaitDeviceConnected()
         _state.emit(FirmwareUploaderState.Pending)
+        return Result.success(Unit)
     }
 }

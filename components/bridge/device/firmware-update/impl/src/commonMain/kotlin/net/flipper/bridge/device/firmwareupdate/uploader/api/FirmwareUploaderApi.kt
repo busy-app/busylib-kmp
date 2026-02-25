@@ -6,5 +6,5 @@ import net.flipper.bridge.device.firmwareupdate.uploader.model.FirmwareUploaderS
 
 interface FirmwareUploaderApi {
     val state: StateFlow<FirmwareUploaderState>
-    suspend fun uploadAndInstall(clientFilePath: Path)
+    suspend fun uploadAndInstall(clientFilePath: Path): Result<Unit>
 }

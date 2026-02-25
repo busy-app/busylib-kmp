@@ -15,13 +15,9 @@ import kotlinx.io.Buffer
 import kotlinx.io.RawSink
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
-import kotlinx.io.files.SystemTemporaryDirectory
 import me.tatarka.inject.annotations.Inject
+import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateVersion
 import net.flipper.bridge.device.firmwareupdate.downloader.model.FirmwareDownloaderState
-import net.flipper.bridge.device.firmwareupdate.uploader.api.FirmwareUploaderApi
-import net.flipper.bsb.cloud.rest.api.BusyFirmwareDirectoryApi
-import net.flipper.bsb.cloud.rest.model.BsbFirmwareUpdateFileType
-import net.flipper.bsb.cloud.rest.model.BsbFirmwareUpdateTarget
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.TaggedLogger
@@ -36,20 +32,13 @@ import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 @SingleIn(BusyLibGraph::class)
 @ContributesBinding(BusyLibGraph::class, FirmwareDownloaderApi::class)
 class FirmwareDownloaderApiImpl(
-    private val busyFirmwareDirectoryApi: BusyFirmwareDirectoryApi,
-    private val firmwareUploaderApi: FirmwareUploaderApi,
     @KtorNetworkClientQualifier private val httpClient: HttpClient,
 ) : FirmwareDownloaderApi, LogTagProvider by TaggedLogger("FirmwareDownloaderApi") {
     private val _state = MutableStateFlow<FirmwareDownloaderState>(FirmwareDownloaderState.Pending)
     override val state: StateFlow<FirmwareDownloaderState> = _state.asStateFlow()
 
-    private fun getTemporalFile(): Path {
-        return Path(SystemTemporaryDirectory, "temp_firmware_update_file")
-    }
-
-    private fun getTemporalFileSink(): RawSink {
-        val file = getTemporalFile()
-        return SystemFileSystem.sink(path = file, append = false)
+    private fun getTemporalPath(): Path {
+        return Path("/Users/makeevrserg/Desktop/tempfile")
     }
 
     private suspend fun downloadIntoFile(
@@ -68,7 +57,6 @@ class FirmwareDownloaderApiImpl(
                             totalBytes = totalBytes
                         )
                     )
-                    info { "downloaded: $downloadedBytes/$totalBytes" }
                 }
                 .onEach { chunk ->
                     val buffer = Buffer().apply {
@@ -81,23 +69,9 @@ class FirmwareDownloaderApiImpl(
         }
     }
 
-    private suspend fun requireUpdateFileUrl(): String {
-        return busyFirmwareDirectoryApi.getFirmwareDirectory()
-            .getOrThrow()
-            .channels
-            .firstOrNull { channel -> channel.id == "development" }
-            ?.versions
-            ?.maxByOrNull { version -> version.timestamp }
-            ?.files
-            ?.filter { it.target == BsbFirmwareUpdateTarget.F21 }
-            ?.firstOrNull { it.type == BsbFirmwareUpdateFileType.UPDATE_TGZ }
-            ?.url
-            ?: error("No update file found")
-    }
-
-    override suspend fun downloadAndUpload(version: String) {
+    override suspend fun download(bsbUpdateVersion: BsbUpdateVersion.Url): Result<Path> {
         _state.emit(FirmwareDownloaderState.Pending)
-        try {
+        return try {
             _state.emit(
                 value = FirmwareDownloaderState.Downloading(
                     bytesReceived = 0L,
@@ -105,7 +79,8 @@ class FirmwareDownloaderApiImpl(
                 )
             )
 
-            httpClient.prepareGet(requireUpdateFileUrl()).execute { response ->
+            val temporalFilePath = getTemporalPath()
+            httpClient.prepareGet(bsbUpdateVersion.url).execute { response ->
                 val totalBytes = response.contentLength() ?: 0L
                 if (totalBytes == 0L) {
                     error { "#downloadAndUpload size cannot be 0" }
@@ -118,14 +93,18 @@ class FirmwareDownloaderApiImpl(
                     )
                 )
                 downloadIntoFile(
-                    sink = getTemporalFileSink(),
+                    sink = SystemFileSystem.sink(path = temporalFilePath, append = false),
                     bytesFlow = response.bodyAsChannel().asFlow(),
                     totalBytes = totalBytes
                 )
             }
+
             info { "#downloadAndUpload download finished!" }
             _state.emit(FirmwareDownloaderState.Pending)
-            firmwareUploaderApi.uploadAndInstall(getTemporalFile())
+            Result.success(temporalFilePath)
+        } catch (t: Throwable) {
+            error(t) { "#downloadAndUpload could not finish download" }
+            Result.failure(t)
         } finally {
             _state.emit(FirmwareDownloaderState.Pending)
         }
