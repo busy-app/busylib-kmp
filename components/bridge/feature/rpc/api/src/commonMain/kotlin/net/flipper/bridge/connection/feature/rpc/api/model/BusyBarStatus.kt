@@ -13,13 +13,10 @@ data class BusyBarStatus(
 
 @Serializable
 data class BusyBarStatusSystem(
-    @SerialName("serial_number") val serialNumber: String,
-    @SerialName("api_semver") val apiSemver: String,
-    @SerialName("branch") val branch: String,
-    @SerialName("version") val version: String,
-    @SerialName("build_date") val buildDate: String,
-    @SerialName("commit_hash") val commitHash: String,
-    @SerialName("uptime") val uptime: String,
+    @SerialName("api_semver")
+    val apiSemver: String,
+    @SerialName("uptime")
+    val uptime: String,
     @SerialName("boot_time")
     @Serializable(InstantUtcSerializer::class)
     val bootTime: Instant

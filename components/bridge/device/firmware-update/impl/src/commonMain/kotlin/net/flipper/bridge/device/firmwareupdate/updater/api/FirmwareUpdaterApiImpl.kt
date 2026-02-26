@@ -165,7 +165,7 @@ class FirmwareUpdaterApiImpl(
             fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
                 .map { status -> status.tryCast<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>() }
                 .flatMapLatest { status -> status?.featureApi?.updateVersionFlow.orNullable() }
-                .onEach { info { "#startUpdateInstall reset downloader statue: $it" } }
+                .onEach { info { "#startUpdateInstall version status: $it" } }
                 .filterNotNull()
                 .mapLatest { bsbUpdateVersion ->
                     info { "#startUpdateInstall reset downloader" }

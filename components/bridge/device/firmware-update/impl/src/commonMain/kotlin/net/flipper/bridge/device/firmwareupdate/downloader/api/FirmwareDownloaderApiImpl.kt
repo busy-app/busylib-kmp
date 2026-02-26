@@ -90,7 +90,6 @@ class FirmwareDownloaderApiImpl(
 
             val temporalFilePath = getTemporalPath()
             httpClient.prepareGet(bsbUpdateVersion.url).execute { response ->
-
                 val totalBytes = response.contentLength() ?: 0L
                 if (totalBytes == 0L) {
                     error { "#downloadAndUpload size cannot be 0" }
