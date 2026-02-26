@@ -42,7 +42,7 @@ import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.ktx.common.SingleJobMode
 import net.flipper.core.busylib.ktx.common.asSingleJobScope
 import net.flipper.core.busylib.ktx.common.cancelPrevious
-import net.flipper.core.busylib.ktx.common.mapCached
+import net.flipper.core.busylib.ktx.common.flatMapCached
 import net.flipper.core.busylib.ktx.common.merge
 import net.flipper.core.busylib.ktx.common.orNullable
 import net.flipper.core.busylib.ktx.common.tryCast
@@ -99,7 +99,7 @@ class FirmwareUpdaterApiImpl(
     }
         .onEach { info { "#previousVersionsFlow: $it" } }
         .merge(flowOf(null))
-        .shareIn(scope, SharingStarted.Eagerly, 1)
+        .shareIn(scope, SharingStarted.Lazily, 1)
 
     override val state: WrappedStateFlow<FwUpdateState> = combine(
         flow = fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
@@ -122,21 +122,23 @@ class FirmwareUpdaterApiImpl(
             )
         }
     )
-        .mapCached { currentFwUpdateState, previousFwUpdateState: FwUpdateState? ->
-            FwUpdateStateDiff.combineDiff(
-                previous = previousFwUpdateState,
-                latest = currentFwUpdateState,
-                currentVersion = fFeatureProvider.get<FDeviceInfoFeatureApi>()
-                    .filterIsInstance<FFeatureStatus.Supported<FDeviceInfoFeatureApi>>()
-                    .first()
-                    .featureApi
-                    .deviceVersionFlow
-                    .first(),
-                previousVersion = previousVersionsFlow.first()
-            )
+        .flatMapCached { currentFwUpdateState, previousFwUpdateState: FwUpdateState? ->
+            fFeatureProvider.get<FDeviceInfoFeatureApi>()
+                .filterIsInstance<FFeatureStatus.Supported<FDeviceInfoFeatureApi>>()
+                .first()
+                .featureApi
+                .deviceVersionFlow
+                .map { currentVersion ->
+                    FwUpdateStateDiff.combineDiff(
+                        previous = previousFwUpdateState,
+                        latest = currentFwUpdateState,
+                        currentVersion = currentVersion,
+                        previousVersion = previousVersionsFlow.first()
+                    )
+                }
         }
         .onEach { info { "#state FwUpdateStateDiff: $it" } }
-        .stateIn(scope, SharingStarted.Eagerly, FwUpdateState.Pending)
+        .stateIn(scope, SharingStarted.Lazily, FwUpdateState.Pending)
         .wrap()
 
     override suspend fun stopFirmwareUpdate(): CResult<Unit> {

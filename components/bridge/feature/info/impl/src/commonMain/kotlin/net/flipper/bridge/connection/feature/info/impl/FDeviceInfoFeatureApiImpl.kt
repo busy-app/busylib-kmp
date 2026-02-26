@@ -40,7 +40,7 @@ class FDeviceInfoFeatureApiImpl(
                 .getStatusFirmware()
         }.commitHash.let(::BusyBarVersion) // todo remove after version changed
         emit(version)
-    }.shareIn(scope, SharingStarted.Eagerly, 1)
+    }.shareIn(scope, SharingStarted.Lazily, 1)
 
     @Inject
     class FDeviceFeatureApiFactory : FDeviceFeatureApi.Factory {

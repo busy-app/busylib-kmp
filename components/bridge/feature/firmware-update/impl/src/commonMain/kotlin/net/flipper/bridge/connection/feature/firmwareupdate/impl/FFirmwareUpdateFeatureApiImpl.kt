@@ -145,7 +145,7 @@ class FFirmwareUpdateFeatureApiImpl(
 //                .filter { updateVersion -> updateVersion.version != currentVersion.version }
         }
         .onEach { info { "#updateVersionFlow: $it" } }
-        .shareIn(scope, SharingStarted.Eagerly, 1)
+        .shareIn(scope, SharingStarted.Lazily, 1)
 
     override val updateVersionChangelog: Flow<String> = updateVersionFlow
         .distinctUntilChanged()
@@ -165,7 +165,7 @@ class FFirmwareUpdateFeatureApiImpl(
             }
         }
         .onEach { info { "#updateVersionChangelog: $it" } }
-        .shareIn(scope, SharingStarted.Eagerly, 1)
+        .shareIn(scope, SharingStarted.Lazily, 1)
 
     @Inject
     class FDeviceFeatureApiFactory(

@@ -124,7 +124,7 @@ class FCombinedConnectionApiImpl(
                     .combine()
                     .flatten()
             }
-    }.stateIn(scope, SharingStarted.Eagerly, emptyList())
+    }.stateIn(scope, SharingStarted.WhileSubscribed(), emptyList())
 
     override fun getCapabilities(): StateFlow<List<FHTTPTransportCapability>> {
         return _capabilities
