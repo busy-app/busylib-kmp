@@ -33,9 +33,4 @@ buildConfig {
         "CRASH_APP_ON_FAILED_CHECKS",
         CURRENT_FLAVOR_TYPE.crashAppOnFailedChecks
     )
-    buildConfigField(
-        String::class.java,
-        "UPDATE_API_CHANNEL",
-        CURRENT_FLAVOR_TYPE.updateApiChannel
-    )
 }

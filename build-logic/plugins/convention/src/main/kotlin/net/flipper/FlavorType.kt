@@ -16,7 +16,6 @@ enum class FlavorType(
     val isSensitiveLogEnabled: Boolean = false,
     val isMockEnabled: Boolean = false,
     val isCloudEnabled: Boolean = false,
-    val updateApiChannel: String
 ) {
     DEBUG(
         isLogEnabled = true,
@@ -24,11 +23,9 @@ enum class FlavorType(
         isSensitiveLogEnabled = true,
         isVerboseLogEnabled = false,
         isMockEnabled = true,
-        isCloudEnabled = true,
-        updateApiChannel = "development"
+        isCloudEnabled = true
     ),
     PROD(
-        isLogEnabled = true,
-        updateApiChannel = "development"
+        isLogEnabled = true
     ),
 }

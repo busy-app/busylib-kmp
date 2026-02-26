@@ -26,6 +26,8 @@ kotlin {
 
         implementation(libs.kotlin.coroutines)
         implementation(libs.kotlin.serialization.json)
+        implementation(libs.settings)
+        implementation(libs.klibs.kstorage)
     }
 
     sourceSets.commonTest.dependencies {

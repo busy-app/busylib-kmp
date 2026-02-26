@@ -1,13 +1,14 @@
 package net.flipper.bridge.connection.feature.firmwareupdate.impl
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.shareIn
 import me.tatarka.inject.annotations.Inject
@@ -31,15 +32,17 @@ import net.flipper.bridge.connection.transport.common.api.serial.FHTTPDeviceApi
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPTransportCapability
 import net.flipper.bridge.connection.transport.common.api.serial.hasCapability
 import net.flipper.bsb.cloud.rest.api.BusyFirmwareDirectoryApi
+import net.flipper.bsb.cloud.rest.channel.api.BusyFirmwareDirectoryChannelApi
 import net.flipper.bsb.cloud.rest.model.BsbFirmwareUpdateFileType
 import net.flipper.bsb.cloud.rest.model.BsbFirmwareUpdateTarget
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.core.wrapper.CResult
+import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.WrappedSharedFlow
 import net.flipper.busylib.core.wrapper.toCResult
 import net.flipper.busylib.core.wrapper.wrap
-import net.flipper.busylib.kmp.components.core.buildkonfig.BuildKonfig
 import net.flipper.core.busylib.ktx.common.DefaultConsumable
+import net.flipper.core.busylib.ktx.common.asFlow
 import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.merge
 import net.flipper.core.busylib.ktx.common.orElse
@@ -53,14 +56,15 @@ import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
 
-@Suppress("UnusedPrivateProperty")
+@Suppress("UnusedPrivateProperty", "LongParameterList")
 class FFirmwareUpdateFeatureApiImpl(
     private val scope: CoroutineScope,
     private val rpcFeatureApi: FRpcFeatureApi,
     private val fEventsFeatureApi: FEventsFeatureApi?,
     private val deviceApi: FConnectedDeviceApi,
     private val busyFirmwareDirectoryApi: BusyFirmwareDirectoryApi,
-    private val fDeviceInfoFeatureApi: FDeviceInfoFeatureApi
+    private val fDeviceInfoFeatureApi: FDeviceInfoFeatureApi,
+    private val busyFirmwareDirectoryChannelApi: BusyFirmwareDirectoryChannelApi
 ) : FFirmwareUpdateFeatureApi, LogTagProvider {
     override val TAG: String = "FFirmwareUpdateFeatureApi"
 
@@ -98,31 +102,38 @@ class FFirmwareUpdateFeatureApiImpl(
     }
 
     private suspend fun requireVersionFromRestApi(): BsbUpdateVersion.Url {
-        return exponentialRetry {
-            runCatching {
-                val bsbFirmwareUpdateVersion = busyFirmwareDirectoryApi.getFirmwareDirectory()
-                    .getOrThrow()
-                    .channels
-                    .firstOrNull { channel -> channel.id == BuildKonfig.UPDATE_API_CHANNEL }
-                    ?.versions
-                    ?.maxByOrNull { version -> version.timestamp }
-                    ?: error("No ${BuildKonfig.UPDATE_API_CHANNEL} version found")
-                val updateFile = bsbFirmwareUpdateVersion
-                    .files
-                    .filter { it.target == BsbFirmwareUpdateTarget.F21 }
-                    .firstOrNull { it.type == BsbFirmwareUpdateFileType.UPDATE_TGZ }
-                    ?: error("No update file found")
-                BsbUpdateVersion.Url(
-                    version = bsbFirmwareUpdateVersion.version,
-                    url = updateFile.url,
-                    sha256 = updateFile.sha256,
-                    changelog = bsbFirmwareUpdateVersion.changelog
-                )
-            }.onFailure { t -> error(t) { "#requireVersionFromRestApi could not find version from REST api " } }
-        }
+        return busyFirmwareDirectoryChannelApi
+            .getChannelIdFlow()
+            .map { channelId -> channelId.id }
+            .mapLatest { channelId ->
+                exponentialRetry {
+                    runCatching {
+                        val bsbFirmwareUpdateVersion = busyFirmwareDirectoryApi
+                            .getFirmwareDirectory()
+                            .getOrThrow()
+                            .channels
+                            .firstOrNull { channel -> channel.id == channelId }
+                            ?.versions
+                            ?.maxByOrNull { version -> version.timestamp }
+                            ?: error("No $channelId version found")
+                        val updateFile = bsbFirmwareUpdateVersion
+                            .files
+                            .filter { it.target == BsbFirmwareUpdateTarget.F21 }
+                            .firstOrNull { it.type == BsbFirmwareUpdateFileType.UPDATE_TGZ }
+                            ?: error("No update file found")
+                        BsbUpdateVersion.Url(
+                            version = bsbFirmwareUpdateVersion.version,
+                            url = updateFile.url,
+                            sha256 = updateFile.sha256,
+                            changelog = bsbFirmwareUpdateVersion.changelog
+                        )
+                    }.onFailure { t -> error(t) { "#requireVersionFromRestApi could not find version from REST api " } }
+                }
+            }
+            .first()
     }
 
-    override val updateVersionFlow = fDeviceInfoFeatureApi
+    override val updateVersionFlow: WrappedFlow<BsbUpdateVersion> = fDeviceInfoFeatureApi
         .deviceVersionFlow
         .flatMapLatest { currentVersion ->
             deviceApi
@@ -146,8 +157,10 @@ class FFirmwareUpdateFeatureApiImpl(
         }
         .onEach { info { "#updateVersionFlow: $it" } }
         .shareIn(scope, SharingStarted.Lazily, 1)
+        .asFlow()
+        .wrap()
 
-    override val updateVersionChangelog: Flow<String> = updateVersionFlow
+    override val updateVersionChangelog: WrappedFlow<String> = updateVersionFlow
         .distinctUntilChanged()
         .map { busyBarVersion ->
             when (busyBarVersion) {
@@ -166,10 +179,13 @@ class FFirmwareUpdateFeatureApiImpl(
         }
         .onEach { info { "#updateVersionChangelog: $it" } }
         .shareIn(scope, SharingStarted.Lazily, 1)
+        .asFlow()
+        .wrap()
 
     @Inject
     class FDeviceFeatureApiFactory(
-        private val busyFirmwareDirectoryApi: BusyFirmwareDirectoryApi
+        private val busyFirmwareDirectoryApi: BusyFirmwareDirectoryApi,
+        private val busyFirmwareDirectoryChannelApi: BusyFirmwareDirectoryChannelApi
     ) : FDeviceFeatureApi.Factory {
         override suspend fun invoke(
             unsafeFeatureDeviceApi: FUnsafeDeviceFeatureApi,
@@ -193,7 +209,8 @@ class FFirmwareUpdateFeatureApiImpl(
                 scope = scope,
                 busyFirmwareDirectoryApi = busyFirmwareDirectoryApi,
                 deviceApi = connectedDevice,
-                fDeviceInfoFeatureApi = fDeviceInfoFeatureApi
+                fDeviceInfoFeatureApi = fDeviceInfoFeatureApi,
+                busyFirmwareDirectoryChannelApi = busyFirmwareDirectoryChannelApi
             )
         }
     }

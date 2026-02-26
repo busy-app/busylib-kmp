@@ -5,6 +5,9 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class BsbFirmwareUpdateChannel(
+    /**
+     * Don't use here [BsbFirmwareChannelId] as we don't know what channel names can be
+     */
     @SerialName("id")
     val id: String,
     @SerialName("title")
