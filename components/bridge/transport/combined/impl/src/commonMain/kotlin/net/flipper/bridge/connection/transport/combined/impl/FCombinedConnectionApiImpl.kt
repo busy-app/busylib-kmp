@@ -5,6 +5,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -12,6 +13,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.sync.Mutex
 import net.flipper.bridge.connection.connectionbuilder.api.FDeviceConfigToConnection
 import net.flipper.bridge.connection.transport.combined.FCombinedConnectionApi
@@ -24,7 +26,12 @@ import net.flipper.bridge.connection.transport.common.api.FInternalTransportConn
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoData
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
+import net.flipper.bridge.connection.transport.common.api.serial.FHTTPDeviceApi
+import net.flipper.bridge.connection.transport.common.api.serial.FHTTPTransportCapability
+import net.flipper.core.busylib.ktx.common.combine
+import net.flipper.core.busylib.ktx.common.flatten
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
+import net.flipper.core.busylib.ktx.common.tryCast
 import net.flipper.core.busylib.ktx.common.withLockResult
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
@@ -100,6 +107,27 @@ class FCombinedConnectionApiImpl(
                 currentConfig = config
             }
         }
+    }
+
+    private val _capabilities = connections.flatMapLatest { connectionsList ->
+        connectionsList
+            .map(AutoReconnectConnection::stateFlow)
+            .combine()
+            .flatMapLatest { connectionStatuses ->
+                connectionStatuses
+                    .asSequence()
+                    .filterIsInstance<FInternalTransportConnectionStatus.Connected>()
+                    .map { status -> status.deviceApi }
+                    .mapNotNull { deviceApi -> deviceApi.tryCast<FHTTPDeviceApi>() }
+                    .map(FHTTPDeviceApi::getCapabilities)
+                    .toList()
+                    .combine()
+                    .flatten()
+            }
+    }.stateIn(scope, SharingStarted.WhileSubscribed(), emptyList())
+
+    override fun getCapabilities(): StateFlow<List<FHTTPTransportCapability>> {
+        return _capabilities
     }
 
     private val httpEngine = FCombinedHttpEngine(scope, connections)

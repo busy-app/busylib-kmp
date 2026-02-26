@@ -22,7 +22,7 @@ enum class FlavorType(
         isSensitiveLogEnabled = true,
         isVerboseLogEnabled = false,
         isMockEnabled = true,
-        isCloudEnabled = true
+        isCloudEnabled = true,
     ),
     PROD(
         isLogEnabled = true,

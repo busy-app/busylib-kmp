@@ -131,7 +131,7 @@ class FFinishSetupFeatureApiImpl(
         flow = fBleFeatureApi?.getBleStatus().orNullable(),
         flow2 = fLinkedInfoOnDemandFeatureApi.status,
         flow3 = fWiFiFeatureApi.getWifiStatusFlow(),
-        flow4 = fFirmwareUpdateFeatureApi.getUpdateStatusFlow(),
+        flow4 = fFirmwareUpdateFeatureApi.updateStatusFlow,
         flow5 = setupFinishedBeforeKrate.cachedStateFlow,
         transform = ::TasksDependencies
     ).transformWhileSubscribed(
@@ -257,9 +257,9 @@ class FFinishSetupFeatureApiImpl(
         @Provides
         @IntoMap
         fun provideFeatureFactory(
-            fBleFeatureFactory: FDeviceFeatureApiFactory
+            fDeviceFeatureApiFactory: FDeviceFeatureApiFactory
         ): Pair<FDeviceFeature, FDeviceFeatureApi.Factory> {
-            return FDeviceFeature.FINISH_SETUP to fBleFeatureFactory
+            return FDeviceFeature.FINISH_SETUP to fDeviceFeatureApiFactory
         }
     }
 }

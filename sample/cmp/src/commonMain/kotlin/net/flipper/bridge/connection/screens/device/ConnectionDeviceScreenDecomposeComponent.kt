@@ -16,6 +16,7 @@ import net.flipper.bridge.connection.screens.device.composable.FPingComposable
 import net.flipper.bridge.connection.screens.device.viewmodel.FCurrentDeviceViewModel
 import net.flipper.bridge.connection.screens.device.viewmodel.FDevicesViewModel
 import net.flipper.bridge.connection.screens.device.viewmodel.PingViewModel
+import net.flipper.bridge.connection.screens.device.viewmodel.UpdaterViewModel
 import net.flipper.bridge.connection.screens.models.ConnectionRootConfig
 
 class ConnectionDeviceScreenDecomposeComponent(
@@ -23,7 +24,8 @@ class ConnectionDeviceScreenDecomposeComponent(
     private val navigation: StackNavigator<ConnectionRootConfig>,
     private val devicesViewModelProvider: () -> FDevicesViewModel,
     private val currentDeviceViewModelProvider: () -> FCurrentDeviceViewModel,
-    private val pingViewModelProvider: () -> PingViewModel
+    private val pingViewModelProvider: () -> PingViewModel,
+    private val updaterViewModelProvider: () -> UpdaterViewModel
 ) : ScreenDecomposeComponent(componentContext) {
     private val devicesViewModel = instanceKeeper.getOrCreate {
         devicesViewModelProvider.invoke()
@@ -33,6 +35,9 @@ class ConnectionDeviceScreenDecomposeComponent(
     }
     private val pingViewModel = instanceKeeper.getOrCreate {
         pingViewModelProvider.invoke()
+    }
+    private val updaterViewModel = instanceKeeper.getOrCreate {
+        updaterViewModelProvider.invoke()
     }
 
     @Composable
@@ -56,7 +61,8 @@ class ConnectionDeviceScreenDecomposeComponent(
                 onConnect = currentDeviceViewModel::connect,
                 toDashboard = {
                     navigation.pushNew(ConnectionRootConfig.Dashboard)
-                }
+                },
+                onStartDownloadUpdate = updaterViewModel::startUpdate
             )
         }
     }
@@ -64,7 +70,8 @@ class ConnectionDeviceScreenDecomposeComponent(
     class Factory(
         private val devicesViewModelProvider: () -> FDevicesViewModel,
         private val currentDeviceViewModelProvider: () -> FCurrentDeviceViewModel,
-        private val pingViewModelProvider: () -> PingViewModel
+        private val pingViewModelProvider: () -> PingViewModel,
+        private val updaterViewModelProvider: () -> UpdaterViewModel
     ) {
         operator fun invoke(
             componentContext: ComponentContext,
@@ -75,7 +82,8 @@ class ConnectionDeviceScreenDecomposeComponent(
                 navigation = navigation,
                 devicesViewModelProvider = devicesViewModelProvider,
                 currentDeviceViewModelProvider = currentDeviceViewModelProvider,
-                pingViewModelProvider = pingViewModelProvider
+                pingViewModelProvider = pingViewModelProvider,
+                updaterViewModelProvider = updaterViewModelProvider
             )
         }
     }

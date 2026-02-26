@@ -5,6 +5,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import net.flipper.bridge.connection.feature.battery.api.FDeviceBatteryInfoFeatureApi
@@ -15,6 +17,7 @@ import net.flipper.bridge.connection.feature.common.api.FOnDeviceReadyFeatureApi
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.feature.info.api.FDeviceInfoFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarStatusSystem
+import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarVersion
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import net.flipper.busylib.core.wrapper.CResult
@@ -442,17 +445,14 @@ class FBSBDeviceApiImplRaceConditionTest {
         override suspend fun getDeviceInfo(): CResult<BusyBarStatusSystem> {
             return Result.success(
                 BusyBarStatusSystem(
-                    serialNumber = "",
                     apiSemver = "6.3.0",
-                    branch = "",
-                    version = "1.0.0",
-                    buildDate = "",
-                    commitHash = "",
                     uptime = "",
                     bootTime = Instant.fromEpochMilliseconds(0)
                 )
             ).toCResult()
         }
+
+        override val deviceVersionFlow: Flow<BusyBarVersion> = emptyFlow()
     }
 
     private class TestBatteryFeatureApi : FDeviceBatteryInfoFeatureApi {

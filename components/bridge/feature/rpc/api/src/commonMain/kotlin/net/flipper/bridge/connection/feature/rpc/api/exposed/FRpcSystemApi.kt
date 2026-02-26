@@ -4,11 +4,13 @@ import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarStatus
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarStatusPower
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarStatusSystem
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarVersion
+import net.flipper.bridge.connection.feature.rpc.api.model.StatusFirmware
 
 interface FRpcSystemApi {
     suspend fun getVersion(): Result<BusyBarVersion>
 
     suspend fun getStatus(): Result<BusyBarStatus>
+    suspend fun getStatusFirmware(): Result<StatusFirmware>
     suspend fun getStatusSystem(): Result<BusyBarStatusSystem>
     suspend fun getStatusPower(): Result<BusyBarStatusPower>
 }

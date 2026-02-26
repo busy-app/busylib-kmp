@@ -3,6 +3,7 @@ package net.flipper.bsb.cloud.rest.api.internal
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bsb.cloud.rest.api.BusyCloudBarsApi
 import net.flipper.bsb.cloud.rest.api.BusyCloudRestApi
+import net.flipper.bsb.cloud.rest.api.BusyFirmwareDirectoryApi
 import net.flipper.busylib.core.di.BusyLibGraph
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
@@ -11,5 +12,6 @@ import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 @SingleIn(BusyLibGraph::class)
 @ContributesBinding(BusyLibGraph::class, BusyCloudRestApi::class)
 class BusyCloudRestApiImpl(
-    override val barsApi: BusyCloudBarsApi
+    override val barsApi: BusyCloudBarsApi,
+    override val busyFirmwareDirectoryApi: BusyFirmwareDirectoryApi
 ) : BusyCloudRestApi

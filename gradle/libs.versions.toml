@@ -32,8 +32,10 @@ vaniktech = "0.36.0" #https://github.com/vanniktech/gradle-maven-publish-plugin
 buildkonfig = "6.0.7"
 skie = "0.10.10" # https://github.com/touchlab/SKIE/releases
 bitvector = "0.9.2"
-
+kotlinx-crypto = "0.5.0"
 [libraries]
+kotlinx-crypto = { module = "dev.whyoleg.cryptography:cryptography-core", version.ref = "kotlinx-crypto" }
+kotlinx-crypto-provider = { module = "dev.whyoleg.cryptography:cryptography-provider-optimal", version.ref = "kotlinx-crypto" }
 vaniktech = { module = "com.vanniktech:gradle-maven-publish-plugin", version.ref = "vaniktech" }
 android-gradle = { module = "com.android.tools.build:gradle", version.ref = "agp" }
 kotlin-ksp-gradle = { module = "com.google.devtools.ksp:com.google.devtools.ksp.gradle.plugin", version.ref = "ksp" }
