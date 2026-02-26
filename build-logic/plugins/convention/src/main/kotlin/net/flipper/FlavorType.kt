@@ -8,7 +8,6 @@ package net.flipper
  * so in the end, when project will e KMP-full, this will be final version
  * of BuildKonfig field values
  */
-@Suppress("LongParameterList")
 enum class FlavorType(
     val isLogEnabled: Boolean = false,
     val isVerboseLogEnabled: Boolean = false,
@@ -23,9 +22,9 @@ enum class FlavorType(
         isSensitiveLogEnabled = true,
         isVerboseLogEnabled = false,
         isMockEnabled = true,
-        isCloudEnabled = true
+        isCloudEnabled = true,
     ),
     PROD(
-        isLogEnabled = true
+        isLogEnabled = true,
     ),
 }
