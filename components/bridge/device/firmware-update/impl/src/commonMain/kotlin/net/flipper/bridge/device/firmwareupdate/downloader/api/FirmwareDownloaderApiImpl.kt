@@ -10,32 +10,24 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onCompletion
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.io.Buffer
 import kotlinx.io.RawSink
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.files.SystemTemporaryDirectory
-import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateVersion
 import net.flipper.bridge.device.firmwareupdate.downloader.model.FirmwareDownloaderState
 import net.flipper.bridge.device.firmwareupdate.downloader.util.sha256
-import net.flipper.busylib.core.di.BusyLibGraph
+import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.TaggedLogger
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
-import net.flipper.core.ktor.di.qualifier.KtorNetworkClientQualifier
 import net.flipper.core.ktor.util.asFlow
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
-import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 
-@Inject
-@SingleIn(BusyLibGraph::class)
-@ContributesBinding(BusyLibGraph::class, FirmwareDownloaderApi::class)
-class FirmwareDownloaderApiImpl(
-    @KtorNetworkClientQualifier private val httpClient: HttpClient,
+internal class FirmwareDownloaderApiImpl(
+    private val httpClient: HttpClient,
 ) : FirmwareDownloaderApi, LogTagProvider by TaggedLogger("FirmwareDownloaderApi") {
     private val _state = MutableStateFlow<FirmwareDownloaderState>(FirmwareDownloaderState.Pending)
     override val state: StateFlow<FirmwareDownloaderState> = _state.asStateFlow()
@@ -49,29 +41,23 @@ class FirmwareDownloaderApiImpl(
         bytesFlow: Flow<ByteArray>,
         totalBytes: Long
     ) {
+        val buffer = Buffer()
         var downloadedBytes = 0L
-        try {
-            bytesFlow
-                .onEach { chunk ->
-                    downloadedBytes += chunk.size
-                    _state.emit(
-                        value = FirmwareDownloaderState.Downloading(
-                            bytesReceived = downloadedBytes,
-                            totalBytes = totalBytes
-                        )
+        bytesFlow
+            .onCompletion { _state.emit(FirmwareDownloaderState.Downloaded) }
+            .collect { chunk ->
+                downloadedBytes += chunk.size
+                buffer.clear()
+                buffer.write(chunk)
+                sink.write(buffer, buffer.size)
+                _state.emit(
+                    value = FirmwareDownloaderState.Downloading(
+                        bytesReceived = downloadedBytes,
+                        totalBytes = totalBytes
                     )
-                }
-                .onEach { chunk ->
-                    val buffer = Buffer().apply {
-                        write(chunk)
-                    }
-                    sink.write(buffer, buffer.size)
-                }
-                .onCompletion { _state.emit(FirmwareDownloaderState.Downloaded) }
-                .collect()
-        } finally {
-            sink.close()
-        }
+                )
+            }
+        buffer.close()
     }
 
     override fun reset() {
@@ -80,7 +66,7 @@ class FirmwareDownloaderApiImpl(
 
     override suspend fun download(bsbUpdateVersion: BsbUpdateVersion.Url): Result<Path> {
         _state.emit(FirmwareDownloaderState.Pending)
-        return try {
+        return runSuspendCatching {
             _state.emit(
                 value = FirmwareDownloaderState.Downloading(
                     bytesReceived = 0L,
@@ -102,11 +88,13 @@ class FirmwareDownloaderApiImpl(
                         totalBytes = totalBytes
                     )
                 )
-                downloadIntoFile(
-                    sink = SystemFileSystem.sink(path = temporalFilePath, append = false),
-                    bytesFlow = response.bodyAsChannel().asFlow(),
-                    totalBytes = totalBytes
-                )
+                SystemFileSystem.sink(path = temporalFilePath, append = false).use { sink ->
+                    downloadIntoFile(
+                        sink = sink,
+                        bytesFlow = response.bodyAsChannel().asFlow(),
+                        totalBytes = totalBytes
+                    )
+                }
             }
 
             info { "#downloadAndUpload download finished!" }
@@ -114,11 +102,10 @@ class FirmwareDownloaderApiImpl(
                 error("Downloaded file hash does not match expected hash")
             }
             _state.emit(FirmwareDownloaderState.Downloaded)
-            Result.success(temporalFilePath)
-        } catch (t: Throwable) {
+            temporalFilePath
+        }.onFailure { t ->
             error(t) { "#downloadAndUpload could not finish download" }
             _state.emit(FirmwareDownloaderState.Pending)
-            Result.failure(t)
         }
     }
 }

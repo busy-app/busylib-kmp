@@ -3,9 +3,9 @@ package net.flipper.bridge.device.firmwareupdate.updater.service
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.feature.firmwareupdate.api.FFirmwareUpdateFeatureApi
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
@@ -15,7 +15,6 @@ import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.UpdateStatus
 import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
 import net.flipper.busylib.core.di.BusyLibGraph
-import net.flipper.busylib.core.wrapper.toCResult
 import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.onLatest
 import net.flipper.core.busylib.ktx.common.orNullable
@@ -50,12 +49,12 @@ class CheckUpdateService(
                     UpdateStatus.Check.CheckResult.NOT_AVAILABLE -> true
                 }
             }
-            .onLatest {
+            .flatMapLatest { fFeatureProvider.get<FRpcFeatureApi>() }
+            .filterIsInstance<FFeatureStatus.Supported<FRpcFeatureApi>>()
+            .map { status -> status.featureApi }
+            .onLatest { featureApi ->
                 exponentialRetry {
-                    fFeatureProvider.get<FRpcFeatureApi>()
-                        .filterIsInstance<FFeatureStatus.Supported<FRpcFeatureApi>>()
-                        .first()
-                        .featureApi
+                    featureApi
                         .fRpcUpdaterApi
                         .startUpdateCheck()
                         .onFailure { throwable ->
@@ -64,8 +63,6 @@ class CheckUpdateService(
                             }
                         }
                         .map { }
-                        .toCResult()
-                        .toKotlinResult()
                 }
             }
             .launchIn(scope)

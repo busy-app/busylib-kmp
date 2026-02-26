@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
-import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
 import net.flipper.bridge.connection.feature.provider.api.get
@@ -21,7 +20,6 @@ import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
 import net.flipper.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
 import net.flipper.bridge.device.firmwareupdate.uploader.model.FirmwareUploaderState
-import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.ktx.common.onLatest
 import net.flipper.core.busylib.ktx.common.tryCast
 import net.flipper.core.busylib.log.LogTagProvider
@@ -29,13 +27,8 @@ import net.flipper.core.busylib.log.TaggedLogger
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
 import net.flipper.core.ktor.util.asFlow
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
-import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 
-@Inject
-@SingleIn(BusyLibGraph::class)
-@ContributesBinding(BusyLibGraph::class, FirmwareUploaderApi::class)
-class FirmwareUploaderApiImpl(
+internal class FirmwareUploaderApiImpl(
     private val fFeatureProvider: FFeatureProvider,
     private val fDeviceOrchestrator: FDeviceOrchestrator
 ) : FirmwareUploaderApi, LogTagProvider by TaggedLogger("FirmwareUploaderApi") {

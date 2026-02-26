@@ -1,5 +1,6 @@
 package net.flipper.bridge.device.firmwareupdate.updater.api
 
+import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.collect
@@ -25,11 +26,14 @@ import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
 import net.flipper.bridge.connection.feature.provider.api.get
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarVersion
+import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
 import net.flipper.bridge.device.firmwareupdate.downloader.api.FirmwareDownloaderApi
+import net.flipper.bridge.device.firmwareupdate.downloader.api.FirmwareDownloaderApiImpl
 import net.flipper.bridge.device.firmwareupdate.updater.diff.FwUpdateStateDiff
 import net.flipper.bridge.device.firmwareupdate.updater.mapper.FwUpdateStatusMapper
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateState
 import net.flipper.bridge.device.firmwareupdate.uploader.api.FirmwareUploaderApi
+import net.flipper.bridge.device.firmwareupdate.uploader.api.FirmwareUploaderApiImpl
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.core.wrapper.CResult
 import net.flipper.busylib.core.wrapper.WrappedStateFlow
@@ -46,18 +50,26 @@ import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.TaggedLogger
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
+import net.flipper.core.ktor.di.qualifier.KtorNetworkClientQualifier
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
-import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 
 @Inject
-@SingleIn(BusyLibGraph::class)
 @ContributesBinding(BusyLibGraph::class, FirmwareUpdaterApi::class)
 class FirmwareUpdaterApiImpl(
     private val fFeatureProvider: FFeatureProvider,
     private val scope: CoroutineScope,
-    private val firmwareDownloaderApi: FirmwareDownloaderApi,
-    private val firmwareUploaderApi: FirmwareUploaderApi,
+    private val fDeviceOrchestrator: FDeviceOrchestrator,
+    @KtorNetworkClientQualifier
+    private val httpClient: HttpClient,
 ) : FirmwareUpdaterApi, LogTagProvider by TaggedLogger("UpdaterApi") {
+    private val firmwareDownloaderApi: FirmwareDownloaderApi = FirmwareDownloaderApiImpl(
+        httpClient = httpClient
+    )
+    private val firmwareUploaderApi: FirmwareUploaderApi = FirmwareUploaderApiImpl(
+        fFeatureProvider = fFeatureProvider,
+        fDeviceOrchestrator = fDeviceOrchestrator
+    )
+
     private val lanUpdaterScope = scope.asSingleJobScope()
     private val previousVersionsFlow = flow {
         var previousVersionOrNull: BusyBarVersion? = null
