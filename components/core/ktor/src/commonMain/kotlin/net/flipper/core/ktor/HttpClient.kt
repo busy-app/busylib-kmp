@@ -18,6 +18,7 @@ import io.ktor.http.HttpHeaders
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 import net.flipper.core.busylib.log.TaggedLogger
+import net.flipper.core.busylib.log.info
 import kotlin.time.Duration.Companion.seconds
 
 private val ktorTimber = TaggedLogger("Ktor")
@@ -55,8 +56,7 @@ fun getHttpClient(
     install(Logging) {
         logger = object : Logger {
             override fun log(message: String) {
-                // 1
-//                ktorTimber.info { message }
+                ktorTimber.info { message }
             }
         }
         level = LogLevel.ALL
