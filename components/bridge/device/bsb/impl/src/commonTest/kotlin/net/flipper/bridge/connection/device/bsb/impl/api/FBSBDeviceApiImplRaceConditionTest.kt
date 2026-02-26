@@ -445,12 +445,7 @@ class FBSBDeviceApiImplRaceConditionTest {
         override suspend fun getDeviceInfo(): CResult<BusyBarStatusSystem> {
             return Result.success(
                 BusyBarStatusSystem(
-                    serialNumber = "",
                     apiSemver = "6.3.0",
-                    branch = "",
-                    version = "1.0.0",
-                    buildDate = "",
-                    commitHash = "",
                     uptime = "",
                     bootTime = Instant.fromEpochMilliseconds(0)
                 )
