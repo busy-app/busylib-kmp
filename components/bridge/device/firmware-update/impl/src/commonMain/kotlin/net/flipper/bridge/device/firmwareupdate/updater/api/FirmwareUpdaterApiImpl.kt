@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.job
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.feature.firmwareupdate.api.FFirmwareUpdateFeatureApi
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateVersion
@@ -105,12 +106,14 @@ class FirmwareUpdaterApiImpl(
         flow = fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
             .map { status -> status.tryCast<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>() }
             .map { status -> status?.featureApi }
-            .flatMapLatest { feature -> feature?.updateStatusFlow.orNullable() },
+            .flatMapLatest { feature -> feature?.updateStatusFlow.orNullable() }
+            .shareIn(scope, SharingStarted.WhileSubscribed(), 1),
         flow2 = fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
             .map { status -> status.tryCast<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>() }
             .map { status -> status?.featureApi }
             .flatMapLatest { feature -> feature?.updateVersionFlow.orNullable() }
-            .map { bsbUpdateVersion -> bsbUpdateVersion?.tryCast<BsbUpdateVersion.Url>() },
+            .map { bsbUpdateVersion -> bsbUpdateVersion?.tryCast<BsbUpdateVersion.Url>() }
+            .shareIn(scope, SharingStarted.WhileSubscribed(), 1),
         flow3 = firmwareDownloaderApi.state,
         flow4 = firmwareUploaderApi.state,
         transform = { updateStatus, bsbUrlUpdateVersion, downloaderState, uploaderState ->
@@ -122,6 +125,7 @@ class FirmwareUpdaterApiImpl(
             )
         }
     )
+        .onEach { info { "#state FwUpdateStatusMapper: $it" } }
         .flatMapCached { currentFwUpdateState, previousFwUpdateState: FwUpdateState? ->
             fFeatureProvider.get<FDeviceInfoFeatureApi>()
                 .filterIsInstance<FFeatureStatus.Supported<FDeviceInfoFeatureApi>>()
@@ -176,13 +180,13 @@ class FirmwareUpdaterApiImpl(
     override suspend fun startUpdateInstall(): CResult<Unit> {
         info { "#startUpdateInstall" }
         return lanUpdaterScope.withJobMode(SingleJobMode.CANCEL_PREVIOUS) {
+            coroutineContext.job.invokeOnCompletion { firmwareDownloaderApi.reset() }
             fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
                 .map { status -> status.tryCast<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>() }
                 .flatMapLatest { status -> status?.featureApi?.updateVersionFlow.orNullable() }
                 .onEach { info { "#startUpdateInstall version status: $it" } }
                 .filterNotNull()
                 .mapLatest { bsbUpdateVersion ->
-                    info { "#startUpdateInstall reset downloader" }
                     firmwareDownloaderApi.reset()
                     info { "#startUpdateInstall bsbUpdateVersion: $bsbUpdateVersion" }
                     when (bsbUpdateVersion) {

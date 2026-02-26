@@ -38,7 +38,7 @@ class FDeviceInfoFeatureApiImpl(
             rpcFeatureApi
                 .fRpcSystemApi
                 .getStatusFirmware()
-        }.commitHash.let(::BusyBarVersion) // todo remove after version changed
+        }.version.let(::BusyBarVersion)
         emit(version)
     }.shareIn(scope, SharingStarted.Lazily, 1)
 

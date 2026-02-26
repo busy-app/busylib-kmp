@@ -25,7 +25,11 @@ class BusyFirmwareDirectoryApiImpl(
 ) : BusyFirmwareDirectoryApi {
     override suspend fun getFirmwareDirectory(): Result<BusyFirmwareDirectory> {
         return runSuspendCatching(dispatcher) {
-            httpClient.get(BusyFirmwareDirectoryApi.URL).body<BusyFirmwareDirectory>()
+            httpClient.get(HOST).body<BusyFirmwareDirectory>()
         }
+    }
+
+    companion object {
+        internal const val HOST = "https://update.flipperzero.one/busybar-firmware/directory.json"
     }
 }

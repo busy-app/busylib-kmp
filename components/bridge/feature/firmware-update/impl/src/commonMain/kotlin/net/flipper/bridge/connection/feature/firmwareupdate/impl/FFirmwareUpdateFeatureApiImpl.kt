@@ -38,6 +38,7 @@ import net.flipper.busylib.core.wrapper.CResult
 import net.flipper.busylib.core.wrapper.WrappedSharedFlow
 import net.flipper.busylib.core.wrapper.toCResult
 import net.flipper.busylib.core.wrapper.wrap
+import net.flipper.busylib.kmp.components.core.buildkonfig.BuildKonfig
 import net.flipper.core.busylib.ktx.common.DefaultConsumable
 import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.merge
@@ -102,13 +103,13 @@ class FFirmwareUpdateFeatureApiImpl(
                 val bsbFirmwareUpdateVersion = busyFirmwareDirectoryApi.getFirmwareDirectory()
                     .getOrThrow()
                     .channels
-                    .firstOrNull { channel -> channel.id == "development" } // todo currently we need only development
+                    .firstOrNull { channel -> channel.id == BuildKonfig.UPDATE_API_CHANNEL }
                     ?.versions
                     ?.maxByOrNull { version -> version.timestamp }
-                    ?: error("No development version found")
+                    ?: error("No ${BuildKonfig.UPDATE_API_CHANNEL} version found")
                 val updateFile = bsbFirmwareUpdateVersion
                     .files
-                    .filter { it.target == BsbFirmwareUpdateTarget.F21 } // todo currently only F21
+                    .filter { it.target == BsbFirmwareUpdateTarget.F21 }
                     .firstOrNull { it.type == BsbFirmwareUpdateFileType.UPDATE_TGZ }
                     ?: error("No update file found")
                 BsbUpdateVersion.Url(
@@ -141,8 +142,7 @@ class FFirmwareUpdateFeatureApiImpl(
                             .map(BsbUpdateVersion::Default)
                     }
                 }
-            // todo commented to be able to test download
-//                .filter { updateVersion -> updateVersion.version != currentVersion.version }
+                .filter { updateVersion -> updateVersion.version != currentVersion.version }
         }
         .onEach { info { "#updateVersionFlow: $it" } }
         .shareIn(scope, SharingStarted.Lazily, 1)
