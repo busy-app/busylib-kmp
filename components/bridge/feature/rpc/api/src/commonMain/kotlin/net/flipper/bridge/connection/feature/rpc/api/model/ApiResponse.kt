@@ -13,6 +13,7 @@ data class SuccessResponse(
     val result: String
 ) : ApiResponse
 
+// hello world
 @Serializable
 data class ErrorResponse(
     @SerialName("error")
