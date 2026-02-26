@@ -34,11 +34,14 @@ class FDeviceInfoFeatureApiImpl(
     }
 
     override val deviceVersionFlow: Flow<BusyBarVersion> = flow {
-        val version = exponentialRetry {
+        val statusFirmware = exponentialRetry {
             rpcFeatureApi
                 .fRpcSystemApi
                 .getStatusFirmware()
-        }.version.let(::BusyBarVersion)
+        }
+        val version = statusFirmware
+            .version
+            .let(::BusyBarVersion)
         emit(version)
     }.shareIn(scope, SharingStarted.Lazily, 1)
 
