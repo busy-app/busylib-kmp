@@ -38,7 +38,6 @@ class FRpcAssetsApiImpl(
     ): Result<SuccessResponse> {
         return runSuspendCatching(dispatcher) {
             httpClient.post("/api/display/draw") {
-                contentType(ContentType.Application.Json)
                 setBody(request)
             }.body<SuccessResponse>()
         }

@@ -5,8 +5,6 @@ import io.ktor.client.call.body
 import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
-import io.ktor.http.ContentType
-import io.ktor.http.contentType
 import kotlinx.coroutines.CoroutineDispatcher
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcWifiApi
 import net.flipper.bridge.connection.feature.rpc.api.model.ConnectRequestConfig
@@ -32,7 +30,6 @@ class FRpcWifiApiImpl(
     override suspend fun connectWifi(config: ConnectRequestConfig): Result<SuccessResponse> {
         return runSuspendCatching(dispatcher) {
             httpClient.post("/api/wifi/connect") {
-                contentType(ContentType.Application.Json)
                 setBody(config)
             }.body<SuccessResponse>()
         }
