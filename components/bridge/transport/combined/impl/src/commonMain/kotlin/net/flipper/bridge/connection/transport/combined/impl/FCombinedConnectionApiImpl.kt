@@ -119,7 +119,6 @@ class FCombinedConnectionApiImpl(
                     .filterIsInstance<FInternalTransportConnectionStatus.Connected>()
                     .map { status -> status.deviceApi }
                     .mapNotNull { deviceApi -> deviceApi.tryCast<FHTTPDeviceApi>() }
-                    .map { fHTTPDeviceApi -> fHTTPDeviceApi }
                     .map(FHTTPDeviceApi::getCapabilities)
                     .toList()
                     .combine()

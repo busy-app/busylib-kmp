@@ -5,6 +5,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.job
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import me.tatarka.inject.annotations.Assisted
@@ -19,6 +20,7 @@ import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.DrawRequest
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.busylib.core.di.BusyLibGraph
+import net.flipper.core.busylib.ktx.common.DelicateSingleJobApi
 import net.flipper.core.busylib.ktx.common.SingleJobMode
 import net.flipper.core.busylib.ktx.common.asSingleJobScope
 import net.flipper.core.busylib.ktx.common.exponentialRetry
@@ -39,24 +41,27 @@ class FOnCallFeatureApiImpl(
     private val singleJobScope = scope.asSingleJobScope()
     private var startJob: Job? = null // todo replace with singleJobScope job
 
+    @OptIn(DelicateSingleJobApi::class)
     override suspend fun start() {
-        startJob = singleJobScope.launch(SingleJobMode.SKIP_IF_RUNNING) {
-            try {
-                exponentialRetry(
-                    initialDelay = INITIAL_RETRY_DELAY,
-                    maxDelay = MAX_RETRY_DELAY
-                ) {
-                    performStartAttempt()
-                }
-                awaitCancellation()
-            } finally {
-                withContext(NonCancellable) {
-                    withTimeoutOrNull(3.seconds) {
-                        performStopAttempt()
+        startJob = runCatching {
+            singleJobScope.withJobMode(SingleJobMode.SKIP_IF_RUNNING) {
+                try {
+                    exponentialRetry(
+                        initialDelay = INITIAL_RETRY_DELAY,
+                        maxDelay = MAX_RETRY_DELAY
+                    ) {
+                        performStartAttempt()
+                    }
+                    awaitCancellation()
+                } finally {
+                    withContext(NonCancellable) {
+                        withTimeoutOrNull(3.seconds) {
+                            performStopAttempt()
+                        }
                     }
                 }
-            }
-        }
+            }.job
+        }.getOrNull()
     }
 
     override suspend fun stop() {

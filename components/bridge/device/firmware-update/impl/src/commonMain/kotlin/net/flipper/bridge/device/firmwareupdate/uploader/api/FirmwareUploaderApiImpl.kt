@@ -51,7 +51,7 @@ class FirmwareUploaderApiImpl(
 
     private suspend fun awaitDeviceConnected() {
         fDeviceOrchestrator.getState()
-            .onEach { info { "#awaitDeviceDisconnected: $it" } }
+            .onEach { info { "#awaitDeviceConnected: $it" } }
             .filterIsInstance<FDeviceConnectStatus.Connected>()
             .first()
     }

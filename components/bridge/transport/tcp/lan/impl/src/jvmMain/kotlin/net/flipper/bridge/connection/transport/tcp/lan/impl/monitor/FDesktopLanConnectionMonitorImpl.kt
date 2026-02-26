@@ -8,6 +8,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.job
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
@@ -49,13 +50,13 @@ class FDesktopLanConnectionMonitorImpl(
         listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting)
 
         // Start monitoring coroutine
-        monitoringJob = singleJobScope.launch(SingleJobMode.CANCEL_PREVIOUS) {
+        monitoringJob = singleJobScope.withJobMode(SingleJobMode.CANCEL_PREVIOUS) {
             info { "Starting connection monitoring for host: ${config.host}" }
             while (isActive) {
                 checkHostAvailability(scope, deviceApi)
                 delay(MONITORING_INTERVAL)
             }
-        }
+        }.job
     }
 
     private suspend fun checkHostAvailability(

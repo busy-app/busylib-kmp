@@ -51,7 +51,6 @@ import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
-import kotlin.collections.filter
 
 @Suppress("UnusedPrivateProperty")
 class FFirmwareUpdateFeatureApiImpl(
@@ -103,13 +102,13 @@ class FFirmwareUpdateFeatureApiImpl(
                 val bsbFirmwareUpdateVersion = busyFirmwareDirectoryApi.getFirmwareDirectory()
                     .getOrThrow()
                     .channels
-                    .firstOrNull { channel -> channel.id == "development" }
+                    .firstOrNull { channel -> channel.id == "development" } // todo currently we need only development
                     ?.versions
                     ?.maxByOrNull { version -> version.timestamp }
                     ?: error("No development version found")
                 val updateFile = bsbFirmwareUpdateVersion
                     .files
-                    .filter { it.target == BsbFirmwareUpdateTarget.F21 }
+                    .filter { it.target == BsbFirmwareUpdateTarget.F21 } // todo currently only F21
                     .firstOrNull { it.type == BsbFirmwareUpdateFileType.UPDATE_TGZ }
                     ?: error("No update file found")
                 BsbUpdateVersion.Url(
@@ -118,7 +117,7 @@ class FFirmwareUpdateFeatureApiImpl(
                     sha256 = updateFile.sha256,
                     changelog = bsbFirmwareUpdateVersion.changelog
                 )
-            }
+            }.onFailure { t -> error(t) { "#requireVersionFromRestApi could not find version from REST api " } }
         }
     }
 
@@ -142,6 +141,7 @@ class FFirmwareUpdateFeatureApiImpl(
                             .map(BsbUpdateVersion::Default)
                     }
                 }
+            // todo commented to be able to test download
 //                .filter { updateVersion -> updateVersion.version != currentVersion.version }
         }
         .onEach { info { "#updateVersionFlow: $it" } }

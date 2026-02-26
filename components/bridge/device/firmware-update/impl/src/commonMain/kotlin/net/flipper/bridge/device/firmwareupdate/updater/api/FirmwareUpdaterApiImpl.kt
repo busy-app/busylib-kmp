@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
@@ -34,6 +35,7 @@ import net.flipper.busylib.core.wrapper.CResult
 import net.flipper.busylib.core.wrapper.WrappedStateFlow
 import net.flipper.busylib.core.wrapper.toCResult
 import net.flipper.busylib.core.wrapper.wrap
+import net.flipper.core.busylib.ktx.common.SingleJobMode
 import net.flipper.core.busylib.ktx.common.asSingleJobScope
 import net.flipper.core.busylib.ktx.common.cancelPrevious
 import net.flipper.core.busylib.ktx.common.mapCached
@@ -126,15 +128,30 @@ class FirmwareUpdaterApiImpl(
         .wrap()
 
     override suspend fun stopFirmwareUpdate(): CResult<Unit> {
-        lanUpdaterScope.cancelPrevious()
-        return fFeatureProvider.get<FRpcFeatureApi>()
-            .filterIsInstance<FFeatureStatus.Supported<FRpcFeatureApi>>()
-            .first()
-            .featureApi
-            .fRpcUpdaterApi
-            .startUpdateAbortDownload()
-            .map { }
-            .toCResult()
+        val currentUpdateVersion = fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
+            .map { status -> status.tryCast<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>() }
+            .map { status -> status?.featureApi }
+            .flatMapLatest { feature -> feature?.updateVersionFlow.orNullable() }
+            .firstOrNull()
+        return when (currentUpdateVersion) {
+            is BsbUpdateVersion.Default -> {
+                fFeatureProvider.get<FRpcFeatureApi>()
+                    .filterIsInstance<FFeatureStatus.Supported<FRpcFeatureApi>>()
+                    .first()
+                    .featureApi
+                    .fRpcUpdaterApi
+                    .startUpdateAbortDownload()
+                    .map { }
+                    .toCResult()
+            }
+
+            is BsbUpdateVersion.Url -> {
+                lanUpdaterScope.cancelPrevious().join()
+                CResult.success(Unit)
+            }
+
+            null -> CResult.success(Unit)
+        }
     }
 
     /**
@@ -144,40 +161,44 @@ class FirmwareUpdaterApiImpl(
      */
     override suspend fun startUpdateInstall(): CResult<Unit> {
         info { "#startUpdateInstall" }
-        return fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
-            .map { status -> status.tryCast<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>() }
-            .flatMapLatest { status -> status?.featureApi?.updateVersionFlow.orNullable() }
-            .filterNotNull()
-            .mapLatest { bsbUpdateVersion ->
-                firmwareDownloaderApi.reset()
-                info { "#startUpdateInstall bsbUpdateVersion: $bsbUpdateVersion" }
-                when (bsbUpdateVersion) {
-                    is BsbUpdateVersion.Default -> {
-                        fFeatureProvider.get<FRpcFeatureApi>()
-                            .filterIsInstance<FFeatureStatus.Supported<FRpcFeatureApi>>()
-                            .first()
-                            .featureApi
-                            .fRpcUpdaterApi
-                            .startUpdateInstall(bsbUpdateVersion.version)
-                            .map { }
-                    }
+        return lanUpdaterScope.withJobMode(SingleJobMode.CANCEL_PREVIOUS) {
+            fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
+                .map { status -> status.tryCast<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>() }
+                .flatMapLatest { status -> status?.featureApi?.updateVersionFlow.orNullable() }
+                .onEach { info { "#startUpdateInstall reset downloader statue: $it" } }
+                .filterNotNull()
+                .mapLatest { bsbUpdateVersion ->
+                    info { "#startUpdateInstall reset downloader" }
+                    firmwareDownloaderApi.reset()
+                    info { "#startUpdateInstall bsbUpdateVersion: $bsbUpdateVersion" }
+                    when (bsbUpdateVersion) {
+                        is BsbUpdateVersion.Default -> {
+                            fFeatureProvider.get<FRpcFeatureApi>()
+                                .filterIsInstance<FFeatureStatus.Supported<FRpcFeatureApi>>()
+                                .first()
+                                .featureApi
+                                .fRpcUpdaterApi
+                                .startUpdateInstall(bsbUpdateVersion.version)
+                                .map { }
+                        }
 
-                    is BsbUpdateVersion.Url -> {
-                        firmwareDownloaderApi.download(bsbUpdateVersion)
-                            .onSuccess { info { "#startUpdateInstall download finished" } }
-                            .onFailure { t -> error(t) { "#startUpdateInstall could not download" } }
-                            .mapCatching { path ->
-                                info { "#startUpdateInstall start uploading" }
-                                firmwareUploaderApi
-                                    .uploadAndInstall(path)
-                                    .onFailure { t -> error(t) { "#startUpdateInstall could not upload" } }
-                                    .getOrThrow()
-                            }
-                            .also { firmwareDownloaderApi.reset() }
+                        is BsbUpdateVersion.Url -> {
+                            firmwareDownloaderApi.download(bsbUpdateVersion)
+                                .onSuccess { info { "#startUpdateInstall download finished" } }
+                                .onFailure { t -> error(t) { "#startUpdateInstall could not download" } }
+                                .mapCatching { path ->
+                                    info { "#startUpdateInstall start uploading" }
+                                    firmwareUploaderApi
+                                        .uploadAndInstall(path)
+                                        .onFailure { t -> error(t) { "#startUpdateInstall could not upload" } }
+                                        .getOrThrow()
+                                }
+                                .also { firmwareDownloaderApi.reset() }
+                        }
                     }
                 }
-            }
-            .map { result -> result.toCResult() }
-            .first()
+                .map { result -> result.toCResult() }
+                .first()
+        }.await()
     }
 }

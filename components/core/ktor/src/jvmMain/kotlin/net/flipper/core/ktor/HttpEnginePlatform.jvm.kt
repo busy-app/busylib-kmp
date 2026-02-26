@@ -14,7 +14,7 @@ actual fun getPlatformEngineFactory(): HttpClientEngineFactory<*> {
             return OkHttp.create {
                 block()
                 preconfigured = OkHttpClient.Builder()
-                    .protocols(listOf(Protocol.HTTP_1_1))
+                    .protocols(listOf(Protocol.HTTP_1_1, Protocol.HTTP_2, Protocol.HTTP_3))
                     .pingInterval(WS_PING_INTERVAL.inWholeMilliseconds, TimeUnit.MILLISECONDS)
                     .build()
             }
