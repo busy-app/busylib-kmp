@@ -11,10 +11,12 @@ import net.flipper.bridge.connection.screens.device.ConnectionDeviceScreenDecomp
 import net.flipper.bridge.connection.screens.device.viewmodel.FCurrentDeviceViewModel
 import net.flipper.bridge.connection.screens.device.viewmodel.FDevicesViewModel
 import net.flipper.bridge.connection.screens.device.viewmodel.PingViewModel
+import net.flipper.bridge.connection.screens.device.viewmodel.UpdaterViewModel
 import net.flipper.bridge.connection.screens.search.ConnectionSearchDecomposeComponent
 import net.flipper.bridge.connection.screens.search.ConnectionSearchViewModel
 import net.flipper.bridge.connection.screens.utils.PermissionChecker
 import net.flipper.bridge.connection.service.api.FConnectionService
+import net.flipper.bridge.device.firmwareupdate.updater.api.FirmwareUpdaterApi
 import net.flipper.busylib.BUSYLib
 
 fun getRootDecomposeComponent(
@@ -30,7 +32,8 @@ fun getRootDecomposeComponent(
         orchestrator = busyLib.orchestrator,
         featureProvider = busyLib.featureProvider,
         searchViewModelProvider = searchViewModelProvider,
-        fConnectionService = busyLib.connectionService
+        fConnectionService = busyLib.connectionService,
+        firmwareUpdaterApi = busyLib.firmwareUpdaterApi
     ).invoke(componentContext)
 }
 
@@ -41,7 +44,8 @@ private fun getRootDecomposeComponentFactory(
     orchestrator: FDeviceOrchestrator,
     featureProvider: FFeatureProvider,
     fConnectionService: FConnectionService,
-    searchViewModelProvider: () -> ConnectionSearchViewModel
+    searchViewModelProvider: () -> ConnectionSearchViewModel,
+    firmwareUpdaterApi: FirmwareUpdaterApi
 ): ConnectionRootDecomposeComponent.Factory {
     return ConnectionRootDecomposeComponent.Factory(
         permissionChecker = permissionChecker,
@@ -53,6 +57,7 @@ private fun getRootDecomposeComponentFactory(
             orchestrator = orchestrator,
             featureProvider = featureProvider,
             fService = fConnectionService,
+            firmwareUpdaterApi = firmwareUpdaterApi
         ),
         dashboardDecomposeComponentFactory = getDashboardDecomposeComponentFactory(featureProvider)
     )
@@ -70,7 +75,8 @@ private fun getConnectionDeviceScreenDecomposeComponentFactory(
     persistedStorage: FDevicePersistedStorage,
     orchestrator: FDeviceOrchestrator,
     featureProvider: FFeatureProvider,
-    fService: FConnectionService
+    fService: FConnectionService,
+    firmwareUpdaterApi: FirmwareUpdaterApi
 ): ConnectionDeviceScreenDecomposeComponent.Factory {
     return ConnectionDeviceScreenDecomposeComponent.Factory(
         devicesViewModelProvider = { FDevicesViewModel(persistedStorage) },
@@ -81,7 +87,9 @@ private fun getConnectionDeviceScreenDecomposeComponentFactory(
                 persistedStorage
             )
         },
-        pingViewModelProvider = { PingViewModel(featureProvider, orchestrator) }
+        pingViewModelProvider = { PingViewModel(featureProvider, orchestrator) },
+        updaterViewModelProvider = { UpdaterViewModel(firmwareUpdaterApi) }
+
     )
 }
 

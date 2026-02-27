@@ -6,8 +6,15 @@ import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
+import io.ktor.http.content.OutgoingContent
+import io.ktor.http.contentType
+import io.ktor.utils.io.ByteWriteChannel
+import io.ktor.utils.io.writeFully
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.flow.Flow
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcUpdaterApi
+import net.flipper.bridge.connection.feature.rpc.api.model.ApiResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.AutoUpdate
 import net.flipper.bridge.connection.feature.rpc.api.model.GetUpdateChangelogResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
@@ -21,9 +28,9 @@ class FRpcUpdaterApiImpl(
     private val dispatcher: CoroutineDispatcher,
     private val objectCache: ObjectCache
 ) : FRpcUpdaterApi {
-    override suspend fun startUpdateCheck(): Result<SuccessResponse> {
+    override suspend fun startUpdateCheck(): Result<ApiResponse> {
         return runSuspendCatching(dispatcher) {
-            httpClient.post("/api/update/check").body<SuccessResponse>()
+            httpClient.post("/api/update/check").body<ApiResponse>()
         }
     }
 
@@ -69,5 +76,33 @@ class FRpcUpdaterApiImpl(
         return runSuspendCatching(dispatcher) {
             httpClient.post("/api/update/abort_download").body<SuccessResponse>()
         }
+    }
+
+    override suspend fun postUpdate(
+        bytesFlow: Flow<ByteArray>,
+        totalBytes: Long,
+        onTransferred: (Long) -> Unit
+    ): Result<Unit> {
+        return runSuspendCatching(dispatcher) {
+            httpClient.post("/api/update") {
+                contentType(ContentType.Application.OctetStream)
+
+                setBody(
+                    object : OutgoingContent.WriteChannelContent() {
+                        override val contentLength: Long = totalBytes
+
+                        override suspend fun writeTo(channel: ByteWriteChannel) {
+                            var transferred = 0L
+
+                            bytesFlow.collect { byteArray ->
+                                channel.writeFully(byteArray)
+                                transferred += byteArray.size
+                                onTransferred(transferred)
+                            }
+                        }
+                    }
+                )
+            }
+        }.map { }
     }
 }

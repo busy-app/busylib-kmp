@@ -48,7 +48,7 @@ suspend fun main() {
     val busyLib = BUSYLibDesktop.build(
         scope = applicationScope,
         principalApi = UserPrincipalApiNoop(
-            getUserPrincipal(hostApi)
+            defaultState = getUserPrincipal(hostApi)
         ),
         busyLibBarsApi = BUSYLibBarsApiNoop(),
         persistedStorage = persistedStorage,

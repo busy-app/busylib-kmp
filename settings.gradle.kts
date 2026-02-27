@@ -53,6 +53,8 @@ include(
     ":components:bridge:device:bsb:impl",
     ":components:bridge:device:firstpair:connection:api",
     ":components:bridge:device:firstpair:connection:impl",
+    ":components:bridge:device:firmware-update:api",
+    ":components:bridge:device:firmware-update:impl",
     ":components:bridge:orchestrator:api",
     ":components:bridge:orchestrator:impl",
     ":components:bridge:service:api",

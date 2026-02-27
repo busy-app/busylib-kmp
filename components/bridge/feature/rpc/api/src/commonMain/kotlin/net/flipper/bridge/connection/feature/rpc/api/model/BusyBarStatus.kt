@@ -7,19 +7,27 @@ import kotlin.time.Instant
 
 @Serializable
 data class BusyBarStatus(
+    @SerialName("device") val device: BusyBarStatusDevice,
+    @SerialName("firmware") val firmware: StatusFirmware,
     @SerialName("system") val system: BusyBarStatusSystem,
     @SerialName("power") val power: BusyBarStatusPower
 )
 
 @Serializable
-data class BusyBarStatusSystem(
+data class BusyBarStatusDevice(
     @SerialName("serial_number") val serialNumber: String,
-    @SerialName("api_semver") val apiSemver: String,
-    @SerialName("branch") val branch: String,
-    @SerialName("version") val version: String,
-    @SerialName("build_date") val buildDate: String,
-    @SerialName("commit_hash") val commitHash: String,
-    @SerialName("uptime") val uptime: String,
+    @SerialName("usb_mac") val usbMac: String,
+    @SerialName("wifi_mac") val wifiMac: String,
+    @SerialName("ble_mac") val bleMac: String,
+    @SerialName("otp_valid") val otpValid: Boolean
+)
+
+@Serializable
+data class BusyBarStatusSystem(
+    @SerialName("api_semver")
+    val apiSemver: String,
+    @SerialName("uptime")
+    val uptime: String,
     @SerialName("boot_time")
     @Serializable(InstantUtcSerializer::class)
     val bootTime: Instant

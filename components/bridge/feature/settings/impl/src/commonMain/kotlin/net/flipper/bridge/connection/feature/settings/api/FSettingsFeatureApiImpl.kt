@@ -23,8 +23,10 @@ import net.flipper.bridge.connection.feature.rpc.api.model.NameInfo
 import net.flipper.bridge.connection.feature.rpc.api.model.toBsbBrightnessInfo
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.busylib.core.di.BusyLibGraph
+import net.flipper.busylib.core.wrapper.CResult
 import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.WrappedStateFlow
+import net.flipper.busylib.core.wrapper.toCResult
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.ktx.common.DefaultConsumable
 import net.flipper.core.busylib.ktx.common.asFlow
@@ -104,26 +106,31 @@ class FSettingsFeatureApiImpl(
             .wrap()
     }
 
-    override suspend fun setVolume(volume: Int): Result<Unit> {
+    override suspend fun setVolume(volume: Int): CResult<Unit> {
         return rpcFeatureApi.fRpcSettingsApi
             .setAudioVolume(volume)
             .map { }
+            .toCResult()
     }
 
     override fun getDeviceName(): WrappedStateFlow<String> {
         return deviceNameFlow.wrap()
     }
 
-    override suspend fun setDeviceName(name: String): Result<Unit> {
-        return rpcFeatureApi.fRpcSettingsApi.setName(NameInfo(name)).map { }
+    override suspend fun setDeviceName(name: String): CResult<Unit> {
+        return rpcFeatureApi.fRpcSettingsApi
+            .setName(NameInfo(name))
+            .map { }
+            .toCResult()
     }
 
     override suspend fun setBrightness(
         value: BsbBrightness,
-    ): Result<Unit> {
+    ): CResult<Unit> {
         return rpcFeatureApi.fRpcSettingsApi
             .setDisplayBrightness(value = value)
             .map { }
+            .toCResult()
     }
 
     @Inject

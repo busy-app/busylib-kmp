@@ -19,6 +19,7 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 import net.flipper.core.busylib.log.TaggedLogger
 import net.flipper.core.busylib.log.info
+import net.flipper.core.ktor.util.tryMinimizeOctetStreamBody
 import kotlin.time.Duration.Companion.seconds
 
 private val ktorTimber = TaggedLogger("Ktor")
@@ -56,7 +57,8 @@ fun getHttpClient(
     install(Logging) {
         logger = object : Logger {
             override fun log(message: String) {
-                ktorTimber.info { message }
+                val mappedMessage = tryMinimizeOctetStreamBody(message)
+                ktorTimber.info { mappedMessage }
             }
         }
         level = LogLevel.ALL

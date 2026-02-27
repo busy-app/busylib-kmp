@@ -20,6 +20,7 @@ import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
 import net.flipper.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
 import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
 import net.flipper.busylib.core.di.BusyLibGraph
+import net.flipper.core.busylib.ktx.common.SingleJobMode
 import net.flipper.core.busylib.ktx.common.asSingleJobScope
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.busylib.log.LogTagProvider
@@ -41,7 +42,7 @@ class CloudProvisioningWatcher(
     private val singleJobScope = scope.asSingleJobScope()
 
     override fun onLaunch() {
-        singleJobScope.launch {
+        singleJobScope.withJobMode(SingleJobMode.CANCEL_PREVIOUS) {
             combine(
                 orchestrator.getState(),
                 featureProvider.get<FRpcCriticalFeatureApi>()

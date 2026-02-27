@@ -5,9 +5,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
+import net.flipper.bridge.connection.feature.info.api.FDeviceInfoFeatureApi
 import net.flipper.bridge.connection.feature.oncall.api.FOnCallFeatureApi
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
@@ -35,6 +37,14 @@ class DashboardViewModel(
     val volumeFlow = featureProvider
         .get(FSettingsFeatureApi::class)
         .getResource { it.getVolumeFlow() }
+
+    val deviceInfoFlow = featureProvider
+        .get(FDeviceInfoFeatureApi::class)
+        .getResource { flow { emit(it.getDeviceInfo()) } }
+
+    val deviceVersionFlow = featureProvider
+        .get(FDeviceInfoFeatureApi::class)
+        .getResource { it.deviceVersionFlow }
 
     fun startOnCall() {
         viewModelScope.launch(FlipperDispatchers.default) {

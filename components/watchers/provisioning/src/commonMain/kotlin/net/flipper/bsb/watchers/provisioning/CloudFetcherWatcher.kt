@@ -11,6 +11,7 @@ import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
 import net.flipper.bsb.watchers.provisioning.api.CloudFetcher
 import net.flipper.bsb.watchers.provisioning.api.model.CloudProvisioningBar
 import net.flipper.busylib.core.di.BusyLibGraph
+import net.flipper.core.busylib.ktx.common.SingleJobMode
 import net.flipper.core.busylib.ktx.common.asSingleJobScope
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
@@ -31,7 +32,7 @@ class CloudFetcherWatcher(
     private val singleJobScope = scope.asSingleJobScope()
 
     override fun onLaunch() {
-        singleJobScope.launch {
+        singleJobScope.withJobMode(SingleJobMode.CANCEL_PREVIOUS) {
             combine(
                 persistedStorage.getAllDevicesFlow(),
                 cloudFetcher.getBarsFlow()

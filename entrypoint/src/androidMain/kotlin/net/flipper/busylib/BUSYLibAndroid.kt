@@ -8,10 +8,10 @@ import kotlinx.coroutines.CoroutineScope
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.api.scanner.FlipperScanner
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
-import net.flipper.bridge.connection.feature.firmwareupdate.updater.api.UpdaterApi
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
 import net.flipper.bridge.connection.service.api.FConnectionService
+import net.flipper.bridge.device.firmwareupdate.updater.api.FirmwareUpdaterApi
 import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.cloud.api.BUSYLibBarsApi
 import net.flipper.bsb.cloud.api.BUSYLibHostApi
@@ -27,7 +27,7 @@ class BUSYLibAndroid(
     override val connectionService: FConnectionService,
     override val orchestrator: FDeviceOrchestrator,
     override val featureProvider: FFeatureProvider,
-    override val updaterApi: UpdaterApi,
+    override val firmwareUpdaterApi: FirmwareUpdaterApi,
     val flipperScanner: FlipperScanner,
     val centralManager: CentralManager,
     private val startUpListeners: Set<InternalBUSYLibStartupListener>

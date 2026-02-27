@@ -6,8 +6,6 @@ import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
-import io.ktor.http.ContentType
-import io.ktor.http.contentType
 import kotlinx.coroutines.CoroutineDispatcher
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcSettingsApi
 import net.flipper.bridge.connection.feature.rpc.api.model.AudioVolumeInfo
@@ -35,7 +33,6 @@ class FRpcSettingsApiImpl(
     override suspend fun setName(body: NameInfo): Result<SuccessResponse> {
         return runSuspendCatching(dispatcher) {
             httpClient.post("/api/name") {
-                contentType(ContentType.Application.Json)
                 setBody(body)
             }.body<SuccessResponse>()
         }
@@ -61,7 +58,7 @@ class FRpcSettingsApiImpl(
     ): Result<SuccessResponse> {
         return runSuspendCatching(dispatcher) {
             httpClient.post("/api/display/brightness") {
-                setBody(value.asDisplayBrightnessInfo())
+                parameter("value", value.asDisplayBrightnessInfo().value)
             }.body<SuccessResponse>()
         }
     }
