@@ -13,7 +13,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         ]? = nil
     ) -> Bool {
 
-        IOSAppComponentKt.busyLib.connectionService.onApplicationInit()
+        IOSAppComponentKt.busyLib.connectionService.launch()
         return true
     }
 }
