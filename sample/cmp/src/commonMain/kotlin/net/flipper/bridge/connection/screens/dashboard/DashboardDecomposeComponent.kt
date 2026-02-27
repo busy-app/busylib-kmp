@@ -41,6 +41,10 @@ class DashboardDecomposeComponent(
             Text("Brightness: $brightness")
             val volume by viewModel.volumeFlow.collectAsState()
             Text("Volume: $volume")
+            val deviceInfo by viewModel.deviceInfoFlow.collectAsState()
+            Text("Device Info: $deviceInfo")
+            val deviceVersion by viewModel.deviceVersionFlow.collectAsState()
+            Text("Device Version: $deviceVersion")
 
             Button(
                 onClick = viewModel::startOnCall
