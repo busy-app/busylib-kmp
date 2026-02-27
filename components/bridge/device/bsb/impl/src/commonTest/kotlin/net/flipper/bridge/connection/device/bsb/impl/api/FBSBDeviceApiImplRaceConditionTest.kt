@@ -18,6 +18,7 @@ import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.feature.info.api.FDeviceInfoFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarStatusSystem
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarVersion
+import net.flipper.bridge.connection.feature.rpc.api.model.StatusFirmware
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import net.flipper.busylib.core.wrapper.CResult
@@ -450,6 +451,10 @@ class FBSBDeviceApiImplRaceConditionTest {
                     bootTime = Instant.fromEpochMilliseconds(0)
                 )
             ).toCResult()
+        }
+
+        override suspend fun getDeviceFirmware(): CResult<StatusFirmware> {
+            return CResult.failure(NotImplementedError())
         }
 
         override val deviceVersionFlow: Flow<BusyBarVersion> = emptyFlow()
