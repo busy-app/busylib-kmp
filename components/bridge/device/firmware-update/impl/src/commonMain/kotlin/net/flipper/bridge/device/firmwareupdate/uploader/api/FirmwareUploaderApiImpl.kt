@@ -49,7 +49,16 @@ internal class FirmwareUploaderApiImpl(
             .first()
     }
 
-    override suspend fun uploadAndInstall(clientFilePath: Path): Result<Unit> {
+    override fun reset() {
+        _state.update { FirmwareUploaderState.Pending }
+    }
+
+    override suspend fun uploadAndInstall(
+        clientFilePath: Path,
+        onPrepared: suspend () -> Unit
+    ): Result<Unit> {
+        _state.emit(FirmwareUploaderState.Uploading(0, 0))
+        onPrepared.invoke()
         fFeatureProvider.get<FRpcFeatureApi>()
             .onEach { _state.emit(FirmwareUploaderState.Pending) }
             .map { fFeatureStatus -> fFeatureStatus.tryCast<FFeatureStatus.Supported<FRpcFeatureApi>>() }
@@ -57,7 +66,6 @@ internal class FirmwareUploaderApiImpl(
             .filterNotNull()
             .onLatest { fFeatureApi ->
                 _state.emit(FirmwareUploaderState.Uploading(0, 0))
-
                 val size = SystemFileSystem.metadataOrNull(clientFilePath)?.size ?: 0L
                 if (size == 0L) {
                     error("#uploadAndInstall: could not read file size")
@@ -68,11 +76,17 @@ internal class FirmwareUploaderApiImpl(
                         totalBytes = size,
                         bytesFlow = SystemFileSystem.source(clientFilePath).asFlow(),
                         onTransferred = { bytesUploaded ->
-                            _state.update { FirmwareUploaderState.Uploading(bytesUploaded, size) }
+                            val state = FirmwareUploaderState.Uploading(bytesUploaded, size)
+                            if (state.progress >= 1f) {
+                                _state.update { FirmwareUploaderState.Uploaded }
+                            } else {
+                                _state.update { state }
+                            }
                         }
                     ).getOrThrow()
                 } catch (_: SocketTimeoutException) {
                     info { "#uploadAndInstall device connection lost" }
+                    _state.emit(FirmwareUploaderState.Uploaded)
                 }
             }
             .catch { t ->
@@ -90,7 +104,6 @@ internal class FirmwareUploaderApiImpl(
         info { "#uploadAndInstall device disconnected" }
         awaitDeviceConnected()
         info { "#uploadAndInstall device connected" }
-        _state.emit(FirmwareUploaderState.Pending)
         return Result.success(Unit)
     }
 }

@@ -57,9 +57,7 @@ object FwUpdateStatusMapper {
                     UpdateStatus.Check.CheckEvent.START,
                     UpdateStatus.Check.CheckEvent.NONE,
                     UpdateStatus.Check.CheckEvent.STOP -> {
-                        fromCheckStatus(
-                            updateStatus = updateStatus,
-                        )
+                        fromCheckStatus(updateStatus = updateStatus,)
                     }
                 }
             }
@@ -72,9 +70,7 @@ object FwUpdateStatusMapper {
         return when (updateStatus.install.status) {
             UpdateStatus.Install.Status.BUSY,
             UpdateStatus.Install.Status.OK -> {
-                fromInstallAction(
-                    updateStatus = updateStatus,
-                )
+                fromInstallAction(updateStatus = updateStatus)
             }
 
             UpdateStatus.Install.Status.BATTERY_LOW -> FwUpdateState.LowBattery
@@ -104,7 +100,7 @@ object FwUpdateStatusMapper {
             }
 
             uploaderState is FirmwareUploaderState.Uploaded -> {
-                FwUpdateState.Updating
+                FwUpdateState.Uploading(progress = 1f)
             }
 
             downloaderState is FirmwareDownloaderState.Downloading -> {

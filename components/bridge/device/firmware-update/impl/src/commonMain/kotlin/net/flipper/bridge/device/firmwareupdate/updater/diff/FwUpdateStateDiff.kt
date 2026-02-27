@@ -1,14 +1,13 @@
 package net.flipper.bridge.device.firmwareupdate.updater.diff
 
-import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarVersion
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateState
 
 object FwUpdateStateDiff {
     fun combineDiff(
         previous: FwUpdateState?,
         latest: FwUpdateState,
-        currentVersion: BusyBarVersion,
-        previousVersion: BusyBarVersion?
+        currentVersion: String,
+        previousVersion: String?
     ): FwUpdateState {
         return when (previous) {
             null -> latest
@@ -24,7 +23,9 @@ object FwUpdateStateDiff {
             FwUpdateState.Busy -> latest
 
             is FwUpdateState.Updating -> {
-                if (currentVersion.version == previousVersion?.version) {
+                if (previousVersion == null) {
+                    FwUpdateState.Updating
+                } else if (currentVersion == previousVersion) {
                     FwUpdateState.UpdateFinished
                 } else {
                     FwUpdateState.UpdateFailed

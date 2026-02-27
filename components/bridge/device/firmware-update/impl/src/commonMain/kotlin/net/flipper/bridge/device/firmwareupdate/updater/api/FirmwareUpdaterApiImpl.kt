@@ -53,9 +53,11 @@ import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
 import net.flipper.core.ktor.di.qualifier.KtorNetworkClientQualifier
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
+import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 
 @Inject
 @ContributesBinding(BusyLibGraph::class, FirmwareUpdaterApi::class)
+@SingleIn(BusyLibGraph::class)
 class FirmwareUpdaterApiImpl(
     private val fFeatureProvider: FFeatureProvider,
     private val scope: CoroutineScope,
@@ -72,29 +74,42 @@ class FirmwareUpdaterApiImpl(
     )
 
     private val lanUpdaterScope = scope.asSingleJobScope()
+
+    private data class VersionsModel(
+        val previousVersion: BusyBarVersion?,
+        val currentVersion: BusyBarVersion
+    )
+
     private val previousVersionsFlow = flow {
-        var previousVersionOrNull: BusyBarVersion? = null
-        var currentVersionOrNull: BusyBarVersion? = null
+        var versionModelOrNull: VersionsModel? = null
         fFeatureProvider.get<FDeviceInfoFeatureApi>()
             .filterIsInstance<FFeatureStatus.Supported<FDeviceInfoFeatureApi>>()
             .flatMapLatest { status -> status.featureApi.deviceVersionFlow }
             .onEach { newCurrentVersion ->
+                val localVersionModelOrNull = versionModelOrNull
                 when {
-                    currentVersionOrNull == null -> {
-                        previousVersionOrNull = newCurrentVersion
-                        currentVersionOrNull = newCurrentVersion
+                    localVersionModelOrNull == null -> {
+                        val newVersionModel = VersionsModel(
+                            previousVersion = null,
+                            currentVersion = newCurrentVersion
+                        )
+                        versionModelOrNull = newVersionModel
+                        emit(newVersionModel)
                     }
 
-                    currentVersionOrNull == newCurrentVersion -> {
+                    localVersionModelOrNull.currentVersion == newCurrentVersion -> {
                         // nothing
                     }
 
-                    currentVersionOrNull != newCurrentVersion -> {
-                        previousVersionOrNull = currentVersionOrNull
-                        currentVersionOrNull = newCurrentVersion
+                    localVersionModelOrNull.currentVersion != newCurrentVersion -> {
+                        val newVersionModel = VersionsModel(
+                            previousVersion = localVersionModelOrNull.currentVersion,
+                            currentVersion = newCurrentVersion
+                        )
+                        versionModelOrNull = newVersionModel
+                        emit(newVersionModel)
                     }
                 }
-                emit(previousVersionOrNull)
             }
             .collect()
     }
@@ -112,7 +127,7 @@ class FirmwareUpdaterApiImpl(
             .map { status -> status.tryCast<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>() }
             .map { status -> status?.featureApi }
             .flatMapLatest { feature -> feature?.updateVersionFlow.orNullable() }
-            .map { bsbUpdateVersion -> bsbUpdateVersion?.tryCast<BsbUpdateVersion.Url>() }
+            .mapLatest { bsbUpdateVersion -> bsbUpdateVersion?.tryCast<BsbUpdateVersion.Url>() }
             .shareIn(scope, SharingStarted.WhileSubscribed(), 1),
         flow3 = firmwareDownloaderApi.state,
         flow4 = firmwareUploaderApi.state,
@@ -125,24 +140,20 @@ class FirmwareUpdaterApiImpl(
             )
         }
     )
-        .onEach { info { "#state FwUpdateStatusMapper: $it" } }
         .flatMapCached { currentFwUpdateState, previousFwUpdateState: FwUpdateState? ->
-            fFeatureProvider.get<FDeviceInfoFeatureApi>()
-                .filterIsInstance<FFeatureStatus.Supported<FDeviceInfoFeatureApi>>()
-                .first()
-                .featureApi
-                .deviceVersionFlow
-                .map { currentVersion ->
+            info { "#state FwUpdateStatusMapper: $currentFwUpdateState" }
+            previousVersionsFlow
+                .filterNotNull()
+                .mapLatest { versionsModel ->
                     FwUpdateStateDiff.combineDiff(
                         previous = previousFwUpdateState,
                         latest = currentFwUpdateState,
-                        currentVersion = currentVersion,
-                        previousVersion = previousVersionsFlow.first()
-                    )
+                        currentVersion = versionsModel.currentVersion.version,
+                        previousVersion = versionsModel.previousVersion?.version
+                    ).also { info { "#state FwUpdateStateDiff: $it" } }
                 }
         }
-        .onEach { info { "#state FwUpdateStateDiff: $it" } }
-        .stateIn(scope, SharingStarted.Lazily, FwUpdateState.Pending)
+        .stateIn(scope, SharingStarted.Eagerly, FwUpdateState.Pending)
         .wrap()
 
     override suspend fun stopFirmwareUpdate(): CResult<Unit> {
@@ -180,7 +191,10 @@ class FirmwareUpdaterApiImpl(
     override suspend fun startUpdateInstall(): CResult<Unit> {
         info { "#startUpdateInstall" }
         return lanUpdaterScope.withJobMode(SingleJobMode.CANCEL_PREVIOUS) {
-            coroutineContext.job.invokeOnCompletion { firmwareDownloaderApi.reset() }
+            coroutineContext.job.invokeOnCompletion {
+                firmwareDownloaderApi.reset()
+                firmwareUploaderApi.reset()
+            }
             fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
                 .map { status -> status.tryCast<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>() }
                 .flatMapLatest { status -> status?.featureApi?.updateVersionFlow.orNullable() }
@@ -188,6 +202,7 @@ class FirmwareUpdaterApiImpl(
                 .filterNotNull()
                 .mapLatest { bsbUpdateVersion ->
                     firmwareDownloaderApi.reset()
+                    firmwareUploaderApi.reset()
                     info { "#startUpdateInstall bsbUpdateVersion: $bsbUpdateVersion" }
                     when (bsbUpdateVersion) {
                         is BsbUpdateVersion.Default -> {
@@ -207,11 +222,10 @@ class FirmwareUpdaterApiImpl(
                                 .mapCatching { path ->
                                     info { "#startUpdateInstall start uploading" }
                                     firmwareUploaderApi
-                                        .uploadAndInstall(path)
+                                        .uploadAndInstall(path) { firmwareDownloaderApi.reset() }
                                         .onFailure { t -> error(t) { "#startUpdateInstall could not upload" } }
                                         .getOrThrow()
                                 }
-                                .also { firmwareDownloaderApi.reset() }
                         }
                     }
                 }
