@@ -22,12 +22,16 @@ import net.flipper.bridge.connection.feature.rpc.api.model.UpdateStatus
 import net.flipper.core.busylib.ktx.common.cache.ObjectCache
 import net.flipper.core.busylib.ktx.common.cache.getOrElse
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
+import net.flipper.core.busylib.log.LogTagProvider
+import net.flipper.core.busylib.log.TaggedLogger
+import net.flipper.core.busylib.log.info
 
 class FRpcUpdaterApiImpl(
     private val httpClient: HttpClient,
     private val dispatcher: CoroutineDispatcher,
     private val objectCache: ObjectCache
-) : FRpcUpdaterApi {
+) : FRpcUpdaterApi, LogTagProvider by TaggedLogger("FRpcUpdaterApi") {
+
     override suspend fun startUpdateCheck(): Result<ApiResponse> {
         return runSuspendCatching(dispatcher) {
             httpClient.post("/api/update/check").body<ApiResponse>()
@@ -93,12 +97,13 @@ class FRpcUpdaterApiImpl(
 
                         override suspend fun writeTo(channel: ByteWriteChannel) {
                             var transferred = 0L
-
+                            info { "#postUpdate.writeTo begin" }
                             bytesFlow.collect { byteArray ->
                                 channel.writeFully(byteArray)
                                 transferred += byteArray.size
                                 onTransferred(transferred)
                             }
+                            info { "#postUpdate.writeTo end" }
                         }
                     }
                 )

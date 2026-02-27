@@ -49,6 +49,10 @@ internal class FirmwareUploaderApiImpl(
             .first()
     }
 
+    override fun reset() {
+        _state.update { FirmwareUploaderState.Pending }
+    }
+
     override suspend fun uploadAndInstall(clientFilePath: Path): Result<Unit> {
         fFeatureProvider.get<FRpcFeatureApi>()
             .onEach { _state.emit(FirmwareUploaderState.Pending) }
@@ -90,7 +94,6 @@ internal class FirmwareUploaderApiImpl(
         info { "#uploadAndInstall device disconnected" }
         awaitDeviceConnected()
         info { "#uploadAndInstall device connected" }
-        _state.emit(FirmwareUploaderState.Pending)
         return Result.success(Unit)
     }
 }

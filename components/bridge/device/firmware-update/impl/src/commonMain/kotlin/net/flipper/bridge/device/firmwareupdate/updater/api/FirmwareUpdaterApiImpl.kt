@@ -142,7 +142,7 @@ class FirmwareUpdaterApiImpl(
                 }
         }
         .onEach { info { "#state FwUpdateStateDiff: $it" } }
-        .stateIn(scope, SharingStarted.Lazily, FwUpdateState.Pending)
+        .stateIn(scope, SharingStarted.Eagerly, FwUpdateState.Pending)
         .wrap()
 
     override suspend fun stopFirmwareUpdate(): CResult<Unit> {
@@ -180,7 +180,10 @@ class FirmwareUpdaterApiImpl(
     override suspend fun startUpdateInstall(): CResult<Unit> {
         info { "#startUpdateInstall" }
         return lanUpdaterScope.withJobMode(SingleJobMode.CANCEL_PREVIOUS) {
-            coroutineContext.job.invokeOnCompletion { firmwareDownloaderApi.reset() }
+            coroutineContext.job.invokeOnCompletion {
+                firmwareDownloaderApi.reset()
+                firmwareUploaderApi.reset()
+            }
             fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
                 .map { status -> status.tryCast<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>() }
                 .flatMapLatest { status -> status?.featureApi?.updateVersionFlow.orNullable() }
@@ -188,6 +191,7 @@ class FirmwareUpdaterApiImpl(
                 .filterNotNull()
                 .mapLatest { bsbUpdateVersion ->
                     firmwareDownloaderApi.reset()
+                    firmwareUploaderApi.reset()
                     info { "#startUpdateInstall bsbUpdateVersion: $bsbUpdateVersion" }
                     when (bsbUpdateVersion) {
                         is BsbUpdateVersion.Default -> {
@@ -212,6 +216,7 @@ class FirmwareUpdaterApiImpl(
                                         .getOrThrow()
                                 }
                                 .also { firmwareDownloaderApi.reset() }
+                                .also { firmwareUploaderApi.reset() }
                         }
                     }
                 }
