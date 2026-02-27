@@ -12,7 +12,7 @@ import net.flipper.core.busylib.ktx.common.launchOnCompletion
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.transport.ble.impl.cb.FPeripheralApi
 
-class FSerialBleApiImpl(
+class FiOSSerialBleApiImpl(
     scope: CoroutineScope,
     val fPeripheralApi: FPeripheralApi
 ) : FSerialBleApi, LogTagProvider {

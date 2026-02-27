@@ -177,6 +177,7 @@ class FPeripheral(
         serialWrite = null
         _metaInfoKeysStream.emit(emptyMap())
         _stateStream.emit(FPeripheralState.DISCONNECTED)
+        _rxDataStream.emit(byteArrayOf())
         debug { "Peripheral onDisconnect id=${identifier.UUIDString}" }
     }
 
@@ -195,7 +196,10 @@ class FPeripheral(
     private suspend fun handleCBError(code: Long) {
         when (code) {
             7L -> _stateStream.emit(FPeripheralState.INVALID_PAIRING) // CBErrorPeerRemovedPairingInformation
-            17L -> _stateStream.emit(FPeripheralState.DISCONNECTED) // CBErrorEncryptionTimedOut
+            17L -> {
+                _stateStream.emit(FPeripheralState.DISCONNECTED)
+                _rxDataStream.emit(byteArrayOf())
+            }// CBErrorEncryptionTimedOut
         }
         error { "Peripheral CBError id=${identifier.UUIDString} code=$code" }
     }
@@ -403,8 +407,8 @@ private fun CBUUID.toKotlinUUID(): kotlin.uuid.Uuid {
         if (withoutDashes.length == 32) {
             // Format as standard UUID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
             return "${withoutDashes.substring(0, 8)}-${withoutDashes.substring(8, 12)}-" +
-                "${withoutDashes.substring(12, 16)}-${withoutDashes.substring(16, 20)}-" +
-                withoutDashes.substring(20, 32)
+                    "${withoutDashes.substring(12, 16)}-${withoutDashes.substring(16, 20)}-" +
+                    withoutDashes.substring(20, 32)
         }
 
         // Short form UUID (4 or 8 characters) - convert to full Bluetooth SIG UUID

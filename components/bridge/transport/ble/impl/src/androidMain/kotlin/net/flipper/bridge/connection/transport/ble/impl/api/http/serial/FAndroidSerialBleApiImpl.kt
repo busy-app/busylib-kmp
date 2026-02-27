@@ -11,7 +11,7 @@ import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 import net.flipper.core.busylib.ktx.common.launchOnCompletion
 import net.flipper.core.busylib.log.LogTagProvider
 
-class FSerialBleApiImpl(
+class FAndroidSerialBleApiImpl(
     scope: CoroutineScope,
     private val unsafeSerialApi: FSerialUnsafeApiImpl,
 ) : FSerialBleApi, LogTagProvider {
