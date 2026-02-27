@@ -181,7 +181,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd ../  \n\necho $CONFIGURATION\necho $SDK_NAME\necho $ARCHS\n\nORG_GRADLE_PROJECT_current_flavor_type=DEBUG\n./gradlew :sample:embedAndSignAppleFrameworkForXcode --stacktrace\n";
+			shellScript = "cd ../  \n\necho $CONFIGURATION\necho $SDK_NAME\necho $ARCHS\n\nORG_GRADLE_PROJECT_current_flavor_type=DEBUG\n./gradlew :sample:cmp:embedAndSignAppleFrameworkForXcode --stacktrace\n";
 		};
 		658A18892EF9A67B006EAA52 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -199,7 +199,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd ../  \n\necho $CONFIGURATION\necho $SDK_NAME\necho $ARCHS\n\nORG_GRADLE_PROJECT_current_flavor_type=DEBUG\n./gradlew :sample:embedAndSignAppleFrameworkForXcode --stacktrace\n";
+			shellScript = "cd ../  \n\necho $CONFIGURATION\necho $SDK_NAME\necho $ARCHS\n\nORG_GRADLE_PROJECT_current_flavor_type=DEBUG\n./gradlew :sample:cmp:embedAndSignAppleFrameworkForXcode --stacktrace\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -344,7 +344,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = SXH69675TZ;
+				DEVELOPMENT_TEAM = "${TEAM_ID}";
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
@@ -458,7 +458,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = SXH69675TZ;
+				DEVELOPMENT_TEAM = "${TEAM_ID}";
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
