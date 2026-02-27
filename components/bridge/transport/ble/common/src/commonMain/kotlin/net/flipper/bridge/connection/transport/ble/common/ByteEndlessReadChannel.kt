@@ -63,6 +63,7 @@ class ByteEndlessReadChannel(
     }
 
     override fun cancel(cause: Throwable?) {
+        info { "Cancel channel with cause: $cause" }
         channel.close(cause)
         coroutineContext.cancel(cause as? CancellationException)
         _isClosedForRead.compareAndSet(expectedValue = false, newValue = true)

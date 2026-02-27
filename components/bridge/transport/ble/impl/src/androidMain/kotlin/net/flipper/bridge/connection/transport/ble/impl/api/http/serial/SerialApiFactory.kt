@@ -35,7 +35,7 @@ class SerialApiFactory(
             scope = scope
         )
 
-        return FSerialBleApiImpl(
+        return FAndroidSerialBleApiImpl(
             scope = scope,
             unsafeSerialApi = unsafeApi,
         )

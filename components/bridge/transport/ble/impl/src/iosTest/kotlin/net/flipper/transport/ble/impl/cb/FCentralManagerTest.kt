@@ -6,6 +6,7 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
+import net.flipper.transport.ble.impl.manager.FCentralManagerImpl
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -188,12 +189,12 @@ class FCentralManagerTest {
 
     private data class Sut(
         val manager: RecordingCentralManager,
-        val sut: FCentralManager,
+        val sut: FCentralManagerImpl,
     )
 
     private fun TestScope.createSut(): Sut {
         val manager = RecordingCentralManager()
-        val sut = FCentralManager(
+        val sut = FCentralManagerImpl(
             scope = this,
             manager = manager,
         )
