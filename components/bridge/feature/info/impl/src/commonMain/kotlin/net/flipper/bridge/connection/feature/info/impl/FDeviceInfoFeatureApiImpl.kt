@@ -15,6 +15,7 @@ import net.flipper.bridge.connection.feature.info.api.FDeviceInfoFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarStatusSystem
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarVersion
+import net.flipper.bridge.connection.feature.rpc.api.model.StatusFirmware
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.core.wrapper.CResult
@@ -31,6 +32,10 @@ class FDeviceInfoFeatureApiImpl(
 
     override suspend fun getDeviceInfo(): CResult<BusyBarStatusSystem> {
         return rpcFeatureApi.fRpcSystemApi.getStatusSystem().toCResult()
+    }
+
+    override suspend fun getDeviceFirmware(): CResult<StatusFirmware> {
+        return rpcFeatureApi.fRpcSystemApi.getStatusFirmware().toCResult()
     }
 
     override val deviceVersionFlow: Flow<BusyBarVersion> = flow {
