@@ -6,6 +6,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     let root: ConnectionRootDecomposeComponent = MacOSAppComponentKt.getRootDecomposeComponent()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        MacOSAppComponentKt.busyLib.connectionService.onApplicationInit()
+        MacOSAppComponentKt.busyLib.launch()
     }
 }
