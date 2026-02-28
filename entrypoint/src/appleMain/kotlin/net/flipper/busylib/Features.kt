@@ -4,6 +4,7 @@ package net.flipper.busylib
 
 import net.flipper.bridge.connection.feature.battery.api.FDeviceBatteryInfoFeatureApi
 import net.flipper.bridge.connection.feature.ble.api.FBleFeatureApi
+import net.flipper.bridge.connection.feature.finishsetup.api.FFinishSetupFeatureApi
 import net.flipper.bridge.connection.feature.firmwareupdate.api.FFirmwareUpdateFeatureApi
 import net.flipper.bridge.connection.feature.info.api.FDeviceInfoFeatureApi
 import net.flipper.bridge.connection.feature.link.check.ondemand.api.FLinkedInfoOnDemandFeatureApi
@@ -115,4 +116,13 @@ fun FFeatureProvider.getTimeZoneFeature(): WrappedFlow<FFeatureStatus<FTimeZoneF
 
 suspend fun FFeatureProvider.getTimeZoneFeatureSync(): FTimeZoneFeatureApi? {
     return this.getSync(FTimeZoneFeatureApi::class)
+}
+
+// Finish Setup Feature
+fun FFeatureProvider.getFinishSetupFeature(): WrappedFlow<FFeatureStatus<FFinishSetupFeatureApi>> {
+    return get(FFinishSetupFeatureApi::class).wrap()
+}
+
+suspend fun FFeatureProvider.getFinishSetupFeatureSync(): FFinishSetupFeatureApi? {
+    return this.getSync(FFinishSetupFeatureApi::class)
 }
