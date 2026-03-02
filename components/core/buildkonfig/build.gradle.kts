@@ -1,4 +1,4 @@
-import io.gitlab.arturbosch.detekt.Detekt
+import dev.detekt.gradle.Detekt
 import net.flipper.Config.CURRENT_FLAVOR_TYPE
 
 plugins {
