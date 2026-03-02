@@ -16,4 +16,5 @@ data class FBleDeviceSerialConfig(
     val serialServiceUuid: Uuid,
     val rxServiceCharUuid: Uuid,
     val txServiceCharUuid: Uuid,
+    val resetCharUuid: Uuid
 )

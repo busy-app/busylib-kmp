@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.plus
 import net.flipper.bridge.connection.transport.ble.impl.serial.FSerialBleApi
 import net.flipper.bridge.connection.transport.ble.impl.serial.ByteEndlessReadChannel
+import net.flipper.bridge.connection.transport.ble.impl.serial.FResetSerialBleApi
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 import net.flipper.core.busylib.ktx.common.launchOnCompletion
 import net.flipper.core.busylib.log.LogTagProvider
@@ -14,7 +15,8 @@ import net.flipper.core.busylib.log.LogTagProvider
 class FAndroidSerialBleApiImpl(
     scope: CoroutineScope,
     private val unsafeSerialApi: FSerialUnsafeApiImpl,
-) : FSerialBleApi, LogTagProvider {
+    resetApi: FResetSerialBleApi
+) : FSerialBleApi, LogTagProvider, FResetSerialBleApi by resetApi {
     override val TAG = "FSerialBleApi"
     private val channel = ByteEndlessReadChannel()
 

@@ -34,10 +34,17 @@ class SerialApiFactory(
             txCharacteristic = txCharacteristic,
             scope = scope
         )
+        val resetApi = FResetSerialBleApiImpl(
+            resetCharacteristicFlow = serialService.map { service ->
+                service?.characteristics?.find { it.uuid == config.serialServiceUuid }
+            },
+            scope = scope
+        )
 
         return FAndroidSerialBleApiImpl(
             scope = scope,
             unsafeSerialApi = unsafeApi,
+            resetApi = resetApi
         )
     }
 }
