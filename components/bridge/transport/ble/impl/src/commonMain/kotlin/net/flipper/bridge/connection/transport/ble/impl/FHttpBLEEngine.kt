@@ -32,13 +32,14 @@ import net.flipper.bridge.connection.transport.ble.impl.exception.BadHttpRespons
 import net.flipper.bridge.connection.transport.common.utils.toRawHttpRequestString
 import net.flipper.core.busylib.ktx.common.withLockResult
 import net.flipper.core.busylib.log.LogTagProvider
+import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
 import kotlin.coroutines.CoroutineContext
 
 class FHttpBLEEngine(
     private val serialApi: FSerialBleApi,
 ) : HttpClientEngineBase("ble-serial"), LogTagProvider {
-
+    private var requestCount = 0
     override val TAG = "FHttpBLEEngine"
 
     override val config = HttpClientEngineConfig()
@@ -56,6 +57,7 @@ class FHttpBLEEngine(
         val requestTime = GMTDate()
         info { "Want to request: ${processedRequest.url}" }
         val result = withLockResult(mutex, "execute") {
+            checkRequestCountUnsafe()
             info { "Send request: $processedRequest" }
             val rawText = processedRequest.toRawHttpRequestString()
             info { "Raw data is: $rawText" }
@@ -72,6 +74,16 @@ class FHttpBLEEngine(
         }
 
         return result
+    }
+
+    private suspend fun checkRequestCountUnsafe() {
+        val deviceRequestCount = serialApi.getRequestCounterStateFlow().value
+        if (requestCount < deviceRequestCount) {
+            error { "Received request count: $deviceRequestCount, but current request count is $requestCount" }
+            serialApi.reset()
+            requestCount = 0
+        }
+        requestCount++
     }
 
     private fun getProcessedRequest(data: HttpRequestData): HttpRequestData {
