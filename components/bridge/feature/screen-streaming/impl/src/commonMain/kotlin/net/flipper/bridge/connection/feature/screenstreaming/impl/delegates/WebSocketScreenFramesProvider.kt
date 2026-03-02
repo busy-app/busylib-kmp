@@ -25,6 +25,7 @@ class WebSocketScreenFramesProvider(
  * - High bit set (0x80): unique blocks follow, lower 7 bits = count of unique blocks
  * - High bit clear: repeated block, byte value = repeat count
  */
+@Suppress("MagicNumber")
 fun rleDecompress(data: ByteArray, blkSize: Int): ByteArray {
     var index = 0
     val dataLen = data.size

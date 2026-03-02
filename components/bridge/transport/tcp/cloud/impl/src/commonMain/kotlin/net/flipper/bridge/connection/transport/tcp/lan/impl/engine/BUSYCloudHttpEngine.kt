@@ -46,6 +46,7 @@ class BUSYCloudHttpEngine(
     }
 
     @InternalAPI
+    @Suppress("MagicNumber")
     private suspend fun makeRequest(
         data: HttpRequestData,
         token: String

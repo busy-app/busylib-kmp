@@ -56,6 +56,7 @@ class ProxyTokenProvider(
         return false
     }
 
+    @Suppress("MagicNumber")
     private suspend fun generateToken(): String {
         val principal = principalApi.getPrincipalFlow()
             .filterNot { it is BUSYLibUserPrincipal.Loading }

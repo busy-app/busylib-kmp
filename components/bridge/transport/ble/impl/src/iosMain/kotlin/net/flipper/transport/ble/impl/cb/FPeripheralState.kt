@@ -11,6 +11,7 @@ enum class FPeripheralState {
     INVALID_PAIRING;
 
     companion object {
+        @Suppress("MagicNumber")
         fun from(state: CBPeripheralState): FPeripheralState {
             return when (state) {
                 0L -> DISCONNECTED

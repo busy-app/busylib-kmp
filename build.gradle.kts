@@ -10,10 +10,6 @@ plugins {
     alias(libs.plugins.kotlinSerialization) apply false
     alias(libs.plugins.googleServices) apply false
 
-    alias(libs.plugins.klibs.gradle.detekt) apply false
-    alias(libs.plugins.klibs.gradle.detekt.compose) apply false
-    alias(libs.plugins.klibs.gradle.dokka.root) apply false
-    alias(libs.plugins.klibs.gradle.dokka.module) apply false
     alias(libs.plugins.klibs.gradle.java.version) apply false
     alias(libs.plugins.klibs.gradle.publication) apply false
     alias(libs.plugins.klibs.gradle.rootinfo) apply false
@@ -24,6 +20,6 @@ plugins {
     alias(libs.plugins.klibs.gradle.android.apk.name) apply false
     alias(libs.plugins.klibs.gradle.android.namespace) apply false
     id("flipper.multiplatform") apply false // For sharing `build-logic` runtime between subprojects
-}
 
-apply(plugin = "ru.astrainteractive.gradleplugin.detekt")
+    id("net.flipper.busylib.detekt")
+}

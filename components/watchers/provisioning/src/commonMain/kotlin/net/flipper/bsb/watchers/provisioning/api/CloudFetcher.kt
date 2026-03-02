@@ -56,6 +56,7 @@ class CloudFetcher(
             .onFailure { error(it) { "Failed to fetch bars" } }
     }
 
+    @Suppress("MagicNumber")
     private suspend fun getBars(
         principal: BUSYLibUserPrincipal.Token,
         busyHost: String
