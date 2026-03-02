@@ -136,6 +136,7 @@ class IOSSearchViewModel(
         }
     }
 
+    @Suppress("MagicNumber")
     private fun handleSessionEvent(event: ASAccessoryEvent?) {
         if (event == null) {
             warn { "Received null event from ASAccessorySession" }

@@ -67,7 +67,7 @@ class DashboardDecomposeComponent(
     }
 
     @Composable
-    private fun ScreenStreamingBlock(modifier: Modifier) {
+    private fun ScreenStreamingBlock(modifier: Modifier = Modifier) {
         val image by viewModel.screenStreamingImagesFlow.collectAsState(null)
         val painter = rememberBusyImagePainter(image)
         painter?.let {

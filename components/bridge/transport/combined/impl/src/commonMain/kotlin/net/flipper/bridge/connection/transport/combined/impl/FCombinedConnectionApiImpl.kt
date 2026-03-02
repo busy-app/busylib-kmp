@@ -148,6 +148,7 @@ class FCombinedConnectionApiImpl(
     }
 }
 
+@Suppress("MagicNumber")
 private fun getPriority(status: FInternalTransportConnectionStatus): Int {
     return when (status) {
         FInternalTransportConnectionStatus.Disconnected -> 0

@@ -28,6 +28,7 @@ object BsbBrightnessSerializer : KSerializer<BsbBrightness> {
             .takeIf { string.equals("auto", true) }
     }
 
+    @Suppress("MagicNumber")
     private fun getPercentageBrightnessOrNull(string: String): BsbBrightness.Number? {
         return string
             .toIntOrNull()

@@ -165,6 +165,7 @@ class CloudProvisioningWatcher(
     }
 }
 
+@Suppress("MagicNumber")
 private fun BUSYBar.ConnectionWay.getPriority(): Int {
     return when (this) {
         is BUSYBar.ConnectionWay.BLE -> 0 // Slowest transport, lowest priority

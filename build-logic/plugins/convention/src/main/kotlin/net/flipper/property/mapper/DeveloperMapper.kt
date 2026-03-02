@@ -4,6 +4,7 @@ import net.flipper.property.model.Developer
 import org.gradle.api.GradleException
 
 object DeveloperMapper {
+    @Suppress("MagicNumber")
     fun parseDeveloper(value: String): Developer {
         val items: List<String> = value.split("|").map(String::trim)
         if (items.size != 3) {

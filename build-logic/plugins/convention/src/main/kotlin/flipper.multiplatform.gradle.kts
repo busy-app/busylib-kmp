@@ -52,6 +52,7 @@ if (appleEnabled) {
     }
 }
 
+@Suppress("SpreadOperator")
 includeCommonKspConfigurationTo(
     *configurations.toTypedArray()
 )
