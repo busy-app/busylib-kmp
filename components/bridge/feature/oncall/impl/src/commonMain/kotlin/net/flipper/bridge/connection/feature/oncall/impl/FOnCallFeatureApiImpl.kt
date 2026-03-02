@@ -2,7 +2,9 @@ package net.flipper.bridge.connection.feature.oncall.impl
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import me.tatarka.inject.annotations.Assisted
@@ -35,10 +37,10 @@ class FOnCallFeatureApiImpl(
 
     private val singleJobScope = scope.asSingleJobScope()
 
-    override suspend fun start() {
+    override fun start() {
         singleJobScope.withJobMode(SingleJobMode.CANCEL_PREVIOUS) {
             try {
-                while (true) {
+                while (currentCoroutineContext().isActive) {
                     rpcFeatureApi
                         .fRpcAssetsApi
                         .displayDraw(createDrawRequest())
@@ -55,7 +57,7 @@ class FOnCallFeatureApiImpl(
         }
     }
 
-    override suspend fun stop() {
+    override fun stop() {
         singleJobScope.cancelPrevious()
     }
 
