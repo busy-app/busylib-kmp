@@ -3,8 +3,8 @@ package net.flipper.bridge.connection.feature.oncall.impl
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.job
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
@@ -23,11 +23,9 @@ import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.ktx.common.DelicateSingleJobApi
 import net.flipper.core.busylib.ktx.common.SingleJobMode
 import net.flipper.core.busylib.ktx.common.asSingleJobScope
-import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
-import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 @Inject
@@ -46,13 +44,13 @@ class FOnCallFeatureApiImpl(
         startJob = runCatching {
             singleJobScope.withJobMode(SingleJobMode.SKIP_IF_RUNNING) {
                 try {
-                    exponentialRetry(
-                        initialDelay = INITIAL_RETRY_DELAY,
-                        maxDelay = MAX_RETRY_DELAY
-                    ) {
-                        performStartAttempt()
+                    while (true) {
+                        rpcFeatureApi
+                            .fRpcAssetsApi
+                            .displayDraw(createDrawRequest())
+                            .onFailure { error(it) { "Failed to display draw" } }
+                        delay(UPDATE_DELAY)
                     }
-                    awaitCancellation()
                 } finally {
                     withContext(NonCancellable) {
                         withTimeoutOrNull(3.seconds) {
@@ -69,48 +67,34 @@ class FOnCallFeatureApiImpl(
         job?.cancelAndJoin()
     }
 
-    private suspend fun performStartAttempt(): Result<Unit> = runCatching {
-        rpcFeatureApi
-            .fRpcAssetsApi
-            .uploadAsset(
-                appId = OnCallImage.APP_ID,
-                file = OnCallImage.IMAGE_NAME,
-                content = OnCallImage.content
-            )
-            .onFailure { error(it) { "Failed to upload asset" } }
-            .getOrThrow()
-
-        rpcFeatureApi
-            .fRpcAssetsApi
-            .displayDraw(createDrawRequest())
-            .onFailure { error(it) { "Failed to display draw" } }
-            .getOrThrow()
-    }
-
     private suspend fun performStopAttempt(): Result<Unit> {
-        return rpcFeatureApi.fRpcAssetsApi.removeDraw(appId = OnCallImage.APP_ID).map { }
+        return rpcFeatureApi.fRpcAssetsApi.removeDraw(appId = APP_ID).map { }
     }
 
     private fun createDrawRequest(): DrawRequest {
         return DrawRequest(
-            appId = OnCallImage.APP_ID,
+            appId = APP_ID,
             elements = listOf(
                 DrawRequest.Element(
                     id = "0",
-                    timeout = OnCallImage.TIMEOUT,
-                    type = DrawRequest.Element.ElementType.IMAGE,
-                    x = 0,
-                    y = 0,
-                    path = OnCallImage.IMAGE_NAME,
-                    display = DrawRequest.Display.FRONT
+                    timeout = ELEMENT_TIMEOUT,
+                    priority = ELEMENT_PRIORITY,
+                    display = DrawRequest.Display.FRONT,
+                    type = DrawRequest.Element.ElementType.ANIM,
+                    builtinAnim = BUILTIN_ANIM,
+                    section = "loop",
+                    loop = true
                 )
             )
         )
     }
 
     companion object {
-        private val INITIAL_RETRY_DELAY = 1.seconds
-        private val MAX_RETRY_DELAY = Duration.INFINITE
+        private const val APP_ID = "on_call"
+        private const val BUILTIN_ANIM = "shared/on_call_72x16"
+        private const val ELEMENT_TIMEOUT = 30
+        private const val ELEMENT_PRIORITY = 50
+        private val UPDATE_DELAY = 3.seconds
     }
 
     @Inject
