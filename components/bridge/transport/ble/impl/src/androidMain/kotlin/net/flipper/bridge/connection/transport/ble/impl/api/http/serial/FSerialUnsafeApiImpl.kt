@@ -17,7 +17,7 @@ import kotlinx.coroutines.launch
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.transport.ble.api.MAX_ATTRIBUTE_SIZE
-import net.flipper.bridge.connection.transport.ble.common.exception.BLEConnectionPermissionException
+import net.flipper.bridge.connection.transport.ble.http.exception.BLEConnectionPermissionException
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.debug
 import net.flipper.core.busylib.log.error

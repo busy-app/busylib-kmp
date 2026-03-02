@@ -55,6 +55,12 @@ dependencies {
     implementation(projects.sample.cmp)
 }
 
+kotlin {
+    compilerOptions {
+        freeCompilerArgs.add("-XXLanguage:+ExplicitBackingFields")
+    }
+}
+
 android {
     defaultConfig {
         applicationId = requireProjectInfo.group

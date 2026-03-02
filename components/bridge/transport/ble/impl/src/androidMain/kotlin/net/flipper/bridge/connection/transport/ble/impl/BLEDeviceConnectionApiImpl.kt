@@ -9,10 +9,10 @@ import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.transport.ble.api.BleDeviceConnectionApi
 import net.flipper.bridge.connection.transport.ble.api.FBleApi
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceConnectionConfig
-import net.flipper.bridge.connection.transport.ble.common.BleConstants
-import net.flipper.bridge.connection.transport.ble.common.exception.BLEConnectionPermissionException
-import net.flipper.bridge.connection.transport.ble.common.exception.FailedConnectToDeviceException
-import net.flipper.bridge.connection.transport.ble.common.exception.NoFoundDeviceException
+import net.flipper.bridge.connection.transport.ble.http.BleConstants
+import net.flipper.bridge.connection.transport.ble.http.exception.BLEConnectionPermissionException
+import net.flipper.bridge.connection.transport.ble.http.exception.FailedConnectToDeviceException
+import net.flipper.bridge.connection.transport.ble.http.exception.NoFoundDeviceException
 import net.flipper.bridge.connection.transport.ble.impl.api.FAndroidBleApiImpl
 import net.flipper.bridge.connection.transport.ble.impl.api.http.serial.SerialApiFactory
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus

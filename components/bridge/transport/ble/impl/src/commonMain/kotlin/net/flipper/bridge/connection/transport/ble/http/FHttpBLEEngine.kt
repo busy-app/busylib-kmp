@@ -27,12 +27,11 @@ import kotlinx.coroutines.withContext
 import kotlinx.io.InternalIoApi
 import kotlinx.io.Source
 import kotlinx.io.readByteArray
-import net.flipper.bridge.connection.transport.ble.api.FSerialBleApi
+import net.flipper.bridge.connection.transport.ble.http.serial.FSerialBleApi
 import net.flipper.bridge.connection.transport.ble.http.exception.BadHttpResponseException
 import net.flipper.bridge.connection.transport.common.utils.toRawHttpRequestString
 import net.flipper.core.busylib.ktx.common.withLockResult
 import net.flipper.core.busylib.log.LogTagProvider
-import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
 import kotlin.coroutines.CoroutineContext
 
