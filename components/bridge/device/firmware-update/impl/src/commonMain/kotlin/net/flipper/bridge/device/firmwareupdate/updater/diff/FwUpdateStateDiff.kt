@@ -1,18 +1,15 @@
 package net.flipper.bridge.device.firmwareupdate.updater.diff
 
+import net.flipper.bridge.device.firmwareupdate.updater.model.BusyBarVersionTransition
+import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateEvent
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateState
 
 object FwUpdateStateDiff {
-    fun combineDiff(
-        previous: FwUpdateState?,
-        latest: FwUpdateState,
-        currentVersion: String,
-        previousVersion: String?
-    ): FwUpdateState {
-        return when (previous) {
-            null -> latest
-            is FwUpdateState.UpdateFailed,
-            is FwUpdateState.UpdateFinished,
+    fun compareAndGetEvent(
+        fwUpdateState: FwUpdateState?,
+        busyBarVersionTransition: BusyBarVersionTransition?,
+    ): FwUpdateEvent? {
+        return when (fwUpdateState) {
             is FwUpdateState.UpdateAvailable,
             FwUpdateState.Pending,
             FwUpdateState.NoUpdateAvailable,
@@ -20,39 +17,23 @@ object FwUpdateStateDiff {
             FwUpdateState.Failure,
             FwUpdateState.CouldNotCheckUpdate,
             FwUpdateState.CheckingVersion,
-            FwUpdateState.Busy -> latest
-
-            is FwUpdateState.Updating -> {
-                if (previousVersion == null) {
-                    FwUpdateState.Updating
-                } else if (currentVersion == previousVersion) {
-                    FwUpdateState.UpdateFinished
+            FwUpdateState.Busy -> {
+                if (busyBarVersionTransition == null) {
+                    null
+                } else if (busyBarVersionTransition.previousVersion == null) {
+                    null
+                } else if (busyBarVersionTransition.currentVersion == busyBarVersionTransition.previousVersion) {
+                    FwUpdateEvent.UpdateFinished
                 } else {
-                    FwUpdateState.UpdateFailed
+                    FwUpdateEvent.UpdateFailed
                 }
             }
 
+            null -> null
+
+            is FwUpdateState.Updating,
             is FwUpdateState.Uploading,
-            is FwUpdateState.Downloading -> {
-                when (latest) {
-                    is FwUpdateState.Uploading,
-                    is FwUpdateState.UpdateFailed,
-                    is FwUpdateState.UpdateFinished,
-                    FwUpdateState.Busy,
-                    FwUpdateState.CheckingVersion,
-                    FwUpdateState.CouldNotCheckUpdate,
-                    is FwUpdateState.Downloading,
-                    FwUpdateState.Failure,
-                    FwUpdateState.LowBattery,
-                    FwUpdateState.NoUpdateAvailable,
-                    is FwUpdateState.Updating,
-                    is FwUpdateState.UpdateAvailable -> latest
-
-                    FwUpdateState.Pending -> {
-                        FwUpdateState.Updating
-                    }
-                }
-            }
+            is FwUpdateState.Downloading -> null
         }
     }
 }

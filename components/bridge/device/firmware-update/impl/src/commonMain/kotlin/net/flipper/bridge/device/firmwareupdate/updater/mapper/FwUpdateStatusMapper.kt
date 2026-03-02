@@ -57,7 +57,7 @@ object FwUpdateStatusMapper {
                     UpdateStatus.Check.CheckEvent.START,
                     UpdateStatus.Check.CheckEvent.NONE,
                     UpdateStatus.Check.CheckEvent.STOP -> {
-                        fromCheckStatus(updateStatus = updateStatus,)
+                        fromCheckStatus(updateStatus = updateStatus)
                     }
                 }
             }
@@ -89,10 +89,9 @@ object FwUpdateStatusMapper {
     }
 
     fun toFwUpdateState(
-        updateStatus: UpdateStatus?,
         uploaderState: FirmwareUploaderState,
         downloaderState: FirmwareDownloaderState,
-        bsbUrlUpdateVersion: BsbUpdateVersion.Url?
+        bsbUrlUpdateVersion: BsbUpdateVersion.Url?,
     ): FwUpdateState {
         return when {
             uploaderState is FirmwareUploaderState.Uploading -> {
@@ -100,7 +99,7 @@ object FwUpdateStatusMapper {
             }
 
             uploaderState is FirmwareUploaderState.Uploaded -> {
-                FwUpdateState.Uploading(progress = 1f)
+                FwUpdateState.Updating
             }
 
             downloaderState is FirmwareDownloaderState.Downloading -> {
@@ -111,19 +110,18 @@ object FwUpdateStatusMapper {
                 FwUpdateState.Downloading(progress = 1f)
             }
 
-            updateStatus == null -> {
-                FwUpdateState.Pending
-            }
-
             bsbUrlUpdateVersion != null -> {
                 FwUpdateState.UpdateAvailable
             }
 
             else -> {
-                fromInstallStatus(
-                    updateStatus = updateStatus,
-                )
+                FwUpdateState.Pending
             }
         }
+    }
+
+    fun toFwUpdateState(updateStatus: UpdateStatus?): FwUpdateState {
+        if (updateStatus == null) return FwUpdateState.Pending
+        return fromInstallStatus(updateStatus = updateStatus)
     }
 }
