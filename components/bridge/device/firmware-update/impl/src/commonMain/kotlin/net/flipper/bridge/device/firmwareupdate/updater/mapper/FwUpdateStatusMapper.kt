@@ -6,7 +6,7 @@ import net.flipper.bridge.device.firmwareupdate.downloader.model.FirmwareDownloa
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateState
 import net.flipper.bridge.device.firmwareupdate.uploader.model.FirmwareUploaderState
 
-object FwUpdateStatusMapper {
+internal object FwUpdateStatusMapper {
     private fun fromCheckStatus(
         updateStatus: UpdateStatus,
     ): FwUpdateState {

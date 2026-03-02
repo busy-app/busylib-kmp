@@ -3,7 +3,7 @@ package net.flipper.bridge.device.firmwareupdate.updater.diff
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarVersion
 import net.flipper.bridge.device.firmwareupdate.updater.model.BusyBarVersionTransition
 
-object VersionsModelDiff {
+internal object VersionsModelDiff {
     fun compareAndGet(
         localVersionModelOrNull: BusyBarVersionTransition?,
         newCurrentVersion: BusyBarVersion?

@@ -4,7 +4,7 @@ import net.flipper.bridge.device.firmwareupdate.updater.model.BusyBarVersionTran
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateEvent
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateState
 
-object FwUpdateStateDiff {
+internal object FwUpdateStateDiff {
     fun compareAndGetEvent(
         fwUpdateState: FwUpdateState?,
         busyBarVersionTransition: BusyBarVersionTransition?,

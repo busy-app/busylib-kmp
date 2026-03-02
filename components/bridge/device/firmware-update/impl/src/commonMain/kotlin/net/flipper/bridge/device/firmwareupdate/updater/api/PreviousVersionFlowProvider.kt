@@ -51,7 +51,9 @@ class PreviousVersionFlowProvider(
     /**
      * After each successful update/upload/download, we need to restart previous version checker
      */
-    fun getAutoRestartedPreviousVersionFlow(fwUpdateStateFlow: Flow<FwUpdateState>): Flow<BusyBarVersionTransition?> {
+    internal fun getAutoRestartedPreviousVersionFlow(
+        fwUpdateStateFlow: Flow<FwUpdateState>
+    ): Flow<BusyBarVersionTransition?> {
         return channelFlow {
             var job: Job? = null
             fwUpdateStateFlow
