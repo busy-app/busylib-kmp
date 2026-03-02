@@ -11,6 +11,7 @@ kotlin {
         implementation(projects.components.core.ktx)
         implementation(projects.components.core.log)
 
+        implementation(projects.components.bridge.feature.common.api)
         implementation(projects.components.bridge.feature.provider.api)
         implementation(projects.components.bridge.feature.oncall.api)
 
