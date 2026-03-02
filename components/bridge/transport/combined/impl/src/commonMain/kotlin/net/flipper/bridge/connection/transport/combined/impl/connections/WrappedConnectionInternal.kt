@@ -29,10 +29,10 @@ class WrappedConnectionInternal(
     override val TAG = "WrappedConnection"
 
     private var connectionApi: FConnectedDeviceApi? = null
-    val stateFlow: StateFlow<FInternalTransportConnectionStatus>
-        field = MutableStateFlow<FInternalTransportConnectionStatus>(
-            FInternalTransportConnectionStatus.Connecting
-        )
+    private val _stateFlow = MutableStateFlow<FInternalTransportConnectionStatus>(
+        FInternalTransportConnectionStatus.Connecting
+    )
+    val stateFlow: StateFlow<FInternalTransportConnectionStatus> get() = _stateFlow
 
     private val scope = ChildSupervisorScope(
         parentScope = parentScope,
@@ -43,7 +43,7 @@ class WrappedConnectionInternal(
         } else {
             error(it) { "Scope for connection $config was cancelled due to an error" }
         }
-        stateFlow.value = FInternalTransportConnectionStatus.Disconnected
+        _stateFlow.value = FInternalTransportConnectionStatus.Disconnected
     }
 
     init {
@@ -60,7 +60,7 @@ class WrappedConnectionInternal(
     }
 
     override suspend fun onStatusUpdate(status: FInternalTransportConnectionStatus) {
-        stateFlow.value = status
+        _stateFlow.value = status
         yield() // Allow collectors to process the state before returning
     }
 

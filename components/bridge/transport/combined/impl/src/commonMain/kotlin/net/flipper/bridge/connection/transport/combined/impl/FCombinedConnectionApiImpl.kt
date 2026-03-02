@@ -47,8 +47,8 @@ class FCombinedConnectionApiImpl(
     override val TAG = "FCombinedConnectionApi"
 
     // Visible for testing
-    val connections: StateFlow<List<AutoReconnectConnection>>
-        field = MutableStateFlow(initialConnections)
+    private val _connections = MutableStateFlow(initialConnections)
+    val connections: StateFlow<List<AutoReconnectConnection>> get() = _connections
 
     private val updateMutex = Mutex()
 
@@ -103,7 +103,7 @@ class FCombinedConnectionApiImpl(
                     config = config,
                     factory = { AutoReconnectConnection(scope, it, connectionBuilder) }
                 )
-                connections.value = newConnections
+                _connections.value = newConnections
                 currentConfig = config
             }
         }

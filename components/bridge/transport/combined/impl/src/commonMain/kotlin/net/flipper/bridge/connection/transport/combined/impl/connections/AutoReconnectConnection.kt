@@ -36,10 +36,10 @@ class AutoReconnectConnection(
     private val updateMutex = Mutex()
     private val connectionJob: Job
 
-    val stateFlow: StateFlow<FInternalTransportConnectionStatus>
-        field = MutableStateFlow<FInternalTransportConnectionStatus>(
-            FInternalTransportConnectionStatus.Connecting
-        )
+    private val _stateFlow = MutableStateFlow<FInternalTransportConnectionStatus>(
+        FInternalTransportConnectionStatus.Connecting
+    )
+    val stateFlow: StateFlow<FInternalTransportConnectionStatus> get() = _stateFlow
 
     init {
         connectionJob = scope.launch {
@@ -61,7 +61,7 @@ class AutoReconnectConnection(
 
                 connection.stateFlow
                     .onEach {
-                        stateFlow.value = it
+                        _stateFlow.value = it
                         if (it is FInternalTransportConnectionStatus.Connected) {
                             retryCount = 0
                         }
