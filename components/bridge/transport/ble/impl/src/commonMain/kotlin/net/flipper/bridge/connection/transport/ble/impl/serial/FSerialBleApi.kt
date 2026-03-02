@@ -1,4 +1,4 @@
-package net.flipper.bridge.connection.transport.ble.http.serial
+package net.flipper.bridge.connection.transport.ble.impl.serial
 
 interface FSerialBleApi {
     fun getReceiveByteChannel(): ByteEndlessReadChannel

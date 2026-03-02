@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceConnectionConfig
-import net.flipper.bridge.connection.transport.ble.http.BleConstants
+import net.flipper.bridge.connection.transport.ble.impl.BleConstants
 import net.flipper.busylib.core.wrapper.WrappedStateFlow
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers

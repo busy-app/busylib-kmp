@@ -1,4 +1,4 @@
-package net.flipper.bridge.connection.transport.ble.http
+package net.flipper.bridge.connection.transport.ble.impl
 
 import io.ktor.client.engine.HttpClientEngineBase
 import io.ktor.client.engine.HttpClientEngineConfig
@@ -27,8 +27,8 @@ import kotlinx.coroutines.withContext
 import kotlinx.io.InternalIoApi
 import kotlinx.io.Source
 import kotlinx.io.readByteArray
-import net.flipper.bridge.connection.transport.ble.http.serial.FSerialBleApi
-import net.flipper.bridge.connection.transport.ble.http.exception.BadHttpResponseException
+import net.flipper.bridge.connection.transport.ble.impl.serial.FSerialBleApi
+import net.flipper.bridge.connection.transport.ble.impl.exception.BadHttpResponseException
 import net.flipper.bridge.connection.transport.common.utils.toRawHttpRequestString
 import net.flipper.core.busylib.ktx.common.withLockResult
 import net.flipper.core.busylib.log.LogTagProvider

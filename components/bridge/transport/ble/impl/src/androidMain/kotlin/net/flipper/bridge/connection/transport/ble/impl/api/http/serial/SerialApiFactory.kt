@@ -4,7 +4,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.map
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceSerialConfig
-import net.flipper.bridge.connection.transport.ble.http.serial.FSerialBleApi
+import net.flipper.bridge.connection.transport.ble.impl.serial.FSerialBleApi
 import net.flipper.busylib.core.wrapper.WrappedStateFlow
 import net.flipper.core.busylib.log.LogTagProvider
 import no.nordicsemi.kotlin.ble.client.RemoteService

@@ -1,4 +1,4 @@
-package net.flipper.bridge.connection.transport.ble.http.serial
+package net.flipper.bridge.connection.transport.ble.impl.serial
 
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.InternalAPI
