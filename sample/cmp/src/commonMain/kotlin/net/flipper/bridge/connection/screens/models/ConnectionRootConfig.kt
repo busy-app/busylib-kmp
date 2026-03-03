@@ -15,4 +15,7 @@ sealed class ConnectionRootConfig {
 
     @Serializable
     data object Dashboard : ConnectionRootConfig()
+
+    @Serializable
+    data object FirmwareUpdate : ConnectionRootConfig()
 }

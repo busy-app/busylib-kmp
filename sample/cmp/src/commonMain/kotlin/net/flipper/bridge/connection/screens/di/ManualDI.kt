@@ -12,6 +12,8 @@ import net.flipper.bridge.connection.screens.device.viewmodel.FCurrentDeviceView
 import net.flipper.bridge.connection.screens.device.viewmodel.FDevicesViewModel
 import net.flipper.bridge.connection.screens.device.viewmodel.PingViewModel
 import net.flipper.bridge.connection.screens.device.viewmodel.UpdaterViewModel
+import net.flipper.bridge.connection.screens.fwupdate.FirmwareUpdateDecomposeComponent
+import net.flipper.bridge.connection.screens.fwupdate.FirmwareUpdateViewModel
 import net.flipper.bridge.connection.screens.search.ConnectionSearchDecomposeComponent
 import net.flipper.bridge.connection.screens.search.ConnectionSearchViewModel
 import net.flipper.bridge.connection.screens.utils.PermissionChecker
@@ -59,7 +61,10 @@ private fun getRootDecomposeComponentFactory(
             fService = fConnectionService,
             firmwareUpdaterApi = firmwareUpdaterApi
         ),
-        dashboardDecomposeComponentFactory = getDashboardDecomposeComponentFactory(featureProvider)
+        dashboardDecomposeComponentFactory = getDashboardDecomposeComponentFactory(featureProvider),
+        firmwareUpdateDecomposeComponentFactory = getFirmwareUpdateDecomposeComponentFactory(
+            firmwareUpdaterApi = firmwareUpdaterApi
+        )
     )
 }
 
@@ -98,5 +103,13 @@ private fun getDashboardDecomposeComponentFactory(
 ): DashboardDecomposeComponent.Factory {
     return DashboardDecomposeComponent.Factory(
         dashboardViewModelFactory = { DashboardViewModel(fFeatureProvider) }
+    )
+}
+
+private fun getFirmwareUpdateDecomposeComponentFactory(
+    firmwareUpdaterApi: FirmwareUpdaterApi
+): FirmwareUpdateDecomposeComponent.Factory {
+    return FirmwareUpdateDecomposeComponent.Factory(
+        firmwareUpdateViewModelFactory = { FirmwareUpdateViewModel(firmwareUpdaterApi) }
     )
 }
