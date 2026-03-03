@@ -9,6 +9,7 @@ import net.flipper.bridge.connection.screens.dashboard.DashboardDecomposeCompone
 import net.flipper.bridge.connection.screens.decompose.CompositeDecomposeComponent
 import net.flipper.bridge.connection.screens.decompose.DecomposeComponent
 import net.flipper.bridge.connection.screens.device.ConnectionDeviceScreenDecomposeComponent
+import net.flipper.bridge.connection.screens.fwupdate.FirmwareUpdateDecomposeComponent
 import net.flipper.bridge.connection.screens.models.ConnectionRootConfig
 import net.flipper.bridge.connection.screens.nopermission.ConnectionNoPermissionDecomposeComponent
 import net.flipper.bridge.connection.screens.search.ConnectionSearchDecomposeComponent
@@ -19,7 +20,8 @@ class ConnectionRootDecomposeComponent(
     permissionChecker: PermissionChecker,
     private val searchDecomposeFactory: ConnectionSearchDecomposeComponent.Factory,
     private val connectionDeviceScreenDecomposeComponentFactory: ConnectionDeviceScreenDecomposeComponent.Factory,
-    private val dashboardDecomposeComponentFactory: DashboardDecomposeComponent.Factory
+    private val dashboardDecomposeComponentFactory: DashboardDecomposeComponent.Factory,
+    private val firmwareUpdateDecomposeComponentFactory: FirmwareUpdateDecomposeComponent.Factory
 ) : CompositeDecomposeComponent<ConnectionRootConfig>(), ComponentContext by componentContext {
     override val stack: Value<ChildStack<ConnectionRootConfig, DecomposeComponent>> = childStack(
         source = navigation,
@@ -55,13 +57,19 @@ class ConnectionRootDecomposeComponent(
             componentContext = componentContext,
             onBack = navigation::pop
         )
+
+        is ConnectionRootConfig.FirmwareUpdate -> firmwareUpdateDecomposeComponentFactory.invoke(
+            componentContext = componentContext,
+            onBack = navigation::pop
+        )
     }
 
     class Factory(
         private val permissionChecker: PermissionChecker,
         private val searchDecomposeFactory: ConnectionSearchDecomposeComponent.Factory,
         private val connectionDeviceScreenDecomposeComponentFactory: ConnectionDeviceScreenDecomposeComponent.Factory,
-        private val dashboardDecomposeComponentFactory: DashboardDecomposeComponent.Factory
+        private val dashboardDecomposeComponentFactory: DashboardDecomposeComponent.Factory,
+        private val firmwareUpdateDecomposeComponentFactory: FirmwareUpdateDecomposeComponent.Factory
     ) {
         fun invoke(
             componentContext: ComponentContext
@@ -71,7 +79,8 @@ class ConnectionRootDecomposeComponent(
                 permissionChecker,
                 searchDecomposeFactory,
                 connectionDeviceScreenDecomposeComponentFactory,
-                dashboardDecomposeComponentFactory
+                dashboardDecomposeComponentFactory,
+                firmwareUpdateDecomposeComponentFactory
             )
         }
     }
