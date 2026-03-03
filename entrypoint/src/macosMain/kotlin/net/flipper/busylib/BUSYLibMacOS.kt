@@ -16,6 +16,7 @@ import net.flipper.bsb.cloud.api.BUSYLibHostApi
 import net.flipper.bsb.cloud.api.BUSYLibHostApiStub
 import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
 import net.flipper.busylib.di.create
+import net.flipper.tools.oncall.api.OnCallSingletonApi
 
 @Inject
 class BUSYLibMacOS(
@@ -23,7 +24,8 @@ class BUSYLibMacOS(
     override val orchestrator: FDeviceOrchestrator,
     override val featureProvider: FFeatureProvider,
     override val firmwareUpdaterApi: FirmwareUpdaterApi,
-    private val startUpListeners: Set<InternalBUSYLibStartupListener>
+    private val startUpListeners: Set<InternalBUSYLibStartupListener>,
+    val onCallSingletonApi: OnCallSingletonApi
 ) : BUSYLibApple {
     override fun launch() {
         startUpListeners.forEach {
