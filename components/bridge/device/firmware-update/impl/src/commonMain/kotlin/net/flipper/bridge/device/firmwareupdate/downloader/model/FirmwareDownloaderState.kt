@@ -1,6 +1,6 @@
 package net.flipper.bridge.device.firmwareupdate.downloader.model
 
-sealed interface FirmwareDownloaderState {
+internal sealed interface FirmwareDownloaderState {
     data object Downloaded : FirmwareDownloaderState
     data object Pending : FirmwareDownloaderState
     data class Downloading(
