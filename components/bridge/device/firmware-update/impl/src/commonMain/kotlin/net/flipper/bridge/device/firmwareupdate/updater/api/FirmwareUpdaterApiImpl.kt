@@ -121,6 +121,7 @@ class FirmwareUpdaterApiImpl(
             .map { status -> status.tryCast<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>() }
             .map { status -> status?.featureApi }
             .flatMapLatest { feature -> feature?.updateVersionFlow.orNullable() }
+            .filterNotNull()
             .firstOrNull()
         return when (currentUpdateVersion) {
             is BsbUpdateVersion.Default -> {
@@ -168,7 +169,7 @@ class FirmwareUpdaterApiImpl(
      */
     override suspend fun startUpdateInstall(): CResult<Unit> {
         info { "#startUpdateInstall" }
-        return lanUpdaterScope.withJobMode(SingleJobMode.CANCEL_PREVIOUS) {
+        return lanUpdaterScope.async(SingleJobMode.CANCEL_PREVIOUS) {
             coroutineContext.job.invokeOnCompletion {
                 firmwareDownloaderApi.reset()
                 firmwareUploaderApi.reset()

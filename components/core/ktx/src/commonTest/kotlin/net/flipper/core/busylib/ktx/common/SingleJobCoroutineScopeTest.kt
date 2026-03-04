@@ -18,11 +18,11 @@ class SingleJobCoroutineScopeTest {
         val singleJobScope = asSingleJobScope()
         val incrementFlow = MutableStateFlow(0)
         val jobs = listOf(
-            singleJobScope.withJobMode(SingleJobMode.SKIP_IF_RUNNING) {
+            singleJobScope.launch(SingleJobMode.SKIP_IF_RUNNING) {
                 delay(200L)
                 incrementFlow.update { value -> value + 1 }
             },
-            singleJobScope.withJobMode(SingleJobMode.SKIP_IF_RUNNING) {
+            singleJobScope.launch(SingleJobMode.SKIP_IF_RUNNING) {
                 delay(200L)
                 incrementFlow.update { value -> value + 1 }
             }
@@ -37,7 +37,7 @@ class SingleJobCoroutineScopeTest {
         val singleJobScope = asSingleJobScope()
         val incrementFlow = MutableStateFlow(0)
         val jobs = List(5) {
-            singleJobScope.withJobMode(SingleJobMode.AWAIT_PREVIOUS) {
+            singleJobScope.launch(SingleJobMode.AWAIT_PREVIOUS) {
                 println("Lauynched:L $it")
                 delay(200L)
                 incrementFlow.update { value ->
@@ -55,7 +55,7 @@ class SingleJobCoroutineScopeTest {
         val singleJobScope = asSingleJobScope()
         val incrementFlow = MutableStateFlow(0)
         val jobs = List(5) {
-            singleJobScope.withJobMode(SingleJobMode.CANCEL_PREVIOUS) {
+            singleJobScope.launch(SingleJobMode.CANCEL_PREVIOUS) {
                 delay(200L)
                 incrementFlow.update { value ->
                     value + 1
@@ -72,19 +72,19 @@ class SingleJobCoroutineScopeTest {
         val singleJobScope = asSingleJobScope()
         val incrementFlow = MutableStateFlow(0)
         val jobs = listOf(
-            singleJobScope.withJobMode(SingleJobMode.SKIP_IF_RUNNING) {
+            singleJobScope.launch(SingleJobMode.SKIP_IF_RUNNING) {
                 delay(200L)
                 incrementFlow.update { value ->
                     value + 10
                 }
             },
-            singleJobScope.withJobMode(SingleJobMode.AWAIT_PREVIOUS) {
+            singleJobScope.launch(SingleJobMode.AWAIT_PREVIOUS) {
                 delay(200L)
                 incrementFlow.update { value ->
                     value + 100
                 }
             },
-            singleJobScope.withJobMode(SingleJobMode.CANCEL_PREVIOUS) {
+            singleJobScope.launch(SingleJobMode.CANCEL_PREVIOUS) {
                 delay(200L)
                 incrementFlow.update { value ->
                     value - 100
