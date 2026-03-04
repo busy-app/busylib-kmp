@@ -12,7 +12,6 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
-import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * A [CoroutineScope] that ensures only one coroutine job is active
@@ -46,10 +45,6 @@ interface SingleJobCoroutineScope : CoroutineScope {
 fun SingleJobCoroutineScope.cancelPrevious(): Job {
     return launch(SingleJobMode.CANCEL_PREVIOUS, block = {}).job
 }
-
-class PreviousJobsRunningException(
-    message: String = "Some of previous jobs were still running"
-) : CancellationException(message)
 
 /**
  * Defines how a [SingleJobCoroutineScope] behaves when a new coroutine launch
@@ -115,18 +110,16 @@ private class MutexSingleJobCoroutineScope(
         context: CoroutineContext,
         start: CoroutineStart,
         block: suspend CoroutineScope.() -> T
-    ): Result<Deferred<T>> {
+    ): Deferred<T>? {
         val isAnyJobActive = activeJobs.any(Job::isActive)
         return if (isAnyJobActive) {
-            Result.failure(PreviousJobsRunningException())
+            null
         } else {
-            Result.success(
-                async(
-                    context = context,
-                    start = start,
-                    block = block
-                ).also(activeJobs::add)
-            )
+            async(
+                context = context,
+                start = start,
+                block = block
+            ).also(activeJobs::add)
         }
     }
 
@@ -183,7 +176,7 @@ private class MutexSingleJobCoroutineScope(
                                 context = context,
                                 start = start,
                                 block = block
-                            ).getOrNull()
+                            )
                         }
                     }
                 }?.join()
