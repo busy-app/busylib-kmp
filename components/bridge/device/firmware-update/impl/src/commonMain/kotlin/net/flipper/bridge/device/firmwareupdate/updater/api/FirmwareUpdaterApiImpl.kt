@@ -2,6 +2,7 @@ package net.flipper.bridge.device.firmwareupdate.updater.api
 
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -36,7 +37,6 @@ import net.flipper.busylib.core.wrapper.CResult
 import net.flipper.busylib.core.wrapper.WrappedStateFlow
 import net.flipper.busylib.core.wrapper.toCResult
 import net.flipper.busylib.core.wrapper.wrap
-import net.flipper.core.busylib.ktx.common.SingleJobMode
 import net.flipper.core.busylib.ktx.common.asFlow
 import net.flipper.core.busylib.ktx.common.asSingleJobScope
 import net.flipper.core.busylib.ktx.common.cancelPrevious
@@ -169,7 +169,7 @@ class FirmwareUpdaterApiImpl(
      */
     override suspend fun startUpdateInstall(): CResult<Unit> {
         info { "#startUpdateInstall" }
-        return lanUpdaterScope.async(SingleJobMode.CANCEL_PREVIOUS) {
+        return lanUpdaterScope.async {
             coroutineContext.job.invokeOnCompletion {
                 firmwareDownloaderApi.reset()
                 firmwareUploaderApi.reset()

@@ -20,13 +20,9 @@ import kotlin.coroutines.cancellation.CancellationException
  */
 interface SingleJobCoroutineScope : CoroutineScope {
     /**
-     * Launches a new coroutine within this scope, applying the given [mode]
-     * to control how it interacts with any currently running job
-     * @throws PreviousJobsRunningException if selected [SingleJobMode.SKIP_IF_RUNNING] and previous jobs still active
+     * Launches a new coroutine within this scope, applying the [SingleJobMode.CANCEL_PREVIOUS] mode
      */
-    @DelicateSingleJobApi
     fun <T> async(
-        mode: SingleJobMode,
         context: CoroutineContext = EmptyCoroutineContext,
         start: CoroutineStart = CoroutineStart.DEFAULT,
         block: suspend CoroutineScope.() -> T
@@ -50,13 +46,6 @@ interface SingleJobCoroutineScope : CoroutineScope {
 fun SingleJobCoroutineScope.cancelPrevious(): Job {
     return launch(SingleJobMode.CANCEL_PREVIOUS, block = {}).job
 }
-
-@RequiresOptIn(
-    message = "This is dangerous API of SingleJobCoroutineScope." +
-        "See docs of methods, annotated with this",
-    level = RequiresOptIn.Level.WARNING
-)
-annotation class DelicateSingleJobApi
 
 class PreviousJobsRunningException(
     message: String = "Some of previous jobs were still running"
@@ -142,7 +131,6 @@ private class MutexSingleJobCoroutineScope(
     }
 
     override fun <T> async(
-        mode: SingleJobMode,
         context: CoroutineContext,
         start: CoroutineStart,
         block: suspend CoroutineScope.() -> T
@@ -152,31 +140,11 @@ private class MutexSingleJobCoroutineScope(
             start = start,
             block = {
                 mutex.withLock {
-                    when (mode) {
-                        SingleJobMode.CANCEL_PREVIOUS -> {
-                            cancelPreviousUnsafe(
-                                context = context,
-                                start = start,
-                                block = block
-                            )
-                        }
-
-                        SingleJobMode.AWAIT_PREVIOUS -> {
-                            awaitPreviousUnsafe(
-                                context = context,
-                                start = start,
-                                block = block
-                            )
-                        }
-
-                        SingleJobMode.SKIP_IF_RUNNING -> {
-                            trySkipPreviousUnsafe(
-                                context = context,
-                                start = start,
-                                block = block
-                            ).getOrThrow()
-                        }
-                    }
+                    cancelPreviousUnsafe(
+                        context = context,
+                        start = start,
+                        block = block
+                    )
                 }.await()
             }
         )
