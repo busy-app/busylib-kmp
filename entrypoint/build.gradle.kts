@@ -156,9 +156,13 @@ kotlin {
     sourceSets.iosMain.dependencies {
         implementation(projects.components.bridge.transport.ble.impl)
     }
-    if (!macOSEnabled) return@kotlin
-    sourceSets.macosMain.dependencies {
-        implementation(projects.components.bridge.transport.tcp.lan.impl)
+    if (macOSEnabled) {
+        sourceSets.macosMain.dependencies {
+            implementation(projects.components.bridge.transport.tcp.lan.impl)
+
+            implementation(projects.components.tools.oncall.api)
+            implementation(projects.components.tools.oncall.impl)
+        }
     }
 }
 

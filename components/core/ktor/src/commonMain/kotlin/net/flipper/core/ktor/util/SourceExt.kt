@@ -10,7 +10,7 @@ import kotlinx.io.buffered
 import kotlinx.io.readByteArray
 import net.flipper.core.busylib.log.error
 
-@Suppress("LoopWithTooManyJumpStatements")
+@Suppress("LoopWithTooManyJumpStatements", "MagicNumber")
 fun RawSource.asFlow(
     bufferSize: Long = 1 * 1024
 ): Flow<ByteArray> = flow {

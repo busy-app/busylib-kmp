@@ -191,6 +191,7 @@ class FPeripheral(
         }
     }
 
+    @Suppress("MagicNumber")
     private suspend fun handleCBError(code: Long) {
         when (code) {
             7L -> _stateStream.emit(FPeripheralState.INVALID_PAIRING) // CBErrorPeerRemovedPairingInformation
@@ -199,6 +200,7 @@ class FPeripheral(
         error { "Peripheral CBError id=${identifier.UUIDString} code=$code" }
     }
 
+    @Suppress("MagicNumber")
     private suspend fun handleCBATTError(code: Long) {
         when (code) {
             15L -> _stateStream.emit(FPeripheralState.PAIRING_FAILED) // CBATTErrorInsufficientEncryption
@@ -379,6 +381,7 @@ class FPeripheral(
     }
 }
 
+@Suppress("MagicNumber")
 private fun CBUUID.toKotlinUUID(): kotlin.uuid.Uuid {
     /**
      * Convert short-form Bluetooth SIG UUIDs to full 128-bit format.

@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.sync.Mutex
 import net.flipper.bridge.connection.connectionbuilder.api.FDeviceConfigToConnection
 import net.flipper.bridge.connection.transport.combined.FCombinedConnectionApi
@@ -124,9 +124,9 @@ class FCombinedConnectionApiImpl(
                     .combine()
                     .flatten()
             }
-    }.stateIn(scope, SharingStarted.WhileSubscribed(), emptyList())
+    }.shareIn(scope, SharingStarted.WhileSubscribed(), 1)
 
-    override fun getCapabilities(): StateFlow<List<FHTTPTransportCapability>> {
+    override fun getCapabilities(): Flow<List<FHTTPTransportCapability>> {
         return _capabilities
     }
 
@@ -148,6 +148,7 @@ class FCombinedConnectionApiImpl(
     }
 }
 
+@Suppress("MagicNumber")
 private fun getPriority(status: FInternalTransportConnectionStatus): Int {
     return when (status) {
         FInternalTransportConnectionStatus.Disconnected -> 0

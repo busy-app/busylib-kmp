@@ -87,7 +87,7 @@ class BSBWebSocketImpl(
     }
 }
 
-@Suppress("LongParameterList")
+@Suppress("LongParameterList", "MagicNumber")
 suspend fun getBSBWebSocket(
     httpClient: HttpClient,
     logger: LogTagProvider,
@@ -121,6 +121,7 @@ suspend fun getBSBWebSocket(
     }
 }
 
+@Suppress("MagicNumber")
 private suspend fun getTicketToken(
     httpClient: HttpClient,
     busyHost: String,

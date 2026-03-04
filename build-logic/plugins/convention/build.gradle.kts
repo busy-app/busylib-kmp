@@ -12,6 +12,17 @@ dependencies {
     implementation(libs.vaniktech)
     implementation(libs.klibs.gradle.android)
     implementation(libs.klibs.gradle.convention)
+    implementation(libs.detekt.gradle)
 
     implementation(files(libs.javaClass.superclass.protectionDomain.codeSource.location))
+}
+
+gradlePlugin {
+    val pluginGroup = "net.flipper"
+    plugins {
+        create("busylib.detekt") {
+            id = "$pluginGroup.$name"
+            implementationClass = "net.flipper.plugin.DetektPlugin"
+        }
+    }
 }

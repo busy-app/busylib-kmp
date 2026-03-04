@@ -8,7 +8,6 @@ import net.flipper.bridge.connection.feature.finishsetup.api.FFinishSetupFeature
 import net.flipper.bridge.connection.feature.firmwareupdate.api.FFirmwareUpdateFeatureApi
 import net.flipper.bridge.connection.feature.info.api.FDeviceInfoFeatureApi
 import net.flipper.bridge.connection.feature.link.check.ondemand.api.FLinkedInfoOnDemandFeatureApi
-import net.flipper.bridge.connection.feature.oncall.api.FOnCallFeatureApi
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
 import net.flipper.bridge.connection.feature.screenstreaming.api.FScreenStreamingFeatureApi
@@ -44,15 +43,6 @@ fun FFeatureProvider.getFLinkedInfoOnDemandFeature(): WrappedFlow<FFeatureStatus
 
 suspend fun FFeatureProvider.getFLinkedInfoOnDemandFeatureSync(): FLinkedInfoOnDemandFeatureApi? {
     return this.getSync(FLinkedInfoOnDemandFeatureApi::class)
-}
-
-// OnCall Feature
-fun FFeatureProvider.getOnCallFeature(): WrappedFlow<FFeatureStatus<FOnCallFeatureApi>> {
-    return get(FOnCallFeatureApi::class).wrap()
-}
-
-suspend fun FFeatureProvider.getOnCallFeatureSync(): FOnCallFeatureApi? {
-    return this.getSync(FOnCallFeatureApi::class)
 }
 
 // Settings Feature

@@ -6,7 +6,7 @@ import net.flipper.bridge.device.firmwareupdate.downloader.model.FirmwareDownloa
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateState
 import net.flipper.bridge.device.firmwareupdate.uploader.model.FirmwareUploaderState
 
-object FwUpdateStatusMapper {
+internal object FwUpdateStatusMapper {
     private fun fromCheckStatus(
         updateStatus: UpdateStatus,
     ): FwUpdateState {
@@ -57,9 +57,7 @@ object FwUpdateStatusMapper {
                     UpdateStatus.Check.CheckEvent.START,
                     UpdateStatus.Check.CheckEvent.NONE,
                     UpdateStatus.Check.CheckEvent.STOP -> {
-                        fromCheckStatus(
-                            updateStatus = updateStatus,
-                        )
+                        fromCheckStatus(updateStatus = updateStatus)
                     }
                 }
             }
@@ -72,9 +70,7 @@ object FwUpdateStatusMapper {
         return when (updateStatus.install.status) {
             UpdateStatus.Install.Status.BUSY,
             UpdateStatus.Install.Status.OK -> {
-                fromInstallAction(
-                    updateStatus = updateStatus,
-                )
+                fromInstallAction(updateStatus = updateStatus)
             }
 
             UpdateStatus.Install.Status.BATTERY_LOW -> FwUpdateState.LowBattery
@@ -93,10 +89,9 @@ object FwUpdateStatusMapper {
     }
 
     fun toFwUpdateState(
-        updateStatus: UpdateStatus?,
         uploaderState: FirmwareUploaderState,
         downloaderState: FirmwareDownloaderState,
-        bsbUrlUpdateVersion: BsbUpdateVersion.Url?
+        bsbUrlUpdateVersion: BsbUpdateVersion.Url?,
     ): FwUpdateState {
         return when {
             uploaderState is FirmwareUploaderState.Uploading -> {
@@ -115,19 +110,18 @@ object FwUpdateStatusMapper {
                 FwUpdateState.Downloading(progress = 1f)
             }
 
-            updateStatus == null -> {
-                FwUpdateState.Pending
-            }
-
             bsbUrlUpdateVersion != null -> {
                 FwUpdateState.UpdateAvailable
             }
 
             else -> {
-                fromInstallStatus(
-                    updateStatus = updateStatus,
-                )
+                FwUpdateState.Pending
             }
         }
+    }
+
+    fun toFwUpdateState(updateStatus: UpdateStatus?): FwUpdateState {
+        if (updateStatus == null) return FwUpdateState.Pending
+        return fromInstallStatus(updateStatus = updateStatus)
     }
 }
