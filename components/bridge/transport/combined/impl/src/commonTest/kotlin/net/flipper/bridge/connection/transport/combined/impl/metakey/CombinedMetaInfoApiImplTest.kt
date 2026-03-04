@@ -1,6 +1,8 @@
 package net.flipper.bridge.connection.transport.combined.impl.metakey
 
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -9,6 +11,7 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import net.flipper.bridge.connection.transport.combined.impl.connections.AutoReconnectConnection
+import net.flipper.bridge.connection.transport.combined.impl.connections.SharedConnectionPool
 import net.flipper.bridge.connection.transport.combined.impl.connections.helpers.MockConnectionBuilder
 import net.flipper.bridge.connection.transport.combined.impl.connections.helpers.TestConfig
 import net.flipper.bridge.connection.transport.combined.impl.connections.helpers.TestConnectedDeviceApi
@@ -39,7 +42,10 @@ class CombinedMetaInfoApiImplTest {
         connectionBuilder.connectCalledDeferred.await()
         advanceUntilIdle()
 
-        val sut = CombinedMetaInfoApiImpl(MutableStateFlow(listOf(connection)))
+        val sut = CombinedMetaInfoApiImpl(
+            SharedConnectionPool(CoroutineScope(SupervisorJob() + testDispatcher), MutableStateFlow(listOf(connection)))
+        )
+        advanceUntilIdle()
         val result = sut.get(TransportMetaInfoKey.DEVICE_NAME).first()
 
         assertTrue(result.isFailure, "Should be failure when no transport is connected")
@@ -77,7 +83,12 @@ class CombinedMetaInfoApiImplTest {
             )
             advanceUntilIdle()
 
-            val sut = CombinedMetaInfoApiImpl(MutableStateFlow(listOf(connection)))
+            val sut = CombinedMetaInfoApiImpl(
+                SharedConnectionPool(
+                    CoroutineScope(SupervisorJob() + testDispatcher),
+                    MutableStateFlow(listOf(connection))
+                )
+            )
             val result = sut.get(TransportMetaInfoKey.DEVICE_NAME).first()
 
             assertTrue(result.isSuccess, "Should be success when transport supports the key")
@@ -117,7 +128,12 @@ class CombinedMetaInfoApiImplTest {
             )
             advanceUntilIdle()
 
-            val sut = CombinedMetaInfoApiImpl(MutableStateFlow(listOf(connection)))
+            val sut = CombinedMetaInfoApiImpl(
+                SharedConnectionPool(
+                    CoroutineScope(SupervisorJob() + testDispatcher),
+                    MutableStateFlow(listOf(connection))
+                )
+            )
             val result = sut.get(TransportMetaInfoKey.BATTERY_LEVEL).first()
 
             assertTrue(
@@ -152,7 +168,9 @@ class CombinedMetaInfoApiImplTest {
         )
         advanceUntilIdle()
 
-        val sut = CombinedMetaInfoApiImpl(MutableStateFlow(listOf(connection)))
+        val sut = CombinedMetaInfoApiImpl(
+            SharedConnectionPool(CoroutineScope(SupervisorJob() + testDispatcher), MutableStateFlow(listOf(connection)))
+        )
         val result = sut.get(TransportMetaInfoKey.DEVICE_NAME).first()
 
         assertTrue(
@@ -217,7 +235,12 @@ class CombinedMetaInfoApiImplTest {
             )
             advanceUntilIdle()
 
-            val sut = CombinedMetaInfoApiImpl(MutableStateFlow(listOf(connection1, connection2)))
+            val sut = CombinedMetaInfoApiImpl(
+                SharedConnectionPool(
+                    CoroutineScope(SupervisorJob() + testDispatcher),
+                    MutableStateFlow(listOf(connection1, connection2))
+                )
+            )
             val result = sut.get(TransportMetaInfoKey.BATTERY_LEVEL).first()
 
             assertTrue(result.isSuccess, "Should find key from second connection")
@@ -259,7 +282,12 @@ class CombinedMetaInfoApiImplTest {
             )
             advanceUntilIdle()
 
-            val sut = CombinedMetaInfoApiImpl(MutableStateFlow(listOf(connection)))
+            val sut = CombinedMetaInfoApiImpl(
+                SharedConnectionPool(
+                    CoroutineScope(SupervisorJob() + testDispatcher),
+                    MutableStateFlow(listOf(connection))
+                )
+            )
 
             // Verify initially successful
             val resultBefore = sut.get(TransportMetaInfoKey.DEVICE_NAME).first()
@@ -293,7 +321,9 @@ class CombinedMetaInfoApiImplTest {
 
         val listener = connectionBuilder.latestListener()!!
 
-        val sut = CombinedMetaInfoApiImpl(MutableStateFlow(listOf(connection)))
+        val sut = CombinedMetaInfoApiImpl(
+            SharedConnectionPool(CoroutineScope(SupervisorJob() + testDispatcher), MutableStateFlow(listOf(connection)))
+        )
 
         // Initially no connection — failure
         val result1 = sut.get(TransportMetaInfoKey.DEVICE_NAME).first()

@@ -25,13 +25,17 @@ class SharedConnectionPool(
 ) : LogTagProvider {
     override val TAG = "SharedConnectionPool"
     private val sharedState = connectionsFlow.flatMapLatest { connections ->
-        combine(
-            connections.map { connection ->
-                connection.stateFlow.flatMapLatest { status ->
-                    getConnectionSnapshot(status)
+        if (connections.isEmpty()) {
+            flowOf(emptyArray())
+        } else {
+            combine(
+                connections.map { connection ->
+                    connection.stateFlow.flatMapLatest { status ->
+                        getConnectionSnapshot(status)
+                    }
                 }
-            }
-        ) { it }
+            ) { it }
+        }
     }.shareIn(scope, SharingStarted.Eagerly, 1)
 
     fun get() = sharedState.asFlow()
