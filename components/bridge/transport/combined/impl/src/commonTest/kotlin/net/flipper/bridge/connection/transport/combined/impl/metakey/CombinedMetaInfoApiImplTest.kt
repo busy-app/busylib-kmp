@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.job
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -31,6 +32,7 @@ class CombinedMetaInfoApiImplTest {
     @Test
     fun GIVEN_no_connected_transports_WHEN_get_called_THEN_emits_failure() = runTest {
         val testDispatcher = StandardTestDispatcher(testScheduler)
+        val poolScope = CoroutineScope(SupervisorJob(backgroundScope.coroutineContext.job) + testDispatcher)
         val connectionBuilder = MockConnectionBuilder()
         val connection = AutoReconnectConnection(
             scope = backgroundScope,
@@ -43,7 +45,7 @@ class CombinedMetaInfoApiImplTest {
         advanceUntilIdle()
 
         val sut = CombinedMetaInfoApiImpl(
-            SharedConnectionPool(CoroutineScope(SupervisorJob() + testDispatcher), MutableStateFlow(listOf(connection)))
+            SharedConnectionPool(poolScope, MutableStateFlow(listOf(connection)))
         )
         advanceUntilIdle()
         val result = sut.get(TransportMetaInfoKey.DEVICE_NAME).first()
@@ -58,6 +60,7 @@ class CombinedMetaInfoApiImplTest {
     fun GIVEN_connected_transport_supports_key_WHEN_get_called_THEN_emits_success_with_data() =
         runTest {
             val testDispatcher = StandardTestDispatcher(testScheduler)
+            val poolScope = CoroutineScope(SupervisorJob(backgroundScope.coroutineContext.job) + testDispatcher)
             val connectionBuilder = MockConnectionBuilder()
             val connection = AutoReconnectConnection(
                 scope = backgroundScope,
@@ -85,7 +88,7 @@ class CombinedMetaInfoApiImplTest {
 
             val sut = CombinedMetaInfoApiImpl(
                 SharedConnectionPool(
-                    CoroutineScope(SupervisorJob() + testDispatcher),
+                    poolScope,
                     MutableStateFlow(listOf(connection))
                 )
             )
@@ -103,6 +106,7 @@ class CombinedMetaInfoApiImplTest {
     fun GIVEN_connected_transport_does_not_support_key_WHEN_get_called_THEN_emits_failure() =
         runTest {
             val testDispatcher = StandardTestDispatcher(testScheduler)
+            val poolScope = CoroutineScope(SupervisorJob(backgroundScope.coroutineContext.job) + testDispatcher)
             val connectionBuilder = MockConnectionBuilder()
             val connection = AutoReconnectConnection(
                 scope = backgroundScope,
@@ -130,7 +134,7 @@ class CombinedMetaInfoApiImplTest {
 
             val sut = CombinedMetaInfoApiImpl(
                 SharedConnectionPool(
-                    CoroutineScope(SupervisorJob() + testDispatcher),
+                    poolScope,
                     MutableStateFlow(listOf(connection))
                 )
             )
@@ -148,6 +152,7 @@ class CombinedMetaInfoApiImplTest {
     @Test
     fun GIVEN_connected_device_without_meta_api_WHEN_get_called_THEN_emits_failure() = runTest {
         val testDispatcher = StandardTestDispatcher(testScheduler)
+        val poolScope = CoroutineScope(SupervisorJob(backgroundScope.coroutineContext.job) + testDispatcher)
         val connectionBuilder = MockConnectionBuilder()
         val connection = AutoReconnectConnection(
             scope = backgroundScope,
@@ -169,7 +174,7 @@ class CombinedMetaInfoApiImplTest {
         advanceUntilIdle()
 
         val sut = CombinedMetaInfoApiImpl(
-            SharedConnectionPool(CoroutineScope(SupervisorJob() + testDispatcher), MutableStateFlow(listOf(connection)))
+            SharedConnectionPool(poolScope, MutableStateFlow(listOf(connection)))
         )
         val result = sut.get(TransportMetaInfoKey.DEVICE_NAME).first()
 
@@ -183,9 +188,11 @@ class CombinedMetaInfoApiImplTest {
     }
 
     @Test
+    @Suppress("LongMethod")
     fun GIVEN_two_connections_only_second_supports_key_WHEN_get_called_THEN_returns_from_second() =
         runTest {
             val testDispatcher = StandardTestDispatcher(testScheduler)
+            val poolScope = CoroutineScope(SupervisorJob(backgroundScope.coroutineContext.job) + testDispatcher)
 
             val builder1 = MockConnectionBuilder()
             val connection1 = AutoReconnectConnection(
@@ -237,7 +244,7 @@ class CombinedMetaInfoApiImplTest {
 
             val sut = CombinedMetaInfoApiImpl(
                 SharedConnectionPool(
-                    CoroutineScope(SupervisorJob() + testDispatcher),
+                    poolScope,
                     MutableStateFlow(listOf(connection1, connection2))
                 )
             )
@@ -255,6 +262,7 @@ class CombinedMetaInfoApiImplTest {
     fun GIVEN_transport_disconnects_WHEN_observing_key_THEN_emits_failure_after_disconnect() =
         runTest {
             val testDispatcher = StandardTestDispatcher(testScheduler)
+            val poolScope = CoroutineScope(SupervisorJob(backgroundScope.coroutineContext.job) + testDispatcher)
             val connectionBuilder = MockConnectionBuilder()
             val connection = AutoReconnectConnection(
                 scope = backgroundScope,
@@ -284,7 +292,7 @@ class CombinedMetaInfoApiImplTest {
 
             val sut = CombinedMetaInfoApiImpl(
                 SharedConnectionPool(
-                    CoroutineScope(SupervisorJob() + testDispatcher),
+                    poolScope,
                     MutableStateFlow(listOf(connection))
                 )
             )
@@ -308,6 +316,7 @@ class CombinedMetaInfoApiImplTest {
     @Test
     fun GIVEN_transport_reconnects_WHEN_was_disconnected_THEN_emits_success_again() = runTest {
         val testDispatcher = StandardTestDispatcher(testScheduler)
+        val poolScope = CoroutineScope(SupervisorJob(backgroundScope.coroutineContext.job) + testDispatcher)
         val connectionBuilder = MockConnectionBuilder()
         val connection = AutoReconnectConnection(
             scope = backgroundScope,
@@ -322,7 +331,7 @@ class CombinedMetaInfoApiImplTest {
         val listener = connectionBuilder.latestListener()!!
 
         val sut = CombinedMetaInfoApiImpl(
-            SharedConnectionPool(CoroutineScope(SupervisorJob() + testDispatcher), MutableStateFlow(listOf(connection)))
+            SharedConnectionPool(poolScope, MutableStateFlow(listOf(connection)))
         )
 
         // Initially no connection — failure
