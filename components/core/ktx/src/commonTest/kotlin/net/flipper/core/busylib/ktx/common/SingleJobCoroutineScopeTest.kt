@@ -1,5 +1,3 @@
-@file:OptIn(DelicateSingleJobApi::class)
-
 package net.flipper.core.busylib.ktx.common
 
 import kotlinx.coroutines.delay
