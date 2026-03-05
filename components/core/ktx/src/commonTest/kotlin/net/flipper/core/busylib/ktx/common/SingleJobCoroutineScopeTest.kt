@@ -36,7 +36,7 @@ class SingleJobCoroutineScopeTest {
         val incrementFlow = MutableStateFlow(0)
         val jobs = List(5) {
             singleJobScope.launch(SingleJobMode.AWAIT_PREVIOUS) {
-                println("Lauynched:L $it")
+                println("Lauynched: $it")
                 delay(200L)
                 incrementFlow.update { value ->
                     value + 1

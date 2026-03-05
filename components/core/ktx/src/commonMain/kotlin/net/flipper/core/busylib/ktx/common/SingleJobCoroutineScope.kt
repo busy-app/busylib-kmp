@@ -78,12 +78,13 @@ private class MutexSingleJobCoroutineScope(
     private val mutex = Mutex()
 
     private fun <T> awaitPreviousUnsafe(
+        scope: CoroutineScope,
         context: CoroutineContext,
         start: CoroutineStart,
         block: suspend CoroutineScope.() -> T
     ): Deferred<T> {
         val previousJobs = activeJobs.toList()
-        return async(
+        return scope.async(
             context = context,
             start = start,
             block = {
@@ -94,12 +95,13 @@ private class MutexSingleJobCoroutineScope(
     }
 
     private fun <T> cancelPreviousUnsafe(
+        scope: CoroutineScope,
         context: CoroutineContext,
         start: CoroutineStart,
         block: suspend CoroutineScope.() -> T
     ): Deferred<T> {
         activeJobs.forEach(Job::cancel)
-        return async(
+        return scope.async(
             context = context,
             start = start,
             block = block
@@ -107,6 +109,7 @@ private class MutexSingleJobCoroutineScope(
     }
 
     private fun <T> trySkipPreviousUnsafe(
+        scope: CoroutineScope,
         context: CoroutineContext,
         start: CoroutineStart,
         block: suspend CoroutineScope.() -> T
@@ -115,7 +118,7 @@ private class MutexSingleJobCoroutineScope(
         return if (isAnyJobActive) {
             null
         } else {
-            async(
+            scope.async(
                 context = context,
                 start = start,
                 block = block
@@ -136,7 +139,8 @@ private class MutexSingleJobCoroutineScope(
                     cancelPreviousUnsafe(
                         context = context,
                         start = start,
-                        block = block
+                        block = block,
+                        scope = this
                     )
                 }.await()
             }
@@ -159,7 +163,8 @@ private class MutexSingleJobCoroutineScope(
                             cancelPreviousUnsafe(
                                 context = context,
                                 start = start,
-                                block = block
+                                block = block,
+                                scope = this
                             )
                         }
 
@@ -167,7 +172,8 @@ private class MutexSingleJobCoroutineScope(
                             awaitPreviousUnsafe(
                                 context = context,
                                 start = start,
-                                block = block
+                                block = block,
+                                scope = this
                             )
                         }
 
@@ -175,7 +181,8 @@ private class MutexSingleJobCoroutineScope(
                             trySkipPreviousUnsafe(
                                 context = context,
                                 start = start,
-                                block = block
+                                block = block,
+                                scope = this
                             )
                         }
                     }
