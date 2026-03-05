@@ -12,6 +12,7 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpProtocolVersion
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.cio.CIOHeaders
+import io.ktor.http.cio.ParserException
 import io.ktor.http.cio.parseResponse
 import io.ktor.util.date.GMTDate
 import io.ktor.utils.io.ByteReadChannel
@@ -30,6 +31,7 @@ import kotlinx.io.readByteArray
 import net.flipper.bridge.connection.transport.ble.impl.serial.FSerialBleApi
 import net.flipper.bridge.connection.transport.ble.impl.exception.BadHttpResponseException
 import net.flipper.bridge.connection.transport.common.utils.toRawHttpRequestString
+import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.busylib.ktx.common.withLockResult
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
@@ -98,7 +100,14 @@ class FHttpBLEEngine(
         requestTime: GMTDate,
         callContext: CoroutineContext
     ): HttpResponseData {
-        val response = parseResponse(channel) ?: throw BadHttpResponseException()
+        val response = runSuspendCatching {
+            parseResponse(channel)
+        }.onFailure { t ->
+            if (t is ParserException) {
+                error(t) { "Parser exception, make reset" }
+                serialApi.reset()
+            }
+        }.getOrThrow() ?: throw BadHttpResponseException()
         val headers: Headers = CIOHeaders(response.headers)
 
         val contentLength = headers[HttpHeaders.ContentLength]?.toLongOrNull()
