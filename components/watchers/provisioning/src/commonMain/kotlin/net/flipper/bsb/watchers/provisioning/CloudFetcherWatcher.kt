@@ -32,7 +32,7 @@ class CloudFetcherWatcher(
     private val singleJobScope = scope.asSingleJobScope()
 
     override fun onLaunch() {
-        singleJobScope.withJobMode(SingleJobMode.CANCEL_PREVIOUS) {
+        singleJobScope.launch(SingleJobMode.CANCEL_PREVIOUS) {
             combine(
                 persistedStorage.getAllDevicesFlow(),
                 cloudFetcher.getBarsFlow()

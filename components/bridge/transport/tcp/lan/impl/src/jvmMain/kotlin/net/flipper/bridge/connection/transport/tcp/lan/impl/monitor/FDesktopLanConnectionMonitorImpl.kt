@@ -5,7 +5,6 @@ import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.request.get
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.job
@@ -16,6 +15,7 @@ import net.flipper.bridge.connection.transport.tcp.lan.FLanApi
 import net.flipper.bridge.connection.transport.tcp.lan.FLanDeviceConnectionConfig
 import net.flipper.core.busylib.ktx.common.SingleJobMode
 import net.flipper.core.busylib.ktx.common.asSingleJobScope
+import net.flipper.core.busylib.ktx.common.cancelPrevious
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
 import net.flipper.core.ktor.getPlatformEngineFactory
@@ -33,7 +33,6 @@ class FDesktopLanConnectionMonitorImpl(
     override val TAG: String = "FLanConnectionMonitor"
 
     private val singleJobScope = scope.asSingleJobScope()
-    private var monitoringJob: Job? = null
     private var isConnected: Boolean = false
 
     private val httpClient: HttpClient by lazy {
@@ -50,7 +49,7 @@ class FDesktopLanConnectionMonitorImpl(
         listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting)
 
         // Start monitoring coroutine
-        monitoringJob = singleJobScope.withJobMode(SingleJobMode.CANCEL_PREVIOUS) {
+        singleJobScope.launch(SingleJobMode.CANCEL_PREVIOUS) {
             info { "Starting connection monitoring for host: ${config.host}" }
             while (isActive) {
                 checkHostAvailability(scope, deviceApi)
@@ -95,8 +94,7 @@ class FDesktopLanConnectionMonitorImpl(
 
     override fun stopMonitoring() {
         info { "Stopping connection monitoring for host: ${config.host}" }
-        monitoringJob?.cancel()
-        monitoringJob = null
+        singleJobScope.cancelPrevious()
         isConnected = false
     }
 }
