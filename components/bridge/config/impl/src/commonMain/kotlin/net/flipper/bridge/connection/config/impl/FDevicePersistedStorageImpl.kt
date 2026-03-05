@@ -36,7 +36,7 @@ class FDevicePersistedStorageImpl(
             if (deviceId.isNullOrBlank()) {
                 return@map null
             } else {
-                config.devices.find { bUSYBar -> bUSYBar.uniqueId == deviceId }
+                config.devices.find { busyBar -> busyBar.uniqueId == deviceId }
             }
         }.wrap()
     }

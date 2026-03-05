@@ -54,7 +54,7 @@ class FDeviceOrchestratorImpl(
             uniqueId = config.uniqueId,
             config = deviceConnectionConfigMapper.getConnectionConfig(config),
             listener = { deviceHolder, status ->
-                info { "Received status update for device $status" }
+                info { "Received status update for device ${deviceHolder.uniqueId}: $status" }
                 if (status is FInternalTransportConnectionStatus.Disconnected) {
                     onInternalDisconnect(deviceHolder) {
                         transportListener.onStatusUpdate(config, status)

@@ -26,7 +26,7 @@ class PersistedStorageTransactionScopeImpl(
 
         val isNewDevice = settings
             .devices
-            .none { bUSYBar -> bUSYBar.uniqueId == device.uniqueId }
+            .none { busyBar -> busyBar.uniqueId == device.uniqueId }
 
         if (isNewDevice) {
             addOrReplace(device)

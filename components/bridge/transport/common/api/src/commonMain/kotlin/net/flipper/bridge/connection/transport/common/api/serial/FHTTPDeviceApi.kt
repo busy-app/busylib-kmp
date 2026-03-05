@@ -9,9 +9,9 @@ interface FHTTPDeviceApi {
     fun getDeviceHttpEngine(): HttpClientEngine
 
     /**
-     * Don't make it just flowO
-     * If it's not overridden - it should be emptyList,
-     * which means device api has no capabilities
+     * Default implementation returns a `flowOf(emptyList())`, meaning this device API has no capabilities.
+     * Implementations should override this and return a Flow that emits the current list of capabilities
+     * instead of just wrapping a static list with `flowOf()`.
      */
     fun getCapabilities(): Flow<List<FHTTPTransportCapability>> = flowOf(emptyList())
 }
