@@ -1,5 +1,6 @@
 package net.flipper.bridge.connection.transport.combined.impl.connections
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
@@ -40,6 +41,8 @@ class WrappedConnectionInternal(
     ) {
         if (it == null) {
             info { "Wrapped connection $config scope is being cancelled" }
+        } else if (it is CancellationException) {
+            info { "Wrapped connection $config scope was cancelled" }
         } else {
             error(it) { "Scope for connection $config was cancelled due to an error" }
         }
