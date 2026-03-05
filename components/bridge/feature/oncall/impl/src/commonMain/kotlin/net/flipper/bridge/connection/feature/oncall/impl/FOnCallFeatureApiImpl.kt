@@ -38,7 +38,7 @@ class FOnCallFeatureApiImpl(
     private val singleJobScope = scope.asSingleJobScope()
 
     override fun start() {
-        singleJobScope.withJobMode(SingleJobMode.CANCEL_PREVIOUS) {
+        singleJobScope.launch(SingleJobMode.CANCEL_PREVIOUS) {
             try {
                 while (currentCoroutineContext().isActive) {
                     rpcFeatureApi

@@ -35,7 +35,7 @@ class OnCallSingletonApiImpl(
     private val singleJobScope = scope.asSingleJobScope()
 
     override fun start() {
-        singleJobScope.withJobMode(SingleJobMode.CANCEL_PREVIOUS) {
+        singleJobScope.launch(SingleJobMode.CANCEL_PREVIOUS) {
             info { "Subscribing to FOnCallFeatureApi" }
             onCallFeatureApiFlow
                 .collectLatest { status ->

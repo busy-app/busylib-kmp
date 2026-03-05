@@ -36,7 +36,7 @@ class BUSYLibNameWatcher(
 
     override fun onLaunch() {
         info { "Launched" }
-        singleJobScope.withJobMode(SingleJobMode.CANCEL_PREVIOUS) {
+        singleJobScope.launch(SingleJobMode.CANCEL_PREVIOUS) {
             combine(
                 orchestrator.getState(),
                 featureProvider.get<FSettingsFeatureApi>()

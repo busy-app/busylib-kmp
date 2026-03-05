@@ -74,7 +74,7 @@ class FLinkInfoOnReadyFeatureApiImpl(
     }
 
     private fun tryCheckLinkedInfo() {
-        singleJobScope.withJobMode(SingleJobMode.CANCEL_PREVIOUS) {
+        singleJobScope.launch(SingleJobMode.CANCEL_PREVIOUS) {
             val principal = busyLibPrincipalApi.getPrincipalFlow()
                 .filter { principal -> principal !is BUSYLibUserPrincipal.Loading }
                 .first() as? BUSYLibUserPrincipal.Full
