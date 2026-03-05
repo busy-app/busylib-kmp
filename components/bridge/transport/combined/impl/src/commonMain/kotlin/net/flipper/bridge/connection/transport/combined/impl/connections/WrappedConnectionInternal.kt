@@ -6,6 +6,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
 import net.flipper.bridge.connection.connectionbuilder.api.FDeviceConfigToConnection
@@ -37,37 +38,59 @@ class WrappedConnectionInternal(
 
     private val scope = ChildSupervisorScope(
         parentScope = parentScope,
-        dispatcher = dispatcher
-    ) {
-        if (it == null) {
-            info { "Wrapped connection $config scope is being cancelled" }
-        } else if (it is CancellationException) {
-            info { "Wrapped connection $config scope was cancelled" }
-        } else {
-            error(it) { "Scope for connection $config was cancelled due to an error" }
+        dispatcher = dispatcher,
+        onCompletion = { t ->
+            when (t) {
+                null -> {
+                    info { "Wrapped connection $config scope is being cancelled" }
+                }
+
+                is CancellationException -> {
+                    info { "Wrapped connection $config scope was cancelled" }
+                }
+
+                else -> {
+                    error(t) { "Scope for connection $config was cancelled due to an error" }
+                }
+            }
+            stateFlow.update { FInternalTransportConnectionStatus.Disconnected }
         }
-        stateFlow.value = FInternalTransportConnectionStatus.Disconnected
+    )
+
+    private fun initConnectionApi() {
+        scope.launch {
+            info { "#init connect connectionApi with config $config" }
+            val connectionApiResult = connectionBuilder.connect(
+                scope = scope,
+                config = config,
+                listener = this@WrappedConnectionInternal
+            )
+            connectionApi = connectionApiResult
+                .onFailure { t -> error(t) { "Could not build connectionApi" } }
+                .getOrElse { throw WrappedConnectionException(it) }
+        }
     }
 
-    init {
-        scope.launch {
-            connectionApi = connectionBuilder.connect(
-                scope,
-                config,
-                this@WrappedConnectionInternal
-            ).getOrElse { throw WrappedConnectionException(it) }
-        }
+    private fun awaitCompletion() {
         scope.launchOnCompletion {
+            info { "#init disconnecting connectionApi" }
             connectionApi?.disconnect()
         }
     }
 
+    init {
+        initConnectionApi()
+        awaitCompletion()
+    }
+
     override suspend fun onStatusUpdate(status: FInternalTransportConnectionStatus) {
-        stateFlow.value = status
+        info { "#onStatusUpdate $status" }
+        stateFlow.emit(status)
         yield() // Allow collectors to process the state before returning
     }
 
     suspend fun disconnect() {
+        info { "#disconnect" }
         scope.cancel()
     }
 }

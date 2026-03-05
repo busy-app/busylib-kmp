@@ -58,16 +58,19 @@ class AutoReconnectConnection(
                         dispatcher = dispatcher
                     )
                 }
+                info { "Created connection $connection" }
 
                 connection.stateFlow
-                    .onEach {
-                        stateFlow.value = it
-                        if (it is FInternalTransportConnectionStatus.Connected) {
+                    .onEach { connectionStatus ->
+                        info { "Got connection status $connectionStatus" }
+                        stateFlow.emit(connectionStatus)
+                        if (connectionStatus is FInternalTransportConnectionStatus.Connected) {
                             retryCount = 0
                         }
                     }
-                    .filter { it == FInternalTransportConnectionStatus.Disconnected }
+                    .filter { status -> status == FInternalTransportConnectionStatus.Disconnected }
                     .first()
+                info { "Got disconnected event" }
                 connection.disconnect()
                 delay(getExponentialDelay(retryCount))
                 retryCount++
@@ -78,7 +81,7 @@ class AutoReconnectConnection(
     suspend fun tryUpdateConnectionConfig(
         newConfig: FDeviceConnectionConfig<*>
     ): Result<Unit> = withLockResult(updateMutex) {
-        val currentState = stateFlow.value
+        val currentState = stateFlow.first()
         if (currentState !is FInternalTransportConnectionStatus.Connected) {
             return@withLockResult if (config == newConfig) {
                 Result.success(Unit)
@@ -89,9 +92,9 @@ class AutoReconnectConnection(
             }
         }
 
-        return@withLockResult currentState.deviceApi.tryUpdateConnectionConfig(newConfig).onSuccess {
-            config = newConfig
-        }
+        return@withLockResult currentState.deviceApi
+            .tryUpdateConnectionConfig(newConfig)
+            .onSuccess { config = newConfig }
     }
 
     suspend fun disconnect() {

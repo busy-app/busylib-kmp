@@ -24,7 +24,11 @@ class PersistedStorageTransactionScopeImpl(
             return
         }
 
-        if (settings.devices.none { it.uniqueId == device.uniqueId }) {
+        val isNewDevice = settings
+            .devices
+            .none { busyBar -> busyBar.uniqueId == device.uniqueId }
+
+        if (isNewDevice) {
             addOrReplace(device)
         }
 
@@ -35,9 +39,9 @@ class PersistedStorageTransactionScopeImpl(
         info { "Add device $device" }
 
         settings = settings.copy(
-            devices = settings.devices.filter {
-                it.uniqueId != device.uniqueId
-            }.plus(device)
+            devices = settings.devices
+                .filter { busyBar -> busyBar.uniqueId != device.uniqueId }
+                .plus(device)
         )
     }
 
@@ -48,7 +52,7 @@ class PersistedStorageTransactionScopeImpl(
             settings
         } else {
             settings.copy(
-                devices = settings.devices.filter { it.uniqueId != id },
+                devices = settings.devices.filter { busyBar -> busyBar.uniqueId != id },
                 currentSelectedDeviceId = if (id == settings.currentSelectedDeviceId) {
                     null
                 } else {
