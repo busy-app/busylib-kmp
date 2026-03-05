@@ -90,7 +90,7 @@ class BLEDeviceConnectionApiImpl(
             services = services,
             scope = scope
         )
-
+        info { "Created serial api" }
         val bleApi = FAndroidBleApiImpl(
             peripheral = device,
             scope = scope,
@@ -99,6 +99,7 @@ class BLEDeviceConnectionApiImpl(
             currentConfig = config,
             listener = listener
         )
+        info { "Created ble api" }
         return bleApi
     }
 }

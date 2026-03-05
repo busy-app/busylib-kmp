@@ -51,8 +51,8 @@ class FConnectionServiceImpl(
 
     private fun getExpectedState(): Flow<ExpectedState> {
         return combine(
-            isForceDisconnectedFlow,
-            fDevicePersistedStorage.getCurrentDeviceFlow()
+            flow = isForceDisconnectedFlow,
+            flow2 = fDevicePersistedStorage.getCurrentDeviceFlow()
         ) { isForceDisconnected, currentDevice ->
             if (isForceDisconnected) {
                 return@combine ExpectedState.Disconnected

@@ -24,32 +24,32 @@ class FDeviceConnectionConfigMapperImpl(
     override fun getConnectionConfig(device: BUSYBar): FDeviceConnectionConfig<*> {
         return busyBarCombinedBuilderConfig.build(
             name = device.humanReadableName,
-            connectionConfigs = device.connectionWays.map {
+            connectionConfigs = device.connectionWays.map { connectionWay ->
                 map(
-                    device = it,
-                    device.humanReadableName
+                    connectionWay = connectionWay,
+                    humanReadableName = device.humanReadableName
                 )
             }
         )
     }
 
     private fun map(
-        device: BUSYBar.ConnectionWay,
+        connectionWay: BUSYBar.ConnectionWay,
         humanReadableName: String
     ): FDeviceConnectionConfig<*> {
-        return when (device) {
+        return when (connectionWay) {
             is BUSYBar.ConnectionWay.BLE -> bleBuilderConfig.build(
-                address = device.address,
+                address = connectionWay.address,
                 deviceName = humanReadableName
             )
 
             is BUSYBar.ConnectionWay.Cloud -> cloudBuilderConfig.build(
                 name = humanReadableName,
-                deviceId = device.deviceId
+                deviceId = connectionWay.deviceId
             )
 
             is BUSYBar.ConnectionWay.Lan -> lanBuilderConfig.build(
-                host = device.host,
+                host = connectionWay.host,
                 name = humanReadableName
             )
 

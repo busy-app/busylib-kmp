@@ -1,7 +1,10 @@
 package net.flipper.bridge.connection.transport.tcp.lan.impl
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.shareIn
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
@@ -30,13 +33,15 @@ class FLanApiImpl(
     override val deviceName: String
         get() = currentConfig.name
 
-    override fun getCapabilities(): MutableStateFlow<List<FHTTPTransportCapability>> {
-        return MutableStateFlow(
-            listOf(
-                FHTTPTransportCapability.BB_WEBSOCKET_SUPPORTED,
-                FHTTPTransportCapability.BB_DOWNLOAD_UPDATE_SUPPORTED
-            )
+    private val _capabilities = flowOf(
+        listOf(
+            FHTTPTransportCapability.BB_WEBSOCKET_SUPPORTED,
+            FHTTPTransportCapability.BB_DOWNLOAD_UPDATE_SUPPORTED
         )
+    ).shareIn(scope, SharingStarted.WhileSubscribed(), 1)
+
+    override fun getCapabilities(): Flow<List<FHTTPTransportCapability>> {
+        return _capabilities
     }
 
     suspend fun startMonitoring() {

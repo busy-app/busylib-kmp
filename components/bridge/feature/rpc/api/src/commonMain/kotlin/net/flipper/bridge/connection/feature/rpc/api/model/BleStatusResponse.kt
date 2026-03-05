@@ -5,12 +5,10 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class BleStatusResponse(
-    @SerialName("state")
+    @SerialName("status")
     val state: State,
     @SerialName("address")
     val address: String? = null,
-    @SerialName("pairing")
-    val pairing: Pairing? = null
 ) {
     @Serializable
     enum class State {
@@ -26,22 +24,13 @@ data class BleStatusResponse(
         @SerialName("enabled")
         ENABLED,
 
+        @SerialName("connectable")
+        CONNECTABLE,
+
         @SerialName("connected")
         CONNECTED,
 
         @SerialName("internal error")
         INTERNAL_ERROR
-    }
-
-    @Serializable
-    enum class Pairing {
-        @SerialName("unknown")
-        UNKNOWN,
-
-        @SerialName("not paired")
-        NOT_PAIR,
-
-        @SerialName("paired")
-        PAIRED
     }
 }

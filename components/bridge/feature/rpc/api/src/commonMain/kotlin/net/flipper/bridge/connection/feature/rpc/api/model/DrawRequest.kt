@@ -22,12 +22,17 @@ data class DrawRequest(
     data class Element(
         val id: String,
         val timeout: Int,
+        val priority: Int? = null,
+        val display: Display,
         val type: ElementType,
         val text: String? = null,
         val path: String? = null,
-        val x: Int,
-        val y: Int,
-        val display: Display
+        val x: Int? = null,
+        val y: Int? = null,
+        @SerialName("builtin_anim")
+        val builtinAnim: String? = null,
+        val section: String? = null,
+        val loop: Boolean? = null
     ) {
         @Serializable
         enum class ElementType {
@@ -35,7 +40,10 @@ data class DrawRequest(
             IMAGE,
 
             @SerialName("text")
-            TEXT
+            TEXT,
+
+            @SerialName("anim")
+            ANIM
         }
     }
 }

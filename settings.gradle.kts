@@ -115,6 +115,9 @@ include(
     ":components:cloud:barsws:impl",
     ":components:cloud:rest",
 
+    ":components:tools:oncall:api",
+    ":components:tools:oncall:impl",
+
     ":components:watchers:api",
     ":components:watchers:changename",
     ":components:watchers:provisioning",
