@@ -46,10 +46,13 @@ class FBleFeatureApiImpl(
             BleStatusResponse.State.INITIALIZATION -> FBleStatus.Initialization
             BleStatusResponse.State.DISABLED -> FBleStatus.Disabled
             BleStatusResponse.State.ENABLED -> FBleStatus.Enabled
+            BleStatusResponse.State.CONNECTABLE -> {
+                FBleStatus.Connectable
+            }
+
             BleStatusResponse.State.CONNECTED -> {
                 FBleStatus.Connected(
                     address = this.address ?: return FBleStatus.Enabled,
-                    pairing = this.pairing ?: return FBleStatus.Enabled
                 )
             }
 
