@@ -4,6 +4,9 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withTimeout
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.transport.ble.api.BleDeviceConnectionApi
@@ -19,7 +22,9 @@ import net.flipper.bridge.connection.transport.common.api.FTransportConnectionSt
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.log.LogTagProvider
+import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
+import no.nordicsemi.kotlin.ble.client.RemoteServices
 import no.nordicsemi.kotlin.ble.client.android.CentralManager
 import no.nordicsemi.kotlin.ble.core.Phy
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
@@ -83,7 +88,20 @@ class BLEDeviceConnectionApiImpl(
         info { "Request the highest mtu" }
         device.requestHighestValueLength()
 
-        val services = device.services().wrap()
+        val services = device.services()
+            .map { state ->
+                when (state) {
+                    is RemoteServices.Discovered -> state.services
+                    is RemoteServices.Failed -> {
+                        error { "Service discovery failed: ${state.reason}" }
+                        null
+                    }
+                    RemoteServices.Discovering,
+                    RemoteServices.Unknown -> null
+                }
+            }
+            .stateIn(scope, SharingStarted.Eagerly, null)
+            .wrap()
 
         val serialApi = serialApiFactory.build(
             config = config.serialConfig,
