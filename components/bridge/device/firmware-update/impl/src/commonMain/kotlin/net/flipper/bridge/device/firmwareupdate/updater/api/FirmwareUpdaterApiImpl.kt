@@ -14,7 +14,6 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.job
@@ -99,9 +98,9 @@ class FirmwareUpdaterApiImpl(
                         bsbUrlUpdateVersion = bsbUpdateVersion,
                     )
                 }
-            }.also { info { "#state: $it" } }
+            }
         }
-    ).stateIn(scope, SharingStarted.Eagerly, FwUpdateState.Pending).wrap()
+    ).stateIn(scope, SharingStarted.Lazily, FwUpdateState.Pending).wrap()
 
     override val events = previousVersionFlowProvider
         .getAutoRestartedPreviousVersionFlow(state)
@@ -112,9 +111,8 @@ class FirmwareUpdaterApiImpl(
             )
         }
         .distinctUntilChanged()
-        .onEach { info { "#event: $it" } }
         .filterNotNull()
-        .shareIn(scope, SharingStarted.Eagerly)
+        .shareIn(scope, SharingStarted.Lazily)
         .asFlow()
         .wrap()
 
