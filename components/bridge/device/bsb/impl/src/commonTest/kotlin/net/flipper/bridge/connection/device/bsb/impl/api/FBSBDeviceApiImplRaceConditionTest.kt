@@ -23,7 +23,10 @@ import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import net.flipper.busylib.core.wrapper.CResult
 import net.flipper.busylib.core.wrapper.WrappedFlow
+import net.flipper.busylib.core.wrapper.WrappedSharedFlow
 import net.flipper.busylib.core.wrapper.toCResult
+import net.flipper.busylib.core.wrapper.wrap
+import net.flipper.busylib.core.wrapper.wrapFlow
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -457,8 +460,10 @@ class FBSBDeviceApiImplRaceConditionTest {
             return CResult.failure(NotImplementedError())
         }
 
-        override val deviceVersionFlow: Flow<BusyBarVersion> = emptyFlow()
-    }
+        override val deviceVersionFlow: WrappedFlow<BusyBarVersion> =
+            emptyFlow<BusyBarVersion>()
+            .wrapFlow()
+
 
     private class TestBatteryFeatureApi : FDeviceBatteryInfoFeatureApi {
         override fun getDeviceBatteryInfo(): WrappedFlow<BSBDeviceBatteryInfo> {
