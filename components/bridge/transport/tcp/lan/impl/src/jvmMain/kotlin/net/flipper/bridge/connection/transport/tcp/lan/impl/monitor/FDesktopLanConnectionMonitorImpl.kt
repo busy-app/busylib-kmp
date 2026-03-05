@@ -7,7 +7,6 @@ import io.ktor.http.isSuccess
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
-import kotlinx.coroutines.job
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
@@ -55,7 +54,7 @@ class FDesktopLanConnectionMonitorImpl(
                 checkHostAvailability(scope, deviceApi)
                 delay(MONITORING_INTERVAL)
             }
-        }.job
+        }
     }
 
     private suspend fun checkHostAvailability(
@@ -68,7 +67,7 @@ class FDesktopLanConnectionMonitorImpl(
             info { "Host ${config.host} became available" }
             isConnected = true
             listener.onStatusUpdate(
-                FInternalTransportConnectionStatus.Connected(
+                status = FInternalTransportConnectionStatus.Connected(
                     scope = scope,
                     deviceApi = deviceApi
                 )

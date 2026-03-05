@@ -8,7 +8,12 @@ import kotlinx.coroutines.flow.map
 interface FHTTPDeviceApi {
     fun getDeviceHttpEngine(): HttpClientEngine
 
-    fun getCapabilities(): Flow<List<FHTTPTransportCapability>> = flowOf()
+    /**
+     * Don't make it just flowO
+     * If it's not overridden - it should be emptyList,
+     * which means device api has no capabilities
+     */
+    fun getCapabilities(): Flow<List<FHTTPTransportCapability>> = flowOf(emptyList())
 }
 
 fun FHTTPDeviceApi.hasCapability(

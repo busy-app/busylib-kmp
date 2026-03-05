@@ -12,5 +12,5 @@ interface PersistedStorageTransactionScope {
 }
 
 fun PersistedStorageTransactionScope.getDevice(id: String): BUSYBar? {
-    return getAllDevices().find { it.uniqueId == id }
+    return getAllDevices().find { busyBar -> busyBar.uniqueId == id }
 }

@@ -14,8 +14,8 @@ class CloudAlwaysActiveHook : TransactionHook, LogTagProvider {
             return
         }
         val cloud = getAllDevices().find { device ->
-            device.connectionWays.any {
-                it is BUSYBar.ConnectionWay.Cloud
+            device.connectionWays.any { connectionWay ->
+                connectionWay is BUSYBar.ConnectionWay.Cloud
             }
         } ?: return
         info { "Current device is null, set the first cloud device as current" }

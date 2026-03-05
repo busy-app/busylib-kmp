@@ -78,11 +78,11 @@ class FCombinedConnectionApiImpl(
         config: FDeviceConnectionConfig<*>
     ): Result<Unit> {
         if (config !is FCombinedConnectionConfig) {
-            return Result.failure(
-                IllegalArgumentException("Config $config has different type")
-            )
+            info { "#tryUpdateConnectionConfig configs is not FCombinedConnectionConfig" }
+            return Result.failure(IllegalArgumentException("Config $config has different type"))
         }
         if (currentConfig == config) {
+            info { "#tryUpdateConnectionConfig configs are identical" }
             return Result.success(Unit)
         }
         info { "Start update child connection configs: $config" }

@@ -77,8 +77,8 @@ class FDeviceHolder<API : FConnectedDeviceApi>(
     ): Result<Unit> {
         return runCatching {
             deviceApi.getCompleted()
-        }.transform {
-            it.tryUpdateConnectionConfig(config)
+        }.transform { deviceApi ->
+            deviceApi.tryUpdateConnectionConfig(config)
         }
     }
 
