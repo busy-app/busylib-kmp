@@ -76,7 +76,7 @@ class FDeviceOrchestratorImpl(
                 error(error) { "Exception in coroutine" }
             }
         )
-        info { "New device created successfully" }
+        info { "New device createdF successfully" }
     }
 
     private fun onInternalDisconnect(deviceHolder: FDeviceHolder<*>, postAction: () -> Unit) {

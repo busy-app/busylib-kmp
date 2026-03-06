@@ -13,11 +13,13 @@ import net.flipper.bridge.connection.transport.ble.api.FSerialBleApi
 import net.flipper.bridge.connection.transport.ble.http.FHttpBLEEngine
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
+import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionType
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.bridge.connection.transport.common.api.meta.FTransportMetaInfoApi
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoData
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPDeviceApi
+import net.flipper.bridge.connection.transport.common.api.serial.FHTTPTransportCapability
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 import net.flipper.transport.ble.impl.cb.FPeripheralApi
 import net.flipper.transport.ble.impl.cb.FPeripheralState
@@ -49,7 +51,8 @@ class FIOSBleApiImpl(
 
                     FPeripheralState.CONNECTED -> FInternalTransportConnectionStatus.Connected(
                         scope = scope,
-                        deviceApi = this
+                        deviceApi = this,
+                        connectionType = FInternalTransportConnectionType.BLE
                     )
                 }
             }
@@ -77,6 +80,14 @@ class FIOSBleApiImpl(
 
     override suspend fun disconnect() {
         onDisconnect()
+    }
+
+    override fun getCapabilities(): Flow<List<FHTTPTransportCapability>> {
+        return flowOf(
+            listOf(
+                FHTTPTransportCapability.BLE_ONLY_CONNECTION_SUPPORTED
+            )
+        )
     }
 
     override fun get(key: TransportMetaInfoKey): Flow<Result<Flow<TransportMetaInfoData?>>> {
