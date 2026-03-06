@@ -37,7 +37,8 @@ class CloudDeviceConnectionApiImpl(
             cloudDeviceMonitorFactory = cloudDeviceMonitorFactory,
             tokenProviderFactory = proxyTokenProvider,
             cloudEngineFactory = cloudEngineFactory,
-            cloudMetaInfoFactory = cloudMetaInfoFactory
+            cloudMetaInfoFactory = cloudMetaInfoFactory,
+            scope = scope
         )
         return@runCatching lanApi
     }

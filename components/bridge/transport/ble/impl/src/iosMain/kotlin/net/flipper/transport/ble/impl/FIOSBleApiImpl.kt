@@ -2,10 +2,12 @@ package net.flipper.transport.ble.impl
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.plus
 import net.flipper.bridge.connection.transport.ble.api.FBleApi
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceConnectionConfig
@@ -82,12 +84,14 @@ class FIOSBleApiImpl(
         onDisconnect()
     }
 
-    override fun getCapabilities(): Flow<List<FHTTPTransportCapability>> {
-        return flowOf(
-            listOf(
-                FHTTPTransportCapability.BLE_ONLY_CONNECTION_SUPPORTED
-            )
+    private val _capabilities = flowOf(
+        listOf(
+            FHTTPTransportCapability.BLE_ONLY_CONNECTION_SUPPORTED,
         )
+    ).shareIn(scope, SharingStarted.WhileSubscribed(), 1)
+
+    override fun getCapabilities(): Flow<List<FHTTPTransportCapability>> {
+        return _capabilities
     }
 
     override fun get(key: TransportMetaInfoKey): Flow<Result<Flow<TransportMetaInfoData?>>> {
