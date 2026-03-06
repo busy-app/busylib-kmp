@@ -81,7 +81,8 @@ class CombinedMetaInfoApiImplTest {
             connectionBuilder.latestListener()!!.onStatusUpdate(
                 FInternalTransportConnectionStatus.Connected(
                     scope = backgroundScope,
-                    deviceApi = metaDeviceApi
+                    deviceApi = metaDeviceApi,
+                    connectionType = null
                 )
             )
             advanceUntilIdle()
@@ -127,7 +128,8 @@ class CombinedMetaInfoApiImplTest {
             connectionBuilder.latestListener()!!.onStatusUpdate(
                 FInternalTransportConnectionStatus.Connected(
                     scope = backgroundScope,
-                    deviceApi = metaDeviceApi
+                    deviceApi = metaDeviceApi,
+                    connectionType = null
                 )
             )
             advanceUntilIdle()
@@ -168,7 +170,8 @@ class CombinedMetaInfoApiImplTest {
         connectionBuilder.latestListener()!!.onStatusUpdate(
             FInternalTransportConnectionStatus.Connected(
                 scope = backgroundScope,
-                deviceApi = plainDeviceApi
+                deviceApi = plainDeviceApi,
+                connectionType = null
             )
         )
         advanceUntilIdle()
@@ -224,7 +227,8 @@ class CombinedMetaInfoApiImplTest {
             builder1.latestListener()!!.onStatusUpdate(
                 FInternalTransportConnectionStatus.Connected(
                     scope = backgroundScope,
-                    deviceApi = meta1
+                    deviceApi = meta1,
+                    connectionType = null
                 )
             )
 
@@ -237,7 +241,8 @@ class CombinedMetaInfoApiImplTest {
             builder2.latestListener()!!.onStatusUpdate(
                 FInternalTransportConnectionStatus.Connected(
                     scope = backgroundScope,
-                    deviceApi = meta2
+                    deviceApi = meta2,
+                    connectionType = null
                 )
             )
             advanceUntilIdle()
@@ -285,7 +290,8 @@ class CombinedMetaInfoApiImplTest {
             listener.onStatusUpdate(
                 FInternalTransportConnectionStatus.Connected(
                     scope = backgroundScope,
-                    deviceApi = metaDeviceApi
+                    deviceApi = metaDeviceApi,
+                    connectionType = null
                 )
             )
             advanceUntilIdle()
@@ -348,7 +354,8 @@ class CombinedMetaInfoApiImplTest {
         listener.onStatusUpdate(
             FInternalTransportConnectionStatus.Connected(
                 scope = backgroundScope,
-                deviceApi = metaDeviceApi
+                deviceApi = metaDeviceApi,
+                connectionType = null
             )
         )
         advanceUntilIdle()
