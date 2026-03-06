@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.transformLatest
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
+import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionType
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.bridge.connection.transport.tcp.cloud.api.FCloudApi
 import net.flipper.bsb.cloud.barsws.api.CloudWebSocketBarsApi
@@ -43,7 +44,8 @@ class CloudDeviceMonitor(
         emit(
             FInternalTransportConnectionStatus.Connected(
                 scope = scope,
-                deviceApi = deviceApi
+                deviceApi = deviceApi,
+                connectionType = FInternalTransportConnectionType.CLOUD
             )
         )
         delay(INACTIVITY_TIMEOUT) // Should be interrupted by any event from websocket
