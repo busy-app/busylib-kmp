@@ -1,6 +1,12 @@
-package net.flipper.bridge.connection.feature.events.api
+package net.flipper.bridge.connection.feature.events.model
 
-enum class UpdateEvent(val bitIndex: Int? = null, val webSocketKey: String? = null) {
+/**
+ * Update events which goes only from BusyBar (socket/lan/cloud)
+ */
+enum class BsbUpdateEvent(
+    val bitIndex: Int? = null,
+    val webSocketKey: String? = null
+) : UpdateEvent {
     DEVICE_NAME(bitIndex = 0, webSocketKey = "name"),
     BRIGHTNESS(webSocketKey = "front_brightness"),
     BLE_STATUS,

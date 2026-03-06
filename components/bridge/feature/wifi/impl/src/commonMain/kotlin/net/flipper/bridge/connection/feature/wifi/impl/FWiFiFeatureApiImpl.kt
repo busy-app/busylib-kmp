@@ -6,13 +6,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.isActive
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
-import net.flipper.bridge.connection.feature.events.api.UpdateEvent
-import net.flipper.bridge.connection.feature.events.api.getUpdateFlow
+import net.flipper.bridge.connection.feature.events.api.getBsbUpdateFlow
+import net.flipper.bridge.connection.feature.events.model.BsbUpdateEvent
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.ConnectRequestConfig
 import net.flipper.bridge.connection.feature.rpc.api.model.Network
@@ -83,7 +82,7 @@ class FWiFiFeatureApiImpl(
 
     override fun getWifiStatusFlow(): WrappedFlow<StatusResponse> {
         return fEventsFeatureApi
-            ?.getUpdateFlow(UpdateEvent.WIFI_STATUS)
+            ?.getBsbUpdateFlow(BsbUpdateEvent.WIFI_STATUS)
             .orEmpty()
             .merge(flowOf(DefaultConsumable(false)))
             .transformWhileSubscribed(scope = scope) { flow ->

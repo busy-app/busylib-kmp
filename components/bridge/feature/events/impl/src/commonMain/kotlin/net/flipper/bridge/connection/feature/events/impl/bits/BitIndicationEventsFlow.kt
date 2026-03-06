@@ -6,26 +6,26 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onEach
-import net.flipper.bridge.connection.feature.events.api.ConsumableUpdateEvent
-import net.flipper.bridge.connection.feature.events.api.UpdateEvent
+import net.flipper.bridge.connection.feature.events.model.BsbUpdateEvent
+import net.flipper.bridge.connection.feature.events.model.ConsumableUpdateEvent
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoData
 import net.flipper.core.busylib.ktx.common.orEmpty
 import net.flipper.core.busylib.log.debug
 import net.flipper.core.busylib.log.error
 
 class BitIndicationEventsFlow {
-    private val cache = UpdateEvent.entries.filter { it.bitIndex != null }
+    private val cache = BsbUpdateEvent.entries.filter { it.bitIndex != null }
         .associateBy { it.bitIndex }
 
-    fun getEventFlow(flow: Flow<TransportMetaInfoData?>): Flow<ConsumableUpdateEvent> {
+    fun getEventFlow(flow: Flow<TransportMetaInfoData?>): Flow<ConsumableUpdateEvent.Bsb> {
         return flow.orEmpty()
             .onEach { debug { "Receive $it" } }
             .mapNotNull { data -> (data as? TransportMetaInfoData.RawBytes)?.bytes?.let(::parse) }
             .onEach { debug { "Receive updates: $it" } }
             .map { updateEvents ->
-                updateEvents.map {
-                    ConsumableUpdateEvent(
-                        updateEvent = it,
+                updateEvents.map { bsbUpdateEvent ->
+                    ConsumableUpdateEvent.Bsb(
+                        bsbUpdateEvent = bsbUpdateEvent,
                         value = null
                     )
                 }
@@ -35,8 +35,8 @@ class BitIndicationEventsFlow {
             }
     }
 
-    private fun parse(byteArray: ByteArray): List<UpdateEvent> {
-        val events = mutableListOf<UpdateEvent>()
+    private fun parse(byteArray: ByteArray): List<BsbUpdateEvent> {
+        val events = mutableListOf<BsbUpdateEvent>()
         val bits = bitsOf(byteArray)
         bits.forEachBit { index ->
             val event = cache[index]
