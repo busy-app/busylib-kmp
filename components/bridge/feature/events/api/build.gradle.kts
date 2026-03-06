@@ -7,6 +7,7 @@ kotlin {
         implementation(projects.components.core.ktx)
 
         api(projects.components.bridge.feature.common.api)
+        implementation(projects.components.bridge.feature.rpc.api)
 
         implementation(libs.kotlin.coroutines)
     }
