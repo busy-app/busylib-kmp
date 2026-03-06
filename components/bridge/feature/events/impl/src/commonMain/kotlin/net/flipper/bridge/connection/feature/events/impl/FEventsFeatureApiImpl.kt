@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
@@ -54,7 +55,11 @@ class FEventsFeatureApiImpl(
     override fun getBsbUpdateEvents(): Flow<ConsumableUpdateEvent.Bsb> = sharedIndicationFlow
 
     override fun onBusyLibEvent(event: BusyLibUpdateEvent) {
-        scope.launch { busyLibEventsFlow.emit(event) }
+        scope.launch {
+            val subscriptionCount = busyLibEventsFlow.subscriptionCount.first()
+            if (subscriptionCount <= 0) return@launch
+            busyLibEventsFlow.emit(event)
+        }
     }
 
     override fun getBusyLibUpdateEvents(): Flow<ConsumableUpdateEvent.BusyLib<*>> {

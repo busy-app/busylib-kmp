@@ -12,7 +12,7 @@ import net.flipper.core.busylib.ktx.common.merge
 interface FEventsFeatureApi : FDeviceFeatureApi {
 
     fun getBsbUpdateEvents(): Flow<ConsumableUpdateEvent.Bsb>
-    fun getBusyLibUpdateEvents(): Flow<ConsumableUpdateEvent.BusyLib<BusyLibUpdateEvent>>
+    fun getBusyLibUpdateEvents(): Flow<ConsumableUpdateEvent.BusyLib<*>>
     fun onBusyLibEvent(event: BusyLibUpdateEvent)
 }
 
@@ -21,7 +21,8 @@ fun FEventsFeatureApi.getBsbUpdateFlow(event: BsbUpdateEvent): Flow<ConsumableUp
         .filter { consumableUpdateEvent -> consumableUpdateEvent.bsbUpdateEvent == event }
 }
 
-fun <T : BusyLibUpdateEvent> FEventsFeatureApi.getBusyLibUpdateFlow(): Flow<ConsumableUpdateEvent.BusyLib<T>> {
+inline fun <reified T : BusyLibUpdateEvent>
+    FEventsFeatureApi.getBusyLibUpdateFlow(): Flow<ConsumableUpdateEvent.BusyLib<T>> {
     return getBusyLibUpdateEvents()
         .filterIsInstance<ConsumableUpdateEvent.BusyLib<T>>()
 }
