@@ -1,4 +1,4 @@
-package net.flipper.bridge.connection.utils
+package net.flipper.bridge.connection.utils.principal.impl
 
 import io.ktor.client.call.body
 import io.ktor.client.request.get

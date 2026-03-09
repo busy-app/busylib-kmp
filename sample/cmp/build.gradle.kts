@@ -49,6 +49,7 @@ kotlin {
         implementation(projects.components.core.log)
         implementation(projects.components.core.ktx)
         implementation(projects.components.core.wrapper)
+        implementation(projects.components.core.ktor)
 
         api(projects.entrypoint)
         implementation(projects.components.bridge.config.impl)
@@ -62,6 +63,8 @@ kotlin {
         api(libs.decompose)
         implementation(libs.decompose.composeExtension)
         implementation(libs.klibs.kstorage)
+
+        implementation(libs.ktor.client.core)
     }
 
     sourceSets.jvmMain.dependencies {
@@ -76,9 +79,6 @@ kotlin {
     }
     sourceSets.jvmMain.dependencies {
         implementation(projects.components.core.ktor)
-
-        implementation(libs.ktor.client.core)
-        implementation(libs.kotlin.serialization.json)
 
         implementation(compose.desktop.currentOs)
     }

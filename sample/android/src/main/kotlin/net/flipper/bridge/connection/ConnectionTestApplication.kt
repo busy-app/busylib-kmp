@@ -1,13 +1,17 @@
 package net.flipper.bridge.connection
 
 import android.app.Application
+import com.flipperdevices.busylib.core.network.BUSYLibNetworkStateApiImpl
 import com.russhwolf.settings.SharedPreferencesSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import net.flipper.bridge.connection.config.impl.FDevicePersistedStorageImpl
 import net.flipper.bridge.connection.utils.cloud.BUSYLibBarsApiNoop
 import net.flipper.bridge.connection.utils.principal.impl.UserPrincipalApiNoop
+import net.flipper.bridge.connection.utils.principal.impl.UserPrincipalApiSampleImpl
+import net.flipper.bsb.cloud.api.BUSYLibHostApiStub
 import net.flipper.busylib.BUSYLibAndroid
+import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 import timber.log.Timber
 
 class ConnectionTestApplication : Application() {
@@ -22,12 +26,18 @@ class ConnectionTestApplication : Application() {
         )
     }
     val busyLib: BUSYLibAndroid by lazy {
+        val scope = CoroutineScope(SupervisorJob())
+        val hostApi = BUSYLibHostApiStub(
+            host = "cloud.dev.busy.app",
+        )
         BUSYLibAndroid.build(
-            CoroutineScope(SupervisorJob()),
-            principalApi = UserPrincipalApiNoop(),
+            CoroutineScope(SupervisorJob() + FlipperDispatchers.default),
+            principalApi = UserPrincipalApiSampleImpl(scope, hostApi),
             busyLibBarsApi = BUSYLibBarsApiNoop(),
             persistedStorage = persistedStorage,
-            context = this
+            context = this,
+            networkStateApi = BUSYLibNetworkStateApiImpl(this, scope),
+            hostApi = hostApi
         )
     }
 
