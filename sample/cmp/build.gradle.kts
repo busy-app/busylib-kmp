@@ -1,3 +1,4 @@
+import net.flipper.property.SecretPropertyValue
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.konan.target.Family
@@ -7,11 +8,26 @@ plugins {
     id("flipper.multiplatform-compose")
     id("org.jetbrains.kotlin.plugin.serialization")
     alias(libs.plugins.skie)
+    alias(libs.plugins.buildkonfig)
 }
 
 afterEvaluate {
     tasks.withType<AbstractPublishToMaven>().configureEach { enabled = false }
 }
+
+
+buildConfig {
+    className("SampleKonfig")
+    packageName("${kotlin.android.namespace}")
+    buildConfigField(
+        String::class.java,
+        "SECRET_AUTH_TOKEN",
+        SecretPropertyValue(project, "flipper.authToken")
+            .getValue()
+            .getOrNull() ?: ""
+    )
+}
+
 
 kotlin {
     targets
