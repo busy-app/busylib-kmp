@@ -18,8 +18,8 @@ import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
-import net.flipper.bridge.connection.feature.events.api.UpdateEvent
-import net.flipper.bridge.connection.feature.events.api.getUpdateFlow
+import net.flipper.bridge.connection.feature.events.api.getBsbUpdateFlow
+import net.flipper.bridge.connection.feature.events.model.BsbUpdateEvent
 import net.flipper.bridge.connection.feature.firmwareupdate.api.FFirmwareUpdateFeatureApi
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateVersion
 import net.flipper.bridge.connection.feature.info.api.FDeviceInfoFeatureApi
@@ -69,7 +69,7 @@ class FFirmwareUpdateFeatureApiImpl(
     override val TAG: String = "FFirmwareUpdateFeatureApi"
 
     override val updateStatusFlow: WrappedSharedFlow<UpdateStatus> = fEventsFeatureApi
-        ?.getUpdateFlow(UpdateEvent.UPDATER_UPDATE_STATUS)
+        ?.getBsbUpdateFlow(BsbUpdateEvent.UPDATER_UPDATE_STATUS)
         .orEmpty()
         .merge(flowOf(DefaultConsumable(false)))
         .transformWhileSubscribed(scope = scope) { flow ->
