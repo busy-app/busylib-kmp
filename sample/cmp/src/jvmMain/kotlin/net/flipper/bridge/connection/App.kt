@@ -22,8 +22,6 @@ import net.flipper.bridge.connection.screens.di.getRootDecomposeComponent
 import net.flipper.bridge.connection.screens.search.LanSearchViewModel
 import net.flipper.bridge.connection.utils.PermissionCheckerNoop
 import net.flipper.bridge.connection.utils.cloud.BUSYLibBarsApiNoop
-import net.flipper.bridge.connection.utils.principal.impl.getUserPrincipal
-import net.flipper.bridge.connection.utils.principal.impl.UserPrincipalApiNoop
 import net.flipper.bridge.connection.utils.principal.impl.UserPrincipalApiSampleImpl
 import net.flipper.bridge.connection.utils.runOnUiThread
 import net.flipper.bsb.cloud.api.BUSYLibHostApiStub

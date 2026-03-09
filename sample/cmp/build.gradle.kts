@@ -15,7 +15,6 @@ afterEvaluate {
     tasks.withType<AbstractPublishToMaven>().configureEach { enabled = false }
 }
 
-
 buildConfig {
     className("SampleKonfig")
     packageName("${kotlin.android.namespace}")
@@ -27,7 +26,6 @@ buildConfig {
             .getOrNull() ?: ""
     )
 }
-
 
 kotlin {
     targets
