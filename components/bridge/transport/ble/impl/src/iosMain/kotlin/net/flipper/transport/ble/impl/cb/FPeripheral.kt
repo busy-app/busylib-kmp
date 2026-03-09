@@ -199,7 +199,7 @@ class FPeripheral(
             17L -> {
                 _stateStream.emit(FPeripheralState.DISCONNECTED)
                 _rxDataStream.emit(byteArrayOf())
-            }// CBErrorEncryptionTimedOut
+            } // CBErrorEncryptionTimedOut
         }
         error { "Peripheral CBError id=${identifier.UUIDString} code=$code" }
     }
@@ -407,8 +407,8 @@ private fun CBUUID.toKotlinUUID(): kotlin.uuid.Uuid {
         if (withoutDashes.length == 32) {
             // Format as standard UUID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
             return "${withoutDashes.substring(0, 8)}-${withoutDashes.substring(8, 12)}-" +
-                    "${withoutDashes.substring(12, 16)}-${withoutDashes.substring(16, 20)}-" +
-                    withoutDashes.substring(20, 32)
+                "${withoutDashes.substring(12, 16)}-${withoutDashes.substring(16, 20)}-" +
+                withoutDashes.substring(20, 32)
         }
 
         // Short form UUID (4 or 8 characters) - convert to full Bluetooth SIG UUID

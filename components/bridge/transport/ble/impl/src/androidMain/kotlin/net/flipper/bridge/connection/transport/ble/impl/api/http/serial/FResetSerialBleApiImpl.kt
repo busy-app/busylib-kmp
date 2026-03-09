@@ -19,8 +19,8 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.plus
 import net.flipper.bridge.connection.transport.ble.impl.serial.FResetSerialBleApi
-import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 import net.flipper.core.busylib.log.LogTagProvider
+import net.flipper.core.busylib.log.debug
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
 import no.nordicsemi.kotlin.ble.client.RemoteCharacteristic
@@ -46,13 +46,14 @@ class FResetSerialBleApiImpl(
                 flow {
                     while (currentCoroutineContext().isActive) {
                         val counter = characteristic.read().toRequestCounter()
+                        debug { "Receive request counter $counter" }
                         emit(counter)
                         delay(POLLING_INTERVAL)
                     }
                 }
             }
             .onEach { _requestCounterStateFlow.value = it }
-            .launchIn(scope + FlipperDispatchers.default)
+            .launchIn(scope)
     }
 
     override fun getRequestCounterStateFlow(): StateFlow<Int> {
@@ -68,6 +69,7 @@ class FResetSerialBleApiImpl(
     }
 }
 
+@Suppress("MagicNumber")
 private fun ByteArray.toRequestCounter(): Int {
     if (size < Int.SIZE_BYTES) return 0
     return (this[0].toInt() and 0xFF) or
@@ -76,6 +78,7 @@ private fun ByteArray.toRequestCounter(): Int {
         ((this[3].toInt() and 0xFF) shl 24)
 }
 
+@Suppress("MagicNumber")
 private fun Int.toUInt32ByteArray(): ByteArray {
     return byteArrayOf(
         (this and 0xFF).toByte(),

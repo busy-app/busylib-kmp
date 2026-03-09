@@ -36,7 +36,7 @@ class SerialApiFactory(
         )
         val resetApi = FResetSerialBleApiImpl(
             resetCharacteristicFlow = serialService.map { service ->
-                service?.characteristics?.find { it.uuid == config.serialServiceUuid }
+                service?.characteristics?.find { it.uuid == config.resetCharUuid }
             },
             scope = scope
         )

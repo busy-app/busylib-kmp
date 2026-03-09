@@ -30,7 +30,6 @@ import platform.Foundation.NSNumber
 import platform.Foundation.NSUUID
 import platform.darwin.NSObject
 
-
 private class FCentralManagerDelegate(
     private val onStateUpdate: (CBManagerState) -> Unit,
     private val onDidConnect: (CBPeripheral) -> Unit,

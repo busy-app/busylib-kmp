@@ -28,8 +28,8 @@ import kotlinx.coroutines.withContext
 import kotlinx.io.InternalIoApi
 import kotlinx.io.Source
 import kotlinx.io.readByteArray
-import net.flipper.bridge.connection.transport.ble.impl.serial.FSerialBleApi
 import net.flipper.bridge.connection.transport.ble.impl.exception.BadHttpResponseException
+import net.flipper.bridge.connection.transport.ble.impl.serial.FSerialBleApi
 import net.flipper.bridge.connection.transport.common.utils.toRawHttpRequestString
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.busylib.ktx.common.withLockResult
@@ -67,6 +67,7 @@ class FHttpBLEEngine(
 
             withContext(NonCancellable) {
                 serialApi.send(rawText.encodeToByteArray())
+                debug { "Waiting for response" }
                 parseRawHttpResponse(
                     channel = channel,
                     requestTime = requestTime,

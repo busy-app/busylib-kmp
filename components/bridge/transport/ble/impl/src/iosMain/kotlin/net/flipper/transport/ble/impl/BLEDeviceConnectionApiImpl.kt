@@ -19,7 +19,6 @@ import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
 import net.flipper.transport.ble.impl.cb.FBLEStatus
-import net.flipper.transport.ble.impl.manager.FCentralManagerImpl
 import net.flipper.transport.ble.impl.cb.FPeripheralApi
 import net.flipper.transport.ble.impl.cb.FPeripheralState
 import net.flipper.transport.ble.impl.manager.FCentralManagerApi

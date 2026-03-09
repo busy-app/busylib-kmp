@@ -80,7 +80,9 @@ class FSerialUnsafeApiImpl(
 
         data.chunked(MAX_ATTRIBUTE_SIZE).forEach {
             debug { "Write chunk with ${it.size} with max size $MAX_ATTRIBUTE_SIZE" }
+            debug { "Write ${data.decodeToString()}" }
             writeCharacteristic.write(it, WriteType.WITH_RESPONSE)
+            debug { "Return back from write" }
         }
     }
 

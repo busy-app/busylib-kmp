@@ -12,11 +12,11 @@ import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.transport.ble.api.BleDeviceConnectionApi
 import net.flipper.bridge.connection.transport.ble.api.FBleApi
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceConnectionConfig
+import net.flipper.bridge.connection.transport.ble.impl.api.FAndroidBleApiImpl
+import net.flipper.bridge.connection.transport.ble.impl.api.http.serial.SerialApiFactory
 import net.flipper.bridge.connection.transport.ble.impl.exception.BLEConnectionPermissionException
 import net.flipper.bridge.connection.transport.ble.impl.exception.FailedConnectToDeviceException
 import net.flipper.bridge.connection.transport.ble.impl.exception.NoFoundDeviceException
-import net.flipper.bridge.connection.transport.ble.impl.api.FAndroidBleApiImpl
-import net.flipper.bridge.connection.transport.ble.impl.api.http.serial.SerialApiFactory
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.busylib.core.di.BusyLibGraph
@@ -46,7 +46,7 @@ class BLEDeviceConnectionApiImpl(
         connectUnsafe(scope, config, listener)
     }
 
-    @Suppress("ThrowsCount")
+    @Suppress("ThrowsCount", "LongMethod")
     private suspend fun connectUnsafe(
         scope: CoroutineScope,
         config: FBleDeviceConnectionConfig,
