@@ -34,6 +34,7 @@ import net.flipper.bridge.connection.transport.common.utils.toRawHttpRequestStri
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.busylib.ktx.common.withLockResult
 import net.flipper.core.busylib.log.LogTagProvider
+import net.flipper.core.busylib.log.debug
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
 import kotlin.coroutines.CoroutineContext
@@ -67,7 +68,7 @@ class FHttpBLEEngine(
 
             withContext(NonCancellable) {
                 serialApi.send(rawText.encodeToByteArray())
-                debug { "Waiting for response" }
+                info { "Waiting for response" }
                 parseRawHttpResponse(
                     channel = channel,
                     requestTime = requestTime,
