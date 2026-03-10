@@ -5,7 +5,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
@@ -24,6 +23,7 @@ import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfi
 import net.flipper.busylib.core.wrapper.CResult
 import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.toCResult
+import net.flipper.busylib.core.wrapper.wrapFlow
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -457,7 +457,9 @@ class FBSBDeviceApiImplRaceConditionTest {
             return CResult.failure(NotImplementedError())
         }
 
-        override val deviceVersionFlow: Flow<BusyBarVersion> = emptyFlow()
+        override val deviceVersionFlow: WrappedFlow<BusyBarVersion> =
+            emptyFlow<BusyBarVersion>()
+                .wrapFlow()
     }
 
     private class TestBatteryFeatureApi : FDeviceBatteryInfoFeatureApi {
