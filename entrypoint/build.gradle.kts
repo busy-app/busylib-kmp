@@ -200,7 +200,6 @@ val zipXCFrameworkDebug by tasks.registering(Exec::class) {
     )
 }
 
-
 val zipXCFrameworkRelease by tasks.registering(Exec::class) {
     group = "publishing"
     description = "Creates a ZIP archive of the release XCFramework (preserving symlinks)"
@@ -233,8 +232,6 @@ val zipXCFrameworkRelease by tasks.registering(Exec::class) {
         "BusyLibKMP.xcframework",
         outputFile.get().asFile.absolutePath
     )
-
-
 }
 logger.info(
     "THI IS PATH ${
