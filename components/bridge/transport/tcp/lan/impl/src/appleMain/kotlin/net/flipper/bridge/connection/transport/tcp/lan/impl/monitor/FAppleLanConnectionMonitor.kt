@@ -11,6 +11,8 @@ import net.flipper.bridge.connection.transport.tcp.lan.FLanDeviceConnectionConfi
 import net.flipper.bridge.connection.transport.tcp.lan.impl.model.KotlinNwError
 import net.flipper.bridge.connection.transport.tcp.lan.impl.model.asKotlinNwError
 import net.flipper.bridge.connection.transport.tcp.lan.impl.util.withLock
+import net.flipper.core.busylib.ktx.common.SingleJobMode
+import net.flipper.core.busylib.ktx.common.asSingleJobScope
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.debug
 import net.flipper.core.busylib.log.error
@@ -54,8 +56,17 @@ class FAppleLanConnectionMonitor(
 ) : FLanConnectionMonitorApi, LogTagProvider {
     override val TAG: String = "FLanConnectionMonitor"
     private val queue = dispatch_queue_create("net.flipper.lan.connection", null)
+    private val restartMonitoringScope = scope.asSingleJobScope()
     private val connectionLock = NSLock()
     private var connection: nw_connection_t = null
+
+    private fun restartMonitoring() {
+        restartMonitoringScope.launch(SingleJobMode.SKIP_IF_RUNNING) {
+            listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting)
+            stopMonitoring()
+            startMonitoring()
+        }
+    }
 
     private fun createConnection(): nw_connection_t {
         return connectionLock.withLock {
@@ -92,7 +103,8 @@ class FAppleLanConnectionMonitor(
 
             is KotlinNwError.TimedOut,
             is KotlinNwError.ResetByPeer -> {
-                listener.onStatusUpdate(FInternalTransportConnectionStatus.Disconnected)
+                restartMonitoring()
+                return
             }
         }
         when (state) {
@@ -108,7 +120,7 @@ class FAppleLanConnectionMonitor(
 
             nw_connection_state_invalid -> {
                 error { "#handleStateUpdate Connection invalid: $error" }
-                listener.onStatusUpdate(FInternalTransportConnectionStatus.Disconnected)
+                restartMonitoring()
             }
 
             nw_connection_state_waiting -> {
@@ -117,12 +129,12 @@ class FAppleLanConnectionMonitor(
 
             nw_connection_state_failed -> {
                 error { "#handleStateUpdate Connection failed: $error" }
-                listener.onStatusUpdate(FInternalTransportConnectionStatus.Disconnected)
+                restartMonitoring()
             }
 
             nw_connection_state_cancelled -> {
                 error { "#handleStateUpdate Connection cancelled" }
-                listener.onStatusUpdate(FInternalTransportConnectionStatus.Disconnected)
+                restartMonitoring()
             }
 
             nw_connection_state_preparing -> {
@@ -158,7 +170,7 @@ class FAppleLanConnectionMonitor(
             if (isViable) return@nw_connection_set_viability_changed_handler
             runBlocking {
                 error { "#collectConnectionViability Connection became non-viable" }
-                listener.onStatusUpdate(FInternalTransportConnectionStatus.Disconnected)
+                restartMonitoring()
             }
         }
     }
@@ -174,7 +186,7 @@ class FAppleLanConnectionMonitor(
             if (status == nw_path_status_satisfied) return@nw_connection_set_path_changed_handler
             runBlocking {
                 error { "#collectConnectionPathChange Path no longer satisfied (status=$status)" }
-                listener.onStatusUpdate(FInternalTransportConnectionStatus.Disconnected)
+                restartMonitoring()
             }
         }
     }
