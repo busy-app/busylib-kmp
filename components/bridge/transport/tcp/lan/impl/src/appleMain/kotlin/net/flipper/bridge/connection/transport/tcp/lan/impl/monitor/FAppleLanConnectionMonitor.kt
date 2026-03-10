@@ -11,8 +11,6 @@ import net.flipper.bridge.connection.transport.tcp.lan.FLanDeviceConnectionConfi
 import net.flipper.bridge.connection.transport.tcp.lan.impl.model.KotlinNwError
 import net.flipper.bridge.connection.transport.tcp.lan.impl.model.asKotlinNwError
 import net.flipper.bridge.connection.transport.tcp.lan.impl.util.withLock
-import net.flipper.core.busylib.ktx.common.asSingleJobScope
-import net.flipper.core.busylib.ktx.common.cancelPrevious
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.debug
 import net.flipper.core.busylib.log.error
@@ -57,7 +55,6 @@ class FAppleLanConnectionMonitor(
     override val TAG: String = "FLanConnectionMonitor"
     private val queue = dispatch_queue_create("net.flipper.lan.connection", null)
     private val connectionLock = NSLock()
-    private val connectionTimeoutScope = scope.asSingleJobScope()
     private var connection: nw_connection_t = null
 
     private fun createConnection(): nw_connection_t {
@@ -87,6 +84,17 @@ class FAppleLanConnectionMonitor(
         state: UInt,
         error: KotlinNwError?
     ) {
+        when (error) {
+            null,
+            is KotlinNwError.HostIsDown,
+            is KotlinNwError.Unknown,
+            is KotlinNwError.NoRouteToHost -> Unit
+
+            is KotlinNwError.TimedOut,
+            is KotlinNwError.ResetByPeer -> {
+                listener.onStatusUpdate(FInternalTransportConnectionStatus.Disconnected)
+            }
+        }
         when (state) {
             nw_connection_state_ready -> {
                 debug { "#handleStateUpdate Connected to ${config.host}" }
@@ -132,7 +140,6 @@ class FAppleLanConnectionMonitor(
             val kError = error?.asKotlinNwError()
             debug { "#collectConnectionEvents state=$state error=$kError" }
             runBlocking {
-                connectionTimeoutScope.cancelPrevious()
                 handleStateUpdate(
                     state = state,
                     error = kError
@@ -141,6 +148,11 @@ class FAppleLanConnectionMonitor(
         }
     }
 
+    /**
+     * Registers a handler that fires when TCP connection's viability changes
+     * A connection becomes non-viable when it can no longer carry data
+     * (e.g. USB cable disconnected or the device stopped responding)
+     */
     private fun collectConnectionViability(connection: nw_connection_t) {
         nw_connection_set_viability_changed_handler(connection) { isViable ->
             if (isViable) return@nw_connection_set_viability_changed_handler
@@ -151,6 +163,11 @@ class FAppleLanConnectionMonitor(
         }
     }
 
+    /**
+     * Registers a handler that fires when the underlying network path changes
+     * The path describes which local interface and route is used for this TCP connection
+     * (e.g. the USB-LAN interface went down)
+     */
     private fun collectConnectionPathChange(connection: nw_connection_t) {
         nw_connection_set_path_changed_handler(connection) { path ->
             val status = nw_path_get_status(path)
@@ -163,7 +180,6 @@ class FAppleLanConnectionMonitor(
     }
 
     override suspend fun startMonitoring() {
-        info { "#startMonitoring" }
         val currentConnection = createConnection()
 
         collectConnectionEvents(currentConnection)
@@ -177,12 +193,12 @@ class FAppleLanConnectionMonitor(
     }
 
     override fun stopMonitoring() {
-        info { "#stopMonitoring" }
         connectionLock.withLock {
             connection?.let { localConnection ->
                 nw_connection_set_path_changed_handler(localConnection, null)
                 nw_connection_set_viability_changed_handler(localConnection, null)
                 nw_connection_set_state_changed_handler(localConnection, null)
+
                 nw_connection_force_cancel(localConnection)
             }
             connection = null
@@ -191,9 +207,22 @@ class FAppleLanConnectionMonitor(
     }
 
     companion object {
+        /**
+         * Amount of seconds before sending keep-alive requests
+         * @see KotlinNwError.TimedOut
+         */
         private const val KEEPALIVE_IDLE_TIME_SEC = 5u
+
+        /**
+         * Amount of seconds between keep-alive requests
+         * @see KotlinNwError.TimedOut
+         */
         private const val KEEPALIVE_INTERVAL_SEC = 3u
 
+        /**
+         * Maximum numbers of unanswered keep-alive requests
+         * @see KotlinNwError.TimedOut
+         */
         private const val KEEPALIVE_COUNT = 3u
     }
 }

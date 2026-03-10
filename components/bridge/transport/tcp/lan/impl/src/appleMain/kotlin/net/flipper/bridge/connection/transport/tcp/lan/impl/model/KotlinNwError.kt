@@ -13,7 +13,7 @@ internal sealed class KotlinNwError(
 ) : Throwable(instance.toString()) {
     val code: Int = nw_error_get_error_code(instance)
 
-    class CodeHostIsDown(e: nw_error_t) : KotlinNwError(e)
+    class HostIsDown(e: nw_error_t) : KotlinNwError(e)
     class NoRouteToHost(e: nw_error_t) : KotlinNwError(e)
     class ResetByPeer(e: nw_error_t) : KotlinNwError(e)
     class TimedOut(e: nw_error_t) : KotlinNwError(e)
@@ -31,7 +31,7 @@ internal fun nw_error_t?.asKotlinNwError(): KotlinNwError? {
     if (this == null) return null
     val code = this.let(::nw_error_get_error_code)
     return when (code) {
-        ERROR_CODE_HOST_IS_DOWN -> KotlinNwError.CodeHostIsDown(this)
+        ERROR_CODE_HOST_IS_DOWN -> KotlinNwError.HostIsDown(this)
         ERROR_CODE_NO_ROUTE_TO_HOST -> KotlinNwError.NoRouteToHost(this)
         ERROR_CODE_RESET_BY_PEER -> KotlinNwError.ResetByPeer(this)
         ERROR_CODE_TIMED_OUT -> KotlinNwError.TimedOut(this)
