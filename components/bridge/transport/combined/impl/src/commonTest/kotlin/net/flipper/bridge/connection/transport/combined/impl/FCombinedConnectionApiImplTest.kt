@@ -8,6 +8,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -68,7 +69,7 @@ class FCombinedConnectionApiImplTest {
      * Returns the SUT, the list of connection builders, and the status listener.
      */
     private suspend fun createSut(
-        testDispatcher: kotlinx.coroutines.test.TestCoroutineScheduler,
+        testDispatcher: TestCoroutineScheduler,
         scope: CoroutineScope,
         config: FCombinedConnectionConfig,
         globalConnectionBuilder: MockConnectionBuilder = MockConnectionBuilder()
@@ -206,7 +207,11 @@ class FCombinedConnectionApiImplTest {
             assertTrue(result.isSuccess)
             val connectionsAfter = sut.connections.value
             assertEquals(1, connectionsAfter.size)
-            assertSame(connectionsBefore[0], connectionsAfter[0], "Should reuse exact same connection object")
+            assertSame(
+                connectionsBefore[0],
+                connectionsAfter[0],
+                "Should reuse exact same connection object"
+            )
         }
 
     @Test
@@ -232,7 +237,11 @@ class FCombinedConnectionApiImplTest {
             val deviceApi = TestConnectedDeviceApi("DeviceA")
             deviceApi.tryUpdateResult = Result.success(Unit)
             builder.latestListener()!!.onStatusUpdate(
-                Connected(scope = backgroundScope, deviceApi = deviceApi)
+                Connected(
+                    scope = backgroundScope,
+                    deviceApi = deviceApi,
+                    connectionType = null
+                )
             )
             advanceUntilIdle()
 
@@ -278,7 +287,11 @@ class FCombinedConnectionApiImplTest {
             val deviceApi = TestConnectedDeviceApi("DeviceA")
             deviceApi.tryUpdateResult = Result.failure(IllegalArgumentException("Rejected"))
             builder.latestListener()!!.onStatusUpdate(
-                Connected(scope = backgroundScope, deviceApi = deviceApi)
+                Connected(
+                    scope = backgroundScope,
+                    deviceApi = deviceApi,
+                    connectionType = null
+                )
             )
             advanceUntilIdle()
 
@@ -670,7 +683,11 @@ class FCombinedConnectionApiImplTest {
             // Simulate connected state
             val deviceApi = TestConnectedDeviceApi("A")
             builder.latestListener()!!.onStatusUpdate(
-                Connected(scope = backgroundScope, deviceApi = deviceApi)
+                Connected(
+                    scope = backgroundScope,
+                    deviceApi = deviceApi,
+                    connectionType = null
+                )
             )
             advanceUntilIdle()
 
@@ -820,7 +837,11 @@ class FCombinedConnectionApiImplTest {
 
             // Simulate connected with throwing device
             builder.latestListener()!!.onStatusUpdate(
-                Connected(scope = backgroundScope, deviceApi = throwingDeviceApi)
+                Connected(
+                    scope = backgroundScope,
+                    deviceApi = throwingDeviceApi,
+                    connectionType = null
+                )
             )
             advanceUntilIdle()
 
@@ -941,7 +962,11 @@ class FCombinedConnectionApiImplTest {
         // Make connected
         val deviceApi = TestConnectedDeviceApi("A")
         builder.latestListener()!!.onStatusUpdate(
-            Connected(scope = backgroundScope, deviceApi = deviceApi)
+            Connected(
+                scope = backgroundScope,
+                deviceApi = deviceApi,
+                connectionType = null
+            )
         )
         advanceUntilIdle()
 
@@ -1283,7 +1308,11 @@ class FCombinedConnectionApiImplTest {
                 tryUpdateResult = Result.success(Unit)
             }
             builder.latestListener()!!.onStatusUpdate(
-                Connected(scope = backgroundScope, deviceApi = deviceApi)
+                Connected(
+                    scope = backgroundScope,
+                    deviceApi = deviceApi,
+                    connectionType = null
+                )
             )
             advanceUntilIdle()
 
@@ -1318,7 +1347,11 @@ class FCombinedConnectionApiImplTest {
                 tryUpdateResult = Result.failure(IllegalArgumentException("Nope"))
             }
             builder.latestListener()!!.onStatusUpdate(
-                Connected(scope = backgroundScope, deviceApi = deviceApi)
+                Connected(
+                    scope = backgroundScope,
+                    deviceApi = deviceApi,
+                    connectionType = null
+                )
             )
             advanceUntilIdle()
 
@@ -1395,7 +1428,11 @@ class FCombinedConnectionApiImplTest {
         // Phase 2: Simulate connected
         val deviceApi = TestConnectedDeviceApi("DevA")
         builder.latestListener()!!.onStatusUpdate(
-            Connected(scope = backgroundScope, deviceApi = deviceApi)
+            Connected(
+                scope = backgroundScope,
+                deviceApi = deviceApi,
+                connectionType = null
+            )
         )
         advanceUntilIdle()
 

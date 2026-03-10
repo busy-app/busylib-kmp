@@ -109,7 +109,8 @@ class AutoReconnectConnectionTest {
             val listener = connectionBuilder.latestListener()!!
             val connectedStatus = FInternalTransportConnectionStatus.Connected(
                 scope = backgroundScope,
-                deviceApi = connectionBuilder.deviceApis.last()
+                deviceApi = connectionBuilder.deviceApis.last(),
+                connectionType = null
             )
             listener.onStatusUpdate(connectedStatus)
             advanceUntilIdle()
@@ -144,7 +145,8 @@ class AutoReconnectConnectionTest {
         val listener1 = connectionBuilder.latestListener()!!
         val connectedStatus = FInternalTransportConnectionStatus.Connected(
             scope = backgroundScope,
-            deviceApi = connectionBuilder.deviceApis.last()
+            deviceApi = connectionBuilder.deviceApis.last(),
+            connectionType = null
         )
         listener1.onStatusUpdate(connectedStatus)
         advanceUntilIdle()
@@ -277,7 +279,8 @@ class AutoReconnectConnectionTest {
         val listener = connectionBuilder.latestListener()!!
         val connectedStatus = FInternalTransportConnectionStatus.Connected(
             scope = backgroundScope,
-            deviceApi = connectionBuilder.deviceApis.last()
+            deviceApi = connectionBuilder.deviceApis.last(),
+            connectionType = null
         )
         listener.onStatusUpdate(connectedStatus)
         advanceUntilIdle()
@@ -424,7 +427,8 @@ class AutoReconnectConnectionTest {
         val listener = connectionBuilder.latestListener()!!
         val connectedStatus = FInternalTransportConnectionStatus.Connected(
             scope = backgroundScope,
-            deviceApi = connectionBuilder.deviceApis.last()
+            deviceApi = connectionBuilder.deviceApis.last(),
+            connectionType = null
         )
         listener.onStatusUpdate(connectedStatus)
         advanceUntilIdle()
@@ -475,7 +479,8 @@ class AutoReconnectConnectionTest {
 
         val connectedStatus = FInternalTransportConnectionStatus.Connected(
             scope = backgroundScope,
-            deviceApi = connectionBuilder.deviceApis.last()
+            deviceApi = connectionBuilder.deviceApis.last(),
+            connectionType = null
         )
         listener.onStatusUpdate(connectedStatus)
         advanceUntilIdle()
@@ -787,7 +792,10 @@ class AutoReconnectConnectionTest {
                 // Connect
                 val connectedStatus = FInternalTransportConnectionStatus.Connected(
                     scope = backgroundScope,
-                    deviceApi = connectionBuilder.deviceApis.lastOrNull() ?: TestConnectedDeviceApi()
+                    deviceApi = connectionBuilder.deviceApis
+                        .lastOrNull()
+                        ?: TestConnectedDeviceApi(),
+                    connectionType = null
                 )
                 listener.onStatusUpdate(connectedStatus)
                 advanceUntilIdle()
@@ -857,7 +865,8 @@ class AutoReconnectConnectionTest {
             listener1.onStatusUpdate(
                 FInternalTransportConnectionStatus.Connected(
                     scope = backgroundScope,
-                    deviceApi = connectionBuilder.deviceApis.last()
+                    deviceApi = connectionBuilder.deviceApis.last(),
+                    connectionType = null
                 )
             )
             advanceUntilIdle()
@@ -910,7 +919,8 @@ class AutoReconnectConnectionTest {
         listener1.onStatusUpdate(
             FInternalTransportConnectionStatus.Connected(
                 scope = backgroundScope,
-                deviceApi = connectionBuilder.deviceApis.last()
+                deviceApi = connectionBuilder.deviceApis.last(),
+                connectionType = null
             )
         )
         advanceUntilIdle()
@@ -925,7 +935,8 @@ class AutoReconnectConnectionTest {
         listener2.onStatusUpdate(
             FInternalTransportConnectionStatus.Connected(
                 scope = backgroundScope,
-                deviceApi = connectionBuilder.deviceApis.last()
+                deviceApi = connectionBuilder.deviceApis.last(),
+                connectionType = null
             )
         )
         advanceUntilIdle()
@@ -966,7 +977,8 @@ class AutoReconnectConnectionTest {
         val listener = connectionBuilder.latestListener()!!
         val connectedStatus = FInternalTransportConnectionStatus.Connected(
             scope = backgroundScope,
-            deviceApi = connectionBuilder.deviceApis.last()
+            deviceApi = connectionBuilder.deviceApis.last(),
+            connectionType = null
         )
         listener.onStatusUpdate(connectedStatus)
         advanceUntilIdle()
@@ -1058,7 +1070,8 @@ class AutoReconnectConnectionTest {
             storedListener!!.onStatusUpdate(
                 FInternalTransportConnectionStatus.Connected(
                     scope = testScope,
-                    deviceApi = deviceApi1
+                    deviceApi = deviceApi1,
+                    connectionType = null
                 )
             )
             advanceUntilIdle()
@@ -1167,7 +1180,8 @@ class AutoReconnectConnectionTest {
             storedListener!!.onStatusUpdate(
                 FInternalTransportConnectionStatus.Connected(
                     scope = testScope,
-                    deviceApi = deviceApi
+                    deviceApi = deviceApi,
+                    connectionType = null
                 )
             )
             advanceUntilIdle()

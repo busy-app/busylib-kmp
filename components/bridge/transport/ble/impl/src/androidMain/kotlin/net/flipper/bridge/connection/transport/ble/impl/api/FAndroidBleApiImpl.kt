@@ -1,9 +1,13 @@
 package net.flipper.bridge.connection.transport.ble.impl.api
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.shareIn
 import net.flipper.bridge.connection.transport.ble.api.FBleApi
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.ble.impl.FHttpBLEEngine
@@ -11,9 +15,11 @@ import net.flipper.bridge.connection.transport.ble.impl.meta.FTransportMetaInfoA
 import net.flipper.bridge.connection.transport.ble.impl.serial.FSerialBleApi
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
+import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionType
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.bridge.connection.transport.common.api.meta.FTransportMetaInfoApi
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPDeviceApi
+import net.flipper.bridge.connection.transport.common.api.serial.FHTTPTransportCapability
 import net.flipper.busylib.core.wrapper.WrappedStateFlow
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
@@ -48,7 +54,8 @@ class FAndroidBleApiImpl(
 
                         BondState.BONDED -> FInternalTransportConnectionStatus.Connected(
                             scope = scope,
-                            deviceApi = this@FAndroidBleApiImpl
+                            deviceApi = this@FAndroidBleApiImpl,
+                            connectionType = FInternalTransportConnectionType.BLE
                         )
                     }
 
@@ -84,6 +91,16 @@ class FAndroidBleApiImpl(
     }
 
     override fun getDeviceHttpEngine() = bleHttpEngine
+
+    private val _capabilities = flowOf(
+        listOf(
+            FHTTPTransportCapability.BLE_ONLY_CONNECTION_SUPPORTED,
+        )
+    ).shareIn(scope, SharingStarted.WhileSubscribed(), 1)
+
+    override fun getCapabilities(): Flow<List<FHTTPTransportCapability>> {
+        return _capabilities
+    }
 
     override suspend fun disconnect() {
         peripheral.disconnect()
