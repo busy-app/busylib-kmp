@@ -8,7 +8,9 @@ import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.orchestrator.api.model.ConnectingStatus
 import net.flipper.bridge.connection.orchestrator.api.model.DisconnectStatus
 import net.flipper.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
+import net.flipper.bridge.connection.orchestrator.api.model.FDeviceTransportType
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
+import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionType
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
@@ -46,7 +48,13 @@ class FTransportListenerImpl : LogTagProvider {
                 is FInternalTransportConnectionStatus.Connected -> FDeviceConnectStatus.Connected(
                     device = device,
                     deviceApi = status.deviceApi,
-                    scope = status.scope
+                    scope = status.scope,
+                    transportType = when (status.connectionType) {
+                        FInternalTransportConnectionType.BLE -> FDeviceTransportType.BLE
+                        FInternalTransportConnectionType.LAN -> FDeviceTransportType.LAN
+                        FInternalTransportConnectionType.CLOUD -> FDeviceTransportType.CLOUD
+                        null -> null
+                    }
                 )
 
                 FInternalTransportConnectionStatus.Connecting ->
