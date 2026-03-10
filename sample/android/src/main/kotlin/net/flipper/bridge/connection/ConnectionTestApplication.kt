@@ -25,12 +25,12 @@ class ConnectionTestApplication : Application() {
         )
     }
     val busyLib: BUSYLibAndroid by lazy {
-        val scope = CoroutineScope(SupervisorJob())
+        val scope = CoroutineScope(SupervisorJob() + FlipperDispatchers.default)
         val hostApi = BUSYLibHostApiStub(
             host = "cloud.dev.busy.app",
         )
         BUSYLibAndroid.build(
-            CoroutineScope(SupervisorJob() + FlipperDispatchers.default),
+            scope = scope,
             principalApi = UserPrincipalApiSampleImpl(scope, hostApi),
             busyLibBarsApi = BUSYLibBarsApiNoop(),
             persistedStorage = persistedStorage,
