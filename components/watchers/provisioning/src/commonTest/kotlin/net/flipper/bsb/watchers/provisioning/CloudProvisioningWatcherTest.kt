@@ -309,7 +309,8 @@ class CloudProvisioningWatcherTest {
             FDeviceConnectStatus.Connected(
                 scope = scope,
                 device = connectedDevice,
-                deviceApi = FakeConnectedDeviceApi()
+                deviceApi = FakeConnectedDeviceApi(),
+                transportType = null
             )
         )
 

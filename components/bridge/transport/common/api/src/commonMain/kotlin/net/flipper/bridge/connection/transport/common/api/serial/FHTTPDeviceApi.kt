@@ -20,5 +20,5 @@ fun FHTTPDeviceApi.hasCapability(
     capability: FHTTPTransportCapability
 ): Flow<Boolean> {
     return getCapabilities()
-        .map { it.contains(capability) }
+        .map { capabilities -> capabilities.contains(capability) }
 }
