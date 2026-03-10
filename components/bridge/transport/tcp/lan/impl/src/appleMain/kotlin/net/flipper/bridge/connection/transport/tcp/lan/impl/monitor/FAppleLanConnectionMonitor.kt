@@ -9,6 +9,8 @@ import net.flipper.bridge.connection.transport.common.api.FInternalTransportConn
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionType
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.bridge.connection.transport.tcp.lan.FLanDeviceConnectionConfig
+import net.flipper.bridge.connection.transport.tcp.lan.impl.model.KotlinNwError
+import net.flipper.bridge.connection.transport.tcp.lan.impl.model.asKotlinNwError
 import net.flipper.core.busylib.ktx.common.SingleJobMode
 import net.flipper.core.busylib.ktx.common.asSingleJobScope
 import net.flipper.core.busylib.ktx.common.cancelPrevious
@@ -34,6 +36,7 @@ import platform.Network.nw_connection_state_ready
 import platform.Network.nw_connection_state_waiting
 import platform.Network.nw_connection_t
 import platform.Network.nw_endpoint_create_host
+import platform.Network.nw_error_get_error_code
 import platform.Network.nw_error_t
 import platform.Network.nw_parameters_copy_default_protocol_stack
 import platform.Network.nw_parameters_create
@@ -49,11 +52,6 @@ import platform.Network.nw_tcp_options_set_keepalive_count
 import platform.darwin.dispatch_queue_create
 import kotlin.time.Duration.Companion.seconds
 
-private const val KEEPALIVE_IDLE_TIME_SEC = 5u
-private const val KEEPALIVE_INTERVAL_SEC = 3u
-private const val KEEPALIVE_COUNT = 3u
-
-private val CONNECTION_TIMEOUT_JOB = 10.seconds
 
 @OptIn(ExperimentalForeignApi::class)
 class FAppleLanConnectionMonitor(
@@ -65,10 +63,114 @@ class FAppleLanConnectionMonitor(
     override val TAG: String = "FLanConnectionMonitor"
     private val queue = dispatch_queue_create("net.flipper.lan.connection", null)
     private val connectionLock = NSLock()
-    private val restartConnectionScope = scope.asSingleJobScope()
     private val connectionTimeoutScope = scope.asSingleJobScope()
     private var connection: nw_connection_t = null
-    private var restartCount = 0
+
+    private fun sendDisconnectStatusAfterTimeout() {
+        connectionTimeoutScope.launch(SingleJobMode.CANCEL_PREVIOUS) {
+            delay(CONNECTION_TIMEOUT_JOB)
+            listener.onStatusUpdate(FInternalTransportConnectionStatus.Disconnected)
+            debug { "#sendDisconnectStatusAfterTimeout Could not connect within timeout, restarting" }
+        }
+    }
+
+    private suspend fun handleStateUpdate(
+        state: UInt,
+        error: KotlinNwError?
+    ) {
+        when (error) {
+            is KotlinNwError.TimedOut,
+            is KotlinNwError.CodeHostIsDown,
+            is KotlinNwError.NoRouteToHost,
+            is KotlinNwError.ResetByPeer -> {
+                error { "#handleStateUpdate Received error $error" }
+                sendDisconnectStatusAfterTimeout()
+                return
+            }
+
+            is KotlinNwError.Unknown,
+            null -> Unit
+        }
+
+        when (state) {
+            nw_connection_state_ready -> {
+                info { "#handleStateUpdate Connected to ${config.host}" }
+                val status = FInternalTransportConnectionStatus.Connected(
+                    scope = scope,
+                    deviceApi = deviceApi,
+                    connectionType = FInternalTransportConnectionType.LAN
+                )
+                listener.onStatusUpdate(status)
+            }
+
+            nw_connection_state_invalid -> {
+                error { "#handleStateUpdate Connection invalid: $error" }
+                sendDisconnectStatusAfterTimeout()
+            }
+
+            nw_connection_state_waiting -> {
+                debug { "#handleStateUpdate Waiting for connection: $error" }
+                sendDisconnectStatusAfterTimeout()
+            }
+
+            nw_connection_state_failed -> {
+                error { "#handleStateUpdate Connection failed: $error" }
+                sendDisconnectStatusAfterTimeout()
+            }
+
+            nw_connection_state_cancelled -> {
+                error { "#handleStateUpdate Connection cancelled" }
+                sendDisconnectStatusAfterTimeout()
+            }
+
+            nw_connection_state_preparing -> {
+                debug { "#handleStateUpdate Connection preparing" }
+                sendDisconnectStatusAfterTimeout()
+            }
+
+            else -> {
+                debug { "#handleStateUpdate Connection unknown state: $state; error: $error" }
+                sendDisconnectStatusAfterTimeout()
+            }
+        }
+    }
+
+    private fun collectConnectionEvents(connection: nw_connection_t) {
+        nw_connection_set_state_changed_handler(connection) { state, error ->
+            val kError = error?.asKotlinNwError()
+            info { "#collectConnectionEvents state=$state error=$kError" }
+            runBlocking {
+                connectionTimeoutScope.cancelPrevious()
+                handleStateUpdate(
+                    state = state,
+                    error = kError
+                )
+            }
+        }
+    }
+
+    private fun collectConnectionViability(connection: nw_connection_t) {
+        nw_connection_set_viability_changed_handler(connection) { isViable ->
+            info { "#collectConnectionViability isViable=$isViable" }
+            if (isViable) return@nw_connection_set_viability_changed_handler
+            runBlocking {
+                error { "#collectConnectionViability Connection became non-viable, marking disconnected" }
+                sendDisconnectStatusAfterTimeout()
+            }
+        }
+    }
+
+    private fun collectConnectionPathChange(connection: nw_connection_t) {
+        nw_connection_set_path_changed_handler(connection) { path ->
+            val status = nw_path_get_status(path)
+            info { "#collectConnectionPathChange status=$status" }
+            if (status == nw_path_status_satisfied) return@nw_connection_set_path_changed_handler
+            runBlocking {
+                error { "#collectConnectionPathChange Path no longer satisfied (status=$status), marking disconnected" }
+                sendDisconnectStatusAfterTimeout()
+            }
+        }
+    }
 
     private fun createConnection(): nw_connection_t {
         return connectionLock.withLock {
@@ -93,42 +195,6 @@ class FAppleLanConnectionMonitor(
         }
     }
 
-    private fun collectConnectionEvents(connection: nw_connection_t) {
-        nw_connection_set_state_changed_handler(connection) { state, error ->
-            info { "#stateChanged state=$state error=${error.toString()}" }
-            runBlocking {
-                handleStateUpdate(state, error)
-            }
-        }
-    }
-
-    private fun collectConnectionViability(connection: nw_connection_t) {
-        nw_connection_set_viability_changed_handler(connection) { isViable ->
-            info { "#viabilityChanged isViable=$isViable" }
-            runBlocking {
-                if (!isViable) {
-                    error { "Connection became non-viable, marking disconnected" }
-                    listener.onStatusUpdate(FInternalTransportConnectionStatus.Disconnected)
-                    restartMonitoring()
-                }
-            }
-        }
-    }
-
-    private fun collectConnectionPathChange(connection: nw_connection_t) {
-        nw_connection_set_path_changed_handler(connection) { path ->
-            val status = nw_path_get_status(path)
-            info { "#pathChanged status=$status" }
-            runBlocking {
-                if (status != nw_path_status_satisfied) {
-                    error { "Path no longer satisfied (status=$status), marking disconnected" }
-                    listener.onStatusUpdate(FInternalTransportConnectionStatus.Disconnected)
-                    restartMonitoring()
-                }
-            }
-        }
-    }
-
     override suspend fun startMonitoring() {
         info { "#startMonitoring" }
         val currentConnection = createConnection()
@@ -140,7 +206,7 @@ class FAppleLanConnectionMonitor(
         nw_connection_set_queue(currentConnection, queue)
         nw_connection_start(currentConnection)
 
-        info { "Started monitoring connection to ${config.host}" }
+        info { "#startMonitoring Started monitoring connection to ${config.host}" }
     }
 
     override fun stopMonitoring() {
@@ -152,74 +218,12 @@ class FAppleLanConnectionMonitor(
         info { "#stopMonitoring Stopped monitoring connection to ${config.host}" }
     }
 
-    private fun restartMonitoring() {
-        restartConnectionScope.launch(SingleJobMode.SKIP_IF_RUNNING) {
-            val duration = getExponentialDelay(++restartCount)
-            error { "#restartMonitoring duration: restartCount: $restartCount" }
-            stopMonitoring()
-            delay(duration)
-            startMonitoring()
-        }
-    }
+    companion object {
+        private const val KEEPALIVE_IDLE_TIME_SEC = 5u
+        private const val KEEPALIVE_INTERVAL_SEC = 3u
+        private const val KEEPALIVE_COUNT = 3u
 
-    private suspend fun handleStateUpdate(
-        state: UInt,
-        error: nw_error_t
-    ) {
-        info { "#handleStateUpdate: state=$state; error: $error" }
-
-        when (state) {
-            nw_connection_state_ready -> {
-                info { "Connected to ${config.host}" }
-                restartCount = 0
-                connectionTimeoutScope.cancelPrevious()
-                listener.onStatusUpdate(
-                    FInternalTransportConnectionStatus.Connected(
-                        scope = scope,
-                        deviceApi = deviceApi,
-                        connectionType = FInternalTransportConnectionType.LAN
-                    )
-                )
-            }
-
-            nw_connection_state_invalid -> {
-                error { "Connection invalid: ${error?.toString()}" }
-                listener.onStatusUpdate(FInternalTransportConnectionStatus.Disconnected)
-                restartMonitoring()
-            }
-
-            nw_connection_state_waiting -> {
-                debug { "Waiting for connection: ${error?.toString()}" }
-                listener.onStatusUpdate(FInternalTransportConnectionStatus.Disconnected)
-            }
-
-            nw_connection_state_failed -> {
-                error { "Connection failed: ${error.toString()}" }
-                listener.onStatusUpdate(FInternalTransportConnectionStatus.Disconnected)
-                restartMonitoring()
-            }
-
-            nw_connection_state_cancelled -> {
-                error { "Connection cancelled" }
-                listener.onStatusUpdate(FInternalTransportConnectionStatus.Disconnected)
-                restartMonitoring()
-            }
-
-            nw_connection_state_preparing -> {
-                debug { "Connection preparing" }
-                listener.onStatusUpdate(FInternalTransportConnectionStatus.Disconnected)
-                connectionTimeoutScope.launch(SingleJobMode.CANCEL_PREVIOUS) {
-                    delay(CONNECTION_TIMEOUT_JOB)
-                    restartMonitoring()
-                }
-            }
-
-            else -> {
-                listener.onStatusUpdate(FInternalTransportConnectionStatus.Disconnected)
-                debug { "Connection unknown state: $state; error: ${error.toString()}" }
-                restartMonitoring()
-            }
-        }
+        private val CONNECTION_TIMEOUT_JOB = 5.seconds
     }
 }
 
