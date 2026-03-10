@@ -5,6 +5,7 @@ import kotlinx.coroutines.delay
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
+import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionType
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.bridge.connection.transport.common.api.meta.FTransportMetaInfoApi
 import net.flipper.bridge.connection.transport.mock.FMockApi
@@ -53,7 +54,8 @@ class MockDeviceConnectionApiImpl : MockDeviceConnectionApi {
         listener.onStatusUpdate(
             FInternalTransportConnectionStatus.Connected(
                 scope = scope,
-                deviceApi = mockApi
+                deviceApi = mockApi,
+                connectionType = FInternalTransportConnectionType.BLE
             )
         )
 

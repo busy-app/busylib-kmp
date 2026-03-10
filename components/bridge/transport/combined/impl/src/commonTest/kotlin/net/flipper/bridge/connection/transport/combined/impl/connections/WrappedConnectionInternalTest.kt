@@ -2,6 +2,7 @@
 
 package net.flipper.bridge.connection.transport.combined.impl.connections
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
@@ -84,7 +85,8 @@ class WrappedConnectionInternalTest {
             // Simulate connection established via listener
             val connectedStatus = FInternalTransportConnectionStatus.Connected(
                 scope = backgroundScope,
-                deviceApi = connectionBuilder.deviceApis.last()
+                deviceApi = connectionBuilder.deviceApis.last(),
+                connectionType = null
             )
             connectionBuilder.latestListener()?.onStatusUpdate(connectedStatus)
 
@@ -236,7 +238,8 @@ class WrappedConnectionInternalTest {
 
         val connectedStatus = FInternalTransportConnectionStatus.Connected(
             scope = backgroundScope,
-            deviceApi = connectionBuilder.deviceApis.last()
+            deviceApi = connectionBuilder.deviceApis.last(),
+            connectionType = null
         )
         listener.onStatusUpdate(connectedStatus)
         advanceUntilIdle()
@@ -328,7 +331,8 @@ class WrappedConnectionInternalTest {
         // Simulate connection established
         val connectedStatus = FInternalTransportConnectionStatus.Connected(
             scope = backgroundScope,
-            deviceApi = connectionBuilder.deviceApis.last()
+            deviceApi = connectionBuilder.deviceApis.last(),
+            connectionType = null
         )
         connectionBuilder.latestListener()?.onStatusUpdate(connectedStatus)
         advanceUntilIdle()
@@ -362,7 +366,8 @@ class WrappedConnectionInternalTest {
         // Simulate connection established
         val connectedStatus = FInternalTransportConnectionStatus.Connected(
             scope = backgroundScope,
-            deviceApi = connectionBuilder.deviceApis.last()
+            deviceApi = connectionBuilder.deviceApis.last(),
+            connectionType = null
         )
         connectionBuilder.latestListener()?.onStatusUpdate(connectedStatus)
         advanceUntilIdle()
@@ -457,7 +462,8 @@ class WrappedConnectionInternalTest {
         val listener = connectionBuilder.latestListener()!!
         val connectedStatus = FInternalTransportConnectionStatus.Connected(
             scope = backgroundScope,
-            deviceApi = connectionBuilder.deviceApis.last()
+            deviceApi = connectionBuilder.deviceApis.last(),
+            connectionType = null
         )
         listener.onStatusUpdate(connectedStatus)
         advanceUntilIdle()
@@ -541,7 +547,7 @@ class WrappedConnectionInternalTest {
             advanceUntilIdle()
 
             // When
-            parentJob.cancel(cause = kotlinx.coroutines.CancellationException("Parent cancelled"))
+            parentJob.cancel(cause = CancellationException("Parent cancelled"))
             advanceUntilIdle()
 
             // Then - should not crash (error is logged)
@@ -626,7 +632,8 @@ class WrappedConnectionInternalTest {
             // Simulate connection
             val connectedStatus = FInternalTransportConnectionStatus.Connected(
                 scope = backgroundScope,
-                deviceApi = throwingDeviceApi
+                deviceApi = throwingDeviceApi,
+                connectionType = null
             )
             connectionBuilder.listener?.onStatusUpdate(connectedStatus)
             advanceUntilIdle()

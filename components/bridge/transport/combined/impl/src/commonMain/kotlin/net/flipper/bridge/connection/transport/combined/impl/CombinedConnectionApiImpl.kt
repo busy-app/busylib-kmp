@@ -23,8 +23,12 @@ class CombinedConnectionApiImpl : CombinedConnectionApi {
     ): Result<FCombinedConnectionApi> = runCatching {
         listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting)
 
-        val connections = config.connectionConfigs.map {
-            AutoReconnectConnection(scope, it, connectionBuilder)
+        val connections = config.connectionConfigs.map { connectionConfig ->
+            AutoReconnectConnection(
+                scope = scope,
+                initialConfig = connectionConfig,
+                connectionBuilder = connectionBuilder
+            )
         }
         return@runCatching FCombinedConnectionApiImpl(
             scope = scope,
