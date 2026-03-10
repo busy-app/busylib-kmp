@@ -2,6 +2,8 @@ import net.flipper.Config.CURRENT_FLAVOR_TYPE
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
 import org.jetbrains.kotlin.konan.target.Family
+import ru.astrainteractive.gradleplugin.property.extension.PrimitivePropertyValueExt.stringOrNull
+import ru.astrainteractive.gradleplugin.property.secretProperty
 
 plugins {
     id("flipper.multiplatform")
@@ -198,6 +200,7 @@ val zipXCFrameworkDebug by tasks.registering(Exec::class) {
     )
 }
 
+
 val zipXCFrameworkRelease by tasks.registering(Exec::class) {
     group = "publishing"
     description = "Creates a ZIP archive of the release XCFramework (preserving symlinks)"
@@ -230,6 +233,38 @@ val zipXCFrameworkRelease by tasks.registering(Exec::class) {
         "BusyLibKMP.xcframework",
         outputFile.get().asFile.absolutePath
     )
+
+
+}
+logger.info(
+    "THI IS PATH ${
+        layout.buildDirectory.asFile.get()
+            .resolve("XCFrameworks")
+            .resolve("debug")
+            .resolve("BusyLibKMP.xcframework")
+    }"
+)
+
+val copyXCFrameworkDebug by tasks.registering(Copy::class) {
+    // Path to iOS/Bridge
+    val bridgeFolder = secretProperty("flipper.iosProjectBridgeAbsolutePath")
+        .stringOrNull
+        ?.let(::File)
+    require(bridgeFolder != null) {
+        "Couldn't copy debug framework into iOS project, flipper.iosProjectBridgeAbsolutePath is not set"
+    }
+    from(
+        layout.buildDirectory.asFile.get()
+            .resolve("XCFrameworks")
+            .resolve("debug")
+            .resolve("BusyLibKMP.xcframework")
+    )
+    destinationDir = bridgeFolder.resolve("BusyLibKMP.xcframework")
+    dependsOn(zipXCFrameworkDebug)
+}
+
+zipXCFrameworkDebug.configure {
+    finalizedBy(copyXCFrameworkDebug)
 }
 
 // Configure publishing to include the XCFramework zip files
