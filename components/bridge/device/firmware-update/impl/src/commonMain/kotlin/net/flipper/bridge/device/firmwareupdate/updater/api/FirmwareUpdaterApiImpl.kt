@@ -145,10 +145,11 @@ class FirmwareUpdaterApiImpl(
         }
     }
 
+    // TODO https://flipper.atlassian.net/browse/MOB-2268
     private suspend fun awaitDeviceReconnected() {
         info { "#startUpdateInstall upload finished! Awaiting device disconnected" }
         fDeviceOrchestrator.getState()
-            .filterIsInstance<FDeviceConnectStatus.Disconnected>()
+            .filterIsInstance<FDeviceConnectStatus.Connecting>()
             .first()
         info { "#startUpdateInstall awaiting for connected device!" }
         fDeviceOrchestrator.getState()

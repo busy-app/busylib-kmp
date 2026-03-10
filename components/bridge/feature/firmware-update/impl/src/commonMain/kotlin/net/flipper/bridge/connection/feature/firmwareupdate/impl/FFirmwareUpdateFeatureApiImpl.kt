@@ -68,6 +68,7 @@ class FFirmwareUpdateFeatureApiImpl(
 ) : FFirmwareUpdateFeatureApi, LogTagProvider {
     override val TAG: String = "FFirmwareUpdateFeatureApi"
 
+    // TODO https://flipper.atlassian.net/browse/MOB-2270
     override val updateStatusFlow: WrappedSharedFlow<UpdateStatus> = fEventsFeatureApi
         ?.getBsbUpdateFlow(BsbUpdateEvent.UPDATER_UPDATE_STATUS)
         .orEmpty()
