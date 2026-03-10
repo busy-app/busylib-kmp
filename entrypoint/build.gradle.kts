@@ -260,7 +260,6 @@ val copyXCFrameworkDebug by tasks.registering(Copy::class) {
     dependsOn(zipXCFrameworkDebug)
 }
 
-
 // Configure publishing to include the XCFramework zip files
 publishing {
     publications {
