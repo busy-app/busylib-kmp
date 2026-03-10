@@ -87,7 +87,7 @@ class FHttpLanConnectionMonitor(
             val response = httpClient.get(url)
 
             // Check that response status is successful
-            return response.status.isSuccess()
+            response.status.isSuccess()
         } catch (_: Exception) {
             false
         }
@@ -96,6 +96,7 @@ class FHttpLanConnectionMonitor(
     override fun stopMonitoring() {
         info { "Stopping connection monitoring for host: ${config.host}" }
         singleJobScope.cancelPrevious()
+        httpClient.close()
         isConnected = false
     }
 }
