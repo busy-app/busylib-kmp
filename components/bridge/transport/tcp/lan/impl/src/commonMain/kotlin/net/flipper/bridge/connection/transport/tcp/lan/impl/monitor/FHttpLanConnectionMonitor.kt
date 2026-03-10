@@ -9,6 +9,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
+import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionType
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.bridge.connection.transport.tcp.lan.FLanApi
 import net.flipper.bridge.connection.transport.tcp.lan.FLanDeviceConnectionConfig
@@ -70,6 +71,7 @@ class FHttpLanConnectionMonitor(
                 status = FInternalTransportConnectionStatus.Connected(
                     scope = scope,
                     deviceApi = deviceApi,
+                    connectionType = FInternalTransportConnectionType.LAN,
                 )
             )
         } else if (!isHostAvailable && isConnected) {
