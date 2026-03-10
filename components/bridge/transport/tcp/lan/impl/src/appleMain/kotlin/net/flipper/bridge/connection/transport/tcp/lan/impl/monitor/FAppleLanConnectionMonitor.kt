@@ -118,17 +118,23 @@ class FAppleLanConnectionMonitor(
                 listener.onStatusUpdate(status)
             }
 
-            nw_connection_state_invalid -> {
-                error { "#handleStateUpdate Connection invalid: $error" }
-                restartMonitoring()
-            }
-
             nw_connection_state_waiting -> {
                 debug { "#handleStateUpdate Waiting for connection: $error" }
+                listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting)
+            }
+
+            nw_connection_state_preparing -> {
+                debug { "#handleStateUpdate Connection preparing" }
+                listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting)
             }
 
             nw_connection_state_failed -> {
                 error { "#handleStateUpdate Connection failed: $error" }
+                restartMonitoring()
+            }
+
+            nw_connection_state_invalid -> {
+                error { "#handleStateUpdate Connection invalid: $error" }
                 restartMonitoring()
             }
 
@@ -137,12 +143,9 @@ class FAppleLanConnectionMonitor(
                 restartMonitoring()
             }
 
-            nw_connection_state_preparing -> {
-                debug { "#handleStateUpdate Connection preparing" }
-            }
-
             else -> {
                 debug { "#handleStateUpdate Connection unknown state: $state; error: $error" }
+                restartMonitoring()
             }
         }
     }
@@ -168,10 +171,8 @@ class FAppleLanConnectionMonitor(
     private fun collectConnectionViability(connection: nw_connection_t) {
         nw_connection_set_viability_changed_handler(connection) { isViable ->
             if (isViable) return@nw_connection_set_viability_changed_handler
-            runBlocking {
-                error { "#collectConnectionViability Connection became non-viable" }
-                restartMonitoring()
-            }
+            error { "#collectConnectionViability Connection became non-viable" }
+            restartMonitoring()
         }
     }
 
@@ -184,10 +185,8 @@ class FAppleLanConnectionMonitor(
         nw_connection_set_path_changed_handler(connection) { path ->
             val status = nw_path_get_status(path)
             if (status == nw_path_status_satisfied) return@nw_connection_set_path_changed_handler
-            runBlocking {
-                error { "#collectConnectionPathChange Path no longer satisfied (status=$status)" }
-                restartMonitoring()
-            }
+            error { "#collectConnectionPathChange Path no longer satisfied (status=$status)" }
+            restartMonitoring()
         }
     }
 
