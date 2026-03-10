@@ -22,7 +22,6 @@ internal sealed class KotlinNwError(
     override fun toString(): String {
         return "${this::class} $message-$code"
     }
-
 }
 
 /**

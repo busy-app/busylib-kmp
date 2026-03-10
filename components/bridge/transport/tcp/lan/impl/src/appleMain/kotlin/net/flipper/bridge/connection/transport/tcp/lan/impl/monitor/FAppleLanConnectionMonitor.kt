@@ -11,10 +11,10 @@ import net.flipper.bridge.connection.transport.common.api.FTransportConnectionSt
 import net.flipper.bridge.connection.transport.tcp.lan.FLanDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.tcp.lan.impl.model.KotlinNwError
 import net.flipper.bridge.connection.transport.tcp.lan.impl.model.asKotlinNwError
+import net.flipper.bridge.connection.transport.tcp.lan.impl.util.withLock
 import net.flipper.core.busylib.ktx.common.SingleJobMode
 import net.flipper.core.busylib.ktx.common.asSingleJobScope
 import net.flipper.core.busylib.ktx.common.cancelPrevious
-import net.flipper.core.busylib.ktx.common.getExponentialDelay
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.debug
 import net.flipper.core.busylib.log.error
@@ -36,8 +36,6 @@ import platform.Network.nw_connection_state_ready
 import platform.Network.nw_connection_state_waiting
 import platform.Network.nw_connection_t
 import platform.Network.nw_endpoint_create_host
-import platform.Network.nw_error_get_error_code
-import platform.Network.nw_error_t
 import platform.Network.nw_parameters_copy_default_protocol_stack
 import platform.Network.nw_parameters_create
 import platform.Network.nw_parameters_set_include_peer_to_peer
@@ -46,12 +44,11 @@ import platform.Network.nw_path_status_satisfied
 import platform.Network.nw_protocol_stack_set_transport_protocol
 import platform.Network.nw_tcp_create_options
 import platform.Network.nw_tcp_options_set_enable_keepalive
+import platform.Network.nw_tcp_options_set_keepalive_count
 import platform.Network.nw_tcp_options_set_keepalive_idle_time
 import platform.Network.nw_tcp_options_set_keepalive_interval
-import platform.Network.nw_tcp_options_set_keepalive_count
 import platform.darwin.dispatch_queue_create
 import kotlin.time.Duration.Companion.seconds
-
 
 @OptIn(ExperimentalForeignApi::class)
 class FAppleLanConnectionMonitor(
@@ -65,6 +62,29 @@ class FAppleLanConnectionMonitor(
     private val connectionLock = NSLock()
     private val connectionTimeoutScope = scope.asSingleJobScope()
     private var connection: nw_connection_t = null
+
+    private fun createConnection(): nw_connection_t {
+        return connectionLock.withLock {
+            connection?.let { nw_connection_cancel(it) }
+
+            val endpoint = nw_endpoint_create_host(config.host, "80")
+            val parameters = nw_parameters_create()
+            val protocolStack = nw_parameters_copy_default_protocol_stack(parameters)
+
+            val tcpOptions = nw_tcp_create_options()
+            nw_tcp_options_set_enable_keepalive(tcpOptions, true)
+            nw_tcp_options_set_keepalive_idle_time(tcpOptions, KEEPALIVE_IDLE_TIME_SEC)
+            nw_tcp_options_set_keepalive_interval(tcpOptions, KEEPALIVE_INTERVAL_SEC)
+            nw_tcp_options_set_keepalive_count(tcpOptions, KEEPALIVE_COUNT)
+
+            nw_protocol_stack_set_transport_protocol(protocolStack, tcpOptions)
+            nw_parameters_set_include_peer_to_peer(parameters, true)
+
+            val createdConnection = nw_connection_create(endpoint, parameters)
+            connection = createdConnection
+            createdConnection
+        }
+    }
 
     private fun sendDisconnectStatusAfterTimeout() {
         connectionTimeoutScope.launch(SingleJobMode.CANCEL_PREVIOUS) {
@@ -172,29 +192,6 @@ class FAppleLanConnectionMonitor(
         }
     }
 
-    private fun createConnection(): nw_connection_t {
-        return connectionLock.withLock {
-            connection?.let { nw_connection_cancel(it) }
-
-            val endpoint = nw_endpoint_create_host(config.host, "80")
-            val parameters = nw_parameters_create()
-            val protocolStack = nw_parameters_copy_default_protocol_stack(parameters)
-
-            val tcpOptions = nw_tcp_create_options()
-            nw_tcp_options_set_enable_keepalive(tcpOptions, true)
-            nw_tcp_options_set_keepalive_idle_time(tcpOptions, KEEPALIVE_IDLE_TIME_SEC)
-            nw_tcp_options_set_keepalive_interval(tcpOptions, KEEPALIVE_INTERVAL_SEC)
-            nw_tcp_options_set_keepalive_count(tcpOptions, KEEPALIVE_COUNT)
-
-            nw_protocol_stack_set_transport_protocol(protocolStack, tcpOptions)
-            nw_parameters_set_include_peer_to_peer(parameters, true)
-
-            val createdConnection = nw_connection_create(endpoint, parameters)
-            connection = createdConnection
-            createdConnection
-        }
-    }
-
     override suspend fun startMonitoring() {
         info { "#startMonitoring" }
         val currentConnection = createConnection()
@@ -212,7 +209,12 @@ class FAppleLanConnectionMonitor(
     override fun stopMonitoring() {
         info { "#stopMonitoring" }
         connectionLock.withLock {
-            connection?.let { nw_connection_force_cancel(it) }
+            connection?.let { localConnection ->
+                nw_connection_set_path_changed_handler(localConnection, null)
+                nw_connection_set_viability_changed_handler(localConnection, null)
+                nw_connection_set_state_changed_handler(localConnection, null)
+                nw_connection_force_cancel(localConnection)
+            }
             connection = null
         }
         info { "#stopMonitoring Stopped monitoring connection to ${config.host}" }
@@ -224,14 +226,5 @@ class FAppleLanConnectionMonitor(
         private const val KEEPALIVE_COUNT = 3u
 
         private val CONNECTION_TIMEOUT_JOB = 5.seconds
-    }
-}
-
-private inline fun <T> NSLock.withLock(block: () -> T): T {
-    lock()
-    return try {
-        block()
-    } finally {
-        unlock()
     }
 }
