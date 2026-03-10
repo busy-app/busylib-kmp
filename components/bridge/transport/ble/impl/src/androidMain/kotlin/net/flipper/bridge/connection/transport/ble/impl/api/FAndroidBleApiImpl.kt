@@ -2,7 +2,8 @@ package net.flipper.bridge.connection.transport.ble.impl.api
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import net.flipper.bridge.connection.transport.ble.api.FBleApi
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.ble.api.FSerialBleApi
@@ -35,12 +36,11 @@ class FAndroidBleApiImpl(
     override val TAG = "FBleApi"
     private val bleHttpEngine = FHttpBLEEngine(serialApi)
 
-    init {
-        scope.launch {
-            combine(
-                peripheral.state,
-                peripheral.bondState
-            ) { state, bondState ->
+    private fun startPeripheralStatusCollectionJob() {
+        combine(
+            flow = peripheral.state,
+            flow2 = peripheral.bondState,
+            transform = { state, bondState ->
                 when (state) {
                     ConnectionState.Connected -> when (bondState) {
                         BondState.NONE,
@@ -56,11 +56,15 @@ class FAndroidBleApiImpl(
                     is ConnectionState.Disconnected -> FInternalTransportConnectionStatus.Disconnected
                     ConnectionState.Disconnecting -> FInternalTransportConnectionStatus.Disconnecting
                 }
-            }.collect {
-                info { "New status: $it" }
-                listener.onStatusUpdate(it)
             }
-        }
+        ).onEach { status ->
+            info { "New status: $status" }
+            listener.onStatusUpdate(status)
+        }.launchIn(scope)
+    }
+
+    init {
+        startPeripheralStatusCollectionJob()
     }
 
     override val deviceName = peripheral.name ?: currentConfig.deviceName

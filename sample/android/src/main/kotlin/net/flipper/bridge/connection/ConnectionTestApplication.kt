@@ -36,6 +36,6 @@ class ConnectionTestApplication : Application() {
 
         Timber.plant(Timber.DebugTree())
 
-        busyLib.connectionService.onApplicationInit()
+        busyLib.launch()
     }
 }

@@ -10,8 +10,8 @@ import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
-import net.flipper.bridge.connection.feature.events.api.UpdateEvent
-import net.flipper.bridge.connection.feature.events.api.getUpdateFlow
+import net.flipper.bridge.connection.feature.events.api.getBsbUpdateFlow
+import net.flipper.bridge.connection.feature.events.model.BsbUpdateEvent
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.timezone.api.model.TimestampInfo
 import net.flipper.bridge.connection.feature.timezone.api.model.TimezoneInfo
@@ -42,7 +42,7 @@ class FTimeZoneFeatureApiImpl(
 
     override fun getTimestampInfoFlow(): WrappedFlow<TimestampInfo> {
         return fEventsFeatureApi
-            ?.getUpdateFlow(UpdateEvent.TIMESTAMP_CHANGED)
+            ?.getBsbUpdateFlow(BsbUpdateEvent.TIMESTAMP_CHANGED)
             .orEmpty()
             .merge(flowOf(DefaultConsumable(false)))
             .transformWhileSubscribed(scope = scope) { flow ->
@@ -64,7 +64,7 @@ class FTimeZoneFeatureApiImpl(
 
     override fun getTimeZoneInfoFlow(): WrappedFlow<TimezoneInfo> {
         return fEventsFeatureApi
-            ?.getUpdateFlow(UpdateEvent.TIMEZONE_CHANGED)
+            ?.getBsbUpdateFlow(BsbUpdateEvent.TIMEZONE_CHANGED)
             .orEmpty()
             .merge(flowOf(DefaultConsumable(false)))
             .transformWhileSubscribed(scope = scope) { flow ->

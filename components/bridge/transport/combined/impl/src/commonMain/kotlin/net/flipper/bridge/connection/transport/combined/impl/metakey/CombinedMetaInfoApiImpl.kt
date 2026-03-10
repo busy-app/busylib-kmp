@@ -2,11 +2,11 @@ package net.flipper.bridge.connection.transport.combined.impl.metakey
 
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
-import net.flipper.bridge.connection.transport.combined.impl.connections.AutoReconnectConnection
+import kotlinx.coroutines.flow.map
+import net.flipper.bridge.connection.transport.combined.impl.connections.SharedConnectionPool
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.meta.FTransportMetaInfoApi
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoData
@@ -15,21 +15,14 @@ import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
 
 class CombinedMetaInfoApiImpl(
-    connectionsFlow: StateFlow<List<AutoReconnectConnection>>,
+    connectionPool: SharedConnectionPool,
 ) : FTransportMetaInfoApi, LogTagProvider {
     override val TAG = "CombinedMetaInfoApi"
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    private val delegates = connectionsFlow.flatMapLatest { connections ->
-        if (connections.isEmpty()) {
-            flowOf(emptyList())
-        } else {
-            combine(connections.map { it.stateFlow }) { states ->
-                states.filterIsInstance<FInternalTransportConnectionStatus.Connected>()
-                    .map { it.deviceApi }
-                    .filterIsInstance<FTransportMetaInfoApi>()
-            }
-        }
+    private val delegates = connectionPool.get().map { list ->
+        list.mapNotNull { it.status as? FInternalTransportConnectionStatus.Connected }
+            .mapNotNull { it.deviceApi as? FTransportMetaInfoApi }
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)

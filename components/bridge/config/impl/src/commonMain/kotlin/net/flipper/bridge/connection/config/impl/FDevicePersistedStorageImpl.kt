@@ -21,8 +21,10 @@ class FDevicePersistedStorageImpl(
 ) : FDevicePersistedStorage, LogTagProvider {
     override val TAG = "FDevicePersistedStorage"
     private val mutex = Mutex()
-    private val hooks =
-        listOf<TransactionHook>(CloudAlwaysActiveHook(), DeduplicateConnectionWaysHook())
+    private val hooks = listOf<TransactionHook>(
+        CloudAlwaysActiveHook(),
+        DeduplicateConnectionWaysHook()
+    )
 
     constructor(
         observableSettings: ObservableSettings
@@ -34,13 +36,15 @@ class FDevicePersistedStorageImpl(
             if (deviceId.isNullOrBlank()) {
                 return@map null
             } else {
-                config.devices.find { it.uniqueId == deviceId }
+                config.devices.find { busyBar -> busyBar.uniqueId == deviceId }
             }
         }.wrap()
     }
 
     override fun getAllDevicesFlow(): WrappedFlow<List<BUSYBar>> {
-        return bleConfigKrate.flow.map { it.devices }.wrap()
+        return bleConfigKrate.flow
+            .map { bleConfigSettings -> bleConfigSettings.devices }
+            .wrap()
     }
 
     override suspend fun <T> transaction(
@@ -49,8 +53,8 @@ class FDevicePersistedStorageImpl(
         val original = bleConfigKrate.getValue()
         val scope = PersistedStorageTransactionScopeImpl(original)
         val result = block(scope)
-        hooks.forEach {
-            with(it) {
+        hooks.forEach { hook ->
+            with(hook) {
                 scope.postTransaction()
             }
         }

@@ -37,16 +37,14 @@ class FDeviceConfigToConnectionImpl(
             return@runCatching result.getOrThrow()
         }
 
-        val connectionApiUntyped = configToConnectionMap.entries.find { (qualifier, _) ->
-            qualifier.isInstance(
-                config
-            )
-        } ?: throw NotImplementedError("Can't find connection for config $config")
+        val connectionApiUntyped = configToConnectionMap.entries
+            .find { (qualifier, _) -> qualifier.isInstance(config) }
+            ?: throw NotImplementedError("Can't find connection for config $config")
 
         @Suppress("UNCHECKED_CAST")
-        val connectionApi =
-            connectionApiUntyped.value.deviceConnectionApi as? DeviceConnectionApi<API, CONFIG>
-                ?: throw NotImplementedError("Can't map to connection api")
+        val connectionApi = connectionApiUntyped.value
+            .deviceConnectionApi as? DeviceConnectionApi<API, CONFIG>
+            ?: throw NotImplementedError("Can't map to connection api")
 
         connectionApi.connect(scope, config, listener).getOrThrow()
     }

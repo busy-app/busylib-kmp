@@ -81,3 +81,7 @@ android {
         checkReleaseBuilds = true
     }
 }
+
+kotlin.compilerOptions {
+    freeCompilerArgs.add("-XXLanguage:+ExplicitBackingFields")
+}

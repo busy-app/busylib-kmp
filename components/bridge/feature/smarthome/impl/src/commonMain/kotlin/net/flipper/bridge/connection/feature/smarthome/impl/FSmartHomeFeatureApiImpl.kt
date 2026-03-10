@@ -13,8 +13,8 @@ import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
-import net.flipper.bridge.connection.feature.events.api.UpdateEvent
-import net.flipper.bridge.connection.feature.events.api.getUpdateFlow
+import net.flipper.bridge.connection.feature.events.api.getBsbUpdateFlow
+import net.flipper.bridge.connection.feature.events.model.BsbUpdateEvent
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcMatterApi
 import net.flipper.bridge.connection.feature.rpc.api.model.MatterCommissionedFabrics
@@ -50,7 +50,7 @@ class FSmartHomeFeatureApiImpl(
 
     override fun getCommissionedFabricsFlow(): WrappedFlow<MatterCommissionedFabrics> {
         return fEventsFeatureApi
-            ?.getUpdateFlow(UpdateEvent.SMART_HOME_STATUS_CHANGED)
+            ?.getBsbUpdateFlow(BsbUpdateEvent.SMART_HOME_STATUS_CHANGED)
             .orEmpty()
             .merge(flowOf(DefaultConsumable(false)))
             .transformWhileSubscribed(scope = scope) { flow ->
