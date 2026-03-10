@@ -128,4 +128,3 @@ include(
     ":sample:cmp",
     ":sample:android"
 )
-
