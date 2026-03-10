@@ -52,7 +52,8 @@ class FAppleLanConnectionMonitor(
     private val listener: FTransportConnectionStatusListener,
     private val config: FLanDeviceConnectionConfig,
     private val scope: CoroutineScope,
-    private val deviceApi: FConnectedDeviceApi
+    private val deviceApi: FConnectedDeviceApi,
+    private val port: String = DEFAULT_PORT
 ) : FLanConnectionMonitorApi, LogTagProvider {
     override val TAG: String = "FLanConnectionMonitor"
     private val queue = dispatch_queue_create("net.flipper.lan.connection", null)
@@ -72,7 +73,7 @@ class FAppleLanConnectionMonitor(
         return connectionLock.withLock {
             connection?.let { nw_connection_cancel(it) }
 
-            val endpoint = nw_endpoint_create_host(config.host, "80")
+            val endpoint = nw_endpoint_create_host(config.host, port)
             val parameters = nw_parameters_create()
             val protocolStack = nw_parameters_copy_default_protocol_stack(parameters)
 
@@ -218,6 +219,8 @@ class FAppleLanConnectionMonitor(
     }
 
     companion object {
+        private const val DEFAULT_PORT = "80"
+
         /**
          * Amount of seconds before sending keep-alive requests
          * @see KotlinNwError.TimedOut
