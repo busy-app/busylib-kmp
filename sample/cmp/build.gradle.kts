@@ -1,3 +1,4 @@
+import net.flipper.property.SecretPropertyValue
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.konan.target.Family
@@ -7,10 +8,23 @@ plugins {
     id("flipper.multiplatform-compose")
     id("org.jetbrains.kotlin.plugin.serialization")
     alias(libs.plugins.skie)
+    alias(libs.plugins.buildkonfig)
 }
 
 afterEvaluate {
     tasks.withType<AbstractPublishToMaven>().configureEach { enabled = false }
+}
+
+buildConfig {
+    className("SampleKonfig")
+    packageName("${kotlin.android.namespace}")
+    buildConfigField(
+        String::class.java,
+        "SECRET_AUTH_TOKEN",
+        SecretPropertyValue(project, "flipper.authToken")
+            .getValue()
+            .getOrNull() ?: ""
+    )
 }
 
 kotlin {
@@ -33,6 +47,7 @@ kotlin {
         implementation(projects.components.core.log)
         implementation(projects.components.core.ktx)
         implementation(projects.components.core.wrapper)
+        implementation(projects.components.core.ktor)
 
         api(projects.entrypoint)
         implementation(projects.components.bridge.config.impl)
@@ -46,6 +61,8 @@ kotlin {
         api(libs.decompose)
         implementation(libs.decompose.composeExtension)
         implementation(libs.klibs.kstorage)
+
+        implementation(libs.ktor.client.core)
     }
 
     sourceSets.jvmMain.dependencies {
@@ -59,11 +76,6 @@ kotlin {
         implementation(libs.appcompat)
     }
     sourceSets.jvmMain.dependencies {
-        implementation(projects.components.core.ktor)
-
-        implementation(libs.ktor.client.core)
-        implementation(libs.kotlin.serialization.json)
-
         implementation(compose.desktop.currentOs)
     }
 }
