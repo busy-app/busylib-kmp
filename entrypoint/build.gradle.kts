@@ -240,6 +240,11 @@ val copyXCFrameworkDebug by tasks.registering(Exec::class) {
     group = "publishing"
     description = "Copies the debug XCFramework into the iOS project"
 
+    if (!appleEnabled) {
+        logger.error("Can't execute zipXCFrameworkDebug as apple isn't enabled")
+        return@registering
+    }
+
     dependsOn(zipXCFrameworkDebug)
 
     val bridgeFolder = secretProperty("flipper.iosProjectBridgeAbsolutePath")
