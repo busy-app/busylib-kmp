@@ -10,14 +10,16 @@ kotlin {
             implementation(projects.components.bridge.transport.common.impl)
             implementation(projects.components.bridge.transport.tcp.lan.api)
             implementation(projects.components.core.ktor)
+            implementation(projects.components.core.ktx)
             implementation(projects.components.core.di)
             implementation(projects.components.core.log)
 
             implementation(libs.kotlin.coroutines)
             implementation(libs.ktor.client.core)
         }
-        jvmMain.dependencies {
-            implementation(projects.components.core.ktx)
+        commonTest.dependencies {
+            implementation(libs.kotlin.test)
+            implementation(libs.kotlin.coroutines.test)
         }
     }
 }
