@@ -4,6 +4,9 @@ plugins {
     id("kotlinx-serialization")
 }
 kotlin {
+    sourceSets.commonTest.dependencies {
+        implementation(libs.kotlin.test)
+    }
     sourceSets.commonMain.dependencies {
         implementation(projects.components.bridge.config.api)
 
