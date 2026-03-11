@@ -4,18 +4,15 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.plus
 import net.flipper.bridge.connection.transport.ble.impl.serial.FResetSerialBleApi
@@ -34,30 +31,26 @@ class FResetSerialBleApiImpl(
     resetCharacteristicFlow: Flow<RemoteCharacteristic?>,
 ) : FResetSerialBleApi, LogTagProvider {
     override val TAG = "FResetSerialBleApi"
-    private val _requestCounterStateFlow = MutableStateFlow(0)
 
     private val characteristicSharedFlow = resetCharacteristicFlow
         .filterNotNull()
         .shareIn(scope, SharingStarted.Eagerly, replay = 1)
 
-    init {
-        characteristicSharedFlow
-            .flatMapLatest { characteristic ->
-                flow {
-                    while (currentCoroutineContext().isActive) {
-                        val counter = characteristic.read().toRequestCounter()
-                        debug { "Receive request counter $counter" }
-                        emit(counter)
-                        delay(POLLING_INTERVAL)
-                    }
+    private val requestCounterStateFlow = characteristicSharedFlow
+        .flatMapLatest { characteristic ->
+            flow {
+                while (currentCoroutineContext().isActive) {
+                    val counter = characteristic.read().toRequestCounter()
+                    debug { "Receive request counter $counter" }
+                    emit(counter)
+                    delay(POLLING_INTERVAL)
                 }
             }
-            .onEach { _requestCounterStateFlow.value = it }
-            .launchIn(scope)
-    }
+        }
+        .stateIn(scope, SharingStarted.Lazily, 0)
 
     override fun getRequestCounterStateFlow(): StateFlow<Int> {
-        return _requestCounterStateFlow.asStateFlow()
+        return requestCounterStateFlow
     }
 
     override suspend fun reset() {
@@ -65,7 +58,7 @@ class FResetSerialBleApiImpl(
         val characteristic = characteristicSharedFlow.first()
         characteristic.write(0.toUInt32ByteArray(), WriteType.WITH_RESPONSE)
         info { "Characteristic written, waiting for reset..." }
-        _requestCounterStateFlow.filter { it == 0 }.first()
+        requestCounterStateFlow.filter { it == 0 }.first()
     }
 }
 
