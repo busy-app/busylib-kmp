@@ -11,7 +11,7 @@ actual fun getConnectionMonitorApi(
     scope: CoroutineScope,
     deviceApi: FLanApi
 ): FLanConnectionMonitorApi {
-    return FHttpLanConnectionMonitor(
+    return FAppleLanConnectionMonitor(
         listener,
         config,
         scope,
