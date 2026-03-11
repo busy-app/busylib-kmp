@@ -32,6 +32,7 @@ import net.flipper.core.busylib.ktx.common.throttleLatest
 import net.flipper.core.busylib.ktx.common.transformWhileSubscribed
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.verbose
+import ru.astrainteractive.klibs.kstorage.suspend.StateFlowSuspendMutableKrate
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
 import kotlin.time.Duration.Companion.seconds
 
@@ -41,7 +42,7 @@ class FFinishSetupFeatureApiImpl(
     private val fLinkedInfoOnDemandFeatureApi: FLinkedInfoOnDemandFeatureApi,
     private val fWiFiFeatureApi: FWiFiFeatureApi,
     private val fFirmwareUpdateFeatureApi: FFirmwareUpdateFeatureApi,
-    private val setupFinishedBeforeKrate: SetupFinishedBeforeKrate
+    private val setupFinishedBeforeKrate: StateFlowSuspendMutableKrate<Boolean>
 ) : FFinishSetupFeatureApi, LogTagProvider {
     override val TAG: String = "FFinishSetupFeatureApi"
 
@@ -112,7 +113,7 @@ class FFinishSetupFeatureApiImpl(
                 DeviceSetupTaskStatus.COMPLETED -> {
                     when (updateStatus.check.status) {
                         UpdateStatus.Check.CheckResult.AVAILABLE -> DeviceSetupTaskStatus.NOT_COMPLETED
-                        UpdateStatus.Check.CheckResult.NOT_AVAILABLE -> DeviceSetupTaskStatus.NOT_AVAILABLE
+                        UpdateStatus.Check.CheckResult.NOT_AVAILABLE -> DeviceSetupTaskStatus.COMPLETED
                         UpdateStatus.Check.CheckResult.FAILURE -> DeviceSetupTaskStatus.NOT_AVAILABLE
                         UpdateStatus.Check.CheckResult.NONE -> DeviceSetupTaskStatus.LOADING
                     }
@@ -120,7 +121,7 @@ class FFinishSetupFeatureApiImpl(
 
                 DeviceSetupTaskStatus.NOT_COMPLETED -> DeviceSetupTaskStatus.NOT_AVAILABLE
                 DeviceSetupTaskStatus.LOADING,
-                DeviceSetupTaskStatus.NOT_AVAILABLE -> DeviceSetupTaskStatus.NOT_AVAILABLE
+                DeviceSetupTaskStatus.NOT_AVAILABLE -> DeviceSetupTaskStatus.COMPLETED
             },
         )
         verbose { "#createUpdateFirmwareTask $updateStatus; $connectWifiTaskStatus -> $deviceSetupTask" }
@@ -149,13 +150,6 @@ class FFinishSetupFeatureApiImpl(
                 if (isSetupFinishedBefore) {
                     verbose { "#taskListResourceFlow isSetupFinishedBefore: $isSetupFinishedBefore" }
                     return@throttleLatest FFinishSetupState.FinishedBefore
-                }
-
-                if (bleStatus == null && linkedAccountInfo == null && wifiStatus == null) {
-                    return@throttleLatest FFinishSetupState.Loading
-                }
-                if (linkedAccountInfo == null || wifiStatus == null) {
-                    return@throttleLatest FFinishSetupState.Loading
                 }
                 if (fBleFeatureApi != null && bleStatus == null) {
                     return@throttleLatest FFinishSetupState.Loading
