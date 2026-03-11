@@ -233,22 +233,39 @@ val zipXCFrameworkRelease by tasks.registering(Exec::class) {
         outputFile.get().asFile.absolutePath
     )
 }
-val copyXCFrameworkDebug by tasks.registering(Copy::class) {
-    // Path to iOS/Bridge
+
+// Don't just use Copy task
+// We need to preserve symlinks
+val copyXCFrameworkDebug by tasks.registering(Exec::class) {
+    group = "publishing"
+    description = "Copies the debug XCFramework into the iOS project"
+
+    dependsOn(zipXCFrameworkDebug)
+
     val bridgeFolder = secretProperty("flipper.iosProjectBridgeAbsolutePath")
         .stringOrNull
         ?.let(::File)
+
     require(bridgeFolder != null) {
         "Couldn't copy debug framework into iOS project, flipper.iosProjectBridgeAbsolutePath is not set"
     }
-    from(
-        layout.buildDirectory.asFile.get()
-            .resolve("XCFrameworks")
-            .resolve("debug")
-            .resolve("BusyLibKMP.xcframework")
+
+    val source = layout.buildDirectory.asFile.get()
+        .resolve("XCFrameworks")
+        .resolve("debug")
+        .resolve("BusyLibKMP.xcframework")
+
+    val destination = bridgeFolder.resolve("BusyLibKMP.xcframework")
+
+    doFirst {
+        destination.deleteRecursively()
+    }
+
+    commandLine(
+        "ditto",
+        source.absolutePath,
+        destination.absolutePath
     )
-    destinationDir = bridgeFolder.resolve("BusyLibKMP.xcframework")
-    dependsOn(zipXCFrameworkDebug)
 }
 
 // Configure publishing to include the XCFramework zip files
