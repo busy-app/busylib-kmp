@@ -112,7 +112,7 @@ class FFinishSetupFeatureApiImpl(
                 DeviceSetupTaskStatus.COMPLETED -> {
                     when (updateStatus.check.status) {
                         UpdateStatus.Check.CheckResult.AVAILABLE -> DeviceSetupTaskStatus.NOT_COMPLETED
-                        UpdateStatus.Check.CheckResult.NOT_AVAILABLE -> DeviceSetupTaskStatus.NOT_AVAILABLE
+                        UpdateStatus.Check.CheckResult.NOT_AVAILABLE -> DeviceSetupTaskStatus.COMPLETED
                         UpdateStatus.Check.CheckResult.FAILURE -> DeviceSetupTaskStatus.NOT_AVAILABLE
                         UpdateStatus.Check.CheckResult.NONE -> DeviceSetupTaskStatus.LOADING
                     }
@@ -120,7 +120,7 @@ class FFinishSetupFeatureApiImpl(
 
                 DeviceSetupTaskStatus.NOT_COMPLETED -> DeviceSetupTaskStatus.NOT_AVAILABLE
                 DeviceSetupTaskStatus.LOADING,
-                DeviceSetupTaskStatus.NOT_AVAILABLE -> DeviceSetupTaskStatus.NOT_AVAILABLE
+                DeviceSetupTaskStatus.NOT_AVAILABLE -> DeviceSetupTaskStatus.COMPLETED
             },
         )
         verbose { "#createUpdateFirmwareTask $updateStatus; $connectWifiTaskStatus -> $deviceSetupTask" }
@@ -149,13 +149,6 @@ class FFinishSetupFeatureApiImpl(
                 if (isSetupFinishedBefore) {
                     verbose { "#taskListResourceFlow isSetupFinishedBefore: $isSetupFinishedBefore" }
                     return@throttleLatest FFinishSetupState.FinishedBefore
-                }
-
-                if (bleStatus == null && linkedAccountInfo == null && wifiStatus == null) {
-                    return@throttleLatest FFinishSetupState.Loading
-                }
-                if (linkedAccountInfo == null || wifiStatus == null) {
-                    return@throttleLatest FFinishSetupState.Loading
                 }
                 if (fBleFeatureApi != null && bleStatus == null) {
                     return@throttleLatest FFinishSetupState.Loading
