@@ -6,7 +6,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
@@ -20,11 +19,12 @@ import kotlinx.coroutines.job
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.feature.firmwareupdate.api.FFirmwareUpdateFeatureApi
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateVersion
-import net.flipper.bridge.connection.feature.info.api.FDeviceInfoFeatureApi
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
 import net.flipper.bridge.connection.feature.provider.api.get
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
+import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
+import net.flipper.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
 import net.flipper.bridge.device.firmwareupdate.downloader.api.FirmwareDownloaderApi
 import net.flipper.bridge.device.firmwareupdate.downloader.api.FirmwareDownloaderApiImpl
 import net.flipper.bridge.device.firmwareupdate.updater.diff.FwUpdateStateDiff
@@ -55,6 +55,7 @@ import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 @SingleIn(BusyLibGraph::class)
 class FirmwareUpdaterApiImpl(
     private val fFeatureProvider: FFeatureProvider,
+    private val fDeviceOrchestrator: FDeviceOrchestrator,
     private val scope: CoroutineScope,
     @KtorNetworkClientQualifier
     private val httpClient: HttpClient,
@@ -144,20 +145,15 @@ class FirmwareUpdaterApiImpl(
         }
     }
 
+    // TODO https://flipper.atlassian.net/browse/MOB-2268
     private suspend fun awaitDeviceReconnected() {
-        info { "#startUpdateInstall upload finished! Awaiting null version" }
-        fFeatureProvider.get<FDeviceInfoFeatureApi>()
-            .map { status -> status.tryCast<FFeatureStatus.Supported<FDeviceInfoFeatureApi>>() }
-            .map { status -> status?.featureApi }
-            .flatMapLatest { feature -> feature?.deviceVersionFlow.orNullable() }
-            .filter { version -> version == null }
+        info { "#startUpdateInstall upload finished! Awaiting device disconnected" }
+        fDeviceOrchestrator.getState()
+            .filterIsInstance<FDeviceConnectStatus.Connecting>()
             .first()
-        info { "#startUpdateInstall awaiting for version!" }
-        fFeatureProvider.get<FDeviceInfoFeatureApi>()
-            .map { status -> status.tryCast<FFeatureStatus.Supported<FDeviceInfoFeatureApi>>() }
-            .map { status -> status?.featureApi }
-            .flatMapLatest { feature -> feature?.deviceVersionFlow.orNullable() }
-            .filterNotNull()
+        info { "#startUpdateInstall awaiting for connected device!" }
+        fDeviceOrchestrator.getState()
+            .filterIsInstance<FDeviceConnectStatus.Connected>()
             .first()
         info { "#startUpdateInstall device connected" }
     }

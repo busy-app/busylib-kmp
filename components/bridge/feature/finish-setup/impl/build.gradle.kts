@@ -29,4 +29,10 @@ kotlin {
         implementation(libs.settings.observable)
         implementation(libs.settings.coroutines)
     }
+
+    sourceSets.commonTest.dependencies {
+        implementation(libs.kotlin.test)
+        implementation(libs.kotlin.coroutines.test)
+        implementation(libs.kotlin.immutable)
+    }
 }

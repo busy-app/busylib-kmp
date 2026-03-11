@@ -2,6 +2,8 @@ import net.flipper.Config.CURRENT_FLAVOR_TYPE
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
 import org.jetbrains.kotlin.konan.target.Family
+import ru.astrainteractive.gradleplugin.property.extension.PrimitivePropertyValueExt.stringOrNull
+import ru.astrainteractive.gradleplugin.property.secretProperty
 
 plugins {
     id("flipper.multiplatform")
@@ -229,6 +231,45 @@ val zipXCFrameworkRelease by tasks.registering(Exec::class) {
         "--keepParent",
         "BusyLibKMP.xcframework",
         outputFile.get().asFile.absolutePath
+    )
+}
+
+// Don't just use Copy task
+// We need to preserve symlinks
+val copyXCFrameworkDebug by tasks.registering(Exec::class) {
+    group = "publishing"
+    description = "Copies the debug XCFramework into the iOS project"
+
+    if (!appleEnabled) {
+        logger.error("Can't execute zipXCFrameworkDebug as apple isn't enabled")
+        return@registering
+    }
+
+    dependsOn(zipXCFrameworkDebug)
+
+    val bridgeFolder = secretProperty("flipper.iosProjectBridgeAbsolutePath")
+        .stringOrNull
+        ?.let(::File)
+
+    require(bridgeFolder != null) {
+        "Couldn't copy debug framework into iOS project, flipper.iosProjectBridgeAbsolutePath is not set"
+    }
+
+    val source = layout.buildDirectory.asFile.get()
+        .resolve("XCFrameworks")
+        .resolve("debug")
+        .resolve("BusyLibKMP.xcframework")
+
+    val destination = bridgeFolder.resolve("BusyLibKMP.xcframework")
+
+    doFirst {
+        destination.deleteRecursively()
+    }
+
+    commandLine(
+        "ditto",
+        source.absolutePath,
+        destination.absolutePath
     )
 }
 

@@ -1,4 +1,4 @@
-package net.flipper.bridge.connection.utils
+package net.flipper.bridge.connection.utils.principal.impl
 
 import io.ktor.client.call.body
 import io.ktor.client.request.get
@@ -7,6 +7,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
 import net.flipper.bsb.cloud.api.BUSYLibHostApi
+import net.flipper.busylib.kmp.sample.cmp.SampleKonfig
 import net.flipper.core.ktor.getHttpClient
 import kotlin.uuid.Uuid
 
@@ -25,16 +26,16 @@ private data class AuthMeUser(
 )
 
 suspend fun getUserPrincipal(hostApi: BUSYLibHostApi): BUSYLibUserPrincipal {
-    if (Secrets.AUTH_TOKEN.isBlank()) {
+    if (SampleKonfig.SECRET_AUTH_TOKEN.isBlank()) {
         return BUSYLibUserPrincipal.Empty
     }
     val httpClient = getHttpClient()
     val response = httpClient.get("https://${hostApi.getHost().value}/api/v0/auth/me") {
-        header("Authorization", "Bearer ${Secrets.AUTH_TOKEN}")
+        header("Authorization", "Bearer ${SampleKonfig.SECRET_AUTH_TOKEN}")
     }
     val authMe = response.body<AuthMeResponse>()
     return BUSYLibUserPrincipal.Full(
-        token = Secrets.AUTH_TOKEN,
+        token = SampleKonfig.SECRET_AUTH_TOKEN,
         email = authMe.success.email,
         userId = authMe.success.uid
     )
