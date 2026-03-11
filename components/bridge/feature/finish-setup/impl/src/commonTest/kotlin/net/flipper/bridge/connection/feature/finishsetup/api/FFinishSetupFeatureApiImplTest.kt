@@ -18,6 +18,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withTimeoutOrNull
 import net.flipper.bridge.connection.feature.ble.api.FBleFeatureApi
 import net.flipper.bridge.connection.feature.ble.api.model.FBleStatus
+import net.flipper.bridge.connection.feature.finishsetup.krate.SetupFinishedBeforeKrate
 import net.flipper.bridge.connection.feature.finishsetup.model.DeviceSetupTask
 import net.flipper.bridge.connection.feature.finishsetup.model.DeviceSetupTaskStatus
 import net.flipper.bridge.connection.feature.finishsetup.model.DeviceSetupTaskType
@@ -37,7 +38,6 @@ import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.WrappedSharedFlow
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.ktx.common.asFlow
-import ru.astrainteractive.klibs.kstorage.suspend.StateFlowSuspendMutableKrate
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -106,7 +106,7 @@ class FFinishSetupFeatureApiImplTest {
 
     private class FakeSetupFinishedBeforeKrate(
         initialValue: Boolean = false
-    ) : StateFlowSuspendMutableKrate<Boolean> {
+    ) : SetupFinishedBeforeKrate {
         private val _state = MutableStateFlow(initialValue)
         override val cachedStateFlow: StateFlow<Boolean> = _state.asStateFlow()
         var savedValue: Boolean? = null

@@ -42,7 +42,7 @@ class FFinishSetupFeatureApiImpl(
     private val fLinkedInfoOnDemandFeatureApi: FLinkedInfoOnDemandFeatureApi,
     private val fWiFiFeatureApi: FWiFiFeatureApi,
     private val fFirmwareUpdateFeatureApi: FFirmwareUpdateFeatureApi,
-    private val setupFinishedBeforeKrate: StateFlowSuspendMutableKrate<Boolean>
+    private val setupFinishedBeforeKrate: SetupFinishedBeforeKrate
 ) : FFinishSetupFeatureApi, LogTagProvider {
     override val TAG: String = "FFinishSetupFeatureApi"
 
