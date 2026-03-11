@@ -11,8 +11,13 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 
 class LifecyclesHolderFlow(
-    initList: List<Lifecycle>
+    initList: List<LifecycleWithState>
 ) {
+    data class LifecycleWithState(
+        val lifecycle: Lifecycle,
+        val shouldBeState: Lifecycle.State = Lifecycle.State.STARTED
+    )
+
     private val lifecyclesStateFlow = MutableStateFlow(initList)
     val isAnyLifecycleOnStartFlow = getLifecyclesFlow()
         .flatMapLatest { flows ->
@@ -25,10 +30,10 @@ class LifecyclesHolderFlow(
             }
         }
 
-    fun addLifecycle(lifecycle: Lifecycle) {
+    fun addLifecycle(lifecycle: Lifecycle, shouldBeState: Lifecycle.State = Lifecycle.State.STARTED) {
         lifecyclesStateFlow.update {
-            if (!it.contains(lifecycle)) {
-                it.plus(lifecycle)
+            if (it.none { entry -> entry.lifecycle == lifecycle }) {
+                it.plus(LifecycleWithState(lifecycle, shouldBeState))
             } else {
                 it
             }
@@ -37,14 +42,14 @@ class LifecyclesHolderFlow(
 
     private fun getLifecyclesFlow(): Flow<List<Flow<Boolean>>> {
         return lifecyclesStateFlow.map { lifecycles ->
-            lifecycles.map { lifecycle ->
-                lifecycle.currentStateFlow
+            lifecycles.map { entry ->
+                entry.lifecycle.currentStateFlow
                     .onEach { state ->
                         if (state == Lifecycle.State.DESTROYED) {
-                            lifecyclesStateFlow.update { it.minus(lifecycle) }
+                            lifecyclesStateFlow.update { it.filter { e -> e.lifecycle != entry.lifecycle } }
                         }
                     }.map { state ->
-                        state.isAtLeast(Lifecycle.State.STARTED)
+                        state.isAtLeast(entry.shouldBeState)
                     }
             }
         }
