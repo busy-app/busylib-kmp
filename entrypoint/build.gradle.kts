@@ -233,15 +233,6 @@ val zipXCFrameworkRelease by tasks.registering(Exec::class) {
         outputFile.get().asFile.absolutePath
     )
 }
-logger.info(
-    "THI IS PATH ${
-        layout.buildDirectory.asFile.get()
-            .resolve("XCFrameworks")
-            .resolve("debug")
-            .resolve("BusyLibKMP.xcframework")
-    }"
-)
-
 val copyXCFrameworkDebug by tasks.registering(Copy::class) {
     // Path to iOS/Bridge
     val bridgeFolder = secretProperty("flipper.iosProjectBridgeAbsolutePath")
