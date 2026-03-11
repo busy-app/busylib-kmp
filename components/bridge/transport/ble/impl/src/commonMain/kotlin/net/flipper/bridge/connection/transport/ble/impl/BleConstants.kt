@@ -1,4 +1,4 @@
-package net.flipper.bridge.connection.transport.ble.common
+package net.flipper.bridge.connection.transport.ble.impl
 
 import kotlin.time.Duration.Companion.seconds
 

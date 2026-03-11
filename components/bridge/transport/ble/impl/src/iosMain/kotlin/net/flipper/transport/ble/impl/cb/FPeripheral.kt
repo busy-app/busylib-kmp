@@ -177,6 +177,7 @@ class FPeripheral(
         serialWrite = null
         _metaInfoKeysStream.emit(emptyMap())
         _stateStream.emit(FPeripheralState.DISCONNECTED)
+        _rxDataStream.emit(byteArrayOf())
         debug { "Peripheral onDisconnect id=${identifier.UUIDString}" }
     }
 
@@ -195,7 +196,10 @@ class FPeripheral(
     private suspend fun handleCBError(code: Long) {
         when (code) {
             7L -> _stateStream.emit(FPeripheralState.INVALID_PAIRING) // CBErrorPeerRemovedPairingInformation
-            17L -> _stateStream.emit(FPeripheralState.DISCONNECTED) // CBErrorEncryptionTimedOut
+            17L -> {
+                _stateStream.emit(FPeripheralState.DISCONNECTED)
+                _rxDataStream.emit(byteArrayOf())
+            } // CBErrorEncryptionTimedOut
         }
         error { "Peripheral CBError id=${identifier.UUIDString} code=$code" }
     }

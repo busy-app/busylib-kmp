@@ -1,4 +1,4 @@
-package net.flipper.bridge.connection.transport.ble.common
+package net.flipper.bridge.connection.transport.ble.impl.serial
 
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.InternalAPI
@@ -37,7 +37,7 @@ class ByteEndlessReadChannel(
     override val isClosedForRead: Boolean
         get() = _isClosedForRead.load()
 
-    val job = Job(parent[Job])
+    val job = Job(parent[Job.Key])
     val coroutineContext = parent + job + CoroutineName("RawSourceChannel")
 
     @InternalAPI
@@ -63,6 +63,7 @@ class ByteEndlessReadChannel(
     }
 
     override fun cancel(cause: Throwable?) {
+        info { "Cancel channel with cause: $cause" }
         channel.close(cause)
         coroutineContext.cancel(cause as? CancellationException)
         _isClosedForRead.compareAndSet(expectedValue = false, newValue = true)

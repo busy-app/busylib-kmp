@@ -19,6 +19,7 @@ import net.flipper.bridge.connection.transport.common.api.FInternalTransportConn
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPDeviceApi
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPTransportCapability
 import net.flipper.bridge.connection.transport.common.api.serial.HEADER_NAME_REQUEST_CAPABILITY
+import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.verbose
@@ -76,12 +77,14 @@ class FCombinedHttpEngine(
     ): HttpResponseData {
         var lastException: Throwable? = null
         for (delegate in filteredDelegates) {
-            try {
+            runSuspendCatching {
                 verbose { "Dispatch request $data to $delegate" }
-                return delegate.getDeviceHttpEngine().execute(data)
-            } catch (e: Throwable) {
-                error(e) { "Delegate $delegate failed, trying next" }
-                lastException = e
+                delegate.getDeviceHttpEngine().execute(data)
+            }.onSuccess {
+                return it
+            }.onFailure {
+                error(it) { "Delegate $delegate failed, trying next" }
+                lastException = it
             }
         }
         throw lastException ?: error("No delegates available")

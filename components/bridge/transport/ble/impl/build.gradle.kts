@@ -8,8 +8,7 @@ kotlin {
         implementation(projects.components.bridge.transport.common.api)
 
         implementation(projects.components.bridge.transport.ble.api)
-        implementation(projects.components.bridge.transport.ble.common)
-        implementation(projects.components.bridge.transport.ble.http)
+        implementation(projects.components.bridge.transport.common.impl)
 
         implementation(projects.components.core.log)
         implementation(projects.components.core.di)

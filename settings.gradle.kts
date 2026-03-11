@@ -72,8 +72,6 @@ include(
 
     ":components:bridge:transport:ble:api",
     ":components:bridge:transport:ble:impl",
-    ":components:bridge:transport:ble:common",
-    ":components:bridge:transport:ble:http",
 
     ":components:bridge:transportconfigbuilder:api",
     ":components:bridge:transportconfigbuilder:impl",

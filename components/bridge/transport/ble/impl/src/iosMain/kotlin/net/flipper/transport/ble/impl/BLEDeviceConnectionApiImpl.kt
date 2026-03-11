@@ -10,19 +10,18 @@ import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.transport.ble.api.BleDeviceConnectionApi
 import net.flipper.bridge.connection.transport.ble.api.FBleApi
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceConnectionConfig
-import net.flipper.bridge.connection.transport.ble.common.BleConstants
-import net.flipper.bridge.connection.transport.ble.common.exception.FailedConnectToDeviceException
-import net.flipper.bridge.connection.transport.ble.common.exception.NoFoundDeviceException
+import net.flipper.bridge.connection.transport.ble.impl.BleConstants
+import net.flipper.bridge.connection.transport.ble.impl.exception.FailedConnectToDeviceException
+import net.flipper.bridge.connection.transport.ble.impl.exception.NoFoundDeviceException
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
 import net.flipper.transport.ble.impl.cb.FBLEStatus
-import net.flipper.transport.ble.impl.cb.FCentralManager
 import net.flipper.transport.ble.impl.cb.FPeripheralApi
 import net.flipper.transport.ble.impl.cb.FPeripheralState
-import platform.CoreBluetooth.CBCentralManager
+import net.flipper.transport.ble.impl.manager.FCentralManagerApi
 import platform.Foundation.NSUUID
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 import kotlin.time.Duration
@@ -30,11 +29,9 @@ import kotlin.time.Duration
 @Inject
 @ContributesBinding(BusyLibGraph::class, BleDeviceConnectionApi::class)
 class BLEDeviceConnectionApiImpl(
-    val manager: CBCentralManager
+    private val centralManager: FCentralManagerApi
 ) : BleDeviceConnectionApi, LogTagProvider {
     override val TAG = "BleDeviceConnectionApi"
-
-    private val centralManager = FCentralManager(manager = manager)
 
     override suspend fun connect(
         scope: CoroutineScope,
@@ -68,7 +65,7 @@ class BLEDeviceConnectionApiImpl(
         info { "Peripheral connected successfully!" }
         listener.onStatusUpdate(FInternalTransportConnectionStatus.Pairing)
 
-        val serialApi = FSerialBleApiImpl(
+        val serialApi = FiOSSerialBleApiImpl(
             scope = scope,
             fPeripheralApi = peripheral
         )

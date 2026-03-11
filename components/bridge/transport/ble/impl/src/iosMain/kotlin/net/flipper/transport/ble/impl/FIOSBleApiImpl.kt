@@ -11,8 +11,8 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.plus
 import net.flipper.bridge.connection.transport.ble.api.FBleApi
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceConnectionConfig
-import net.flipper.bridge.connection.transport.ble.api.FSerialBleApi
-import net.flipper.bridge.connection.transport.ble.http.FHttpBLEEngine
+import net.flipper.bridge.connection.transport.ble.impl.FHttpBLEEngine
+import net.flipper.bridge.connection.transport.ble.impl.serial.FSerialBleApi
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionType

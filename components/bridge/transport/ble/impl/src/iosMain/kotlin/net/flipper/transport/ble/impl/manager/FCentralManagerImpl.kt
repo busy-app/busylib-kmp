@@ -1,4 +1,4 @@
-package net.flipper.transport.ble.impl.cb
+package net.flipper.transport.ble.impl.manager
 
 import kotlinx.cinterop.ObjCSignatureOverride
 import kotlinx.coroutines.CoroutineScope
@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceConnectionConfig
-import net.flipper.bridge.connection.transport.ble.common.BleConstants
+import net.flipper.bridge.connection.transport.ble.impl.BleConstants
 import net.flipper.busylib.core.wrapper.WrappedStateFlow
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
@@ -16,6 +16,10 @@ import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
 import net.flipper.core.busylib.log.warn
+import net.flipper.transport.ble.impl.cb.FBLEStatus
+import net.flipper.transport.ble.impl.cb.FPeripheral
+import net.flipper.transport.ble.impl.cb.FPeripheralApi
+import net.flipper.transport.ble.impl.cb.FPeripheralState
 import platform.CoreBluetooth.CBCentralManager
 import platform.CoreBluetooth.CBCentralManagerDelegateProtocol
 import platform.CoreBluetooth.CBManagerState
@@ -25,17 +29,6 @@ import platform.Foundation.NSError
 import platform.Foundation.NSNumber
 import platform.Foundation.NSUUID
 import platform.darwin.NSObject
-
-interface FCentralManagerApi {
-    val connectedStream: WrappedStateFlow<Map<NSUUID, FPeripheralApi>>
-    val bleStatusStream: WrappedStateFlow<FBLEStatus>
-    val discoveredStream: WrappedStateFlow<Set<NSUUID>>
-
-    suspend fun connect(config: FBleDeviceConnectionConfig)
-    suspend fun disconnect(id: NSUUID)
-    suspend fun startScan()
-    suspend fun stopScan()
-}
 
 private class FCentralManagerDelegate(
     private val onStateUpdate: (CBManagerState) -> Unit,
@@ -81,7 +74,7 @@ private class FCentralManagerDelegate(
     }
 }
 
-class FCentralManager(
+class FCentralManagerImpl(
     private val scope: CoroutineScope = CoroutineScope(FlipperDispatchers.default),
     val manager: CBCentralManager
 ) : FCentralManagerApi, LogTagProvider {
@@ -162,7 +155,7 @@ class FCentralManager(
 
     override suspend fun startScan() {
         info { "#startScan" }
-        val state = FBLEStatus.from(manager.state)
+        val state = FBLEStatus.Companion.from(manager.state)
         if (state != FBLEStatus.POWERED_ON) {
             warn { "Cannot start scan with BLE state: $state" }
             return
@@ -186,7 +179,7 @@ class FCentralManager(
 
     private suspend fun updateBLEStatus(state: CBManagerState) {
         info { "#updateBLEStatus state=$state" }
-        val newStatus = FBLEStatus.from(state)
+        val newStatus = FBLEStatus.Companion.from(state)
         _bleStatusStream.emit(newStatus)
 
         info { "BLE state updated: $state" }

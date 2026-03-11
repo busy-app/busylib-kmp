@@ -1,4 +1,4 @@
-package net.flipper.bridge.connection.transport.ble.http
+package net.flipper.bridge.connection.transport.ble.impl
 
 import io.ktor.client.engine.HttpClientEngineBase
 import io.ktor.client.engine.HttpClientEngineConfig
@@ -12,6 +12,7 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpProtocolVersion
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.cio.CIOHeaders
+import io.ktor.http.cio.ParserException
 import io.ktor.http.cio.parseResponse
 import io.ktor.util.date.GMTDate
 import io.ktor.utils.io.ByteReadChannel
@@ -27,9 +28,10 @@ import kotlinx.coroutines.withContext
 import kotlinx.io.InternalIoApi
 import kotlinx.io.Source
 import kotlinx.io.readByteArray
-import net.flipper.bridge.connection.transport.ble.api.FSerialBleApi
-import net.flipper.bridge.connection.transport.ble.http.exception.BadHttpResponseException
+import net.flipper.bridge.connection.transport.ble.impl.exception.BadHttpResponseException
+import net.flipper.bridge.connection.transport.ble.impl.serial.FSerialBleApi
 import net.flipper.bridge.connection.transport.common.utils.toRawHttpRequestString
+import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.busylib.ktx.common.withLockResult
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
@@ -39,7 +41,7 @@ import kotlin.coroutines.CoroutineContext
 class FHttpBLEEngine(
     private val serialApi: FSerialBleApi,
 ) : HttpClientEngineBase("ble-serial"), LogTagProvider {
-
+    private var requestCount = 0
     override val TAG = "FHttpBLEEngine"
 
     override val config = HttpClientEngineConfig()
@@ -57,6 +59,7 @@ class FHttpBLEEngine(
         val requestTime = GMTDate()
         info { "Want to request: ${processedRequest.url}" }
         val result = withLockResult(mutex, "execute") {
+            checkRequestCountUnsafe()
             info { "Send request: $processedRequest" }
             val rawText = processedRequest.toRawHttpRequestString()
             info { "Raw data is: $rawText" }
@@ -64,6 +67,7 @@ class FHttpBLEEngine(
 
             withContext(NonCancellable) {
                 serialApi.send(rawText.encodeToByteArray())
+                info { "Waiting for response" }
                 parseRawHttpResponse(
                     channel = channel,
                     requestTime = requestTime,
@@ -73,6 +77,16 @@ class FHttpBLEEngine(
         }
 
         return result
+    }
+
+    private suspend fun checkRequestCountUnsafe() {
+        val deviceRequestCount = serialApi.getRequestCounterStateFlow().value
+        if (requestCount < deviceRequestCount) {
+            error { "Received request count: $deviceRequestCount, but current request count is $requestCount" }
+            serialApi.reset()
+            requestCount = 0
+        }
+        requestCount++
     }
 
     private fun getProcessedRequest(data: HttpRequestData): HttpRequestData {
@@ -87,7 +101,14 @@ class FHttpBLEEngine(
         requestTime: GMTDate,
         callContext: CoroutineContext
     ): HttpResponseData {
-        val response = parseResponse(channel) ?: throw BadHttpResponseException()
+        val response = runSuspendCatching {
+            parseResponse(channel)
+        }.onFailure { t ->
+            if (t is ParserException) {
+                error(t) { "Parser exception, make reset" }
+                serialApi.reset()
+            }
+        }.getOrThrow() ?: throw BadHttpResponseException()
         val headers: Headers = CIOHeaders(response.headers)
 
         val contentLength = headers[HttpHeaders.ContentLength]?.toLongOrNull()
