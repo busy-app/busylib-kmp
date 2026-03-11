@@ -68,6 +68,9 @@ fun <T : Any?> StateFlow<T>.wrap(): WrappedStateFlow<T> = WrappedStateFlow(this)
 fun <T : Any?> SharedFlow<T>.wrap(): WrappedSharedFlow<T> = WrappedSharedFlow(this)
 fun <T : Any?> Flow<T>.wrap(): WrappedFlow<T> = WrappedFlow(this)
 
+// For explicit type drive without overide method
+fun <T : Any?> Flow<T>.wrapFlow(): WrappedFlow<T> = WrappedFlow(this)
+
 interface Closeable {
     fun close()
 }
