@@ -32,7 +32,6 @@ import net.flipper.core.busylib.ktx.common.throttleLatest
 import net.flipper.core.busylib.ktx.common.transformWhileSubscribed
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.verbose
-import ru.astrainteractive.klibs.kstorage.suspend.StateFlowSuspendMutableKrate
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
 import kotlin.time.Duration.Companion.seconds
 
