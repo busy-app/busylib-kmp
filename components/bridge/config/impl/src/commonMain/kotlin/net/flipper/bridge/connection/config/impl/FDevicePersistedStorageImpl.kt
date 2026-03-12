@@ -8,8 +8,10 @@ import net.flipper.bridge.connection.config.api.PersistedStorageTransactionScope
 import net.flipper.bridge.connection.config.api.TransactionHook
 import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.config.impl.hooks.AlwaysActiveHook
+import net.flipper.bridge.connection.config.impl.hooks.RemoveDuplicateCloudHook
 import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.wrap
+import net.flipper.core.busylib.ktx.common.withLock
 import net.flipper.core.busylib.ktx.common.withLockResult
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
@@ -21,15 +23,18 @@ class FDevicePersistedStorageImpl(
     override val TAG = "FDevicePersistedStorage"
     private val mutex = Mutex()
     private var hooks = listOf<TransactionHook>(
-        AlwaysActiveHook()
+        AlwaysActiveHook(),
+        RemoveDuplicateCloudHook()
     )
 
     constructor(
         observableSettings: ObservableSettings
     ) : this(BleConfigSettingsKrateImpl(observableSettings))
 
-    override fun addHook(hook: TransactionHook) {
-        hooks += hook
+    override suspend fun addHook(hook: TransactionHook) {
+        withLock(mutex, "add_hook") {
+            hooks += hook
+        }
     }
 
     override fun getCurrentDeviceFlow(): WrappedFlow<BUSYBar?> {

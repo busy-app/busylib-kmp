@@ -9,19 +9,23 @@ import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.watchers.hook.DesktopActiveDevice
 import net.flipper.busylib.watchers.hook.DesktopAlwaysLan
 import net.flipper.busylib.watchers.hook.DesktopEmptyFiller
+import net.flipper.core.busylib.ktx.common.SingleJobMode
+import net.flipper.core.busylib.ktx.common.asSingleJobScope
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 
 @Inject
 @ContributesBinding(BusyLibGraph::class, InternalBUSYLibStartupListener::class, multibinding = true)
 class DesktopLanBarsWatcher(
-    private val scope: CoroutineScope,
+    scope: CoroutineScope,
     private val persistedStorage: FDevicePersistedStorage
 ) : InternalBUSYLibStartupListener {
+    private val singleJobScope = scope.asSingleJobScope()
+
     override fun onLaunch() {
-        persistedStorage.addHook(DesktopEmptyFiller())
-        persistedStorage.addHook(DesktopAlwaysLan())
-        persistedStorage.addHook(DesktopActiveDevice())
-        scope.launch {
+        singleJobScope.launch(SingleJobMode.SKIP_IF_RUNNING) {
+            persistedStorage.addHook(DesktopEmptyFiller())
+            persistedStorage.addHook(DesktopAlwaysLan())
+            persistedStorage.addHook(DesktopActiveDevice())
             persistedStorage.transaction { } // Activate all hooks
         }
     }
