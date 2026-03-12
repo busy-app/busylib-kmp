@@ -26,7 +26,7 @@ kotlin {
             macosArm64()
         }
     }
-
+    applyDefaultHierarchyTemplate()
     compilerOptions {
         freeCompilerArgs.add("-XXLanguage:+ExplicitBackingFields")
     }
