@@ -62,8 +62,8 @@ class BUSYLibNetworkStateApiImpl(
         isNetworkAvailableFlowInternal.value = false
     }
 
-    override fun addLifecycle(lifecycle: Lifecycle, shouldBeState: Lifecycle.State) {
-        info { "Add lifecycle $lifecycle with shouldBeState $shouldBeState" }
-        lifecycleHolder.addLifecycle(lifecycle, shouldBeState)
+    override fun addLifecycle(lifecycle: Lifecycle, expectedState: Lifecycle.State) {
+        info { "Add lifecycle $lifecycle with shouldBeState $expectedState" }
+        lifecycleHolder.addLifecycle(lifecycle, expectedState)
     }
 }
