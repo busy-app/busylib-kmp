@@ -1,7 +1,6 @@
 package net.flipper.bridge.connection.config.impl.hooks
 
 import net.flipper.bridge.connection.config.api.PersistedStorageTransactionScope
-import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
 
@@ -14,7 +13,7 @@ class AlwaysActiveHook : TransactionHook, LogTagProvider {
         }
         val devices = getAllDevices()
         val nextDevice = devices.firstOrNull { device ->
-            device.connectionWays.any { it is BUSYBar.ConnectionWay.Cloud }
+            device.cloud != null
         } ?: devices.firstOrNull() ?: return
         info { "Current device is null, selecting next available device: $nextDevice" }
         setCurrentDevice(nextDevice)
