@@ -53,7 +53,7 @@ flipper.iosProjectBridgeAbsolutePath=/Users/makeevrserg/Desktop/git/iOS/Bridge
 current_flavor_type=DEVELOP
 ```
 
-For iOS don't forget:
+For xcode don't forget:
 
 - Resolve dependencies: `xcodebuild -resolvePackageDependencies`
 - Clean your xcode build before launch
