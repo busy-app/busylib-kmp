@@ -38,7 +38,7 @@ class CloudFetcherWatcher(
                 cloudFetcher.getBarsFlow()
             ) { allDevices, cloudBars ->
                 allDevices.mapNotNull {
-                    it.connectionWays.filterIsInstance<BUSYBar.ConnectionWay.Cloud>().firstOrNull()
+                    it.cloud
                 }.map { it.deviceId } to cloudBars
             }.collectLatest { (localCloudDeviceIds, cloudBars) ->
                 val cloudBarsId = cloudBars.mapNotNull { Uuid.parseOrNull(it.id) }
@@ -59,8 +59,7 @@ class CloudFetcherWatcher(
     ) {
         val cloudBarsId = cloudBars.mapNotNull { Uuid.parseOrNull(it.id) }.toSet()
         val deviceClouds = getAllDevices().mapNotNull { device ->
-            val deviceId = device.connectionWays.filterIsInstance<BUSYBar.ConnectionWay.Cloud>()
-                .firstOrNull()?.deviceId ?: return@mapNotNull null
+            val deviceId = device.cloud?.deviceId ?: return@mapNotNull null
             device to deviceId
         }
         val deviceCloudIds = deviceClouds.map { (_, deviceId) -> deviceId }.toSet()
@@ -77,11 +76,7 @@ class CloudFetcherWatcher(
                 info { "Add new bar: $bar" }
                 val newBusyBar = BUSYBar(
                     humanReadableName = bar.label ?: DEFAULT_BUSY_BAR_NAME,
-                    connectionWays = listOf(
-                        BUSYBar.ConnectionWay.Cloud(
-                            deviceId = id
-                        )
-                    )
+                    cloud = BUSYBar.ConnectionWay.Cloud(deviceId = id)
                 )
                 addOrReplace(newBusyBar)
             }
@@ -90,15 +85,13 @@ class CloudFetcherWatcher(
     private fun PersistedStorageTransactionScope.removeCloud(
         device: BUSYBar
     ) {
-        val newConnectionWays = device.connectionWays.filterNot {
-            it is BUSYBar.ConnectionWay.Cloud
-        }
-        if (newConnectionWays.isEmpty()) {
+        val withoutCloud = device.copy(cloud = null)
+        if (withoutCloud.connectionWays.isEmpty()) {
             info { "Remove $device, because cloud not found in linked device" }
             removeDevice(device.uniqueId)
         } else {
-            info { "Remove cloud link from $device, new connections: $newConnectionWays" }
-            addOrReplace(device.copy(connectionWays = newConnectionWays))
+            info { "Remove cloud link from $device, new connections: ${withoutCloud.connectionWays}" }
+            addOrReplace(withoutCloud)
         }
     }
 }
