@@ -93,14 +93,12 @@ class CloudProvisioningWatcher(
      * - Local and cloud, not connected to cloud - remove cloud connection
      */
     private fun PersistedStorageTransactionScope.updateBUSYBar(cloudId: Uuid?, original: BUSYBar) {
-        val cloudConnection = original
-            .connectionWays
-            .filterIsInstance<BUSYBar.ConnectionWay.Cloud>().firstOrNull()
+        val cloudConnection = original.cloud
         if (cloudConnection == null) {
             if (cloudId != null) { // Only local transport, connected to cloud - add cloud transport to current device
                 info { "Found new cloud connection for device $original with id $cloudId" }
 
-                addOrReplace(getConnectedBUSYBar(cloudId, original))
+                addOrReplace(original.copy(cloud = BUSYBar.ConnectionWay.Cloud(cloudId)))
                 return
             }
             // Only local transport, not connected to cloud - skip
@@ -113,13 +111,7 @@ class CloudProvisioningWatcher(
         }
 
         if (cloudId == null) { // Local and cloud, not connected to cloud - remove cloud connection
-            addOrReplace(
-                original.copy(
-                    connectionWays = original.connectionWays.filterNot {
-                        it is BUSYBar.ConnectionWay.Cloud
-                    }
-                )
-            )
+            addOrReplace(original.copy(cloud = null))
             return
         }
 
@@ -132,9 +124,7 @@ class CloudProvisioningWatcher(
         }
         val allDevices = getAllDevices()
         val existedDevice = allDevices.find { deviceFromStorage ->
-            deviceFromStorage.connectionWays.any {
-                (it as? BUSYBar.ConnectionWay.Cloud)?.deviceId == cloudId
-            }
+            deviceFromStorage.cloud?.deviceId == cloudId
         }
         if (existedDevice != null) {
             info { "Found existed device connected to cloud with id $cloudId" }
@@ -142,35 +132,11 @@ class CloudProvisioningWatcher(
             return
         }
         info { "Create new device for cloud connection with id $cloudId" }
-        val newBUSYBar = getConnectedBUSYBar(
-            cloudId,
-            BUSYBar(
-                humanReadableName = original.humanReadableName,
-                connectionWays = original.connectionWays
-            )
+        val newBUSYBar = original.copy(
+            uniqueId = Uuid.random().toString(),
+            cloud = BUSYBar.ConnectionWay.Cloud(cloudId)
         )
         addOrReplace(newBUSYBar)
         setCurrentDevice(newBUSYBar)
-    }
-
-    private fun getConnectedBUSYBar(cloudId: Uuid, device: BUSYBar): BUSYBar {
-        info { "Found new cloud connection for device $device with id $cloudId" }
-        val newConnections = device.connectionWays
-            .filter { it !is BUSYBar.ConnectionWay.Cloud }
-            .plus(BUSYBar.ConnectionWay.Cloud(cloudId))
-
-        return device.copy(
-            connectionWays = newConnections.sortedByDescending { it.getPriority() }
-        )
-    }
-}
-
-@Suppress("MagicNumber")
-private fun BUSYBar.ConnectionWay.getPriority(): Int {
-    return when (this) {
-        is BUSYBar.ConnectionWay.BLE -> 0 // Slowest transport, lowest priority
-        is BUSYBar.ConnectionWay.Cloud -> 10 // Faster than ble
-        is BUSYBar.ConnectionWay.Lan -> 100 // Fastest transport
-        BUSYBar.ConnectionWay.Mock -> -1 // Use only for debug
     }
 }

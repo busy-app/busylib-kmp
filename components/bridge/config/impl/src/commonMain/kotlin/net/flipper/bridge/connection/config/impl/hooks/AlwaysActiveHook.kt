@@ -14,7 +14,7 @@ class AlwaysActiveHook : TransactionHook, LogTagProvider {
         }
         val devices = getAllDevices()
         val nextDevice = devices.firstOrNull { device ->
-            device.connectionWays.any { it is BUSYBar.ConnectionWay.Cloud }
+            device.cloud != null
         } ?: devices.firstOrNull() ?: return
         info { "Current device is null, selecting next available device: $nextDevice" }
         setCurrentDevice(nextDevice)

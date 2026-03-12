@@ -7,7 +7,6 @@ import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.config.api.PersistedStorageTransactionScope
 import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.config.impl.hooks.AlwaysActiveHook
-import net.flipper.bridge.connection.config.impl.hooks.DeduplicateConnectionWaysHook
 import net.flipper.bridge.connection.config.impl.hooks.TransactionHook
 import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.wrap
@@ -22,8 +21,7 @@ class FDevicePersistedStorageImpl(
     override val TAG = "FDevicePersistedStorage"
     private val mutex = Mutex()
     private val hooks = listOf<TransactionHook>(
-        AlwaysActiveHook(),
-        DeduplicateConnectionWaysHook()
+        AlwaysActiveHook()
     )
 
     constructor(

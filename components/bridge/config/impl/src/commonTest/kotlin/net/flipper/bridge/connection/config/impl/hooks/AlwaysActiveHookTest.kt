@@ -12,31 +12,31 @@ class AlwaysActiveHookTest {
     private val cloudDevice1 = BUSYBar(
         humanReadableName = "Cloud Device 1",
         uniqueId = "cloud-1",
-        connectionWays = listOf(BUSYBar.ConnectionWay.Cloud(Uuid.random()))
+        cloud = BUSYBar.ConnectionWay.Cloud(Uuid.random())
     )
 
     private val cloudDevice2 = BUSYBar(
         humanReadableName = "Cloud Device 2",
         uniqueId = "cloud-2",
-        connectionWays = listOf(BUSYBar.ConnectionWay.Cloud(Uuid.random()))
+        cloud = BUSYBar.ConnectionWay.Cloud(Uuid.random())
     )
 
     private val bleDevice1 = BUSYBar(
         humanReadableName = "BLE Device 1",
         uniqueId = "ble-1",
-        connectionWays = listOf(BUSYBar.ConnectionWay.BLE("AA:BB:CC:DD:EE:FF"))
+        ble = BUSYBar.ConnectionWay.BLE("AA:BB:CC:DD:EE:FF")
     )
 
     private val bleDevice2 = BUSYBar(
         humanReadableName = "BLE Device 2",
         uniqueId = "ble-2",
-        connectionWays = listOf(BUSYBar.ConnectionWay.BLE("11:22:33:44:55:66"))
+        ble = BUSYBar.ConnectionWay.BLE("11:22:33:44:55:66")
     )
 
     private val lanDevice = BUSYBar(
         humanReadableName = "LAN Device",
         uniqueId = "lan-1",
-        connectionWays = listOf(BUSYBar.ConnectionWay.Lan())
+        lan = BUSYBar.ConnectionWay.Lan()
     )
 
     private val hook = AlwaysActiveHook()
