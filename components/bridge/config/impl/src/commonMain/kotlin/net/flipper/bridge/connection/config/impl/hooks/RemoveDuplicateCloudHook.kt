@@ -8,6 +8,7 @@ import net.flipper.core.busylib.log.info
 class RemoveDuplicateCloudHook : TransactionHook, LogTagProvider {
     override val TAG = "RemoveDuplicateCloudHook"
 
+    @Suppress("NestedBlockDepth")
     override fun PersistedStorageTransactionScope.postTransaction() {
         val allDevices = getAllDevices()
         val currentDevice = getCurrentDevice()
@@ -26,7 +27,10 @@ class RemoveDuplicateCloudHook : TransactionHook, LogTagProvider {
             val best = duplicates.maxBy { it.connectionWays.size }
             duplicates.forEach { device ->
                 if (device.uniqueId != best.uniqueId) {
-                    info { "Removing duplicate device ${device.uniqueId} with cloud id ${device.cloud?.deviceId}, keeping ${best.uniqueId}" }
+                    info {
+                        "Removing duplicate device ${device.uniqueId} " +
+                            "with cloud id ${device.cloud?.deviceId}, keeping ${best.uniqueId}"
+                    }
                     removeDevice(device.uniqueId)
                     if (currentDevice?.uniqueId == device.uniqueId) {
                         info { "Switching current device to ${best.uniqueId}" }
