@@ -35,6 +35,7 @@ import net.flipper.bridge.device.firmwareupdate.uploader.api.FirmwareUploaderApi
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.core.wrapper.CResult
 import net.flipper.busylib.core.wrapper.WrappedStateFlow
+import net.flipper.busylib.core.wrapper.map
 import net.flipper.busylib.core.wrapper.toCResult
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.ktx.common.asFlow
@@ -195,7 +196,7 @@ class FirmwareUpdaterApiImpl(
                                 .fRpcUpdaterApi
                                 .startUpdateInstall(bsbUpdateVersion.version)
                                 .onSuccess { updaterStatusCollector.start() }
-                                .map { }
+                                .map { bsbUpdateVersion }
                         }
 
                         is BsbUpdateVersion.Url -> {
@@ -209,12 +210,20 @@ class FirmwareUpdaterApiImpl(
                                         .onFailure { t -> error(t) { "#startUpdateInstall could not upload" } }
                                         .getOrThrow()
                                 }
+                                .map { bsbUpdateVersion }
                         }
                     }
                 }
                 .map { result -> result.toCResult() }
                 .first()
-                .also { awaitDeviceReconnected() }
+                .map { bsbUpdateVersion ->
+                    when (bsbUpdateVersion) {
+                        is BsbUpdateVersion.Default -> Unit
+                        is BsbUpdateVersion.Url -> {
+                            awaitDeviceReconnected()
+                        }
+                    }
+                }
         }.await()
     }
 }

@@ -14,6 +14,7 @@ internal object FwUpdateStateDiff {
             FwUpdateState.Pending,
             FwUpdateState.NoUpdateAvailable,
             FwUpdateState.LowBattery,
+            FwUpdateState.DownloadFailure,
             FwUpdateState.Failure,
             FwUpdateState.CouldNotCheckUpdate,
             FwUpdateState.CheckingVersion,

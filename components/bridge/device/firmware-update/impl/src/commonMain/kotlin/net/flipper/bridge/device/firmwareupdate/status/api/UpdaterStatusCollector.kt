@@ -19,28 +19,34 @@ import net.flipper.core.busylib.ktx.common.asSingleJobScope
 import net.flipper.core.busylib.ktx.common.cancelPrevious
 import net.flipper.core.busylib.ktx.common.launchIn
 import net.flipper.core.busylib.ktx.common.tryCast
+import net.flipper.core.busylib.log.LogTagProvider
+import net.flipper.core.busylib.log.TaggedLogger
+import net.flipper.core.busylib.log.info
 import kotlin.time.Duration.Companion.seconds
 
 @Inject
 class UpdaterStatusCollector(
     private val fFeatureProvider: FFeatureProvider,
     private val scope: CoroutineScope
-) {
+) : LogTagProvider by TaggedLogger("UpdaterStatusCollector") {
     private val singleJobScope = scope.asSingleJobScope()
 
     fun start() {
+        info { "#start" }
         TickFlow(UPDATE_DELAY)
             .flatMapLatest { fFeatureProvider.get<FEventsFeatureApi>() }
             .map { status -> status.tryCast<FFeatureStatus.Supported<FEventsFeatureApi>>() }
             .filterNotNull()
             .map { status -> status.featureApi }
             .onEach { eventsFeatureApi ->
+                info { "#start sent UPDATER_UPDATE_STATUS" }
                 eventsFeatureApi.onBsbEvent(BsbUpdateEvent.UPDATER_UPDATE_STATUS)
             }
             .launchIn(singleJobScope, SingleJobMode.CANCEL_PREVIOUS)
     }
 
     fun stop(graceful: Boolean = false) {
+        info { "#stop graceful: $graceful" }
         scope.launch {
             if (graceful) delay(UPDATE_DELAY)
             singleJobScope.cancelPrevious()

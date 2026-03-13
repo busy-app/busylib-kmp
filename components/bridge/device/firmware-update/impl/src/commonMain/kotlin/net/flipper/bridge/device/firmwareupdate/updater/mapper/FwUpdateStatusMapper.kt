@@ -73,8 +73,10 @@ internal object FwUpdateStatusMapper {
                 fromInstallAction(updateStatus = updateStatus)
             }
 
+            UpdateStatus.Install.Status.DOWNLOAD_FAILURE,
+            UpdateStatus.Install.Status.DOWNLOAD_ABORT -> FwUpdateState.DownloadFailure
+
             UpdateStatus.Install.Status.BATTERY_LOW -> FwUpdateState.LowBattery
-            UpdateStatus.Install.Status.DOWNLOAD_ABORT,
             UpdateStatus.Install.Status.SHA_MISMATCH,
             UpdateStatus.Install.Status.UNPACK_STAGING_DIR_FAILURE,
             UpdateStatus.Install.Status.UNPACK_ARCHIVE_OPEN_FAILURE,
@@ -83,8 +85,7 @@ internal object FwUpdateStatusMapper {
             UpdateStatus.Install.Status.INSTALL_MANIFEST_INVALID,
             UpdateStatus.Install.Status.INSTALL_SESSION_CONFIG_FAILURE,
             UpdateStatus.Install.Status.INSTALL_POINTER_SETUP_FAILURE,
-            UpdateStatus.Install.Status.UNKNOWN_FAILURE,
-            UpdateStatus.Install.Status.DOWNLOAD_FAILURE -> FwUpdateState.Failure
+            UpdateStatus.Install.Status.UNKNOWN_FAILURE -> FwUpdateState.Failure
         }
     }
 

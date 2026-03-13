@@ -2,6 +2,7 @@ package net.flipper.bridge.device.firmwareupdate.updater.model
 
 sealed interface FwUpdateState {
     data object Failure : FwUpdateState
+    data object DownloadFailure : FwUpdateState
     data object CheckingVersion : FwUpdateState
     data object LowBattery : FwUpdateState
     data object Busy : FwUpdateState
