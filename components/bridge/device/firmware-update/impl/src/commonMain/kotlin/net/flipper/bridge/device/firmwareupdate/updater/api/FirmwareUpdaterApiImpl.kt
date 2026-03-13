@@ -101,7 +101,7 @@ class FirmwareUpdaterApiImpl(
                 }
             }
         }
-    ).stateIn(scope, SharingStarted.Eagerly, FwUpdateState.Pending).wrap()
+    ).stateIn(scope, SharingStarted.Lazily, FwUpdateState.Pending).wrap()
 
     override val events = previousVersionFlowProvider
         .getAutoRestartedPreviousVersionFlow(state)

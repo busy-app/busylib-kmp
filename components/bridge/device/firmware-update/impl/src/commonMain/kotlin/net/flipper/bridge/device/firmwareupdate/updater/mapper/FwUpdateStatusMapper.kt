@@ -126,7 +126,15 @@ internal object FwUpdateStatusMapper {
         return when (updateStatusSource) {
             is UpdateStatusSource.Cached -> {
                 if (updateStatusSource.freshUpdateStatus == null) {
-                    FwUpdateState.Updating
+                    when (updateStatusSource.cachedUpdateStatus.install.action) {
+                        UpdateStatus.Install.Action.UNPACK,
+                        UpdateStatus.Install.Action.SHA_VERIFICATION,
+                        UpdateStatus.Install.Action.DOWNLOAD -> FwUpdateState.Updating
+
+                        UpdateStatus.Install.Action.PREPARE,
+                        UpdateStatus.Install.Action.APPLY,
+                        UpdateStatus.Install.Action.NONE -> FwUpdateState.Pending
+                    }
                 } else {
                     fromInstallStatus(updateStatus = updateStatusSource.freshUpdateStatus)
                 }
