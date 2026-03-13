@@ -1,6 +1,7 @@
 package net.flipper.bridge.connection.config.impl.hooks
 
 import net.flipper.bridge.connection.config.api.PersistedStorageTransactionScope
+import net.flipper.bridge.connection.config.api.TransactionHook
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
 

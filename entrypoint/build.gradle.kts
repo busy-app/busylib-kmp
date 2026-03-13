@@ -13,7 +13,6 @@ plugins {
 }
 
 kotlin {
-
     sourceSets.commonMain.dependencies {
         implementation(projects.components.core.di)
         implementation(projects.components.core.ktx)
@@ -109,6 +108,15 @@ kotlin {
     }
     sourceSets.jvmMain.dependencies {
         implementation(projects.components.bridge.transport.tcp.lan.impl)
+    }
+    applyDefaultHierarchyTemplate {
+        common {
+            group("desktop") {
+                withJvm()
+                withMacosX64()
+                withMacosArm64()
+            }
+        }
     }
 }
 

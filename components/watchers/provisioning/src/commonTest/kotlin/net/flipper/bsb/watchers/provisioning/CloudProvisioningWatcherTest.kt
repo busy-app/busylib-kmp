@@ -14,6 +14,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.config.api.PersistedStorageTransactionScope
+import net.flipper.bridge.connection.config.api.TransactionHook
 import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
@@ -357,6 +358,8 @@ class CloudProvisioningWatcherTest {
 
         override fun getCurrentDeviceFlow() = flowOf(currentDevice).wrap()
         override fun getAllDevicesFlow() = flowOf(devices.toList()).wrap()
+
+        override suspend fun addHook(hook: TransactionHook) = Unit
 
         override suspend fun <T> transaction(block: suspend PersistedStorageTransactionScope.() -> T): T {
             val scope = object : PersistedStorageTransactionScope {

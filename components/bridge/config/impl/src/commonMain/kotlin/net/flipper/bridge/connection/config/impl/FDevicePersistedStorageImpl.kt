@@ -5,11 +5,13 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Mutex
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.config.api.PersistedStorageTransactionScope
+import net.flipper.bridge.connection.config.api.TransactionHook
 import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.config.impl.hooks.AlwaysActiveHook
-import net.flipper.bridge.connection.config.impl.hooks.TransactionHook
+import net.flipper.bridge.connection.config.impl.hooks.RemoveDuplicateCloudHook
 import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.wrap
+import net.flipper.core.busylib.ktx.common.withLock
 import net.flipper.core.busylib.ktx.common.withLockResult
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
@@ -20,13 +22,20 @@ class FDevicePersistedStorageImpl(
 ) : FDevicePersistedStorage, LogTagProvider {
     override val TAG = "FDevicePersistedStorage"
     private val mutex = Mutex()
-    private val hooks = listOf<TransactionHook>(
-        AlwaysActiveHook()
+    private var hooks = listOf<TransactionHook>(
+        AlwaysActiveHook(),
+        RemoveDuplicateCloudHook()
     )
 
     constructor(
         observableSettings: ObservableSettings
     ) : this(BleConfigSettingsKrateImpl(observableSettings))
+
+    override suspend fun addHook(hook: TransactionHook) {
+        withLock(mutex, "add_hook") {
+            hooks += hook
+        }
+    }
 
     override fun getCurrentDeviceFlow(): WrappedFlow<BUSYBar?> {
         return bleConfigKrate.flow.map { config ->
