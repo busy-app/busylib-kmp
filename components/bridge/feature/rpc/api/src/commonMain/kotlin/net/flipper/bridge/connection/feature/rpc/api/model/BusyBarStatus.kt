@@ -2,7 +2,9 @@ package net.flipper.bridge.connection.feature.rpc.api.model
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import net.flipper.bridge.connection.feature.rpc.api.serialization.DurationSerializer
 import net.flipper.bridge.connection.feature.rpc.api.serialization.InstantUtcSerializer
+import kotlin.time.Duration
 import kotlin.time.Instant
 
 @Serializable
@@ -27,7 +29,8 @@ data class BusyBarStatusSystem(
     @SerialName("api_semver")
     val apiSemver: String,
     @SerialName("uptime")
-    val uptime: String,
+    @Serializable(DurationSerializer::class)
+    val uptime: Duration,
     @SerialName("boot_time")
     @Serializable(InstantUtcSerializer::class)
     val bootTime: Instant

@@ -13,6 +13,7 @@ interface FEventsFeatureApi : FDeviceFeatureApi {
 
     fun getBsbUpdateEvents(): Flow<ConsumableUpdateEvent.Bsb>
     fun getBusyLibUpdateEvents(): Flow<ConsumableUpdateEvent.BusyLib<*>>
+    fun onBsbEvent(event: BsbUpdateEvent)
     fun onBusyLibEvent(event: BusyLibUpdateEvent)
 }
 

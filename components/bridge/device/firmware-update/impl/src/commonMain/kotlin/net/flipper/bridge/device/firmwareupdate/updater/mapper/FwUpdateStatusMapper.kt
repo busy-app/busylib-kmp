@@ -3,6 +3,7 @@ package net.flipper.bridge.device.firmwareupdate.updater.mapper
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateVersion
 import net.flipper.bridge.connection.feature.rpc.api.model.UpdateStatus
 import net.flipper.bridge.device.firmwareupdate.downloader.model.FirmwareDownloaderState
+import net.flipper.bridge.device.firmwareupdate.status.model.UpdateStatusSource
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateState
 import net.flipper.bridge.device.firmwareupdate.uploader.model.FirmwareUploaderState
 
@@ -73,8 +74,10 @@ internal object FwUpdateStatusMapper {
                 fromInstallAction(updateStatus = updateStatus)
             }
 
+            UpdateStatus.Install.Status.DOWNLOAD_FAILURE,
+            UpdateStatus.Install.Status.DOWNLOAD_ABORT -> FwUpdateState.DownloadFailure
+
             UpdateStatus.Install.Status.BATTERY_LOW -> FwUpdateState.LowBattery
-            UpdateStatus.Install.Status.DOWNLOAD_ABORT,
             UpdateStatus.Install.Status.SHA_MISMATCH,
             UpdateStatus.Install.Status.UNPACK_STAGING_DIR_FAILURE,
             UpdateStatus.Install.Status.UNPACK_ARCHIVE_OPEN_FAILURE,
@@ -83,8 +86,7 @@ internal object FwUpdateStatusMapper {
             UpdateStatus.Install.Status.INSTALL_MANIFEST_INVALID,
             UpdateStatus.Install.Status.INSTALL_SESSION_CONFIG_FAILURE,
             UpdateStatus.Install.Status.INSTALL_POINTER_SETUP_FAILURE,
-            UpdateStatus.Install.Status.UNKNOWN_FAILURE,
-            UpdateStatus.Install.Status.DOWNLOAD_FAILURE -> FwUpdateState.Failure
+            UpdateStatus.Install.Status.UNKNOWN_FAILURE -> FwUpdateState.Failure
         }
     }
 
@@ -120,8 +122,31 @@ internal object FwUpdateStatusMapper {
         }
     }
 
-    fun toFwUpdateState(updateStatus: UpdateStatus?): FwUpdateState {
-        if (updateStatus == null) return FwUpdateState.Pending
-        return fromInstallStatus(updateStatus = updateStatus)
+    fun toFwUpdateState(updateStatusSource: UpdateStatusSource): FwUpdateState {
+        return when (updateStatusSource) {
+            is UpdateStatusSource.Cached -> {
+                if (updateStatusSource.freshUpdateStatus == null) {
+                    when (updateStatusSource.cachedUpdateStatus.install.action) {
+                        UpdateStatus.Install.Action.UNPACK,
+                        UpdateStatus.Install.Action.SHA_VERIFICATION,
+                        UpdateStatus.Install.Action.DOWNLOAD -> FwUpdateState.Updating
+
+                        UpdateStatus.Install.Action.PREPARE,
+                        UpdateStatus.Install.Action.APPLY,
+                        UpdateStatus.Install.Action.NONE -> FwUpdateState.Pending
+                    }
+                } else {
+                    fromInstallStatus(updateStatus = updateStatusSource.freshUpdateStatus)
+                }
+            }
+
+            is UpdateStatusSource.Fresh -> {
+                if (updateStatusSource.freshUpdateStatus == null) {
+                    FwUpdateState.Pending
+                } else {
+                    fromInstallStatus(updateStatus = updateStatusSource.freshUpdateStatus)
+                }
+            }
+        }
     }
 }
