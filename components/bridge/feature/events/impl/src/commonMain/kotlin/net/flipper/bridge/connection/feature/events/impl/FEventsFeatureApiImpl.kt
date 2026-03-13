@@ -5,12 +5,10 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.WhileSubscribed
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.shareIn
@@ -40,22 +38,16 @@ class FEventsFeatureApiImpl(
     private val busyLibEventsFlow = MutableSharedFlow<BusyLibUpdateEvent>()
     private val internalBsbEventsFlow = MutableSharedFlow<BsbUpdateEvent>()
 
-    private val sharedIndicationFlow = combine(
-        flow = metaInfoApi.get(TransportMetaInfoKey.EVENTS_INDICATION),
-        flow2 = metaInfoApi.get(TransportMetaInfoKey.WS_EVENT),
-        flow3 = internalBsbEventsFlow
+    private val sharedIndicationFlow = merge(
+        metaInfoApi.get(TransportMetaInfoKey.EVENTS_INDICATION)
+            .mapNotNull { bitsMaskFlowResult -> bitsMaskFlowResult.getOrNull() }
+            .flatMapLatest { flow -> bitIndicationEventsFlow.getEventFlow(flow) },
+        metaInfoApi.get(TransportMetaInfoKey.WS_EVENT)
+            .mapNotNull { bitsMaskFlowResult -> bitsMaskFlowResult.getOrNull() }
+            .flatMapLatest { flow -> wsEventsFlow.getEventFlow(flow) },
+        internalBsbEventsFlow
             .map { event -> ConsumableUpdateEvent.Bsb(event, null) },
-    ) { bitsMaskFlowResult, wsEventsFlowResult, internalEvent ->
-        val flows = mutableListOf<Flow<ConsumableUpdateEvent.Bsb>>(emptyFlow())
-        bitsMaskFlowResult.getOrNull()?.let { flow ->
-            flows += bitIndicationEventsFlow.getEventFlow(flow)
-        }
-        wsEventsFlowResult.getOrNull()?.let { flow ->
-            flows += wsEventsFlow.getEventFlow(flow)
-        }
-        flows += flowOf(internalEvent)
-        flows.merge()
-    }.flatMapLatest { it }
+    )
         .onEach { verbose { "Receive update event: $it" } }
         .shareIn(scope, SharingStarted.WhileSubscribed(5.seconds))
 

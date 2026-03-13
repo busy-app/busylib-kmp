@@ -5,6 +5,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
@@ -152,6 +153,7 @@ class FirmwareUpdaterApiImpl(
             .map { status -> status.tryCast<FFeatureStatus.Supported<FDeviceInfoFeatureApi>>() }
             .map { status -> status?.featureApi }
             .map { feature -> feature?.getDeviceInfo()?.toKotlinResult()?.getOrNull() }
+            .filter { response -> response == null }
             .first()
         updaterStatusCollector.stop(graceful = true)
         info { "#startUpdateInstall awaiting for new uptime!" }

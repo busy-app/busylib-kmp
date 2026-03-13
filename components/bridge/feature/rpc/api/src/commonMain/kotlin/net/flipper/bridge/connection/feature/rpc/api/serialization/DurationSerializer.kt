@@ -14,7 +14,8 @@ import kotlin.time.Duration.Companion.seconds
 
 @Suppress("MagicNumber")
 object DurationSerializer : KSerializer<Duration> {
-    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("AstraKDuration", PrimitiveKind.STRING)
+    override val descriptor: SerialDescriptor =
+        PrimitiveSerialDescriptor("AstraKDuration", PrimitiveKind.STRING)
 
     private enum class Delimiter(val value: String) {
         W("w"),
@@ -47,21 +48,29 @@ object DurationSerializer : KSerializer<Duration> {
             buildString {
                 if (days >= 7) {
                     append("${days / 7}${Delimiter.W.value}")
+                    append(" ")
                 }
-                append("${days % 7}${Delimiter.W.value}")
+                if (days % 7 != 0L) {
+                    append("${days % 7}${Delimiter.D.value}")
+                    append(" ")
+                }
                 if (hours > 0) {
                     append("${hours}${Delimiter.H.value}")
+                    append(" ")
                 }
                 if (minutes > 0) {
                     append("${minutes}${Delimiter.M.value}")
+                    append(" ")
                 }
                 if (seconds > 0) {
                     append("${seconds}${Delimiter.S.value}")
+                    append(" ")
                 }
                 if (days.plus(hours).plus(minutes).plus(seconds) == 0L) {
                     append("0${Delimiter.S.value}")
+                    append(" ")
                 }
-            }
+            }.trimEnd()
         }
     }
 
@@ -80,12 +89,12 @@ object DurationSerializer : KSerializer<Duration> {
         val durationList = split.map { part ->
             val delimiter = Delimiter.entries
                 .firstOrNull { delimiter -> part.contains(delimiter.value) }
-                ?: error("Wrong usage on argument. Could not determine delimiter $value. Should be as 1y2mo3w4d6h10m30s")
+                ?: error("Wrong usage on argument. Could not determine delimiter $value. Should be as 3w4d6h10m30s")
 
             val intAmount = part
                 .replace(delimiter.value, "")
                 .toIntOrNull()
-                ?: error("Wrong usage on argument. Could not convert to int $value. Should be as 1y2mo3w4d6h10m30s")
+                ?: error("Wrong usage on argument. Could not convert to int $value. Should be as 3w4d6h10m30s")
 
             when (delimiter) {
                 Delimiter.W -> (intAmount * 7).days
