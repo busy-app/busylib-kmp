@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
@@ -19,6 +20,7 @@ import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
 import net.flipper.bridge.connection.feature.events.impl.bits.BitIndicationEventsFlow
 import net.flipper.bridge.connection.feature.events.impl.ws.WSEventsFlow
+import net.flipper.bridge.connection.feature.events.model.BsbUpdateEvent
 import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
 import net.flipper.bridge.connection.feature.events.model.ConsumableUpdateEvent
 import net.flipper.bridge.connection.transport.common.api.meta.FTransportMetaInfoApi
@@ -36,10 +38,14 @@ class FEventsFeatureApiImpl(
     private val bitIndicationEventsFlow by lazy { BitIndicationEventsFlow() }
     private val wsEventsFlow by lazy { WSEventsFlow() }
     private val busyLibEventsFlow = MutableSharedFlow<BusyLibUpdateEvent>()
+    private val internalBsbEventsFlow = MutableSharedFlow<BsbUpdateEvent>()
+
     private val sharedIndicationFlow = combine(
         flow = metaInfoApi.get(TransportMetaInfoKey.EVENTS_INDICATION),
         flow2 = metaInfoApi.get(TransportMetaInfoKey.WS_EVENT),
-    ) { bitsMaskFlowResult, wsEventsFlowResult ->
+        flow3 = internalBsbEventsFlow
+            .map { event -> ConsumableUpdateEvent.Bsb(event, null) },
+    ) { bitsMaskFlowResult, wsEventsFlowResult, internalEvent ->
         val flows = mutableListOf<Flow<ConsumableUpdateEvent.Bsb>>(emptyFlow())
         bitsMaskFlowResult.getOrNull()?.let { flow ->
             flows += bitIndicationEventsFlow.getEventFlow(flow)
@@ -47,12 +53,17 @@ class FEventsFeatureApiImpl(
         wsEventsFlowResult.getOrNull()?.let { flow ->
             flows += wsEventsFlow.getEventFlow(flow)
         }
+        flows += flowOf(internalEvent)
         flows.merge()
     }.flatMapLatest { it }
         .onEach { verbose { "Receive update event: $it" } }
         .shareIn(scope, SharingStarted.WhileSubscribed(5.seconds))
 
     override fun getBsbUpdateEvents(): Flow<ConsumableUpdateEvent.Bsb> = sharedIndicationFlow
+
+    override fun onBsbEvent(event: BsbUpdateEvent) {
+        scope.launch { internalBsbEventsFlow.emit(event) }
+    }
 
     override fun onBusyLibEvent(event: BusyLibUpdateEvent) {
         scope.launch {

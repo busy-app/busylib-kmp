@@ -19,14 +19,14 @@ import kotlinx.coroutines.job
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.feature.firmwareupdate.api.FFirmwareUpdateFeatureApi
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateVersion
+import net.flipper.bridge.connection.feature.info.api.FDeviceInfoFeatureApi
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
 import net.flipper.bridge.connection.feature.provider.api.get
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
-import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
-import net.flipper.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
 import net.flipper.bridge.device.firmwareupdate.downloader.api.FirmwareDownloaderApi
 import net.flipper.bridge.device.firmwareupdate.downloader.api.FirmwareDownloaderApiImpl
+import net.flipper.bridge.device.firmwareupdate.status.api.UpdaterStatusCollector
 import net.flipper.bridge.device.firmwareupdate.updater.diff.FwUpdateStateDiff
 import net.flipper.bridge.device.firmwareupdate.updater.mapper.FwUpdateStatusMapper
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateState
@@ -40,6 +40,7 @@ import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.ktx.common.asFlow
 import net.flipper.core.busylib.ktx.common.asSingleJobScope
 import net.flipper.core.busylib.ktx.common.cancelPrevious
+import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.orNullable
 import net.flipper.core.busylib.ktx.common.tryCast
 import net.flipper.core.busylib.log.LogTagProvider
@@ -55,11 +56,11 @@ import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 @SingleIn(BusyLibGraph::class)
 class FirmwareUpdaterApiImpl(
     private val fFeatureProvider: FFeatureProvider,
-    private val fDeviceOrchestrator: FDeviceOrchestrator,
-    private val scope: CoroutineScope,
     @KtorNetworkClientQualifier
     private val httpClient: HttpClient,
+    private val updaterStatusCollector: UpdaterStatusCollector,
     private val previousVersionFlowProvider: PreviousVersionFlowProvider,
+    private val scope: CoroutineScope,
 ) : FirmwareUpdaterApi, LogTagProvider by TaggedLogger("UpdaterApi") {
     private val firmwareDownloaderApi: FirmwareDownloaderApi = FirmwareDownloaderApiImpl(
         httpClient = httpClient
@@ -132,6 +133,7 @@ class FirmwareUpdaterApiImpl(
                     .featureApi
                     .fRpcUpdaterApi
                     .startUpdateAbortDownload()
+                    .onSuccess { updaterStatusCollector.stop(graceful = true) }
                     .map { }
                     .toCResult()
             }
@@ -145,17 +147,23 @@ class FirmwareUpdaterApiImpl(
         }
     }
 
-    // TODO https://flipper.atlassian.net/browse/MOB-2268
     private suspend fun awaitDeviceReconnected() {
-        info { "#startUpdateInstall upload finished! Awaiting device disconnected" }
-        fDeviceOrchestrator.getState()
-            .filterIsInstance<FDeviceConnectStatus.Connecting>()
+        info { "#startUpdateInstall upload finished! Awaiting null device uptime" }
+        fFeatureProvider.get<FDeviceInfoFeatureApi>()
+            .map { status -> status.tryCast<FFeatureStatus.Supported<FDeviceInfoFeatureApi>>() }
+            .map { status -> status?.featureApi }
+            .map { feature -> feature?.getDeviceInfo()?.toKotlinResult()?.getOrNull() }
             .first()
-        info { "#startUpdateInstall awaiting for connected device!" }
-        fDeviceOrchestrator.getState()
-            .filterIsInstance<FDeviceConnectStatus.Connected>()
+        updaterStatusCollector.stop(graceful = true)
+        info { "#startUpdateInstall awaiting for new uptime!" }
+        fFeatureProvider.get<FDeviceInfoFeatureApi>()
+            .map { status -> status.tryCast<FFeatureStatus.Supported<FDeviceInfoFeatureApi>>() }
+            .map { status -> status?.featureApi }
+            .filterNotNull()
+            .map { feature -> exponentialRetry { feature.getDeviceInfo().toKotlinResult() } }
+            .map { busyBarStatusSystem -> busyBarStatusSystem.uptime }
             .first()
-        info { "#startUpdateInstall device connected" }
+        info { "#startUpdateInstall device connected!" }
     }
 
     /**
@@ -186,6 +194,7 @@ class FirmwareUpdaterApiImpl(
                                 .featureApi
                                 .fRpcUpdaterApi
                                 .startUpdateInstall(bsbUpdateVersion.version)
+                                .onSuccess { updaterStatusCollector.start() }
                                 .map { }
                         }
 

@@ -5,8 +5,11 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.job
 import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -207,3 +210,8 @@ private class MutexSingleJobCoroutineScope(
 fun CoroutineScope.asSingleJobScope(): SingleJobCoroutineScope {
     return MutexSingleJobCoroutineScope(this)
 }
+
+fun <T> Flow<T>.launchIn(
+    scope: SingleJobCoroutineScope,
+    mode: SingleJobMode = SingleJobMode.CANCEL_PREVIOUS
+): Job = scope.launch(mode) { collect() }
