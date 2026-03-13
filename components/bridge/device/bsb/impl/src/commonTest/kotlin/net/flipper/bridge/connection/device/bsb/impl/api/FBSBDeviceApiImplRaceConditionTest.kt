@@ -28,6 +28,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertSame
+import kotlin.time.Duration.Companion.days
 import kotlin.time.Instant
 
 /**
@@ -447,7 +448,7 @@ class FBSBDeviceApiImplRaceConditionTest {
             return Result.success(
                 BusyBarStatusSystem(
                     apiSemver = "6.3.0",
-                    uptime = "",
+                    uptime = 1.days,
                     bootTime = Instant.fromEpochMilliseconds(0)
                 )
             ).toCResult()

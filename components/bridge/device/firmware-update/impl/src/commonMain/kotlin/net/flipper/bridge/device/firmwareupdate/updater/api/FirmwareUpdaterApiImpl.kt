@@ -2,7 +2,6 @@ package net.flipper.bridge.device.firmwareupdate.updater.api
 
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -26,6 +25,7 @@ import net.flipper.bridge.connection.feature.provider.api.get
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.device.firmwareupdate.downloader.api.FirmwareDownloaderApi
 import net.flipper.bridge.device.firmwareupdate.downloader.api.FirmwareDownloaderApiImpl
+import net.flipper.bridge.device.firmwareupdate.status.api.UpdateStatusProvider
 import net.flipper.bridge.device.firmwareupdate.status.api.UpdaterStatusCollector
 import net.flipper.bridge.device.firmwareupdate.updater.diff.FwUpdateStateDiff
 import net.flipper.bridge.device.firmwareupdate.updater.mapper.FwUpdateStatusMapper
@@ -61,6 +61,7 @@ class FirmwareUpdaterApiImpl(
     private val httpClient: HttpClient,
     private val updaterStatusCollector: UpdaterStatusCollector,
     private val previousVersionFlowProvider: PreviousVersionFlowProvider,
+    private val updateStatusProvider: UpdateStatusProvider,
     private val scope: CoroutineScope,
 ) : FirmwareUpdaterApi, LogTagProvider by TaggedLogger("UpdaterApi") {
     private val firmwareDownloaderApi: FirmwareDownloaderApi = FirmwareDownloaderApiImpl(
@@ -73,10 +74,7 @@ class FirmwareUpdaterApiImpl(
     private val lanUpdaterScope = scope.asSingleJobScope()
 
     override val state: WrappedStateFlow<FwUpdateState> = combine(
-        flow = fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
-            .map { status -> status.tryCast<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>() }
-            .map { status -> status?.featureApi }
-            .flatMapLatest { feature -> feature?.updateStatusFlow.orNullable() }
+        flow = updateStatusProvider.getUpdateStatus()
             .shareIn(scope, SharingStarted.WhileSubscribed(), 1),
         flow2 = fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
             .map { status -> status.tryCast<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>() }
@@ -86,11 +84,11 @@ class FirmwareUpdaterApiImpl(
             .shareIn(scope, SharingStarted.WhileSubscribed(), 1),
         flow3 = firmwareDownloaderApi.state,
         flow4 = firmwareUploaderApi.state,
-        transform = { updateStatus, bsbUpdateVersion, downloaderState, uploaderState ->
+        transform = { updateStatusSource, bsbUpdateVersion, downloaderState, uploaderState ->
             when (bsbUpdateVersion) {
                 is BsbUpdateVersion.Default -> {
                     FwUpdateStatusMapper.toFwUpdateState(
-                        updateStatus = updateStatus,
+                        updateStatusSource = updateStatusSource,
                     )
                 }
 
@@ -103,7 +101,7 @@ class FirmwareUpdaterApiImpl(
                 }
             }
         }
-    ).stateIn(scope, SharingStarted.Lazily, FwUpdateState.Pending).wrap()
+    ).stateIn(scope, SharingStarted.Eagerly, FwUpdateState.Pending).wrap()
 
     override val events = previousVersionFlowProvider
         .getAutoRestartedPreviousVersionFlow(state)

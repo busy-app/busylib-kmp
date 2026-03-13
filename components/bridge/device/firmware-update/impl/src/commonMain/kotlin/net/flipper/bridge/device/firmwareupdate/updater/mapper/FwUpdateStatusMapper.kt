@@ -3,6 +3,7 @@ package net.flipper.bridge.device.firmwareupdate.updater.mapper
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateVersion
 import net.flipper.bridge.connection.feature.rpc.api.model.UpdateStatus
 import net.flipper.bridge.device.firmwareupdate.downloader.model.FirmwareDownloaderState
+import net.flipper.bridge.device.firmwareupdate.status.model.UpdateStatusSource
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateState
 import net.flipper.bridge.device.firmwareupdate.uploader.model.FirmwareUploaderState
 
@@ -121,8 +122,23 @@ internal object FwUpdateStatusMapper {
         }
     }
 
-    fun toFwUpdateState(updateStatus: UpdateStatus?): FwUpdateState {
-        if (updateStatus == null) return FwUpdateState.Pending
-        return fromInstallStatus(updateStatus = updateStatus)
+    fun toFwUpdateState(updateStatusSource: UpdateStatusSource): FwUpdateState {
+        return when (updateStatusSource) {
+            is UpdateStatusSource.Cached -> {
+                if (updateStatusSource.freshUpdateStatus == null) {
+                    FwUpdateState.Updating
+                } else {
+                    fromInstallStatus(updateStatus = updateStatusSource.freshUpdateStatus)
+                }
+            }
+
+            is UpdateStatusSource.Fresh -> {
+                if (updateStatusSource.freshUpdateStatus == null) {
+                    FwUpdateState.Pending
+                } else {
+                    fromInstallStatus(updateStatus = updateStatusSource.freshUpdateStatus)
+                }
+            }
+        }
     }
 }
