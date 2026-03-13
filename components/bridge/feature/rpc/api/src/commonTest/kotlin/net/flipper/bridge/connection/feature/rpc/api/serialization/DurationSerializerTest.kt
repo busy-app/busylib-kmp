@@ -1,6 +1,6 @@
 package net.flipper.bridge.connection.feature.rpc.api.serialization
 
-import org.junit.Test
+import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours

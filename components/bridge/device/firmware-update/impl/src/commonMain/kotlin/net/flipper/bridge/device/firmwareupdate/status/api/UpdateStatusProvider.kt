@@ -1,6 +1,5 @@
 package net.flipper.bridge.device.firmwareupdate.status.api
 
-import jdk.jfr.internal.OldObjectSample.emit
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flatMapLatest
