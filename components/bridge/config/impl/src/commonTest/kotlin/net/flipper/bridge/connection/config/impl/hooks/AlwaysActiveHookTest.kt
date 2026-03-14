@@ -98,7 +98,9 @@ class AlwaysActiveHookTest {
         fun getSelectedDevice(): BUSYBar? = selectedDevice
         override fun getCurrentDevice(): BUSYBar? = selectedDevice
         override fun getAllDevices(): List<BUSYBar> = devices
-        override fun setCurrentDevice(device: BUSYBar?) { selectedDevice = device }
+        override fun setCurrentDevice(device: BUSYBar?) {
+            selectedDevice = device
+        }
         override fun addOrReplace(device: BUSYBar) = Unit
         override fun removeDevice(id: String) = Unit
     }

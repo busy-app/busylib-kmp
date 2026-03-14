@@ -19,6 +19,7 @@ internal object FwUpdateStateDiff {
             FwUpdateState.CouldNotCheckUpdate,
             FwUpdateState.CheckingVersion,
             FwUpdateState.Busy -> {
+                @Suppress("UseLet")
                 if (busyBarVersionTransition == null) {
                     null
                 } else if (busyBarVersionTransition.previousVersion == null) {
