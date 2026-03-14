@@ -660,7 +660,7 @@ style:
   UnnecessaryFullyQualifiedName:
     active: false
   RangeUntilInsteadOfRangeTo:
-    active: false
+    active: true
   UnusedImport:
     active: false
   UnusedPrivateClass:
