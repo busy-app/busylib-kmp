@@ -66,6 +66,7 @@ class DetektPlugin : Plugin<Project> {
             dependencies {
                 "detektPlugins"(libs.detekt.ruleset.ktlint)
                 "detektPlugins"(libs.detekt.ruleset.compose)
+                "detektPlugins"(libs.detekt.ruleset.decompose)
             }
         }
     }

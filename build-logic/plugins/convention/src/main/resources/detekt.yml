@@ -814,3 +814,9 @@ Compose:
     active: false
   Material2:
     active: false
+
+DecomposeRule:
+  PushForbiddenRule:
+    active: true
+    checkImport: true
+    replaceTo: 'pushToFront()'
