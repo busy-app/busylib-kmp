@@ -22,8 +22,8 @@ fun FEventsFeatureApi.getBsbUpdateFlow(event: BsbUpdateEvent): Flow<ConsumableUp
         .filter { consumableUpdateEvent -> consumableUpdateEvent.bsbUpdateEvent == event }
 }
 
-inline fun <reified T : BusyLibUpdateEvent>
-    FEventsFeatureApi.getBusyLibUpdateFlow(): Flow<ConsumableUpdateEvent.BusyLib<T>> {
+inline fun <reified T : BusyLibUpdateEvent> FEventsFeatureApi.getBusyLibUpdateFlow():
+    Flow<ConsumableUpdateEvent.BusyLib<T>> {
     return getBusyLibUpdateEvents()
         .filterIsInstance<ConsumableUpdateEvent.BusyLib<T>>()
 }

@@ -79,6 +79,7 @@ class IOSSearchViewModel(
     }
 
     @OptIn(ExperimentalForeignApi::class)
+    @Suppress("MagicNumber")
     private fun supportedPickerDisplayItem(): ASPickerDisplayItem {
         val descriptor = ASDiscoveryDescriptor()
         descriptor.bluetoothServiceUUID = CBUUID.UUIDWithString("308A") as objcnames.classes.CBUUID
