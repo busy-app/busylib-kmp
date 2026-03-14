@@ -42,7 +42,7 @@ class IOSSearchViewModel(
         address = "busy_bar_mock",
         deviceModel = BUSYBar(
             humanReadableName = "BUSY Bar Mock",
-            connectionWays = listOf(BUSYBar.ConnectionWay.Mock)
+            mock = BUSYBar.ConnectionWay.Mock
         ),
         isAdded = false,
     )
@@ -108,7 +108,7 @@ class IOSSearchViewModel(
             persistedStorage.getAllDevicesFlow()
         ) { accessoriesMap, savedDevices ->
             val existedUuids = savedDevices
-                .filter { device -> device.connectionWays.any { it is BUSYBar.ConnectionWay.BLE } }
+                .filter { device -> device.ble != null }
                 .associateBy { it.uniqueId }
 
             accessoriesMap.map { (uuid, accessory) ->
@@ -117,7 +117,7 @@ class IOSSearchViewModel(
                     deviceModel = existedUuids[uuid] ?: BUSYBar(
                         uniqueId = uuid,
                         humanReadableName = accessory.displayName,
-                        connectionWays = listOf(BUSYBar.ConnectionWay.BLE(address = uuid))
+                        ble = BUSYBar.ConnectionWay.BLE(address = uuid)
                     ),
                     isAdded = existedUuids.containsKey(uuid)
                 )

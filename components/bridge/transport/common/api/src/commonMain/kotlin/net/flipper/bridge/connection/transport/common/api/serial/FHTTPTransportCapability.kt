@@ -6,7 +6,10 @@ package net.flipper.bridge.connection.transport.common.api.serial
  */
 enum class FHTTPTransportCapability {
     BB_WEBSOCKET_SUPPORTED,
-    BB_DOWNLOAD_UPDATE_SUPPORTED
+    BB_DOWNLOAD_UPDATE_SUPPORTED,
+    BLE_ONLY_CONNECTION_SUPPORTED,
+    LAN_ONLY_CONNECTION_SUPPORTED,
+    CLOUD_ONLY_CONNECTION_SUPPORTED,
 }
 
 const val HEADER_NAME_REQUEST_CAPABILITY = "X-BUSYLib-Request-Capability-Origin"

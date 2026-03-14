@@ -1,0 +1,40 @@
+package net.flipper.bridge.connection.transport.ble.impl.api.http.serial
+
+import io.ktor.utils.io.cancel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.plus
+import net.flipper.bridge.connection.transport.ble.impl.serial.ByteEndlessReadChannel
+import net.flipper.bridge.connection.transport.ble.impl.serial.FResetSerialBleApi
+import net.flipper.bridge.connection.transport.ble.impl.serial.FSerialBleApi
+import net.flipper.core.busylib.ktx.common.FlipperDispatchers
+import net.flipper.core.busylib.ktx.common.launchOnCompletion
+import net.flipper.core.busylib.log.LogTagProvider
+
+class FAndroidSerialBleApiImpl(
+    scope: CoroutineScope,
+    private val unsafeSerialApi: FSerialUnsafeApiImpl,
+    resetApi: FResetSerialBleApi
+) : FSerialBleApi, LogTagProvider, FResetSerialBleApi by resetApi {
+    override val TAG = "FSerialBleApi"
+    private val channel = ByteEndlessReadChannel()
+
+    init {
+        unsafeSerialApi
+            .getReceiveBytesFlow()
+            .onEach { byteArray -> channel.onByteReceive(byteArray) }
+            .launchIn(scope + FlipperDispatchers.default)
+
+        scope.launchOnCompletion { channel.cancel() }
+    }
+
+    override fun getReceiveByteChannel() = channel
+
+    /**
+     * @return the first ble response after send request
+     */
+    override suspend fun send(data: ByteArray) {
+        unsafeSerialApi.sendBytes(data)
+    }
+}

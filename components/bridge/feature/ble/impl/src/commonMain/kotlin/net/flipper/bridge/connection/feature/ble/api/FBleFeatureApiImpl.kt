@@ -2,7 +2,6 @@ package net.flipper.bridge.connection.feature.ble.api
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
 import me.tatarka.inject.annotations.IntoMap
@@ -12,8 +11,8 @@ import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
-import net.flipper.bridge.connection.feature.events.api.UpdateEvent
-import net.flipper.bridge.connection.feature.events.api.getUpdateFlow
+import net.flipper.bridge.connection.feature.events.api.getBsbUpdateFlow
+import net.flipper.bridge.connection.feature.events.model.BsbUpdateEvent
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.BleStatusResponse
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
@@ -46,10 +45,13 @@ class FBleFeatureApiImpl(
             BleStatusResponse.State.INITIALIZATION -> FBleStatus.Initialization
             BleStatusResponse.State.DISABLED -> FBleStatus.Disabled
             BleStatusResponse.State.ENABLED -> FBleStatus.Enabled
+            BleStatusResponse.State.CONNECTABLE -> {
+                FBleStatus.Connectable
+            }
+
             BleStatusResponse.State.CONNECTED -> {
                 FBleStatus.Connected(
                     address = this.address ?: return FBleStatus.Enabled,
-                    pairing = this.pairing ?: return FBleStatus.Enabled
                 )
             }
 
@@ -59,7 +61,7 @@ class FBleFeatureApiImpl(
 
     override fun getBleStatus(): WrappedFlow<FBleStatus> {
         return fEventsFeatureApi
-            ?.getUpdateFlow(UpdateEvent.BLE_STATUS)
+            ?.getBsbUpdateFlow(BsbUpdateEvent.BLE_STATUS)
             .orEmpty()
             .merge(flowOf(DefaultConsumable(false)))
             .transformWhileSubscribed(scope = scope) { flow ->

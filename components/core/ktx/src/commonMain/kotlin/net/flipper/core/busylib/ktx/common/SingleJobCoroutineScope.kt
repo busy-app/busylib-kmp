@@ -1,13 +1,15 @@
 package net.flipper.core.busylib.ktx.common
 
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.job
 import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -19,22 +21,33 @@ import kotlin.coroutines.EmptyCoroutineContext
  * at a time according to the selected [SingleJobMode]
  */
 interface SingleJobCoroutineScope : CoroutineScope {
-
     /**
-     * Launches a new coroutine within this scope, applying the given [mode]
-     * to control how it interacts with any currently running job
-     * @throws CancellationException if selected [SingleJobMode.SKIP_IF_RUNNING]
+     * Launches a new coroutine within this scope, applying the [SingleJobMode.CANCEL_PREVIOUS] mode
      */
-    fun <T> withJobMode(
-        mode: SingleJobMode,
+    fun <T> async(
         context: CoroutineContext = EmptyCoroutineContext,
         start: CoroutineStart = CoroutineStart.DEFAULT,
         block: suspend CoroutineScope.() -> T
     ): Deferred<T>
+
+    /**
+     * Launches a new coroutine within this scope, applying the given [mode]
+     * to control how it interacts with any currently running job
+     */
+    fun launch(
+        mode: SingleJobMode,
+        context: CoroutineContext = EmptyCoroutineContext,
+        start: CoroutineStart = CoroutineStart.DEFAULT,
+        block: suspend CoroutineScope.() -> Unit
+    ): Job
 }
 
-@RequiresOptIn("This is internal API of the Compose gradle plugin.")
-annotation class DelicateSingleJobApi
+/**
+ * Cancel previous running jobs as side effect
+ */
+fun SingleJobCoroutineScope.cancelPrevious(): Job {
+    return launch(SingleJobMode.CANCEL_PREVIOUS, block = {}).job
+}
 
 /**
  * Defines how a [SingleJobCoroutineScope] behaves when a new coroutine launch
@@ -53,8 +66,9 @@ enum class SingleJobMode {
 
     /**
      * If there is already an active job, skips launching a new coroutine
+     * [SingleJobCoroutineScope.async] May throw exception if using this [SingleJobMode]
+     * @see SingleJobCoroutineScope.async
      */
-    @DelicateSingleJobApi
     SKIP_IF_RUNNING
 }
 
@@ -66,8 +80,56 @@ private class MutexSingleJobCoroutineScope(
     private val activeJobs = mutableListOf<Job>()
     private val mutex = Mutex()
 
-    override fun <T> withJobMode(
-        mode: SingleJobMode,
+    private fun <T> awaitPreviousUnsafe(
+        scope: CoroutineScope,
+        context: CoroutineContext,
+        start: CoroutineStart,
+        block: suspend CoroutineScope.() -> T
+    ): Deferred<T> {
+        val previousJobs = activeJobs.toList()
+        return scope.async(
+            context = context,
+            start = start,
+            block = {
+                previousJobs.joinAll()
+                block.invoke(this)
+            }
+        ).also(activeJobs::add)
+    }
+
+    private fun <T> cancelPreviousUnsafe(
+        scope: CoroutineScope,
+        context: CoroutineContext,
+        start: CoroutineStart,
+        block: suspend CoroutineScope.() -> T
+    ): Deferred<T> {
+        activeJobs.forEach(Job::cancel)
+        return scope.async(
+            context = context,
+            start = start,
+            block = block
+        ).also(activeJobs::add)
+    }
+
+    private fun <T> trySkipPreviousUnsafe(
+        scope: CoroutineScope,
+        context: CoroutineContext,
+        start: CoroutineStart,
+        block: suspend CoroutineScope.() -> T
+    ): Deferred<T>? {
+        val isAnyJobActive = activeJobs.any(Job::isActive)
+        return if (isAnyJobActive) {
+            null
+        } else {
+            scope.async(
+                context = context,
+                start = start,
+                block = block
+            ).also(activeJobs::add)
+        }
+    }
+
+    override fun <T> async(
         context: CoroutineContext,
         start: CoroutineStart,
         block: suspend CoroutineScope.() -> T
@@ -77,46 +139,57 @@ private class MutexSingleJobCoroutineScope(
             start = start,
             block = {
                 mutex.withLock {
+                    cancelPreviousUnsafe(
+                        context = context,
+                        start = start,
+                        block = block,
+                        scope = this
+                    )
+                }.await()
+            }
+        )
+    }
+
+    override fun launch(
+        mode: SingleJobMode,
+        context: CoroutineContext,
+        start: CoroutineStart,
+        block: suspend CoroutineScope.() -> Unit
+    ): Job {
+        return scope.async(
+            context = context,
+            start = start,
+            block = {
+                mutex.withLock {
                     when (mode) {
                         SingleJobMode.CANCEL_PREVIOUS -> {
-                            activeJobs.forEach(Job::cancel)
-                            async(
+                            cancelPreviousUnsafe(
                                 context = context,
                                 start = start,
-                                block = block
-                            ).also(activeJobs::add)
+                                block = block,
+                                scope = this
+                            )
                         }
 
                         SingleJobMode.AWAIT_PREVIOUS -> {
-                            val previousJobs = activeJobs.toList()
-                            async(
+                            awaitPreviousUnsafe(
                                 context = context,
                                 start = start,
-                                block = {
-                                    previousJobs.joinAll()
-                                    block.invoke(this)
-                                }
-                            ).also(activeJobs::add)
+                                block = block,
+                                scope = this
+                            )
                         }
 
-                        @OptIn(DelicateSingleJobApi::class)
-                        SingleJobMode.SKIP_IF_RUNNING
-                        -> {
-                            val isAnyJobActive = activeJobs.any(Job::isActive)
-                            if (isAnyJobActive) {
-                                throw CancellationException(
-                                    "A new coroutine cannot be launched while a previous one is running"
-                                )
-                            } else {
-                                async(
-                                    context = context,
-                                    start = start,
-                                    block = block
-                                ).also(activeJobs::add)
-                            }
+                        SingleJobMode.SKIP_IF_RUNNING -> {
+                            trySkipPreviousUnsafe(
+                                context = context,
+                                start = start,
+                                block = block,
+                                scope = this
+                            )
                         }
                     }
-                }.await()
+                }?.join()
             }
         )
     }
@@ -134,10 +207,11 @@ private class MutexSingleJobCoroutineScope(
     }
 }
 
-fun SingleJobCoroutineScope.cancelPrevious(): Job {
-    return withJobMode(SingleJobMode.CANCEL_PREVIOUS, block = {}).job
-}
-
 fun CoroutineScope.asSingleJobScope(): SingleJobCoroutineScope {
     return MutexSingleJobCoroutineScope(this)
 }
+
+fun <T> Flow<T>.launchIn(
+    scope: SingleJobCoroutineScope,
+    mode: SingleJobMode = SingleJobMode.CANCEL_PREVIOUS
+): Job = scope.launch(mode) { collect() }

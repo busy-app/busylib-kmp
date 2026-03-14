@@ -7,10 +7,12 @@ interface BUSYLibAndroidNetworkStateApi : BUSYLibNetworkStateApi {
     /**
      * Registers a lifecycle to be tracked for determining network availability.
      * Network will only be considered available when any of the registered lifecycles
-     * are at least in STARTED state. Call this for foreground services to ensure
+     * are at least in [expectedState]. Call this for foreground services to ensure
      * network requests respect Android 15's process lifecycle requirements.
      *
      * @param lifecycle The lifecycle to track (e.g., from a LifecycleService)
+     * @param expectedState The minimum lifecycle state required for this lifecycle
+     *  to be considered active. Defaults to [Lifecycle.State.STARTED].
      */
-    fun addLifecycle(lifecycle: Lifecycle)
+    fun addLifecycle(lifecycle: Lifecycle, expectedState: Lifecycle.State = Lifecycle.State.STARTED)
 }

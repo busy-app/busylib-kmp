@@ -5,6 +5,8 @@ import io.ktor.client.request.delete
 import io.ktor.client.request.url
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.URLProtocol
+import io.ktor.http.path
 import kotlinx.coroutines.CoroutineDispatcher
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
@@ -35,7 +37,11 @@ class BusyCloudBarsApiImpl(
     ): Result<Unit> {
         return runSuspendCatching(dispatcher) {
             val response = httpClient.delete {
-                url("${bsbHostApi.getHost().value}/api/v0/bars/$uuid")
+                url {
+                    protocol = URLProtocol.HTTPS
+                    host = bsbHostApi.getHost().value
+                    path("api", "v0", "bars", "$uuid")
+                }
                 addAuthHeader(principal)
             }
             when (response.status) {

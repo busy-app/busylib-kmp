@@ -13,7 +13,7 @@ import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 import net.flipper.core.busylib.log.info
-import net.flipper.core.ktor.util.tryMinimizeOctetStreamBody
+import net.flipper.core.ktor.util.minimizeBodyLogMessage
 
 internal fun getHttpClient(httpClientEngine: HttpClientEngine) = HttpClient(httpClientEngine) {
     install(WebSockets)
@@ -33,7 +33,7 @@ internal fun getHttpClient(httpClientEngine: HttpClientEngine) = HttpClient(http
     install(Logging) {
         logger = object : Logger {
             override fun log(message: String) {
-                val mappedMessage = tryMinimizeOctetStreamBody(message)
+                val mappedMessage = minimizeBodyLogMessage(message)
                 info { mappedMessage }
             }
         }

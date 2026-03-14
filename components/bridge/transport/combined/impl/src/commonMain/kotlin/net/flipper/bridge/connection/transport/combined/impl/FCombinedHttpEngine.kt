@@ -1,64 +1,52 @@
 package net.flipper.bridge.connection.transport.combined.impl
 
+import io.ktor.client.engine.DEFAULT_CAPABILITIES
 import io.ktor.client.engine.HttpClientEngineBase
 import io.ktor.client.engine.HttpClientEngineCapability
 import io.ktor.client.engine.HttpClientEngineConfig
+import io.ktor.client.plugins.websocket.WebSocketCapability
+import io.ktor.client.plugins.websocket.WebSocketExtensionsCapability
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.HttpRequestData
 import io.ktor.client.request.HttpResponseData
 import io.ktor.client.request.takeFrom
 import io.ktor.utils.io.InternalAPI
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
-import net.flipper.bridge.connection.transport.combined.impl.connections.AutoReconnectConnection
+import net.flipper.bridge.connection.transport.combined.impl.connections.SharedConnectionPool
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPDeviceApi
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPTransportCapability
 import net.flipper.bridge.connection.transport.common.api.serial.HEADER_NAME_REQUEST_CAPABILITY
+import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.verbose
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class FCombinedHttpEngine(
-    scope: CoroutineScope,
-    connectionsFlow: StateFlow<List<AutoReconnectConnection>>,
+    private val connectionPool: SharedConnectionPool,
 ) : HttpClientEngineBase("bb-combined-http"), LogTagProvider {
     override val TAG = "FCombinedHttpEngine"
 
     override val config = HttpClientEngineConfig()
 
-    private val delegates = connectionsFlow.flatMapLatest { connections ->
-        if (connections.isEmpty()) {
-            flowOf(arrayOf())
-        } else {
-            combine(connections.map { it.stateFlow }) { states ->
-                states.filterIsInstance<FInternalTransportConnectionStatus.Connected>()
-                    .map { it.deviceApi }.filterIsInstance<FHTTPDeviceApi>()
-                    .map { deviceApi ->
-                        deviceApi.getCapabilities().map { deviceApi to it }
-                    }
-            }.flatMapLatest { apis ->
-                if (apis.isEmpty()) {
-                    flowOf(arrayOf())
-                } else {
-                    combine(apis) { it }
-                }
-            }
-        }
-    }.stateIn(scope, SharingStarted.Eagerly, arrayOf())
-
     @InternalAPI
     override suspend fun execute(data: HttpRequestData): HttpResponseData {
-        val currentDelegates = delegates.value
+        val currentDelegates = connectionPool.get().first().map { snapshot ->
+            if (snapshot.status !is FInternalTransportConnectionStatus.Connected) {
+                return@map null
+            }
+            val deviceApi = snapshot.status.deviceApi
+            if (deviceApi !is FHTTPDeviceApi) {
+                return@map null
+            }
+            if (snapshot.capabilities == null) {
+                return@map null
+            }
+            deviceApi to snapshot.capabilities
+        }.filterNotNull()
         check(currentDelegates.isNotEmpty()) { "No connected devices" }
 
         val requestedCapability = data.headers[HEADER_NAME_REQUEST_CAPABILITY]?.toIntOrNull()?.let {
@@ -68,11 +56,12 @@ class FCombinedHttpEngine(
         val filteredDelegates = if (requestedCapability == null) {
             currentDelegates.toList()
         } else {
-            currentDelegates.filter { it.second.contains(requestedCapability) }.also {
-                if (it.isEmpty()) {
-                    error("No delegate with capability $requestedCapability")
+            currentDelegates.filter { it.second.contains(requestedCapability) }
+                .also {
+                    if (it.isEmpty()) {
+                        error("No delegate with capability $requestedCapability")
+                    }
                 }
-            }
         }.map { it.first }
 
         val requestBuilder = HttpRequestBuilder()
@@ -88,18 +77,20 @@ class FCombinedHttpEngine(
     ): HttpResponseData {
         var lastException: Throwable? = null
         for (delegate in filteredDelegates) {
-            try {
+            runSuspendCatching {
                 verbose { "Dispatch request $data to $delegate" }
-                return delegate.getDeviceHttpEngine().execute(data)
-            } catch (e: Throwable) {
-                error(e) { "Delegate $delegate failed, trying next" }
-                lastException = e
+                delegate.getDeviceHttpEngine().execute(data)
+            }.onSuccess {
+                return it
+            }.onFailure {
+                error(it) { "Delegate $delegate failed, trying next" }
+                lastException = it
             }
         }
         throw lastException ?: error("No delegates available")
     }
 
+    // It should be as wide as possible
     override val supportedCapabilities: Set<HttpClientEngineCapability<*>>
-        get() = delegates.value.map { it.first }
-            .flatMap { it.getDeviceHttpEngine().supportedCapabilities }.toSet()
+        get() = DEFAULT_CAPABILITIES + WebSocketCapability + WebSocketExtensionsCapability
 }

@@ -51,8 +51,8 @@ class FConnectionServiceImpl(
 
     private fun getExpectedState(): Flow<ExpectedState> {
         return combine(
-            isForceDisconnectedFlow,
-            fDevicePersistedStorage.getCurrentDeviceFlow()
+            flow = isForceDisconnectedFlow,
+            flow2 = fDevicePersistedStorage.getCurrentDeviceFlow()
         ) { isForceDisconnected, currentDevice ->
             if (isForceDisconnected) {
                 return@combine ExpectedState.Disconnected
@@ -138,10 +138,7 @@ class FConnectionServiceImpl(
                 warn { "#unpairDevice Can't find device $device" }
                 return@transaction CResult.success(Unit)
             }
-            val deviceId = device.connectionWays
-                .filterIsInstance<BUSYBar.ConnectionWay.Cloud>()
-                .firstOrNull()
-                ?.deviceId
+            val deviceId = device.cloud?.deviceId
             if (deviceId != null) {
                 val principal = principalApi.getPrincipalFlow()
                     .filter { principal -> principal !is BUSYLibUserPrincipal.Loading }

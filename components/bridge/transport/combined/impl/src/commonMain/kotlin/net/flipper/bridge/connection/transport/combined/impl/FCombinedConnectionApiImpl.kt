@@ -3,35 +3,31 @@ package net.flipper.bridge.connection.transport.combined.impl
 import io.ktor.client.engine.HttpClientEngine
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.sync.Mutex
 import net.flipper.bridge.connection.connectionbuilder.api.FDeviceConfigToConnection
 import net.flipper.bridge.connection.transport.combined.FCombinedConnectionApi
 import net.flipper.bridge.connection.transport.combined.FCombinedConnectionConfig
 import net.flipper.bridge.connection.transport.combined.impl.connections.AutoReconnectConnection
+import net.flipper.bridge.connection.transport.combined.impl.connections.ConnectionSnapshot
+import net.flipper.bridge.connection.transport.combined.impl.connections.SharedConnectionPool
 import net.flipper.bridge.connection.transport.combined.impl.metakey.CombinedMetaInfoApiImpl
 import net.flipper.bridge.connection.transport.combined.impl.utils.UpdateConfigDelegate
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
+import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionType
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoData
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
-import net.flipper.bridge.connection.transport.common.api.serial.FHTTPDeviceApi
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPTransportCapability
-import net.flipper.core.busylib.ktx.common.combine
-import net.flipper.core.busylib.ktx.common.flatten
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
-import net.flipper.core.busylib.ktx.common.tryCast
 import net.flipper.core.busylib.ktx.common.withLockResult
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
@@ -49,31 +45,75 @@ class FCombinedConnectionApiImpl(
     // Visible for testing
     val connections: StateFlow<List<AutoReconnectConnection>>
         field = MutableStateFlow(initialConnections)
+    private val connectionPool = SharedConnectionPool(
+        scope = scope,
+        connectionsFlow = connections
+    )
 
     private val updateMutex = Mutex()
-
-    init {
-        connections.flatMapLatest { connectionsList ->
-            if (connectionsList.isEmpty()) {
-                flowOf(FInternalTransportConnectionStatus.Disconnected)
-            } else {
-                combine(connectionsList.map { it.stateFlow }) { states ->
-                    states.maxBy { getPriority(it) }
+    private fun getCurrentConnectionSnapshotFlow(): Flow<ConnectionSnapshot?> {
+        return connectionPool
+            .get()
+            .map { connectionsList ->
+                if (connectionsList.isEmpty()) {
+                    null
+                } else {
+                    connectionsList
+                        .maxBy { connectionSnapshot -> getPriority(connectionSnapshot.status) }
                 }
             }
-        }.distinctUntilChanged()
-            .onEach {
-                if (it is FInternalTransportConnectionStatus.Connected) {
+            .distinctUntilChanged()
+    }
+
+    private fun getCurrentConnectionType(
+        capabilities: List<FHTTPTransportCapability>
+    ): FInternalTransportConnectionType? {
+        return when {
+            FHTTPTransportCapability
+                .LAN_ONLY_CONNECTION_SUPPORTED in capabilities -> {
+                FInternalTransportConnectionType.LAN
+            }
+
+            FHTTPTransportCapability
+                .CLOUD_ONLY_CONNECTION_SUPPORTED in capabilities -> {
+                FInternalTransportConnectionType.CLOUD
+            }
+
+            FHTTPTransportCapability
+                .BLE_ONLY_CONNECTION_SUPPORTED in capabilities -> {
+                FInternalTransportConnectionType.BLE
+            }
+
+            else -> null
+        }
+    }
+
+    private fun startCollectTransportStatusUpdateJob(): Job {
+        return getCurrentConnectionSnapshotFlow()
+            .onEach { connectionSnapshot ->
+                val transportConnectionStatus = connectionSnapshot
+                    ?.status
+                    ?: FInternalTransportConnectionStatus.Disconnected
+
+                val capabilities = connectionSnapshot?.capabilities.orEmpty()
+
+                if (transportConnectionStatus is FInternalTransportConnectionStatus.Connected) {
                     listener.onStatusUpdate(
-                        FInternalTransportConnectionStatus.Connected(
+                        status = FInternalTransportConnectionStatus.Connected(
                             scope = scope,
-                            deviceApi = this
+                            deviceApi = this,
+                            connectionType = getCurrentConnectionType(capabilities)
                         )
                     )
                 } else {
-                    listener.onStatusUpdate(it)
+                    listener.onStatusUpdate(transportConnectionStatus)
                 }
-            }.launchIn(scope)
+            }
+            .launchIn(scope)
+    }
+
+    init {
+        startCollectTransportStatusUpdateJob()
     }
 
     override val deviceName: String
@@ -83,11 +123,11 @@ class FCombinedConnectionApiImpl(
         config: FDeviceConnectionConfig<*>
     ): Result<Unit> {
         if (config !is FCombinedConnectionConfig) {
-            return Result.failure(
-                IllegalArgumentException("Config $config has different type")
-            )
+            info { "#tryUpdateConnectionConfig configs is not FCombinedConnectionConfig" }
+            return Result.failure(IllegalArgumentException("Config $config has different type"))
         }
         if (currentConfig == config) {
+            info { "#tryUpdateConnectionConfig configs are identical" }
             return Result.success(Unit)
         }
         info { "Start update child connection configs: $config" }
@@ -109,29 +149,18 @@ class FCombinedConnectionApiImpl(
         }
     }
 
-    private val _capabilities = connections.flatMapLatest { connectionsList ->
-        connectionsList
-            .map(AutoReconnectConnection::stateFlow)
-            .combine()
-            .flatMapLatest { connectionStatuses ->
-                connectionStatuses
-                    .asSequence()
-                    .filterIsInstance<FInternalTransportConnectionStatus.Connected>()
-                    .map { status -> status.deviceApi }
-                    .mapNotNull { deviceApi -> deviceApi.tryCast<FHTTPDeviceApi>() }
-                    .map(FHTTPDeviceApi::getCapabilities)
-                    .toList()
-                    .combine()
-                    .flatten()
-            }
-    }.stateIn(scope, SharingStarted.WhileSubscribed(), emptyList())
+    private val _capabilities = connectionPool.get().map { currentConnections ->
+        currentConnections
+            .flatMap { connectionSnapshot -> connectionSnapshot.capabilities.orEmpty() }
+            .distinct()
+    }
 
-    override fun getCapabilities(): StateFlow<List<FHTTPTransportCapability>> {
+    override fun getCapabilities(): Flow<List<FHTTPTransportCapability>> {
         return _capabilities
     }
 
-    private val httpEngine = FCombinedHttpEngine(scope, connections)
-    private val metaInfoApi = CombinedMetaInfoApiImpl(connections)
+    private val httpEngine = FCombinedHttpEngine(connectionPool)
+    private val metaInfoApi = CombinedMetaInfoApiImpl(connectionPool)
 
     override fun getDeviceHttpEngine(): HttpClientEngine {
         return httpEngine

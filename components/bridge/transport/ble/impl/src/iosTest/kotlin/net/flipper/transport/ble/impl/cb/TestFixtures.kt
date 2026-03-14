@@ -33,6 +33,7 @@ internal const val MANUFACTURER_SHORT_UUID = "2A29"
 private const val SERIAL_SERVICE_FULL_UUID = "0000308a-0000-1000-8000-00805f9b34fb"
 private const val SERIAL_RX_FULL_UUID = "0000308b-0000-1000-8000-00805f9b34fb"
 private const val SERIAL_TX_FULL_UUID = "0000308c-0000-1000-8000-00805f9b34fb"
+private const val SERIAL_RESET_UUID = "6E400004-B5A3-F393-E0A9-E50E24DCCA9E"
 private const val META_SERVICE_FULL_UUID = "0000180a-0000-1000-8000-00805f9b34fb"
 private const val DEVICE_NAME_FULL_UUID = "00002a00-0000-1000-8000-00805f9b34fb"
 private const val BATTERY_LEVEL_FULL_UUID = "00002a19-0000-1000-8000-00805f9b34fb"
@@ -185,6 +186,7 @@ internal fun createConfig(
             serialServiceUuid = Uuid.parse(SERIAL_SERVICE_FULL_UUID),
             rxServiceCharUuid = Uuid.parse(SERIAL_RX_FULL_UUID),
             txServiceCharUuid = Uuid.parse(SERIAL_TX_FULL_UUID),
+            resetCharUuid = Uuid.parse(SERIAL_RESET_UUID),
         ),
         metaInfoGattMap = metaInfoGattMap,
     )

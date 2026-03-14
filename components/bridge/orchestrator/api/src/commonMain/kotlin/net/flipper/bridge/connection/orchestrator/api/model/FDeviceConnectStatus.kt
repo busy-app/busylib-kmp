@@ -22,6 +22,7 @@ sealed class FDeviceConnectStatus {
     class Connected(
         val scope: CoroutineScope,
         val device: BUSYBar,
-        val deviceApi: FConnectedDeviceApi
+        val deviceApi: FConnectedDeviceApi,
+        val transportType: FDeviceTransportType?
     ) : FDeviceConnectStatus()
 }

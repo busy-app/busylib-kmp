@@ -4,23 +4,27 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withTimeout
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.transport.ble.api.BleDeviceConnectionApi
 import net.flipper.bridge.connection.transport.ble.api.FBleApi
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceConnectionConfig
-import net.flipper.bridge.connection.transport.ble.common.BleConstants
-import net.flipper.bridge.connection.transport.ble.common.exception.BLEConnectionPermissionException
-import net.flipper.bridge.connection.transport.ble.common.exception.FailedConnectToDeviceException
-import net.flipper.bridge.connection.transport.ble.common.exception.NoFoundDeviceException
 import net.flipper.bridge.connection.transport.ble.impl.api.FAndroidBleApiImpl
 import net.flipper.bridge.connection.transport.ble.impl.api.http.serial.SerialApiFactory
+import net.flipper.bridge.connection.transport.ble.impl.exception.BLEConnectionPermissionException
+import net.flipper.bridge.connection.transport.ble.impl.exception.FailedConnectToDeviceException
+import net.flipper.bridge.connection.transport.ble.impl.exception.NoFoundDeviceException
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.log.LogTagProvider
+import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
+import no.nordicsemi.kotlin.ble.client.RemoteServices
 import no.nordicsemi.kotlin.ble.client.android.CentralManager
 import no.nordicsemi.kotlin.ble.core.Phy
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
@@ -42,7 +46,7 @@ class BLEDeviceConnectionApiImpl(
         connectUnsafe(scope, config, listener)
     }
 
-    @Suppress("ThrowsCount")
+    @Suppress("ThrowsCount", "LongMethod")
     private suspend fun connectUnsafe(
         scope: CoroutineScope,
         config: FBleDeviceConnectionConfig,
@@ -84,14 +88,27 @@ class BLEDeviceConnectionApiImpl(
         info { "Request the highest mtu" }
         device.requestHighestValueLength()
 
-        val services = device.services().wrap()
+        val services = device.services()
+            .map { state ->
+                when (state) {
+                    is RemoteServices.Discovered -> state.services
+                    is RemoteServices.Failed -> {
+                        error { "Service discovery failed: ${state.reason}" }
+                        null
+                    }
+                    RemoteServices.Discovering,
+                    RemoteServices.Unknown -> null
+                }
+            }
+            .stateIn(scope, SharingStarted.Eagerly, null)
+            .wrap()
 
         val serialApi = serialApiFactory.build(
             config = config.serialConfig,
             services = services,
             scope = scope
         )
-
+        info { "Created serial api" }
         val bleApi = FAndroidBleApiImpl(
             peripheral = device,
             scope = scope,
@@ -100,6 +117,7 @@ class BLEDeviceConnectionApiImpl(
             currentConfig = config,
             listener = listener
         )
+        info { "Created ble api" }
         return bleApi
     }
 }

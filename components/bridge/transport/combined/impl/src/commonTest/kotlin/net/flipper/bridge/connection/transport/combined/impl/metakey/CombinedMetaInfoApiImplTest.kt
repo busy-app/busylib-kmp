@@ -1,14 +1,18 @@
 package net.flipper.bridge.connection.transport.combined.impl.metakey
 
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.job
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import net.flipper.bridge.connection.transport.combined.impl.connections.AutoReconnectConnection
+import net.flipper.bridge.connection.transport.combined.impl.connections.SharedConnectionPool
 import net.flipper.bridge.connection.transport.combined.impl.connections.helpers.MockConnectionBuilder
 import net.flipper.bridge.connection.transport.combined.impl.connections.helpers.TestConfig
 import net.flipper.bridge.connection.transport.combined.impl.connections.helpers.TestConnectedDeviceApi
@@ -28,6 +32,7 @@ class CombinedMetaInfoApiImplTest {
     @Test
     fun GIVEN_no_connected_transports_WHEN_get_called_THEN_emits_failure() = runTest {
         val testDispatcher = StandardTestDispatcher(testScheduler)
+        val poolScope = CoroutineScope(SupervisorJob(backgroundScope.coroutineContext.job) + testDispatcher)
         val connectionBuilder = MockConnectionBuilder()
         val connection = AutoReconnectConnection(
             scope = backgroundScope,
@@ -39,7 +44,10 @@ class CombinedMetaInfoApiImplTest {
         connectionBuilder.connectCalledDeferred.await()
         advanceUntilIdle()
 
-        val sut = CombinedMetaInfoApiImpl(MutableStateFlow(listOf(connection)))
+        val sut = CombinedMetaInfoApiImpl(
+            SharedConnectionPool(poolScope, MutableStateFlow(listOf(connection)))
+        )
+        advanceUntilIdle()
         val result = sut.get(TransportMetaInfoKey.DEVICE_NAME).first()
 
         assertTrue(result.isFailure, "Should be failure when no transport is connected")
@@ -52,6 +60,7 @@ class CombinedMetaInfoApiImplTest {
     fun GIVEN_connected_transport_supports_key_WHEN_get_called_THEN_emits_success_with_data() =
         runTest {
             val testDispatcher = StandardTestDispatcher(testScheduler)
+            val poolScope = CoroutineScope(SupervisorJob(backgroundScope.coroutineContext.job) + testDispatcher)
             val connectionBuilder = MockConnectionBuilder()
             val connection = AutoReconnectConnection(
                 scope = backgroundScope,
@@ -72,12 +81,18 @@ class CombinedMetaInfoApiImplTest {
             connectionBuilder.latestListener()!!.onStatusUpdate(
                 FInternalTransportConnectionStatus.Connected(
                     scope = backgroundScope,
-                    deviceApi = metaDeviceApi
+                    deviceApi = metaDeviceApi,
+                    connectionType = null
                 )
             )
             advanceUntilIdle()
 
-            val sut = CombinedMetaInfoApiImpl(MutableStateFlow(listOf(connection)))
+            val sut = CombinedMetaInfoApiImpl(
+                SharedConnectionPool(
+                    poolScope,
+                    MutableStateFlow(listOf(connection))
+                )
+            )
             val result = sut.get(TransportMetaInfoKey.DEVICE_NAME).first()
 
             assertTrue(result.isSuccess, "Should be success when transport supports the key")
@@ -92,6 +107,7 @@ class CombinedMetaInfoApiImplTest {
     fun GIVEN_connected_transport_does_not_support_key_WHEN_get_called_THEN_emits_failure() =
         runTest {
             val testDispatcher = StandardTestDispatcher(testScheduler)
+            val poolScope = CoroutineScope(SupervisorJob(backgroundScope.coroutineContext.job) + testDispatcher)
             val connectionBuilder = MockConnectionBuilder()
             val connection = AutoReconnectConnection(
                 scope = backgroundScope,
@@ -112,12 +128,18 @@ class CombinedMetaInfoApiImplTest {
             connectionBuilder.latestListener()!!.onStatusUpdate(
                 FInternalTransportConnectionStatus.Connected(
                     scope = backgroundScope,
-                    deviceApi = metaDeviceApi
+                    deviceApi = metaDeviceApi,
+                    connectionType = null
                 )
             )
             advanceUntilIdle()
 
-            val sut = CombinedMetaInfoApiImpl(MutableStateFlow(listOf(connection)))
+            val sut = CombinedMetaInfoApiImpl(
+                SharedConnectionPool(
+                    poolScope,
+                    MutableStateFlow(listOf(connection))
+                )
+            )
             val result = sut.get(TransportMetaInfoKey.BATTERY_LEVEL).first()
 
             assertTrue(
@@ -132,6 +154,7 @@ class CombinedMetaInfoApiImplTest {
     @Test
     fun GIVEN_connected_device_without_meta_api_WHEN_get_called_THEN_emits_failure() = runTest {
         val testDispatcher = StandardTestDispatcher(testScheduler)
+        val poolScope = CoroutineScope(SupervisorJob(backgroundScope.coroutineContext.job) + testDispatcher)
         val connectionBuilder = MockConnectionBuilder()
         val connection = AutoReconnectConnection(
             scope = backgroundScope,
@@ -147,12 +170,15 @@ class CombinedMetaInfoApiImplTest {
         connectionBuilder.latestListener()!!.onStatusUpdate(
             FInternalTransportConnectionStatus.Connected(
                 scope = backgroundScope,
-                deviceApi = plainDeviceApi
+                deviceApi = plainDeviceApi,
+                connectionType = null
             )
         )
         advanceUntilIdle()
 
-        val sut = CombinedMetaInfoApiImpl(MutableStateFlow(listOf(connection)))
+        val sut = CombinedMetaInfoApiImpl(
+            SharedConnectionPool(poolScope, MutableStateFlow(listOf(connection)))
+        )
         val result = sut.get(TransportMetaInfoKey.DEVICE_NAME).first()
 
         assertTrue(
@@ -165,9 +191,11 @@ class CombinedMetaInfoApiImplTest {
     }
 
     @Test
+    @Suppress("LongMethod")
     fun GIVEN_two_connections_only_second_supports_key_WHEN_get_called_THEN_returns_from_second() =
         runTest {
             val testDispatcher = StandardTestDispatcher(testScheduler)
+            val poolScope = CoroutineScope(SupervisorJob(backgroundScope.coroutineContext.job) + testDispatcher)
 
             val builder1 = MockConnectionBuilder()
             val connection1 = AutoReconnectConnection(
@@ -199,7 +227,8 @@ class CombinedMetaInfoApiImplTest {
             builder1.latestListener()!!.onStatusUpdate(
                 FInternalTransportConnectionStatus.Connected(
                     scope = backgroundScope,
-                    deviceApi = meta1
+                    deviceApi = meta1,
+                    connectionType = null
                 )
             )
 
@@ -212,12 +241,18 @@ class CombinedMetaInfoApiImplTest {
             builder2.latestListener()!!.onStatusUpdate(
                 FInternalTransportConnectionStatus.Connected(
                     scope = backgroundScope,
-                    deviceApi = meta2
+                    deviceApi = meta2,
+                    connectionType = null
                 )
             )
             advanceUntilIdle()
 
-            val sut = CombinedMetaInfoApiImpl(MutableStateFlow(listOf(connection1, connection2)))
+            val sut = CombinedMetaInfoApiImpl(
+                SharedConnectionPool(
+                    poolScope,
+                    MutableStateFlow(listOf(connection1, connection2))
+                )
+            )
             val result = sut.get(TransportMetaInfoKey.BATTERY_LEVEL).first()
 
             assertTrue(result.isSuccess, "Should find key from second connection")
@@ -232,6 +267,7 @@ class CombinedMetaInfoApiImplTest {
     fun GIVEN_transport_disconnects_WHEN_observing_key_THEN_emits_failure_after_disconnect() =
         runTest {
             val testDispatcher = StandardTestDispatcher(testScheduler)
+            val poolScope = CoroutineScope(SupervisorJob(backgroundScope.coroutineContext.job) + testDispatcher)
             val connectionBuilder = MockConnectionBuilder()
             val connection = AutoReconnectConnection(
                 scope = backgroundScope,
@@ -254,12 +290,18 @@ class CombinedMetaInfoApiImplTest {
             listener.onStatusUpdate(
                 FInternalTransportConnectionStatus.Connected(
                     scope = backgroundScope,
-                    deviceApi = metaDeviceApi
+                    deviceApi = metaDeviceApi,
+                    connectionType = null
                 )
             )
             advanceUntilIdle()
 
-            val sut = CombinedMetaInfoApiImpl(MutableStateFlow(listOf(connection)))
+            val sut = CombinedMetaInfoApiImpl(
+                SharedConnectionPool(
+                    poolScope,
+                    MutableStateFlow(listOf(connection))
+                )
+            )
 
             // Verify initially successful
             val resultBefore = sut.get(TransportMetaInfoKey.DEVICE_NAME).first()
@@ -280,6 +322,7 @@ class CombinedMetaInfoApiImplTest {
     @Test
     fun GIVEN_transport_reconnects_WHEN_was_disconnected_THEN_emits_success_again() = runTest {
         val testDispatcher = StandardTestDispatcher(testScheduler)
+        val poolScope = CoroutineScope(SupervisorJob(backgroundScope.coroutineContext.job) + testDispatcher)
         val connectionBuilder = MockConnectionBuilder()
         val connection = AutoReconnectConnection(
             scope = backgroundScope,
@@ -293,7 +336,9 @@ class CombinedMetaInfoApiImplTest {
 
         val listener = connectionBuilder.latestListener()!!
 
-        val sut = CombinedMetaInfoApiImpl(MutableStateFlow(listOf(connection)))
+        val sut = CombinedMetaInfoApiImpl(
+            SharedConnectionPool(poolScope, MutableStateFlow(listOf(connection)))
+        )
 
         // Initially no connection — failure
         val result1 = sut.get(TransportMetaInfoKey.DEVICE_NAME).first()
@@ -309,7 +354,8 @@ class CombinedMetaInfoApiImplTest {
         listener.onStatusUpdate(
             FInternalTransportConnectionStatus.Connected(
                 scope = backgroundScope,
-                deviceApi = metaDeviceApi
+                deviceApi = metaDeviceApi,
+                connectionType = null
             )
         )
         advanceUntilIdle()

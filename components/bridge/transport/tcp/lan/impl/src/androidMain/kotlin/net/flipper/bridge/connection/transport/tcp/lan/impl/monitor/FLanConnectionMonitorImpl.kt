@@ -2,6 +2,7 @@ package net.flipper.bridge.connection.transport.tcp.lan.impl.monitor
 
 import kotlinx.coroutines.CoroutineScope
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
+import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionType
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.bridge.connection.transport.tcp.lan.FLanApi
 import net.flipper.bridge.connection.transport.tcp.lan.FLanDeviceConnectionConfig
@@ -18,7 +19,8 @@ class FLanConnectionMonitorImpl(
         listener.onStatusUpdate(
             FInternalTransportConnectionStatus.Connected(
                 scope = scope,
-                deviceApi = deviceApi
+                deviceApi = deviceApi,
+                connectionType = FInternalTransportConnectionType.LAN
             )
         )
     }

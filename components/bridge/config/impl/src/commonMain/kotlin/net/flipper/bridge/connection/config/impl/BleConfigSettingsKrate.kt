@@ -46,7 +46,7 @@ class BleConfigSettingsKrateImpl(
         }
     ) {
     companion object {
-        private const val KEY = "ble_config_v2"
+        private const val KEY = "ble_config_v3"
         private val Factory get() = ValueFactory { BleConfigSettings() }
         private val Serializer get() = BleConfigSettings.serializer()
     }

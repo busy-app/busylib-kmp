@@ -23,7 +23,12 @@ class BUSYLibNetworkStateApiImpl(
 ) : BUSYLibAndroidNetworkStateApi, ConnectivityManager.NetworkCallback(), LogTagProvider {
     override val TAG = "NetworkStateApi"
     private val lifecycleHolder = LifecyclesHolderFlow(
-        listOf(ProcessLifecycleOwner.get().lifecycle)
+        listOf(
+            LifecyclesHolderFlow.LifecycleWithState(
+                lifecycle = ProcessLifecycleOwner.get().lifecycle,
+                shouldBeState = Lifecycle.State.RESUMED
+            )
+        )
     )
     private val isNetworkAvailableFlowInternal = MutableStateFlow(false)
 
@@ -57,8 +62,8 @@ class BUSYLibNetworkStateApiImpl(
         isNetworkAvailableFlowInternal.value = false
     }
 
-    override fun addLifecycle(lifecycle: Lifecycle) {
-        info { "Add lifecycle $lifecycle" }
-        lifecycleHolder.addLifecycle(lifecycle)
+    override fun addLifecycle(lifecycle: Lifecycle, expectedState: Lifecycle.State) {
+        info { "Add lifecycle $lifecycle with shouldBeState $expectedState" }
+        lifecycleHolder.addLifecycle(lifecycle, expectedState)
     }
 }

@@ -7,8 +7,8 @@ import kotlinx.io.bytestring.toHexString
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 
-suspend fun Path.sha256() = SystemFileSystem.source(this).sha256()
-suspend fun RawSource.sha256(): String {
+internal suspend fun Path.sha256() = SystemFileSystem.source(this).sha256()
+internal suspend fun RawSource.sha256(): String {
     val provider = CryptographyProvider.Default
     val hasher = provider.get(SHA256).hasher()
     val hash = hasher.hash(this)

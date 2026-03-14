@@ -1,7 +1,6 @@
 package net.flipper.bridge.connection.feature.info.impl
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.shareIn
@@ -19,7 +18,9 @@ import net.flipper.bridge.connection.feature.rpc.api.model.StatusFirmware
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.core.wrapper.CResult
+import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.toCResult
+import net.flipper.busylib.core.wrapper.wrapFlow
 import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.log.LogTagProvider
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
@@ -38,7 +39,7 @@ class FDeviceInfoFeatureApiImpl(
         return rpcFeatureApi.fRpcSystemApi.getStatusFirmware().toCResult()
     }
 
-    override val deviceVersionFlow: Flow<BusyBarVersion> = flow {
+    override val deviceVersionFlow: WrappedFlow<BusyBarVersion> = flow {
         val statusFirmware = exponentialRetry {
             rpcFeatureApi
                 .fRpcSystemApi
@@ -48,7 +49,7 @@ class FDeviceInfoFeatureApiImpl(
             .version
             .let(::BusyBarVersion)
         emit(version)
-    }.shareIn(scope, SharingStarted.Lazily, 1)
+    }.shareIn(scope, SharingStarted.Lazily, 1).wrapFlow()
 
     @Inject
     class FDeviceFeatureApiFactory : FDeviceFeatureApi.Factory {

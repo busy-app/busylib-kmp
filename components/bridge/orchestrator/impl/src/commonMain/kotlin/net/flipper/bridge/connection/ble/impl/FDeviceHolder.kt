@@ -53,8 +53,8 @@ class FDeviceHolder<API : FConnectedDeviceApi>(
 ) : LogTagProvider {
     override val TAG = "FDeviceHolder-$config"
 
-    private val transportConnectionListener = FTransportConnectionStatusListener {
-        listener(this, it)
+    private val transportConnectionListener = FTransportConnectionStatusListener { transportConnectionStatus ->
+        listener.invoke(this, transportConnectionStatus)
     }
 
     private val scope = CoroutineScope(
@@ -64,11 +64,11 @@ class FDeviceHolder<API : FConnectedDeviceApi>(
     )
     private val deviceApi: Deferred<API> = scope.async {
         deviceConnectionHelper.connect(
-            scope,
-            config,
-            transportConnectionListener
-        ).onFailure {
-            onConnectError(this@FDeviceHolder, it)
+            scope = scope,
+            config = config,
+            listener = transportConnectionListener
+        ).onFailure { t ->
+            onConnectError(this@FDeviceHolder, t)
         }.getOrThrow()
     }
 
@@ -77,8 +77,8 @@ class FDeviceHolder<API : FConnectedDeviceApi>(
     ): Result<Unit> {
         return runCatching {
             deviceApi.getCompleted()
-        }.transform {
-            it.tryUpdateConnectionConfig(config)
+        }.transform { deviceApi ->
+            deviceApi.tryUpdateConnectionConfig(config)
         }
     }
 

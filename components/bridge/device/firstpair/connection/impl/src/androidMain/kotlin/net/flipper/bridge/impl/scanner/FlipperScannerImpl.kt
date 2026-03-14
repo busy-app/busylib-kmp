@@ -76,7 +76,6 @@ class FlipperScannerImpl(
     }
 
     private fun getAlreadyBondedDevices(): Flow<DiscoveredBluetoothDeviceImpl> {
-        return flowOf()
         if (ActivityCompat.checkSelfPermission(
                 context,
                 Manifest.permission.BLUETOOTH_CONNECT

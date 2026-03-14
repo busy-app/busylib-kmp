@@ -14,6 +14,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.config.api.PersistedStorageTransactionScope
+import net.flipper.bridge.connection.config.api.TransactionHook
 import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
@@ -33,6 +34,7 @@ import kotlin.reflect.KClass
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.uuid.Uuid
 
@@ -61,10 +63,9 @@ class CloudProvisioningWatcherTest {
 
             val updated = setup.storage.findDevice("device-1")
             assertNotNull(updated)
-            val cloudWay =
-                updated.connectionWays.filterIsInstance<BUSYBar.ConnectionWay.Cloud>().single()
-            assertEquals(cloudId, cloudWay.deviceId)
-            assertTrue(updated.connectionWays.any { it is BUSYBar.ConnectionWay.BLE })
+            assertNotNull(updated.cloud)
+            assertEquals(cloudId, updated.cloud!!.deviceId)
+            assertNotNull(updated.ble)
 
             setup.cleanup()
         }
@@ -146,9 +147,8 @@ class CloudProvisioningWatcherTest {
             // New device should be created with the new cloud connection
             val newDevice = setup.storage.devices.find { it.uniqueId != "device-1" }
             assertNotNull(newDevice, "New device should be created")
-            val cloud =
-                newDevice.connectionWays.filterIsInstance<BUSYBar.ConnectionWay.Cloud>().single()
-            assertEquals(newCloudId, cloud.deviceId)
+            assertNotNull(newDevice.cloud)
+            assertEquals(newCloudId, newDevice.cloud!!.deviceId)
 
             // Current device should be switched to new device
             assertEquals(newDevice, setup.storage.currentDevice)
@@ -212,14 +212,8 @@ class CloudProvisioningWatcherTest {
 
             val updated = setup.storage.findDevice("device-1")
             assertNotNull(updated)
-            assertTrue(
-                updated.connectionWays.none { it is BUSYBar.ConnectionWay.Cloud },
-                "Cloud connection should be removed"
-            )
-            assertTrue(
-                updated.connectionWays.any { it is BUSYBar.ConnectionWay.BLE },
-                "BLE connection should remain"
-            )
+            assertNull(updated.cloud, "Cloud connection should be removed")
+            assertNotNull(updated.ble, "BLE connection should remain")
 
             setup.cleanup()
         }
@@ -267,7 +261,11 @@ class CloudProvisioningWatcherTest {
 
         val updated = setup.storage.findDevice("device-1")
         assertNotNull(updated)
-        // Priority: Lan(100) > Cloud(10) > BLE(0)
+        // All connection ways should be present
+        assertNotNull(updated.lan)
+        assertNotNull(updated.cloud)
+        assertNotNull(updated.ble)
+        // Priority order in connectionWays: Lan(100) > Cloud(10) > BLE(0)
         assertTrue(updated.connectionWays[0] is BUSYBar.ConnectionWay.Lan)
         assertTrue(updated.connectionWays[1] is BUSYBar.ConnectionWay.Cloud)
         assertTrue(updated.connectionWays[2] is BUSYBar.ConnectionWay.BLE)
@@ -309,7 +307,8 @@ class CloudProvisioningWatcherTest {
             FDeviceConnectStatus.Connected(
                 scope = scope,
                 device = connectedDevice,
-                deviceApi = FakeConnectedDeviceApi()
+                deviceApi = FakeConnectedDeviceApi(),
+                transportType = null
             )
         )
 
@@ -324,10 +323,25 @@ class CloudProvisioningWatcherTest {
     }
 
     private fun busyBar(id: String, vararg connectionWays: BUSYBar.ConnectionWay): BUSYBar {
+        var ble: BUSYBar.ConnectionWay.BLE? = null
+        var cloud: BUSYBar.ConnectionWay.Cloud? = null
+        var lan: BUSYBar.ConnectionWay.Lan? = null
+        var mock: BUSYBar.ConnectionWay.Mock? = null
+        for (way in connectionWays) {
+            when (way) {
+                is BUSYBar.ConnectionWay.BLE -> ble = way
+                is BUSYBar.ConnectionWay.Cloud -> cloud = way
+                is BUSYBar.ConnectionWay.Lan -> lan = way
+                is BUSYBar.ConnectionWay.Mock -> mock = way
+            }
+        }
         return BUSYBar(
             humanReadableName = "Test Bar",
             uniqueId = id,
-            connectionWays = connectionWays.toList()
+            ble = ble,
+            cloud = cloud,
+            lan = lan,
+            mock = mock
         )
     }
 
@@ -344,6 +358,8 @@ class CloudProvisioningWatcherTest {
 
         override fun getCurrentDeviceFlow() = flowOf(currentDevice).wrap()
         override fun getAllDevicesFlow() = flowOf(devices.toList()).wrap()
+
+        override suspend fun addHook(hook: TransactionHook) = Unit
 
         override suspend fun <T> transaction(block: suspend PersistedStorageTransactionScope.() -> T): T {
             val scope = object : PersistedStorageTransactionScope {

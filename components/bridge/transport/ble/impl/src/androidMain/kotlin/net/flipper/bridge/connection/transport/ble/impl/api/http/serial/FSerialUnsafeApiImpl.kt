@@ -17,7 +17,7 @@ import kotlinx.coroutines.launch
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.transport.ble.api.MAX_ATTRIBUTE_SIZE
-import net.flipper.bridge.connection.transport.ble.common.exception.BLEConnectionPermissionException
+import net.flipper.bridge.connection.transport.ble.impl.exception.BLEConnectionPermissionException
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.debug
 import net.flipper.core.busylib.log.error
@@ -80,7 +80,9 @@ class FSerialUnsafeApiImpl(
 
         data.chunked(MAX_ATTRIBUTE_SIZE).forEach {
             debug { "Write chunk with ${it.size} with max size $MAX_ATTRIBUTE_SIZE" }
+            debug { "Write ${data.decodeToString()}" }
             writeCharacteristic.write(it, WriteType.WITH_RESPONSE)
+            debug { "Return back from write" }
         }
     }
 

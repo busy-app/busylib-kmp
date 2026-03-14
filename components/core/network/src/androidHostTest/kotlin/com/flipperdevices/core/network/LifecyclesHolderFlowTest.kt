@@ -4,6 +4,7 @@ package com.flipperdevices.core.network
 
 import androidx.lifecycle.Lifecycle
 import com.flipperdevices.busylib.core.network.LifecyclesHolderFlow
+import com.flipperdevices.busylib.core.network.LifecyclesHolderFlow.LifecycleWithState
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,9 +24,13 @@ class LifecyclesHolderFlowTest {
         return lifecycle to stateFlow
     }
 
+    private fun Lifecycle.withState(
+        shouldBeState: Lifecycle.State = Lifecycle.State.STARTED
+    ) = LifecycleWithState(this, shouldBeState)
+
     @Test
     fun `GIVEN empty list WHEN collecting flow THEN emits false`() = runTest {
-        val holder = LifecyclesHolderFlow(emptyList())
+        val holder = LifecyclesHolderFlow(emptyList<LifecycleWithState>())
 
         val result = holder.isAnyLifecycleOnStartFlow.first()
 
@@ -35,7 +40,7 @@ class LifecyclesHolderFlowTest {
     @Test
     fun `GIVEN single started lifecycle WHEN collecting flow THEN emits true`() = runTest {
         val (lifecycle, _) = createMockLifecycle(Lifecycle.State.STARTED)
-        val holder = LifecyclesHolderFlow(listOf(lifecycle))
+        val holder = LifecyclesHolderFlow(listOf(lifecycle.withState()))
 
         val result = holder.isAnyLifecycleOnStartFlow.first()
 
@@ -45,7 +50,7 @@ class LifecyclesHolderFlowTest {
     @Test
     fun `GIVEN single resumed lifecycle WHEN collecting flow THEN emits true`() = runTest {
         val (lifecycle, _) = createMockLifecycle(Lifecycle.State.RESUMED)
-        val holder = LifecyclesHolderFlow(listOf(lifecycle))
+        val holder = LifecyclesHolderFlow(listOf(lifecycle.withState()))
 
         val result = holder.isAnyLifecycleOnStartFlow.first()
 
@@ -55,7 +60,7 @@ class LifecyclesHolderFlowTest {
     @Test
     fun `GIVEN single created lifecycle WHEN collecting flow THEN emits false`() = runTest {
         val (lifecycle, _) = createMockLifecycle(Lifecycle.State.CREATED)
-        val holder = LifecyclesHolderFlow(listOf(lifecycle))
+        val holder = LifecyclesHolderFlow(listOf(lifecycle.withState()))
 
         val result = holder.isAnyLifecycleOnStartFlow.first()
 
@@ -66,7 +71,7 @@ class LifecyclesHolderFlowTest {
     fun `GIVEN multiple lifecycles all started WHEN collecting flow THEN emits true`() = runTest {
         val (lifecycle1, _) = createMockLifecycle(Lifecycle.State.STARTED)
         val (lifecycle2, _) = createMockLifecycle(Lifecycle.State.RESUMED)
-        val holder = LifecyclesHolderFlow(listOf(lifecycle1, lifecycle2))
+        val holder = LifecyclesHolderFlow(listOf(lifecycle1.withState(), lifecycle2.withState()))
 
         val result = holder.isAnyLifecycleOnStartFlow.first()
 
@@ -78,7 +83,7 @@ class LifecyclesHolderFlowTest {
         // Note: isAnyLifecycleOnStartFlow uses 'any' logic - returns true if ANY lifecycle is started
         val (lifecycle1, _) = createMockLifecycle(Lifecycle.State.STARTED)
         val (lifecycle2, _) = createMockLifecycle(Lifecycle.State.CREATED)
-        val holder = LifecyclesHolderFlow(listOf(lifecycle1, lifecycle2))
+        val holder = LifecyclesHolderFlow(listOf(lifecycle1.withState(), lifecycle2.withState()))
 
         val result = holder.isAnyLifecycleOnStartFlow.first()
 
@@ -89,7 +94,7 @@ class LifecyclesHolderFlowTest {
     fun `GIVEN multiple lifecycles none started WHEN collecting flow THEN emits false`() = runTest {
         val (lifecycle1, _) = createMockLifecycle(Lifecycle.State.CREATED)
         val (lifecycle2, _) = createMockLifecycle(Lifecycle.State.INITIALIZED)
-        val holder = LifecyclesHolderFlow(listOf(lifecycle1, lifecycle2))
+        val holder = LifecyclesHolderFlow(listOf(lifecycle1.withState(), lifecycle2.withState()))
 
         val result = holder.isAnyLifecycleOnStartFlow.first()
 
@@ -99,7 +104,7 @@ class LifecyclesHolderFlowTest {
     @Test
     fun `GIVEN lifecycle WHEN adding duplicate THEN does not duplicate`() = runTest {
         val (lifecycle, _) = createMockLifecycle(Lifecycle.State.STARTED)
-        val holder = LifecyclesHolderFlow(listOf(lifecycle))
+        val holder = LifecyclesHolderFlow(listOf(lifecycle.withState()))
 
         holder.addLifecycle(lifecycle)
         holder.addLifecycle(lifecycle)
@@ -112,7 +117,7 @@ class LifecyclesHolderFlowTest {
     fun `GIVEN started lifecycle WHEN adding new started lifecycle THEN still emits true`() = runTest {
         val (lifecycle1, _) = createMockLifecycle(Lifecycle.State.STARTED)
         val (lifecycle2, _) = createMockLifecycle(Lifecycle.State.STARTED)
-        val holder = LifecyclesHolderFlow(listOf(lifecycle1))
+        val holder = LifecyclesHolderFlow(listOf(lifecycle1.withState()))
 
         holder.addLifecycle(lifecycle2)
 
@@ -124,7 +129,7 @@ class LifecyclesHolderFlowTest {
     fun `GIVEN no started lifecycles WHEN adding started lifecycle THEN emits true`() = runTest {
         val (lifecycle1, _) = createMockLifecycle(Lifecycle.State.CREATED)
         val (lifecycle2, _) = createMockLifecycle(Lifecycle.State.STARTED)
-        val holder = LifecyclesHolderFlow(listOf(lifecycle1))
+        val holder = LifecyclesHolderFlow(listOf(lifecycle1.withState()))
 
         holder.addLifecycle(lifecycle2)
 
@@ -136,7 +141,7 @@ class LifecyclesHolderFlowTest {
     fun `GIVEN started lifecycle WHEN state changes to destroyed THEN lifecycle is removed`() = runTest {
         val (lifecycle1, stateFlow1) = createMockLifecycle(Lifecycle.State.STARTED)
         val (lifecycle2, _) = createMockLifecycle(Lifecycle.State.STARTED)
-        val holder = LifecyclesHolderFlow(listOf(lifecycle1, lifecycle2))
+        val holder = LifecyclesHolderFlow(listOf(lifecycle1.withState(), lifecycle2.withState()))
 
         // Initial state - both started
         val initialResult = holder.isAnyLifecycleOnStartFlow.first()
@@ -153,7 +158,7 @@ class LifecyclesHolderFlowTest {
     @Test
     fun `GIVEN single lifecycle WHEN state changes from created to started THEN emits true`() = runTest {
         val (lifecycle, stateFlow) = createMockLifecycle(Lifecycle.State.CREATED)
-        val holder = LifecyclesHolderFlow(listOf(lifecycle))
+        val holder = LifecyclesHolderFlow(listOf(lifecycle.withState()))
 
         // Initial state - created, not started
         val initialResult = holder.isAnyLifecycleOnStartFlow.first()
@@ -169,7 +174,7 @@ class LifecyclesHolderFlowTest {
     @Test
     fun `GIVEN single lifecycle WHEN state changes from started to stopped THEN emits false`() = runTest {
         val (lifecycle, stateFlow) = createMockLifecycle(Lifecycle.State.STARTED)
-        val holder = LifecyclesHolderFlow(listOf(lifecycle))
+        val holder = LifecyclesHolderFlow(listOf(lifecycle.withState()))
 
         // Initial state - started
         val initialResult = holder.isAnyLifecycleOnStartFlow.first()

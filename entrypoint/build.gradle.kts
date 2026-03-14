@@ -2,6 +2,8 @@ import net.flipper.Config.CURRENT_FLAVOR_TYPE
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
 import org.jetbrains.kotlin.konan.target.Family
+import ru.astrainteractive.gradleplugin.property.extension.PrimitivePropertyValueExt.stringOrNull
+import ru.astrainteractive.gradleplugin.property.secretProperty
 
 plugins {
     id("flipper.multiplatform")
@@ -11,7 +13,6 @@ plugins {
 }
 
 kotlin {
-
     sourceSets.commonMain.dependencies {
         implementation(projects.components.core.di)
         implementation(projects.components.core.ktx)
@@ -83,9 +84,7 @@ kotlin {
         if (CURRENT_FLAVOR_TYPE.isMockEnabled) {
             implementation(projects.components.bridge.transport.mock.impl)
         }
-        if (CURRENT_FLAVOR_TYPE.isCloudEnabled) {
-            implementation(projects.components.bridge.transport.tcp.cloud.impl)
-        }
+        implementation(projects.components.bridge.transport.tcp.cloud.impl)
         implementation(projects.components.bridge.transport.tcp.lan.api)
         implementation(projects.components.bridge.transportconfigbuilder.api)
         implementation(projects.components.bridge.transportconfigbuilder.impl)
@@ -109,6 +108,15 @@ kotlin {
     }
     sourceSets.jvmMain.dependencies {
         implementation(projects.components.bridge.transport.tcp.lan.impl)
+    }
+    applyDefaultHierarchyTemplate {
+        common {
+            group("desktop") {
+                withJvm()
+                withMacosX64()
+                withMacosArm64()
+            }
+        }
     }
 }
 
@@ -156,9 +164,13 @@ kotlin {
     sourceSets.iosMain.dependencies {
         implementation(projects.components.bridge.transport.ble.impl)
     }
-    if (!macOSEnabled) return@kotlin
-    sourceSets.macosMain.dependencies {
-        implementation(projects.components.bridge.transport.tcp.lan.impl)
+    if (macOSEnabled) {
+        sourceSets.macosMain.dependencies {
+            implementation(projects.components.bridge.transport.tcp.lan.impl)
+
+            implementation(projects.components.tools.oncall.api)
+            implementation(projects.components.tools.oncall.impl)
+        }
     }
 }
 
@@ -227,6 +239,45 @@ val zipXCFrameworkRelease by tasks.registering(Exec::class) {
         "--keepParent",
         "BusyLibKMP.xcframework",
         outputFile.get().asFile.absolutePath
+    )
+}
+
+// Don't just use Copy task
+// We need to preserve symlinks
+val copyXCFrameworkDebug by tasks.registering(Exec::class) {
+    group = "publishing"
+    description = "Copies the debug XCFramework into the iOS project"
+
+    if (!appleEnabled) {
+        logger.error("Can't execute zipXCFrameworkDebug as apple isn't enabled")
+        return@registering
+    }
+
+    dependsOn(zipXCFrameworkDebug)
+
+    val bridgeFolder = secretProperty("flipper.iosProjectBridgeAbsolutePath")
+        .stringOrNull
+        ?.let(::File)
+
+    require(bridgeFolder != null) {
+        "Couldn't copy debug framework into iOS project, flipper.iosProjectBridgeAbsolutePath is not set"
+    }
+
+    val source = layout.buildDirectory.asFile.get()
+        .resolve("XCFrameworks")
+        .resolve("debug")
+        .resolve("BusyLibKMP.xcframework")
+
+    val destination = bridgeFolder.resolve("BusyLibKMP.xcframework")
+
+    doFirst {
+        destination.deleteRecursively()
+    }
+
+    commandLine(
+        "ditto",
+        source.absolutePath,
+        destination.absolutePath
     )
 }
 

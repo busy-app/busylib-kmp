@@ -72,8 +72,6 @@ include(
 
     ":components:bridge:transport:ble:api",
     ":components:bridge:transport:ble:impl",
-    ":components:bridge:transport:ble:common",
-    ":components:bridge:transport:ble:http",
 
     ":components:bridge:transportconfigbuilder:api",
     ":components:bridge:transportconfigbuilder:impl",
@@ -116,6 +114,9 @@ include(
     ":components:cloud:barsws:api",
     ":components:cloud:barsws:impl",
     ":components:cloud:rest",
+
+    ":components:tools:oncall:api",
+    ":components:tools:oncall:impl",
 
     ":components:watchers:api",
     ":components:watchers:changename",

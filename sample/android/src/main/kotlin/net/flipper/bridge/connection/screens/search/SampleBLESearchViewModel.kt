@@ -40,10 +40,8 @@ class SampleBLESearchViewModel(
             persistedStorage.getAllDevicesFlow()
         ) { searchDevices, savedDevices ->
             val existedMacAddresses = savedDevices
-                .flatMap { device ->
-                    device.connectionWays
-                        .filterIsInstance<BUSYBar.ConnectionWay.BLE>()
-                        .map { it.address to device }
+                .mapNotNull { device ->
+                    device.ble?.let { it.address to device }
                 }.toMap()
             searchDevices.map { bleDevice ->
                 ConnectionSearchItem(
@@ -70,13 +68,13 @@ private fun DiscoveredBluetoothDevice.toFDeviceModel(): BUSYBar {
         is DiscoveredBluetoothDevice.MockDiscoveredBluetoothDevice -> BUSYBar(
             uniqueId = id,
             humanReadableName = name ?: UNKNOWN_NAME,
-            connectionWays = listOf(BUSYBar.ConnectionWay.Mock)
+            mock = BUSYBar.ConnectionWay.Mock
         )
 
         is DiscoveredBluetoothDevice.RealDiscoveredBluetoothDevice -> BUSYBar(
             uniqueId = id,
             humanReadableName = device.name ?: UNKNOWN_NAME,
-            connectionWays = listOf(BUSYBar.ConnectionWay.BLE(address = device.address))
+            ble = BUSYBar.ConnectionWay.BLE(address = device.address)
         )
     }
 }
