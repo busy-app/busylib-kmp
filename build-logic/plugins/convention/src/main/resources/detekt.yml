@@ -662,7 +662,7 @@ style:
   RangeUntilInsteadOfRangeTo:
     active: true
   UnusedImport:
-    active: false
+    active: true
   UnusedPrivateClass:
     active: true
   UnusedPrivateFunction:
