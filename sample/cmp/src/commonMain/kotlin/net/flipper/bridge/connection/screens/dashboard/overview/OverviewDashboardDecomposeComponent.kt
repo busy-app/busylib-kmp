@@ -6,7 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.instancekeeper.getOrCreate
-import net.flipper.bridge.connection.screens.dashboard.orUnavailable
+import net.flipper.bridge.connection.screens.dashboard.common.orUnavailable
 import net.flipper.bridge.connection.screens.decompose.DecomposeOnBackParameter
 import net.flipper.bridge.connection.screens.decompose.ScreenDecomposeComponent
 

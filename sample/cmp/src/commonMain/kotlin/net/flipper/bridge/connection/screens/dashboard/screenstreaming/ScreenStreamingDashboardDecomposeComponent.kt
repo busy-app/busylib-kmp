@@ -20,7 +20,7 @@ class ScreenStreamingDashboardDecomposeComponent(
 
     @Composable
     override fun Render(modifier: Modifier) {
-        val streamImage by viewModel.screenStreamingImagesFlow.collectAsState(null)
+        val streamImage by viewModel.screenStreamingImagesFlow.collectAsState()
 
         ScreenStreamingDashboardContent(
             modifier = modifier,

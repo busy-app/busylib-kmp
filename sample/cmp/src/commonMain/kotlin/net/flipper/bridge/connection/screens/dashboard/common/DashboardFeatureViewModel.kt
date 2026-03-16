@@ -1,10 +1,10 @@
 package net.flipper.bridge.connection.screens.dashboard.common
 
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
@@ -20,7 +20,7 @@ abstract class DashboardFeatureViewModel : DecomposeViewModel() {
             when (feature) {
                 FFeatureStatus.NotFound,
                 FFeatureStatus.Retrieving,
-                FFeatureStatus.Unsupported -> MutableStateFlow(null)
+                FFeatureStatus.Unsupported -> flowOf(null)
 
                 is FFeatureStatus.Supported<T> -> block(feature.featureApi)
             }

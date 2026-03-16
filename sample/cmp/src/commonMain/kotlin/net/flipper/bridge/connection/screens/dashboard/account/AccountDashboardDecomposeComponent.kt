@@ -26,7 +26,7 @@ class AccountDashboardDecomposeComponent(
             modifier = modifier,
             onBack = onBack::invoke,
             linkedAccountStatus = linkedAccountStatus,
-            onDeleteLinkedAccount = viewModel::deleteAccountBsb
+            onDeleteLinkedAccount = viewModel::deleteLinkedAccount
         )
     }
 }

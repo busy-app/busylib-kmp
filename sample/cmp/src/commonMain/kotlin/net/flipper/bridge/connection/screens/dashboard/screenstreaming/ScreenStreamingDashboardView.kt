@@ -17,7 +17,6 @@ import androidx.compose.ui.unit.dp
 import net.flipper.bridge.connection.feature.screenstreaming.model.BusyImageFormat
 import net.flipper.bridge.connection.screens.dashboard.common.DashboardScreenLayout
 import net.flipper.bridge.connection.screens.dashboard.common.DashboardSectionCard
-import net.flipper.bridge.connection.screens.dashboard.rememberBusyImagePainter
 
 @Composable
 fun ScreenStreamingDashboardContent(

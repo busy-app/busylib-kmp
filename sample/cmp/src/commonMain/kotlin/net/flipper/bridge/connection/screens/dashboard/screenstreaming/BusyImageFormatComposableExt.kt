@@ -1,4 +1,4 @@
-package net.flipper.bridge.connection.screens.dashboard
+package net.flipper.bridge.connection.screens.dashboard.screenstreaming
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect

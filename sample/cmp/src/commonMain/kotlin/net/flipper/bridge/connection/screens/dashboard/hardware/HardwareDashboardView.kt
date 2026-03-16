@@ -8,7 +8,7 @@ import net.flipper.bridge.connection.feature.about.model.BusyBarAboutDevice
 import net.flipper.bridge.connection.screens.dashboard.common.DashboardInfoRow
 import net.flipper.bridge.connection.screens.dashboard.common.DashboardScreenLayout
 import net.flipper.bridge.connection.screens.dashboard.common.DashboardSectionCard
-import net.flipper.bridge.connection.screens.dashboard.orUnavailable
+import net.flipper.bridge.connection.screens.dashboard.common.orUnavailable
 
 @Composable
 fun HardwareDashboardContent(
