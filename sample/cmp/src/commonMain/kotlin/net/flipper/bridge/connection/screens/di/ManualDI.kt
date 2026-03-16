@@ -6,7 +6,12 @@ import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
 import net.flipper.bridge.connection.screens.ConnectionRootDecomposeComponent
 import net.flipper.bridge.connection.screens.dashboard.DashboardDecomposeComponent
-import net.flipper.bridge.connection.screens.dashboard.DashboardViewModel
+import net.flipper.bridge.connection.screens.dashboard.account.AccountDashboardViewModel
+import net.flipper.bridge.connection.screens.dashboard.deviceinfo.DeviceInfoDashboardViewModel
+import net.flipper.bridge.connection.screens.dashboard.hardware.HardwareDashboardViewModel
+import net.flipper.bridge.connection.screens.dashboard.oncall.OnCallDashboardViewModel
+import net.flipper.bridge.connection.screens.dashboard.overview.OverviewDashboardViewModel
+import net.flipper.bridge.connection.screens.dashboard.screenstreaming.ScreenStreamingDashboardViewModel
 import net.flipper.bridge.connection.screens.device.ConnectionDeviceScreenDecomposeComponent
 import net.flipper.bridge.connection.screens.device.viewmodel.FCurrentDeviceViewModel
 import net.flipper.bridge.connection.screens.device.viewmodel.FDevicesViewModel
@@ -97,6 +102,11 @@ private fun getDashboardDecomposeComponentFactory(
     fFeatureProvider: FFeatureProvider
 ): DashboardDecomposeComponent.Factory {
     return DashboardDecomposeComponent.Factory(
-        dashboardViewModelFactory = { DashboardViewModel(fFeatureProvider) }
+        overviewViewModelFactory = { OverviewDashboardViewModel(fFeatureProvider) },
+        deviceInfoViewModelFactory = { DeviceInfoDashboardViewModel(fFeatureProvider) },
+        accountViewModelFactory = { AccountDashboardViewModel(fFeatureProvider) },
+        hardwareViewModelFactory = { HardwareDashboardViewModel(fFeatureProvider) },
+        onCallViewModelFactory = { OnCallDashboardViewModel(fFeatureProvider) },
+        screenStreamingViewModelFactory = { ScreenStreamingDashboardViewModel(fFeatureProvider) }
     )
 }
