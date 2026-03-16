@@ -125,7 +125,7 @@ private fun DeviceInfoSection(
     ) {
         InfoRow(label = "API semver", value = deviceInfo?.apiSemver.orUnavailable())
         InfoRow(label = "Uptime", value = deviceInfo?.uptime.orUnavailable())
-        InfoRow(label = "bootTime", value = deviceInfo?.bootTime.orUnavailable())
+        InfoRow(label = "Boot time", value = deviceInfo?.bootTime.orUnavailable())
     }
 }
 
