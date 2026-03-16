@@ -84,7 +84,7 @@ fun DashboardContent(
 }
 
 @Composable
-private fun DashboardTopBar(onBack: () -> Unit,) {
+private fun DashboardTopBar(onBack: () -> Unit) {
     TopAppBar(
         title = { Text("Dashboard") },
         backgroundColor = MaterialTheme.colors.surface,
