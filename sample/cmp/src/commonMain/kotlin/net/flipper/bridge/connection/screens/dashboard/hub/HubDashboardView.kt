@@ -1,9 +1,9 @@
 package net.flipper.bridge.connection.screens.dashboard.hub
 
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.layout.padding
 import net.flipper.bridge.connection.screens.dashboard.common.DashboardFeatureButton
 import net.flipper.bridge.connection.screens.dashboard.common.DashboardScreenLayout
 import net.flipper.bridge.connection.screens.dashboard.common.DashboardSectionCard

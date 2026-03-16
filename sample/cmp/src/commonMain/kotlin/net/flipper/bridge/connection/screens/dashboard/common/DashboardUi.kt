@@ -47,10 +47,11 @@ fun DashboardScreenLayout(
 @Composable
 fun DashboardFeatureButton(
     title: String,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     OutlinedButton(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         onClick = onClick,
         contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
     ) {
@@ -86,9 +87,13 @@ fun DashboardSectionCard(
 }
 
 @Composable
-fun DashboardInfoRow(label: String, value: String) {
+fun DashboardInfoRow(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier
+) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Text(
