@@ -51,7 +51,7 @@ class DashboardViewModel(
 
     val aboutDeviceFlow: StateFlow<BusyBarAboutDevice?> = featureProvider
         .get(FAboutFeatureApi::class)
-        .getResource { flow { emit(it.getAboutDevice().toKotlinResult().getOrNull()) } }
+        .getResource { flow { emit(it.getAboutDevice().getOrNull()) } }
 
     val linkedAccountStatusFlow: StateFlow<LinkedAccountInfo?> = featureProvider
         .get(FLinkedInfoOnDemandFeatureApi::class)
