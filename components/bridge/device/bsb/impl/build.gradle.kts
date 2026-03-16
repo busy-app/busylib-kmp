@@ -29,6 +29,7 @@ kotlin {
         implementation(projects.components.bridge.feature.oncall.api)
         implementation(projects.components.bridge.feature.smarthome.api)
         implementation(projects.components.bridge.feature.finishSetup.api)
+        implementation(projects.components.bridge.feature.about.api)
 
         implementation(libs.kotlin.coroutines)
         implementation(libs.kotlin.immutable)

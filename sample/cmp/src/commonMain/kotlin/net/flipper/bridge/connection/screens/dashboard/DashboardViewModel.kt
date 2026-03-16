@@ -8,8 +8,12 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import net.flipper.bridge.connection.feature.about.api.FAboutFeatureApi
+import net.flipper.bridge.connection.feature.about.model.BusyBarAboutDevice
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.info.api.FDeviceInfoFeatureApi
+import net.flipper.bridge.connection.feature.link.check.ondemand.api.FLinkedInfoOnDemandFeatureApi
+import net.flipper.bridge.connection.feature.link.model.LinkedAccountInfo
 import net.flipper.bridge.connection.feature.oncall.api.FOnCallFeatureApi
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
@@ -17,7 +21,6 @@ import net.flipper.bridge.connection.feature.screenstreaming.api.FScreenStreamin
 import net.flipper.bridge.connection.feature.settings.api.FSettingsFeatureApi
 import net.flipper.bridge.connection.screens.decompose.DecomposeViewModel
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
-import kotlin.collections.get
 
 class DashboardViewModel(
     private val featureProvider: FFeatureProvider
@@ -46,6 +49,14 @@ class DashboardViewModel(
         .get(FDeviceInfoFeatureApi::class)
         .getResource { it.deviceVersionFlow }
 
+    val aboutDeviceFlow: StateFlow<BusyBarAboutDevice?> = featureProvider
+        .get(FAboutFeatureApi::class)
+        .getResource { flow { emit(it.getAboutDevice().toKotlinResult().getOrNull()) } }
+
+    val linkedAccountStatusFlow: StateFlow<LinkedAccountInfo?> = featureProvider
+        .get(FLinkedInfoOnDemandFeatureApi::class)
+        .getResource { it.status }
+
     fun startOnCall() {
         viewModelScope.launch(FlipperDispatchers.default) {
             val onCallFeature = featureProvider.getSync(FOnCallFeatureApi::class)
@@ -57,6 +68,13 @@ class DashboardViewModel(
         viewModelScope.launch(FlipperDispatchers.default) {
             val onCallFeature = featureProvider.getSync(FOnCallFeatureApi::class)
             onCallFeature?.stop()
+        }
+    }
+
+    fun deleteAccountBsb() {
+        viewModelScope.launch(FlipperDispatchers.default) {
+            val linkFeature = featureProvider.getSync(FLinkedInfoOnDemandFeatureApi::class)
+            linkFeature?.deleteAccount()
         }
     }
 

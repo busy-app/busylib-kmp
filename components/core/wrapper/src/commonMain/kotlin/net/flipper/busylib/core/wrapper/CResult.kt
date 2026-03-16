@@ -26,6 +26,11 @@ sealed class CResult<out T> {
         is Failure -> throw error
     }
 
+    fun getOrNull(): T? = when (this) {
+        is Success -> value
+        is Failure -> null
+    }
+
     fun exceptionOrNull(): Throwable? = when (this) {
         is Success -> null
         is Failure -> error

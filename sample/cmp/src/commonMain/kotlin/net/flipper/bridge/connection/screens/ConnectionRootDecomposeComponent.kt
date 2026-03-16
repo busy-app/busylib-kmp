@@ -52,7 +52,8 @@ class ConnectionRootDecomposeComponent(
             )
 
         is ConnectionRootConfig.Dashboard -> dashboardDecomposeComponentFactory(
-            componentContext = componentContext
+            componentContext = componentContext,
+            onBack = navigation::pop
         )
     }
 
