@@ -107,6 +107,8 @@ include(
     ":components:bridge:feature:smarthome:impl",
     ":components:bridge:feature:finish-setup:api",
     ":components:bridge:feature:finish-setup:impl",
+    ":components:bridge:feature:about:api",
+    ":components:bridge:feature:about:impl",
 
     ":components:principal:api",
     ":components:cloud:api",

@@ -2,6 +2,7 @@ package net.flipper.bridge.connection.device.bsb.impl.utils
 
 import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.toPersistentMap
+import net.flipper.bridge.connection.feature.about.api.FAboutFeatureApi
 import net.flipper.bridge.connection.feature.battery.api.FDeviceBatteryInfoFeatureApi
 import net.flipper.bridge.connection.feature.ble.api.FBleFeatureApi
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
@@ -43,6 +44,7 @@ object FZeroFeatureClassToEnumMapper {
             FDeviceFeature.SMART_HOME -> FSmartHomeFeatureApi::class
             FDeviceFeature.TIME_ZONE -> FTimeZoneFeatureApi::class
             FDeviceFeature.FINISH_SETUP -> FFinishSetupFeatureApi::class
+            FDeviceFeature.ABOUT -> FAboutFeatureApi::class
         }
     }
 

@@ -2,6 +2,7 @@
 
 package net.flipper.busylib
 
+import net.flipper.bridge.connection.feature.about.api.FAboutFeatureApi
 import net.flipper.bridge.connection.feature.battery.api.FDeviceBatteryInfoFeatureApi
 import net.flipper.bridge.connection.feature.ble.api.FBleFeatureApi
 import net.flipper.bridge.connection.feature.finishsetup.api.FFinishSetupFeatureApi
@@ -115,4 +116,13 @@ fun FFeatureProvider.getFinishSetupFeature(): WrappedFlow<FFeatureStatus<FFinish
 
 suspend fun FFeatureProvider.getFinishSetupFeatureSync(): FFinishSetupFeatureApi? {
     return this.getSync(FFinishSetupFeatureApi::class)
+}
+
+// About Feature
+fun FFeatureProvider.getAboutFeature(): WrappedFlow<FFeatureStatus<FAboutFeatureApi>> {
+    return get(FAboutFeatureApi::class).wrap()
+}
+
+suspend fun FFeatureProvider.getAboutFeatureSync(): FAboutFeatureApi? {
+    return this.getSync(FAboutFeatureApi::class)
 }
