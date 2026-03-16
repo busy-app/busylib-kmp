@@ -1,0 +1,1 @@
+releases/Sentry-WithoutUIKitOrAppKit.xcframework.zip
