@@ -28,8 +28,8 @@ class FAboutFeatureApiImpl(
                     macAddressBluetooth = status.device.bleMac,
                     macAddressWifi = status.device.wifiMac,
                     macAddressUsb = status.device.usbMac,
-                    hardwareVersion = HARDWARE_VERSION,
-                    productionDate = PRODUCTION_DATE,
+                    hardwareVersion = null,
+                    productionDate = null,
                     frontDisplayResolution = FRONT_DISPLAY_RESOLUTION,
                     frontDisplayRefreshRate = FRONT_DISPLAY_REFRESH_RATE,
                     backDisplayResolution = BACK_DISPLAY_RESOLUTION,
@@ -41,8 +41,6 @@ class FAboutFeatureApiImpl(
     }
 
     companion object {
-        private const val HARDWARE_VERSION = "Unknown"
-        private const val PRODUCTION_DATE = "Unknown"
         private const val FRONT_DISPLAY_RESOLUTION = "72×16 (LED)"
         private const val FRONT_DISPLAY_REFRESH_RATE = "60 Hz"
         private const val BACK_DISPLAY_RESOLUTION = "160×80 (OLED)"
