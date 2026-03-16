@@ -118,5 +118,3 @@ class DashboardDecomposeComponent(
         }
     }
 }
-
-fun <T> T?.orUnavailable(): String = this?.toString() ?: "Unavailable"
