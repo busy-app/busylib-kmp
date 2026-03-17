@@ -21,7 +21,7 @@ import net.flipper.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
 import net.flipper.bridge.connection.service.api.FConnectionService
 import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
-import net.flipper.bsb.cloud.rest.api.BusyCloudRestApi
+import net.flipper.bsb.cloud.rest.api.BusyCloudBarsApi
 import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.core.wrapper.CResult
@@ -40,7 +40,7 @@ import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 class FConnectionServiceImpl(
     private val orchestrator: FDeviceOrchestrator,
     private val fDevicePersistedStorage: FDevicePersistedStorage,
-    private val busyCloudRestApi: BusyCloudRestApi,
+    private val barsApi: BusyCloudBarsApi,
     private val principalApi: BUSYLibPrincipalApi
 ) : FConnectionService, LogTagProvider, InternalBUSYLibStartupListener {
     override val TAG: String = "FConnectionService"
@@ -146,7 +146,7 @@ class FConnectionServiceImpl(
                 if (principal == null) {
                     return@transaction CResult.failure(IllegalStateException("User not authorized"))
                 }
-                val result = busyCloudRestApi.barsApi
+                val result = barsApi
                     .unlinkBusyBar(principal, deviceId)
                     .toCResult()
                 if (result.isFailure) return@transaction result
