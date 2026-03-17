@@ -37,7 +37,7 @@ class BusyCloudAccessTokenApiImpl(
         return runSuspendCatching(dispatcher) {
             httpClient.post {
                 url {
-                    protocol = URLProtocol.Companion.HTTPS
+                    protocol = URLProtocol.HTTPS
                     host = bsbHostApi.getHost().value
                     path("/api/v0/bars/$deviceId/access-token")
                 }
