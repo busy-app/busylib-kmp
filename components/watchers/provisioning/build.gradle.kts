@@ -21,6 +21,7 @@ kotlin {
         implementation(projects.components.bridge.feature.rpc.api)
 
         implementation(projects.components.cloud.api)
+        implementation(projects.components.cloud.rest.api)
         implementation(projects.components.principal.api)
 
         implementation(libs.kotlin.coroutines)

@@ -1,12 +1,12 @@
-package net.flipper.bridge.connection.transport.tcp.lan.impl.engine.token
+package net.flipper.bsb.cloud.rest.model
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class ProxyTokenRequest(
+internal data class BusyCloudAccessTokenRequest(
     @SerialName("scope")
     val scopes: List<String> = listOf("http:read", "http:write", "http:delete"),
     @SerialName("ttl_seconds")
-    val ttlSeconds: Long = 600 // Seconds
+    val ttlSeconds: Long = 600
 )

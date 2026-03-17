@@ -1,4 +1,4 @@
-package net.flipper.core.ktor.util
+package net.flipper.bsb.cloud.rest.api
 
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.http.HttpHeaders
