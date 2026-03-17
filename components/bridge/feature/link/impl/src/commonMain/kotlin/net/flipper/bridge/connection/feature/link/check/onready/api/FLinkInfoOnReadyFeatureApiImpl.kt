@@ -17,7 +17,7 @@ import net.flipper.bridge.connection.feature.rpc.api.model.RpcLinkedAccountInfo
 import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
 import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
-import net.flipper.bsb.cloud.api.BUSYLibBarsApi
+import net.flipper.bsb.cloud.rest.api.BusyCloudBarsApi
 import net.flipper.busylib.core.wrapper.CResult
 import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.toCResult
@@ -36,7 +36,7 @@ class FLinkInfoOnReadyFeatureApiImpl(
     @Assisted private val rpcFeatureApi: FRpcCriticalFeatureApi,
     @Assisted private val scope: CoroutineScope,
     private val busyLibPrincipalApi: BUSYLibPrincipalApi,
-    private val busyLibBarsApi: BUSYLibBarsApi
+    private val busyLibBarsApi: BusyCloudBarsApi
 ) : FLinkedInfoOnReadyFeatureApi, FLinkedInfoOnDemandFeatureApi, LogTagProvider {
     override val TAG = "FLinkedInfoOnReadyFeatureApi"
     private val _status = MutableStateFlow<LinkedAccountInfo?>(null)
@@ -104,7 +104,7 @@ class FLinkInfoOnReadyFeatureApiImpl(
 
         info { "Receive link code from BUSY Bar: $linkCode" }
 
-        busyLibBarsApi.registerBusyBar(principal, linkCode.code).getOrThrow()
+        busyLibBarsApi.linkBusyBar(principal, linkCode.code).getOrThrow()
 
         info { "BUSY Bar registered, waiting user registration from BUSY Bar" }
 

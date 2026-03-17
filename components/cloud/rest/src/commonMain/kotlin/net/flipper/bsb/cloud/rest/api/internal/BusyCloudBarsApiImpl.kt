@@ -2,16 +2,20 @@ package net.flipper.bsb.cloud.rest.api.internal
 
 import io.ktor.client.HttpClient
 import io.ktor.client.request.delete
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
 import io.ktor.client.request.url
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.URLProtocol
+import io.ktor.http.isSuccess
 import io.ktor.http.path
 import kotlinx.coroutines.CoroutineDispatcher
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
 import net.flipper.bsb.cloud.api.BUSYLibHostApi
 import net.flipper.bsb.cloud.rest.api.BusyCloudBarsApi
+import net.flipper.bsb.cloud.rest.model.BSBApiPinRequest
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.ktor.di.qualifier.KtorNetworkClientQualifier
@@ -40,7 +44,7 @@ class BusyCloudBarsApiImpl(
                 url {
                     protocol = URLProtocol.HTTPS
                     host = bsbHostApi.getHost().value
-                    path("api", "v0", "bars", "$uuid")
+                    path("/api/v0/bars/$uuid")
                 }
                 addAuthHeader(principal)
             }
@@ -48,6 +52,24 @@ class BusyCloudBarsApiImpl(
                 HttpStatusCode.OK -> Unit
                 else -> error("Failed to delete bar ${response.bodyAsText()}")
             }
+        }
+    }
+
+    override suspend fun linkBusyBar(
+        principal: BUSYLibUserPrincipal.Token,
+        pin: String
+    ): Result<Unit> {
+        return runSuspendCatching(dispatcher) {
+            val response = httpClient.post {
+                url {
+                    protocol = URLProtocol.HTTPS
+                    host = bsbHostApi.getHost().value
+                    path("/api/v0/bars/link")
+                }
+                addAuthHeader(principal)
+                setBody(BSBApiPinRequest(pin))
+            }
+            check(response.status.isSuccess()) { "Failed link busy bar" }
         }
     }
 }
