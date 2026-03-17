@@ -21,6 +21,7 @@ import net.flipper.bridge.connection.screens.search.ConnectionSearchDecomposeCom
 import net.flipper.bridge.connection.screens.search.ConnectionSearchViewModel
 import net.flipper.bridge.connection.screens.utils.PermissionChecker
 import net.flipper.bridge.connection.service.api.FConnectionService
+import net.flipper.bridge.connection.utils.principal.impl.UserPrincipalApiSampleImpl
 import net.flipper.bridge.device.firmwareupdate.updater.api.FirmwareUpdaterApi
 import net.flipper.busylib.BUSYLib
 
@@ -29,7 +30,8 @@ fun getRootDecomposeComponent(
     permissionChecker: PermissionChecker,
     persistedStorage: FDevicePersistedStorage,
     busyLib: BUSYLib,
-    searchViewModelProvider: () -> ConnectionSearchViewModel
+    searchViewModelProvider: () -> ConnectionSearchViewModel,
+    principalApi: UserPrincipalApiSampleImpl? = null
 ): ConnectionRootDecomposeComponent {
     return getRootDecomposeComponentFactory(
         permissionChecker = permissionChecker,
@@ -38,7 +40,8 @@ fun getRootDecomposeComponent(
         featureProvider = busyLib.featureProvider,
         searchViewModelProvider = searchViewModelProvider,
         fConnectionService = busyLib.connectionService,
-        firmwareUpdaterApi = busyLib.firmwareUpdaterApi
+        firmwareUpdaterApi = busyLib.firmwareUpdaterApi,
+        principalApi = principalApi
     ).invoke(componentContext)
 }
 
@@ -50,7 +53,8 @@ private fun getRootDecomposeComponentFactory(
     featureProvider: FFeatureProvider,
     fConnectionService: FConnectionService,
     searchViewModelProvider: () -> ConnectionSearchViewModel,
-    firmwareUpdaterApi: FirmwareUpdaterApi
+    firmwareUpdaterApi: FirmwareUpdaterApi,
+    principalApi: UserPrincipalApiSampleImpl?
 ): ConnectionRootDecomposeComponent.Factory {
     return ConnectionRootDecomposeComponent.Factory(
         permissionChecker = permissionChecker,
@@ -64,7 +68,10 @@ private fun getRootDecomposeComponentFactory(
             fService = fConnectionService,
             firmwareUpdaterApi = firmwareUpdaterApi
         ),
-        dashboardDecomposeComponentFactory = getDashboardDecomposeComponentFactory(featureProvider)
+        dashboardDecomposeComponentFactory = getDashboardDecomposeComponentFactory(
+            fFeatureProvider = featureProvider,
+            principalApi = principalApi
+        )
     )
 }
 
@@ -99,12 +106,13 @@ private fun getConnectionDeviceScreenDecomposeComponentFactory(
 }
 
 private fun getDashboardDecomposeComponentFactory(
-    fFeatureProvider: FFeatureProvider
+    fFeatureProvider: FFeatureProvider,
+    principalApi: UserPrincipalApiSampleImpl?
 ): DashboardDecomposeComponent.Factory {
     return DashboardDecomposeComponent.Factory(
         overviewViewModelFactory = { OverviewDashboardViewModel(fFeatureProvider) },
         deviceInfoViewModelFactory = { DeviceInfoDashboardViewModel(fFeatureProvider) },
-        accountViewModelFactory = { AccountDashboardViewModel(fFeatureProvider) },
+        accountViewModelFactory = { AccountDashboardViewModel(fFeatureProvider, principalApi) },
         hardwareViewModelFactory = { HardwareDashboardViewModel(fFeatureProvider) },
         onCallViewModelFactory = { OnCallDashboardViewModel(fFeatureProvider) },
         screenStreamingViewModelFactory = { ScreenStreamingDashboardViewModel(fFeatureProvider) }
