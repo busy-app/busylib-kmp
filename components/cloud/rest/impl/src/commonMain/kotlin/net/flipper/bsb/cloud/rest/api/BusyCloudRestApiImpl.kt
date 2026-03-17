@@ -1,9 +1,6 @@
-package net.flipper.bsb.cloud.rest.api.internal
+package net.flipper.bsb.cloud.rest.api
 
 import me.tatarka.inject.annotations.Inject
-import net.flipper.bsb.cloud.rest.api.BusyCloudBarsApi
-import net.flipper.bsb.cloud.rest.api.BusyCloudRestApi
-import net.flipper.bsb.cloud.rest.api.BusyFirmwareDirectoryApi
 import net.flipper.busylib.core.di.BusyLibGraph
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 import software.amazon.lastmile.kotlin.inject.anvil.SingleIn

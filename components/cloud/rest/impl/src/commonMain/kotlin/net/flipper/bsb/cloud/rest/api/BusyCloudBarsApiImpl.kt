@@ -1,10 +1,9 @@
-package net.flipper.bsb.cloud.rest.api.internal
+package net.flipper.bsb.cloud.rest.api
 
 import io.ktor.client.HttpClient
 import io.ktor.client.request.delete
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
-import io.ktor.client.request.url
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.URLProtocol
@@ -14,7 +13,6 @@ import kotlinx.coroutines.CoroutineDispatcher
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
 import net.flipper.bsb.cloud.api.BUSYLibHostApi
-import net.flipper.bsb.cloud.rest.api.BusyCloudBarsApi
 import net.flipper.bsb.cloud.rest.model.BSBApiPinRequest
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
