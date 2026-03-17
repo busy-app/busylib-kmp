@@ -46,7 +46,7 @@ class FLinkInfoOnReadyFeatureApiImpl(
     override suspend fun onReady() {
         busyLibPrincipalApi.getPrincipalFlow()
             .filter { it !is BUSYLibUserPrincipal.Loading }
-            .filter { it !is BUSYLibUserPrincipal.Token.Impl }
+            .filter { it !is BUSYLibUserPrincipal.Token }
             .onEach { _ -> tryCheckLinkedInfo() }
             .launchIn(scope)
     }
@@ -77,9 +77,9 @@ class FLinkInfoOnReadyFeatureApiImpl(
         singleJobScope.launch(SingleJobMode.CANCEL_PREVIOUS) {
             val principal = busyLibPrincipalApi.getPrincipalFlow()
                 .filter { principal -> principal !is BUSYLibUserPrincipal.Loading }
-                .first() as? BUSYLibUserPrincipal.Full
+                .first() as? BUSYLibUserPrincipal.Token
 
-            info { "Local principal is ${principal?.userId}/${principal?.email}" }
+            info { "Local principal is ${principal?.userId}" }
 
             val info = exponentialRetry {
                 rpcFeatureApi.invalidateLinkedUser(principal?.userId)
@@ -98,7 +98,7 @@ class FLinkInfoOnReadyFeatureApiImpl(
     }
 
     private suspend fun authBusyBar(
-        principal: BUSYLibUserPrincipal.Full
+        principal: BUSYLibUserPrincipal.Token
     ): Result<Unit> = runCatching {
         val linkCode = rpcFeatureApi.getLinkCode().getOrThrow()
 

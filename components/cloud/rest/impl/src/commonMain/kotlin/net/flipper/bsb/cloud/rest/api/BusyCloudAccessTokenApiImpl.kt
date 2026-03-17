@@ -12,6 +12,7 @@ import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
 import net.flipper.bsb.cloud.api.BUSYLibHostApi
 import net.flipper.bsb.cloud.rest.model.BusyCloudAccessTokenRequest
 import net.flipper.bsb.cloud.rest.model.BusyCloudAccessTokenResponse
+import net.flipper.bsb.cloud.rest.utils.run
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.ktor.di.qualifier.KtorNetworkClientQualifier
@@ -34,14 +35,14 @@ class BusyCloudAccessTokenApiImpl(
         principal: BUSYLibUserPrincipal.Token,
         deviceId: Uuid
     ): Result<BusyCloudAccessTokenResponse> {
-        return runSuspendCatching(dispatcher) {
+        return principal.run(dispatcher) {
             httpClient.post {
                 url {
                     protocol = URLProtocol.HTTPS
                     host = bsbHostApi.getHost().value
                     path("/api/v0/bars/$deviceId/access-token")
                 }
-                addAuthHeader(principal)
+                addAuth()
                 setBody(BusyCloudAccessTokenRequest())
             }.body<BusyCloudAccessTokenResponse>()
         }
