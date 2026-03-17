@@ -3,6 +3,7 @@ package net.flipper.bridge.connection.feature.link.check.onready.api
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
@@ -45,9 +46,8 @@ class FLinkInfoOnReadyFeatureApiImpl(
 
     override suspend fun onReady() {
         busyLibPrincipalApi.getPrincipalFlow()
-            .filter { it !is BUSYLibUserPrincipal.Loading }
-            .filter { it !is BUSYLibUserPrincipal.Token }
-            .onEach { _ -> tryCheckLinkedInfo() }
+            .filterIsInstance<BUSYLibUserPrincipal.Token>()
+            .onEach { principal -> tryCheckLinkedInfo(principal) }
             .launchIn(scope)
     }
 
@@ -73,12 +73,8 @@ class FLinkInfoOnReadyFeatureApiImpl(
         }
     }
 
-    private fun tryCheckLinkedInfo() {
+    private fun tryCheckLinkedInfo(principal: BUSYLibUserPrincipal.Token?) {
         singleJobScope.launch(SingleJobMode.CANCEL_PREVIOUS) {
-            val principal = busyLibPrincipalApi.getPrincipalFlow()
-                .filter { principal -> principal !is BUSYLibUserPrincipal.Loading }
-                .first() as? BUSYLibUserPrincipal.Token
-
             info { "Local principal is ${principal?.userId}" }
 
             val info = exponentialRetry {
@@ -122,7 +118,14 @@ class FLinkInfoOnReadyFeatureApiImpl(
 
     override suspend fun deleteAccount(): CResult<SuccessResponse> {
         return rpcFeatureApi.deleteAccount()
-            .onSuccess { tryCheckLinkedInfo() }
+            .onSuccess {
+                tryCheckLinkedInfo(
+                    principal = busyLibPrincipalApi
+                        .getPrincipalFlow()
+                        .filter { it !is BUSYLibUserPrincipal.Loading }
+                        .first() as? BUSYLibUserPrincipal.Token
+                )
+            }
             .toCResult()
     }
 
