@@ -4,6 +4,7 @@ import com.flipperdevices.core.network.BUSYLibNetworkStateApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.config.api.PersistedStorageTransactionScope
@@ -41,7 +42,8 @@ class CloudFetcherWatcher(
     override fun onLaunch() {
         singleJobScope.launch(SingleJobMode.CANCEL_PREVIOUS) {
             combine(
-                persistedStorage.getAllDevicesFlow(),
+                persistedStorage.getAllDevicesFlow()
+                    .distinctUntilChanged(),
                 busyLibNetworkStateApi.isNetworkAvailableFlow,
                 principalApi.getPrincipalFlow()
             ) { allDevices, isNetworkAvailable, principal ->
@@ -62,7 +64,7 @@ class CloudFetcherWatcher(
                     null
                 }
                 if (cloudBars == null) {
-                    debug { "Skip syncronization because busy bar list is null" }
+                    debug { "Skip synchronization because busy bar list is null" }
                     return@collectLatest
                 }
                 val cloudBarsId = cloudBars.mapNotNull { Uuid.parseOrNull(it.id) }
