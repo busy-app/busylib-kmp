@@ -18,6 +18,7 @@ import net.flipper.bsb.cloud.api.BUSYLibHostApi
 import net.flipper.bsb.cloud.rest.model.BSBApiPinRequest
 import net.flipper.bsb.cloud.rest.model.BusyCloudBar
 import net.flipper.bsb.cloud.rest.model.BusyCloudBarsListResponse
+import net.flipper.bsb.cloud.rest.utils.run
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.ktor.di.qualifier.KtorNetworkClientQualifier
@@ -40,14 +41,14 @@ class BusyCloudBarsApiImpl(
         principal: BUSYLibUserPrincipal.Token,
         uuid: Uuid,
     ): Result<Unit> {
-        return runSuspendCatching(dispatcher) {
+        return principal.run(dispatcher) {
             val response = httpClient.delete {
                 url {
                     protocol = URLProtocol.HTTPS
                     host = bsbHostApi.getHost().value
                     path("/api/v0/bars/$uuid")
                 }
-                addAuthHeader(principal)
+                addAuth()
             }
             when (response.status) {
                 HttpStatusCode.OK -> Unit
@@ -60,14 +61,14 @@ class BusyCloudBarsApiImpl(
         principal: BUSYLibUserPrincipal.Token,
         pin: String
     ): Result<Unit> {
-        return runSuspendCatching(dispatcher) {
+        return principal.run(dispatcher) {
             val response = httpClient.post {
                 url {
                     protocol = URLProtocol.HTTPS
                     host = bsbHostApi.getHost().value
                     path("/api/v0/bars/link")
                 }
-                addAuthHeader(principal)
+                addAuth()
                 setBody(BSBApiPinRequest(pin))
             }
             check(response.status.isSuccess()) { "Failed link busy bar" }
@@ -77,14 +78,14 @@ class BusyCloudBarsApiImpl(
     override suspend fun getBarsList(
         principal: BUSYLibUserPrincipal.Token
     ): Result<List<BusyCloudBar>> {
-        return runSuspendCatching(dispatcher) {
+        return principal.run(dispatcher) {
             val response = httpClient.get {
                 url {
                     protocol = URLProtocol.HTTPS
                     host = bsbHostApi.getHost().value
                     path("/api/v0/bars/list")
                 }
-                addAuthHeader(principal)
+                addAuth()
             }.body<BusyCloudBarsListResponse>()
             response.success.bars
         }

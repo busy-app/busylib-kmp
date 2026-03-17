@@ -10,8 +10,8 @@ import me.tatarka.inject.annotations.Inject
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
 import net.flipper.bsb.cloud.api.BUSYLibHostApi
 import net.flipper.bsb.cloud.rest.model.BusyCloudTicketResponse
+import net.flipper.bsb.cloud.rest.utils.run
 import net.flipper.busylib.core.di.BusyLibGraph
-import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.ktor.di.qualifier.KtorNetworkClientQualifier
 import net.flipper.core.ktor.di.qualifier.NetworkCoroutineDispatcher
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
@@ -30,14 +30,14 @@ class BusyCloudWebSocketTicketApiImpl(
     override suspend fun getTicketToken(
         principal: BUSYLibUserPrincipal.Token
     ): Result<String> {
-        return runSuspendCatching(dispatcher) {
+        return principal.run(dispatcher) {
             httpClient.post {
                 url {
                     protocol = URLProtocol.HTTPS
                     host = bsbHostApi.getHost().value
                     path("/api/v0/auth/ticket")
                 }
-                addAuthHeader(principal)
+                addAuth()
             }.body<BusyCloudTicketResponse>().token
         }
     }
