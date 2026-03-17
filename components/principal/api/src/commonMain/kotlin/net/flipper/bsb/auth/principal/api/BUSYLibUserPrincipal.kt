@@ -4,7 +4,7 @@ import kotlin.uuid.Uuid
 
 sealed interface BUSYLibUserPrincipal {
 
-    sealed interface Token : BUSYLibUserPrincipal {
+    interface Token : BUSYLibUserPrincipal {
         val userId: Uuid
 
         suspend fun getToken(failedToken: String?): String
