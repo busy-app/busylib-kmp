@@ -6,13 +6,11 @@ plugins {
 
 kotlin {
     sourceSets.commonMain.dependencies {
-        implementation(projects.components.cloud.barsws.api)
+        implementation(projects.components.cloud.rest.api)
 
-        implementation(projects.components.core.log)
         implementation(projects.components.core.di)
         implementation(projects.components.core.ktx)
         implementation(projects.components.core.ktor)
-        implementation(projects.components.core.network)
         implementation(projects.components.core.wrapper)
 
         implementation(projects.components.principal.api)
@@ -21,8 +19,6 @@ kotlin {
         implementation(libs.ktor.client.core)
         implementation(libs.ktor.negotiation)
         implementation(libs.ktor.serialization)
-        implementation(libs.ktor.client.websockets)
-        implementation(libs.ktor.client.logging)
 
         implementation(libs.kotlin.coroutines)
         implementation(libs.kotlin.serialization.json)

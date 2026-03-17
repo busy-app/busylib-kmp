@@ -1,7 +1,6 @@
 package net.flipper.bsb.cloud.rest.api
 
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
-import net.flipper.busylib.core.wrapper.CResult
 import kotlin.uuid.Uuid
 
 interface BusyCloudBarsApi {

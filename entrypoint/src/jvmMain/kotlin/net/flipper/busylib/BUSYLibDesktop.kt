@@ -37,7 +37,6 @@ class BUSYLibDesktop(
         fun build(
             scope: CoroutineScope,
             principalApi: BUSYLibPrincipalApi,
-            busyLibBarsApi: BUSYLibBarsApi,
             persistedStorage: FDevicePersistedStorage,
             hostApi: BUSYLibHostApi = BUSYLibHostApiStub("cloud.busy.app"),
             networkStateApi: BUSYLibNetworkStateApi = BUSYLibNetworkStateApiNoop()
@@ -45,7 +44,6 @@ class BUSYLibDesktop(
             val graph = BUSYLibGraphDesktop::class.create(
                 scope,
                 principalApi,
-                busyLibBarsApi,
                 persistedStorage,
                 hostApi,
                 networkStateApi,

@@ -19,7 +19,6 @@ import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 abstract class BUSYLibGraphAndroid(
     @get:Provides protected val scope: CoroutineScope,
     @get:Provides protected val principalApi: BUSYLibPrincipalApi,
-    @get:Provides protected val busyLibBarsApi: BUSYLibBarsApi,
     @get:Provides protected val persistedStorage: FDevicePersistedStorage,
     // Android-specific factory
     @get:Provides protected val context: Context,

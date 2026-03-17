@@ -9,7 +9,7 @@ kotlin {
 
         implementation(projects.components.principal.api)
         implementation(projects.components.cloud.api)
-        implementation(projects.components.cloud.rest)
+        implementation(projects.components.cloud.rest.api)
 
         implementation(projects.components.core.di)
         implementation(projects.components.core.ktx)

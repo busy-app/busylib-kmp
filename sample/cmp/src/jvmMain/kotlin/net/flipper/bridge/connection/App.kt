@@ -23,7 +23,6 @@ import net.flipper.bridge.connection.config.impl.FDevicePersistedStorageImpl
 import net.flipper.bridge.connection.screens.di.getRootDecomposeComponent
 import net.flipper.bridge.connection.screens.search.LanSearchViewModel
 import net.flipper.bridge.connection.utils.PermissionCheckerNoop
-import net.flipper.bridge.connection.utils.cloud.BUSYLibBarsApiNoop
 import net.flipper.bridge.connection.utils.principal.impl.UserPrincipalApiSampleImpl
 import net.flipper.bridge.connection.utils.runOnUiThread
 import net.flipper.bsb.cloud.api.BUSYLibHostApiStub
@@ -48,7 +47,6 @@ suspend fun main() {
     val busyLib = BUSYLibDesktop.build(
         scope = applicationScope,
         principalApi = UserPrincipalApiSampleImpl(applicationScope, hostApi),
-        busyLibBarsApi = BUSYLibBarsApiNoop(),
         persistedStorage = persistedStorage,
         networkStateApi = BUSYLibNetworkStateApiNoop(defaultState = true),
         hostApi = hostApi

@@ -11,7 +11,6 @@ import net.flipper.bridge.connection.screens.ConnectionRootDecomposeComponent
 import net.flipper.bridge.connection.screens.di.getRootDecomposeComponent
 import net.flipper.bridge.connection.screens.search.LanSearchViewModel
 import net.flipper.bridge.connection.utils.PermissionCheckerNoop
-import net.flipper.bridge.connection.utils.cloud.BUSYLibBarsApiNoop
 import net.flipper.bridge.connection.utils.principal.impl.UserPrincipalApiNoop
 import net.flipper.busylib.BUSYLibMacOS
 import platform.Foundation.NSUserDefaults
@@ -27,7 +26,6 @@ val busyLib: BUSYLibMacOS by lazy {
     BUSYLibMacOS.build(
         CoroutineScope(SupervisorJob()),
         principalApi = UserPrincipalApiNoop(),
-        busyLibBarsApi = BUSYLibBarsApiNoop(),
         persistedStorage = storage,
     )
 }

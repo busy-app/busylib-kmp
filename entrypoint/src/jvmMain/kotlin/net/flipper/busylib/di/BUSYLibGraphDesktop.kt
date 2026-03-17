@@ -18,7 +18,6 @@ import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 abstract class BUSYLibGraphDesktop(
     @get:Provides protected val scope: CoroutineScope,
     @get:Provides protected val principalApi: BUSYLibPrincipalApi,
-    @get:Provides protected val busyLibBarsApi: BUSYLibBarsApi,
     @get:Provides protected val persistedStorage: FDevicePersistedStorage,
     @get:Provides protected val hostApi: BUSYLibHostApi,
     @get:Provides protected val networkStateApi: BUSYLibNetworkStateApi,

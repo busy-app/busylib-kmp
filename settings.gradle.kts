@@ -115,7 +115,8 @@ include(
 
     ":components:cloud:barsws:api",
     ":components:cloud:barsws:impl",
-    ":components:cloud:rest",
+    ":components:cloud:rest:api",
+    ":components:cloud:rest:impl",
 
     ":components:tools:oncall:api",
     ":components:tools:oncall:impl",

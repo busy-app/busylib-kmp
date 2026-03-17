@@ -43,7 +43,6 @@ class BUSYLibAndroid(
         fun build(
             scope: CoroutineScope,
             principalApi: BUSYLibPrincipalApi,
-            busyLibBarsApi: BUSYLibBarsApi,
             persistedStorage: FDevicePersistedStorage,
             // Android-specific factory
             context: Context,
@@ -53,7 +52,6 @@ class BUSYLibAndroid(
             val graph = BUSYLibGraphAndroid::class.create(
                 scope,
                 principalApi,
-                busyLibBarsApi,
                 persistedStorage,
                 context,
                 hostApi,
