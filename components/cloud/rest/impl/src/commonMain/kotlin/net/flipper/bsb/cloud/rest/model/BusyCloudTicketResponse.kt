@@ -1,10 +1,10 @@
-package net.flipper.bsb.cloud.barsws.api.model
+package net.flipper.bsb.cloud.rest.model
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class InternalTicketRequest(
+internal data class BusyCloudTicketResponse(
     @SerialName("token")
     val token: String
 )

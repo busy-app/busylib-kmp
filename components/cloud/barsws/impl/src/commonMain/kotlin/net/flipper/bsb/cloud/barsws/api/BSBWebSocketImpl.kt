@@ -1,9 +1,7 @@
 package net.flipper.bsb.cloud.barsws.api
 
 import io.ktor.client.HttpClient
-import io.ktor.client.call.body
 import io.ktor.client.plugins.websocket.webSocketSession
-import io.ktor.client.request.post
 import io.ktor.http.URLProtocol
 import io.ktor.http.path
 import kotlinx.coroutines.CoroutineDispatcher
@@ -20,11 +18,11 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
-import net.flipper.bsb.cloud.barsws.api.model.InternalTicketRequest
 import net.flipper.bsb.cloud.barsws.api.model.InternalWebSocketRequest
 import net.flipper.bsb.cloud.barsws.api.model.toInternal
 import net.flipper.bsb.cloud.barsws.api.utils.wrappers.BSBWebSocketSession
 import net.flipper.bsb.cloud.barsws.api.utils.wrappers.KtorBSBWebSocketSession
+import net.flipper.bsb.cloud.rest.api.BusyCloudWebSocketTicketApi
 import net.flipper.core.busylib.ktx.common.launchOnCompletion
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
@@ -32,7 +30,6 @@ import net.flipper.core.busylib.log.info
 import net.flipper.core.busylib.log.sensitive
 import net.flipper.core.busylib.log.verbose
 import net.flipper.core.busylib.log.warn
-import net.flipper.core.ktor.util.addAuthHeader
 import kotlin.uuid.Uuid
 
 private const val JSON_KEY_BAR_ID = "bar_id"
@@ -90,6 +87,7 @@ class BSBWebSocketImpl(
 @Suppress("LongParameterList", "MagicNumber")
 suspend fun getBSBWebSocket(
     httpClient: HttpClient,
+    ticketApi: BusyCloudWebSocketTicketApi,
     logger: LogTagProvider,
     principal: BUSYLibUserPrincipal.Token,
     busyHost: String,
@@ -111,7 +109,7 @@ suspend fun getBSBWebSocket(
         scope.launchOnCompletion {
             session.close()
         }
-        val ticketToken = getTicketToken(httpClient, busyHost, principal)
+        val ticketToken = ticketApi.getTicketToken(principal).getOrThrow()
 
         sensitive { "Received ticket token: $ticketToken" }
 
@@ -119,21 +117,4 @@ suspend fun getBSBWebSocket(
 
         return@withContext BSBWebSocketImpl(session, logger, scope, dispatcher)
     }
-}
-
-@Suppress("MagicNumber")
-private suspend fun getTicketToken(
-    httpClient: HttpClient,
-    busyHost: String,
-    principal: BUSYLibUserPrincipal.Token
-): String {
-    return httpClient.post {
-        url {
-            host = busyHost
-            path("/api/v0/auth/ticket")
-            protocol = URLProtocol.HTTPS
-            port = 443
-        }
-        addAuthHeader(principal)
-    }.body<InternalTicketRequest>().token
 }

@@ -11,8 +11,8 @@ import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
 import net.flipper.bsb.cloud.rest.api.BusyCloudBarsApi
-import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
 import net.flipper.bsb.cloud.rest.model.BusyCloudBar
+import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.ktx.common.SingleJobMode
 import net.flipper.core.busylib.ktx.common.asSingleJobScope
@@ -45,16 +45,22 @@ class CloudFetcherWatcher(
                 busyLibNetworkStateApi.isNetworkAvailableFlow,
                 principalApi.getPrincipalFlow()
             ) { allDevices, isNetworkAvailable, principal ->
-                Triple(allDevices.mapNotNull {
-                    it.cloud
-                }.map { it.deviceId }, isNetworkAvailable, principal)
+                Triple(
+                    allDevices.mapNotNull {
+                        it.cloud
+                    }.map { it.deviceId },
+                    isNetworkAvailable,
+                    principal
+                )
             }.collectLatest { (localCloudDeviceIds, isNetworkAvailable, principal) ->
                 val cloudBars = if (isNetworkAvailable && principal is BUSYLibUserPrincipal.Token) {
                     busyCloudBarsApi.getBarsList(principal)
                         .onFailure {
                             error(it) { "Failed to get bars list" }
                         }.getOrNull()
-                } else null
+                } else {
+                    null
+                }
                 if (cloudBars == null) {
                     debug { "Skip syncronization because busy bar list is null" }
                     return@collectLatest
