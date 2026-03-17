@@ -49,7 +49,7 @@ internal object SampleAuthClient {
                 AuthExchangeRequest(
                     authCode = signInResponse.success.authCode,
                     codeVerifier = codeVerifier,
-                    platform = "native"
+                    platform = "mobile"
                 )
             )
         }.body<AuthExchangeResponse>()
