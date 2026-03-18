@@ -5,5 +5,6 @@ import platform.Foundation.abbreviation
 import platform.Foundation.localTimeZone
 
 actual fun currentTimeZoneAbbreviation(): String {
-    return NSTimeZone.localTimeZone.abbreviation ?: ""
+    val tz = NSTimeZone.localTimeZone
+    return tz.abbreviation ?: tz.name
 }
