@@ -7,7 +7,7 @@ import os
 import sys
 
 from common import (
-    DEFAULT_URL, DEFAULT_WORKERS,
+    DEFAULT_URL,
     Stats, delete_path, list_details,
     log, set_stats, setup_logging,
 )
