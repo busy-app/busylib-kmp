@@ -1,4 +1,4 @@
-package net.flipper.busylib.watchers.hook
+package net.flipper.bsb.watchers.desktop.hook
 
 import net.flipper.bridge.connection.config.api.PersistedStorageTransactionScope
 import net.flipper.bridge.connection.config.api.TransactionHook

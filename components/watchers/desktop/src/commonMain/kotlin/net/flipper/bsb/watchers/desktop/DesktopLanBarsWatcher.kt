@@ -1,14 +1,14 @@
-package net.flipper.busylib.watchers
+package net.flipper.bsb.watchers.desktop
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
+import net.flipper.bsb.watchers.desktop.hook.DesktopActiveDevice
 import net.flipper.busylib.core.di.BusyLibGraph
-import net.flipper.busylib.watchers.hook.DesktopActiveDevice
-import net.flipper.busylib.watchers.hook.DesktopAlwaysLan
-import net.flipper.busylib.watchers.hook.DesktopEmptyFiller
+import net.flipper.bsb.watchers.desktop.hook.DesktopAlwaysLan
+import net.flipper.bsb.watchers.desktop.hook.DesktopEmptyFiller
 import net.flipper.core.busylib.ktx.common.SingleJobMode
 import net.flipper.core.busylib.ktx.common.asSingleJobScope
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
