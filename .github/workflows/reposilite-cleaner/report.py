@@ -48,8 +48,13 @@ def group_by_top_level(paths):
     return dict(groups)
 
 
-def generate_report(repos, scan_dir, cleanup_dir):
-    """Generate Markdown report string."""
+def generate_report(repos, artifacts_dir):
+    """Generate Markdown report string.
+
+    Expects artifacts laid out as:
+      <artifacts_dir>/scan-<repo>/scan_result.csv
+      <artifacts_dir>/cleanup-<repo>/cleanup_dirs.csv
+    """
     lines = []
     lines.append("# 🧹 Reposilite Cleanup Report\n")
 
@@ -59,8 +64,8 @@ def generate_report(repos, scan_dir, cleanup_dir):
 
     repo_data = {}
     for repo in repos:
-        scan_path = os.path.join(scan_dir, f"scan-{repo}", "scan_result.csv")
-        cleanup_path = os.path.join(cleanup_dir, f"cleanup-{repo}", "cleanup_dirs.csv")
+        scan_path = os.path.join(artifacts_dir, f"scan-{repo}", "scan_result.csv")
+        cleanup_path = os.path.join(artifacts_dir, f"cleanup-{repo}", "cleanup_dirs.csv")
 
         del_files, del_dirs = read_scan_csv(scan_path)
         cleanup_dirs = read_cleanup_csv(cleanup_path)
@@ -144,15 +149,16 @@ def generate_report(repos, scan_dir, cleanup_dir):
 
 def main():
     p = argparse.ArgumentParser(description="Generate cleanup report")
+    # Default repos must match the matrix in reposilite-clean.yml
     p.add_argument("--repos", nargs="+", default=["releases", "snapshots"],
-                   help="Repository names to report on")
+                   help="Repository names to report on (must match workflow matrix)")
     p.add_argument("--artifacts-dir", default=".",
                    help="Directory containing downloaded artifacts")
     p.add_argument("--output", default=None,
                    help="Output file (default: stdout)")
     args = p.parse_args()
 
-    report = generate_report(args.repos, args.artifacts_dir, args.artifacts_dir)
+    report = generate_report(args.repos, args.artifacts_dir)
 
     if args.output:
         with open(args.output, "w") as f:
