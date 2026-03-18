@@ -27,7 +27,7 @@ class IOSSearchViewModel(
         address = "busy_bar_mock",
         deviceModel = BUSYBar(
             humanReadableName = "BUSY Bar Mock",
-            mock = BUSYBar.ConnectionWay.Mock
+            mock = ConnectionWay.Mock
         ),
         isAdded = false,
     )
@@ -77,6 +77,7 @@ class IOSSearchViewModel(
 
 private fun DiscoveredBluetoothDevice.toFDeviceModel(): BUSYBar {
     return BUSYBar(
+        uniqueId = this.address,
         humanReadableName = this.name ?: "BUSY Bar",
         ble = ConnectionWay.BLE(
             address = this.address

@@ -51,6 +51,6 @@ class FIOSResetSerialBleApiImpl(
         )
         info { "Reset command written, waiting for request counter to be zero" }
         requestCounterStateFlow.filter { it == 0 }.first()
-        info { "Rested command" }
+        info { "Reset success" }
     }
 }

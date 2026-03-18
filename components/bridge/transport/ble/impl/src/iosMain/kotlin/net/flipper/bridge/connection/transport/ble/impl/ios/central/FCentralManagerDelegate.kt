@@ -18,10 +18,6 @@ internal class FCentralManagerDelegate(
 ) : NSObject(), CBCentralManagerDelegateProtocol {
 
     override fun centralManagerDidUpdateState(central: CBCentralManager) {
-        println(
-            "[FCentralManagerDelegate] centralManagerDidUpdateState" +
-                " raw=${central.state} authorization=${CBCentralManager.authorization}"
-        )
         onStateUpdate(central.state)
     }
 
