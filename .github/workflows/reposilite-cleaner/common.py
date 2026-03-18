@@ -1,4 +1,5 @@
 import base64
+import http.client
 import json
 import logging
 import os
@@ -11,6 +12,8 @@ import urllib.error
 DEFAULT_URL = "https://reposilite.flipp.dev"
 DEFAULT_WORKERS = 8
 PROGRESS_INTERVAL = 60
+MAX_RETRIES = 3
+RETRY_BACKOFF = 1  # seconds, doubles each retry
 
 log = logging.getLogger("reposilite-cleaner")
 _stats_ref = None
@@ -37,28 +40,48 @@ def load_exclude_file(path):
 
 
 def make_request(url, method="GET", token=None):
-    req = urllib.request.Request(url, method=method)
-    req.add_header("User-Agent", "reposilite-cleaner/1.0")
-    if token:
-        token = token.strip()
-        if method == "DELETE":
-            credentials = base64.b64encode(token.encode()).decode()
-            req.add_header("Authorization", "Basic " + credentials)
-        else:
-            req.add_header("Authorization", "Bearer " + token)
     ctx = ssl.create_default_context()
-    if _stats_ref:
-        _stats_ref.add_request()
-    try:
-        with urllib.request.urlopen(req, context=ctx) as resp:
+    last_exc = None
+    for attempt in range(MAX_RETRIES + 1):
+        req = urllib.request.Request(url, method=method)
+        req.add_header("User-Agent", "reposilite-cleaner/1.0")
+        if token:
+            stripped = token.strip()
+            if method == "DELETE":
+                credentials = base64.b64encode(stripped.encode()).decode()
+                req.add_header("Authorization", "Basic " + credentials)
+            else:
+                req.add_header("Authorization", "Bearer " + stripped)
+        if _stats_ref:
+            _stats_ref.add_request()
+        try:
+            with urllib.request.urlopen(req, context=ctx) as resp:
+                if method == "GET":
+                    return json.loads(resp.read().decode())
+                return resp.status
+        except urllib.error.HTTPError as e:
+            if method == "GET" and e.code in (502, 503, 504):
+                last_exc = e
+                if attempt < MAX_RETRIES:
+                    time.sleep(RETRY_BACKOFF * (2 ** attempt))
+                    continue
+                log.warning("HTTP %d fetching %s (after %d retries)", e.code, url, MAX_RETRIES)
+                return None
             if method == "GET":
-                return json.loads(resp.read().decode())
-            return resp.status
-    except urllib.error.HTTPError as e:
-        if method == "GET":
-            log.warning("HTTP %d fetching %s", e.code, url)
-            return None
-        raise
+                log.warning("HTTP %d fetching %s", e.code, url)
+                return None
+            raise
+        except (http.client.IncompleteRead, http.client.RemoteDisconnected,
+                ConnectionError, OSError) as e:
+            last_exc = e
+            if attempt < MAX_RETRIES:
+                time.sleep(RETRY_BACKOFF * (2 ** attempt))
+                continue
+            if method == "GET":
+                log.warning("%s fetching %s (after %d retries): %s",
+                            type(e).__name__, url, MAX_RETRIES, e)
+                return None
+            raise last_exc
 
 
 def list_details(base_url, repository, path="", token=None):
