@@ -12,21 +12,23 @@ class DesktopAutoPurger : TransactionHook, LogTagProvider {
     override fun getPriority() = HookOrder.NORMAL
 
     override fun PersistedStorageTransactionScope.postTransaction() {
-        val onlyLans = getAllDevices().filter { it.lan != null && it.connectionWays.size == 1 }
-        if (onlyLans.isEmpty()) {
+        val onlyLansOrEmpty = getAllDevices()
+            .filter { it.connectionWays.isEmpty() || (it.lan != null && it.connectionWays.size == 1) }
+        if (onlyLansOrEmpty.isEmpty()) {
             return
         }
         val isCloudExist = getAllDevices().any { it.cloud != null }
-        if (isCloudExist) {
-            onlyLans.forEach {
+        val listToDelete = if (isCloudExist) {
+            onlyLansOrEmpty.onEach {
                 info { "Remove device $it because we have cloud devices in storage" }
-                removeDevice(it.uniqueId)
             }
         } else {
-            onlyLans.drop(1).forEach {
+            onlyLansOrEmpty.drop(1).onEach {
                 info { "Remove device $it because this is lan duplicated" }
-                removeDevice(it.uniqueId)
             }
+        }
+        listToDelete.forEach {
+            removeDevice(it.uniqueId)
         }
     }
 }

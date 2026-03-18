@@ -14,4 +14,8 @@ kotlin {
 
         implementation(libs.kotlin.coroutines)
     }
+
+    sourceSets.commonTest.dependencies {
+        implementation(libs.kotlin.test)
+    }
 }
