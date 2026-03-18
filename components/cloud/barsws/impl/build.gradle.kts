@@ -7,6 +7,7 @@ plugins {
 kotlin {
     sourceSets.commonMain.dependencies {
         implementation(projects.components.cloud.barsws.api)
+        implementation(projects.components.cloud.rest.api)
 
         implementation(projects.components.core.log)
         implementation(projects.components.core.di)

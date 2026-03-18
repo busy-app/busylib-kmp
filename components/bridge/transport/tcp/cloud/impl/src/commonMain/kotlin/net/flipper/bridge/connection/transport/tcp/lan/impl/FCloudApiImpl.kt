@@ -32,7 +32,6 @@ class FCloudApiImpl(
     private val httpEngine = cloudEngineFactory(
         httpEngineOriginal,
         tokenProviderFactory(
-            httpEngineOriginal,
             currentConfig.deviceId
         )
     )

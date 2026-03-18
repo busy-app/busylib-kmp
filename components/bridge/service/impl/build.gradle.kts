@@ -14,7 +14,7 @@ kotlin {
         implementation(projects.components.bridge.service.api)
         implementation(projects.components.bridge.orchestrator.api)
         implementation(projects.components.bridge.config.api)
-        implementation(projects.components.cloud.rest)
+        implementation(projects.components.cloud.rest.api)
         implementation(projects.components.watchers.api)
 
         implementation(projects.components.bridge.feature.link.api)

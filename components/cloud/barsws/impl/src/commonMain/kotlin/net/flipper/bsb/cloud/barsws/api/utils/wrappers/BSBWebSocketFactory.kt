@@ -7,6 +7,7 @@ import me.tatarka.inject.annotations.Inject
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
 import net.flipper.bsb.cloud.barsws.api.BSBWebSocket
 import net.flipper.bsb.cloud.barsws.api.getBSBWebSocket
+import net.flipper.bsb.cloud.rest.api.BusyCloudWebSocketTicketApi
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.ktor.di.qualifier.KtorNetworkClientQualifier
@@ -45,7 +46,8 @@ interface BSBWebSocketFactory {
 @ContributesBinding(BusyLibGraph::class, BSBWebSocketFactory::class)
 class BSBWebSocketFactoryImpl(
     @KtorNetworkClientQualifier
-    private val httpClient: HttpClient
+    private val httpClient: HttpClient,
+    private val ticketApi: BusyCloudWebSocketTicketApi
 ) : BSBWebSocketFactory {
 
     override suspend fun create(
@@ -57,6 +59,7 @@ class BSBWebSocketFactoryImpl(
     ): BSBWebSocket {
         return getBSBWebSocket(
             httpClient = httpClient,
+            ticketApi = ticketApi,
             logger = logger,
             principal = principal,
             busyHost = busyHost,
