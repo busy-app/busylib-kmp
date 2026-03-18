@@ -63,7 +63,9 @@ class CloudFetcherWatcher(
                             .onFailure {
                                 error(it) { "Failed to get bars list" }
                             }.getOrNull()
-                    } else null
+                    } else {
+                        null
+                    }
                 }
                 if (cloudBars == null) {
                     debug { "Skip synchronization because busy bar list is null" }
