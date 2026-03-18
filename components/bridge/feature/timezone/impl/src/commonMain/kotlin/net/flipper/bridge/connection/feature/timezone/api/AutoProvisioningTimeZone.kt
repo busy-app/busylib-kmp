@@ -53,11 +53,33 @@ class AutoProvisioningTimeZone(
     }
 
     private fun findClosestTimeZone(timeZones: List<TimezoneListItem>): TimezoneListItem {
+        val currentTz = TimeZone.currentSystemDefault()
         val currentAbbr = currentTimeZoneAbbreviation()
-        info { "Current timezone abbreviation: $currentAbbr" }
-        timeZones.find { it.abbr == currentAbbr }?.let { return it }
+        val currentTzCity = currentTz.id.substringAfterLast('/')
+        info { "Current timezone abbreviation: $currentAbbr, id: ${currentTz.id}" }
 
-        val currentOffsetSeconds = TimeZone.currentSystemDefault()
+        val abbrMatches = timeZones.filter { it.abbr == currentAbbr }
+        if (abbrMatches.size == 1) {
+            info { "Found by direct abbreviation match" }
+            return abbrMatches.first()
+        }
+        if (abbrMatches.size > 1) {
+            abbrMatches.find { it.name.equals(currentTzCity, ignoreCase = true) }
+                ?.let {
+                    info { "Find by city and abbreviation match" }
+                    return it
+                }
+            info { "Fallback to first match from abbreviation matches" }
+            return abbrMatches.first()
+        }
+
+        timeZones.find { it.name.equals(currentTzCity, ignoreCase = true) }
+            ?.let {
+                info { "Find by city match" }
+                return it
+            }
+
+        val currentOffsetSeconds = currentTz
             .offsetAt(Clock.System.now())
             .totalSeconds
         return timeZones.minBy {

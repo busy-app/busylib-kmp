@@ -2,6 +2,7 @@ package net.flipper.bridge.connection.feature.timezone.api
 
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
+import kotlinx.datetime.TimeZone
 import net.flipper.bridge.connection.feature.timezone.api.model.TimestampInfo
 import net.flipper.bridge.connection.feature.timezone.api.model.TimezoneInfo
 import net.flipper.bridge.connection.feature.timezone.api.model.TimezoneListItem
@@ -80,26 +81,90 @@ class AutoProvisioningTimeZoneTest {
     }
 
     @Test
-    fun GIVEN_no_abbreviation_match_WHEN_on_ready_THEN_sets_closest_by_offset() = runTest {
+    fun GIVEN_multiple_abbr_matches_WHEN_on_ready_THEN_picks_matching_city_name() = runTest {
+        val systemAbbr = currentTimeZoneAbbreviation()
+        val currentCity = TimeZone.currentSystemDefault().id.substringAfterLast('/')
         val fake = FakeTimeZoneFeatureApi(
             timezonesResult = CResult.success(
                 listOf(
-                    TimezoneListItem("ActiveCity", "+00:00", "FAKE_ACTIVE"),
-                    TimezoneListItem("FarCity", "+12:00", "FAKE_FAR"),
-                    TimezoneListItem("VeryFarCity", "-12:00", "FAKE_VERY_FAR")
+                    TimezoneListItem("OldCity", "+00:00", "FAKE_OLD"),
+                    TimezoneListItem("WrongCity", "+03:00", systemAbbr),
+                    TimezoneListItem(currentCity, "+05:00", systemAbbr),
+                    TimezoneListItem("AnotherWrong", "+07:00", systemAbbr)
                 )
             ),
-            timezoneInfoFlow = flowOf(TimezoneInfo("ActiveCity")).wrap()
+            timezoneInfoFlow = flowOf(TimezoneInfo("OldCity")).wrap()
         )
         val sut = AutoProvisioningTimeZone(fake)
 
         sut.onReady()
 
         assertEquals(1, fake.setTimezoneCalls.size)
-        // Should pick the timezone closest to system offset, not +12:00 or -12:00
+        assertEquals(currentCity, fake.setTimezoneCalls.first().timezone)
+    }
+
+    @Test
+    fun GIVEN_multiple_abbr_matches_no_city_match_WHEN_on_ready_THEN_picks_first() = runTest {
+        val systemAbbr = currentTimeZoneAbbreviation()
+        val fake = FakeTimeZoneFeatureApi(
+            timezonesResult = CResult.success(
+                listOf(
+                    TimezoneListItem("OldCity", "+00:00", "FAKE_OLD"),
+                    TimezoneListItem("Xville_A", "+03:00", systemAbbr),
+                    TimezoneListItem("Xville_B", "+05:00", systemAbbr)
+                )
+            ),
+            timezoneInfoFlow = flowOf(TimezoneInfo("OldCity")).wrap()
+        )
+        val sut = AutoProvisioningTimeZone(fake)
+
+        sut.onReady()
+
+        assertEquals(1, fake.setTimezoneCalls.size)
+        assertEquals("Xville_A", fake.setTimezoneCalls.first().timezone)
+    }
+
+    @Test
+    fun GIVEN_no_abbr_match_but_city_name_matches_WHEN_on_ready_THEN_sets_by_name() = runTest {
+        val currentCity = TimeZone.currentSystemDefault().id.substringAfterLast('/')
+        val fake = FakeTimeZoneFeatureApi(
+            timezonesResult = CResult.success(
+                listOf(
+                    TimezoneListItem("OldCity", "+00:00", "FAKE_OLD"),
+                    TimezoneListItem(currentCity, "+05:00", "FAKE_CITY"),
+                    TimezoneListItem("OtherCity", "+03:00", "FAKE_OTHER")
+                )
+            ),
+            timezoneInfoFlow = flowOf(TimezoneInfo("OldCity")).wrap()
+        )
+        val sut = AutoProvisioningTimeZone(fake)
+
+        sut.onReady()
+
+        assertEquals(1, fake.setTimezoneCalls.size)
+        assertEquals(currentCity, fake.setTimezoneCalls.first().timezone)
+    }
+
+    @Test
+    fun GIVEN_no_abbr_or_name_match_WHEN_on_ready_THEN_sets_closest_by_offset() = runTest {
+        val fake = FakeTimeZoneFeatureApi(
+            timezonesResult = CResult.success(
+                listOf(
+                    TimezoneListItem("Xville_1", "+00:00", "FAKE_ACTIVE"),
+                    TimezoneListItem("Xville_2", "+12:00", "FAKE_FAR"),
+                    TimezoneListItem("Xville_3", "-12:00", "FAKE_VERY_FAR")
+                )
+            ),
+            timezoneInfoFlow = flowOf(TimezoneInfo("Xville_1")).wrap()
+        )
+        val sut = AutoProvisioningTimeZone(fake)
+
+        sut.onReady()
+
+        assertEquals(1, fake.setTimezoneCalls.size)
         val chosen = fake.setTimezoneCalls.first().timezone
         assertTrue(
-            chosen == "ActiveCity" || chosen == "FarCity" || chosen == "VeryFarCity",
+            chosen == "Xville_1" || chosen == "Xville_2" || chosen == "Xville_3",
             "Should pick one of the available timezones"
         )
     }
