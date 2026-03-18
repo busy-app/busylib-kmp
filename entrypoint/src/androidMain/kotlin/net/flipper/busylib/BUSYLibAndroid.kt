@@ -13,7 +13,6 @@ import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
 import net.flipper.bridge.connection.service.api.FConnectionService
 import net.flipper.bridge.device.firmwareupdate.updater.api.FirmwareUpdaterApi
 import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
-import net.flipper.bsb.cloud.api.BUSYLibBarsApi
 import net.flipper.bsb.cloud.api.BUSYLibHostApi
 import net.flipper.bsb.cloud.api.BUSYLibHostApiStub
 import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
@@ -44,7 +43,6 @@ class BUSYLibAndroid(
         fun build(
             scope: CoroutineScope,
             principalApi: BUSYLibPrincipalApi,
-            busyLibBarsApi: BUSYLibBarsApi,
             persistedStorage: FDevicePersistedStorage,
             // Android-specific factory
             context: Context,
@@ -54,7 +52,6 @@ class BUSYLibAndroid(
             val graph = BUSYLibGraphAndroid::class.create(
                 scope,
                 principalApi,
-                busyLibBarsApi,
                 persistedStorage,
                 context,
                 hostApi,

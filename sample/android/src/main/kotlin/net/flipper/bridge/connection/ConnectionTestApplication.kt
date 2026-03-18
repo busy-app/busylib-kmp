@@ -6,7 +6,6 @@ import com.russhwolf.settings.SharedPreferencesSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import net.flipper.bridge.connection.config.impl.FDevicePersistedStorageImpl
-import net.flipper.bridge.connection.utils.cloud.BUSYLibBarsApiNoop
 import net.flipper.bridge.connection.utils.principal.impl.UserPrincipalApiSampleImpl
 import net.flipper.bsb.cloud.api.BUSYLibHostApiStub
 import net.flipper.busylib.BUSYLibAndroid
@@ -32,7 +31,6 @@ class ConnectionTestApplication : Application() {
         BUSYLibAndroid.build(
             scope = scope,
             principalApi = UserPrincipalApiSampleImpl(scope, hostApi),
-            busyLibBarsApi = BUSYLibBarsApiNoop(),
             persistedStorage = persistedStorage,
             context = this,
             networkStateApi = BUSYLibNetworkStateApiImpl(this, scope),

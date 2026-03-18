@@ -14,7 +14,6 @@ This is a Kotlin Multiplatform library for working with [busy.bar](https://busy.
 val busyLib = BUSYLibAndroid.build(
     scope = CoroutineScope(SupervisorJob()),
     principalApi = UserPrincipalApiNoop(),
-    bsbBarsApi = BSBBarsApiNoop(),
     persistedStorage = persistedStorage,
     context = this
 )

@@ -5,7 +5,7 @@ plugins {
 
 kotlin {
     sourceSets.commonMain.dependencies {
-        implementation(projects.components.cloud.rest)
+        implementation(projects.components.cloud.rest.api)
         implementation(projects.components.bridge.feature.firmwareUpdate.api)
         implementation(projects.components.bridge.feature.info.api)
         implementation(projects.components.bridge.device.firmwareUpdate.api)

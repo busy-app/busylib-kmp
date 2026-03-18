@@ -1,0 +1,44 @@
+package net.flipper.bsb.cloud.rest.api
+
+import io.ktor.client.HttpClient
+import io.ktor.client.call.body
+import io.ktor.client.request.post
+import io.ktor.http.URLProtocol
+import io.ktor.http.path
+import kotlinx.coroutines.CoroutineDispatcher
+import me.tatarka.inject.annotations.Inject
+import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
+import net.flipper.bsb.cloud.api.BUSYLibHostApi
+import net.flipper.bsb.cloud.rest.model.BusyCloudTicketResponse
+import net.flipper.busylib.core.di.BusyLibGraph
+import net.flipper.core.busylib.ktx.common.runSuspendCatching
+import net.flipper.core.ktor.di.qualifier.KtorNetworkClientQualifier
+import net.flipper.core.ktor.di.qualifier.NetworkCoroutineDispatcher
+import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
+import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
+
+@Inject
+@SingleIn(BusyLibGraph::class)
+@ContributesBinding(BusyLibGraph::class, BusyCloudWebSocketTicketApi::class)
+class BusyCloudWebSocketTicketApiImpl(
+    @KtorNetworkClientQualifier
+    private val httpClient: HttpClient,
+    @NetworkCoroutineDispatcher
+    private val dispatcher: CoroutineDispatcher,
+    private val bsbHostApi: BUSYLibHostApi,
+) : BusyCloudWebSocketTicketApi {
+    override suspend fun getTicketToken(
+        principal: BUSYLibUserPrincipal.Token
+    ): Result<String> {
+        return runSuspendCatching(dispatcher) {
+            httpClient.post {
+                url {
+                    protocol = URLProtocol.HTTPS
+                    host = bsbHostApi.getHost().value
+                    path("/api/v0/auth/ticket")
+                }
+                addAuthHeader(principal)
+            }.body<BusyCloudTicketResponse>().token
+        }
+    }
+}
