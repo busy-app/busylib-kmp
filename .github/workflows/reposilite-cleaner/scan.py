@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Scan repository and output optimized delete list as CSV.
 
-Streams rows to the output file as directories are processed,
-keeping memory usage low. If all files in a directory are old,
-emits a single directory delete instead of individual file deletes.
+Performs a full scan to build per-directory metadata in memory, then
+writes an optimized delete list to the output file. If all files in a
+directory are old, emits a single directory delete instead of individual
+file deletes.
 
 Output CSV columns: type,path
 """
@@ -147,7 +148,7 @@ def find_cleanup_dirs(start_path, dir_info, deletable_cache):
 
 
 def write_delete_list(start_path, dir_info, cache, writer, stats):
-    """Write optimized CSV rows, streaming as we go."""
+    """Write optimized CSV rows based on precomputed directory metadata."""
 
     def walk(path):
         if is_fully_deletable(path, dir_info, cache):
