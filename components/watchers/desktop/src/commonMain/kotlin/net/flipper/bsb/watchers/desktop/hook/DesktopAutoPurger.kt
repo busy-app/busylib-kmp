@@ -23,9 +23,15 @@ class DesktopAutoPurger : TransactionHook, LogTagProvider {
                 info { "Remove device $it because we have cloud devices in storage" }
             }
         } else {
-            onlyLansOrEmpty.drop(1).onEach {
-                info { "Remove device $it because this is lan duplicated" }
-            }
+            val currentDevice = getCurrentDevice()
+            val deviceToKeep = onlyLansOrEmpty
+                .firstOrNull { it.uniqueId == currentDevice?.uniqueId }
+                ?: onlyLansOrEmpty.first()
+            onlyLansOrEmpty
+                .filter { it.uniqueId != deviceToKeep.uniqueId }
+                .onEach {
+                    info { "Remove device $it because this is lan duplicated" }
+                }
         }
         listToDelete.forEach {
             removeDevice(it.uniqueId)
