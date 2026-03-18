@@ -278,6 +278,10 @@ val copyXCFrameworkDebug by tasks.registering(Exec::class) {
         destination.deleteRecursively()
     }
 
+    doLast {
+        logger.lifecycle("Copied BusyLibKMP.xcframework to ${destination.absolutePath}")
+    }
+
     commandLine(
         "ditto",
         source.absolutePath,

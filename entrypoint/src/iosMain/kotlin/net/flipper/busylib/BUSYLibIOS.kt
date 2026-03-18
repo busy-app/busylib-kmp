@@ -9,6 +9,7 @@ import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
 import net.flipper.bridge.connection.service.api.FConnectionService
+import net.flipper.bridge.connection.transport.ble.impl.ios.central.FCentralManagerApi
 import net.flipper.bridge.device.firmwareupdate.updater.api.FirmwareUpdaterApi
 import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.cloud.api.BUSYLibHostApi
@@ -23,6 +24,7 @@ class BUSYLibIOS(
     override val orchestrator: FDeviceOrchestrator,
     override val featureProvider: FFeatureProvider,
     override val firmwareUpdaterApi: FirmwareUpdaterApi,
+    val fCentralManagerApi: FCentralManagerApi,
     private val startUpListeners: Set<InternalBUSYLibStartupListener>
 ) : BUSYLibApple {
     override fun launch() {

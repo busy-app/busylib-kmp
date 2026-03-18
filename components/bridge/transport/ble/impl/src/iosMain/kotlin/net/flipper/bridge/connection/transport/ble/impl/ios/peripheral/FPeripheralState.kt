@@ -1,0 +1,25 @@
+package net.flipper.bridge.connection.transport.ble.impl.ios.peripheral
+
+import platform.CoreBluetooth.CBPeripheralState
+
+enum class FPeripheralState {
+    DISCONNECTED,
+    CONNECTING,
+    CONNECTED,
+    DISCONNECTING,
+    PAIRING_FAILED,
+    INVALID_PAIRING;
+
+    companion object {
+        @Suppress("MagicNumber")
+        fun from(state: CBPeripheralState): FPeripheralState {
+            return when (state) {
+                0L -> DISCONNECTED
+                1L -> CONNECTING
+                2L -> CONNECTED
+                3L -> DISCONNECTING
+                else -> DISCONNECTED
+            }
+        }
+    }
+}

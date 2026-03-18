@@ -29,4 +29,17 @@ kotlin {
     sourceSets.androidMain.dependencies {
         implementation(libs.ble.client)
     }
+
+    androidLibrary {
+        withHostTest {}
+    }
+
+    sourceSets {
+        val androidHostTest by getting
+        androidHostTest.dependencies {
+            implementation(libs.kotlin.test)
+            implementation(libs.kotlin.coroutines.test)
+            implementation(libs.mockk)
+        }
+    }
 }

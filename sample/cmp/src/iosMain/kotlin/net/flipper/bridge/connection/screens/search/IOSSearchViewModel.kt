@@ -1,40 +1,25 @@
 package net.flipper.bridge.connection.screens.search
 
-import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.persistentMapOf
-import kotlinx.collections.immutable.toImmutableList
-import kotlinx.collections.immutable.toImmutableMap
+import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.config.api.model.BUSYBar
-import net.flipper.bridge.connection.service.api.FConnectionService
+import net.flipper.bridge.connection.config.api.model.BUSYBar.ConnectionWay
+import net.flipper.bridge.connection.transport.ble.impl.ios.central.DiscoveredBluetoothDevice
+import net.flipper.bridge.connection.transport.ble.impl.ios.central.FCentralManagerApi
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.log.LogTagProvider
-import net.flipper.core.busylib.log.info
-import net.flipper.core.busylib.log.warn
-import platform.AccessorySetupKit.ASAccessory
-import platform.AccessorySetupKit.ASAccessoryEvent
-import platform.AccessorySetupKit.ASAccessorySession
-import platform.AccessorySetupKit.ASDiscoveryDescriptor
-import platform.AccessorySetupKit.ASPickerDisplayItem
-import platform.CoreBluetooth.CBUUID
-import platform.Foundation.NSUUID
-import platform.UIKit.UIImage
-import platform.darwin.dispatch_get_main_queue
-import kotlin.collections.toMutableMap
 
 class IOSSearchViewModel(
     persistedStorage: FDevicePersistedStorage,
-    private val connectionService: FConnectionService,
+    private val fCentralManagerApi: FCentralManagerApi,
 ) : ConnectionSearchViewModel(persistedStorage), LogTagProvider {
     override val TAG = "iOSSearchViewModel"
 
@@ -47,188 +32,54 @@ class IOSSearchViewModel(
         isAdded = false,
     )
 
-    // Map to store ConnectionSearchItem with ASAccessory by UUID
-    private val searchItems = MutableStateFlow<ImmutableMap<String, ASAccessory>>(persistentMapOf())
-
     private val devicesFlow = MutableStateFlow<ImmutableList<ConnectionSearchItem>>(
         persistentListOf(mockDevice)
     )
 
     override fun getDevicesFlow() = devicesFlow.asStateFlow().wrap()
 
-    private val session = ASAccessorySession()
-
-    @OptIn(ExperimentalForeignApi::class)
-    override fun onDeviceClick(searchItem: ConnectionSearchItem) {
-        viewModelScope.launch {
-            if (searchItem.isAdded) {
-                // Find accessory by UUID from searchItems map and remove it
-                val accessory = searchItems.value[searchItem.address]
-
-                if (accessory != null) {
-                    session.removeAccessory(accessory) {}
-                } else {
-                    warn { "Accessory with UUID ${searchItem.address} not found in map" }
-                }
-
-                persistedStorage.transaction { removeDevice(searchItem.deviceModel.uniqueId) }
-            } else {
-                persistedStorage.transaction { addOrReplace(searchItem.deviceModel) }
-            }
-        }
-    }
-
-    @OptIn(ExperimentalForeignApi::class)
-    @Suppress("MagicNumber")
-    private fun supportedPickerDisplayItem(): ASPickerDisplayItem {
-        val descriptor = ASDiscoveryDescriptor()
-        descriptor.bluetoothServiceUUID = CBUUID.UUIDWithString("308A") as objcnames.classes.CBUUID
-        descriptor.bluetoothCompanyIdentifier = 3625u // 0E29
-        descriptor.supportedOptions = 2uL // .bluetoothPairingLE
-
-        val productImage = UIImage.imageNamed("BusyBarDevice") ?: run {
-            warn { "Failed to load system image, using empty UIImage" }
-            UIImage()
-        }
-
-        val item = ASPickerDisplayItem(
-            name = "BUSY Bar",
-            productImage = productImage,
-            descriptor = descriptor
-        )
-        return item
-    }
-
-    @OptIn(ExperimentalForeignApi::class)
-    private val supportedPickerDisplayItems: List<Any> = listOf(supportedPickerDisplayItem())
-
     init {
-        combine(
-            searchItems,
-            persistedStorage.getAllDevicesFlow()
-        ) { accessoriesMap, savedDevices ->
-            val existedUuids = savedDevices
-                .filter { device -> device.ble != null }
-                .associateBy { it.uniqueId }
+        viewModelScope.launch {
+            fCentralManagerApi.startScan()
+        }
 
-            accessoriesMap.map { (uuid, accessory) ->
+        combine(
+            fCentralManagerApi.discoveredStream,
+            persistedStorage.getAllDevicesFlow()
+        ) { searchDevices, savedDevices ->
+            val existedMacAddresses = savedDevices
+                .mapNotNull { device ->
+                    device.ble?.let { it.address to device }
+                }.toMap()
+
+            searchDevices.map { bleDevice: DiscoveredBluetoothDevice ->
                 ConnectionSearchItem(
-                    address = uuid,
-                    deviceModel = existedUuids[uuid] ?: BUSYBar(
-                        uniqueId = uuid,
-                        humanReadableName = accessory.displayName,
-                        ble = BUSYBar.ConnectionWay.BLE(address = uuid)
-                    ),
-                    isAdded = existedUuids.containsKey(uuid)
+                    address = bleDevice.address,
+                    deviceModel = existedMacAddresses[bleDevice.address]
+                        ?: bleDevice.toFDeviceModel(),
+                    isAdded = existedMacAddresses.containsKey(bleDevice.address)
                 )
             }
         }.onEach { items ->
             devicesFlow.emit(
-                (listOf(mockDevice) + items).toImmutableList()
+                (listOf(mockDevice) + items).toPersistentList()
             )
         }.launchIn(viewModelScope)
-
-        session.activateWithQueue(dispatch_get_main_queue()) { event: platform.AccessorySetupKit.ASAccessoryEvent? ->
-            handleSessionEvent(event)
-        }
-
-        session.showPickerForDisplayItems(supportedPickerDisplayItems) { error: platform.Foundation.NSError? ->
-            warn { "Error showing picker: $error" }
-        }
     }
 
-    @Suppress("MagicNumber")
-    private fun handleSessionEvent(event: ASAccessoryEvent?) {
-        if (event == null) {
-            warn { "Received null event from ASAccessorySession" }
-            return
-        }
-
-        info { "Event $event" }
-        when (event.eventType) {
-            // .activated
-            10L -> {
-                info { "Acccessory ${session.accessories}" }
-            }
-            // .accessoryAdded
-            30L -> {
-                info { "Accessory added: ${event.accessory}" }
-                saveAccessory(event.accessory)
-            }
-            // accessoryRemoved
-            31L -> {
-                info { "Accessory removed: ${event.accessory}" }
-                removeAccessory(event.accessory?.bluetoothIdentifier)
-            }
-            // .accessoryChanged
-            32L -> {
-                info { "Accessory changed: ${event.accessory}" }
-                // saveAccessory(event.accessory)
-            }
-
-            else -> {
-                warn { "Received unknown event type ${event.eventType}" }
-            }
-        }
-    }
-
-    private fun saveAccessory(accessory: ASAccessory?) {
-        if (accessory == null) {
-            warn { "Received null accessory from ASAccessorySession" }
-            return
-        }
-
-        val id = accessory.bluetoothIdentifier ?: run {
-            warn { "Accessory ${accessory.displayName} has null bluetoothIdentifier" }
-            return
-        }
-
-        val uuidString = id.UUIDString()
-
-        // Store ASAccessory object in the map
-        val updatedMap = searchItems.value.toMutableMap()
-        updatedMap[uuidString] = accessory
-
+    override fun onDestroy() {
         viewModelScope.launch {
-            searchItems.emit(updatedMap.toImmutableMap())
+            fCentralManagerApi.stopScan()
         }
+        super.onDestroy()
     }
+}
 
-    private fun removeAccessory(id: NSUUID?) {
-        if (id == null) {
-            warn { "Received null accessory id from ASAccessorySession" }
-            return
-        }
-
-        val uuidString = id.UUIDString()
-        info { "Removing accessory with UUID: $uuidString" }
-
-        // Remove from map
-        val updatedMap = searchItems.value.toMutableMap()
-        info { "All devices before $uuidString removal: ${updatedMap.keys}" }
-        updatedMap.remove(uuidString)
-        info { "All devices after $uuidString removal: ${updatedMap.keys}" }
-
-        runBlocking {
-            info { "Emitting updated map without $uuidString" }
-            searchItems.emit(updatedMap.toImmutableMap())
-            info { "Emitted updated map without $uuidString" }
-            persistedStorage.transaction {
-                val currentDevice = getCurrentDevice()
-                val isCurrentDevice = currentDevice?.uniqueId == uuidString
-                val existingDevices = getAllDevices()
-                val deviceExists = existingDevices.any { it.uniqueId == uuidString }
-
-                if (currentDevice != null && deviceExists) {
-                    if (isCurrentDevice) {
-                        info { "Accessory is current device, stopping connection attempts" }
-                    }
-                    connectionService.forgetDevice(currentDevice)
-                    info { "Device found in storage, removing..." }
-                } else {
-                    info { "Device not in storage, skipping removal" }
-                }
-            }
-        }
-    }
+private fun DiscoveredBluetoothDevice.toFDeviceModel(): BUSYBar {
+    return BUSYBar(
+        humanReadableName = this.name ?: "BUSY Bar",
+        ble = ConnectionWay.BLE(
+            address = this.address
+        )
+    )
 }
