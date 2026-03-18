@@ -55,13 +55,17 @@ class CloudFetcherWatcher(
                     principal
                 )
             }.collectLatest { (localCloudDeviceIds, isNetworkAvailable, principal) ->
-                val cloudBars = if (isNetworkAvailable && principal is BUSYLibUserPrincipal.Token) {
-                    busyCloudBarsApi.getBarsList(principal)
-                        .onFailure {
-                            error(it) { "Failed to get bars list" }
-                        }.getOrNull()
-                } else {
-                    null
+                val cloudBars = when (principal) {
+                    BUSYLibUserPrincipal.Empty -> emptyList()
+                    BUSYLibUserPrincipal.Loading -> null
+                    is BUSYLibUserPrincipal.Token -> if (isNetworkAvailable) {
+                        busyCloudBarsApi.getBarsList(principal)
+                            .onFailure {
+                                error(it) { "Failed to get bars list" }
+                            }.getOrNull()
+                    } else {
+                        null
+                    }
                 }
                 if (cloudBars == null) {
                     debug { "Skip synchronization because busy bar list is null" }
