@@ -167,6 +167,15 @@ def write_delete_list(start_path, dir_info, cache, writer, stats):
         for sub in info["subdirs"]:
             walk(sub)
 
+    # If the starting path itself (and everything under it) is fully deletable,
+    # emit a single directory delete entry for it. For an empty start_path (the
+    # repository root), preserve existing behavior and do not emit a root dir
+    # delete; instead, fall back to listing its contents.
+    if start_path and is_fully_deletable(start_path, dir_info, cache):
+        writer.writerow(("dir", start_path))
+        stats.add_delete_dir()
+        return
+
     info = dir_info.get(start_path, dir_info.get(""))
     if info:
         for file_path in info.get("old_file_paths", []):
