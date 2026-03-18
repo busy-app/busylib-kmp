@@ -100,18 +100,29 @@ def is_fully_deletable(path, dir_info, cache):
     return has_content
 
 
-def will_be_empty(path, dir_info, deletable_cache):
+def will_be_empty(path, dir_info, deletable_cache, empty_cache=None):
     """Check if a dir will be empty after delete phase (but isn't fully deletable itself)."""
+    if empty_cache is None:
+        empty_cache = {}
+
+    if path in empty_cache:
+        return empty_cache[path]
+
     info = dir_info.get(path)
     if info is None:
+        empty_cache[path] = False
         return False
     # All direct files must be old
     if info["old_files"] < info["total_files"]:
+        empty_cache[path] = False
         return False
     # All subdirs must be either fully deletable or will themselves be empty
     for sub in info["subdirs"]:
-        if not is_fully_deletable(sub, dir_info, deletable_cache) and not will_be_empty(sub, dir_info, deletable_cache):
+        if not is_fully_deletable(sub, dir_info, deletable_cache) and not will_be_empty(sub, dir_info, deletable_cache, empty_cache):
+            empty_cache[path] = False
             return False
+
+    empty_cache[path] = True
     return True
 
 
@@ -121,6 +132,7 @@ def find_cleanup_dirs(start_path, dir_info, deletable_cache):
     Returns paths deepest-first so they can be deleted in order.
     """
     result = []
+    empty_cache = {}
 
     def walk(path):
         # If fully deletable, it's already in the delete list — skip it and its children
@@ -136,7 +148,7 @@ def find_cleanup_dirs(start_path, dir_info, deletable_cache):
             walk(sub)
 
         # Check if this dir will be empty after deletions
-        if will_be_empty(path, dir_info, deletable_cache):
+        if will_be_empty(path, dir_info, deletable_cache, empty_cache):
             result.append(path)
 
     info = dir_info.get(start_path, dir_info.get(""))
