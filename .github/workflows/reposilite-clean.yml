@@ -86,6 +86,9 @@ jobs:
     needs: [delete, cleanup]
     if: always()
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
