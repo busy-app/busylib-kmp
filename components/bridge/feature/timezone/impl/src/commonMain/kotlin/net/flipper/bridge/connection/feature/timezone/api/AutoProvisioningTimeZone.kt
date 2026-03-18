@@ -2,8 +2,9 @@ package net.flipper.bridge.connection.feature.timezone.api
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.UtcOffset
+import kotlinx.datetime.offsetAt
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.feature.common.api.FOnDeviceReadyFeatureApi
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
@@ -15,7 +16,10 @@ import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.debug
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
+import net.flipper.core.busylib.timezone.currentTimeZoneAbbreviation
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
+import kotlin.math.abs
+import kotlin.time.Clock
 
 class AutoProvisioningTimeZone(
     private val timeZoneFeature: FTimeZoneFeatureApi
@@ -49,13 +53,20 @@ class AutoProvisioningTimeZone(
     }
 
     private fun findClosestTimeZone(timeZones: List<TimezoneListItem>): TimezoneListItem {
-        val currentTimeZone = TimeZone.currentSystemDefault()
+        val currentAbbr = currentTimeZoneAbbreviation()
+        info { "Current timezone abbreviation: $currentAbbr" }
+        timeZones.find { it.abbr == currentAbbr }?.let { return it }
 
+        val currentOffsetSeconds = TimeZone.currentSystemDefault()
+            .offsetAt(Clock.System.now())
+            .totalSeconds
+        return timeZones.minBy {
+            abs(UtcOffset.parse(it.offset).totalSeconds - currentOffsetSeconds)
+        }
     }
 
     private fun isCurrentTimeZone(timeZone: TimezoneListItem): Boolean {
-        val currentTimeZone = TimeZone.currentSystemDefault()
-
+        return timeZone.abbr == currentTimeZoneAbbreviation()
     }
 
     @Inject
