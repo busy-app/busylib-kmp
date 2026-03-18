@@ -1,5 +1,6 @@
 package net.flipper.bsb.watchers.desktop.hook
 
+import net.flipper.bridge.connection.config.api.HookOrder
 import net.flipper.bridge.connection.config.api.PersistedStorageTransactionScope
 import net.flipper.bridge.connection.config.api.TransactionHook
 import net.flipper.core.busylib.log.LogTagProvider
@@ -7,6 +8,8 @@ import net.flipper.core.busylib.log.info
 
 class DesktopActiveDevice : TransactionHook, LogTagProvider {
     override val TAG = "DesktopActiveDevice"
+
+    override fun getPriority() = HookOrder.NORMAL
 
     override fun PersistedStorageTransactionScope.postTransaction() {
         val activeDevice = getCurrentDevice()

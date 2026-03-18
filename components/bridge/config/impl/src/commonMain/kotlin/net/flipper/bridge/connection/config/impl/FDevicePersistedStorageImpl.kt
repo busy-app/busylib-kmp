@@ -25,15 +25,15 @@ class FDevicePersistedStorageImpl(
     private var hooks = listOf<TransactionHook>(
         AlwaysActiveHook(),
         RemoveDuplicateCloudHook()
-    )
+    ).sortedBy { it.getPriority() }
 
     constructor(
         observableSettings: ObservableSettings
     ) : this(BleConfigSettingsKrateImpl(observableSettings))
 
-    override suspend fun addHook(hook: TransactionHook) {
+    override suspend fun addHook(vararg hook: TransactionHook) {
         withLock(mutex, "add_hook") {
-            hooks += hook
+            hooks = hooks.plus(hook).sortedBy { it.getPriority() }
         }
     }
 
