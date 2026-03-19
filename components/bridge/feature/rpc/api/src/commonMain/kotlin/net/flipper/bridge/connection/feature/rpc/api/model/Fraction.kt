@@ -24,7 +24,7 @@ import net.flipper.core.busylib.log.error
  *
  * ### Example
  * ```
- * val volume = Fraction.fromPercent(75)
+ * val volume = Fraction.fromWholePercent(75)
  * println(volume.value) // 0.75
  * ```
  *
