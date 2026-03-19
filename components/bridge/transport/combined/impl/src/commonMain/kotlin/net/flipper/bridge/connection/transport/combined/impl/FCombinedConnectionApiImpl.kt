@@ -88,12 +88,6 @@ class FCombinedConnectionApiImpl(
         }
     }
 
-    override fun getCurrentConnectionTypeFlow(): Flow<FInternalTransportConnectionType?> {
-        return getCurrentConnectionSnapshotFlow()
-            .map { connectionSnapshot -> connectionSnapshot?.capabilities.orEmpty() }
-            .map { capabilities -> getCurrentConnectionType(capabilities) }
-    }
-
     private fun startCollectTransportStatusUpdateJob(): Job {
         return getCurrentConnectionSnapshotFlow()
             .onEach { connectionSnapshot ->

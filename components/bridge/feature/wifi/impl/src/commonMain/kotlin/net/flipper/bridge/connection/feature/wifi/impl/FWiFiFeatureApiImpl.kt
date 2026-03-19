@@ -27,7 +27,9 @@ import net.flipper.bridge.connection.feature.wifi.api.model.WiFiSecurity
 import net.flipper.bridge.connection.feature.wifi.util.toInternalSecurity
 import net.flipper.bridge.connection.feature.wifi.util.toWiFiNetwork
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
-import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionType
+import net.flipper.bridge.connection.transport.common.api.serial.FHTTPDeviceApi
+import net.flipper.bridge.connection.transport.common.api.serial.FHTTPTransportCapability
+import net.flipper.bridge.connection.transport.common.api.serial.hasCapability
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.core.wrapper.CResult
 import net.flipper.busylib.core.wrapper.WrappedFlow
@@ -37,6 +39,7 @@ import net.flipper.core.busylib.ktx.common.DefaultConsumable
 import net.flipper.core.busylib.ktx.common.asFlow
 import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.merge
+import net.flipper.core.busylib.ktx.common.orElse
 import net.flipper.core.busylib.ktx.common.orEmpty
 import net.flipper.core.busylib.ktx.common.throttleLatest
 import net.flipper.core.busylib.ktx.common.transformWhileSubscribed
@@ -52,7 +55,7 @@ class FWiFiFeatureApiImpl(
     private val rpcFeatureApi: FRpcFeatureApi,
     private val fEventsFeatureApi: FEventsFeatureApi?,
     private val scope: CoroutineScope,
-    private val connectedDevice: FConnectedDeviceApi
+    private val fHTTPDeviceApi: FHTTPDeviceApi?
 ) : FWiFiFeatureApi, LogTagProvider {
     override val TAG = "FWiFiFeatureApi"
 
@@ -130,16 +133,9 @@ class FWiFiFeatureApiImpl(
         return rpcFeatureApi.fRpcWifiApi.disconnectWifi().map { }.toCResult()
     }
 
-    override val isWifiEditingAllowed = connectedDevice
-        .getCurrentConnectionTypeFlow()
-        .map { connectionType ->
-            when (connectionType) {
-                FInternalTransportConnectionType.BLE -> true
-                FInternalTransportConnectionType.LAN -> true
-                FInternalTransportConnectionType.CLOUD -> false
-                null -> false
-            }
-        }
+    override val isWifiEditingAllowed = fHTTPDeviceApi
+        ?.hasCapability(FHTTPTransportCapability.BB_LOCAL_CONNECTION)
+        .orElse { false }
         .wrap()
 
     @Inject
@@ -161,7 +157,7 @@ class FWiFiFeatureApiImpl(
                 rpcFeatureApi = fRpcFeatureApi,
                 fEventsFeatureApi = fEventsFeatureApi,
                 scope = scope,
-                connectedDevice = connectedDevice
+                fHTTPDeviceApi = connectedDevice as? FHTTPDeviceApi
             )
         }
     }
