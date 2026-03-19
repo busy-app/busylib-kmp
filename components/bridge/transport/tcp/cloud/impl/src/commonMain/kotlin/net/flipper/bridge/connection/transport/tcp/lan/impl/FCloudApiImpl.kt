@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.shareIn
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
+import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionType
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.bridge.connection.transport.common.api.meta.FTransportMetaInfoApi
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPTransportCapability
@@ -77,5 +78,9 @@ class FCloudApiImpl(
 
     override fun getCapabilities(): Flow<List<FHTTPTransportCapability>> {
         return _capabilities
+    }
+
+    override fun getCurrentConnectionTypeFlow(): Flow<FInternalTransportConnectionType?> {
+        return flowOf(FInternalTransportConnectionType.CLOUD)
     }
 }

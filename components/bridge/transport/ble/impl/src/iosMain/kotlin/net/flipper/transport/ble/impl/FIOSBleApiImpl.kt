@@ -103,4 +103,8 @@ class FIOSBleApiImpl(
         }
         return flowOf(Result.failure(IllegalArgumentException("Key $key is not supported")))
     }
+
+    override fun getCurrentConnectionTypeFlow(): Flow<FInternalTransportConnectionType?> {
+        return flowOf(FInternalTransportConnectionType.BLE)
+    }
 }

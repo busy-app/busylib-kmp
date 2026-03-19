@@ -6,21 +6,29 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.isActive
-import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
+import me.tatarka.inject.annotations.IntoMap
+import me.tatarka.inject.annotations.Provides
+import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
+import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
+import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
 import net.flipper.bridge.connection.feature.events.api.getBsbUpdateFlow
 import net.flipper.bridge.connection.feature.events.model.BsbUpdateEvent
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.ConnectRequestConfig
-import net.flipper.bridge.connection.feature.rpc.api.model.Network
 import net.flipper.bridge.connection.feature.rpc.api.model.StatusResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.WifiIpMethod
-import net.flipper.bridge.connection.feature.rpc.api.model.WifiSecurityMethod
 import net.flipper.bridge.connection.feature.wifi.api.FWiFiFeatureApi
 import net.flipper.bridge.connection.feature.wifi.api.model.WiFiNetwork
 import net.flipper.bridge.connection.feature.wifi.api.model.WiFiSecurity
+import net.flipper.bridge.connection.feature.wifi.util.toInternalSecurity
+import net.flipper.bridge.connection.feature.wifi.util.toWiFiNetwork
+import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
+import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionType
+import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.core.wrapper.CResult
 import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.toCResult
@@ -35,15 +43,16 @@ import net.flipper.core.busylib.ktx.common.transformWhileSubscribed
 import net.flipper.core.busylib.ktx.common.tryConsume
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
+import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
 import kotlin.time.Duration.Companion.seconds
 
 private val POOLING_TIME = 3.seconds
 
-@Inject
 class FWiFiFeatureApiImpl(
-    @Assisted private val rpcFeatureApi: FRpcFeatureApi,
-    @Assisted private val fEventsFeatureApi: FEventsFeatureApi?,
-    @Assisted private val scope: CoroutineScope
+    private val rpcFeatureApi: FRpcFeatureApi,
+    private val fEventsFeatureApi: FEventsFeatureApi?,
+    private val scope: CoroutineScope,
+    private val connectedDevice: FConnectedDeviceApi
 ) : FWiFiFeatureApi, LogTagProvider {
     override val TAG = "FWiFiFeatureApi"
 
@@ -121,34 +130,50 @@ class FWiFiFeatureApiImpl(
         return rpcFeatureApi.fRpcWifiApi.disconnectWifi().map { }.toCResult()
     }
 
-    @Inject
-    class InternalFactory(
-        private val factory: (FRpcFeatureApi, FEventsFeatureApi?, CoroutineScope) -> FWiFiFeatureApiImpl
-    ) {
-        operator fun invoke(
-            rpcFeatureApi: FRpcFeatureApi,
-            fEventsFeatureApi: FEventsFeatureApi?,
-            scope: CoroutineScope
-        ): FWiFiFeatureApiImpl = factory(rpcFeatureApi, fEventsFeatureApi, scope)
-    }
-}
-
-private fun Network.toWiFiNetwork(): WiFiNetwork {
-    return WiFiNetwork(
-        ssid = ssid,
-        rssi = rssi,
-        wifiSecurity = when (security) {
-            WifiSecurityMethod.OPEN -> WiFiSecurity.Supported.None
-            else -> WiFiSecurity.Supported.Password.fromInternal(
-                security
-            ) ?: WiFiSecurity.Other(security)
+    override val isWifiEditingAllowed = connectedDevice
+        .getCurrentConnectionTypeFlow()
+        .map { connectionType ->
+            when (connectionType) {
+                FInternalTransportConnectionType.BLE -> false
+                FInternalTransportConnectionType.LAN -> true
+                FInternalTransportConnectionType.CLOUD -> false
+                null -> false
+            }
         }
-    )
-}
+        .wrap()
 
-private fun WiFiSecurity.Supported.toInternalSecurity(): WifiSecurityMethod {
-    return when (this) {
-        WiFiSecurity.Supported.None -> WifiSecurityMethod.OPEN
-        is WiFiSecurity.Supported.Password -> internalWifiSecurity
+    @Inject
+    class Factory : FDeviceFeatureApi.Factory {
+        override suspend fun invoke(
+            unsafeFeatureDeviceApi: FUnsafeDeviceFeatureApi,
+            scope: CoroutineScope,
+            connectedDevice: FConnectedDeviceApi
+        ): FDeviceFeatureApi? {
+            val fRpcFeatureApi = unsafeFeatureDeviceApi
+                .get(FRpcFeatureApi::class)
+                ?.await()
+                ?: return null
+            val fEventsFeatureApi = unsafeFeatureDeviceApi
+                .get(FEventsFeatureApi::class)
+                ?.await()
+
+            return FWiFiFeatureApiImpl(
+                rpcFeatureApi = fRpcFeatureApi,
+                fEventsFeatureApi = fEventsFeatureApi,
+                scope = scope,
+                connectedDevice = connectedDevice
+            )
+        }
+    }
+
+    @ContributesTo(BusyLibGraph::class)
+    interface Component {
+        @Provides
+        @IntoMap
+        fun provideFeatureFactory(
+            factory: Factory
+        ): Pair<FDeviceFeature, FDeviceFeatureApi.Factory> {
+            return FDeviceFeature.WIFI to factory
+        }
     }
 }

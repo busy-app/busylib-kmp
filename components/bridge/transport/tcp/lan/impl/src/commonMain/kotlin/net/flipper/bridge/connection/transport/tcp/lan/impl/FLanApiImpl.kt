@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.shareIn
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
+import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionType
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPTransportCapability
 import net.flipper.bridge.connection.transport.tcp.lan.FLanApi
@@ -71,4 +72,8 @@ class FLanApiImpl(
     }
 
     override fun getDeviceHttpEngine() = httpEngine
+
+    override fun getCurrentConnectionTypeFlow(): Flow<FInternalTransportConnectionType?> {
+        return flowOf(FInternalTransportConnectionType.LAN)
+    }
 }

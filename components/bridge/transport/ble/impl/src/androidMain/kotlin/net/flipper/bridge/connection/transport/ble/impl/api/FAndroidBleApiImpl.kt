@@ -106,4 +106,8 @@ class FAndroidBleApiImpl(
         peripheral.disconnect()
         bleHttpEngine.close()
     }
+
+    override fun getCurrentConnectionTypeFlow(): Flow<FInternalTransportConnectionType?> {
+        return flowOf(FInternalTransportConnectionType.BLE)
+    }
 }
