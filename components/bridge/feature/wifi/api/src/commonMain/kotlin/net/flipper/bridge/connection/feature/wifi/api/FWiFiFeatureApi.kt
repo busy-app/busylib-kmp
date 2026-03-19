@@ -20,7 +20,7 @@ interface FWiFiFeatureApi : FDeviceFeatureApi {
     ): CResult<Unit>
 
     /**
-     * We can't edit Wi-Fi when we don't have ble/lan connection
+     * Wi-Fi cannot be edited when there is no BLE/LAN connection
      */
     val isWifiEditingAllowed: WrappedFlow<Boolean>
 
