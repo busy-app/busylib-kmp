@@ -7,7 +7,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withTimeout
 import net.flipper.bridge.connection.transport.ble.api.MAX_ATTRIBUTE_SIZE
@@ -78,7 +77,6 @@ internal class FPeripheralGattIO(
                         }
                     }
                 }
-
             }
         }
     }
@@ -145,7 +143,7 @@ internal class FPeripheralGattIO(
             val waiter = readDeferreds.remove(characteristicUuid)
             debug {
                 "Completing read uuid=$characteristicUuid bytes=${payload.size} " +
-                        "waiterFound=${waiter != null}"
+                    "waiterFound=${waiter != null}"
             }
             waiter?.complete(payload)
         }

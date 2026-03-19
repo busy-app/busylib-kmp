@@ -4,6 +4,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceConnectionConfig
@@ -27,14 +29,15 @@ import platform.Foundation.NSUUID
 
 class FCentralManager(
     private val manager: CBCentralManager,
-    private val scope: CoroutineScope,
+    scope: CoroutineScope,
 ) : FCentralManagerApi, LogTagProvider {
 
     override val TAG: String
         get() = "FCentralManager"
 
     private val _connectedStream = MutableStateFlow<Map<NSUUID, FPeripheralApi>>(emptyMap())
-    override val connectedStream: WrappedStateFlow<Map<NSUUID, FPeripheralApi>> = _connectedStream.asStateFlow().wrap()
+    override val connectedStream: WrappedStateFlow<Map<NSUUID, FPeripheralApi>> =
+        _connectedStream.asStateFlow().wrap()
 
     private val _discoveredStream = MutableStateFlow<Set<DiscoveredBluetoothDevice>>(emptySet())
 
@@ -42,18 +45,40 @@ class FCentralManager(
         _discoveredStream.asStateFlow().wrap()
 
     private val _bleStatusStream = MutableStateFlow(FBLEStatus.UNKNOWN)
-    override val bleStatusStream: WrappedStateFlow<FBLEStatus> = _bleStatusStream.asStateFlow().wrap()
+    override val bleStatusStream: WrappedStateFlow<FBLEStatus> =
+        _bleStatusStream.asStateFlow().wrap()
 
     private val delegate = FCentralManagerDelegate(
-        onStateUpdate = { state -> scope.launch { updateBLEStatus(state) } },
-        onDidConnect = { peripheral -> scope.launch { didConnect(peripheral) } },
-        onDidDisconnect = { peripheral, error -> scope.launch { didDisconnect(peripheral, error) } },
-        onDidFailToConnect = { peripheral, error -> scope.launch { didFailToConnect(peripheral, error) } },
-        onDidDiscover = { peripheral, adv, rssi -> scope.launch { didDiscover(peripheral, adv, rssi) } }
+        onError = { event, throwable ->
+            error(throwable) { "Failed to send event $event" }
+        }
     )
 
     init {
         manager.delegate = delegate
+        scope.launch {
+            for (event in delegate.events) {
+                processEvent(event)
+            }
+        }
+    }
+
+    private suspend fun processEvent(event: FCentralManagerEvent) {
+        when (event) {
+            is FCentralManagerEvent.StateUpdated -> updateBLEStatus(event.state)
+            is FCentralManagerEvent.DidConnect -> didConnect(event.peripheral)
+            is FCentralManagerEvent.DidDisconnect -> didDisconnect(event.peripheral, event.error)
+            is FCentralManagerEvent.DidFailToConnect -> didFailToConnect(
+                event.peripheral,
+                event.error
+            )
+
+            is FCentralManagerEvent.DidDiscover -> didDiscover(
+                event.peripheral,
+                event.advertisementData,
+                event.rssi
+            )
+        }
     }
 
     override suspend fun connect(
@@ -73,8 +98,9 @@ class FCentralManager(
         val device = FPeripheral(peripheral, config, scope)
         device.onConnecting()
 
-        val current = _connectedStream.first()
-        _connectedStream.emit(current + (peripheral.identifier to device))
+        _connectedStream.update {
+            it + (peripheral.identifier to device)
+        }
 
         info { "CB connect requested id=$id" }
         manager.connectPeripheral(peripheral, options = null)
@@ -160,8 +186,9 @@ class FCentralManager(
             return
         }
 
-        val current = _connectedStream.first()
-        _connectedStream.emit(current + (peripheral.identifier to device))
+        _connectedStream.update {
+            it + (peripheral.identifier to device)
+        }
         device.onConnect()
         info { "CB didConnect id=${peripheral.identifier}" }
     }
@@ -175,14 +202,15 @@ class FCentralManager(
             error { "didDisconnect with error: $error" }
         }
 
-        val connected = _connectedStream.first()
-        val device = connected[peripheral.identifier] ?: run {
+        val toDisconnect = _connectedStream.first()[peripheral.identifier] ?: run {
             error { "CB didDisconnect for unknown peripheral id=${peripheral.identifier}" }
             return
         }
+        toDisconnect.onDisconnect()
 
-        device.onDisconnect()
-        _connectedStream.emit(connected - peripheral.identifier)
+        _connectedStream.update { connected ->
+            connected - peripheral.identifier
+        }
         info { "CB didDisconnect id=${peripheral.identifier}" }
     }
 
@@ -191,18 +219,19 @@ class FCentralManager(
         error: NSError?
     ) {
         info { "#didFailToConnect peripheral=${peripheral.identifier} error=$error" }
-        val connected = _connectedStream.first()
-        val device = connected[peripheral.identifier] ?: run {
-            error { "CB didFailToConnect for unknown peripheral id=${peripheral.identifier}" }
-            return
-        }
+        _connectedStream.update { connected ->
+            val device = connected[peripheral.identifier] ?: run {
+                error { "CB didFailToConnect for unknown peripheral id=${peripheral.identifier}" }
+                return@update connected
+            }
 
-        if (error == null) {
-            error { "CB didFailToConnect without error id=${peripheral.identifier}" }
-        } else {
-            device.onError(error)
+            if (error == null) {
+                error { "CB didFailToConnect without error id=${peripheral.identifier}" }
+            } else {
+                device.onError(error)
+            }
+            connected - peripheral.identifier
         }
-        _connectedStream.emit(connected - peripheral.identifier)
         error { "CB didFailToConnect id=${peripheral.identifier} error=$error" }
     }
 
@@ -215,10 +244,11 @@ class FCentralManager(
         val uuid = peripheral.identifier
         val name = peripheral.name
 
-        val current = _discoveredStream.first()
-        val device = DiscoveredBluetoothDevice(id = uuid, name = name)
-        _discoveredStream.emit(current + device)
-        info { "Emitted to discovered stream, total devices: ${current.size + 1}" }
+        val devices = _discoveredStream.updateAndGet { current ->
+            val device = DiscoveredBluetoothDevice(id = uuid, name = name)
+            current + device
+        }
+        info { "Emitted to discovered stream, total devices: ${devices.size + 1}" }
     }
 }
 

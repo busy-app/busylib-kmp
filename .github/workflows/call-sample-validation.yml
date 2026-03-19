@@ -15,7 +15,7 @@ jobs:
           - name: "JVM"
             task: ":sample:cmp:jvmJar"
           - name: "Android"
-            task: ":sample:cmp:assembleAndroidMain"
+            task: ":sample:android:assembleAndroidMain"
     name: "Build sample:cmp (${{ matrix.name }})"
     runs-on: [ self-hosted, macOS ]
     env:

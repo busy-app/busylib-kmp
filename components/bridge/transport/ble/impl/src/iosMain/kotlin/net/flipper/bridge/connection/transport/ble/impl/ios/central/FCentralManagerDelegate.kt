@@ -1,6 +1,9 @@
 package net.flipper.bridge.connection.transport.ble.impl.ios.central
 
 import kotlinx.cinterop.ObjCSignatureOverride
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.channels.onFailure
 import platform.CoreBluetooth.CBCentralManager
 import platform.CoreBluetooth.CBCentralManagerDelegateProtocol
 import platform.CoreBluetooth.CBManagerState
@@ -9,20 +12,36 @@ import platform.Foundation.NSError
 import platform.Foundation.NSNumber
 import platform.darwin.NSObject
 
+internal sealed class FCentralManagerEvent {
+    data class StateUpdated(val state: CBManagerState) : FCentralManagerEvent()
+    data class DidConnect(val peripheral: CBPeripheral) : FCentralManagerEvent()
+    data class DidDisconnect(val peripheral: CBPeripheral, val error: NSError?) : FCentralManagerEvent()
+    data class DidFailToConnect(val peripheral: CBPeripheral, val error: NSError?) : FCentralManagerEvent()
+    data class DidDiscover(
+        val peripheral: CBPeripheral,
+        val advertisementData: Map<Any?, *>,
+        val rssi: NSNumber
+    ) : FCentralManagerEvent()
+}
+
 internal class FCentralManagerDelegate(
-    private val onStateUpdate: (CBManagerState) -> Unit,
-    private val onDidConnect: (CBPeripheral) -> Unit,
-    private val onDidDisconnect: (CBPeripheral, NSError?) -> Unit,
-    private val onDidFailToConnect: (CBPeripheral, NSError?) -> Unit,
-    private val onDidDiscover: (CBPeripheral, Map<Any?, *>, NSNumber) -> Unit
+    private val onError: (FCentralManagerEvent, Throwable) -> Unit = { _, _ -> }
 ) : NSObject(), CBCentralManagerDelegateProtocol {
+    private val _events: Channel<FCentralManagerEvent> = Channel(Channel.UNLIMITED)
+    val events = _events as ReceiveChannel<FCentralManagerEvent>
+
+    private fun send(event: FCentralManagerEvent) {
+        _events.trySend(event).onFailure { error ->
+            if (error != null) onError(event, error)
+        }
+    }
 
     override fun centralManagerDidUpdateState(central: CBCentralManager) {
-        onStateUpdate(central.state)
+        send(FCentralManagerEvent.StateUpdated(central.state))
     }
 
     override fun centralManager(central: CBCentralManager, didConnectPeripheral: CBPeripheral) {
-        onDidConnect(didConnectPeripheral)
+        send(FCentralManagerEvent.DidConnect(didConnectPeripheral))
     }
 
     @ObjCSignatureOverride
@@ -31,7 +50,7 @@ internal class FCentralManagerDelegate(
         didDisconnectPeripheral: CBPeripheral,
         error: NSError?
     ) {
-        onDidDisconnect(didDisconnectPeripheral, error)
+        send(FCentralManagerEvent.DidDisconnect(didDisconnectPeripheral, error))
     }
 
     @ObjCSignatureOverride
@@ -40,7 +59,7 @@ internal class FCentralManagerDelegate(
         didFailToConnectPeripheral: CBPeripheral,
         error: NSError?
     ) {
-        onDidFailToConnect(didFailToConnectPeripheral, error)
+        send(FCentralManagerEvent.DidFailToConnect(didFailToConnectPeripheral, error))
     }
 
     override fun centralManager(
@@ -49,6 +68,6 @@ internal class FCentralManagerDelegate(
         advertisementData: Map<Any?, *>,
         RSSI: NSNumber
     ) {
-        onDidDiscover(didDiscoverPeripheral, advertisementData, RSSI)
+        send(FCentralManagerEvent.DidDiscover(didDiscoverPeripheral, advertisementData, RSSI))
     }
 }

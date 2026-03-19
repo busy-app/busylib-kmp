@@ -1,5 +1,7 @@
 package net.flipper.bridge.connection.transport.ble.impl.ios.peripheral
 
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.updateAndGet
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
 import net.flipper.core.busylib.log.LogTagProvider
@@ -15,7 +17,7 @@ import kotlin.uuid.Uuid
 
 internal class FPeripheralDiscovery(
     private val config: FBleDeviceConnectionConfig,
-    private val characteristicsByUuid: MutableMap<Uuid, CBCharacteristic>,
+    private val characteristicsByUuid: MutableStateFlow<Map<Uuid, CBCharacteristic>>,
     private val serialWriteUpdater: (CBCharacteristic?) -> Unit,
     private val identifierProvider: () -> String,
 ) : LogTagProvider {
@@ -48,18 +50,22 @@ internal class FPeripheralDiscovery(
         }
 
         val characteristics = service.characteristics?.map { it as CBCharacteristic } ?: emptyList()
-        characteristics.forEach { characteristic ->
-            val characteristicUuid = characteristic.UUID.toKotlinUUID()
-            characteristicsByUuid[characteristicUuid] = characteristic
+
+        val updatedChars = characteristics.map { characteristic ->
+            characteristic.UUID.toKotlinUUID() to characteristic
+        }.onEach { (characteristicUuid, _) ->
             debug { "Registered characteristic UUID: $characteristicUuid" }
+        }
+        val currentCharacteristics = characteristicsByUuid.updateAndGet {
+            it + updatedChars
         }
 
         val serviceUUID = service.UUID.toKotlinUUID()
         info { "Service $service UUID ${service.UUID} Kotlin $serviceUUID" }
 
         if (serviceUUID == config.serialConfig.serialServiceUuid) {
-            val serialRead = characteristicsByUuid[config.serialConfig.rxServiceCharUuid]
-            val serialWrite = characteristicsByUuid[config.serialConfig.txServiceCharUuid]
+            val serialRead = currentCharacteristics[config.serialConfig.rxServiceCharUuid]
+            val serialWrite = currentCharacteristics[config.serialConfig.txServiceCharUuid]
 
             if (serialRead != null && serialWrite != null) {
                 peripheral.setNotifyValue(true, forCharacteristic = serialRead)

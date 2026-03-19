@@ -7,7 +7,11 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
@@ -49,19 +53,22 @@ class FPeripheral(
     override val metaInfoKeysStream: WrappedStateFlow<Map<TransportMetaInfoKey, ByteArray?>> =
         _metaInfoKeysStream.asStateFlow().wrap()
 
-    private var serialWrite: CBCharacteristic? = null
-    private val characteristicsByUuid = mutableMapOf<Uuid, CBCharacteristic>()
+    private var serialWrite = MutableStateFlow<CBCharacteristic?>(null)
+    private val characteristicsByUuid = MutableStateFlow(mapOf<Uuid, CBCharacteristic>())
     private val characteristicValueState = MutableStateFlow<Map<Uuid, ByteArray?>>(emptyMap())
     private val gattIO = FPeripheralGattIO(
         peripheral = peripheral,
-        stateProvider = { _stateStream.value },
-        serialWriteProvider = { serialWrite },
-        characteristicProvider = { uuid -> characteristicsByUuid[uuid] },
+        scope = scope,
+        peripheralState = _stateStream,
+        serialWriteState = serialWrite,
+        characteristicProvider = { uuid ->
+            characteristicsByUuid.map { it[uuid] }.filterNotNull().first()
+        },
     )
     private val discovery = FPeripheralDiscovery(
         config = config,
         characteristicsByUuid = characteristicsByUuid,
-        serialWriteUpdater = { characteristic -> serialWrite = characteristic },
+        serialWriteUpdater = { characteristic -> serialWrite.value = characteristic },
         identifierProvider = { identifier.UUIDString },
     )
     private val valueRouter = FPeripheralValueRouter(
@@ -124,8 +131,8 @@ class FPeripheral(
 
         _rxDataChannel.close()
 
-        characteristicsByUuid.clear()
-        serialWrite = null
+        characteristicsByUuid.update { emptyMap() }
+        serialWrite.value = null
         characteristicValueState.emit(emptyMap())
         _metaInfoKeysStream.emit(emptyMap())
         _stateStream.emit(FPeripheralState.DISCONNECTED)
