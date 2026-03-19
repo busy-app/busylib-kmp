@@ -5,10 +5,8 @@ import kotlinx.coroutines.flow.Flow
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.screenstreaming.model.BusyImageFormat
 import net.flipper.core.busylib.ktx.common.TickFlow
-import net.flipper.core.busylib.ktx.common.asFlow
 import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.throttleLatest
-import net.flipper.core.busylib.ktx.common.transformWhileSubscribed
 import net.flipper.core.busylib.log.error
 import kotlin.io.encoding.Base64
 import kotlin.time.Duration.Companion.seconds
@@ -20,18 +18,14 @@ class TickFlowScreenFramesProvider(
     private val rpcFeatureApi: FRpcFeatureApi
 ) : ScreenFramesProvider {
     private val screensSharedFlow = TickFlow(TICK_DELAY)
-        .transformWhileSubscribed(
-            timeout = TICK_DELAY.minus(1.seconds),
-            scope = scope,
-            transformFlow = { flow ->
-                flow.throttleLatest { _ ->
-                    exponentialRetry {
-                        getBusyImageFormat()
-                            .onFailure { throwable -> error(throwable) { "Failed to get busy image format" } }
+        .throttleLatest { _ ->
+            exponentialRetry {
+                getBusyImageFormat()
+                    .onFailure { throwable ->
+                        error(throwable) { "Failed to get busy image format" }
                     }
-                }
             }
-        ).asFlow()
+        }
 
     override fun getScreens(): Flow<BusyImageFormat> {
         return screensSharedFlow
