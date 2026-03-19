@@ -107,6 +107,7 @@ class FHttpBLEEngine(
             if (t is ParserException) {
                 error(t) { "Parser exception, make reset" }
                 serialApi.reset()
+                requestCount = 0
             }
         }.getOrThrow() ?: throw BadHttpResponseException()
         val headers: Headers = CIOHeaders(response.headers)

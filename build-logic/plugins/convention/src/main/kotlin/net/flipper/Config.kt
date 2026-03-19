@@ -1,5 +1,6 @@
 package net.flipper
 
+import net.flipper.property.AnyPropertyValue
 import net.flipper.property.GradlePropertyValue
 import net.flipper.property.PropertyValue
 import net.flipper.property.asCached
@@ -12,7 +13,7 @@ import org.gradle.api.Project
 object Config {
     val Project.CURRENT_FLAVOR_TYPE: FlavorType
         get() {
-            val property = GradlePropertyValue(rootProject, "current_flavor_type")
+            val property = AnyPropertyValue(rootProject, "current_flavor_type")
                 .asCached(rootProject.extensions)
             val propertyValue = property
                 .getValue()
