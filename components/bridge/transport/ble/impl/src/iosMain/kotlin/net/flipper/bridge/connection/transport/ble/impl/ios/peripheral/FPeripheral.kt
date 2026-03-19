@@ -15,7 +15,6 @@ import net.flipper.busylib.core.wrapper.WrappedStateFlow
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.debug
-import net.flipper.core.busylib.log.error
 import platform.CoreBluetooth.CBCharacteristic
 import platform.CoreBluetooth.CBPeripheral
 import platform.CoreBluetooth.CBService
@@ -172,7 +171,7 @@ class FPeripheral(
 
     override suspend fun writeValue(data: ByteArray) {
         debug { "#writeValue with ${data.size}" }
-        gattIO.writeValue(data)
+        gattIO.writeSerial(data)
     }
 
     override suspend fun readValue(characteristicUuid: Uuid): ByteArray {
