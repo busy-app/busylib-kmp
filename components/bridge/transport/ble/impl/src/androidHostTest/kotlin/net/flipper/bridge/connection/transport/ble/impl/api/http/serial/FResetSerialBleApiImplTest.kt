@@ -45,7 +45,7 @@ class FResetSerialBleApiImplTest {
         }
 
     @Test
-    fun GIVEN_reset_characteristic_available_WHEN_sut_created_THEN_stateflow_is_populated_without_explicit_subscription() =
+    fun GIVEN_reset_characteristic_available_WHEN_sut_created_THEN_stateflow_is_populated_eagerly() =
         runTest {
             val characteristic = createMockCharacteristic(byteArrayOf(0x03, 0x00, 0x00, 0x00))
             val characteristicFlow = MutableStateFlow<RemoteCharacteristic?>(characteristic)
