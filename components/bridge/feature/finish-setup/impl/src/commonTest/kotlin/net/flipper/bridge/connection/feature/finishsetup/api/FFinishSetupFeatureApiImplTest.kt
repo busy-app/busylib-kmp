@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withTimeoutOrNull
@@ -80,6 +81,8 @@ class FFinishSetupFeatureApiImplTest {
             password: String,
             security: WiFiSecurity.Supported
         ): CResult<Unit> = CResult.Success(Unit)
+
+        override val isWifiEditingAllowed = flowOf(false).wrap()
 
         override suspend fun disconnect(): CResult<Unit> = CResult.Success(Unit)
     }
@@ -242,6 +245,8 @@ class FFinishSetupFeatureApiImplTest {
                     password: String,
                     security: WiFiSecurity.Supported
                 ): CResult<Unit> = CResult.Success(Unit)
+
+                override val isWifiEditingAllowed = flowOf(false).wrap()
 
                 override suspend fun disconnect(): CResult<Unit> = CResult.Success(Unit)
             },
