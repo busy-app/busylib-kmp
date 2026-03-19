@@ -92,24 +92,26 @@ class FWiFiFeatureApiImpl(
         }.wrap()
     }
 
-    override fun getWifiStatusFlow(): WrappedFlow<StatusResponse> {
-        return fEventsFeatureApi
-            ?.getBsbUpdateFlow(BsbUpdateEvent.WIFI_STATUS)
-            .orEmpty()
-            .merge(flowOf(DefaultConsumable(false)))
-            .transformWhileSubscribed(scope = scope) { flow ->
-                flow.throttleLatest { consumable ->
-                    val couldConsume = consumable.tryConsume()
-                    exponentialRetry {
-                        rpcFeatureApi
-                            .fRpcWifiApi
-                            .getWifiStatus(couldConsume)
-                            .onFailure { error(it) { "Failed to get WiFi networks" } }
-                    }
+    private val wifiStatusSharedFlow = fEventsFeatureApi
+        ?.getBsbUpdateFlow(BsbUpdateEvent.WIFI_STATUS)
+        .orEmpty()
+        .merge(flowOf(DefaultConsumable(false)))
+        .transformWhileSubscribed(scope = scope) { flow ->
+            flow.throttleLatest { consumable ->
+                val couldConsume = consumable.tryConsume()
+                exponentialRetry {
+                    rpcFeatureApi
+                        .fRpcWifiApi
+                        .getWifiStatus(couldConsume)
+                        .onFailure { error(it) { "Failed to get WiFi networks" } }
                 }
             }
-            .asFlow()
-            .wrap()
+        }
+        .asFlow()
+        .wrap()
+
+    override fun getWifiStatusFlow(): WrappedFlow<StatusResponse> {
+        return wifiStatusSharedFlow
     }
 
     override suspend fun connect(

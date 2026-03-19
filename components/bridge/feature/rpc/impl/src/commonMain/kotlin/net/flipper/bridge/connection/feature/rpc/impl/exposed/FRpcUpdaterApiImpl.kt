@@ -42,9 +42,11 @@ class FRpcUpdaterApiImpl(
         }
     }
 
-    override suspend fun getAutoUpdate(): Result<AutoUpdate> {
+    override suspend fun getAutoUpdate(ignoreCache: Boolean): Result<AutoUpdate> {
         return runSuspendCatching(dispatcher) {
-            httpClient.get("/api/update/autoupdate").body<AutoUpdate>()
+            objectCache.getOrElse(ignoreCache) {
+                httpClient.get("/api/update/autoupdate").body<AutoUpdate>()
+            }
         }
     }
 

@@ -16,6 +16,8 @@ import net.flipper.bridge.connection.transport.common.api.meta.FTransportMetaInf
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
 import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.wrap
+import net.flipper.core.busylib.ktx.common.asFlow
+import net.flipper.core.busylib.ktx.common.transformWhileSubscribed
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
 
@@ -28,7 +30,10 @@ class FScreenStreamingFeatureApiImpl(
     override val TAG: String = "FScreenStreamingFeatureApi"
 
     override val busyImageFormatFlow: WrappedFlow<BusyImageFormat> = getProviderFlow()
-        .flatMapLatest { it.getScreens() }
+        .transformWhileSubscribed(scope = scope) { providersFlow ->
+            providersFlow.flatMapLatest { provider -> provider.getScreens() }
+        }
+        .asFlow()
         .wrap()
 
     private fun getProviderFlow(): Flow<ScreenFramesProvider> {

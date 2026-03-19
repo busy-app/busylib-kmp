@@ -9,8 +9,8 @@ import net.flipper.busylib.core.wrapper.WrappedSharedFlow
 
 interface FFirmwareUpdateFeatureApi : FDeviceFeatureApi {
     val updateStatusFlow: WrappedSharedFlow<UpdateStatus>
+    val isAutoUpdateEnabledFlow: WrappedSharedFlow<Boolean>
     suspend fun setAutoUpdate(isEnabled: Boolean): CResult<Unit>
-    suspend fun getAutoUpdate(): CResult<Boolean>
 
     val updateVersionFlow: WrappedFlow<BsbUpdateVersion>
     val updateVersionChangelog: WrappedFlow<String>

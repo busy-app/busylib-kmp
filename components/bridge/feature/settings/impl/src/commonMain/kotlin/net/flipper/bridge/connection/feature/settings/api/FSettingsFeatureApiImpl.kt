@@ -20,6 +20,7 @@ import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.AudioVolumeInfo
 import net.flipper.bridge.connection.feature.rpc.api.model.BsbBrightness
 import net.flipper.bridge.connection.feature.rpc.api.model.BsbBrightnessInfo
+import net.flipper.bridge.connection.feature.rpc.api.model.Fraction
 import net.flipper.bridge.connection.feature.rpc.api.model.NameInfo
 import net.flipper.bridge.connection.feature.rpc.api.model.toBsbBrightnessInfo
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
@@ -77,75 +78,79 @@ class FSettingsFeatureApiImpl(
             }.filterNotNull()
         }.stateIn(scope, SharingStarted.Lazily, connectedDevice.deviceName)
 
-    override fun getBrightnessInfoFlow(): WrappedFlow<BsbBrightnessInfo> {
-        return fEventsFeatureApi
-            ?.getUpdateFlow(BsbUpdateEvent.BRIGHTNESS)
-            .orEmpty()
-            .merge(flowOf(ConsumableUpdateEvent.Empty))
-            .transformWhileSubscribed(scope = scope) { flow ->
-                flow.throttleLatest { consumable ->
-                    val couldConsume = consumable.tryConsume()
-                    when (consumable) {
-                        ConsumableUpdateEvent.Empty,
-                        is ConsumableUpdateEvent.Bsb -> {
-                            exponentialRetry {
-                                rpcFeatureApi
-                                    .fRpcSettingsApi
-                                    .getDisplayBrightness(couldConsume)
-                                    .map { it.toBsbBrightnessInfo() }
-                                    .onFailure { error(it) { "Failed to get Settings status" } }
-                            }
-                        }
-
-                        is ConsumableUpdateEvent.BusyLib<*> -> {
-                            consumable.busyLibUpdateEvent
-                                .tryCast<BusyLibUpdateEvent.Brightness>()
-                                ?.bsbBrightnessInfo
+    private val brightnessInfoFlow = fEventsFeatureApi
+        ?.getUpdateFlow(BsbUpdateEvent.BRIGHTNESS)
+        .orEmpty()
+        .merge(flowOf(ConsumableUpdateEvent.Empty))
+        .transformWhileSubscribed(scope = scope) { flow ->
+            flow.throttleLatest { consumable ->
+                val couldConsume = consumable.tryConsume()
+                when (consumable) {
+                    ConsumableUpdateEvent.Empty,
+                    is ConsumableUpdateEvent.Bsb -> {
+                        exponentialRetry {
+                            rpcFeatureApi
+                                .fRpcSettingsApi
+                                .getDisplayBrightness(couldConsume)
+                                .map { it.toBsbBrightnessInfo() }
+                                .onFailure { error(it) { "Failed to get Settings status" } }
                         }
                     }
-                }.filterNotNull()
-            }
-            .asFlow()
-            .wrap()
+
+                    is ConsumableUpdateEvent.BusyLib<*> -> {
+                        consumable.busyLibUpdateEvent
+                            .tryCast<BusyLibUpdateEvent.Brightness>()
+                            ?.bsbBrightnessInfo
+                    }
+                }
+            }.filterNotNull()
+        }
+        .asFlow()
+        .wrap()
+
+    override fun getBrightnessInfoFlow(): WrappedFlow<BsbBrightnessInfo> {
+        return brightnessInfoFlow
     }
+
+    private val volumeFlow: WrappedFlow<AudioVolumeInfo> = fEventsFeatureApi
+        ?.getUpdateFlow(BsbUpdateEvent.AUDIO_VOLUME)
+        .orEmpty()
+        .merge(flowOf(ConsumableUpdateEvent.Empty))
+        .transformWhileSubscribed(scope = scope) { flow ->
+            flow.throttleLatest { consumable ->
+                when (consumable) {
+                    is ConsumableUpdateEvent.Bsb,
+                    ConsumableUpdateEvent.Empty -> {
+                        val couldConsume = consumable.tryConsume()
+                        exponentialRetry {
+                            info { "#getVolumeFlow getting volume flow" }
+                            rpcFeatureApi.fRpcSettingsApi
+                                .getAudioVolume(couldConsume)
+                                .onFailure { error(it) { "Failed to get Settings status" } }
+                        }
+                    }
+
+                    is ConsumableUpdateEvent.BusyLib<*> -> {
+                        consumable.busyLibUpdateEvent
+                            .tryCast<BusyLibUpdateEvent.Volume>()
+                            ?.audioVolumeInfo
+                    }
+                }
+            }.filterNotNull()
+        }
+        .asFlow()
+        .wrap()
 
     override fun getVolumeFlow(): WrappedFlow<AudioVolumeInfo> {
-        return fEventsFeatureApi
-            ?.getUpdateFlow(BsbUpdateEvent.AUDIO_VOLUME)
-            .orEmpty()
-            .merge(flowOf(ConsumableUpdateEvent.Empty))
-            .transformWhileSubscribed(scope = scope) { flow ->
-                flow.throttleLatest { consumable ->
-                    when (consumable) {
-                        is ConsumableUpdateEvent.Bsb,
-                        ConsumableUpdateEvent.Empty -> {
-                            val couldConsume = consumable.tryConsume()
-                            exponentialRetry {
-                                info { "#getVolumeFlow getting volume flow" }
-                                rpcFeatureApi.fRpcSettingsApi
-                                    .getAudioVolume(couldConsume)
-                                    .onFailure { error(it) { "Failed to get Settings status" } }
-                            }
-                        }
-
-                        is ConsumableUpdateEvent.BusyLib<*> -> {
-                            consumable.busyLibUpdateEvent
-                                .tryCast<BusyLibUpdateEvent.Volume>()
-                                ?.audioVolumeInfo
-                        }
-                    }
-                }.filterNotNull()
-            }
-            .asFlow()
-            .wrap()
+        return volumeFlow
     }
 
-    override suspend fun setVolume(volume: Int): CResult<Unit> {
+    override suspend fun setVolume(volume: Fraction): CResult<Unit> {
         return rpcFeatureApi.fRpcSettingsApi
-            .setAudioVolume(volume)
+            .setAudioVolume(volume.toWholePercent().toInt())
             .map { }
             .onSuccess {
-                val model = AudioVolumeInfo(volume / MAX_PERCENTAGE_VALUE)
+                val model = AudioVolumeInfo(volume)
                 val event = BusyLibUpdateEvent.Volume(model)
                 fEventsFeatureApi?.onBusyLibEvent(event)
             }
@@ -215,9 +220,5 @@ class FSettingsFeatureApiImpl(
         ): Pair<FDeviceFeature, FDeviceFeatureApi.Factory> {
             return FDeviceFeature.SETTINGS to factory
         }
-    }
-
-    companion object {
-        private const val MAX_PERCENTAGE_VALUE = 100.0
     }
 }

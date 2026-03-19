@@ -10,7 +10,7 @@ import net.flipper.bridge.connection.feature.rpc.api.model.UpdateStatus
 interface FRpcUpdaterApi {
     suspend fun startUpdateCheck(): Result<ApiResponse>
     suspend fun setAutoUpdate(request: AutoUpdate): Result<SuccessResponse>
-    suspend fun getAutoUpdate(): Result<AutoUpdate>
+    suspend fun getAutoUpdate(ignoreCache: Boolean): Result<AutoUpdate>
     suspend fun getUpdateStatus(ignoreCache: Boolean): Result<UpdateStatus>
     suspend fun getUpdateChangelog(version: String): Result<GetUpdateChangelogResponse>
     suspend fun startUpdateInstall(version: String): Result<SuccessResponse>

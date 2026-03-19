@@ -11,4 +11,5 @@ sealed interface BusyLibUpdateEvent : UpdateEvent {
 
     data class Volume(val audioVolumeInfo: AudioVolumeInfo) : BusyLibUpdateEvent
     data class DeviceName(val deviceName: String) : BusyLibUpdateEvent
+    data class AutoUpdateChanged(val isEnabled: Boolean) : BusyLibUpdateEvent
 }
