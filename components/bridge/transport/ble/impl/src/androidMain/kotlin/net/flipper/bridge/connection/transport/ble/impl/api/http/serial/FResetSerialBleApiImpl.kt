@@ -14,17 +14,16 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.isActive
-import kotlinx.coroutines.plus
+import net.flipper.bridge.connection.transport.ble.impl.BleConstants.POLLING_RESET_INTERVAL
 import net.flipper.bridge.connection.transport.ble.impl.serial.FResetSerialBleApi
+import net.flipper.bridge.connection.transport.ble.impl.toRequestCounter
+import net.flipper.bridge.connection.transport.ble.impl.toUInt32ByteArray
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.debug
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
 import no.nordicsemi.kotlin.ble.client.RemoteCharacteristic
 import no.nordicsemi.kotlin.ble.core.WriteType
-import kotlin.time.Duration.Companion.seconds
-
-private val POLLING_INTERVAL = 5.seconds
 
 class FResetSerialBleApiImpl(
     scope: CoroutineScope,
@@ -43,11 +42,11 @@ class FResetSerialBleApiImpl(
                     val counter = characteristic.read().toRequestCounter()
                     debug { "Receive request counter $counter" }
                     emit(counter)
-                    delay(POLLING_INTERVAL)
+                    delay(POLLING_RESET_INTERVAL)
                 }
             }
         }
-        .stateIn(scope, SharingStarted.Lazily, 0)
+        .stateIn(scope, SharingStarted.Eagerly, 0)
 
     override fun getRequestCounterStateFlow(): StateFlow<Int> {
         return requestCounterStateFlow
@@ -60,23 +59,4 @@ class FResetSerialBleApiImpl(
         info { "Characteristic written, waiting for reset..." }
         requestCounterStateFlow.filter { it == 0 }.first()
     }
-}
-
-@Suppress("MagicNumber")
-private fun ByteArray.toRequestCounter(): Int {
-    if (size < Int.SIZE_BYTES) return 0
-    return (this[0].toInt() and 0xFF) or
-        ((this[1].toInt() and 0xFF) shl 8) or
-        ((this[2].toInt() and 0xFF) shl 16) or
-        ((this[3].toInt() and 0xFF) shl 24)
-}
-
-@Suppress("MagicNumber")
-private fun Int.toUInt32ByteArray(): ByteArray {
-    return byteArrayOf(
-        (this and 0xFF).toByte(),
-        ((this shr 8) and 0xFF).toByte(),
-        ((this shr 16) and 0xFF).toByte(),
-        ((this shr 24) and 0xFF).toByte()
-    )
 }
