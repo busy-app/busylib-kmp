@@ -40,44 +40,49 @@ class FTimeZoneFeatureApiImpl(
 ) : FTimeZoneFeatureApi, LogTagProvider {
     override val TAG: String = "FTimeZoneFeatureApi"
 
-    override fun getTimestampInfoFlow(): WrappedFlow<TimestampInfo> {
-        return fEventsFeatureApi
-            ?.getBsbUpdateFlow(BsbUpdateEvent.TIMESTAMP_CHANGED)
-            .orEmpty()
-            .merge(flowOf(DefaultConsumable(false)))
-            .transformWhileSubscribed(scope = scope) { flow ->
-                flow.throttleLatest { consumable ->
-                    val couldConsume = consumable.tryConsume()
-                    exponentialRetry {
-                        rpcFeatureApi.fRpcTimeZoneApi.getTime(couldConsume)
-                    }
+    private val timestampInfoSharedFlow = fEventsFeatureApi
+        ?.getBsbUpdateFlow(BsbUpdateEvent.TIMESTAMP_CHANGED)
+        .orEmpty()
+        .merge(flowOf(DefaultConsumable(false)))
+        .transformWhileSubscribed(scope = scope) { flow ->
+            flow.throttleLatest { consumable ->
+                val couldConsume = consumable.tryConsume()
+                exponentialRetry {
+                    rpcFeatureApi.fRpcTimeZoneApi.getTime(couldConsume)
                 }
             }
-            .asFlow()
-            .map { it.toPublic() }
-            .wrap()
+        }
+        .asFlow()
+        .map { it.toPublic() }
+        .wrap()
+
+    override fun getTimestampInfoFlow(): WrappedFlow<TimestampInfo> {
+        return timestampInfoSharedFlow
     }
 
     override suspend fun setTimestamp(timestampInfo: TimestampInfo): CResult<Unit> {
-        return rpcFeatureApi.fRpcTimeZoneApi.postTimeTimestamp(timestampInfo.toInternal()).toCResult()
+        return rpcFeatureApi.fRpcTimeZoneApi.postTimeTimestamp(timestampInfo.toInternal())
+            .toCResult()
     }
 
-    override fun getTimeZoneInfoFlow(): WrappedFlow<TimezoneInfo> {
-        return fEventsFeatureApi
-            ?.getBsbUpdateFlow(BsbUpdateEvent.TIMEZONE_CHANGED)
-            .orEmpty()
-            .merge(flowOf(DefaultConsumable(false)))
-            .transformWhileSubscribed(scope = scope) { flow ->
-                flow.throttleLatest { consumable ->
-                    val couldConsume = consumable.tryConsume()
-                    exponentialRetry {
-                        rpcFeatureApi.fRpcTimeZoneApi.getTimeTimezone(couldConsume)
-                    }
+    private val timeZoneInfoSharedFlow = fEventsFeatureApi
+        ?.getBsbUpdateFlow(BsbUpdateEvent.TIMEZONE_CHANGED)
+        .orEmpty()
+        .merge(flowOf(DefaultConsumable(false)))
+        .transformWhileSubscribed(scope = scope) { flow ->
+            flow.throttleLatest { consumable ->
+                val couldConsume = consumable.tryConsume()
+                exponentialRetry {
+                    rpcFeatureApi.fRpcTimeZoneApi.getTimeTimezone(couldConsume)
                 }
             }
-            .asFlow()
-            .map { it.toPublic() }
-            .wrap()
+        }
+        .asFlow()
+        .map { it.toPublic() }
+        .wrap()
+
+    override fun getTimeZoneInfoFlow(): WrappedFlow<TimezoneInfo> {
+        return timeZoneInfoSharedFlow
     }
 
     override suspend fun setTimezone(timezoneInfo: TimezoneInfo): CResult<Unit> {

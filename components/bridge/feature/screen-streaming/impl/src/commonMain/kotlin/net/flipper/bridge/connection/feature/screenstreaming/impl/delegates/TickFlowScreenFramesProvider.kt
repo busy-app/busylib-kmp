@@ -19,20 +19,22 @@ class TickFlowScreenFramesProvider(
     private val scope: CoroutineScope,
     private val rpcFeatureApi: FRpcFeatureApi
 ) : ScreenFramesProvider {
-    override fun getScreens(): Flow<BusyImageFormat> {
-        return TickFlow(TICK_DELAY)
-            .transformWhileSubscribed(
-                timeout = TICK_DELAY.minus(1.seconds),
-                scope = scope,
-                transformFlow = { flow ->
-                    flow.throttleLatest { _ ->
-                        exponentialRetry {
-                            getBusyImageFormat()
-                                .onFailure { throwable -> error(throwable) { "Failed to get busy image format" } }
-                        }
+    private val screensSharedFlow = TickFlow(TICK_DELAY)
+        .transformWhileSubscribed(
+            timeout = TICK_DELAY.minus(1.seconds),
+            scope = scope,
+            transformFlow = { flow ->
+                flow.throttleLatest { _ ->
+                    exponentialRetry {
+                        getBusyImageFormat()
+                            .onFailure { throwable -> error(throwable) { "Failed to get busy image format" } }
                     }
                 }
-            ).asFlow()
+            }
+        ).asFlow()
+
+    override fun getScreens(): Flow<BusyImageFormat> {
+        return screensSharedFlow
     }
 
     private suspend fun getBusyImageFormat(): Result<BusyImageFormat> {

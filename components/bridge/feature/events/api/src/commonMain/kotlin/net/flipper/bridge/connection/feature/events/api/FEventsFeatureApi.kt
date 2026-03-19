@@ -42,6 +42,9 @@ fun FEventsFeatureApi.getUpdateFlow(event: BsbUpdateEvent): Flow<ConsumableUpdat
         BsbUpdateEvent.DEVICE_NAME -> getBusyLibUpdateFlow<BusyLibUpdateEvent.DeviceName>()
             .merge(getBsbUpdateFlow(event))
 
+        BsbUpdateEvent.AUTO_UPDATE_CHANGED -> getBusyLibUpdateFlow<BusyLibUpdateEvent.AutoUpdateChanged>()
+            .merge(getBsbUpdateFlow(event))
+
         else -> getBsbUpdateFlow(event)
     }
 }
