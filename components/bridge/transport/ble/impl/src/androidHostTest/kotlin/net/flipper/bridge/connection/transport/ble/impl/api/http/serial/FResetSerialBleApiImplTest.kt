@@ -29,91 +29,96 @@ class FResetSerialBleApiImplTest {
     }
 
     @Test
-    fun `polling starts eagerly before any subscriber`() = runTest {
-        val characteristic = createMockCharacteristic(byteArrayOf(0x05, 0x00, 0x00, 0x00))
-        val characteristicFlow = MutableStateFlow<RemoteCharacteristic?>(characteristic)
+    fun GIVEN_reset_characteristic_available_WHEN_sut_created_THEN_polling_starts_eagerly_before_any_subscriber() =
+        runTest {
+            val characteristic = createMockCharacteristic(byteArrayOf(0x05, 0x00, 0x00, 0x00))
+            val characteristicFlow = MutableStateFlow<RemoteCharacteristic?>(characteristic)
 
-        FResetSerialBleApiImpl(
-            scope = backgroundScope,
-            resetCharacteristicFlow = characteristicFlow,
-        )
+            FResetSerialBleApiImpl(
+                scope = backgroundScope,
+                resetCharacteristicFlow = characteristicFlow,
+            )
 
-        runCurrent()
+            runCurrent()
 
-        coVerify(atLeast = 1) { characteristic.read() }
-    }
-
-    @Test
-    fun `state flow value is populated eagerly without calling getRequestCounterStateFlow`() = runTest {
-        val characteristic = createMockCharacteristic(byteArrayOf(0x03, 0x00, 0x00, 0x00))
-        val characteristicFlow = MutableStateFlow<RemoteCharacteristic?>(characteristic)
-
-        val sut = FResetSerialBleApiImpl(
-            scope = backgroundScope,
-            resetCharacteristicFlow = characteristicFlow,
-        )
-
-        runCurrent()
-
-        assertEquals(3, sut.getRequestCounterStateFlow().value)
-    }
+            coVerify(atLeast = 1) { characteristic.read() }
+        }
 
     @Test
-    fun `polling continues at POLLING_RESET_INTERVAL`() = runTest {
-        val characteristic = createMockCharacteristic(
-            byteArrayOf(0x01, 0x00, 0x00, 0x00),
-            byteArrayOf(0x02, 0x00, 0x00, 0x00),
-            byteArrayOf(0x03, 0x00, 0x00, 0x00),
-        )
-        val characteristicFlow = MutableStateFlow<RemoteCharacteristic?>(characteristic)
+    fun GIVEN_reset_characteristic_available_WHEN_sut_created_THEN_stateflow_is_populated_without_explicit_subscription() =
+        runTest {
+            val characteristic = createMockCharacteristic(byteArrayOf(0x03, 0x00, 0x00, 0x00))
+            val characteristicFlow = MutableStateFlow<RemoteCharacteristic?>(characteristic)
 
-        val sut = FResetSerialBleApiImpl(
-            scope = backgroundScope,
-            resetCharacteristicFlow = characteristicFlow,
-        )
+            val sut = FResetSerialBleApiImpl(
+                scope = backgroundScope,
+                resetCharacteristicFlow = characteristicFlow,
+            )
 
-        runCurrent()
-        assertEquals(1, sut.getRequestCounterStateFlow().value)
+            runCurrent()
 
-        advanceTimeBy(POLLING_RESET_INTERVAL)
-        runCurrent()
-        assertEquals(2, sut.getRequestCounterStateFlow().value)
-
-        advanceTimeBy(POLLING_RESET_INTERVAL)
-        runCurrent()
-        assertEquals(3, sut.getRequestCounterStateFlow().value)
-    }
+            assertEquals(3, sut.getRequestCounterStateFlow().value)
+        }
 
     @Test
-    fun `characteristic flow emission triggers immediate polling`() = runTest {
-        val characteristicFlow = MutableStateFlow<RemoteCharacteristic?>(null)
+    fun GIVEN_multiple_reset_counter_values_WHEN_polling_interval_passes_THEN_stateflow_updates_on_each_tick() =
+        runTest {
+            val characteristic = createMockCharacteristic(
+                byteArrayOf(0x01, 0x00, 0x00, 0x00),
+                byteArrayOf(0x02, 0x00, 0x00, 0x00),
+                byteArrayOf(0x03, 0x00, 0x00, 0x00),
+            )
+            val characteristicFlow = MutableStateFlow<RemoteCharacteristic?>(characteristic)
 
-        val sut = FResetSerialBleApiImpl(
-            scope = backgroundScope,
-            resetCharacteristicFlow = characteristicFlow,
-        )
+            val sut = FResetSerialBleApiImpl(
+                scope = backgroundScope,
+                resetCharacteristicFlow = characteristicFlow,
+            )
 
-        runCurrent()
-        assertEquals(0, sut.getRequestCounterStateFlow().value)
+            runCurrent()
+            assertEquals(1, sut.getRequestCounterStateFlow().value)
 
-        val characteristic = createMockCharacteristic(byteArrayOf(0x07, 0x00, 0x00, 0x00))
-        characteristicFlow.value = characteristic
-        runCurrent()
+            advanceTimeBy(POLLING_RESET_INTERVAL)
+            runCurrent()
+            assertEquals(2, sut.getRequestCounterStateFlow().value)
 
-        assertEquals(7, sut.getRequestCounterStateFlow().value)
-    }
+            advanceTimeBy(POLLING_RESET_INTERVAL)
+            runCurrent()
+            assertEquals(3, sut.getRequestCounterStateFlow().value)
+        }
 
     @Test
-    fun `initial state flow value is zero before characteristic emits`() = runTest {
-        val characteristicFlow = MutableStateFlow<RemoteCharacteristic?>(null)
+    fun GIVEN_characteristic_flow_initially_empty_WHEN_characteristic_is_emitted_THEN_polling_starts_immediately() =
+        runTest {
+            val characteristicFlow = MutableStateFlow<RemoteCharacteristic?>(null)
 
-        val sut = FResetSerialBleApiImpl(
-            scope = backgroundScope,
-            resetCharacteristicFlow = characteristicFlow,
-        )
+            val sut = FResetSerialBleApiImpl(
+                scope = backgroundScope,
+                resetCharacteristicFlow = characteristicFlow,
+            )
 
-        runCurrent()
+            runCurrent()
+            assertEquals(0, sut.getRequestCounterStateFlow().value)
 
-        assertEquals(0, sut.getRequestCounterStateFlow().value)
-    }
+            val characteristic = createMockCharacteristic(byteArrayOf(0x07, 0x00, 0x00, 0x00))
+            characteristicFlow.value = characteristic
+            runCurrent()
+
+            assertEquals(7, sut.getRequestCounterStateFlow().value)
+        }
+
+    @Test
+    fun GIVEN_characteristic_flow_initially_empty_WHEN_sut_created_THEN_stateflow_starts_with_zero() =
+        runTest {
+            val characteristicFlow = MutableStateFlow<RemoteCharacteristic?>(null)
+
+            val sut = FResetSerialBleApiImpl(
+                scope = backgroundScope,
+                resetCharacteristicFlow = characteristicFlow,
+            )
+
+            runCurrent()
+
+            assertEquals(0, sut.getRequestCounterStateFlow().value)
+        }
 }

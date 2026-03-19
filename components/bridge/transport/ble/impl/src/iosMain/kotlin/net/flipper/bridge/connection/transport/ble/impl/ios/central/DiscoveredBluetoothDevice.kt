@@ -12,9 +12,11 @@ data class DiscoveredBluetoothDevice(
         if (this === other) return true
         if (other == null || this::class != other::class) return false
 
-        other as DiscoveredBluetoothDevice
+        if (other is DiscoveredBluetoothDevice) {
+            return id == other.id
+        }
 
-        return id == other.id
+        return false
     }
 
     override fun hashCode(): Int {
