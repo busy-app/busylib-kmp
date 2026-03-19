@@ -49,7 +49,7 @@ class FRpcSettingsApiImpl(
     private fun BsbBrightness.asDisplayBrightnessInfo(): DisplayBrightnessInfo {
         return when (this) {
             BsbBrightness.Auto -> DisplayBrightnessInfo("auto")
-            is BsbBrightness.Number -> DisplayBrightnessInfo("${this.value}")
+            is BsbBrightness.Number -> DisplayBrightnessInfo(this.value.toWholePercent().toInt().toString())
         }
     }
 

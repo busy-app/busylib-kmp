@@ -7,6 +7,7 @@ data class BsbBrightnessInfo(
 fun DisplayBrightnessInfo.toBsbBrightnessInfo(): BsbBrightnessInfo {
     return BsbBrightnessInfo(
         value = this.value.toIntOrNull()
+            ?.let(Fraction::fromWholePercent)
             ?.let(BsbBrightness::Number)
             ?: BsbBrightness.Auto,
     )

@@ -48,21 +48,23 @@ class FSmartHomeFeatureApiImpl(
     LogTagProvider {
     override val TAG = "FSmartHomeFeatureApi"
 
-    override fun getCommissionedFabricsFlow(): WrappedFlow<MatterCommissionedFabrics> {
-        return fEventsFeatureApi
-            ?.getBsbUpdateFlow(BsbUpdateEvent.SMART_HOME_STATUS_CHANGED)
-            .orEmpty()
-            .merge(flowOf(DefaultConsumable(false)))
-            .transformWhileSubscribed(scope = scope) { flow ->
-                flow.throttleLatest { consumable ->
-                    val couldConsume = consumable.tryConsume()
-                    exponentialRetry {
-                        fRpcMatterApi1.getMatterCommissioning(couldConsume)
-                    }
+    private val commissionedFabricsSharedFlow = fEventsFeatureApi
+        ?.getBsbUpdateFlow(BsbUpdateEvent.SMART_HOME_STATUS_CHANGED)
+        .orEmpty()
+        .merge(flowOf(DefaultConsumable(false)))
+        .transformWhileSubscribed(scope = scope) { flow ->
+            flow.throttleLatest { consumable ->
+                val couldConsume = consumable.tryConsume()
+                exponentialRetry {
+                    fRpcMatterApi1.getMatterCommissioning(couldConsume)
                 }
             }
-            .asFlow()
-            .wrap()
+        }
+        .asFlow()
+        .wrap()
+
+    override fun getCommissionedFabricsFlow(): WrappedFlow<MatterCommissionedFabrics> {
+        return commissionedFabricsSharedFlow
     }
 
     override suspend fun getPairCode(): CResult<MatterCommissioningPayload> {

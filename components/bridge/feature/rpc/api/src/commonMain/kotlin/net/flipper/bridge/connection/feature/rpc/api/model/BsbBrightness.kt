@@ -10,7 +10,8 @@ sealed interface BsbBrightness {
     data object Auto : BsbBrightness
 
     /**
-     * @param value percentage from 0 to 100
+     * @param value as a normalized fraction
+     * @see Fraction
      */
-    data class Number(val value: Int) : BsbBrightness
+    data class Number(val value: Fraction) : BsbBrightness
 }

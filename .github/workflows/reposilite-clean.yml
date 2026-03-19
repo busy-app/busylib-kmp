@@ -80,3 +80,26 @@ jobs:
         env:
           REPOSILITE_TOKEN: ${{ secrets.REPOSILITE_TOKEN }}
         run: python .github/workflows/reposilite-cleaner/cleanup.py --repo ${{ matrix.repo }} --input cleanup_dirs.csv
+
+  report:
+    name: "Cleanup Report"
+    needs: [delete, cleanup]
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Generate report
+        run: |
+          python .github/workflows/reposilite-cleaner/report.py \
+            --artifacts-dir artifacts \
+            --output report.md
+          cat report.md >> "$GITHUB_STEP_SUMMARY"

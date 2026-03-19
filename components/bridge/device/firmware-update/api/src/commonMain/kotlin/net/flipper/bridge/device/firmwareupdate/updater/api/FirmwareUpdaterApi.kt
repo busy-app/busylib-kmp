@@ -15,4 +15,9 @@ interface FirmwareUpdaterApi {
      */
     suspend fun stopFirmwareUpdate(): CResult<Unit>
     suspend fun startUpdateInstall(): CResult<Unit>
+
+    /**
+     * Required for button on Firmware settings screen
+     */
+    suspend fun checkForUpdates(): CResult<Unit>
 }
