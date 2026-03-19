@@ -59,24 +59,26 @@ class FBleFeatureApiImpl(
         }
     }
 
-    override fun getBleStatus(): WrappedFlow<FBleStatus> {
-        return fEventsFeatureApi
-            ?.getBsbUpdateFlow(BsbUpdateEvent.BLE_STATUS)
-            .orEmpty()
-            .merge(flowOf(DefaultConsumable(false)))
-            .transformWhileSubscribed(scope = scope) { flow ->
-                flow.throttleLatest { consumable ->
-                    val couldConsume = consumable.tryConsume()
-                    exponentialRetry {
-                        rpcFeatureApi.fRpcBleApi
-                            .getBleStatus(couldConsume)
-                            .onFailure { error(it) { "Failed to get Ble status" } }
-                            .map { response -> response.toFBleStatus() }
-                    }
+    private val bleStatusSharedFlow = fEventsFeatureApi
+        ?.getBsbUpdateFlow(BsbUpdateEvent.BLE_STATUS)
+        .orEmpty()
+        .merge(flowOf(DefaultConsumable(false)))
+        .transformWhileSubscribed(scope = scope) { flow ->
+            flow.throttleLatest { consumable ->
+                val couldConsume = consumable.tryConsume()
+                exponentialRetry {
+                    rpcFeatureApi.fRpcBleApi
+                        .getBleStatus(couldConsume)
+                        .onFailure { error(it) { "Failed to get Ble status" } }
+                        .map { response -> response.toFBleStatus() }
                 }
             }
-            .asFlow()
-            .wrap()
+        }
+        .asFlow()
+        .wrap()
+
+    override fun getBleStatus(): WrappedFlow<FBleStatus> {
+        return bleStatusSharedFlow
     }
 
     @Inject

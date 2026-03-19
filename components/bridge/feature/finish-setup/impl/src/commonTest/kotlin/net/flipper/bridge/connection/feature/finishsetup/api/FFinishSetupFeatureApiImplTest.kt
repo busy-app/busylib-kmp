@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withTimeoutOrNull
@@ -81,6 +82,8 @@ class FFinishSetupFeatureApiImplTest {
             security: WiFiSecurity.Supported
         ): CResult<Unit> = CResult.Success(Unit)
 
+        override val isWifiEditingAllowed = flowOf(false).wrap()
+
         override suspend fun disconnect(): CResult<Unit> = CResult.Success(Unit)
     }
 
@@ -88,12 +91,13 @@ class FFinishSetupFeatureApiImplTest {
         initialUpdateStatus: UpdateStatus
     ) : FFirmwareUpdateFeatureApi {
         private val _updateStatus = MutableStateFlow(initialUpdateStatus)
-        override val updateStatusFlow: WrappedSharedFlow<UpdateStatus> = (_updateStatus.asStateFlow() as SharedFlow<UpdateStatus>).wrap()
+        override val updateStatusFlow: WrappedSharedFlow<UpdateStatus> =
+            (_updateStatus.asStateFlow() as SharedFlow<UpdateStatus>).wrap()
 
         override suspend fun setAutoUpdate(isEnabled: Boolean): CResult<Unit> =
             CResult.Success(Unit)
 
-        override suspend fun getAutoUpdate(): CResult<Boolean> = CResult.Success(true)
+        override val isAutoUpdateEnabledFlow = MutableSharedFlow<Boolean>().wrap()
 
         override val updateVersionFlow: WrappedFlow<BsbUpdateVersion> =
             MutableStateFlow<BsbUpdateVersion>(BsbUpdateVersion.Default("1.0.0")).asFlow().wrap()
@@ -230,14 +234,20 @@ class FFinishSetupFeatureApiImplTest {
             fBleFeatureApi = FakeBleFeatureApi(FBleStatus.Connected("AA:BB:CC")),
             fLinkedInfoOnDemandFeatureApi = FakeLinkedInfoOnDemandFeatureApi(LinkedAccountInfo.NotLinked),
             fWiFiFeatureApi = object : FWiFiFeatureApi {
-                override fun getWifiStatusFlow(): WrappedFlow<StatusResponse> = wifiFlow.asFlow().wrap()
+                override fun getWifiStatusFlow(): WrappedFlow<StatusResponse> =
+                    wifiFlow.asFlow().wrap()
+
                 override fun getWifiStateFlow(): WrappedFlow<ImmutableList<WiFiNetwork>> =
                     MutableStateFlow(persistentListOf<WiFiNetwork>()).asFlow().wrap()
+
                 override suspend fun connect(
                     ssid: String,
                     password: String,
                     security: WiFiSecurity.Supported
                 ): CResult<Unit> = CResult.Success(Unit)
+
+                override val isWifiEditingAllowed = flowOf(false).wrap()
+
                 override suspend fun disconnect(): CResult<Unit> = CResult.Success(Unit)
             },
             fFirmwareUpdateFeatureApi = FakeFirmwareUpdateFeatureApi(defaultUpdateStatus()),
@@ -342,28 +352,29 @@ class FFinishSetupFeatureApiImplTest {
     }
 
     @Test
-    fun GIVEN_ble_enabled_not_connected_WHEN_others_completed_THEN_loaded_with_ble_not_completed() = runTest {
-        val impl = createImpl(
-            scope = backgroundScope,
-            fBleFeatureApi = FakeBleFeatureApi(FBleStatus.Enabled),
-            linkedAccountInfo = LinkedAccountInfo.Linked.SameUser(testUuid, "a@b.com"),
-            wifiStatus = wifiStatus(StatusResponse.State.CONNECTED),
-            updateStatus = defaultUpdateStatus(UpdateStatus.Check.CheckResult.NOT_AVAILABLE),
-            isSetupFinishedBefore = false
-        )
+    fun GIVEN_ble_enabled_not_connected_WHEN_others_completed_THEN_loaded_with_ble_not_completed() =
+        runTest {
+            val impl = createImpl(
+                scope = backgroundScope,
+                fBleFeatureApi = FakeBleFeatureApi(FBleStatus.Enabled),
+                linkedAccountInfo = LinkedAccountInfo.Linked.SameUser(testUuid, "a@b.com"),
+                wifiStatus = wifiStatus(StatusResponse.State.CONNECTED),
+                updateStatus = defaultUpdateStatus(UpdateStatus.Check.CheckResult.NOT_AVAILABLE),
+                isSetupFinishedBefore = false
+            )
 
-        val result = impl.taskListResourceFlow.first()
-        assertIs<FFinishSetupState.Loaded>(result)
-        assertEquals(
-            listOf(
-                task(DeviceSetupTaskType.PAIR_BLE, DeviceSetupTaskStatus.NOT_COMPLETED),
-                task(DeviceSetupTaskType.CONNECT_WIFI, DeviceSetupTaskStatus.COMPLETED),
-                task(DeviceSetupTaskType.LINK_ACCOUNT, DeviceSetupTaskStatus.COMPLETED),
-                task(DeviceSetupTaskType.UPDATE_FIRMWARE, DeviceSetupTaskStatus.COMPLETED),
-            ),
-            result.tasks
-        )
-    }
+            val result = impl.taskListResourceFlow.first()
+            assertIs<FFinishSetupState.Loaded>(result)
+            assertEquals(
+                listOf(
+                    task(DeviceSetupTaskType.PAIR_BLE, DeviceSetupTaskStatus.NOT_COMPLETED),
+                    task(DeviceSetupTaskType.CONNECT_WIFI, DeviceSetupTaskStatus.COMPLETED),
+                    task(DeviceSetupTaskType.LINK_ACCOUNT, DeviceSetupTaskStatus.COMPLETED),
+                    task(DeviceSetupTaskType.UPDATE_FIRMWARE, DeviceSetupTaskStatus.COMPLETED),
+                ),
+                result.tasks
+            )
+        }
 
     @Test
     fun GIVEN_ble_disabled_WHEN_others_completed_THEN_loaded_with_ble_not_completed() = runTest {
@@ -383,21 +394,22 @@ class FFinishSetupFeatureApiImplTest {
     }
 
     @Test
-    fun GIVEN_ble_internal_error_WHEN_others_completed_THEN_loaded_with_ble_not_completed() = runTest {
-        val impl = createImpl(
-            scope = backgroundScope,
-            fBleFeatureApi = FakeBleFeatureApi(FBleStatus.InternalError),
-            linkedAccountInfo = LinkedAccountInfo.Linked.SameUser(testUuid, "a@b.com"),
-            wifiStatus = wifiStatus(StatusResponse.State.CONNECTED),
-            updateStatus = defaultUpdateStatus(UpdateStatus.Check.CheckResult.NOT_AVAILABLE),
-            isSetupFinishedBefore = false
-        )
+    fun GIVEN_ble_internal_error_WHEN_others_completed_THEN_loaded_with_ble_not_completed() =
+        runTest {
+            val impl = createImpl(
+                scope = backgroundScope,
+                fBleFeatureApi = FakeBleFeatureApi(FBleStatus.InternalError),
+                linkedAccountInfo = LinkedAccountInfo.Linked.SameUser(testUuid, "a@b.com"),
+                wifiStatus = wifiStatus(StatusResponse.State.CONNECTED),
+                updateStatus = defaultUpdateStatus(UpdateStatus.Check.CheckResult.NOT_AVAILABLE),
+                isSetupFinishedBefore = false
+            )
 
-        val result = impl.taskListResourceFlow.first()
-        assertIs<FFinishSetupState.Loaded>(result)
-        assertEquals(DeviceSetupTaskStatus.NOT_COMPLETED, result.tasks[0].status)
-        assertEquals(DeviceSetupTaskType.PAIR_BLE, result.tasks[0].type)
-    }
+            val result = impl.taskListResourceFlow.first()
+            assertIs<FFinishSetupState.Loaded>(result)
+            assertEquals(DeviceSetupTaskStatus.NOT_COMPLETED, result.tasks[0].status)
+            assertEquals(DeviceSetupTaskType.PAIR_BLE, result.tasks[0].type)
+        }
 
     @Test
     fun GIVEN_ble_connectable_WHEN_others_completed_THEN_loaded_with_ble_not_completed() = runTest {
@@ -739,28 +751,29 @@ class FFinishSetupFeatureApiImplTest {
     }
 
     @Test
-    fun GIVEN_nothing_done_THEN_loaded_with_ble_and_wifi_not_completed_rest_not_available() = runTest {
-        val impl = createImpl(
-            scope = backgroundScope,
-            fBleFeatureApi = FakeBleFeatureApi(FBleStatus.Enabled),
-            linkedAccountInfo = LinkedAccountInfo.NotLinked,
-            wifiStatus = wifiStatus(StatusResponse.State.DISCONNECTED),
-            updateStatus = defaultUpdateStatus(UpdateStatus.Check.CheckResult.AVAILABLE),
-            isSetupFinishedBefore = false
-        )
+    fun GIVEN_nothing_done_THEN_loaded_with_ble_and_wifi_not_completed_rest_not_available() =
+        runTest {
+            val impl = createImpl(
+                scope = backgroundScope,
+                fBleFeatureApi = FakeBleFeatureApi(FBleStatus.Enabled),
+                linkedAccountInfo = LinkedAccountInfo.NotLinked,
+                wifiStatus = wifiStatus(StatusResponse.State.DISCONNECTED),
+                updateStatus = defaultUpdateStatus(UpdateStatus.Check.CheckResult.AVAILABLE),
+                isSetupFinishedBefore = false
+            )
 
-        val result = impl.taskListResourceFlow.first()
-        assertIs<FFinishSetupState.Loaded>(result)
-        assertEquals(
-            listOf(
-                task(DeviceSetupTaskType.PAIR_BLE, DeviceSetupTaskStatus.NOT_COMPLETED),
-                task(DeviceSetupTaskType.CONNECT_WIFI, DeviceSetupTaskStatus.NOT_COMPLETED),
-                task(DeviceSetupTaskType.LINK_ACCOUNT, DeviceSetupTaskStatus.NOT_AVAILABLE),
-                task(DeviceSetupTaskType.UPDATE_FIRMWARE, DeviceSetupTaskStatus.NOT_AVAILABLE),
-            ),
-            result.tasks
-        )
-    }
+            val result = impl.taskListResourceFlow.first()
+            assertIs<FFinishSetupState.Loaded>(result)
+            assertEquals(
+                listOf(
+                    task(DeviceSetupTaskType.PAIR_BLE, DeviceSetupTaskStatus.NOT_COMPLETED),
+                    task(DeviceSetupTaskType.CONNECT_WIFI, DeviceSetupTaskStatus.NOT_COMPLETED),
+                    task(DeviceSetupTaskType.LINK_ACCOUNT, DeviceSetupTaskStatus.NOT_AVAILABLE),
+                    task(DeviceSetupTaskType.UPDATE_FIRMWARE, DeviceSetupTaskStatus.NOT_AVAILABLE),
+                ),
+                result.tasks
+            )
+        }
 
     @Test
     fun GIVEN_ble_connected_wifi_disconnected_not_linked_THEN_wifi_step_next() = runTest {
