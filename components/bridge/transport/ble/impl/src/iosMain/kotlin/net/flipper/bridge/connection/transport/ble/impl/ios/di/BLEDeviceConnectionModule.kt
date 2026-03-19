@@ -1,18 +1,12 @@
 package net.flipper.bridge.connection.transport.ble.impl.ios.di
 
-import kotlinx.coroutines.CoroutineScope
 import me.tatarka.inject.annotations.IntoMap
 import me.tatarka.inject.annotations.Provides
 import net.flipper.bridge.connection.transport.ble.api.BleDeviceConnectionApi
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceConnectionConfig
-import net.flipper.bridge.connection.transport.ble.impl.ios.central.FCentralManager
-import net.flipper.bridge.connection.transport.ble.impl.ios.central.FCentralManagerApi
 import net.flipper.bridge.connection.transport.common.api.DeviceConnectionApiHolder
 import net.flipper.busylib.core.di.BusyLibGraph
-import net.flipper.core.busylib.ktx.common.FlipperDispatchers
-import platform.CoreBluetooth.CBCentralManager
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
-import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 import kotlin.reflect.KClass
 
 @ContributesTo(BusyLibGraph::class)
