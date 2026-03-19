@@ -26,13 +26,4 @@ interface BLEDeviceConnectionModule {
             bleDeviceConnectionApi
         )
     }
-
-    @Provides
-    @SingleIn(BusyLibGraph::class)
-    fun getAppleCentralManager(
-        manager: CBCentralManager
-    ): FCentralManagerApi = FCentralManager(
-        manager = manager,
-        scope = CoroutineScope(FlipperDispatchers.default)
-    )
 }

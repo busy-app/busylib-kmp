@@ -8,11 +8,13 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
+import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.ble.impl.BleConstants
 import net.flipper.bridge.connection.transport.ble.impl.ios.peripheral.FPeripheral
 import net.flipper.bridge.connection.transport.ble.impl.ios.peripheral.FPeripheralApi
 import net.flipper.bridge.connection.transport.ble.impl.ios.peripheral.FPeripheralState
+import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.core.wrapper.WrappedStateFlow
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.log.LogTagProvider
@@ -26,7 +28,10 @@ import platform.CoreBluetooth.CBUUID
 import platform.Foundation.NSError
 import platform.Foundation.NSNumber
 import platform.Foundation.NSUUID
+import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 
+@Inject
+@ContributesBinding(BusyLibGraph::class, FCentralManagerApi::class)
 class FCentralManager(
     private val manager: CBCentralManager,
     scope: CoroutineScope,
