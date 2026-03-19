@@ -134,7 +134,7 @@ class FWiFiFeatureApiImpl(
         .getCurrentConnectionTypeFlow()
         .map { connectionType ->
             when (connectionType) {
-                FInternalTransportConnectionType.BLE -> false
+                FInternalTransportConnectionType.BLE -> true
                 FInternalTransportConnectionType.LAN -> true
                 FInternalTransportConnectionType.CLOUD -> false
                 null -> false
