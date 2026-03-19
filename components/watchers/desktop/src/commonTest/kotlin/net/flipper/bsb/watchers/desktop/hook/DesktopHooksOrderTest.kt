@@ -60,7 +60,7 @@ class DesktopHooksOrderTest {
     // ---- Empty storage ----
 
     @Test
-    fun emptyStorage_allPermutations() {
+    fun GIVEN_empty_storage_WHEN_all_hook_permutations_run_THEN_results_are_identical() {
         assertAllPermutationsProduceSameResult(
             devices = emptyList(),
             currentDevice = null
@@ -70,7 +70,7 @@ class DesktopHooksOrderTest {
     // ---- Single cloud device (no LAN) ----
 
     @Test
-    fun singleCloudDeviceNoLan_allPermutations() {
+    fun GIVEN_single_cloud_device_without_LAN_WHEN_all_hook_permutations_run_THEN_results_are_identical() {
         assertAllPermutationsProduceSameResult(
             devices = listOf(cloudDevice),
             currentDevice = null
@@ -78,7 +78,7 @@ class DesktopHooksOrderTest {
     }
 
     @Test
-    fun singleCloudDeviceNoLanSelected_allPermutations() {
+    fun GIVEN_single_cloud_device_without_LAN_selected_WHEN_all_hook_permutations_run_THEN_results_are_identical() {
         assertAllPermutationsProduceSameResult(
             devices = listOf(cloudDevice),
             currentDevice = cloudDevice
@@ -88,7 +88,7 @@ class DesktopHooksOrderTest {
     // ---- Single LAN-only device ----
 
     @Test
-    fun singleLanDevice_allPermutations() {
+    fun GIVEN_single_LAN_device_WHEN_all_hook_permutations_run_THEN_results_are_identical() {
         assertAllPermutationsProduceSameResult(
             devices = listOf(lanDevice1),
             currentDevice = null
@@ -96,7 +96,7 @@ class DesktopHooksOrderTest {
     }
 
     @Test
-    fun singleLanDeviceSelected_allPermutations() {
+    fun GIVEN_single_LAN_device_selected_WHEN_all_hook_permutations_run_THEN_results_are_identical() {
         assertAllPermutationsProduceSameResult(
             devices = listOf(lanDevice1),
             currentDevice = lanDevice1
@@ -106,7 +106,7 @@ class DesktopHooksOrderTest {
     // ---- Cloud + LAN-only device ----
 
     @Test
-    fun cloudAndLanDevice_noSelection_allPermutations() {
+    fun GIVEN_cloud_and_LAN_devices_with_no_selection_WHEN_all_hook_permutations_run_THEN_results_are_identical() {
         assertAllPermutationsProduceSameResult(
             devices = listOf(cloudDevice, lanDevice1),
             currentDevice = null
@@ -114,7 +114,7 @@ class DesktopHooksOrderTest {
     }
 
     @Test
-    fun cloudAndLanDevice_lanSelected_allPermutations() {
+    fun GIVEN_cloud_and_LAN_devices_with_LAN_selected_WHEN_all_hook_permutations_run_THEN_results_are_identical() {
         assertAllPermutationsProduceSameResult(
             devices = listOf(cloudDevice, lanDevice1),
             currentDevice = lanDevice1
@@ -122,7 +122,7 @@ class DesktopHooksOrderTest {
     }
 
     @Test
-    fun cloudAndLanDevice_cloudSelected_allPermutations() {
+    fun GIVEN_cloud_and_LAN_devices_with_cloud_selected_WHEN_all_hook_permutations_run_THEN_results_are_identical() {
         assertAllPermutationsProduceSameResult(
             devices = listOf(cloudDevice, lanDevice1),
             currentDevice = cloudDevice
@@ -132,7 +132,7 @@ class DesktopHooksOrderTest {
     // ---- Two LAN-only devices ----
 
     @Test
-    fun twoLanDevices_noSelection_allPermutations() {
+    fun GIVEN_two_LAN_devices_with_no_selection_WHEN_all_hook_permutations_run_THEN_results_are_identical() {
         assertAllPermutationsProduceSameResult(
             devices = listOf(lanDevice1, lanDevice2),
             currentDevice = null
@@ -140,7 +140,7 @@ class DesktopHooksOrderTest {
     }
 
     @Test
-    fun twoLanDevices_firstSelected_allPermutations() {
+    fun GIVEN_two_LAN_devices_with_first_selected_WHEN_all_hook_permutations_run_THEN_results_are_identical() {
         assertAllPermutationsProduceSameResult(
             devices = listOf(lanDevice1, lanDevice2),
             currentDevice = lanDevice1
@@ -148,7 +148,7 @@ class DesktopHooksOrderTest {
     }
 
     @Test
-    fun twoLanDevices_secondSelected_allPermutations() {
+    fun GIVEN_two_LAN_devices_with_second_selected_WHEN_all_hook_permutations_run_THEN_results_are_identical() {
         assertAllPermutationsProduceSameResult(
             devices = listOf(lanDevice1, lanDevice2),
             currentDevice = lanDevice2
@@ -158,7 +158,7 @@ class DesktopHooksOrderTest {
     // ---- Cloud + two LAN-only devices ----
 
     @Test
-    fun cloudAndTwoLanDevices_allPermutations() {
+    fun GIVEN_cloud_and_two_LAN_devices_WHEN_all_hook_permutations_run_THEN_results_are_identical() {
         assertAllPermutationsProduceSameResult(
             devices = listOf(cloudDevice, lanDevice1, lanDevice2),
             currentDevice = null
@@ -166,7 +166,7 @@ class DesktopHooksOrderTest {
     }
 
     @Test
-    fun cloudAndTwoLanDevices_lanSelected_allPermutations() {
+    fun GIVEN_cloud_and_two_LAN_devices_with_LAN_selected_WHEN_all_hook_permutations_run_THEN_results_are_identical() {
         assertAllPermutationsProduceSameResult(
             devices = listOf(cloudDevice, lanDevice1, lanDevice2),
             currentDevice = lanDevice1
@@ -176,7 +176,7 @@ class DesktopHooksOrderTest {
     // ---- Bare device (no connections) ----
 
     @Test
-    fun singleBareDevice_allPermutations() {
+    fun GIVEN_single_bare_device_WHEN_all_hook_permutations_run_THEN_results_are_identical() {
         assertAllPermutationsProduceSameResult(
             devices = listOf(bareDevice1),
             currentDevice = null
@@ -184,7 +184,7 @@ class DesktopHooksOrderTest {
     }
 
     @Test
-    fun twoBareDevices_allPermutations() {
+    fun GIVEN_two_bare_devices_WHEN_all_hook_permutations_run_THEN_results_are_identical() {
         assertAllPermutationsProduceSameResult(
             devices = listOf(bareDevice1, bareDevice2),
             currentDevice = null
@@ -192,7 +192,7 @@ class DesktopHooksOrderTest {
     }
 
     @Test
-    fun cloudAndBareDevice_allPermutations() {
+    fun GIVEN_cloud_and_bare_device_WHEN_all_hook_permutations_run_THEN_results_are_identical() {
         assertAllPermutationsProduceSameResult(
             devices = listOf(cloudDevice, bareDevice1),
             currentDevice = null
@@ -202,7 +202,7 @@ class DesktopHooksOrderTest {
     // ---- Cloud+LAN device already complete ----
 
     @Test
-    fun cloudWithLanDevice_allPermutations() {
+    fun GIVEN_cloud_with_LAN_device_selected_WHEN_all_hook_permutations_run_THEN_results_are_identical() {
         assertAllPermutationsProduceSameResult(
             devices = listOf(cloudWithLanDevice),
             currentDevice = cloudWithLanDevice
@@ -212,7 +212,7 @@ class DesktopHooksOrderTest {
     // ---- BLE device (gets LAN added) ----
 
     @Test
-    fun bleDevice_allPermutations() {
+    fun GIVEN_BLE_device_WHEN_all_hook_permutations_run_THEN_results_are_identical() {
         assertAllPermutationsProduceSameResult(
             devices = listOf(bleDevice),
             currentDevice = null
@@ -220,7 +220,7 @@ class DesktopHooksOrderTest {
     }
 
     @Test
-    fun bleAndCloudDevice_allPermutations() {
+    fun GIVEN_BLE_and_cloud_devices_WHEN_all_hook_permutations_run_THEN_results_are_identical() {
         assertAllPermutationsProduceSameResult(
             devices = listOf(bleDevice, cloudDevice),
             currentDevice = null
@@ -228,7 +228,7 @@ class DesktopHooksOrderTest {
     }
 
     @Test
-    fun bleAndLanDevice_allPermutations() {
+    fun GIVEN_BLE_and_LAN_devices_WHEN_all_hook_permutations_run_THEN_results_are_identical() {
         assertAllPermutationsProduceSameResult(
             devices = listOf(bleDevice, lanDevice1),
             currentDevice = null
@@ -238,7 +238,7 @@ class DesktopHooksOrderTest {
     // ---- Mixed: cloud + BLE + LAN-only ----
 
     @Test
-    fun cloudBleAndLanDevice_allPermutations() {
+    fun GIVEN_cloud_BLE_and_LAN_devices_WHEN_all_hook_permutations_run_THEN_results_are_identical() {
         assertAllPermutationsProduceSameResult(
             devices = listOf(cloudDevice, bleDevice, lanDevice1),
             currentDevice = null
@@ -246,7 +246,7 @@ class DesktopHooksOrderTest {
     }
 
     @Test
-    fun cloudBleAndLanDevice_lanSelected_allPermutations() {
+    fun GIVEN_cloud_BLE_and_LAN_devices_with_LAN_selected_WHEN_all_hook_permutations_run_THEN_results_are_identical() {
         assertAllPermutationsProduceSameResult(
             devices = listOf(cloudDevice, bleDevice, lanDevice1),
             currentDevice = lanDevice1
