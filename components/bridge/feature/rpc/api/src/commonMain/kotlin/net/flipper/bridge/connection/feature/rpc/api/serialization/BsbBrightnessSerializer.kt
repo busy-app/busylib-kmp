@@ -7,6 +7,7 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import net.flipper.bridge.connection.feature.rpc.api.model.BsbBrightness
+import net.flipper.bridge.connection.feature.rpc.api.model.Fraction
 
 object BsbBrightnessSerializer : KSerializer<BsbBrightness> {
 
@@ -18,7 +19,7 @@ object BsbBrightnessSerializer : KSerializer<BsbBrightness> {
     override fun serialize(encoder: Encoder, value: BsbBrightness) {
         val str = when (value) {
             is BsbBrightness.Auto -> "auto"
-            is BsbBrightness.Number -> "${value.value}"
+            is BsbBrightness.Number -> "${value.value.toWholePercent().toInt()}"
         }
         encoder.encodeString(str)
     }
@@ -34,6 +35,7 @@ object BsbBrightnessSerializer : KSerializer<BsbBrightness> {
             .toIntOrNull()
             ?.takeIf { int -> int > 0 }
             ?.takeIf { int -> int in 0..100 }
+            ?.let(Fraction::fromWholePercent)
             ?.let(BsbBrightness::Number)
     }
 

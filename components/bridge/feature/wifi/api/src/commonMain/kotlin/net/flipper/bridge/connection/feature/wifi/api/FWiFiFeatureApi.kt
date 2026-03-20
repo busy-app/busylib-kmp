@@ -19,5 +19,10 @@ interface FWiFiFeatureApi : FDeviceFeatureApi {
         security: WiFiSecurity.Supported
     ): CResult<Unit>
 
+    /**
+     * Wi-Fi cannot be edited when there is no BLE/LAN connection
+     */
+    val isWifiEditingAllowed: WrappedFlow<Boolean>
+
     suspend fun disconnect(): CResult<Unit>
 }

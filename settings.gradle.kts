@@ -43,6 +43,7 @@ include(
     ":components:core:wrapper",
     ":components:core:network",
     ":components:core:ktor",
+    ":components:core:timezone",
 
     ":components:bridge:config:api",
     ":components:bridge:config:impl",
@@ -124,6 +125,7 @@ include(
     ":components:watchers:api",
     ":components:watchers:changename",
     ":components:watchers:provisioning",
+    ":components:watchers:desktop",
 
     ":entrypoint",
     ":sample:cmp",

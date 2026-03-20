@@ -31,6 +31,10 @@ jobs:
   tests_validation:
     needs: gradle_validation
     uses: ./.github/workflows/call-tests-validation.yml
+  sample_cmp_validation:
+    name: Build sample:cmp targets
+    needs: gradle_validation
+    uses: ./.github/workflows/call-sample-validation.yml
   publish_internal:
     name: Publish to internal maven
     needs: gradle_validation

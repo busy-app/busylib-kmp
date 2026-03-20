@@ -15,6 +15,7 @@ enum class BsbUpdateEvent(
     UPDATER_UPDATE_STATUS(webSocketKey = "update_available_version"),
     SMART_HOME_STATUS_CHANGED,
     TIMESTAMP_CHANGED,
+    AUTO_UPDATE_CHANGED,
     TIMEZONE_CHANGED,
     BATTERY_CHARGE(webSocketKey = "battery_charge"),
     POWER_STATE(webSocketKey = "power_state"),

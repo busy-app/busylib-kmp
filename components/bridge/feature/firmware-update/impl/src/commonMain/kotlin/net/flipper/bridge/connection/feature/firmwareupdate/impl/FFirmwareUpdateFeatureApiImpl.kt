@@ -4,6 +4,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -19,7 +20,10 @@ import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
 import net.flipper.bridge.connection.feature.events.api.getBsbUpdateFlow
+import net.flipper.bridge.connection.feature.events.api.getUpdateFlow
 import net.flipper.bridge.connection.feature.events.model.BsbUpdateEvent
+import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
+import net.flipper.bridge.connection.feature.events.model.ConsumableUpdateEvent
 import net.flipper.bridge.connection.feature.firmwareupdate.api.FFirmwareUpdateFeatureApi
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateVersion
 import net.flipper.bridge.connection.feature.info.api.FDeviceInfoFeatureApi
@@ -92,14 +96,40 @@ class FFirmwareUpdateFeatureApiImpl(
         )
         return rpcFeatureApi.fRpcUpdaterApi.setAutoUpdate(request)
             .map { }
+            .onSuccess {
+                val event = BusyLibUpdateEvent.AutoUpdateChanged(isEnabled)
+                fEventsFeatureApi?.onBusyLibEvent(event)
+            }
             .toCResult()
     }
 
-    override suspend fun getAutoUpdate(): CResult<Boolean> {
-        return rpcFeatureApi.fRpcUpdaterApi.getAutoUpdate()
-            .map { it.isEnabled }
-            .toCResult()
-    }
+    override val isAutoUpdateEnabledFlow = fEventsFeatureApi
+        ?.getUpdateFlow(BsbUpdateEvent.AUTO_UPDATE_CHANGED)
+        .orEmpty()
+        .merge(flowOf(ConsumableUpdateEvent.Empty))
+        .transformWhileSubscribed(scope = scope) { flow ->
+            flow.throttleLatest { consumable ->
+                val couldConsume = consumable.tryConsume()
+                when (consumable) {
+                    ConsumableUpdateEvent.Empty,
+                    is ConsumableUpdateEvent.Bsb -> {
+                        exponentialRetry {
+                            rpcFeatureApi
+                                .fRpcUpdaterApi
+                                .getAutoUpdate(couldConsume)
+                                .map(AutoUpdate::isEnabled)
+                        }
+                    }
+
+                    is ConsumableUpdateEvent.BusyLib<*> -> {
+                        consumable.busyLibUpdateEvent
+                            .tryCast<BusyLibUpdateEvent.AutoUpdateChanged>()
+                            ?.isEnabled
+                    }
+                }
+            }.filterNotNull()
+        }
+        .wrap()
 
     private suspend fun requireVersionFromRestApi(): BsbUpdateVersion.Url {
         return busyFirmwareDirectoryChannelApi

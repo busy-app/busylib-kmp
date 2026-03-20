@@ -110,16 +110,8 @@ kotlin {
         implementation(libs.ble.client)
     }
     sourceSets.jvmMain.dependencies {
+        implementation(projects.components.watchers.desktop)
         implementation(projects.components.bridge.transport.tcp.lan.impl)
-    }
-    applyDefaultHierarchyTemplate {
-        common {
-            group("desktop") {
-                withJvm()
-                withMacosX64()
-                withMacosArm64()
-            }
-        }
     }
 }
 
@@ -174,6 +166,8 @@ kotlin {
 
             implementation(projects.components.tools.oncall.api)
             implementation(projects.components.tools.oncall.impl)
+
+            implementation(projects.components.watchers.desktop)
         }
     }
 }
@@ -276,6 +270,10 @@ val copyXCFrameworkDebug by tasks.registering(Exec::class) {
 
     doFirst {
         destination.deleteRecursively()
+    }
+
+    doLast {
+        logger.lifecycle("Copied BusyLibKMP.xcframework to ${destination.absolutePath}")
     }
 
     commandLine(

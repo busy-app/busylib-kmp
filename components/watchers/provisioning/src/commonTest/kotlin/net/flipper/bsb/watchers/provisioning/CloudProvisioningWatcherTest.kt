@@ -359,7 +359,7 @@ class CloudProvisioningWatcherTest {
         override fun getCurrentDeviceFlow() = flowOf(currentDevice).wrap()
         override fun getAllDevicesFlow() = flowOf(devices.toList()).wrap()
 
-        override suspend fun addHook(hook: TransactionHook) = Unit
+        override suspend fun addHook(vararg hook: TransactionHook) = Unit
 
         override suspend fun <T> transaction(block: suspend PersistedStorageTransactionScope.() -> T): T {
             val scope = object : PersistedStorageTransactionScope {

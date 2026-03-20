@@ -4,7 +4,7 @@ import net.flipper.bridge.connection.feature.wifi.api.model.WiFiNetwork
 import net.flipper.bridge.connection.feature.wifi.api.model.WiFiSecurity
 
 @Suppress("FunctionNaming")
-fun WiFiNetworkReplaceComparator(): Comparator<WiFiNetwork> {
+internal fun WiFiNetworkReplaceComparator(): Comparator<WiFiNetwork> {
     return Comparator<WiFiNetwork> { a, b ->
         when (a.wifiSecurity) {
             is WiFiSecurity.Other -> when (b.wifiSecurity) {

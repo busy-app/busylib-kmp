@@ -4,18 +4,6 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
-	<key>NSAccessorySetupBluetoothCompanyIdentifiers</key>
-	<array>
-		<string>0E29</string>
-	</array>
-	<key>NSAccessorySetupBluetoothServices</key>
-	<array>
-		<string>308A</string>
-	</array>
-	<key>NSAccessorySetupKitSupports</key>
-	<array>
-		<string>Bluetooth</string>
-	</array>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>bluetooth-central</string>
