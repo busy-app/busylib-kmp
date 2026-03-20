@@ -7,6 +7,7 @@ import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.OutgoingContent
 import io.ktor.http.contentType
 import io.ktor.utils.io.ByteWriteChannel
@@ -16,6 +17,7 @@ import kotlinx.coroutines.flow.Flow
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcUpdaterApi
 import net.flipper.bridge.connection.feature.rpc.api.model.ApiResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.AutoUpdate
+import net.flipper.bridge.connection.feature.rpc.api.model.ErrorResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.GetUpdateChangelogResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.UpdateStatus
@@ -30,7 +32,14 @@ class FRpcUpdaterApiImpl(
 ) : FRpcUpdaterApi {
     override suspend fun startUpdateCheck(): Result<ApiResponse> {
         return runSuspendCatching(dispatcher) {
-            httpClient.post("/api/update/check").body<ApiResponse>()
+            val httpResponse = httpClient.post("/api/update/check")
+            when (val response = httpResponse.body<ApiResponse>()) {
+                is ErrorResponse if httpResponse.status == HttpStatusCode.Conflict -> {
+                    SuccessResponse(response.error)
+                }
+
+                else -> response
+            }
         }
     }
 
