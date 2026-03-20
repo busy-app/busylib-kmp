@@ -12,6 +12,8 @@ import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
 import net.flipper.bridge.connection.feature.provider.api.get
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
+import net.flipper.bridge.connection.feature.rpc.api.model.ErrorResponse
+import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.UpdateStatus
 import net.flipper.bridge.connection.feature.rpc.api.model.requireSuccessResponseResult
 import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
@@ -61,6 +63,19 @@ class CheckUpdateService(
                     featureApi
                         .fRpcUpdaterApi
                         .startUpdateCheck()
+                        .mapCatching { response ->
+                            when (response) {
+                                is ErrorResponse -> {
+                                    if (response.error.contains("in progress")) {
+                                        SuccessResponse(response.error)
+                                    } else {
+                                        error(response.error)
+                                    }
+                                }
+
+                                is SuccessResponse -> response
+                            }
+                        }
                         .requireSuccessResponseResult()
                         .onFailure { throwable ->
                             error(throwable) {
