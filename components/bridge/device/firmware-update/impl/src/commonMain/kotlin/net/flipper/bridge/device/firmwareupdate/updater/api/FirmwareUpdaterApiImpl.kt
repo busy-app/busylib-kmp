@@ -25,6 +25,7 @@ import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
 import net.flipper.bridge.connection.feature.provider.api.get
 import net.flipper.bridge.connection.feature.provider.api.getSync
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
+import net.flipper.bridge.connection.feature.rpc.api.model.requireSuccessResponseResult
 import net.flipper.bridge.device.firmwareupdate.downloader.api.FirmwareDownloaderApi
 import net.flipper.bridge.device.firmwareupdate.downloader.api.FirmwareDownloaderApiImpl
 import net.flipper.bridge.device.firmwareupdate.status.api.UpdateStatusProvider
@@ -232,6 +233,7 @@ class FirmwareUpdaterApiImpl(
         return fFeatureProvider.getSync<FRpcFeatureApi>()
             ?.fRpcUpdaterApi
             ?.startUpdateCheck()
+            ?.requireSuccessResponseResult()
             ?.map { }
             ?.toCResult()
             ?: CResult.failure(IllegalStateException("RPC feature is null"))

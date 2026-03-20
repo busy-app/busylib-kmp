@@ -18,3 +18,7 @@ data class ErrorResponse(
     @SerialName("error")
     val error: String
 ) : ApiResponse
+
+fun Result<ApiResponse>.requireSuccessResponseResult(): Result<SuccessResponse> {
+    return this.mapCatching { response -> response as SuccessResponse }
+}
