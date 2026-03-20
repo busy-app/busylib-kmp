@@ -23,7 +23,6 @@ import net.flipper.core.busylib.ktx.common.tryCast
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.TaggedLogger
 import net.flipper.core.busylib.log.error
-import net.flipper.core.busylib.log.info
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 
