@@ -11,6 +11,7 @@ kotlin {
         implementation(projects.components.core.di)
         implementation(projects.components.core.ktx)
         implementation(projects.components.core.log)
+        implementation(projects.components.core.timezone)
         implementation(projects.components.core.wrapper)
 
         implementation(projects.components.bridge.feature.common.api)
@@ -19,5 +20,11 @@ kotlin {
         implementation(projects.components.bridge.feature.rpc.api)
 
         implementation(libs.kotlin.coroutines)
+        implementation(libs.kotlin.datetime)
+    }
+
+    sourceSets.commonTest.dependencies {
+        implementation(libs.kotlin.test)
+        implementation(libs.kotlin.coroutines.test)
     }
 }

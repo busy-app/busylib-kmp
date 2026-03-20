@@ -43,6 +43,7 @@ include(
     ":components:core:wrapper",
     ":components:core:network",
     ":components:core:ktor",
+    ":components:core:timezone",
 
     ":components:bridge:config:api",
     ":components:bridge:config:impl",
