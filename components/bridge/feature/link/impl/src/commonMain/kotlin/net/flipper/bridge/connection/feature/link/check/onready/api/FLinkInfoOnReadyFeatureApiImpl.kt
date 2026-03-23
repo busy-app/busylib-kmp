@@ -89,8 +89,11 @@ class FLinkInfoOnReadyFeatureApiImpl(
             info { "BUSY Bar info is $info" }
             if (info is LinkedAccountInfo.NotLinked && principal != null) {
                 info { "Start authorization for BUSY Bar..." }
-                authBusyBar(principal).onFailure {
-                    error(it) { "Failed authorize for BUSY Bar" }
+                exponentialRetry {
+                    authBusyBar(principal)
+                        .onFailure { t ->
+                            error(t) { "Failed authorize for BUSY Bar" }
+                        }
                 }
             }
             _status.emit(info)
