@@ -6,7 +6,6 @@ import com.russhwolf.settings.ObservableSettings
 import com.russhwolf.settings.Settings
 import kotlinx.coroutines.CoroutineScope
 import me.tatarka.inject.annotations.Provides
-import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.cloud.api.BUSYLibHostApi
 import net.flipper.busylib.BUSYLibAndroid

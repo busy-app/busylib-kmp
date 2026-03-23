@@ -1,7 +1,6 @@
 package net.flipper.bsb.watchers.desktop.hook
 
 import net.flipper.bridge.connection.config.internal.HookPriority
-import net.flipper.bridge.connection.config.api.PersistedStorageTransactionScope
 import net.flipper.bridge.connection.config.internal.InternalStorageTransactionScope
 import net.flipper.bridge.connection.config.internal.TransactionHook
 import net.flipper.core.busylib.log.LogTagProvider

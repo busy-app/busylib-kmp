@@ -48,5 +48,4 @@ class FDevicesViewModel(
             devicePersistedStorage.transaction { setCurrentDevice(device) }
         }
     }
-
 }

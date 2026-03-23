@@ -13,6 +13,5 @@ interface BUSYLib {
     val firmwareUpdaterApi: FirmwareUpdaterApi
     val persistedStorage: FDevicePersistedStorage
 
-
     fun launch()
 }

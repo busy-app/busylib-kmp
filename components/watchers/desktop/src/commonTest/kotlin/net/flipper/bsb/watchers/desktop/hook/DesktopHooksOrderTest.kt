@@ -1,8 +1,8 @@
 package net.flipper.bsb.watchers.desktop.hook
 
 import net.flipper.bridge.connection.config.api.PersistedStorageTransactionScope
-import net.flipper.bridge.connection.config.internal.TransactionHook
 import net.flipper.bridge.connection.config.api.model.BUSYBar
+import net.flipper.bridge.connection.config.internal.TransactionHook
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.uuid.Uuid

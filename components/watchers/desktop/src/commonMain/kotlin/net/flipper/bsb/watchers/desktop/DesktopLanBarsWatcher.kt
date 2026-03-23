@@ -3,7 +3,6 @@ package net.flipper.bsb.watchers.desktop
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import me.tatarka.inject.annotations.Inject
-import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.config.internal.FInternalDevicePersistedStorage
 import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
 import net.flipper.bsb.watchers.desktop.hook.DesktopActiveDevice
