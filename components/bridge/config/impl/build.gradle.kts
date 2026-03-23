@@ -8,7 +8,7 @@ kotlin {
         implementation(libs.kotlin.test)
     }
     sourceSets.commonMain.dependencies {
-        implementation(projects.components.bridge.config.api)
+        implementation(projects.components.bridge.config.internal)
 
         implementation(projects.components.core.log)
         implementation(projects.components.core.di)

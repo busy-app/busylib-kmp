@@ -3,23 +3,23 @@ package net.flipper.bridge.connection.config.impl
 import com.russhwolf.settings.ObservableSettings
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Mutex
-import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.config.api.PersistedStorageTransactionScope
-import net.flipper.bridge.connection.config.api.TransactionHook
+import net.flipper.bridge.connection.config.internal.TransactionHook
 import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.config.impl.hooks.AlwaysActiveHook
 import net.flipper.bridge.connection.config.impl.hooks.RemoveDuplicateCloudHook
+import net.flipper.bridge.connection.config.internal.FInternalDevicePersistedStorage
+import net.flipper.bridge.connection.config.internal.InternalStorageTransactionScope
 import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.ktx.common.withLock
 import net.flipper.core.busylib.ktx.common.withLockResult
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
-import ru.astrainteractive.klibs.kstorage.util.save
 
 class FDevicePersistedStorageImpl(
     private val bleConfigKrate: BleConfigSettingsKrate
-) : FDevicePersistedStorage, LogTagProvider {
+) : FInternalDevicePersistedStorage, LogTagProvider {
     override val TAG = "FDevicePersistedStorage"
     private val mutex = Mutex()
     private var hooks = listOf<TransactionHook>(
@@ -54,8 +54,8 @@ class FDevicePersistedStorageImpl(
             .wrap()
     }
 
-    override suspend fun <T> transaction(
-        block: suspend PersistedStorageTransactionScope.() -> T
+    override suspend fun <T> transactionInternal(
+        block: suspend InternalStorageTransactionScope.() -> T
     ): T = withLockResult(mutex, "transaction") {
         val original = bleConfigKrate.getValue()
         val scope = PersistedStorageTransactionScopeImpl(original)
@@ -73,4 +73,8 @@ class FDevicePersistedStorageImpl(
         )
         return@withLockResult result
     }
+
+    override suspend fun <T> transaction(
+        block: suspend PersistedStorageTransactionScope.() -> T
+    ): T = transactionInternal { block() }
 }

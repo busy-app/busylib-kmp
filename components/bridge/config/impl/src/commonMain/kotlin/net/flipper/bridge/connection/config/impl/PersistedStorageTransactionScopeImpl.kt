@@ -1,14 +1,14 @@
 package net.flipper.bridge.connection.config.impl
 
-import net.flipper.bridge.connection.config.api.PersistedStorageTransactionScope
 import net.flipper.bridge.connection.config.api.model.BUSYBar
+import net.flipper.bridge.connection.config.internal.InternalStorageTransactionScope
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
 import net.flipper.core.busylib.log.warn
 
 class PersistedStorageTransactionScopeImpl(
     private var settings: BleConfigSettings
-) : PersistedStorageTransactionScope, LogTagProvider {
+) : InternalStorageTransactionScope, LogTagProvider {
     override val TAG = "PersistedStorageTransactionScope"
     override fun getCurrentDevice(): BUSYBar? {
         return settings.devices.find { it.uniqueId == settings.currentSelectedDeviceId }
@@ -18,7 +18,11 @@ class PersistedStorageTransactionScopeImpl(
         return settings.devices
     }
 
-    override fun setCurrentDevice(device: BUSYBar?) {
+    override fun setCurrentDevice(device: BUSYBar) {
+        setCurrentDeviceNullable(device)
+    }
+
+    override fun setCurrentDeviceNullable(device: BUSYBar?) {
         if (device == null) {
             settings = settings.copy(currentSelectedDeviceId = null)
             return

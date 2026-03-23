@@ -1,9 +1,9 @@
-package net.flipper.bridge.connection.config.api
+package net.flipper.bridge.connection.config.internal
 
 interface TransactionHook {
     fun getPriority(): HookPriority
 
-    fun PersistedStorageTransactionScope.postTransaction()
+    fun InternalStorageTransactionScope.postTransaction()
 }
 
 // The higher the priority, the later the transaction hook will be called
