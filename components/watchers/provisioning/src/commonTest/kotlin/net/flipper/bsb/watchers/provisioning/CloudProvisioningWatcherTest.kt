@@ -14,7 +14,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.config.api.PersistedStorageTransactionScope
-import net.flipper.bridge.connection.config.api.TransactionHook
+import net.flipper.bridge.connection.config.internal.TransactionHook
 import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider

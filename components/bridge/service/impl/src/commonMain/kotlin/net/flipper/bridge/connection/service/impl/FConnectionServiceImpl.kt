@@ -18,6 +18,7 @@ import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
 import net.flipper.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
+import net.flipper.bridge.connection.orchestrator.internal.FInternalDeviceOrchestrator
 import net.flipper.bridge.connection.service.api.FConnectionService
 import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
@@ -38,7 +39,7 @@ import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 @ContributesBinding(BusyLibGraph::class, FConnectionService::class)
 @ContributesBinding(BusyLibGraph::class, InternalBUSYLibStartupListener::class, multibinding = true)
 class FConnectionServiceImpl(
-    private val orchestrator: FDeviceOrchestrator,
+    private val orchestrator: FInternalDeviceOrchestrator,
     private val fDevicePersistedStorage: FDevicePersistedStorage,
     private val barsApi: BusyCloudBarsApi,
     private val principalApi: BUSYLibPrincipalApi

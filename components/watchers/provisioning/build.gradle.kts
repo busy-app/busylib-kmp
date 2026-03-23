@@ -15,7 +15,7 @@ kotlin {
         implementation(projects.components.core.ktor)
         implementation(projects.components.core.network)
 
-        implementation(projects.components.bridge.config.api)
+        implementation(projects.components.bridge.config.internal)
         implementation(projects.components.bridge.orchestrator.api)
         implementation(projects.components.bridge.feature.provider.api)
         implementation(projects.components.bridge.feature.rpc.api)

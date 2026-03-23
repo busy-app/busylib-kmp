@@ -9,6 +9,8 @@ import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.config.api.PersistedStorageTransactionScope
 import net.flipper.bridge.connection.config.api.model.BUSYBar
+import net.flipper.bridge.connection.config.internal.FInternalDevicePersistedStorage
+import net.flipper.bridge.connection.config.internal.InternalStorageTransactionScope
 import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
 import net.flipper.bsb.cloud.rest.api.BusyCloudBarsApi
@@ -30,7 +32,7 @@ private const val DEFAULT_BUSY_BAR_NAME = "BUSY Bar"
 @ContributesBinding(BusyLibGraph::class, InternalBUSYLibStartupListener::class, multibinding = true)
 class CloudFetcherWatcher(
     scope: CoroutineScope,
-    private val persistedStorage: FDevicePersistedStorage,
+    private val persistedStorage: FInternalDevicePersistedStorage,
     private val busyLibNetworkStateApi: BUSYLibNetworkStateApi,
     private val principalApi: BUSYLibPrincipalApi,
     private val busyCloudBarsApi: BusyCloudBarsApi,
@@ -76,7 +78,7 @@ class CloudFetcherWatcher(
                     info { "Cloud devices and local are same, skip invalidation" }
                 } else {
                     info { "Found difference between cloud and local devices, start invalidation" }
-                    persistedStorage.transaction {
+                    persistedStorage.transactionInternal {
                         invalidateCloudBars(cloudBars)
                     }
                 }
@@ -84,7 +86,7 @@ class CloudFetcherWatcher(
         }
     }
 
-    private fun PersistedStorageTransactionScope.invalidateCloudBars(
+    private fun InternalStorageTransactionScope.invalidateCloudBars(
         cloudBars: List<BusyCloudBar>
     ) {
         val cloudBarsId = cloudBars.mapNotNull { Uuid.parseOrNull(it.id) }.toSet()
@@ -112,7 +114,7 @@ class CloudFetcherWatcher(
             }
     }
 
-    private fun PersistedStorageTransactionScope.removeCloud(
+    private fun InternalStorageTransactionScope.removeCloud(
         device: BUSYBar
     ) {
         val withoutCloud = device.copy(cloud = null)
