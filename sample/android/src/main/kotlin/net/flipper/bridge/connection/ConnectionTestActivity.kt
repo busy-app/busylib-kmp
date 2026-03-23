@@ -21,7 +21,6 @@ class ConnectionTestActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val busyLib = (application as ConnectionTestApplication).busyLib
-        val persistedStorage = (application as ConnectionTestApplication).persistedStorage
 
         enableEdgeToEdge()
 
@@ -29,10 +28,11 @@ class ConnectionTestActivity : AppCompatActivity() {
             componentContext = defaultComponentContext(),
             busyLib = busyLib,
             permissionChecker = PermissionCheckerImpl(this),
-            persistedStorage = persistedStorage,
+            persistedStorage = busyLib.persistedStorage,
             searchViewModelProvider = {
                 SampleBLESearchViewModel(
-                    persistedStorage,
+                    busyLib.persistedStorage,
+                    busyLib.connectionService,
                     busyLib.flipperScanner
                 )
             }

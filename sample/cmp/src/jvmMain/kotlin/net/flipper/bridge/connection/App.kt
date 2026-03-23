@@ -19,7 +19,6 @@ import com.flipperdevices.core.network.BUSYLibNetworkStateApiNoop
 import com.russhwolf.settings.PreferencesSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
-import net.flipper.bridge.connection.config.impl.FDevicePersistedStorageImpl
 import net.flipper.bridge.connection.screens.di.getRootDecomposeComponent
 import net.flipper.bridge.connection.screens.search.LanSearchViewModel
 import net.flipper.bridge.connection.utils.PermissionCheckerNoop
@@ -58,7 +57,7 @@ suspend fun main() {
             persistedStorage = busyLib.persistedStorage,
             busyLib = busyLib,
             searchViewModelProvider = {
-                LanSearchViewModel(busyLib.persistedStorage)
+                LanSearchViewModel(busyLib.persistedStorage, busyLib.connectionService)
             }
         )
     }
