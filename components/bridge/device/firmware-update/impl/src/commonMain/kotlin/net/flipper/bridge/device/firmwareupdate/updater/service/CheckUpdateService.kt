@@ -13,7 +13,6 @@ import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
 import net.flipper.bridge.connection.feature.provider.api.get
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.UpdateStatus
-import net.flipper.bridge.connection.feature.rpc.api.model.requireSuccessResponseResult
 import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.ktx.common.exponentialRetry
@@ -61,7 +60,6 @@ class CheckUpdateService(
                     featureApi
                         .fRpcUpdaterApi
                         .startUpdateCheck()
-                        .requireSuccessResponseResult()
                         .onFailure { throwable ->
                             error(throwable) {
                                 "#startUpdateCheck could not start update check"

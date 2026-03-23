@@ -30,15 +30,17 @@ class FRpcUpdaterApiImpl(
     private val dispatcher: CoroutineDispatcher,
     private val objectCache: ObjectCache
 ) : FRpcUpdaterApi {
-    override suspend fun startUpdateCheck(): Result<ApiResponse> {
+    override suspend fun startUpdateCheck(): Result<Unit> {
         return runSuspendCatching(dispatcher) {
             val httpResponse = httpClient.post("/api/update/check")
-            when (val response = httpResponse.body<ApiResponse>()) {
-                is ErrorResponse if httpResponse.status == HttpStatusCode.Conflict -> {
-                    SuccessResponse(response.error)
+            val response = httpResponse.body<ApiResponse>()
+            if (response is ErrorResponse) {
+                if (httpResponse.status == HttpStatusCode.Conflict) {
+                    return@runSuspendCatching // Operation already in progress
+                } else {
+                    @Suppress("TooGenericExceptionThrown")
+                    throw RuntimeException("Received error response: $response")
                 }
-
-                else -> response
             }
         }
     }
