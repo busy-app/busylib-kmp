@@ -8,16 +8,6 @@ import net.flipper.busylib.core.wrapper.CResult
  */
 interface FConnectionService {
     /**
-     * Reconnect to last known device after being force disconnected
-     */
-    fun connectCurrent()
-
-    /**
-     * Disconnect current device
-     */
-    fun disconnect()
-
-    /**
      * Forget selected [device] and disconnect from it
      */
     suspend fun forgetDevice(device: BUSYBar): CResult<Unit>

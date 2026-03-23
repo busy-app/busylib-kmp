@@ -9,5 +9,8 @@ import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
 interface FInternalDeviceOrchestrator : FDeviceOrchestrator {
     suspend fun connectIfNot(config: BUSYBar)
 
+    /**
+     * See FConnectionService#forget instead
+     */
     suspend fun disconnectCurrent()
 }

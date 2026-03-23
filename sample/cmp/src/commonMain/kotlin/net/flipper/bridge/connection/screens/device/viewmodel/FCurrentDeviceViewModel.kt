@@ -14,18 +14,10 @@ class FCurrentDeviceViewModel(
 ) : DecomposeViewModel() {
     fun getState() = orchestrator.getState()
 
-    fun connect() = viewModelScope.launch {
-        service.connectCurrent()
-    }
-
     fun forget() = viewModelScope.launch {
         val device = fDevicePersistedStorage.getCurrentDeviceFlow()
             .firstOrNull()
             ?: return@launch
         service.forgetDevice(device)
-    }
-
-    fun disconnect() = viewModelScope.launch {
-        service.disconnect()
     }
 }

@@ -3,6 +3,8 @@ package net.flipper.bridge.connection.config.impl
 import com.russhwolf.settings.ObservableSettings
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Mutex
+import me.tatarka.inject.annotations.Inject
+import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.config.api.PersistedStorageTransactionScope
 import net.flipper.bridge.connection.config.internal.TransactionHook
 import net.flipper.bridge.connection.config.api.model.BUSYBar
@@ -10,26 +12,32 @@ import net.flipper.bridge.connection.config.impl.hooks.AlwaysActiveHook
 import net.flipper.bridge.connection.config.impl.hooks.RemoveDuplicateCloudHook
 import net.flipper.bridge.connection.config.internal.FInternalDevicePersistedStorage
 import net.flipper.bridge.connection.config.internal.InternalStorageTransactionScope
+import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.ktx.common.withLock
 import net.flipper.core.busylib.ktx.common.withLockResult
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
+import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
+import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 
+
+@Inject
+@SingleIn(BusyLibGraph::class)
+@ContributesBinding(BusyLibGraph::class, FInternalDevicePersistedStorage::class)
+@ContributesBinding(BusyLibGraph::class, FDevicePersistedStorage::class)
 class FDevicePersistedStorageImpl(
-    private val bleConfigKrate: BleConfigSettingsKrate
+    observableSettings: ObservableSettings
 ) : FInternalDevicePersistedStorage, LogTagProvider {
     override val TAG = "FDevicePersistedStorage"
     private val mutex = Mutex()
+
+    private val bleConfigKrate = BleConfigSettingsKrateImpl(observableSettings)
     private var hooks = listOf<TransactionHook>(
         AlwaysActiveHook(),
         RemoveDuplicateCloudHook()
     ).sortedBy { it.getPriority() }
-
-    constructor(
-        observableSettings: ObservableSettings
-    ) : this(BleConfigSettingsKrateImpl(observableSettings))
 
     override suspend fun addHook(vararg hook: TransactionHook) {
         withLock(mutex, "add_hook") {

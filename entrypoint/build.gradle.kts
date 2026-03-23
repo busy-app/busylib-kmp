@@ -29,8 +29,8 @@ kotlin {
         implementation(projects.components.cloud.rest.impl)
 
         api(projects.components.bridge.config.api)
-        // To access FDevicePersistedStorageImpl
-        api(projects.components.bridge.config.impl)
+        implementation(projects.components.bridge.config.impl)
+        implementation(projects.components.bridge.config.internal)
         implementation(projects.components.bridge.connectionbuilder.api)
         implementation(projects.components.bridge.connectionbuilder.impl)
         implementation(projects.components.bridge.device.bsb.api)
@@ -64,6 +64,7 @@ kotlin {
         implementation(projects.components.bridge.feature.timezone.impl)
         api(projects.components.bridge.orchestrator.api)
         implementation(projects.components.bridge.orchestrator.impl)
+        implementation(projects.components.bridge.orchestrator.internal)
         api(projects.components.bridge.service.api)
         implementation(projects.components.bridge.service.impl)
         api(projects.components.bridge.feature.events.api)

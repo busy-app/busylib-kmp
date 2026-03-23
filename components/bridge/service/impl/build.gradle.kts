@@ -13,7 +13,7 @@ kotlin {
 
         implementation(projects.components.bridge.service.api)
         implementation(projects.components.bridge.orchestrator.internal)
-        implementation(projects.components.bridge.config.api)
+        implementation(projects.components.bridge.config.internal)
         implementation(projects.components.cloud.rest.api)
         implementation(projects.components.watchers.api)
 
