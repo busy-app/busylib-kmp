@@ -6,7 +6,6 @@ import com.arkivanov.essenty.lifecycle.LifecycleRegistry
 import com.russhwolf.settings.NSUserDefaultsSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
-import net.flipper.bridge.connection.config.impl.FDevicePersistedStorageImpl
 import net.flipper.bridge.connection.screens.ConnectionRootDecomposeComponent
 import net.flipper.bridge.connection.screens.di.getRootDecomposeComponent
 import net.flipper.bridge.connection.screens.search.LanSearchViewModel
@@ -15,18 +14,13 @@ import net.flipper.bridge.connection.utils.principal.impl.UserPrincipalApiNoop
 import net.flipper.busylib.BUSYLibMacOS
 import platform.Foundation.NSUserDefaults
 
-val storage by lazy {
-    FDevicePersistedStorageImpl(
-        NSUserDefaultsSettings(
-            NSUserDefaults.standardUserDefaults
-        )
-    )
-}
 val busyLib: BUSYLibMacOS by lazy {
     BUSYLibMacOS.build(
         CoroutineScope(SupervisorJob()),
         principalApi = UserPrincipalApiNoop(),
-        persistedStorage = storage,
+        observableSettings = NSUserDefaultsSettings(
+            NSUserDefaults.standardUserDefaults
+        ),
     )
 }
 
@@ -39,10 +33,11 @@ fun getRootDecomposeComponent(): ConnectionRootDecomposeComponent {
         componentContext = componentContext,
         busyLib = busyLib,
         permissionChecker = PermissionCheckerNoop(),
-        persistedStorage = storage,
+        persistedStorage = busyLib.persistedStorage,
         searchViewModelProvider = {
             LanSearchViewModel(
-                storage
+                busyLib.persistedStorage,
+                busyLib.connectionService
             )
         }
     )

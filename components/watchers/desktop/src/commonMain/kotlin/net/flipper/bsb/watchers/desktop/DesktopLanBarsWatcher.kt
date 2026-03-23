@@ -3,7 +3,7 @@ package net.flipper.bsb.watchers.desktop
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import me.tatarka.inject.annotations.Inject
-import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
+import net.flipper.bridge.connection.config.internal.FInternalDevicePersistedStorage
 import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
 import net.flipper.bsb.watchers.desktop.hook.DesktopActiveDevice
 import net.flipper.bsb.watchers.desktop.hook.DesktopAlwaysLan
@@ -18,7 +18,7 @@ import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 @ContributesBinding(BusyLibGraph::class, InternalBUSYLibStartupListener::class, multibinding = true)
 class DesktopLanBarsWatcher(
     scope: CoroutineScope,
-    private val persistedStorage: FDevicePersistedStorage
+    private val persistedStorage: FInternalDevicePersistedStorage
 ) : InternalBUSYLibStartupListener {
     private val singleJobScope = scope.asSingleJobScope()
 

@@ -7,6 +7,7 @@ import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.configbuilder.api.FDeviceConnectionConfigMapper
 import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
+import net.flipper.bridge.connection.orchestrator.internal.FInternalDeviceOrchestrator
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.core.wrapper.wrap
@@ -20,11 +21,12 @@ import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 @Inject
 @SingleIn(BusyLibGraph::class)
 @ContributesBinding(BusyLibGraph::class, FDeviceOrchestrator::class)
+@ContributesBinding(BusyLibGraph::class, FInternalDeviceOrchestrator::class)
 class FDeviceOrchestratorImpl(
     private val deviceHolderFactory: FDeviceHolderFactory,
     private val deviceConnectionConfigMapper: FDeviceConnectionConfigMapper,
     private val globalScope: CoroutineScope
-) : FDeviceOrchestrator, LogTagProvider {
+) : FInternalDeviceOrchestrator, LogTagProvider {
     override val TAG = "FDeviceOrchestrator"
 
     private val transportListener = FTransportListenerImpl()

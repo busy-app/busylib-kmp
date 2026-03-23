@@ -15,14 +15,16 @@ import net.flipper.bridge.api.scanner.FlipperScanner
 import net.flipper.bridge.api.utils.Constants.UNKNOWN_NAME
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.config.api.model.BUSYBar
+import net.flipper.bridge.connection.service.api.FConnectionService
 import net.flipper.busylib.core.wrapper.WrappedStateFlow
 import net.flipper.busylib.core.wrapper.wrap
 
 @SuppressLint("MissingPermission")
 class SampleBLESearchViewModel(
     persistedStorage: FDevicePersistedStorage,
+    deviceService: FConnectionService,
     flipperScanner: FlipperScanner
-) : ConnectionSearchViewModel(persistedStorage) {
+) : ConnectionSearchViewModel(persistedStorage, deviceService) {
     private val mockDevice = ConnectionSearchItem(
         address = DiscoveredBluetoothDevice.MockDiscoveredBluetoothDevice.address,
         deviceModel = DiscoveredBluetoothDevice.MockDiscoveredBluetoothDevice.toFDeviceModel(),

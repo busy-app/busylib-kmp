@@ -47,8 +47,7 @@ class ConnectionDeviceScreenDecomposeComponent(
             FDeviceDropdownComposable(
                 devicesState = deviceState,
                 onDeviceSelect = devicesViewModel::onSelectDevice,
-                onOpenSearch = { navigation.pushNew(ConnectionRootConfig.Search) },
-                onDisconnect = devicesViewModel::onDisconnect
+                onOpenSearch = { navigation.pushNew(ConnectionRootConfig.Search) }
             )
             val currentDevice by currentDeviceViewModel.getState().collectAsState()
             FCurrentDeviceComposable(currentDevice)
@@ -56,9 +55,7 @@ class ConnectionDeviceScreenDecomposeComponent(
             FPingComposable(
                 logs = logs,
                 onSendPing = pingViewModel::sendPing,
-                onDisconnect = currentDeviceViewModel::disconnect,
                 onForget = currentDeviceViewModel::forget,
-                onConnect = currentDeviceViewModel::connect,
                 toDashboard = {
                     navigation.pushNew(ConnectionRootConfig.Dashboard)
                 },

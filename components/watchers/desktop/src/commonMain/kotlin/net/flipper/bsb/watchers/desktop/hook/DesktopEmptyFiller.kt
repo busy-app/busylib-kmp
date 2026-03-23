@@ -1,9 +1,9 @@
 package net.flipper.bsb.watchers.desktop.hook
 
-import net.flipper.bridge.connection.config.api.HookPriority
-import net.flipper.bridge.connection.config.api.PersistedStorageTransactionScope
-import net.flipper.bridge.connection.config.api.TransactionHook
 import net.flipper.bridge.connection.config.api.model.BUSYBar
+import net.flipper.bridge.connection.config.internal.HookPriority
+import net.flipper.bridge.connection.config.internal.InternalStorageTransactionScope
+import net.flipper.bridge.connection.config.internal.TransactionHook
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
 
@@ -12,7 +12,7 @@ class DesktopEmptyFiller : TransactionHook, LogTagProvider {
 
     override fun getPriority() = HookPriority.NORMAL
 
-    override fun PersistedStorageTransactionScope.postTransaction() {
+    override fun InternalStorageTransactionScope.postTransaction() {
         if (getAllDevices().isEmpty()) {
             info { "Found no devices, add BUSY Bar LAN" }
             val device = BUSYBar(

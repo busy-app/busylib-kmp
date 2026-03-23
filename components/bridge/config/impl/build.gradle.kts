@@ -1,14 +1,14 @@
 plugins {
     id("flipper.multiplatform")
-    id("org.jetbrains.kotlin.plugin.serialization")
     id("kotlinx-serialization")
+    id("flipper.anvil-multiplatform")
 }
 kotlin {
     sourceSets.commonTest.dependencies {
         implementation(libs.kotlin.test)
     }
     sourceSets.commonMain.dependencies {
-        implementation(projects.components.bridge.config.api)
+        implementation(projects.components.bridge.config.internal)
 
         implementation(projects.components.core.log)
         implementation(projects.components.core.di)

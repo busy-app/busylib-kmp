@@ -33,7 +33,6 @@ fun FDeviceDropdownComposable(
     devicesState: DevicesDropdownState,
     onDeviceSelect: (BUSYBar) -> Unit,
     onOpenSearch: () -> Unit,
-    onDisconnect: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -72,21 +71,6 @@ fun FDeviceDropdownComposable(
                     ) {
                         Text(
                             text = device.humanReadableName,
-                            color = MaterialTheme.colors.onBackground
-                        )
-                    }
-                }
-
-                if (devicesState.currentDevice != null) {
-                    DropdownMenuItem(
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = {
-                            onDisconnect()
-                            expanded = false
-                        }
-                    ) {
-                        Text(
-                            text = "Disconnect current device",
                             color = MaterialTheme.colors.onBackground
                         )
                     }

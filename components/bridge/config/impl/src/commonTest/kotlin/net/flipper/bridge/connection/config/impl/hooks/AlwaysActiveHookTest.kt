@@ -1,7 +1,7 @@
 package net.flipper.bridge.connection.config.impl.hooks
 
-import net.flipper.bridge.connection.config.api.PersistedStorageTransactionScope
 import net.flipper.bridge.connection.config.api.model.BUSYBar
+import net.flipper.bridge.connection.config.internal.InternalStorageTransactionScope
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -94,11 +94,14 @@ class AlwaysActiveHookTest {
     private class FakeTransactionScope(
         private var selectedDevice: BUSYBar?,
         private val devices: List<BUSYBar>
-    ) : PersistedStorageTransactionScope {
+    ) : InternalStorageTransactionScope {
         fun getSelectedDevice(): BUSYBar? = selectedDevice
         override fun getCurrentDevice(): BUSYBar? = selectedDevice
         override fun getAllDevices(): List<BUSYBar> = devices
-        override fun setCurrentDevice(device: BUSYBar?) {
+        override fun setCurrentDevice(device: BUSYBar) {
+            selectedDevice = device
+        }
+        override fun setCurrentDeviceNullable(device: BUSYBar?) {
             selectedDevice = device
         }
         override fun addOrReplace(device: BUSYBar) = Unit

@@ -1,5 +1,6 @@
 package net.flipper.busylib
 
+import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
 import net.flipper.bridge.connection.service.api.FConnectionService
@@ -10,6 +11,7 @@ interface BUSYLib {
     val orchestrator: FDeviceOrchestrator
     val featureProvider: FFeatureProvider
     val firmwareUpdaterApi: FirmwareUpdaterApi
+    val persistedStorage: FDevicePersistedStorage
 
     fun launch()
 }
