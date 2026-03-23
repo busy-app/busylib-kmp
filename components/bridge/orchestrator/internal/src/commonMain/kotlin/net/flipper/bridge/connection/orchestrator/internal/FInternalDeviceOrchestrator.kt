@@ -10,7 +10,10 @@ interface FInternalDeviceOrchestrator : FDeviceOrchestrator {
     suspend fun connectIfNot(config: BUSYBar)
 
     /**
-     * See FConnectionService#forget instead
+     * Internal helper used by higher-level "forget" operations, such as
+     * FConnectionService.forgetDevice(...). This is not exposed on
+     * FDeviceOrchestrator's public API and should only be used inside the
+     * BUSY Lib orchestration layer.
      */
     suspend fun disconnectCurrent()
 }
