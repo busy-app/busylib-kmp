@@ -3,6 +3,7 @@ package net.flipper.busylib
 import com.flipperdevices.core.network.BUSYLibNetworkStateApi
 import com.flipperdevices.core.network.BUSYLibNetworkStateApiNoop
 import com.russhwolf.settings.NSUserDefaultsSettings
+import com.russhwolf.settings.ObservableSettings
 import kotlinx.coroutines.CoroutineScope
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
@@ -23,6 +24,7 @@ class BUSYLibMacOS(
     override val orchestrator: FDeviceOrchestrator,
     override val featureProvider: FFeatureProvider,
     override val firmwareUpdaterApi: FirmwareUpdaterApi,
+    override val persistedStorage: FDevicePersistedStorage,
     private val startUpListeners: Set<InternalBUSYLibStartupListener>,
     val onCallSingletonApi: OnCallSingletonApi
 ) : BUSYLibApple {
@@ -37,14 +39,14 @@ class BUSYLibMacOS(
         fun build(
             scope: CoroutineScope,
             principalApi: BUSYLibPrincipalApi,
-            persistedStorage: FDevicePersistedStorage,
+            observableSettings: ObservableSettings,
             hostApi: BUSYLibHostApi = BUSYLibHostApiStub("cloud.busy.app"),
             networkStateApi: BUSYLibNetworkStateApi = BUSYLibNetworkStateApiNoop()
         ): BUSYLibMacOS {
             val graph = create(
                 scope,
                 principalApi,
-                persistedStorage,
+                observableSettings,
                 hostApi,
                 networkStateApi,
                 NSUserDefaultsSettings.Factory().create("busylib_settings")

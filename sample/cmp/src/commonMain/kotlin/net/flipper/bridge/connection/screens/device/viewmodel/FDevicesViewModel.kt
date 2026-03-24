@@ -48,10 +48,4 @@ class FDevicesViewModel(
             devicePersistedStorage.transaction { setCurrentDevice(device) }
         }
     }
-
-    fun onDisconnect() {
-        viewModelScope.launch {
-            devicePersistedStorage.transaction { setCurrentDevice(null) }
-        }
-    }
 }

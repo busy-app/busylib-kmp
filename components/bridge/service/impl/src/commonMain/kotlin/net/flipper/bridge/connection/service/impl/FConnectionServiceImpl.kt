@@ -4,20 +4,20 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import me.tatarka.inject.annotations.Inject
-import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.config.api.model.BUSYBar
-import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
+import net.flipper.bridge.connection.config.internal.FInternalDevicePersistedStorage
 import net.flipper.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
+import net.flipper.bridge.connection.orchestrator.internal.FInternalDeviceOrchestrator
 import net.flipper.bridge.connection.service.api.FConnectionService
 import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
@@ -38,8 +38,8 @@ import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 @ContributesBinding(BusyLibGraph::class, FConnectionService::class)
 @ContributesBinding(BusyLibGraph::class, InternalBUSYLibStartupListener::class, multibinding = true)
 class FConnectionServiceImpl(
-    private val orchestrator: FDeviceOrchestrator,
-    private val fDevicePersistedStorage: FDevicePersistedStorage,
+    private val orchestrator: FInternalDeviceOrchestrator,
+    private val fDevicePersistedStorage: FInternalDevicePersistedStorage,
     private val barsApi: BusyCloudBarsApi,
     private val principalApi: BUSYLibPrincipalApi
 ) : FConnectionService, LogTagProvider, InternalBUSYLibStartupListener {
@@ -47,21 +47,14 @@ class FConnectionServiceImpl(
 
     private val scope = CoroutineScope(SupervisorJob() + FlipperDispatchers.default)
     private val mutex = Mutex()
-    private val isForceDisconnectedFlow = MutableStateFlow(false)
-
     private fun getExpectedState(): Flow<ExpectedState> {
-        return combine(
-            flow = isForceDisconnectedFlow,
-            flow2 = fDevicePersistedStorage.getCurrentDeviceFlow()
-        ) { isForceDisconnected, currentDevice ->
-            if (isForceDisconnected) {
-                return@combine ExpectedState.Disconnected
-            }
-            if (currentDevice == null) {
-                return@combine ExpectedState.Disconnected
-            }
-            return@combine ExpectedState.Connected(currentDevice)
-        }.distinctUntilChanged()
+        return fDevicePersistedStorage.getCurrentDeviceFlow()
+            .map { currentDevice ->
+                if (currentDevice == null) {
+                    return@map ExpectedState.Disconnected
+                }
+                return@map ExpectedState.Connected(currentDevice)
+            }.distinctUntilChanged()
     }
 
     private fun getConnectionJob(scope: CoroutineScope): Job {
@@ -110,33 +103,17 @@ class FConnectionServiceImpl(
         }
     }
 
-    override fun connectCurrent() {
-        scope.launch {
-            isForceDisconnectedFlow.emit(false)
-        }
-    }
-
-    override fun disconnect() {
-        scope.launch {
-            isForceDisconnectedFlow.emit(true)
-        }
-    }
-
     override suspend fun forgetDevice(
         device: BUSYBar
     ): CResult<Unit> {
-        return fDevicePersistedStorage.transaction {
+        return fDevicePersistedStorage.transactionInternal {
             val devices = getAllDevices()
-            val currentDevice = getCurrentDevice()
 
-            if (currentDevice?.uniqueId == device.uniqueId) {
-                isForceDisconnectedFlow.emit(true)
-            }
             val isDeviceExists = devices
                 .firstOrNull { listDevice -> listDevice.uniqueId == device.uniqueId } != null
             if (!isDeviceExists) {
                 warn { "#unpairDevice Can't find device $device" }
-                return@transaction CResult.success(Unit)
+                return@transactionInternal CResult.success(Unit)
             }
             val deviceId = device.cloud?.deviceId
             if (deviceId != null) {
@@ -144,16 +121,16 @@ class FConnectionServiceImpl(
                     .filter { principal -> principal !is BUSYLibUserPrincipal.Loading }
                     .first() as? BUSYLibUserPrincipal.Token
                 if (principal == null) {
-                    return@transaction CResult.failure(IllegalStateException("User not authorized"))
+                    return@transactionInternal CResult.failure(IllegalStateException("User not authorized"))
                 }
                 val result = barsApi
                     .unlinkBusyBar(principal, deviceId)
                     .toCResult()
-                if (result.isFailure) return@transaction result
+                if (result.isFailure) return@transactionInternal result
             }
             removeDevice(device.uniqueId)
 
-            return@transaction CResult.success(Unit)
+            return@transactionInternal CResult.success(Unit)
         }
     }
 }

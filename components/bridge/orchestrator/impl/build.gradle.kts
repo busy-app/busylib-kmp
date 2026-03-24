@@ -10,7 +10,7 @@ kotlin {
         implementation(projects.components.core.log)
         implementation(projects.components.core.di)
 
-        implementation(projects.components.bridge.orchestrator.api)
+        implementation(projects.components.bridge.orchestrator.internal)
         implementation(projects.components.bridge.transport.mock.api)
         implementation(projects.components.bridge.transport.common.api)
         implementation(projects.components.bridge.connectionbuilder.api)

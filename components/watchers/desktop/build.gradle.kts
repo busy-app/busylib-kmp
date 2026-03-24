@@ -10,7 +10,7 @@ kotlin {
         implementation(projects.components.core.log)
         implementation(projects.components.core.ktx)
 
-        implementation(projects.components.bridge.config.api)
+        implementation(projects.components.bridge.config.internal)
 
         implementation(libs.kotlin.coroutines)
     }

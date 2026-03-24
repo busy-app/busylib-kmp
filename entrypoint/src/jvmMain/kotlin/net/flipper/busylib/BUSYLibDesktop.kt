@@ -2,6 +2,7 @@ package net.flipper.busylib
 
 import com.flipperdevices.core.network.BUSYLibNetworkStateApi
 import com.flipperdevices.core.network.BUSYLibNetworkStateApiNoop
+import com.russhwolf.settings.ObservableSettings
 import com.russhwolf.settings.PreferencesSettings
 import kotlinx.coroutines.CoroutineScope
 import me.tatarka.inject.annotations.Inject
@@ -24,6 +25,7 @@ class BUSYLibDesktop(
     override val orchestrator: FDeviceOrchestrator,
     override val featureProvider: FFeatureProvider,
     override val firmwareUpdaterApi: FirmwareUpdaterApi,
+    override val persistedStorage: FDevicePersistedStorage,
     private val startUpListeners: Set<InternalBUSYLibStartupListener>
 ) : BUSYLib {
     override fun launch() {
@@ -37,14 +39,14 @@ class BUSYLibDesktop(
         fun build(
             scope: CoroutineScope,
             principalApi: BUSYLibPrincipalApi,
-            persistedStorage: FDevicePersistedStorage,
+            observableSettings: ObservableSettings,
             hostApi: BUSYLibHostApi = BUSYLibHostApiStub("cloud.busy.app"),
             networkStateApi: BUSYLibNetworkStateApi = BUSYLibNetworkStateApiNoop()
         ): BUSYLibDesktop {
             val graph = BUSYLibGraphDesktop::class.create(
                 scope,
                 principalApi,
-                persistedStorage,
+                observableSettings,
                 hostApi,
                 networkStateApi,
                 PreferencesSettings.Factory().create("busylib_settings")

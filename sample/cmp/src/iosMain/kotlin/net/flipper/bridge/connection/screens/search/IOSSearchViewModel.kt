@@ -12,6 +12,7 @@ import kotlinx.coroutines.launch
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.config.api.model.BUSYBar.ConnectionWay
+import net.flipper.bridge.connection.service.api.FConnectionService
 import net.flipper.bridge.connection.transport.ble.impl.ios.central.DiscoveredBluetoothDevice
 import net.flipper.bridge.connection.transport.ble.impl.ios.central.FCentralManagerApi
 import net.flipper.busylib.core.wrapper.wrap
@@ -19,8 +20,9 @@ import net.flipper.core.busylib.log.LogTagProvider
 
 class IOSSearchViewModel(
     persistedStorage: FDevicePersistedStorage,
+    deviceService: FConnectionService,
     private val fCentralManagerApi: FCentralManagerApi,
-) : ConnectionSearchViewModel(persistedStorage), LogTagProvider {
+) : ConnectionSearchViewModel(persistedStorage, deviceService), LogTagProvider {
     override val TAG = "iOSSearchViewModel"
 
     private val mockDevice = ConnectionSearchItem(

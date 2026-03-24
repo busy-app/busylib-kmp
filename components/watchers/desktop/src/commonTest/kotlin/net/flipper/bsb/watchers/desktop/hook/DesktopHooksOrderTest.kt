@@ -1,8 +1,8 @@
 package net.flipper.bsb.watchers.desktop.hook
 
-import net.flipper.bridge.connection.config.api.PersistedStorageTransactionScope
-import net.flipper.bridge.connection.config.api.TransactionHook
 import net.flipper.bridge.connection.config.api.model.BUSYBar
+import net.flipper.bridge.connection.config.internal.InternalStorageTransactionScope
+import net.flipper.bridge.connection.config.internal.TransactionHook
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.uuid.Uuid
@@ -342,22 +342,26 @@ class DesktopHooksOrderTest {
     private class FakeTransactionScope(
         private val devices: MutableList<BUSYBar>,
         private var currentDeviceId: String?
-    ) : PersistedStorageTransactionScope {
+    ) : InternalStorageTransactionScope {
 
         override fun getCurrentDevice(): BUSYBar? =
             devices.find { it.uniqueId == currentDeviceId }
 
         override fun getAllDevices(): List<BUSYBar> = devices.toList()
 
-        override fun setCurrentDevice(device: BUSYBar?) {
-            if (device == null) {
-                currentDeviceId = null
-                return
-            }
+        override fun setCurrentDevice(device: BUSYBar) {
             if (devices.none { it.uniqueId == device.uniqueId }) {
                 addOrReplace(device)
             }
             currentDeviceId = device.uniqueId
+        }
+
+        override fun setCurrentDeviceNullable(device: BUSYBar?) {
+            if (device == null) {
+                currentDeviceId = null
+                return
+            }
+            setCurrentDevice(device)
         }
 
         override fun addOrReplace(device: BUSYBar) {

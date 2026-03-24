@@ -29,8 +29,10 @@ import platform.Foundation.NSError
 import platform.Foundation.NSNumber
 import platform.Foundation.NSUUID
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
+import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 
 @Inject
+@SingleIn(BusyLibGraph::class)
 @ContributesBinding(BusyLibGraph::class, FCentralManagerApi::class)
 class FCentralManager(
     private val manager: CBCentralManager,

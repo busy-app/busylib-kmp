@@ -14,7 +14,6 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.config.api.PersistedStorageTransactionScope
-import net.flipper.bridge.connection.config.api.TransactionHook
 import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
@@ -359,24 +358,18 @@ class CloudProvisioningWatcherTest {
         override fun getCurrentDeviceFlow() = flowOf(currentDevice).wrap()
         override fun getAllDevicesFlow() = flowOf(devices.toList()).wrap()
 
-        override suspend fun addHook(vararg hook: TransactionHook) = Unit
-
         override suspend fun <T> transaction(block: suspend PersistedStorageTransactionScope.() -> T): T {
             val scope = object : PersistedStorageTransactionScope {
                 override fun getCurrentDevice() = this@FakePersistedStorage.currentDevice
                 override fun getAllDevices() = this@FakePersistedStorage.devices.toList()
 
-                override fun setCurrentDevice(device: BUSYBar?) {
+                override fun setCurrentDevice(device: BUSYBar) {
                     this@FakePersistedStorage.currentDevice = device
                 }
 
                 override fun addOrReplace(device: BUSYBar) {
                     this@FakePersistedStorage.devices.removeAll { it.uniqueId == device.uniqueId }
                     this@FakePersistedStorage.devices.add(device)
-                }
-
-                override fun removeDevice(id: String) {
-                    this@FakePersistedStorage.devices.removeAll { it.uniqueId == id }
                 }
             }
             return scope.block()
@@ -387,8 +380,6 @@ class CloudProvisioningWatcherTest {
         private val stateFlow: MutableStateFlow<FDeviceConnectStatus>
     ) : FDeviceOrchestrator {
         override fun getState(): WrappedStateFlow<FDeviceConnectStatus> = stateFlow.wrap()
-        override suspend fun connectIfNot(config: BUSYBar) = Unit
-        override suspend fun disconnectCurrent() = Unit
     }
 
     private class FakeFeatureProvider(

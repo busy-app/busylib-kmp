@@ -47,6 +47,7 @@ include(
 
     ":components:bridge:config:api",
     ":components:bridge:config:impl",
+    ":components:bridge:config:internal",
     ":components:bridge:connectionbuilder:api",
     ":components:bridge:connectionbuilder:impl",
     ":components:bridge:device:common:api",
@@ -58,6 +59,7 @@ include(
     ":components:bridge:device:firmware-update:impl",
     ":components:bridge:orchestrator:api",
     ":components:bridge:orchestrator:impl",
+    ":components:bridge:orchestrator:internal",
     ":components:bridge:service:api",
     ":components:bridge:service:impl",
     ":components:bridge:transport:mock:api",

@@ -19,7 +19,6 @@ import com.flipperdevices.core.network.BUSYLibNetworkStateApiNoop
 import com.russhwolf.settings.PreferencesSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
-import net.flipper.bridge.connection.config.impl.FDevicePersistedStorageImpl
 import net.flipper.bridge.connection.screens.di.getRootDecomposeComponent
 import net.flipper.bridge.connection.screens.search.LanSearchViewModel
 import net.flipper.bridge.connection.utils.PermissionCheckerNoop
@@ -39,10 +38,7 @@ suspend fun main() {
         SupervisorJob() + FlipperDispatchers.default
     )
 
-    val persistedStorage = FDevicePersistedStorageImpl(
-        PreferencesSettings(Preferences.userRoot())
-    )
-    persistedStorage.transaction { getAllDevices().forEach { removeDevice(it.uniqueId) } }
+    val settings = PreferencesSettings(Preferences.userRoot())
     val hostApi = BUSYLibHostApiStub(
         host = "cloud.dev.busy.app",
     )
@@ -51,7 +47,7 @@ suspend fun main() {
     val busyLib = BUSYLibDesktop.build(
         scope = applicationScope,
         principalApi = principalApi,
-        persistedStorage = persistedStorage,
+        observableSettings = settings,
         networkStateApi = BUSYLibNetworkStateApiNoop(defaultState = true),
         hostApi = hostApi
     )
@@ -62,10 +58,10 @@ suspend fun main() {
         getRootDecomposeComponent(
             componentContext = DefaultComponentContext(lifecycle = lifecycle),
             permissionChecker = PermissionCheckerNoop(),
-            persistedStorage = persistedStorage,
+            persistedStorage = busyLib.persistedStorage,
             busyLib = busyLib,
             searchViewModelProvider = {
-                LanSearchViewModel(persistedStorage)
+                LanSearchViewModel(busyLib.persistedStorage, busyLib.connectionService)
             },
             principalApi = principalApi
         )

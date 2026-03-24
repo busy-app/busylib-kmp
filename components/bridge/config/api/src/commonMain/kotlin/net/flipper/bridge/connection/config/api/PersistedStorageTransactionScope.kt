@@ -6,9 +6,8 @@ interface PersistedStorageTransactionScope {
     fun getCurrentDevice(): BUSYBar?
     fun getAllDevices(): List<BUSYBar>
 
-    fun setCurrentDevice(device: BUSYBar?)
+    fun setCurrentDevice(device: BUSYBar)
     fun addOrReplace(device: BUSYBar)
-    fun removeDevice(id: String)
 }
 
 fun PersistedStorageTransactionScope.getDevice(id: String): BUSYBar? {

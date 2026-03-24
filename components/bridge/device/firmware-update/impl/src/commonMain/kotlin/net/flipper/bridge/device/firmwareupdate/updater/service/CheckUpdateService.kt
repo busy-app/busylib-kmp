@@ -19,6 +19,8 @@ import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.onLatest
 import net.flipper.core.busylib.ktx.common.orNullable
 import net.flipper.core.busylib.ktx.common.tryCast
+import net.flipper.core.busylib.log.LogTagProvider
+import net.flipper.core.busylib.log.TaggedLogger
 import net.flipper.core.busylib.log.error
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
@@ -29,7 +31,8 @@ import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 class CheckUpdateService(
     private val fFeatureProvider: FFeatureProvider,
     private val scope: CoroutineScope
-) : InternalBUSYLibStartupListener {
+) : InternalBUSYLibStartupListener,
+    LogTagProvider by TaggedLogger("CheckUpdateService") {
     override fun onLaunch() {
         fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
             .flatMapLatest { status ->
