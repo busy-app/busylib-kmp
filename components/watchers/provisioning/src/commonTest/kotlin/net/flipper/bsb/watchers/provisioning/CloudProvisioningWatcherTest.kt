@@ -1,14 +1,10 @@
 package net.flipper.bsb.watchers.provisioning
 
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -65,8 +61,6 @@ class CloudProvisioningWatcherTest {
             assertNotNull(updated.cloud)
             assertEquals(cloudId, updated.cloud!!.deviceId)
             assertNotNull(updated.ble)
-
-            setup.cleanup()
         }
 
     @Test
@@ -88,8 +82,6 @@ class CloudProvisioningWatcherTest {
         val updated = setup.storage.findDevice("device-1")
         assertNotNull(updated)
         assertEquals(device.connectionWays, updated.connectionWays)
-
-        setup.cleanup()
     }
 
     @Test
@@ -114,8 +106,6 @@ class CloudProvisioningWatcherTest {
             val updated = setup.storage.findDevice("device-1")
             assertNotNull(updated)
             assertEquals(device.connectionWays, updated.connectionWays)
-
-            setup.cleanup()
         }
 
     @Test
@@ -151,8 +141,6 @@ class CloudProvisioningWatcherTest {
 
             // Current device should be switched to new device
             assertEquals(newDevice, setup.storage.currentDevice)
-
-            setup.cleanup()
         }
 
     @Test
@@ -186,8 +174,6 @@ class CloudProvisioningWatcherTest {
             assertEquals(existingDevice, setup.storage.currentDevice)
             // No new devices created
             assertEquals(2, setup.storage.devices.size)
-
-            setup.cleanup()
         }
 
     @Test
@@ -213,8 +199,6 @@ class CloudProvisioningWatcherTest {
             assertNotNull(updated)
             assertNull(updated.cloud, "Cloud connection should be removed")
             assertNotNull(updated.ble, "BLE connection should remain")
-
-            setup.cleanup()
         }
 
     @Test
@@ -236,8 +220,6 @@ class CloudProvisioningWatcherTest {
         val updated = setup.storage.findDevice("device-1")
         assertNotNull(updated)
         assertEquals(device.connectionWays, updated.connectionWays)
-
-        setup.cleanup()
     }
 
     @Test
@@ -268,8 +250,6 @@ class CloudProvisioningWatcherTest {
         assertTrue(updated.connectionWays[0] is BUSYBar.ConnectionWay.Lan)
         assertTrue(updated.connectionWays[1] is BUSYBar.ConnectionWay.Cloud)
         assertTrue(updated.connectionWays[2] is BUSYBar.ConnectionWay.BLE)
-
-        setup.cleanup()
     }
 
     // endregion
@@ -278,13 +258,8 @@ class CloudProvisioningWatcherTest {
 
     private data class TestSetup(
         val watcher: CloudProvisioningWatcher,
-        val storage: FakePersistedStorage,
-        val scope: CoroutineScope
-    ) {
-        fun cleanup() {
-            scope.cancel()
-        }
-    }
+        val storage: FakePersistedStorage
+    )
 
     private fun TestScope.createSetup(
         devices: MutableList<BUSYBar>,
@@ -300,11 +275,9 @@ class CloudProvisioningWatcherTest {
             FFeatureStatus.Supported(rpcApi)
         )
 
-        val scope = CoroutineScope(SupervisorJob() + StandardTestDispatcher(testScheduler))
-
         val orchestratorState = MutableStateFlow<FDeviceConnectStatus>(
             FDeviceConnectStatus.Connected(
-                scope = scope,
+                scope = backgroundScope,
                 device = connectedDevice,
                 deviceApi = FakeConnectedDeviceApi(),
                 transportType = null
@@ -312,13 +285,13 @@ class CloudProvisioningWatcherTest {
         )
 
         val watcher = CloudProvisioningWatcher(
-            scope = scope,
+            scope = backgroundScope,
             featureProvider = FakeFeatureProvider(featureFlow),
             orchestrator = FakeOrchestrator(orchestratorState),
             persistedStorage = storage
         )
 
-        return TestSetup(watcher, storage, scope)
+        return TestSetup(watcher, storage)
     }
 
     private fun busyBar(id: String, vararg connectionWays: BUSYBar.ConnectionWay): BUSYBar {

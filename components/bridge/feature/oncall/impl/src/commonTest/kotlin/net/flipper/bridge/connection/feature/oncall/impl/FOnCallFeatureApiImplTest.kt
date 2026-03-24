@@ -1,8 +1,5 @@
 package net.flipper.bridge.connection.feature.oncall.impl
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcAssetsApi
@@ -20,7 +17,6 @@ import net.flipper.bridge.connection.feature.rpc.api.model.DrawRequest
 import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
 
 class FOnCallFeatureApiImplTest {
@@ -29,18 +25,17 @@ class FOnCallFeatureApiImplTest {
     fun GIVEN_start_WHEN_time_advances_THEN_draw_called_periodically() = runTest {
         val fakeAssetsApi = FakeRpcAssetsApi()
         val fakeRpcFeatureApi = FakeRpcFeatureApi(fakeAssetsApi)
-        val scope = CoroutineScope(coroutineContext + Job())
-        val api = FOnCallFeatureApiImpl(fakeRpcFeatureApi, scope)
+        val api = FOnCallFeatureApiImpl(fakeRpcFeatureApi, backgroundScope)
 
-        launch { api.start() }
+        api.start()
         advanceTimeBy(1) // let first draw happen
 
         assertEquals(1, fakeAssetsApi.drawRequests.size)
 
-        advanceTimeBy(3.seconds)
+        advanceTimeBy(10.seconds)
         assertEquals(2, fakeAssetsApi.drawRequests.size)
 
-        advanceTimeBy(3.seconds)
+        advanceTimeBy(10.seconds)
         assertEquals(3, fakeAssetsApi.drawRequests.size)
 
         api.stop()
@@ -50,10 +45,9 @@ class FOnCallFeatureApiImplTest {
     fun GIVEN_start_WHEN_stop_THEN_remove_draw_called() = runTest {
         val fakeAssetsApi = FakeRpcAssetsApi()
         val fakeRpcFeatureApi = FakeRpcFeatureApi(fakeAssetsApi)
-        val scope = CoroutineScope(coroutineContext + Job())
-        val api = FOnCallFeatureApiImpl(fakeRpcFeatureApi, scope)
+        val api = FOnCallFeatureApiImpl(fakeRpcFeatureApi, backgroundScope)
 
-        launch { api.start() }
+        api.start()
         advanceTimeBy(1)
 
         api.stop()
@@ -63,23 +57,24 @@ class FOnCallFeatureApiImplTest {
     }
 
     @Test
-    fun GIVEN_started_WHEN_start_again_THEN_previous_cancelled_and_remove_draw_called() = runTest {
+    fun GIVEN_started_WHEN_start_again_THEN_skip_if_running() = runTest {
         val fakeAssetsApi = FakeRpcAssetsApi()
         val fakeRpcFeatureApi = FakeRpcFeatureApi(fakeAssetsApi)
-        val scope = CoroutineScope(coroutineContext + Job())
-        val api = FOnCallFeatureApiImpl(fakeRpcFeatureApi, scope)
+        val api = FOnCallFeatureApiImpl(fakeRpcFeatureApi, backgroundScope)
 
-        launch { api.start() }
+        api.start()
         advanceTimeBy(1)
         assertEquals(1, fakeAssetsApi.drawRequests.size)
         assertEquals(0, fakeAssetsApi.removedAppIds.size)
 
-        // start again — should cancel previous (triggering removeDraw) and restart
-        launch { api.start() }
+        // start again — SKIP_IF_RUNNING means second start is a no-op
+        api.start()
         advanceTimeBy(1)
 
-        assertTrue(fakeAssetsApi.removedAppIds.isNotEmpty())
-        assertEquals("on_call", fakeAssetsApi.removedAppIds.last())
+        // No removeDraw called since previous job was not cancelled
+        assertEquals(0, fakeAssetsApi.removedAppIds.size)
+        // Still only 1 draw (second start was skipped)
+        assertEquals(1, fakeAssetsApi.drawRequests.size)
 
         api.stop()
     }
@@ -88,10 +83,9 @@ class FOnCallFeatureApiImplTest {
     fun GIVEN_start_WHEN_draw_called_THEN_request_has_correct_params() = runTest {
         val fakeAssetsApi = FakeRpcAssetsApi()
         val fakeRpcFeatureApi = FakeRpcFeatureApi(fakeAssetsApi)
-        val scope = CoroutineScope(coroutineContext + Job())
-        val api = FOnCallFeatureApiImpl(fakeRpcFeatureApi, scope)
+        val api = FOnCallFeatureApiImpl(fakeRpcFeatureApi, backgroundScope)
 
-        launch { api.start() }
+        api.start()
         advanceTimeBy(1)
 
         val request = fakeAssetsApi.drawRequests.first()
