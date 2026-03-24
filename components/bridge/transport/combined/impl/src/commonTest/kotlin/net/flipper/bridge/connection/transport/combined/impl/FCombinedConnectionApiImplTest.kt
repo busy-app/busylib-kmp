@@ -3,6 +3,7 @@ package net.flipper.bridge.connection.transport.combined.impl
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancel
@@ -371,7 +372,7 @@ class FCombinedConnectionApiImplTest {
     fun GIVEN_all_configs_removed_WHEN_tryUpdateConnectionConfig_THEN_all_connections_disconnected() =
         runTest {
             val testDispatcher = StandardTestDispatcher(testScheduler)
-            val sutScope = CoroutineScope(SupervisorJob() + testDispatcher)
+            val sutScope = CoroutineScope(SupervisorJob(backgroundScope.coroutineContext.job) + testDispatcher)
             val configA = TestConfig("a")
             val config1 = createConfig("Device", configA)
             val builder = createConnectionBuilder()
@@ -409,8 +410,6 @@ class FCombinedConnectionApiImplTest {
                 "Should emit Disconnected when all connections removed. " +
                     "statusHistory=$statusHistory"
             )
-
-            sutScope.cancel()
         }
 
     // endregion
@@ -664,7 +663,7 @@ class FCombinedConnectionApiImplTest {
     fun GIVEN_connection_removed_WHEN_state_was_connected_THEN_status_listener_notified() =
         runTest {
             val testDispatcher = StandardTestDispatcher(testScheduler)
-            val sutScope = CoroutineScope(SupervisorJob() + testDispatcher)
+            val sutScope = CoroutineScope(SupervisorJob(backgroundScope.coroutineContext.job) + testDispatcher)
             val configA = TestConfig("a")
             val config1 = createConfig("Device", configA)
             val builder = createConnectionBuilder()
@@ -711,8 +710,6 @@ class FCombinedConnectionApiImplTest {
                 "Should emit Disconnected after removing connected connection. " +
                     "Got: $statusHistory"
             )
-
-            sutScope.cancel()
         }
 
     // endregion
@@ -909,7 +906,7 @@ class FCombinedConnectionApiImplTest {
     fun GIVEN_new_connection_added_WHEN_becomes_connected_THEN_status_emits_connected() =
         runTest {
             val testDispatcher = StandardTestDispatcher(testScheduler)
-            val sutScope = CoroutineScope(SupervisorJob() + testDispatcher)
+            val sutScope = CoroutineScope(SupervisorJob(backgroundScope.coroutineContext.job) + testDispatcher)
             val builder = createConnectionBuilder()
             val statusHistory = mutableListOf<FInternalTransportConnectionStatus>()
             val listener = FTransportConnectionStatusListener { statusHistory.add(it) }
@@ -935,14 +932,12 @@ class FCombinedConnectionApiImplTest {
                 statusHistory.any { it == Connecting },
                 "Should see Connecting status for new connection. Got: $statusHistory"
             )
-
-            sutScope.cancel()
         }
 
     @Test
     fun GIVEN_connected_connection_kept_WHEN_another_added_THEN_remains_connected() = runTest {
         val testDispatcher = StandardTestDispatcher(testScheduler)
-        val sutScope = CoroutineScope(SupervisorJob() + testDispatcher)
+        val sutScope = CoroutineScope(SupervisorJob(backgroundScope.coroutineContext.job) + testDispatcher)
         val configA = TestConfig("a")
         val configB = TestConfig("b")
         val config1 = createConfig("Device", configA)
@@ -1001,8 +996,6 @@ class FCombinedConnectionApiImplTest {
             "Should remain connected or at worst be connecting (not disconnected). " +
                 "Got: $statusHistory"
         )
-
-        sutScope.cancel()
     }
 
     // endregion
@@ -1398,7 +1391,7 @@ class FCombinedConnectionApiImplTest {
     @Test
     fun GIVEN_full_lifecycle_WHEN_create_update_disconnect_THEN_works_correctly() = runTest {
         val testDispatcher = StandardTestDispatcher(testScheduler)
-        val sutScope = CoroutineScope(SupervisorJob() + testDispatcher)
+        val sutScope = CoroutineScope(SupervisorJob(backgroundScope.coroutineContext.job) + testDispatcher)
         val configA = TestConfig("a")
         val configB = TestConfig("b")
         val configC = TestConfig("c")
@@ -1461,8 +1454,6 @@ class FCombinedConnectionApiImplTest {
         // Phase 5: Disconnect
         sut.disconnect()
         advanceUntilIdle()
-
-        sutScope.cancel()
     }
 
     @Test
@@ -1559,7 +1550,7 @@ class FCombinedConnectionApiImplTest {
     fun GIVEN_no_connections_initially_WHEN_update_then_back_to_empty_THEN_transitions_correct() =
         runTest {
             val testDispatcher = StandardTestDispatcher(testScheduler)
-            val sutScope = CoroutineScope(SupervisorJob() + testDispatcher)
+            val sutScope = CoroutineScope(SupervisorJob(backgroundScope.coroutineContext.job) + testDispatcher)
             val builder = createConnectionBuilder()
             val statusHistory = mutableListOf<FInternalTransportConnectionStatus>()
             val listener = FTransportConnectionStatusListener { statusHistory.add(it) }
@@ -1597,8 +1588,6 @@ class FCombinedConnectionApiImplTest {
                 statusHistory.any { it == Disconnected },
                 "Should transition back to Disconnected"
             )
-
-            sutScope.cancel()
         }
 
     // endregion

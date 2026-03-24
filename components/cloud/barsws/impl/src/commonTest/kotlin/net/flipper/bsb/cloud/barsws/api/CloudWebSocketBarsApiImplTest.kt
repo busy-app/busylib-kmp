@@ -77,7 +77,7 @@ class CloudWebSocketBarsApiImplTest {
                             webSockets.add(ws)
                         }
                     }
-                    .launchIn(testSetup.testScope)
+                    .launchIn(backgroundScope)
             }
 
             advanceUntilIdle()
@@ -91,7 +91,6 @@ class CloudWebSocketBarsApiImplTest {
             }
 
             jobs.forEach { it.cancel() }
-            testSetup.testScope.cancel()
         }
 
     @Test
@@ -107,7 +106,7 @@ class CloudWebSocketBarsApiImplTest {
             var firstWs: BSBWebSocket? = null
             val job1 = testSetup.api.getWSFlow()
                 .onEach { firstWs = it }
-                .launchIn(testSetup.testScope)
+                .launchIn(backgroundScope)
 
             advanceUntilIdle()
 
@@ -115,7 +114,7 @@ class CloudWebSocketBarsApiImplTest {
             var lateWs: BSBWebSocket? = null
             val job2 = testSetup.api.getWSFlow()
                 .onEach { lateWs = it }
-                .launchIn(testSetup.testScope)
+                .launchIn(backgroundScope)
 
             advanceUntilIdle()
 
@@ -126,7 +125,6 @@ class CloudWebSocketBarsApiImplTest {
 
             job1.cancel()
             job2.cancel()
-            testSetup.testScope.cancel()
         }
 
     @Test
@@ -161,7 +159,6 @@ class CloudWebSocketBarsApiImplTest {
             )
 
             jobs.forEach { it.cancel() }
-            testSetup.testScope.cancel()
         }
 
     // endregion
@@ -180,7 +177,7 @@ class CloudWebSocketBarsApiImplTest {
             )
 
             // When - subscribe then unsubscribe
-            val job = testSetup.api.getWSFlow().launchIn(testSetup.testScope)
+            val job = testSetup.api.getWSFlow().launchIn(backgroundScope)
             advanceUntilIdle()
 
             job.cancel()
@@ -191,25 +188,26 @@ class CloudWebSocketBarsApiImplTest {
                 true,
                 "WebSocket should be closed when no subscribers remain"
             )
-            testSetup.testScope.cancel()
         }
 
     @Test
     fun GIVEN_websocket_WHEN_scope_is_cancelled_THEN_all_resources_are_cleaned_up() = runTest {
         // Given
         val cleanupCalled = MutableStateFlow(false)
+        val cancellableScope = CoroutineScope(StandardTestDispatcher(testScheduler) + Job())
 
         val testSetup = createTestSetup(
             isNetworkAvailable = true,
             principal = BUSYLibUserPrincipal.Token("test-token"),
-            onWebSocketClosed = { cleanupCalled.value = true }
+            onWebSocketClosed = { cleanupCalled.value = true },
+            scopeOverride = cancellableScope
         )
 
-        val job = testSetup.api.getWSFlow().launchIn(testSetup.testScope)
+        val job = testSetup.api.getWSFlow().launchIn(cancellableScope)
         advanceUntilIdle()
 
         // When - cancel the scope
-        testSetup.testScope.cancel()
+        cancellableScope.cancel()
         advanceUntilIdle()
 
         // Then - resources should be cleaned up
@@ -228,18 +226,17 @@ class CloudWebSocketBarsApiImplTest {
 
             // When - rapid subscribe/unsubscribe
             repeat(50) {
-                val job = testSetup.api.getWSFlow().launchIn(testSetup.testScope)
+                val job = testSetup.api.getWSFlow().launchIn(backgroundScope)
                 advanceUntilIdle()
                 job.cancel()
                 advanceUntilIdle()
             }
 
             // Then - should not crash or leak resources
-            val finalJob = testSetup.api.getWSFlow().launchIn(testSetup.testScope)
+            val finalJob = testSetup.api.getWSFlow().launchIn(backgroundScope)
             advanceUntilIdle()
             assertNotNull(finalJob)
             finalJob.cancel()
-            testSetup.testScope.cancel()
         }
 
     // endregion
@@ -259,14 +256,13 @@ class CloudWebSocketBarsApiImplTest {
         var receivedWs: BSBWebSocket? = null
         val job = testSetup.api.getWSFlow()
             .onEach { receivedWs = it }
-            .launchIn(testSetup.testScope)
+            .launchIn(backgroundScope)
 
         advanceUntilIdle()
 
         // Then - no WebSocket should be emitted when network is unavailable
         assertNull(receivedWs, "No WebSocket should be emitted when network unavailable")
         job.cancel()
-        testSetup.testScope.cancel()
     }
 
     @Test
@@ -282,14 +278,13 @@ class CloudWebSocketBarsApiImplTest {
         var receivedWs: BSBWebSocket? = null
         val job = testSetup.api.getWSFlow()
             .onEach { receivedWs = it }
-            .launchIn(testSetup.testScope)
+            .launchIn(backgroundScope)
 
         advanceUntilIdle()
 
         // Then
         assertNull(receivedWs, "No WebSocket should be emitted when user not authenticated")
         job.cancel()
-        testSetup.testScope.cancel()
     }
 
     @Test
@@ -305,14 +300,13 @@ class CloudWebSocketBarsApiImplTest {
         var receivedWs: BSBWebSocket? = null
         val job = testSetup.api.getWSFlow()
             .onEach { receivedWs = it }
-            .launchIn(testSetup.testScope)
+            .launchIn(backgroundScope)
 
         advanceUntilIdle()
 
         // Then
         assertNull(receivedWs, "No WebSocket should be emitted when principal is loading")
         job.cancel()
-        testSetup.testScope.cancel()
     }
 
     @Test
@@ -328,7 +322,7 @@ class CloudWebSocketBarsApiImplTest {
             val receivedWebSockets = mutableListOf<BSBWebSocket?>()
             val job = testSetup.api.getWSFlow()
                 .onEach { receivedWebSockets.add(it) }
-                .launchIn(testSetup.testScope)
+                .launchIn(backgroundScope)
 
             advanceUntilIdle()
 
@@ -345,7 +339,6 @@ class CloudWebSocketBarsApiImplTest {
                 "WebSocket should be emitted when network becomes available"
             )
             job.cancel()
-            testSetup.testScope.cancel()
         }
 
     @Test
@@ -361,7 +354,7 @@ class CloudWebSocketBarsApiImplTest {
         val receivedWebSockets = mutableListOf<BSBWebSocket?>()
         val job = testSetup.api.getWSFlow()
             .onEach { receivedWebSockets.add(it) }
-            .launchIn(testSetup.testScope)
+            .launchIn(backgroundScope)
 
         advanceUntilIdle()
 
@@ -375,7 +368,6 @@ class CloudWebSocketBarsApiImplTest {
         // Then - WebSocket should be emitted
         assertTrue(receivedWebSockets.any { it != null }, "WebSocket should be emitted when user logs in")
         job.cancel()
-        testSetup.testScope.cancel()
     }
 
     @Test
@@ -391,7 +383,7 @@ class CloudWebSocketBarsApiImplTest {
         val receivedWebSockets = mutableListOf<BSBWebSocket?>()
         val job = testSetup.api.getWSFlow()
             .onEach { receivedWebSockets.add(it) }
-            .launchIn(testSetup.testScope)
+            .launchIn(backgroundScope)
 
         advanceUntilIdle()
 
@@ -402,7 +394,6 @@ class CloudWebSocketBarsApiImplTest {
         // Then - the flow should switch to empty (flatMapLatest to flowOf())
         // No new websockets should be created after network disconnect
         job.cancel()
-        testSetup.testScope.cancel()
     }
 
     @Test
@@ -419,7 +410,7 @@ class CloudWebSocketBarsApiImplTest {
         var wsCount = 0
         val job = testSetup.api.getWSFlow()
             .onEach { wsCount++ }
-            .launchIn(testSetup.testScope)
+            .launchIn(backgroundScope)
 
         advanceUntilIdle()
 
@@ -429,7 +420,6 @@ class CloudWebSocketBarsApiImplTest {
 
         // Then - flow should stop emitting (switches to flowOf())
         job.cancel()
-        testSetup.testScope.cancel()
     }
 
     @Test
@@ -453,7 +443,7 @@ class CloudWebSocketBarsApiImplTest {
             }
         )
 
-        val job = testSetup.api.getWSFlow().launchIn(testSetup.testScope)
+        val job = testSetup.api.getWSFlow().launchIn(backgroundScope)
         advanceUntilIdle()
 
         // When - host changes
@@ -464,7 +454,6 @@ class CloudWebSocketBarsApiImplTest {
         // The combine operator should trigger a new websocket creation
         assertTrue(createdHosts.size >= 1, "At least one WebSocket should be created")
         job.cancel()
-        testSetup.testScope.cancel()
     }
 
     // endregion
@@ -486,7 +475,7 @@ class CloudWebSocketBarsApiImplTest {
         )
 
         // When - subscribe and let it retry
-        val job = testSetup.api.getWSFlow().launchIn(testSetup.testScope)
+        val job = testSetup.api.getWSFlow().launchIn(backgroundScope)
 
         // Advance time to allow retries with exponential backoff
         advanceTimeBy(100.milliseconds)
@@ -502,7 +491,6 @@ class CloudWebSocketBarsApiImplTest {
         )
 
         job.cancel()
-        testSetup.testScope.cancel()
     }
 
     @Test
@@ -517,13 +505,12 @@ class CloudWebSocketBarsApiImplTest {
                 onWebSocketCreated = { connectionAttempts.update { it + 1 } }
             )
 
-            val job = testSetup.api.getWSFlow().launchIn(testSetup.testScope)
+            val job = testSetup.api.getWSFlow().launchIn(backgroundScope)
             advanceUntilIdle()
 
             // Note: Due to wrapWebsocket's infinite loop with retry logic,
             // reconnection should happen automatically on failure
             job.cancel()
-            testSetup.testScope.cancel()
         }
 
     // endregion
@@ -549,11 +536,11 @@ class CloudWebSocketBarsApiImplTest {
 
             val job1 = testSetup.api.getWSFlow()
                 .onEach { subscriber1Results.add(it) }
-                .launchIn(testSetup.testScope)
+                .launchIn(backgroundScope)
 
             val job2 = testSetup.api.getWSFlow()
                 .onEach { subscriber2Results.add(it) }
-                .launchIn(testSetup.testScope)
+                .launchIn(backgroundScope)
 
             advanceUntilIdle()
 
@@ -570,7 +557,6 @@ class CloudWebSocketBarsApiImplTest {
             // Then - both subscribers should have received consistent state
             job1.cancel()
             job2.cancel()
-            testSetup.testScope.cancel()
         }
 
     @Test
@@ -586,7 +572,7 @@ class CloudWebSocketBarsApiImplTest {
             // When - high concurrency subscribe/unsubscribe
             val jobs = List(100) {
                 async {
-                    val job = testSetup.api.getWSFlow().launchIn(testSetup.testScope)
+                    val job = testSetup.api.getWSFlow().launchIn(backgroundScope)
                     delay(10.milliseconds)
                     job.cancel()
                 }
@@ -601,11 +587,10 @@ class CloudWebSocketBarsApiImplTest {
             }
 
             // Then - no deadlock, system should be responsive
-            val finalJob = testSetup.api.getWSFlow().launchIn(testSetup.testScope)
+            val finalJob = testSetup.api.getWSFlow().launchIn(backgroundScope)
             advanceUntilIdle()
             assertNotNull(finalJob, "Should be able to subscribe after high concurrency")
             finalJob.cancel()
-            testSetup.testScope.cancel()
         }
 
     @Test
@@ -624,7 +609,7 @@ class CloudWebSocketBarsApiImplTest {
                 hostFlow = hostFlow
             )
 
-            val job = testSetup.api.getWSFlow().launchIn(testSetup.testScope)
+            val job = testSetup.api.getWSFlow().launchIn(backgroundScope)
             advanceUntilIdle()
 
             // When - concurrent changes while connecting
@@ -660,7 +645,6 @@ class CloudWebSocketBarsApiImplTest {
 
             // Then - should handle all changes without crashing
             job.cancel()
-            testSetup.testScope.cancel()
         }
 
     // endregion
@@ -680,13 +664,12 @@ class CloudWebSocketBarsApiImplTest {
         // When
         val job = testSetup.api.getWSFlow()
             .onEach { }
-            .launchIn(testSetup.testScope)
+            .launchIn(backgroundScope)
 
         advanceUntilIdle()
 
         // Then - should handle empty host gracefully
         job.cancel()
-        testSetup.testScope.cancel()
     }
 
     @Test
@@ -705,12 +688,11 @@ class CloudWebSocketBarsApiImplTest {
         )
 
         // When
-        val job = testSetup.api.getWSFlow().launchIn(testSetup.testScope)
+        val job = testSetup.api.getWSFlow().launchIn(backgroundScope)
         advanceUntilIdle()
 
         // Then - should use the token from Full principal
         job.cancel()
-        testSetup.testScope.cancel()
     }
 
     @Test
@@ -729,7 +711,6 @@ class CloudWebSocketBarsApiImplTest {
 
         // Then
         assertNull(result, "Should timeout when conditions not met")
-        testSetup.testScope.cancel()
     }
 
     @Test
@@ -747,7 +728,7 @@ class CloudWebSocketBarsApiImplTest {
                 onWebSocketCreated = { connectionAttempts.update { it + 1 } }
             )
 
-            val job = testSetup.api.getWSFlow().launchIn(testSetup.testScope)
+            val job = testSetup.api.getWSFlow().launchIn(backgroundScope)
             advanceUntilIdle()
 
             val initialAttempts = connectionAttempts.value
@@ -766,7 +747,6 @@ class CloudWebSocketBarsApiImplTest {
                 "No reconnection for same token value"
             )
             job.cancel()
-            testSetup.testScope.cancel()
         }
 
     // endregion
@@ -778,8 +758,7 @@ class CloudWebSocketBarsApiImplTest {
         val networkStateApi: BUSYLibNetworkStateApi,
         val principalApi: BUSYLibPrincipalApi,
         val hostApi: BUSYLibHostApi,
-        val webSocketFactory: MockBSBWebSocketFactory,
-        val testScope: CoroutineScope
+        val webSocketFactory: MockBSBWebSocketFactory
     )
 
     @Suppress("LongParameterList")
@@ -792,7 +771,8 @@ class CloudWebSocketBarsApiImplTest {
         hostFlow: MutableStateFlow<String>? = null,
         onWebSocketCreated: () -> Unit = {},
         onWebSocketClosed: () -> Unit = {},
-        onWebSocketCreatedForHost: (String) -> Unit = {}
+        onWebSocketCreatedForHost: (String) -> Unit = {},
+        scopeOverride: CoroutineScope? = null
     ): TestSetup {
         val actualNetworkFlow = networkFlow ?: MutableStateFlow(isNetworkAvailable)
         val actualPrincipalFlow = principalFlow ?: MutableStateFlow(principal)
@@ -817,16 +797,15 @@ class CloudWebSocketBarsApiImplTest {
             onWebSocketCreatedForHost = onWebSocketCreatedForHost
         )
 
-        // Create a dedicated scope with the test dispatcher for proper coroutine control
         val testDispatcher = StandardTestDispatcher(testScheduler)
-        val testScopeForApi = CoroutineScope(testDispatcher + Job())
+        val apiScope = scopeOverride ?: backgroundScope
 
         val api = CloudWebSocketBarsApiImpl(
             networkStateApi = networkStateApi,
             principalApi = principalApi,
             hostApi = hostApi,
             webSocketFactory = webSocketFactory,
-            scope = testScopeForApi,
+            scope = apiScope,
             dispatcher = testDispatcher
         )
 
@@ -835,8 +814,7 @@ class CloudWebSocketBarsApiImplTest {
             networkStateApi = networkStateApi,
             principalApi = principalApi,
             hostApi = hostApi,
-            webSocketFactory = webSocketFactory,
-            testScope = testScopeForApi
+            webSocketFactory = webSocketFactory
         )
     }
 
