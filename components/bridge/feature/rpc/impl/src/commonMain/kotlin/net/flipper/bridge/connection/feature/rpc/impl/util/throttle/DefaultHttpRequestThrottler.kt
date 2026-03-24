@@ -2,7 +2,6 @@ package net.flipper.bridge.connection.feature.rpc.impl.util.throttle
 
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.statement.request
-import io.ktor.util.AttributeKey
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -43,7 +42,6 @@ internal class DefaultHttpRequestThrottler(
 
                     // Refill bucket if reset time has passed
                     reset = Clock.System.now() + refillPeriod
-                    request.attributes.put(ResetAttribute, reset)
 
                     remaining = limit
                 }
@@ -52,9 +50,5 @@ internal class DefaultHttpRequestThrottler(
                 remaining--
             }
         }
-    }
-
-    companion object {
-        private val ResetAttribute = AttributeKey<Instant>("DefaultHttpRequestThrottler.reset")
     }
 }
