@@ -52,12 +52,11 @@ class BSBWebSocketImplTest {
         // Given
         val mockSession = MockBSBWebSocketSession()
         val testDispatcher = StandardTestDispatcher(testScheduler)
-        val testScope = CoroutineScope(testDispatcher + Job())
 
         val webSocket = BSBWebSocketImpl(
             session = mockSession,
             logger = testLogger,
-            scope = testScope,
+            scope = backgroundScope,
             dispatcher = testDispatcher
         )
 
@@ -65,7 +64,7 @@ class BSBWebSocketImplTest {
         val receivedEvents = mutableListOf<WebSocketEvent>()
         val job = webSocket.getEventsFlow()
             .onEach { receivedEvents.add(it) }
-            .launchIn(testScope)
+            .launchIn(backgroundScope)
 
         advanceUntilIdle()
 
@@ -75,7 +74,6 @@ class BSBWebSocketImplTest {
         // Then
         assertEquals(1, receivedEvents.size, "Should receive exactly one event")
         job.cancel()
-        testScope.cancel()
     }
 
     @Test
@@ -84,12 +82,11 @@ class BSBWebSocketImplTest {
             // Given
             val mockSession = MockBSBWebSocketSession()
             val testDispatcher = StandardTestDispatcher(testScheduler)
-            val testScope = CoroutineScope(testDispatcher + Job())
 
             val webSocket = BSBWebSocketImpl(
                 session = mockSession,
                 logger = testLogger,
-                scope = testScope,
+                scope = backgroundScope,
                 dispatcher = testDispatcher
             )
 
@@ -97,7 +94,7 @@ class BSBWebSocketImplTest {
             val receivedEvents = mutableListOf<WebSocketEvent>()
             val job = webSocket.getEventsFlow()
                 .onEach { receivedEvents.add(it) }
-                .launchIn(testScope)
+                .launchIn(backgroundScope)
 
             advanceUntilIdle()
 
@@ -109,7 +106,6 @@ class BSBWebSocketImplTest {
             // Then
             assertEquals(5, receivedEvents.size, "Should receive all 5 events")
             job.cancel()
-            testScope.cancel()
         }
 
     @Test
@@ -118,12 +114,11 @@ class BSBWebSocketImplTest {
         val mockSession = MockBSBWebSocketSession()
         // Create a dedicated scope with the test dispatcher for proper coroutine control
         val testDispatcher = StandardTestDispatcher(testScheduler)
-        val testScopeForWebSocket = CoroutineScope(testDispatcher + Job())
 
         val webSocket = BSBWebSocketImpl(
             session = mockSession,
             logger = testLogger,
-            scope = testScopeForWebSocket,
+            scope = backgroundScope,
             dispatcher = testDispatcher
         )
 
@@ -133,11 +128,11 @@ class BSBWebSocketImplTest {
 
         val job1 = webSocket.getEventsFlow()
             .onEach { subscriber1Events.add(it) }
-            .launchIn(testScopeForWebSocket)
+            .launchIn(backgroundScope)
 
         val job2 = webSocket.getEventsFlow()
             .onEach { subscriber2Events.add(it) }
-            .launchIn(testScopeForWebSocket)
+            .launchIn(backgroundScope)
 
         advanceUntilIdle()
 
@@ -150,7 +145,6 @@ class BSBWebSocketImplTest {
 
         job1.cancel()
         job2.cancel()
-        testScopeForWebSocket.cancel() // Cancel the scope to cleanup shareIn coroutine
     }
 
     @Test
@@ -158,12 +152,11 @@ class BSBWebSocketImplTest {
         // Given
         val mockSession = MockBSBWebSocketSession()
         val testDispatcher = StandardTestDispatcher(testScheduler)
-        val testScope = CoroutineScope(testDispatcher + Job())
 
         val webSocket = BSBWebSocketImpl(
             session = mockSession,
             logger = testLogger,
-            scope = testScope,
+            scope = backgroundScope,
             dispatcher = testDispatcher
         )
 
@@ -171,7 +164,7 @@ class BSBWebSocketImplTest {
         val firstSubscriberEvents = mutableListOf<WebSocketEvent>()
         val job1 = webSocket.getEventsFlow()
             .onEach { firstSubscriberEvents.add(it) }
-            .launchIn(testScope)
+            .launchIn(backgroundScope)
 
         advanceUntilIdle()
 
@@ -184,7 +177,7 @@ class BSBWebSocketImplTest {
         val lateSubscriberEvents = mutableListOf<WebSocketEvent>()
         val job2 = webSocket.getEventsFlow()
             .onEach { lateSubscriberEvents.add(it) }
-            .launchIn(testScope)
+            .launchIn(backgroundScope)
 
         advanceUntilIdle()
 
@@ -193,7 +186,6 @@ class BSBWebSocketImplTest {
 
         job1.cancel()
         job2.cancel()
-        testScope.cancel()
     }
 
     // endregion
@@ -275,19 +267,18 @@ class BSBWebSocketImplTest {
             // Given
             val mockSession = MockBSBWebSocketSession()
             val testDispatcher = StandardTestDispatcher(testScheduler)
-            val testScope = CoroutineScope(testDispatcher + Job())
 
             val webSocket = BSBWebSocketImpl(
                 session = mockSession,
                 logger = testLogger,
-                scope = testScope,
+                scope = backgroundScope,
                 dispatcher = testDispatcher
             )
 
             val receivedEvents = mutableListOf<WebSocketEvent>()
             val job = webSocket.getEventsFlow()
                 .onEach { receivedEvents.add(it) }
-                .launchIn(testScope)
+                .launchIn(backgroundScope)
 
             advanceUntilIdle()
 
@@ -300,7 +291,6 @@ class BSBWebSocketImplTest {
             // Then - should still receive the valid message after error
             assertEquals(1, receivedEvents.size, "Should receive the valid event after error")
             job.cancel()
-            testScope.cancel()
         }
 
     @Test
@@ -373,18 +363,17 @@ class BSBWebSocketImplTest {
             // Given
             val mockSession = MockBSBWebSocketSession()
             val testDispatcher = StandardTestDispatcher(testScheduler)
-            val testScope = CoroutineScope(testDispatcher + Job())
 
             val webSocket = BSBWebSocketImpl(
                 session = mockSession,
                 logger = testLogger,
-                scope = testScope,
+                scope = backgroundScope,
                 dispatcher = testDispatcher
             )
 
             // When - subscribe then unsubscribe
-            val job1 = webSocket.getEventsFlow().launchIn(testScope)
-            val job2 = webSocket.getEventsFlow().launchIn(testScope)
+            val job1 = webSocket.getEventsFlow().launchIn(backgroundScope)
+            val job2 = webSocket.getEventsFlow().launchIn(backgroundScope)
             advanceUntilIdle()
 
             job1.cancel()
@@ -393,11 +382,10 @@ class BSBWebSocketImplTest {
 
             // Then - due to SharingStarted.WhileSubscribed, the upstream should stop
             // This is verified by the fact that the flow can be re-subscribed successfully
-            val newJob = webSocket.getEventsFlow().launchIn(testScope)
+            val newJob = webSocket.getEventsFlow().launchIn(backgroundScope)
             advanceUntilIdle()
             assertNotNull(newJob)
             newJob.cancel()
-            testScope.cancel()
         }
 
     // endregion
@@ -409,29 +397,27 @@ class BSBWebSocketImplTest {
         // Given
         val mockSession = MockBSBWebSocketSession()
         val testDispatcher = StandardTestDispatcher(testScheduler)
-        val testScope = CoroutineScope(testDispatcher + Job())
 
         val webSocket = BSBWebSocketImpl(
             session = mockSession,
             logger = testLogger,
-            scope = testScope,
+            scope = backgroundScope,
             dispatcher = testDispatcher
         )
 
         // When - rapid subscribe/unsubscribe cycles
         repeat(100) {
-            val job = webSocket.getEventsFlow().launchIn(testScope)
+            val job = webSocket.getEventsFlow().launchIn(backgroundScope)
             advanceUntilIdle()
             job.cancel()
             advanceUntilIdle()
         }
 
         // Then - should not crash or have any issues
-        val finalJob = webSocket.getEventsFlow().launchIn(testScope)
+        val finalJob = webSocket.getEventsFlow().launchIn(backgroundScope)
         advanceUntilIdle()
         assertNotNull(finalJob)
         finalJob.cancel()
-        testScope.cancel()
     }
 
     @Test
@@ -439,19 +425,18 @@ class BSBWebSocketImplTest {
         // Given
         val mockSession = MockBSBWebSocketSession()
         val testDispatcher = StandardTestDispatcher(testScheduler)
-        val testScope = CoroutineScope(testDispatcher + Job())
 
         val webSocket = BSBWebSocketImpl(
             session = mockSession,
             logger = testLogger,
-            scope = testScope,
+            scope = backgroundScope,
             dispatcher = testDispatcher
         )
 
         val receivedEvents = mutableListOf<WebSocketEvent>()
         val job = webSocket.getEventsFlow()
             .onEach { receivedEvents.add(it) }
-            .launchIn(testScope)
+            .launchIn(backgroundScope)
 
         advanceUntilIdle()
 
@@ -474,7 +459,6 @@ class BSBWebSocketImplTest {
         assertEquals(20, mockSession.sentRequests.size, "All sends should complete")
         assertEquals(20, receivedEvents.size, "All receives should complete")
         job.cancel()
-        testScope.cancel()
     }
 
     @Test
@@ -482,19 +466,18 @@ class BSBWebSocketImplTest {
         // Given
         val mockSession = MockBSBWebSocketSession()
         val testDispatcher = StandardTestDispatcher(testScheduler)
-        val testScope = CoroutineScope(testDispatcher + Job())
 
         val webSocket = BSBWebSocketImpl(
             session = mockSession,
             logger = testLogger,
-            scope = testScope,
+            scope = backgroundScope,
             dispatcher = testDispatcher
         )
 
         val receivedEvents = mutableListOf<WebSocketEvent>()
         val job = webSocket.getEventsFlow()
             .onEach { receivedEvents.add(it) }
-            .launchIn(testScope)
+            .launchIn(backgroundScope)
 
         advanceUntilIdle()
 
@@ -507,7 +490,6 @@ class BSBWebSocketImplTest {
         // Then
         assertEquals(1000, receivedEvents.size, "All high frequency events should be received")
         job.cancel()
-        testScope.cancel()
     }
 
     // endregion
@@ -553,12 +535,11 @@ class BSBWebSocketImplTest {
             // Given
             val mockSession = MockBSBWebSocketSession()
             val testDispatcher = StandardTestDispatcher(testScheduler)
-            val testScope = CoroutineScope(testDispatcher + Job())
 
             val webSocket = BSBWebSocketImpl(
                 session = mockSession,
                 logger = testLogger,
-                scope = testScope,
+                scope = backgroundScope,
                 dispatcher = testDispatcher
             )
 
@@ -567,7 +548,7 @@ class BSBWebSocketImplTest {
                 val events = mutableListOf<WebSocketEvent>()
                 val job = webSocket.getEventsFlow()
                     .onEach { events.add(it) }
-                    .launchIn(testScope)
+                    .launchIn(backgroundScope)
 
                 advanceUntilIdle()
 
@@ -582,7 +563,6 @@ class BSBWebSocketImplTest {
                 job.cancel()
                 advanceUntilIdle()
             }
-            testScope.cancel()
         }
 
     @Test
@@ -590,12 +570,11 @@ class BSBWebSocketImplTest {
         // Given
         val mockSession = MockBSBWebSocketSession()
         val testDispatcher = StandardTestDispatcher(testScheduler)
-        val testScope = CoroutineScope(testDispatcher + Job())
 
         val webSocket = BSBWebSocketImpl(
             session = mockSession,
             logger = testLogger,
-            scope = testScope,
+            scope = backgroundScope,
             dispatcher = testDispatcher
         )
 
@@ -605,10 +584,10 @@ class BSBWebSocketImplTest {
         // Fast subscriber
         val fastJob = webSocket.getEventsFlow()
             .onEach { fastSubscriberEvents.add(it) }
-            .launchIn(testScope)
+            .launchIn(backgroundScope)
 
         // Slow subscriber (simulated with processing delay)
-        val slowJob = testScope.launch {
+        val slowJob = backgroundScope.launch {
             webSocket.getEventsFlow().collect { event ->
                 delay(100) // Simulate slow processing
                 slowSubscriberEvents.add(event)
@@ -628,7 +607,6 @@ class BSBWebSocketImplTest {
 
         fastJob.cancel()
         slowJob.cancel()
-        testScope.cancel()
     }
 
     @Test
@@ -636,19 +614,18 @@ class BSBWebSocketImplTest {
         // Given
         val mockSession = MockBSBWebSocketSession()
         val testDispatcher = StandardTestDispatcher(testScheduler)
-        val testScope = CoroutineScope(testDispatcher + Job())
 
         val webSocket = BSBWebSocketImpl(
             session = mockSession,
             logger = testLogger,
-            scope = testScope,
+            scope = backgroundScope,
             dispatcher = testDispatcher
         )
 
         val receivedEvents = mutableListOf<WebSocketEvent>()
         val job = webSocket.getEventsFlow()
             .onEach { receivedEvents.add(it) }
-            .launchIn(testScope)
+            .launchIn(backgroundScope)
 
         advanceUntilIdle()
 
@@ -667,7 +644,6 @@ class BSBWebSocketImplTest {
 
         // Then - job should be cancelled
         assertTrue(job.isCancelled, "Job should be cancelled after session close")
-        testScope.cancel()
     }
 
     // endregion
