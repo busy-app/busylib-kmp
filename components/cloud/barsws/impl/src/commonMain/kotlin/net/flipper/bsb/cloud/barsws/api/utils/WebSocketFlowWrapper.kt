@@ -21,8 +21,10 @@ fun <T> LogTagProvider.wrapWebsocket(
             retryCount++
             error(it) { "Failed request websocket" }
         }.collect {
+            if (retryCount != 0) {
+                info { "Restore websocket with message: $it" }
+            }
             retryCount = 0
-            info { "Receive changes by websocket: $it" }
             emit(it)
         }
         val delayTimeout = getExponentialDelay(retryCount)

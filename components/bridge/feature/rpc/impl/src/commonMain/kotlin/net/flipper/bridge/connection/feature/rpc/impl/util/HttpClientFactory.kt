@@ -12,8 +12,12 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
+import net.flipper.bridge.connection.feature.rpc.impl.util.throttle.HttpRequestThrottle
 import net.flipper.core.busylib.log.info
 import net.flipper.core.ktor.util.minimizeBodyLogMessage
+import kotlin.time.Duration.Companion.seconds
+
+private const val MAX_RPS = 2 // Limitation for BUSY Bar request
 
 internal fun getHttpClient(httpClientEngine: HttpClientEngine) = HttpClient(httpClientEngine) {
     install(WebSockets)
@@ -38,5 +42,11 @@ internal fun getHttpClient(httpClientEngine: HttpClientEngine) = HttpClient(http
             }
         }
         level = LogLevel.ALL
+    }
+    install(HttpRequestThrottle) {
+        throttler(
+            limit = MAX_RPS,
+            refillPeriod = 1.seconds,
+        )
     }
 }
