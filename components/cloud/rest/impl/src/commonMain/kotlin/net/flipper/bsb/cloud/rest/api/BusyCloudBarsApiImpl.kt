@@ -20,7 +20,6 @@ import net.flipper.bsb.cloud.rest.model.BusyCloudBar
 import net.flipper.bsb.cloud.rest.model.BusyCloudBarsListResponse
 import net.flipper.bsb.cloud.rest.utils.run
 import net.flipper.busylib.core.di.BusyLibGraph
-import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.ktor.di.qualifier.KtorNetworkClientQualifier
 import net.flipper.core.ktor.di.qualifier.NetworkCoroutineDispatcher
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding

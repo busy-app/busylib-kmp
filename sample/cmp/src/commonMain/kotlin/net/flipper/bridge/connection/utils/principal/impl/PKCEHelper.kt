@@ -9,7 +9,7 @@ import kotlin.random.Random
 internal object PKCEHelper {
     @OptIn(ExperimentalEncodingApi::class)
     fun generateCodeVerifier(): String {
-        val bytes = Random.nextBytes(32)
+        val bytes = Random.nextBytes(size = 32)
         return Base64.UrlSafe.encode(bytes).trimEnd('=')
     }
 
