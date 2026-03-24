@@ -1,7 +1,6 @@
 package net.flipper.bridge.connection.feature.rpc.impl.util.throttle
 
 import io.ktor.client.request.HttpRequestBuilder
-import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.request
 import io.ktor.util.AttributeKey
 import kotlinx.coroutines.delay
@@ -52,15 +51,6 @@ internal class DefaultHttpRequestThrottler(
                 // Block one slot and continue this request
                 remaining--
             }
-        }
-    }
-
-    override suspend fun onResponse(response: HttpResponse) {
-        if (response.request.attributes.getOrNull(ResetAttribute) == reset) {
-            // If this was the request that started this bucket, we update the
-            // reset time after we receive the response. This ensures that our time is not smaller
-            // than the server's reset time
-            reset = Clock.System.now() + refillPeriod
         }
     }
 

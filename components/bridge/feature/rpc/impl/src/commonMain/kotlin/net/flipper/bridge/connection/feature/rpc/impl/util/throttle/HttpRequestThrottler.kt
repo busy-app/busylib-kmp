@@ -1,7 +1,6 @@
 package net.flipper.bridge.connection.feature.rpc.impl.util.throttle
 
 import io.ktor.client.request.HttpRequestBuilder
-import io.ktor.client.statement.HttpResponse
 import kotlinx.coroutines.delay
 
 /**
@@ -20,10 +19,4 @@ public interface HttpRequestThrottler {
      * request should not be throttled.
      */
     public suspend fun throttle(request: HttpRequestBuilder)
-
-    /**
-     * Handle the [HttpResponse] which allows to update internal state (e.g. by evaluating server
-     * response headers.
-     */
-    public suspend fun onResponse(response: HttpResponse)
 }

@@ -3,7 +3,6 @@ package net.flipper.bridge.connection.feature.rpc.impl.util.throttle
 import io.ktor.client.plugins.api.ClientPlugin
 import io.ktor.client.plugins.api.Send
 import io.ktor.client.plugins.api.createClientPlugin
-import io.ktor.http.HttpStatusCode.Companion.TooManyRequests
 
 /**
  * [HttpRequestThrottle] Ktor Client Plugin.
@@ -28,9 +27,6 @@ public val HttpRequestThrottle: ClientPlugin<HttpRequestThrottleConfig> = create
     on(Send) { request ->
         pluginConfig.throttler.throttle(request)
 
-        var call = proceed(request)
-        pluginConfig.throttler.onResponse(call.response)
-
-        return@on call
+        return@on proceed(request)
     }
 }
