@@ -27,6 +27,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withTimeoutOrNull
 import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
+import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipalToken
 import net.flipper.bsb.cloud.api.BUSYLibHostApi
 import net.flipper.bsb.cloud.barsws.api.utils.wrappers.BSBWebSocketFactory
 import net.flipper.busylib.core.wrapper.WrappedStateFlow
@@ -39,6 +40,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.uuid.Uuid
 
 /**
  * Comprehensive tests for CloudWebSocketBarsApiImpl covering:
@@ -63,7 +65,7 @@ class CloudWebSocketBarsApiImplTest {
             // Given
             val testSetup = createTestSetup(
                 isNetworkAvailable = true,
-                principal = BUSYLibUserPrincipal.Token("test-token")
+                principal = testToken()
             )
 
             // When - multiple subscribers
@@ -99,7 +101,7 @@ class CloudWebSocketBarsApiImplTest {
             // Given
             val testSetup = createTestSetup(
                 isNetworkAvailable = true,
-                principal = BUSYLibUserPrincipal.Token("test-token")
+                principal = testToken()
             )
 
             // When - first subscriber
@@ -134,7 +136,7 @@ class CloudWebSocketBarsApiImplTest {
             val factoryCallCount = MutableStateFlow(0)
             val testSetup = createTestSetup(
                 isNetworkAvailable = true,
-                principal = BUSYLibUserPrincipal.Token("test-token"),
+                principal = testToken(),
                 onWebSocketCreated = { factoryCallCount.update { it + 1 } }
             )
 
@@ -172,7 +174,7 @@ class CloudWebSocketBarsApiImplTest {
             val closedFlow = MutableStateFlow(false)
             val testSetup = createTestSetup(
                 isNetworkAvailable = true,
-                principal = BUSYLibUserPrincipal.Token("test-token"),
+                principal = testToken(),
                 onWebSocketClosed = { closedFlow.value = true }
             )
 
@@ -198,7 +200,7 @@ class CloudWebSocketBarsApiImplTest {
 
         val testSetup = createTestSetup(
             isNetworkAvailable = true,
-            principal = BUSYLibUserPrincipal.Token("test-token"),
+            principal = testToken(),
             onWebSocketClosed = { cleanupCalled.value = true },
             scopeOverride = cancellableScope
         )
@@ -222,7 +224,7 @@ class CloudWebSocketBarsApiImplTest {
             val testSetup = createTestSetup(
 
                 isNetworkAvailable = true,
-                principal = BUSYLibUserPrincipal.Token("test-token")
+                principal = testToken()
             )
 
             // When - rapid subscribe/unsubscribe
@@ -250,7 +252,7 @@ class CloudWebSocketBarsApiImplTest {
         val testSetup = createTestSetup(
 
             isNetworkAvailable = false,
-            principal = BUSYLibUserPrincipal.Token("test-token")
+            principal = testToken()
         )
 
         // When
@@ -317,7 +319,7 @@ class CloudWebSocketBarsApiImplTest {
             val networkFlow = MutableStateFlow(false)
             val testSetup = createTestSetup(
                 networkFlow = networkFlow,
-                principal = BUSYLibUserPrincipal.Token("test-token")
+                principal = testToken()
             )
 
             val receivedWebSockets = mutableListOf<BSBWebSocket?>()
@@ -363,7 +365,7 @@ class CloudWebSocketBarsApiImplTest {
         assertTrue(receivedWebSockets.all { it == null }, "No WebSocket initially")
 
         // When - user logs in
-        principalFlow.value = BUSYLibUserPrincipal.Token("new-token")
+        principalFlow.value = testToken("new-token")
         advanceUntilIdle()
 
         // Then - WebSocket should be emitted
@@ -378,7 +380,7 @@ class CloudWebSocketBarsApiImplTest {
         val testSetup = createTestSetup(
 
             networkFlow = networkFlow,
-            principal = BUSYLibUserPrincipal.Token("test-token")
+            principal = testToken()
         )
 
         val receivedWebSockets = mutableListOf<BSBWebSocket?>()
@@ -401,7 +403,7 @@ class CloudWebSocketBarsApiImplTest {
     fun GIVEN_user_logs_out_WHEN_websocket_active_THEN_websocket_flow_stops() = runTest {
         // Given
         val principalFlow =
-            MutableStateFlow<BUSYLibUserPrincipal>(BUSYLibUserPrincipal.Token("test-token"))
+            MutableStateFlow<BUSYLibUserPrincipal>(testToken())
         val testSetup = createTestSetup(
 
             isNetworkAvailable = true,
@@ -433,7 +435,7 @@ class CloudWebSocketBarsApiImplTest {
         val testSetup = createTestSetup(
 
             isNetworkAvailable = true,
-            principal = BUSYLibUserPrincipal.Token("test-token"),
+            principal = testToken(),
             hostFlow = hostFlow,
             onWebSocketCreatedForHost = { host ->
                 runBlocking {
@@ -468,7 +470,7 @@ class CloudWebSocketBarsApiImplTest {
         val testSetup = createTestSetup(
 
             isNetworkAvailable = true,
-            principal = BUSYLibUserPrincipal.Token("test-token"),
+            principal = testToken(),
             onWebSocketCreated = {
                 connectionAttempts.update { it + 1 }
                 error("Connection failed")
@@ -502,7 +504,7 @@ class CloudWebSocketBarsApiImplTest {
             val testSetup = createTestSetup(
 
                 isNetworkAvailable = true,
-                principal = BUSYLibUserPrincipal.Token("test-token"),
+                principal = testToken(),
                 onWebSocketCreated = { connectionAttempts.update { it + 1 } }
             )
 
@@ -524,7 +526,7 @@ class CloudWebSocketBarsApiImplTest {
             // Given
             val networkFlow = MutableStateFlow(true)
             val principalFlow =
-                MutableStateFlow<BUSYLibUserPrincipal>(BUSYLibUserPrincipal.Token("test-token"))
+                MutableStateFlow<BUSYLibUserPrincipal>(testToken())
 
             val testSetup = createTestSetup(
 
@@ -552,7 +554,7 @@ class CloudWebSocketBarsApiImplTest {
             advanceUntilIdle()
             principalFlow.value = BUSYLibUserPrincipal.Empty
             advanceUntilIdle()
-            principalFlow.value = BUSYLibUserPrincipal.Token("new-token")
+            principalFlow.value = testToken("new-token")
             advanceUntilIdle()
 
             // Then - both subscribers should have received consistent state
@@ -567,7 +569,7 @@ class CloudWebSocketBarsApiImplTest {
             val testSetup = createTestSetup(
 
                 isNetworkAvailable = true,
-                principal = BUSYLibUserPrincipal.Token("test-token")
+                principal = testToken()
             )
 
             // When - high concurrency subscribe/unsubscribe
@@ -600,7 +602,7 @@ class CloudWebSocketBarsApiImplTest {
             // Given
             val networkFlow = MutableStateFlow(true)
             val principalFlow =
-                MutableStateFlow<BUSYLibUserPrincipal>(BUSYLibUserPrincipal.Token("test-token"))
+                MutableStateFlow<BUSYLibUserPrincipal>(testToken())
             val hostFlow = MutableStateFlow("host.example.com")
 
             val testSetup = createTestSetup(
@@ -624,7 +626,7 @@ class CloudWebSocketBarsApiImplTest {
                 async {
                     repeat(10) {
                         val newPrincipal = if (it % 2 == 0) {
-                            BUSYLibUserPrincipal.Token("token-$it")
+                            testToken("token-$it")
                         } else {
                             BUSYLibUserPrincipal.Empty
                         }
@@ -658,7 +660,7 @@ class CloudWebSocketBarsApiImplTest {
         val testSetup = createTestSetup(
 
             isNetworkAvailable = true,
-            principal = BUSYLibUserPrincipal.Token("test-token"),
+            principal = testToken(),
             host = ""
         )
 
@@ -674,18 +676,11 @@ class CloudWebSocketBarsApiImplTest {
     }
 
     @Test
-    fun GIVEN_null_token_in_full_principal_WHEN_subscribing_THEN_uses_token_correctly() = runTest {
+    fun GIVEN_token_principal_WHEN_subscribing_THEN_uses_token_correctly() = runTest {
         // Given
-        val fullPrincipal = BUSYLibUserPrincipal.Full(
-            token = "full-token",
-            email = "test@example.com",
-            userId = null
-        )
-
         val testSetup = createTestSetup(
-
             isNetworkAvailable = true,
-            principal = fullPrincipal
+            principal = testToken("full-token")
         )
 
         // When
@@ -719,8 +714,9 @@ class CloudWebSocketBarsApiImplTest {
         runTest {
             // Given
             val connectionAttempts = MutableStateFlow(0)
+            val sameToken = testToken("same-token")
             val principalFlow =
-                MutableStateFlow<BUSYLibUserPrincipal>(BUSYLibUserPrincipal.Token("same-token"))
+                MutableStateFlow<BUSYLibUserPrincipal>(sameToken)
 
             val testSetup = createTestSetup(
 
@@ -734,14 +730,14 @@ class CloudWebSocketBarsApiImplTest {
 
             val initialAttempts = connectionAttempts.value
 
-            // When - set same token value multiple times
+            // When - set same token instance multiple times
             repeat(5) {
-                principalFlow.value = BUSYLibUserPrincipal.Token("same-token")
+                principalFlow.value = sameToken
                 advanceUntilIdle()
             }
 
-            // Then - no additional connections should be made for same state
-            // Note: MutableStateFlow does NOT emit for same value (data class equals)
+            // Then - no additional connections should be made for same instance
+            // Note: MutableStateFlow does NOT emit for same value (referential equality)
             assertEquals(
                 initialAttempts,
                 connectionAttempts.value,
@@ -820,6 +816,12 @@ class CloudWebSocketBarsApiImplTest {
     }
 
     // endregion
+
+    private fun testToken(token: String = "test-token"): BUSYLibUserPrincipal.Token =
+        BUSYLibUserPrincipalToken(
+            userId = Uuid.parse("00000000-0000-0000-0000-000000000001"),
+            tokenProvider = { token }
+        )
 
     // region Mock Implementations
 
