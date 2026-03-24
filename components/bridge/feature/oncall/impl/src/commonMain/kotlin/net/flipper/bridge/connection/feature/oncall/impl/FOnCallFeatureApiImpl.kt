@@ -38,7 +38,7 @@ class FOnCallFeatureApiImpl(
     private val singleJobScope = scope.asSingleJobScope()
 
     override fun start() {
-        singleJobScope.launch(SingleJobMode.CANCEL_PREVIOUS) {
+        singleJobScope.launch(SingleJobMode.SKIP_IF_RUNNING) {
             try {
                 while (currentCoroutineContext().isActive) {
                     rpcFeatureApi
@@ -88,7 +88,7 @@ class FOnCallFeatureApiImpl(
         private const val BUILTIN_ANIM = "shared/on_call_72x16"
         private const val ELEMENT_TIMEOUT = 30
         private const val ELEMENT_PRIORITY = 50
-        private val UPDATE_DELAY = 3.seconds
+        private val UPDATE_DELAY = 10.seconds
     }
 
     @Inject
