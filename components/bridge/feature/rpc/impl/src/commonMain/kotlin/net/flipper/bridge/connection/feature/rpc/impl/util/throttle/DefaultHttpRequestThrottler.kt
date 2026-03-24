@@ -37,8 +37,11 @@ internal class DefaultHttpRequestThrottler(
             if (refillPeriod > Duration.ZERO) {
                 // Throttle if all slots are blocked
                 if (remaining <= 0) {
-                    info { "Delaying request ${request.url} due to rate limit" }
-                    delay(reset - Clock.System.now())
+                    val delay = reset - Clock.System.now()
+                    if (delay > Duration.ZERO) {
+                        info { "Delaying request ${request.url} due to rate limit to $delay" }
+                    }
+                    delay(delay)
 
                     // Refill bucket if reset time has passed
                     reset = Clock.System.now() + refillPeriod
