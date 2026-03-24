@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.withTimeout
 import me.tatarka.inject.annotations.Assisted
@@ -46,8 +47,8 @@ class FLinkInfoOnReadyFeatureApiImpl(
     override suspend fun onReady() {
         busyLibPrincipalApi.getPrincipalFlow()
             .filter { it !is BUSYLibUserPrincipal.Loading }
-            .filter { it !is BUSYLibUserPrincipal.Token.Impl }
-            .onEach { _ -> tryCheckLinkedInfo() }
+            .map { it as? BUSYLibUserPrincipal.Token }
+            .onEach { principal -> tryCheckLinkedInfo(principal) }
             .launchIn(scope)
     }
 
@@ -73,13 +74,9 @@ class FLinkInfoOnReadyFeatureApiImpl(
         }
     }
 
-    private fun tryCheckLinkedInfo() {
+    private fun tryCheckLinkedInfo(principal: BUSYLibUserPrincipal.Token?) {
         singleJobScope.launch(SingleJobMode.CANCEL_PREVIOUS) {
-            val principal = busyLibPrincipalApi.getPrincipalFlow()
-                .filter { principal -> principal !is BUSYLibUserPrincipal.Loading }
-                .first() as? BUSYLibUserPrincipal.Full
-
-            info { "Local principal is ${principal?.userId}/${principal?.email}" }
+            info { "Local principal is ${principal?.userId}" }
 
             val info = exponentialRetry {
                 rpcFeatureApi.invalidateLinkedUser(principal?.userId)
@@ -101,7 +98,7 @@ class FLinkInfoOnReadyFeatureApiImpl(
     }
 
     private suspend fun authBusyBar(
-        principal: BUSYLibUserPrincipal.Full
+        principal: BUSYLibUserPrincipal.Token
     ): Result<Unit> = runCatching {
         val linkCode = rpcFeatureApi.getLinkCode().getOrThrow()
 
@@ -125,7 +122,14 @@ class FLinkInfoOnReadyFeatureApiImpl(
 
     override suspend fun deleteAccount(): CResult<SuccessResponse> {
         return rpcFeatureApi.deleteAccount()
-            .onSuccess { tryCheckLinkedInfo() }
+            .onSuccess {
+                tryCheckLinkedInfo(
+                    principal = busyLibPrincipalApi
+                        .getPrincipalFlow()
+                        .filter { it !is BUSYLibUserPrincipal.Loading }
+                        .first() as? BUSYLibUserPrincipal.Token
+                )
+            }
             .toCResult()
     }
 

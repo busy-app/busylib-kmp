@@ -29,6 +29,8 @@ import net.flipper.busylib.BUSYLibDesktop
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 import java.util.prefs.Preferences
 
+private const val AUTH_PREFS_NODE = "busylib_auth"
+
 @Suppress("LongMethod")
 suspend fun main() {
     val lifecycle = LifecycleRegistry()
@@ -40,9 +42,11 @@ suspend fun main() {
     val hostApi = BUSYLibHostApiStub(
         host = "cloud.dev.busy.app",
     )
+    val authSettings = PreferencesSettings(Preferences.userRoot().node(AUTH_PREFS_NODE))
+    val principalApi = UserPrincipalApiSampleImpl(applicationScope, hostApi, authSettings)
     val busyLib = BUSYLibDesktop.build(
         scope = applicationScope,
-        principalApi = UserPrincipalApiSampleImpl(applicationScope, hostApi),
+        principalApi = principalApi,
         observableSettings = settings,
         networkStateApi = BUSYLibNetworkStateApiNoop(defaultState = true),
         hostApi = hostApi
@@ -58,7 +62,8 @@ suspend fun main() {
             busyLib = busyLib,
             searchViewModelProvider = {
                 LanSearchViewModel(busyLib.persistedStorage, busyLib.connectionService)
-            }
+            },
+            principalApi = principalApi
         )
     }
 

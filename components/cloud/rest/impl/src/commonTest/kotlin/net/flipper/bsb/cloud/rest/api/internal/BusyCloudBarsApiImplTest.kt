@@ -10,7 +10,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
-import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
+import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipalToken
 import net.flipper.bsb.cloud.api.BUSYLibHostApiStub
 import net.flipper.bsb.cloud.rest.api.BusyCloudBarsApiImpl
 import kotlin.test.Test
@@ -22,7 +22,11 @@ class BusyCloudBarsApiImplTest {
     @Test
     fun GIVEN_unlinkBusyBar_WHEN_called_THEN_request_is_sent_to_expected_url() = runTest {
         val host = "test.flipperzero.one"
-        val principal = BUSYLibUserPrincipal.Token("test-token")
+        val testToken = "test-token"
+        val principal = BUSYLibUserPrincipalToken(
+            userId = Uuid.parse("00000000-0000-0000-0000-000000000001"),
+            tokenProvider = { testToken }
+        )
         val uuid = Uuid.parse("019588ec-6e11-7f56-b24a-bb74d2fb0d5f")
 
         var requestMethod: HttpMethod? = null
@@ -57,6 +61,6 @@ class BusyCloudBarsApiImplTest {
         assertTrue(result.isSuccess)
         assertEquals(HttpMethod.Delete, requestMethod)
         assertEquals("https://$host/api/v0/bars/$uuid", requestUrl)
-        assertEquals("Bearer ${principal.token}", authHeader)
+        assertEquals("Bearer $testToken", authHeader)
     }
 }
