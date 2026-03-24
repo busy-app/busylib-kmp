@@ -8,7 +8,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import net.flipper.core.busylib.log.LogTagProvider
-import net.flipper.core.busylib.log.verbose
+import net.flipper.core.busylib.log.info
 import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Instant
@@ -39,7 +39,7 @@ internal class DefaultHttpRequestThrottler(
             if (refillPeriod > Duration.ZERO) {
                 // Throttle if all slots are blocked
                 if (remaining <= 0) {
-                    verbose { "Delaying request ${request.url} due to rate limit" }
+                    info { "Delaying request ${request.url} due to rate limit" }
                     delay(reset - Clock.System.now())
 
                     // Refill bucket if reset time has passed
