@@ -61,7 +61,6 @@ class CloudProvisioningWatcherTest {
             assertNotNull(updated.cloud)
             assertEquals(cloudId, updated.cloud!!.deviceId)
             assertNotNull(updated.ble)
-
         }
 
     @Test
@@ -83,7 +82,6 @@ class CloudProvisioningWatcherTest {
         val updated = setup.storage.findDevice("device-1")
         assertNotNull(updated)
         assertEquals(device.connectionWays, updated.connectionWays)
-
     }
 
     @Test
@@ -108,7 +106,6 @@ class CloudProvisioningWatcherTest {
             val updated = setup.storage.findDevice("device-1")
             assertNotNull(updated)
             assertEquals(device.connectionWays, updated.connectionWays)
-
         }
 
     @Test
@@ -144,7 +141,6 @@ class CloudProvisioningWatcherTest {
 
             // Current device should be switched to new device
             assertEquals(newDevice, setup.storage.currentDevice)
-
         }
 
     @Test
@@ -178,7 +174,6 @@ class CloudProvisioningWatcherTest {
             assertEquals(existingDevice, setup.storage.currentDevice)
             // No new devices created
             assertEquals(2, setup.storage.devices.size)
-
         }
 
     @Test
@@ -204,7 +199,6 @@ class CloudProvisioningWatcherTest {
             assertNotNull(updated)
             assertNull(updated.cloud, "Cloud connection should be removed")
             assertNotNull(updated.ble, "BLE connection should remain")
-
         }
 
     @Test
@@ -226,7 +220,6 @@ class CloudProvisioningWatcherTest {
         val updated = setup.storage.findDevice("device-1")
         assertNotNull(updated)
         assertEquals(device.connectionWays, updated.connectionWays)
-
     }
 
     @Test
@@ -257,7 +250,6 @@ class CloudProvisioningWatcherTest {
         assertTrue(updated.connectionWays[0] is BUSYBar.ConnectionWay.Lan)
         assertTrue(updated.connectionWays[1] is BUSYBar.ConnectionWay.Cloud)
         assertTrue(updated.connectionWays[2] is BUSYBar.ConnectionWay.BLE)
-
     }
 
     // endregion
