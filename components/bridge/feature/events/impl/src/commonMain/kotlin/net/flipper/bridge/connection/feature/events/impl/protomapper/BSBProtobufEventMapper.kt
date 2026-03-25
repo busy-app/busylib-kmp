@@ -15,7 +15,7 @@ import net.flipper.bridge.connection.feature.events.impl.protomapper.delegates.U
 import net.flipper.bridge.connection.feature.events.impl.protomapper.delegates.WifiProtobufMapper
 import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
 
-class BSBProtobufEventMapper {
+object BSBProtobufEventMapper {
     fun map(state: StateUpdate): BusyLibUpdateEvent? {
         state.device_name?.let { return DeviceNameProtobufMapper.map(it) }
         state.power?.let { return PowerProtobufMapper.map(it) }

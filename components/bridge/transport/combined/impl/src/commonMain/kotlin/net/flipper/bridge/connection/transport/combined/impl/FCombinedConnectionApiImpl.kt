@@ -19,6 +19,7 @@ import net.flipper.bridge.connection.transport.combined.impl.connections.AutoRec
 import net.flipper.bridge.connection.transport.combined.impl.connections.ConnectionSnapshot
 import net.flipper.bridge.connection.transport.combined.impl.connections.SharedConnectionPool
 import net.flipper.bridge.connection.transport.combined.impl.metakey.CombinedMetaInfoApiImpl
+import net.flipper.bridge.connection.transport.combined.impl.streaming.FCombinedStreamingApiImpl
 import net.flipper.bridge.connection.transport.combined.impl.utils.UpdateConfigDelegate
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
@@ -27,6 +28,8 @@ import net.flipper.bridge.connection.transport.common.api.FTransportConnectionSt
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoData
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPTransportCapability
+import net.flipper.bridge.connection.transport.common.api.serial.FStatusStreamingApi
+import net.flipper.bridge.connection.transport.common.api.serial.StatusStreamingEvent
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.busylib.ktx.common.withLockResult
 import net.flipper.core.busylib.log.LogTagProvider
@@ -39,7 +42,7 @@ class FCombinedConnectionApiImpl(
     private val listener: FTransportConnectionStatusListener,
     private val connectionBuilder: FDeviceConfigToConnection,
     private val scope: CoroutineScope
-) : FCombinedConnectionApi, LogTagProvider {
+) : FCombinedConnectionApi, LogTagProvider, FStatusStreamingApi {
     override val TAG = "FCombinedConnectionApi"
 
     // Visible for testing
@@ -174,6 +177,12 @@ class FCombinedConnectionApiImpl(
         connections.value.forEach {
             runSuspendCatching { it.disconnect() }
         }
+    }
+
+    private val streamingApi = FCombinedStreamingApiImpl(connectionPool)
+
+    override fun getEvents(): Flow<StatusStreamingEvent> {
+        return streamingApi.getEvents()
     }
 }
 
