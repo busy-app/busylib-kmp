@@ -46,6 +46,8 @@ include(
     ":components:core:ktor",
     ":components:core:timezone",
 
+    ":components:bridge:bsbprotobuf",
+
     ":components:bridge:config:api",
     ":components:bridge:config:impl",
     ":components:bridge:config:internal",
