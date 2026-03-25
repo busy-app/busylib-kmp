@@ -1,0 +1,13 @@
+plugins {
+    id("flipper.multiplatform")
+    alias(libs.plugins.wire)
+}
+
+wire {
+    sourcePath {
+        srcDir("$projectDir/src/commonMain/proto")
+    }
+    kotlin {
+        enumMode = "sealed_class"
+    }
+}
