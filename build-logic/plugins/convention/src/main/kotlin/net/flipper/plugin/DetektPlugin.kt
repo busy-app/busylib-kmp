@@ -49,8 +49,11 @@ class DetektPlugin : Plugin<Project> {
             exclude(
                 "**/resources/**",
                 "**/build/**",
-                "**/generated/ksp/**",
             )
+            // Exclude generated sources by absolute path so it works
+            // for compilation-based tasks (e.g. detektMainJvm) where
+            // detekt v2 sets source roots inside build/generated/
+            exclude { it.file.absolutePath.contains("/build/generated/") }
 
             parallel.set(true)
 
