@@ -19,6 +19,21 @@ class DetektPlugin : Plugin<Project> {
         }
         val detektYmlFileName = "detekt.yml"
 
+        val detektFile =
+            target.rootProject.layout.buildDirectory.file(detektYmlFileName).get().asFile
+        if (!detektFile.exists()) {
+            detektFile.parentFile.mkdirs()
+            val detektFileResource = Thread.currentThread()
+                .getContextClassLoader()
+                .getResource(detektYmlFileName)
+            val bytes = detektFileResource
+                ?.openConnection()
+                ?.getInputStream()
+                ?.use { it.readBytes() }
+                ?: byteArrayOf()
+            detektFile.writeBytes(bytes)
+        }
+
         target.tasks.withType<Detekt> {
             // Disable caching
             outputs.upToDateWhen { false }
@@ -27,22 +42,6 @@ class DetektPlugin : Plugin<Project> {
                 html.required.set(true)
                 checkstyle.required.set(false)
             }
-            val detektFileResource = Thread.currentThread()
-                .getContextClassLoader()
-                .getResource(detektYmlFileName)
-            val bytes = detektFileResource
-                ?.openConnection()
-                ?.getInputStream()
-                ?.readBytes()
-                ?: byteArrayOf()
-
-            val detektFile =
-                target.rootProject.layout.buildDirectory.file(detektYmlFileName).get().asFile
-            if (!detektFile.exists()) {
-                detektFile.parentFile.mkdirs()
-                detektFile.createNewFile()
-            }
-            detektFile.writeBytes(bytes)
             config.setFrom(detektFile)
             setSource(target.files(target.projectDir))
 
@@ -50,6 +49,7 @@ class DetektPlugin : Plugin<Project> {
             exclude(
                 "**/resources/**",
                 "**/build/**",
+                "**/generated/ksp/**",
             )
 
             parallel.set(true)

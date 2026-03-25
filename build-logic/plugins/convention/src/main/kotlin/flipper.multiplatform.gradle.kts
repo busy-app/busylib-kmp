@@ -5,6 +5,8 @@ plugins {
     id("flipper.publish")
 }
 
+pluginManager.apply(net.flipper.plugin.DetektPlugin::class)
+
 pluginManager.apply(ru.astrainteractive.gradleplugin.plugin.AndroidSdkPlugin::class)
 pluginManager.apply(ru.astrainteractive.gradleplugin.plugin.AndroidJavaPlugin::class)
 pluginManager.apply(ru.astrainteractive.gradleplugin.plugin.AndroidNamespacePlugin::class)
