@@ -1,0 +1,34 @@
+package net.flipper.bridge.connection.feature.events.impl.protomapper
+
+import BSB_State.StateUpdate
+import net.flipper.bridge.connection.feature.events.impl.protomapper.delegates.AudioVolumeProtobufMapper
+import net.flipper.bridge.connection.feature.events.impl.protomapper.delegates.BrightnessProtobufMapper
+import net.flipper.bridge.connection.feature.events.impl.protomapper.delegates.DeviceNameProtobufMapper
+import net.flipper.bridge.connection.feature.events.impl.protomapper.delegates.FrameProtobufMapper
+import net.flipper.bridge.connection.feature.events.impl.protomapper.delegates.InputProtobufMapper
+import net.flipper.bridge.connection.feature.events.impl.protomapper.delegates.MatterProtobufMapper
+import net.flipper.bridge.connection.feature.events.impl.protomapper.delegates.PowerProtobufMapper
+import net.flipper.bridge.connection.feature.events.impl.protomapper.delegates.TimerProtobufMapper
+import net.flipper.bridge.connection.feature.events.impl.protomapper.delegates.TimezoneProtobufMapper
+import net.flipper.bridge.connection.feature.events.impl.protomapper.delegates.UpdateCheckProtobufMapper
+import net.flipper.bridge.connection.feature.events.impl.protomapper.delegates.UpdateStateProtobufMapper
+import net.flipper.bridge.connection.feature.events.impl.protomapper.delegates.WifiProtobufMapper
+import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
+
+class BSBProtobufEventMapper {
+    fun map(state: StateUpdate): BusyLibUpdateEvent? {
+        state.device_name?.let { return DeviceNameProtobufMapper.map(it) }
+        state.power?.let { return PowerProtobufMapper.map(it) }
+        state.brightness?.let { return BrightnessProtobufMapper.map(it) }
+        state.audio_volume?.let { return AudioVolumeProtobufMapper.map(it) }
+        state.wifi?.let { return WifiProtobufMapper.map(it) }
+        state.update_state?.let { return UpdateStateProtobufMapper.map(it) }
+        state.update_check?.let { return UpdateCheckProtobufMapper.map(it) }
+        state.timezone?.let { return TimezoneProtobufMapper.map(it) }
+        state.matter?.let { return MatterProtobufMapper.map(it) }
+        state.frame?.let { return FrameProtobufMapper.map(it) }
+        state.input?.let { return InputProtobufMapper.map(it) }
+        state.timer?.let { return TimerProtobufMapper.map(it) }
+        return null
+    }
+}
