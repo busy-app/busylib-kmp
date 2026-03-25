@@ -1,0 +1,3 @@
+[submodule "components/bridge/bsbprotobuf/src/commonMain/proto"]
+	path = components/bridge/bsbprotobuf/src/commonMain/proto
+	url = git@github.com:flipperdevices/bsb-protobuf.git

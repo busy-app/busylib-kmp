@@ -36,7 +36,14 @@ val deviceInfo = busyLib
     .getDeviceInfo()
 ```
 
-## Creating local build
+## Developing
+
+### How to clone
+
+- For clone: `git clone --recurse-submodules git@github.com:busy-app/busylib-kmp.git`
+- For update submodules: `git submodule update --init --recursive`
+
+### Creating local build
 
 Create `local.properties` and execute gradle commands
 
