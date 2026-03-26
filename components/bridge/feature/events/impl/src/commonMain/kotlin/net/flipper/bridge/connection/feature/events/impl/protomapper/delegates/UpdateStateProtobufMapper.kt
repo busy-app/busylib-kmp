@@ -26,6 +26,7 @@ object UpdateStateProtobufMapper {
         }
     }
 
+    @Suppress("CyclomaticComplexMethod")
     private fun mapStatus(status: UpdateStatus): BusyLibUpdateEvent.UpdateState.Status {
         return when (status) {
             UpdateStatus.OK -> BusyLibUpdateEvent.UpdateState.Status.OK
@@ -34,13 +35,20 @@ object UpdateStateProtobufMapper {
             UpdateStatus.DOWNLOAD_FAILURE -> BusyLibUpdateEvent.UpdateState.Status.DOWNLOAD_FAILURE
             UpdateStatus.DOWNLOAD_ABORT -> BusyLibUpdateEvent.UpdateState.Status.DOWNLOAD_ABORT
             UpdateStatus.SHA_MISMATCH -> BusyLibUpdateEvent.UpdateState.Status.SHA_MISMATCH
-            UpdateStatus.UNPACK_CREATE_STAGING_DIRECTORY_FAILURE -> BusyLibUpdateEvent.UpdateState.Status.UNPACK_STAGING_DIR_FAILURE
-            UpdateStatus.UNPACK_ARCHIVE_OPEN_FAILURE -> BusyLibUpdateEvent.UpdateState.Status.UNPACK_ARCHIVE_OPEN_FAILURE
-            UpdateStatus.UNPACK_ARCHIVE_UNPACK_FAILURE -> BusyLibUpdateEvent.UpdateState.Status.UNPACK_ARCHIVE_UNPACK_FAILURE
-            UpdateStatus.INSTALLATION_PREPARE_MANIFEST_NOT_FOUND -> BusyLibUpdateEvent.UpdateState.Status.INSTALL_MANIFEST_NOT_FOUND
-            UpdateStatus.INSTALLATION_PREPARE_MANIFEST_INVALID -> BusyLibUpdateEvent.UpdateState.Status.INSTALL_MANIFEST_INVALID
-            UpdateStatus.INSTALLATION_PREPARE_SESSION_CONFIG_SETUP_FAILURE -> BusyLibUpdateEvent.UpdateState.Status.INSTALL_SESSION_CONFIG_FAILURE
-            UpdateStatus.INSTALLATION_PREPARE_POINTER_SETUP_FAILURE -> BusyLibUpdateEvent.UpdateState.Status.INSTALL_POINTER_SETUP_FAILURE
+            UpdateStatus.UNPACK_CREATE_STAGING_DIRECTORY_FAILURE ->
+                BusyLibUpdateEvent.UpdateState.Status.UNPACK_STAGING_DIR_FAILURE
+            UpdateStatus.UNPACK_ARCHIVE_OPEN_FAILURE ->
+                BusyLibUpdateEvent.UpdateState.Status.UNPACK_ARCHIVE_OPEN_FAILURE
+            UpdateStatus.UNPACK_ARCHIVE_UNPACK_FAILURE ->
+                BusyLibUpdateEvent.UpdateState.Status.UNPACK_ARCHIVE_UNPACK_FAILURE
+            UpdateStatus.INSTALLATION_PREPARE_MANIFEST_NOT_FOUND ->
+                BusyLibUpdateEvent.UpdateState.Status.INSTALL_MANIFEST_NOT_FOUND
+            UpdateStatus.INSTALLATION_PREPARE_MANIFEST_INVALID ->
+                BusyLibUpdateEvent.UpdateState.Status.INSTALL_MANIFEST_INVALID
+            UpdateStatus.INSTALLATION_PREPARE_SESSION_CONFIG_SETUP_FAILURE ->
+                BusyLibUpdateEvent.UpdateState.Status.INSTALL_SESSION_CONFIG_FAILURE
+            UpdateStatus.INSTALLATION_PREPARE_POINTER_SETUP_FAILURE ->
+                BusyLibUpdateEvent.UpdateState.Status.INSTALL_POINTER_SETUP_FAILURE
             UpdateStatus.UNKNOWN_FAILURE -> BusyLibUpdateEvent.UpdateState.Status.UNKNOWN_FAILURE
             is UpdateStatus.Unrecognized -> BusyLibUpdateEvent.UpdateState.Status.UNKNOWN_FAILURE
         }
