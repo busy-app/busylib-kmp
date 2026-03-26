@@ -822,6 +822,12 @@ DecomposeRule:
     replaceTo: 'pushToFront()'
 
 FlipperRule:
+  ApiWrappedTypeRule:
+    active: true
+    ignoredPaths:
+      - 'components/bridge/feature/rpc/api'
+      - 'components/bridge/feature/events/api'
+      - 'components/bridge/feature/provider/api'
   ForbiddenApiModuleDependencyRule:
     active: true
     ignoredPaths:
