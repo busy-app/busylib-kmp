@@ -7,4 +7,4 @@ const val MAX_ATTRIBUTE_SIZE = 237
 // Timeout for a single BLE write-with-response ACK (milliseconds)
 const val WRITE_ACK_TIMEOUT_MS = 10_000L
 
-const val FIRST_RESET_CHARACTERISTICS_VALUE = 1
+const val RESET_CHARACTERISTICS_REPLAY_VALUE = 1
