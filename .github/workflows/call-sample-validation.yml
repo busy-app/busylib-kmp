@@ -3,7 +3,35 @@ on:
   workflow_call:
 
 jobs:
-  sample_cmp_build:
+  sample_cmp_build_jvm:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: "JVM"
+            task: ":sample:cmp:jvmJar"
+          - name: "Android"
+            task: ":sample:android:assembleDebug"
+    name: "Build jvm sample:cmp (${{ matrix.name }})"
+    runs-on: [ self-hosted, Linux ]
+    env:
+      ORG_GRADLE_PROJECT_current_flavor_type: DEBUG
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up JDK 1.17
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Give gradle permission
+        run: chmod +x gradlew
+      - name: Build sample:cmp target
+        uses: gradle/gradle-build-action@v3
+        with:
+          arguments: ${{ matrix.task }} --stacktrace
+  sample_cmp_build_apple:
     strategy:
       fail-fast: false
       matrix:
@@ -12,11 +40,7 @@ jobs:
             task: ":sample:cmp:linkDebugFrameworkIosFat"
           - name: "macOS"
             task: ":sample:cmp:linkDebugFrameworkOsxFat"
-          - name: "JVM"
-            task: ":sample:cmp:jvmJar"
-          - name: "Android"
-            task: ":sample:android:assembleDebug"
-    name: "Build sample:cmp (${{ matrix.name }})"
+    name: "Build apple sample:cmp (${{ matrix.name }})"
     runs-on: [ self-hosted, macOS ]
     env:
       ORG_GRADLE_PROJECT_current_flavor_type: DEBUG
