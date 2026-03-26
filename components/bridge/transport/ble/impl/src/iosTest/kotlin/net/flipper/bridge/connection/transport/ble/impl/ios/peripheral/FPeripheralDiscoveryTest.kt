@@ -2,6 +2,7 @@ package net.flipper.bridge.connection.transport.ble.impl.ios.peripheral
 
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import net.flipper.bridge.connection.transport.ble.impl.ios.testfixtures.BATTERY_LEVEL_SHORT_UUID
@@ -130,7 +131,8 @@ class FPeripheralDiscoveryTest {
                 newCharacteristic(DEVICE_NAME_SHORT_UUID, payload = "connected".encodeToByteArray()),
                 error = null,
             )
-            sut.sut.writeValue(byteArrayOf(9, 9, 9))
+            backgroundScope.launch { sut.sut.writeValue(byteArrayOf(9, 9, 9)) }
+            runCurrent()
             assertTrue(sut.peripheral.writeRequests.isEmpty())
         }
 }
