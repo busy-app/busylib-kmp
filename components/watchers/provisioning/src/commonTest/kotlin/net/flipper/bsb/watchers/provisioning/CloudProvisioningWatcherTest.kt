@@ -1,10 +1,14 @@
 package net.flipper.bsb.watchers.provisioning
 
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.job
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -275,9 +279,13 @@ class CloudProvisioningWatcherTest {
             FFeatureStatus.Supported(rpcApi)
         )
 
+        val scope = CoroutineScope(
+            SupervisorJob(backgroundScope.coroutineContext.job) + StandardTestDispatcher(testScheduler)
+        )
+
         val orchestratorState = MutableStateFlow<FDeviceConnectStatus>(
             FDeviceConnectStatus.Connected(
-                scope = backgroundScope,
+                scope = scope,
                 device = connectedDevice,
                 deviceApi = FakeConnectedDeviceApi(),
                 transportType = null
@@ -285,7 +293,7 @@ class CloudProvisioningWatcherTest {
         )
 
         val watcher = CloudProvisioningWatcher(
-            scope = backgroundScope,
+            scope = scope,
             featureProvider = FakeFeatureProvider(featureFlow),
             orchestrator = FakeOrchestrator(orchestratorState),
             persistedStorage = storage
