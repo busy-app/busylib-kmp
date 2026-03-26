@@ -16,6 +16,7 @@ class FCombinedStreamingApiImpl(
     connectionPool: SharedConnectionPool
 ) : FStatusStreamingApi, LogTagProvider {
     override val TAG = "FCombinedStreamingApi"
+
     @OptIn(ExperimentalCoroutinesApi::class)
     private val delegates = connectionPool.get().map { list ->
         list.mapNotNull { it.status as? FInternalTransportConnectionStatus.Connected }

@@ -5,5 +5,8 @@ import net.flipper.bridge.connection.transport.common.api.meta.FTransportMetaInf
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPDeviceApi
 import net.flipper.bridge.connection.transport.common.api.serial.FStatusStreamingApi
 
-interface FCombinedConnectionApi : FConnectedDeviceApi, FHTTPDeviceApi, FTransportMetaInfoApi,
+interface FCombinedConnectionApi :
+    FConnectedDeviceApi,
+    FHTTPDeviceApi,
+    FTransportMetaInfoApi,
     FStatusStreamingApi
