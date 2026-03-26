@@ -2,27 +2,16 @@ package net.flipper.detekt.rules
 
 import dev.detekt.api.Config
 import dev.detekt.test.TestConfig
-import dev.detekt.test.lint
-import dev.detekt.test.utils.compileForTest
-import java.nio.file.Files
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class ForbiddenApiModuleDependencyRuleTest {
 
-    private fun lintWithPath(code: String, relativePath: String, config: Config = Config.empty): Int {
-        val rule = ForbiddenApiModuleDependencyRule(config)
-        val tempDir = Files.createTempDirectory("detekt-test")
-        try {
-            val file = tempDir.resolve(relativePath)
-            Files.createDirectories(file.parent)
-            Files.writeString(file, code)
-            val ktFile = compileForTest(file)
-            return rule.lint(ktFile).size
-        } finally {
-            tempDir.toFile().deleteRecursively()
-        }
-    }
+    private fun lintWithPath(
+        code: String,
+        relativePath: String,
+        config: Config = Config.empty
+    ): Int = ForbiddenApiModuleDependencyRule(config).lintWithPath(code, relativePath)
 
     @Test
     fun `reports forbidden dependency in api module`() {
