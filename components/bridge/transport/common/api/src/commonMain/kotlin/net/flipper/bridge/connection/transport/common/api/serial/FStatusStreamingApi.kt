@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.Flow
 sealed interface StatusStreamingEvent {
     class Protobuf(
         val data: ByteArray
-    ): StatusStreamingEvent
+    ) : StatusStreamingEvent
 }
 
 interface FStatusStreamingApi {
