@@ -36,6 +36,7 @@ dependencyResolutionManagement {
 }
 
 include(
+    ":detekt-rules",
     ":components:core:di",
     ":components:core:buildkonfig",
     ":components:core:log",

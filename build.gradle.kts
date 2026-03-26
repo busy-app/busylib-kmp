@@ -23,3 +23,7 @@ plugins {
 
     id("net.flipper.busylib.detekt")
 }
+
+dependencies {
+    "detektPlugins"(project(":detekt-rules"))
+}
