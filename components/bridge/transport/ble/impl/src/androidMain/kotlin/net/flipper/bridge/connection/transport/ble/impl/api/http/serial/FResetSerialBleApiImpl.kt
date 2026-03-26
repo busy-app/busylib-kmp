@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.isActive
+import net.flipper.bridge.connection.transport.ble.api.FIRST_RESET_CHARACTERISTICS_VALUE
 import net.flipper.bridge.connection.transport.ble.impl.BleConstants.POLLING_RESET_INTERVAL
 import net.flipper.bridge.connection.transport.ble.impl.serial.FResetSerialBleApi
 import net.flipper.bridge.connection.transport.ble.impl.toRequestCounter
@@ -44,7 +45,7 @@ class FResetSerialBleApiImpl(
                 }
             }
         }
-        .shareIn(scope, SharingStarted.Eagerly, 0)
+        .shareIn(scope, SharingStarted.Eagerly, FIRST_RESET_CHARACTERISTICS_VALUE)
 
     override fun getRequestCounterFlow(): Flow<Int> {
         return requestCounterFlow
