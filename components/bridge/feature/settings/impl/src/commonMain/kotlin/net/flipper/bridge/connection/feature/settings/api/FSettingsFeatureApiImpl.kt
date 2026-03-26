@@ -4,6 +4,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import me.tatarka.inject.annotations.Inject
 import me.tatarka.inject.annotations.IntoMap
@@ -12,6 +14,7 @@ import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
+import net.flipper.bridge.connection.feature.events.api.get
 import net.flipper.bridge.connection.feature.events.api.getUpdateFlow
 import net.flipper.bridge.connection.feature.events.model.BsbUpdateEvent
 import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
@@ -112,37 +115,21 @@ class FSettingsFeatureApiImpl(
         return brightnessInfoFlow
     }
 
-    private val volumeFlow: WrappedFlow<AudioVolumeInfo> = fEventsFeatureApi
-        ?.getUpdateFlow(BsbUpdateEvent.AUDIO_VOLUME)
-        .orEmpty()
-        .merge(flowOf(ConsumableUpdateEvent.Empty))
-        .transformWhileSubscribed(scope = scope) { flow ->
-            flow.throttleLatest { consumable ->
-                when (consumable) {
-                    is ConsumableUpdateEvent.Bsb,
-                    ConsumableUpdateEvent.Empty -> {
-                        val couldConsume = consumable.tryConsume()
-                        exponentialRetry {
-                            info { "#getVolumeFlow getting volume flow" }
-                            rpcFeatureApi.fRpcSettingsApi
-                                .getAudioVolume(couldConsume)
-                                .onFailure { error(it) { "Failed to get Settings status" } }
-                        }
-                    }
-
-                    is ConsumableUpdateEvent.BusyLib<*> -> {
-                        consumable.busyLibUpdateEvent
-                            .tryCast<BusyLibUpdateEvent.Volume>()
-                            ?.audioVolumeInfo
-                    }
-                }
-            }.filterNotNull()
-        }
-        .asFlow()
-        .wrap()
+    private val volumeFlow = fEventsFeatureApi
+        .get(
+            scope = scope,
+            initial = { couldConsume ->
+                rpcFeatureApi.fRpcSettingsApi
+                    .getAudioVolume(couldConsume)
+                    .onFailure {
+                        error(it) { "Failed to get Settings status" }
+                    }.map { BusyLibUpdateEvent.Volume(it.volume) }
+            },
+            mapper = { flow -> flow.map { AudioVolumeInfo(it.volume) }.onEach { info { "Receive $it" } } }
+        )
 
     override fun getVolumeFlow(): WrappedFlow<AudioVolumeInfo> {
-        return volumeFlow
+        return volumeFlow.asFlow().wrap()
     }
 
     override suspend fun setVolume(volume: Fraction): CResult<Unit> {
@@ -151,7 +138,7 @@ class FSettingsFeatureApiImpl(
             .map { }
             .onSuccess {
                 val model = AudioVolumeInfo(volume)
-                val event = BusyLibUpdateEvent.Volume(model)
+                val event = BusyLibUpdateEvent.Volume(model.volume)
                 fEventsFeatureApi?.onBusyLibEvent(event)
             }
             .toCResult()
