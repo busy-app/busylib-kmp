@@ -1,6 +1,8 @@
 package net.flipper.bridge.connection.transport.ble.impl.ios.central
 
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -132,7 +134,7 @@ class FCentralManagerTest {
                 setStateRaw(5L)
             }
 
-            val sut = FCentralManager(manager = manager, scope = this)
+            val sut = FCentralManager(manager = manager, scope = CoroutineScope(coroutineContext + Job()))
             manager.emitStateUpdate()
             advanceUntilIdle()
 
@@ -214,7 +216,7 @@ class FCentralManagerTest {
 
     private fun TestScope.createSut(): Sut {
         val manager = RecordingCentralManager()
-        val sut = FCentralManager(manager = manager, scope = this)
+        val sut = FCentralManager(manager = manager, scope = CoroutineScope(coroutineContext + Job()))
         return Sut(manager = manager, sut = sut)
     }
 }

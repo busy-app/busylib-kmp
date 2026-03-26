@@ -94,6 +94,15 @@ internal class RecordingPeripheral : CBPeripheral() {
 
 @OptIn(ExperimentalForeignApi::class)
 internal class RecordingCentralManager : CBCentralManager(delegate = null, queue = null, options = null) {
+    // Store delegate locally to prevent real CBCentralManager from firing
+    // centralManagerDidUpdateState: when the delegate is assigned.
+    private var _localDelegate: platform.CoreBluetooth.CBCentralManagerDelegateProtocol? = null
+
+    override fun delegate(): platform.CoreBluetooth.CBCentralManagerDelegateProtocol? = _localDelegate
+    override fun setDelegate(delegate: platform.CoreBluetooth.CBCentralManagerDelegateProtocol?) {
+        _localDelegate = delegate
+    }
+
     private val peripherals: MutableMap<NSUUID, CBPeripheral> = mutableMapOf()
 
     val connectRequests: MutableList<CBPeripheral> = mutableListOf()
