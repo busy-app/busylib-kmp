@@ -5,6 +5,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import net.flipper.bridge.connection.transport.ble.impl.ios.testfixtures.RecordingPeripheral
@@ -17,6 +18,7 @@ import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -113,12 +115,12 @@ class FPeripheralLifecycleTest {
             assertEquals(FPeripheralState.DISCONNECTED, connected.sut.stateStream.value)
             assertEquals(emptyMap<TransportMetaInfoKey, ByteArray?>(), connected.sut.metaInfoKeysStream.value)
 
-            assertFailsWith<IllegalStateException> {
-                connected.sut.readValue(resetUuid)
-            }
-            assertFailsWith<IllegalStateException> {
-                connected.sut.writeValue(resetUuid, byteArrayOf(0, 0, 0, 0))
-            }
+            // After disconnect, new operations suspend in waitConnected()
+            val readJob = backgroundScope.launch { connected.sut.readValue(resetUuid) }
+            val writeJob = backgroundScope.launch { connected.sut.writeValue(resetUuid, byteArrayOf(0, 0, 0, 0)) }
+            runCurrent()
+            assertFalse(readJob.isCompleted)
+            assertFalse(writeJob.isCompleted)
         }
 
     @Test
