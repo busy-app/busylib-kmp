@@ -11,7 +11,6 @@ enum class BsbUpdateEvent(
     DEVICE_NAME(bitIndex = 0, webSocketKey = "name"),
     BRIGHTNESS(webSocketKey = "front_brightness"),
     BLE_STATUS,
-    AUDIO_VOLUME(webSocketKey = "volume"),
     WIFI_STATUS,
     UPDATER_UPDATE_STATUS(webSocketKey = "update_available_version"),
     SMART_HOME_STATUS_CHANGED,
