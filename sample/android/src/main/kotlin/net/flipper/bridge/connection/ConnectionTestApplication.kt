@@ -17,12 +17,13 @@ class ConnectionTestApplication : Application() {
         val hostApi = BUSYLibHostApiStub(
             host = "cloud.dev.busy.app",
         )
+        val settings = SharedPreferencesSettings(
+            baseContext.getSharedPreferences("settings", MODE_PRIVATE)
+        )
         BUSYLibAndroid.build(
             scope = scope,
-            principalApi = UserPrincipalApiSampleImpl(scope, hostApi),
-            settings = SharedPreferencesSettings(
-                baseContext.getSharedPreferences("settings", MODE_PRIVATE)
-            ),
+            principalApi = UserPrincipalApiSampleImpl(scope, hostApi, settings),
+            settings = settings,
             context = this,
             networkStateApi = BUSYLibNetworkStateApiImpl(this, scope),
             hostApi = hostApi
