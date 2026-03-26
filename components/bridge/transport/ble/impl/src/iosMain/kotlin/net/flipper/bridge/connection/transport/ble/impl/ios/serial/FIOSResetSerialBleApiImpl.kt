@@ -3,12 +3,12 @@ package net.flipper.bridge.connection.transport.ble.impl.ios.serial
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.isActive
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.ble.impl.BleConstants.POLLING_RESET_INTERVAL
@@ -29,18 +29,16 @@ class FIOSResetSerialBleApiImpl(
 
     private val requestCounterStateFlow = flow {
         while (currentCoroutineContext().isActive) {
-            val counter = (
-                fPeripheralApi
-                    .readValue(config.serialConfig.resetCharUuid)
-                )
+            val counter = fPeripheralApi
+                .readValue(config.serialConfig.resetCharUuid)
                 .toRequestCounter()
             debug { "Receive request counter $counter" }
             emit(counter)
             delay(POLLING_RESET_INTERVAL)
         }
-    }.stateIn(scope, SharingStarted.Eagerly, 0)
+    }.shareIn(scope, SharingStarted.Eagerly, 0)
 
-    override fun getRequestCounterStateFlow(): StateFlow<Int> {
+    override fun getRequestCounterStateFlow(): Flow<Int> {
         return requestCounterStateFlow
     }
 

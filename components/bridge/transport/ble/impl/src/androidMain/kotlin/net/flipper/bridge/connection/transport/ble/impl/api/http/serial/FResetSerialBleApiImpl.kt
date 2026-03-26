@@ -5,14 +5,12 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.shareIn
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.isActive
 import net.flipper.bridge.connection.transport.ble.impl.BleConstants.POLLING_RESET_INTERVAL
 import net.flipper.bridge.connection.transport.ble.impl.serial.FResetSerialBleApi
@@ -46,9 +44,9 @@ class FResetSerialBleApiImpl(
                 }
             }
         }
-        .stateIn(scope, SharingStarted.Eagerly, 0)
+        .shareIn(scope, SharingStarted.Eagerly, 0)
 
-    override fun getRequestCounterStateFlow(): StateFlow<Int> {
+    override fun getRequestCounterStateFlow(): Flow<Int> {
         return requestCounterStateFlow
     }
 

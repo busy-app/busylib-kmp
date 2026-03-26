@@ -1,8 +1,8 @@
 package net.flipper.bridge.connection.transport.ble.impl.serial
 
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.Flow
 
 interface FResetSerialBleApi {
-    fun getRequestCounterStateFlow(): StateFlow<Int>
+    fun getRequestCounterStateFlow(): Flow<Int>
     suspend fun reset()
 }

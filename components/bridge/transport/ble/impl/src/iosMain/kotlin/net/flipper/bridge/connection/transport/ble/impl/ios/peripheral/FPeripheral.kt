@@ -19,7 +19,10 @@ import net.flipper.busylib.core.wrapper.WrappedStateFlow
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.debug
+import platform.CoreBluetooth.CBATTErrorInsufficientEncryption
 import platform.CoreBluetooth.CBCharacteristic
+import platform.CoreBluetooth.CBErrorEncryptionTimedOut
+import platform.CoreBluetooth.CBErrorPeerRemovedPairingInformation
 import platform.CoreBluetooth.CBPeripheral
 import platform.CoreBluetooth.CBService
 import platform.Foundation.NSError
@@ -155,10 +158,9 @@ class FPeripheral(
 
         scope.launch {
             when (code) {
-                // CBErrorPeerRemovedPairingInformation
-                7L -> _stateStream.emit(FPeripheralState.INVALID_PAIRING)
-                // CBErrorEncryptionTimedOut
-                17L -> {
+                CBErrorPeerRemovedPairingInformation ->
+                    _stateStream.emit(FPeripheralState.INVALID_PAIRING)
+                CBErrorEncryptionTimedOut -> {
                     _stateStream.emit(FPeripheralState.DISCONNECTED)
                 }
             }
@@ -170,8 +172,8 @@ class FPeripheral(
         debug { "Peripheral CBATTError id=${identifier.UUIDString} code=$code" }
         scope.launch {
             when (code) {
-                // CBATTErrorInsufficientEncryption
-                15L -> _stateStream.emit(FPeripheralState.PAIRING_FAILED)
+                CBATTErrorInsufficientEncryption ->
+                    _stateStream.emit(FPeripheralState.PAIRING_FAILED)
             }
         }
     }
