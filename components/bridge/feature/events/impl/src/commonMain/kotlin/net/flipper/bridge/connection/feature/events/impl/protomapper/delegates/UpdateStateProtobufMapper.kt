@@ -7,7 +7,6 @@ import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
 
 object UpdateStateProtobufMapper {
     fun map(updateState: UpdateState): BusyLibUpdateEvent.UpdateState {
-        updateState.status
         return BusyLibUpdateEvent.UpdateState(
             action = mapAction(updateState.action),
             status = mapStatus(updateState.status),
