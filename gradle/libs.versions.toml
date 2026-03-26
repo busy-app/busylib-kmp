@@ -119,6 +119,8 @@ klibs-gradle-android = { module = "ru.astrainteractive.gradleplugin:android", ve
 klibs-gradle-convention = { module = "ru.astrainteractive.gradleplugin:convention", version.ref = "klibs-gradleplugin" }
 
 detekt-gradle = { module = "dev.detekt:detekt-gradle-plugin", version.ref = "detekt" }
+detekt-api = { module = "dev.detekt:detekt-api", version.ref = "detekt" }
+detekt-test = { module = "dev.detekt:detekt-test", version.ref = "detekt" }
 detekt-ruleset-ktlint = { module = "dev.detekt:detekt-rules-ktlint-wrapper", version.ref = "detekt" }
 detekt-ruleset-compose = { module = "io.nlopez.compose.rules:detekt", version.ref = "detekt-ruleset-compose" }
 detekt-ruleset-decompose = { module = "uk.kulikov.detekt.decompose:decompose-detekt-rules", version.ref = "detekt-ruleset-decompose" }

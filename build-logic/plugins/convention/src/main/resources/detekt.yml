@@ -820,3 +820,18 @@ DecomposeRule:
     active: true
     checkImport: true
     replaceTo: 'pushToFront()'
+
+FlipperRule:
+  ForbiddenApiModuleDependencyRule:
+    active: true
+    ignoredPaths:
+      - 'components/bridge/device/firmware-update/api'
+      - 'components/bridge/feature/ble/api'
+      - 'components/bridge/feature/events/api'
+      - 'components/bridge/feature/firmware-update/api'
+      - 'components/bridge/feature/info/api'
+      - 'components/bridge/feature/link/api'
+      - 'components/bridge/feature/screen-streaming/api'
+      - 'components/bridge/feature/settings/api'
+      - 'components/bridge/feature/smarthome/api'
+      - 'components/bridge/feature/wifi/api'
