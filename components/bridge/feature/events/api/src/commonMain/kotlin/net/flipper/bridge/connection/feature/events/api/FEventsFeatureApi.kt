@@ -36,29 +36,22 @@ fun FEventsFeatureApi.getBsbUpdateFlow(event: BsbUpdateEvent): Flow<ConsumableUp
         .filter { consumableUpdateEvent -> consumableUpdateEvent.bsbUpdateEvent == event }
 }
 
-@Deprecated("Use BusyLibUpdateEvent instead")
-inline fun <reified T : BusyLibUpdateEvent> FEventsFeatureApi.getBusyLibUpdateFlow():
-    Flow<ConsumableUpdateEvent.BusyLib<T>> {
-    return getBusyLibUpdateEvents()
-        .filterIsInstance<ConsumableUpdateEvent.BusyLib<T>>()
-}
-
 /**
  * Receive [BsbUpdateEvent] along with [BusyLibUpdateEvent] if it's supported for this event type
  */
 @Deprecated("Use BusyLibUpdateEvent instead")
 fun FEventsFeatureApi.getUpdateFlow(event: BsbUpdateEvent): Flow<ConsumableUpdateEvent> {
     return when (event) {
-        BsbUpdateEvent.BRIGHTNESS -> getBusyLibUpdateFlow<BusyLibUpdateEvent.Brightness>()
+        BsbUpdateEvent.BRIGHTNESS -> get<BusyLibUpdateEvent.Brightness>()
             .merge(getBsbUpdateFlow(event))
 
-        BsbUpdateEvent.AUDIO_VOLUME -> getBusyLibUpdateFlow<BusyLibUpdateEvent.Volume>()
+        BsbUpdateEvent.AUDIO_VOLUME -> get<BusyLibUpdateEvent.Volume>()
             .merge(getBsbUpdateFlow(event))
 
-        BsbUpdateEvent.DEVICE_NAME -> getBusyLibUpdateFlow<BusyLibUpdateEvent.DeviceName>()
+        BsbUpdateEvent.DEVICE_NAME -> get<BusyLibUpdateEvent.DeviceName>()
             .merge(getBsbUpdateFlow(event))
 
-        BsbUpdateEvent.AUTO_UPDATE_CHANGED -> getBusyLibUpdateFlow<BusyLibUpdateEvent.AutoUpdateChanged>()
+        BsbUpdateEvent.AUTO_UPDATE_CHANGED -> get<BusyLibUpdateEvent.AutoUpdateChanged>()
             .merge(getBsbUpdateFlow(event))
 
         else -> getBsbUpdateFlow(event)
@@ -70,13 +63,12 @@ inline fun <reified T : BusyLibUpdateEvent> FEventsFeatureApi.get(): Flow<Consum
         .filterIsInstance<ConsumableUpdateEvent.BusyLib<T>>()
 }
 
-fun <T : BusyLibUpdateEvent, R> FEventsFeatureApi?.get(
+inline fun <reified T : BusyLibUpdateEvent, R> FEventsFeatureApi?.get(
     scope: CoroutineScope,
-    initial: suspend (couldConsume: Boolean) -> Result<T>,
-    mapper: (Flow<T>) -> Flow<R>
+    crossinline initial: suspend (couldConsume: Boolean) -> Result<T>,
+    crossinline mapper: (Flow<T>) -> Flow<R>
 ): SharedFlow<R> {
-    return this?.getBusyLibUpdateEvents()
-        ?.filterIsInstance<ConsumableUpdateEvent.BusyLib<T>>()
+    return this?.get<T>()
         .orEmpty()
         .merge(flowOf(ConsumableUpdateEvent.Empty))
         .transformWhileSubscribed(scope = scope) { flow ->
@@ -101,9 +93,9 @@ fun <T : BusyLibUpdateEvent, R> FEventsFeatureApi?.get(
         }
 }
 
-fun <T : BusyLibUpdateEvent> FEventsFeatureApi?.get(
+inline fun <reified T : BusyLibUpdateEvent> FEventsFeatureApi?.get(
     scope: CoroutineScope,
-    initial: suspend (couldConsume: Boolean) -> Result<T>
+    crossinline initial: suspend (couldConsume: Boolean) -> Result<T>
 ): SharedFlow<T> {
     return get(scope, initial, { it })
 }
