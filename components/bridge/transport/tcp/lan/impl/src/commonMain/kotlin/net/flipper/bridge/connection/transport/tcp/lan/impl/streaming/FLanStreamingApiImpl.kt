@@ -47,7 +47,7 @@ class FLanStreamingApiImpl(
                         FHTTPTransportCapability.BB_WEBSOCKET_SUPPORTED.ordinal.toString()
                 }
                 info { "Init websocket $session" }
-                session.send(Frame.Text("{\"enabled\": true}"))
+                session.send(Frame.Text("{\"enable\":true}"))
                 retryCount = 0
                 for (frame in session.incoming) {
                     verbose { "Received frame $frame" }
