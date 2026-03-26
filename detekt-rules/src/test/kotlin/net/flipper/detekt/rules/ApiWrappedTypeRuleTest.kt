@@ -147,6 +147,14 @@ class ApiWrappedTypeRuleTest {
     }
 
     @Test
+    fun `reports only forbidden type for suspend function returning raw Flow`() {
+        val code = """
+            suspend fun getUpdates(): Flow<String> = TODO()
+        """.trimIndent()
+        assertEquals(1, lintInApiModule(code))
+    }
+
+    @Test
     fun `does not report suspend function returning CResult`() {
         val code = """
             suspend fun doSomething(): CResult<String> = TODO()
