@@ -58,7 +58,7 @@ class ByteEndlessReadChannel(
                 buffer.write(data)
                 verbose {
                     "Read ${data.size} bytes with min request $min, " +
-                    "so current buffer size is ${buffer.remaining}"
+                        "so current buffer size is ${buffer.remaining}"
                 }
             }
         }
