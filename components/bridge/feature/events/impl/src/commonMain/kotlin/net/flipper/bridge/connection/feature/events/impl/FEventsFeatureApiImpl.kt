@@ -97,7 +97,7 @@ class FEventsFeatureApiImpl(
         data: StatusStreamingEvent.Protobuf
     ) = runSuspendCatching {
         val state = State.ADAPTER.decode(data.data)
-        verbose { "Process ${state.updates.size} updates" }
+        verbose { "Process ${state.updates.size} updates: $state" }
         val updates = state.updates.mapNotNull { update ->
             BSBProtobufEventMapper.map(update)
         }
