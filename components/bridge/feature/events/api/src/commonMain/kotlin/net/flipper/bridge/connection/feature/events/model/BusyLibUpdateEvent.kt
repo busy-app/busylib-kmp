@@ -1,6 +1,5 @@
 package net.flipper.bridge.connection.feature.events.model
 
-import net.flipper.bridge.connection.feature.rpc.api.model.AudioVolumeInfo
 import net.flipper.bridge.connection.feature.rpc.api.model.BsbBrightnessInfo
 import net.flipper.bridge.connection.feature.rpc.api.model.Fraction
 
@@ -10,7 +9,7 @@ import net.flipper.bridge.connection.feature.rpc.api.model.Fraction
 sealed interface BusyLibUpdateEvent : UpdateEvent {
     data class Brightness(val bsbBrightnessInfo: BsbBrightnessInfo) : BusyLibUpdateEvent
 
-    data class Volume(val audioVolumeInfo: AudioVolumeInfo) : BusyLibUpdateEvent
+    data class Volume(val volume: Fraction) : BusyLibUpdateEvent
     data class DeviceName(val deviceName: String) : BusyLibUpdateEvent
     data class AutoUpdateChanged(val isEnabled: Boolean) : BusyLibUpdateEvent
 

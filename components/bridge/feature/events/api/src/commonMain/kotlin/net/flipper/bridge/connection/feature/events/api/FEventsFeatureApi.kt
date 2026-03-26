@@ -45,9 +45,6 @@ fun FEventsFeatureApi.getUpdateFlow(event: BsbUpdateEvent): Flow<ConsumableUpdat
         BsbUpdateEvent.BRIGHTNESS -> get<BusyLibUpdateEvent.Brightness>()
             .merge(getBsbUpdateFlow(event))
 
-        BsbUpdateEvent.AUDIO_VOLUME -> get<BusyLibUpdateEvent.Volume>()
-            .merge(getBsbUpdateFlow(event))
-
         BsbUpdateEvent.DEVICE_NAME -> get<BusyLibUpdateEvent.DeviceName>()
             .merge(getBsbUpdateFlow(event))
 
