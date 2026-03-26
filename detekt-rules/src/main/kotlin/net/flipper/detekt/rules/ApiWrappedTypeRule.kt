@@ -99,7 +99,7 @@ class ApiWrappedTypeRule(config: Config) : Rule(
                 Finding(
                     Entity.from(function),
                     "Public function '${function.name}' in api module is suspend " +
-                        "and returns '$typeName'. Functions returning flow types must not be suspend."
+                        "and returns '$typeName'. Functions returning wrapped flow types must not be suspend."
                 )
             )
         }
