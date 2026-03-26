@@ -52,7 +52,7 @@ internal class FPeripheralGattIO(
                 if (peripheralState.value != FPeripheralState.CONNECTED) {
                     error("#writeValue aborting — disconnected during chunked write")
                 }
-                verbose { "Write chunk to seral with ${chunk.size} with max size $MAX_ATTRIBUTE_SIZE" }
+                verbose { "Write chunk to serial with ${chunk.size} with max size $MAX_ATTRIBUTE_SIZE" }
 
                 val deferred = CompletableDeferred<Unit>()
                 withLock(writeDeferredMutex, "write_serial") {

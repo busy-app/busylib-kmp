@@ -81,7 +81,7 @@ class FHttpBLEEngine(
     }
 
     private suspend fun checkRequestCountUnsafe() {
-        val deviceRequestCount = serialApi.getRequestCounterStateFlow().first()
+        val deviceRequestCount = serialApi.getRequestCounterFlow().first()
         if (requestCount < deviceRequestCount) {
             error { "Received request count: $deviceRequestCount, but current request count is $requestCount" }
             serialApi.reset()

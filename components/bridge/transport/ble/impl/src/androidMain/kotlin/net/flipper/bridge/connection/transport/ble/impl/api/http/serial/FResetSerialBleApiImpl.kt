@@ -33,7 +33,7 @@ class FResetSerialBleApiImpl(
         .filterNotNull()
         .shareIn(scope, SharingStarted.Eagerly, replay = 1)
 
-    private val requestCounterStateFlow = characteristicSharedFlow
+    private val requestCounterFlow = characteristicSharedFlow
         .flatMapLatest { characteristic ->
             flow {
                 while (currentCoroutineContext().isActive) {
@@ -46,8 +46,8 @@ class FResetSerialBleApiImpl(
         }
         .shareIn(scope, SharingStarted.Eagerly, 0)
 
-    override fun getRequestCounterStateFlow(): Flow<Int> {
-        return requestCounterStateFlow
+    override fun getRequestCounterFlow(): Flow<Int> {
+        return requestCounterFlow
     }
 
     override suspend fun reset() {
@@ -55,6 +55,6 @@ class FResetSerialBleApiImpl(
         val characteristic = characteristicSharedFlow.first()
         characteristic.write(0.toUInt32ByteArray(), WriteType.WITH_RESPONSE)
         info { "Characteristic written, waiting for reset..." }
-        requestCounterStateFlow.filter { it == 0 }.first()
+        requestCounterFlow.filter { it == 0 }.first()
     }
 }

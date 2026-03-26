@@ -82,7 +82,7 @@ private class FakeSerialBleApi : FSerialBleApi {
         }
     }
 
-    override fun getRequestCounterStateFlow(): StateFlow<Int> {
+    override fun getRequestCounterFlow(): StateFlow<Int> {
         return requestCounterStateFlow
     }
 

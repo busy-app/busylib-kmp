@@ -27,7 +27,7 @@ class FIOSResetSerialBleApiImpl(
 ) : FResetSerialBleApi, LogTagProvider {
     override val TAG = "FResetSerialBleApi"
 
-    private val requestCounterStateFlow = flow {
+    private val requestCounterFlow = flow {
         while (currentCoroutineContext().isActive) {
             val counter = fPeripheralApi
                 .readValue(config.serialConfig.resetCharUuid)
@@ -38,8 +38,8 @@ class FIOSResetSerialBleApiImpl(
         }
     }.shareIn(scope, SharingStarted.Eagerly, 0)
 
-    override fun getRequestCounterStateFlow(): Flow<Int> {
-        return requestCounterStateFlow
+    override fun getRequestCounterFlow(): Flow<Int> {
+        return requestCounterFlow
     }
 
     override suspend fun reset() {
@@ -48,7 +48,7 @@ class FIOSResetSerialBleApiImpl(
             data = 0.toUInt32ByteArray(),
         )
         info { "Reset command written, waiting for request counter to be zero" }
-        requestCounterStateFlow.filter { it == 0 }.first()
+        requestCounterFlow.filter { it == 0 }.first()
         info { "Reset success" }
     }
 }
