@@ -31,7 +31,8 @@ class FPeripheralGattIOTest {
     fun GIVEN_not_connected_state_WHEN_writeValue_called_THEN_write_is_ignored() = runTest {
         val sut = createSut()
 
-        sut.sut.writeValue(byteArrayOf(1, 2, 3))
+        backgroundScope.launch { sut.sut.writeValue(byteArrayOf(1, 2, 3)) }
+        runCurrent()
 
         assertTrue(sut.peripheral.writeRequests.isEmpty())
     }
@@ -260,12 +261,12 @@ class FPeripheralGattIOTest {
             assertFailsWith<CancellationException> { readJob.await() }
             assertFailsWith<CancellationException> { writeJob.await() }
 
-            assertFailsWith<IllegalStateException> {
-                sut.sut.readValue(resetUuid)
-            }
-            assertFailsWith<IllegalStateException> {
-                sut.sut.writeValue(resetUuid, byteArrayOf(0, 0, 0, 0))
-            }
+            // After disconnect, new operations suspend in waitConnected()
+            val newReadJob = backgroundScope.launch { sut.sut.readValue(resetUuid) }
+            val newWriteJob = backgroundScope.launch { sut.sut.writeValue(resetUuid, byteArrayOf(0, 0, 0, 0)) }
+            runCurrent()
+            assertFalse(newReadJob.isCompleted)
+            assertFalse(newWriteJob.isCompleted)
         }
 
     @Test
