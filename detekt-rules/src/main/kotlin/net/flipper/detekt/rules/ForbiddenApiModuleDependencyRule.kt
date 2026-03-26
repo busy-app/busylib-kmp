@@ -16,20 +16,14 @@ class ForbiddenApiModuleDependencyRule(config: Config) : Rule(
     private val ignoredPaths: List<String> =
         config.valueOrDefault("ignoredPaths", emptyList())
 
-    private var shouldCheck = false
-
     override fun visitKtFile(file: KtFile) {
-        val filePath = file.virtualFilePath.replace("\\", "/")
-        val parentDirName = File(filePath).parentFile?.name
-        shouldCheck = parentDirName == "api" && !isIgnored(filePath)
-        if (shouldCheck) {
+        if (shouldCheck(file)) {
             super.visitKtFile(file)
         }
-        shouldCheck = false
     }
 
     override fun visitDotQualifiedExpression(expression: KtDotQualifiedExpression) {
-        if (shouldCheck && expression.text == FORBIDDEN_DEPENDENCY) {
+        if (expression.text == FORBIDDEN_DEPENDENCY) {
             report(
                 Finding(
                     Entity.from(expression),
@@ -41,8 +35,10 @@ class ForbiddenApiModuleDependencyRule(config: Config) : Rule(
         super.visitDotQualifiedExpression(expression)
     }
 
-    private fun isIgnored(filePath: String): Boolean {
-        return ignoredPaths.any { filePath.contains(it) }
+    private fun shouldCheck(file: KtFile): Boolean {
+        val filePath = file.virtualFilePath.replace("\\", "/")
+        val parentDirName = File(filePath).parentFile?.name
+        return parentDirName == "api" && ignoredPaths.none { filePath.contains(it) }
     }
 
     companion object {
