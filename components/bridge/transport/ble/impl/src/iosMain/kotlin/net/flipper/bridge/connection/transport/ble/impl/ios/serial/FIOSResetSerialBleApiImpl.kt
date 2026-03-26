@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.isActive
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceConnectionConfig
-import net.flipper.bridge.connection.transport.ble.api.RESET_CHARACTERISTICS_REPLAY_VALUE
 import net.flipper.bridge.connection.transport.ble.impl.BleConstants.POLLING_RESET_INTERVAL
 import net.flipper.bridge.connection.transport.ble.impl.ios.peripheral.FPeripheralApi
 import net.flipper.bridge.connection.transport.ble.impl.serial.FResetSerialBleApi
@@ -37,7 +36,7 @@ class FIOSResetSerialBleApiImpl(
             emit(counter)
             delay(POLLING_RESET_INTERVAL)
         }
-    }.shareIn(scope, SharingStarted.Eagerly, RESET_CHARACTERISTICS_REPLAY_VALUE)
+    }.shareIn(scope, SharingStarted.Eagerly, 1)
 
     override fun getRequestCounterFlow(): Flow<Int> {
         return requestCounterFlow

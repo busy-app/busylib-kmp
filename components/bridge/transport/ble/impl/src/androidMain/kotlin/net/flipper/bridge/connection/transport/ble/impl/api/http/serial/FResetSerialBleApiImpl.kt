@@ -45,7 +45,7 @@ class FResetSerialBleApiImpl(
                 }
             }
         }
-        .shareIn(scope, SharingStarted.Eagerly, RESET_CHARACTERISTICS_REPLAY_VALUE)
+        .shareIn(scope, SharingStarted.Eagerly, 1)
 
     override fun getRequestCounterFlow(): Flow<Int> {
         return requestCounterFlow
