@@ -42,7 +42,7 @@ class FIOSResetSerialBleApiImplTest {
                 config = config,
             )
 
-            assertEquals(3, sut.getRequestCounterStateFlow().first { it == 3 })
+            assertEquals(3, sut.getRequestCounterFlow().first { it == 3 })
             assertEquals(listOf(config.serialConfig.resetCharUuid), peripheral.readRequests)
         }
 
@@ -57,8 +57,8 @@ class FIOSResetSerialBleApiImplTest {
                 config = config,
             )
 
-            val firstFlow = sut.getRequestCounterStateFlow()
-            val secondFlow = sut.getRequestCounterStateFlow()
+            val firstFlow = sut.getRequestCounterFlow()
+            val secondFlow = sut.getRequestCounterFlow()
 
             assertSame(firstFlow, secondFlow)
         }
@@ -78,7 +78,7 @@ class FIOSResetSerialBleApiImplTest {
                 config = config,
             )
 
-            assertEquals(3, sut.getRequestCounterStateFlow().first { it == 3 })
+            assertEquals(3, sut.getRequestCounterFlow().first { it == 3 })
 
             val resetJob = async { sut.reset() }
             runCurrent()
@@ -115,7 +115,7 @@ private class FakePeripheralApi(
     private val writeFailure: Throwable? = null,
 ) : FPeripheralApi {
     override val identifier: NSUUID = NSUUID()
-    override val name: String? = "FakePeripheral"
+    override val name: String = "FakePeripheral"
     override val stateStream: WrappedStateFlow<FPeripheralState> = MutableStateFlow(FPeripheralState.CONNECTED)
         .asStateFlow()
         .wrap()

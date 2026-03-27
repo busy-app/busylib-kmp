@@ -7,6 +7,7 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -57,7 +58,7 @@ class FResetSerialBleApiImplTest {
 
             runCurrent()
 
-            assertEquals(3, sut.getRequestCounterStateFlow().value)
+            assertEquals(3, sut.getRequestCounterFlow().first())
         }
 
     @Test
@@ -76,15 +77,15 @@ class FResetSerialBleApiImplTest {
             )
 
             runCurrent()
-            assertEquals(1, sut.getRequestCounterStateFlow().value)
+            assertEquals(1, sut.getRequestCounterFlow().first())
 
             advanceTimeBy(POLLING_RESET_INTERVAL)
             runCurrent()
-            assertEquals(2, sut.getRequestCounterStateFlow().value)
+            assertEquals(2, sut.getRequestCounterFlow().first())
 
             advanceTimeBy(POLLING_RESET_INTERVAL)
             runCurrent()
-            assertEquals(3, sut.getRequestCounterStateFlow().value)
+            assertEquals(3, sut.getRequestCounterFlow().first())
         }
 
     @Test
@@ -98,13 +99,13 @@ class FResetSerialBleApiImplTest {
             )
 
             runCurrent()
-            assertEquals(0, sut.getRequestCounterStateFlow().value)
+            assertEquals(0, sut.getRequestCounterFlow().first())
 
             val characteristic = createMockCharacteristic(byteArrayOf(0x07, 0x00, 0x00, 0x00))
             characteristicFlow.value = characteristic
             runCurrent()
 
-            assertEquals(7, sut.getRequestCounterStateFlow().value)
+            assertEquals(7, sut.getRequestCounterFlow().first())
         }
 
     @Test
@@ -119,6 +120,6 @@ class FResetSerialBleApiImplTest {
 
             runCurrent()
 
-            assertEquals(0, sut.getRequestCounterStateFlow().value)
+            assertEquals(0, sut.getRequestCounterFlow().first())
         }
 }

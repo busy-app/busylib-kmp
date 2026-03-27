@@ -22,6 +22,7 @@ import io.ktor.utils.io.core.remaining
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
@@ -80,7 +81,7 @@ class FHttpBLEEngine(
     }
 
     private suspend fun checkRequestCountUnsafe() {
-        val deviceRequestCount = serialApi.getRequestCounterStateFlow().value
+        val deviceRequestCount = serialApi.getRequestCounterFlow().first()
         if (requestCount < deviceRequestCount) {
             error { "Received request count: $deviceRequestCount, but current request count is $requestCount" }
             serialApi.reset()

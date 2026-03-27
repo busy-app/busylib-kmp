@@ -5,14 +5,12 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.shareIn
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.isActive
 import net.flipper.bridge.connection.transport.ble.impl.BleConstants.POLLING_RESET_INTERVAL
 import net.flipper.bridge.connection.transport.ble.impl.serial.FResetSerialBleApi
@@ -35,7 +33,7 @@ class FResetSerialBleApiImpl(
         .filterNotNull()
         .shareIn(scope, SharingStarted.Eagerly, replay = 1)
 
-    private val requestCounterStateFlow = characteristicSharedFlow
+    private val requestCounterFlow = characteristicSharedFlow
         .flatMapLatest { characteristic ->
             flow {
                 while (currentCoroutineContext().isActive) {
@@ -46,10 +44,10 @@ class FResetSerialBleApiImpl(
                 }
             }
         }
-        .stateIn(scope, SharingStarted.Eagerly, 0)
+        .shareIn(scope, SharingStarted.Eagerly, 1)
 
-    override fun getRequestCounterStateFlow(): StateFlow<Int> {
-        return requestCounterStateFlow
+    override fun getRequestCounterFlow(): Flow<Int> {
+        return requestCounterFlow
     }
 
     override suspend fun reset() {
@@ -57,6 +55,6 @@ class FResetSerialBleApiImpl(
         val characteristic = characteristicSharedFlow.first()
         characteristic.write(0.toUInt32ByteArray(), WriteType.WITH_RESPONSE)
         info { "Characteristic written, waiting for reset..." }
-        requestCounterStateFlow.filter { it == 0 }.first()
+        requestCounterFlow.filter { it == 0 }.first()
     }
 }

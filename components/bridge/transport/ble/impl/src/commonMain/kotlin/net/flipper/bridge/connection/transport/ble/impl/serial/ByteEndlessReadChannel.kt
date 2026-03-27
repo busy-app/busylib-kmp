@@ -16,6 +16,7 @@ import kotlinx.io.Source
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
+import net.flipper.core.busylib.log.verbose
 import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
@@ -45,17 +46,20 @@ class ByteEndlessReadChannel(
         get() = buffer
 
     suspend fun onByteReceive(byteArray: ByteArray) {
-        info { "Receive ${byteArray.size}" }
+        verbose { "Receive ${byteArray.size}" }
         channel.send(byteArray)
     }
 
     override suspend fun awaitContent(min: Int): Boolean {
         withContext(coroutineContext) {
             while (currentCoroutineContext().isActive && buffer.remaining < min) {
-                info { "Buffer is ${buffer.remaining}, waiting for min bytes: $min" }
+                verbose { "Buffer is ${buffer.remaining}, waiting for min bytes: $min" }
                 val data = channel.receive()
                 buffer.write(data)
-                info { "Read ${data.size} bytes with min request $min, so current buffer size is ${buffer.remaining}" }
+                verbose {
+                    "Read ${data.size} bytes with min request $min, " +
+                        "so current buffer size is ${buffer.remaining}"
+                }
             }
         }
 

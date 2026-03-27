@@ -16,9 +16,10 @@ import net.flipper.core.busylib.ktx.common.launchWithLock
 import net.flipper.core.busylib.ktx.common.toNSData
 import net.flipper.core.busylib.ktx.common.withLock
 import net.flipper.core.busylib.log.LogTagProvider
-import net.flipper.core.busylib.log.debug
 import net.flipper.core.busylib.log.error
+import net.flipper.core.busylib.log.verbose
 import platform.CoreBluetooth.CBCharacteristic
+import platform.CoreBluetooth.CBCharacteristicWriteWithResponse
 import platform.CoreBluetooth.CBPeripheral
 import platform.Foundation.NSError
 import kotlin.uuid.Uuid
@@ -45,13 +46,13 @@ internal class FPeripheralGattIO(
         // Wait for serial write state
         val characteristic = serialWriteState.filterNotNull().first()
         val serialWriteUuid = characteristic.UUID.toKotlinUUID()
-        debug { "Peripheral writeValue bytes=${data.size} id=${peripheral.identifier.UUIDString}" }
+        verbose { "#writeSerial bytes=${data.size} id=${peripheral.identifier.UUIDString}" }
         withLock(writeMutex, "writeValue") {
             data.chunked(MAX_ATTRIBUTE_SIZE).forEach { chunk ->
                 if (peripheralState.value != FPeripheralState.CONNECTED) {
                     error("#writeValue aborting — disconnected during chunked write")
                 }
-                debug { "Write chunk with ${chunk.size} with max size $MAX_ATTRIBUTE_SIZE" }
+                verbose { "Write chunk to serial with ${chunk.size} with max size $MAX_ATTRIBUTE_SIZE" }
 
                 val deferred = CompletableDeferred<Unit>()
                 withLock(writeDeferredMutex, "write_serial") {
@@ -60,10 +61,11 @@ internal class FPeripheralGattIO(
                     )
                     writeDeferreds[serialWriteUuid] = deferred
                 }
+
                 peripheral.writeValue(
                     chunk.toNSData(),
                     forCharacteristic = characteristic,
-                    type = 0L // CBCharacteristicWriteWithResponse
+                    type = CBCharacteristicWriteWithResponse
                 )
 
                 try {
@@ -90,6 +92,11 @@ internal class FPeripheralGattIO(
                 CancellationException("Superseded by newer read request")
             )
             readDeferreds[characteristicUuid] = deferred
+        }
+
+        verbose {
+            "#readValue uuid=$characteristicUuid " +
+                "id=${peripheral.identifier.UUIDString}"
         }
 
         peripheral.readValueForCharacteristic(characteristic)
@@ -119,10 +126,16 @@ internal class FPeripheralGattIO(
             writeDeferreds[characteristicUuid] = deferred
         }
 
+        verbose {
+            "#writeValue bytes=${data.size} uuid=$characteristicUuid " +
+                "id=${peripheral.identifier.UUIDString }" +
+                "data=${data.decodeToString()}"
+        }
+
         peripheral.writeValue(
             data.toNSData(),
             forCharacteristic = characteristic,
-            type = 0L // CBCharacteristicWriteWithResponse
+            type = CBCharacteristicWriteWithResponse
         )
 
         try {
@@ -141,7 +154,7 @@ internal class FPeripheralGattIO(
     fun completeRead(characteristicUuid: Uuid, payload: ByteArray) {
         launchWithLock(readDeferredMutex, scope, "complete_read") {
             val waiter = readDeferreds.remove(characteristicUuid)
-            debug {
+            verbose {
                 "Completing read uuid=$characteristicUuid bytes=${payload.size} " +
                     "waiterFound=${waiter != null}"
             }
@@ -151,6 +164,7 @@ internal class FPeripheralGattIO(
 
     fun failRead(characteristicUuid: Uuid, error: NSError) {
         launchWithLock(readDeferredMutex, scope, "fail_read") {
+            error { "#failRead receive from $characteristicUuid error=${error.localizedDescription}" }
             readDeferreds.remove(characteristicUuid)
                 ?.completeExceptionally(Exception(error.localizedDescription))
         }
@@ -162,6 +176,8 @@ internal class FPeripheralGattIO(
     ) {
         launchWithLock(writeDeferredMutex, scope, "handle_write") {
             val characteristicUuid = didWriteValueForCharacteristic.UUID.toKotlinUUID()
+            verbose { "#handleDidWriteValue receive did write from $characteristicUuid" }
+
             val deferred = writeDeferreds.remove(characteristicUuid) ?: return@launchWithLock
             if (error != null) {
                 deferred.completeExceptionally(Exception(error.localizedDescription))
