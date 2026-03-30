@@ -51,7 +51,7 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
       - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4
       - name: Replace gradle properties with sed
         run: |
           sed -i -e 's/^makeevrserg.project.version.string=.*$/makeevrserg.project.version.string=${{ inputs.VERSION_NAME }}/g' gradle.properties

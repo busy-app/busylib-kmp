@@ -24,7 +24,7 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
       - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4
       - name: Give gradle permission
         run: chmod +x gradlew
       - name: Build sample:cmp target
@@ -52,7 +52,7 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
       - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4
       - name: Give gradle permission
         run: chmod +x gradlew
       - name: Build sample:cmp target
