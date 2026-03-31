@@ -2,10 +2,7 @@ package net.flipper.bridge.connection.feature.settings.api
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import me.tatarka.inject.annotations.Inject
 import me.tatarka.inject.annotations.IntoMap
@@ -15,8 +12,6 @@ import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
 import net.flipper.bridge.connection.feature.events.api.get
-import net.flipper.bridge.connection.feature.events.api.getUpdateFlow
-import net.flipper.bridge.connection.feature.events.model.BsbUpdateEvent
 import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
 import net.flipper.bridge.connection.feature.events.model.ConsumableUpdateEvent
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
@@ -39,11 +34,9 @@ import net.flipper.core.busylib.ktx.common.merge
 import net.flipper.core.busylib.ktx.common.orEmpty
 import net.flipper.core.busylib.ktx.common.throttleLatest
 import net.flipper.core.busylib.ktx.common.transformWhileSubscribed
-import net.flipper.core.busylib.ktx.common.tryCast
 import net.flipper.core.busylib.ktx.common.tryConsume
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
-import net.flipper.core.busylib.log.info
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
 
 class FSettingsFeatureApiImpl(
@@ -55,7 +48,7 @@ class FSettingsFeatureApiImpl(
     override val TAG: String = "FSettingsFeatureApi"
 
     private val deviceNameFlow = fEventsFeatureApi
-        ?.getUpdateFlow(BsbUpdateEvent.DEVICE_NAME)
+        ?.get<BusyLibUpdateEvent.DeviceName>()
         .orEmpty()
         .merge(flowOf(ConsumableUpdateEvent.Empty))
         .transformWhileSubscribed(scope = scope) { flow ->
@@ -72,17 +65,15 @@ class FSettingsFeatureApiImpl(
                         }
                     }
 
-                    is ConsumableUpdateEvent.BusyLib<*> -> {
-                        consumable.busyLibUpdateEvent
-                            .tryCast<BusyLibUpdateEvent.DeviceName>()
-                            ?.deviceName
+                    is ConsumableUpdateEvent.BusyLib<BusyLibUpdateEvent.DeviceName> -> {
+                        consumable.busyLibUpdateEvent.deviceName
                     }
                 }
-            }.filterNotNull()
+            }
         }.stateIn(scope, SharingStarted.Lazily, connectedDevice.deviceName)
 
     private val brightnessInfoFlow = fEventsFeatureApi
-        ?.getUpdateFlow(BsbUpdateEvent.BRIGHTNESS)
+        ?.get<BusyLibUpdateEvent.Brightness>()
         .orEmpty()
         .merge(flowOf(ConsumableUpdateEvent.Empty))
         .transformWhileSubscribed(scope = scope) { flow ->
@@ -95,18 +86,16 @@ class FSettingsFeatureApiImpl(
                             rpcFeatureApi
                                 .fRpcSettingsApi
                                 .getDisplayBrightness(couldConsume)
-                                .map { it.toBsbBrightnessInfo() }
+                                .map { displayBrightnessInfo -> displayBrightnessInfo.toBsbBrightnessInfo() }
                                 .onFailure { error(it) { "Failed to get Settings status" } }
                         }
                     }
 
-                    is ConsumableUpdateEvent.BusyLib<*> -> {
-                        consumable.busyLibUpdateEvent
-                            .tryCast<BusyLibUpdateEvent.Brightness>()
-                            ?.bsbBrightnessInfo
+                    is ConsumableUpdateEvent.BusyLib<BusyLibUpdateEvent.Brightness> -> {
+                        consumable.busyLibUpdateEvent.bsbBrightnessInfo
                     }
                 }
-            }.filterNotNull()
+            }
         }
         .asFlow()
         .wrap()
@@ -116,20 +105,30 @@ class FSettingsFeatureApiImpl(
     }
 
     private val volumeFlow = fEventsFeatureApi
-        .get(
-            scope = scope,
-            initial = { couldConsume ->
-                rpcFeatureApi.fRpcSettingsApi
-                    .getAudioVolume(couldConsume)
-                    .onFailure {
-                        error(it) { "Failed to get Settings status" }
-                    }.map { BusyLibUpdateEvent.Volume(it.volume) }
-            },
-            mapper = { flow -> flow.map { AudioVolumeInfo(it.volume) }.onEach { info { "Receive $it" } } }
-        )
+        ?.get<BusyLibUpdateEvent.Volume>()
+        .orEmpty()
+        .merge(flowOf(ConsumableUpdateEvent.Empty))
+        .transformWhileSubscribed(scope = scope) { flow ->
+            flow.throttleLatest { consumable ->
+                val couldConsume = consumable.tryConsume()
+                when (consumable) {
+                    is ConsumableUpdateEvent.BusyLib<BusyLibUpdateEvent.Volume> -> {
+                        AudioVolumeInfo(consumable.busyLibUpdateEvent.volume)
+                    }
+
+                    else -> {
+                        exponentialRetry {
+                            rpcFeatureApi.fRpcSettingsApi.getAudioVolume(couldConsume)
+                        }
+                    }
+                }
+            }
+        }
+        .asFlow()
+        .wrap()
 
     override fun getVolumeFlow(): WrappedFlow<AudioVolumeInfo> {
-        return volumeFlow.asFlow().wrap()
+        return volumeFlow
     }
 
     override suspend fun setVolume(volume: Fraction): CResult<Unit> {

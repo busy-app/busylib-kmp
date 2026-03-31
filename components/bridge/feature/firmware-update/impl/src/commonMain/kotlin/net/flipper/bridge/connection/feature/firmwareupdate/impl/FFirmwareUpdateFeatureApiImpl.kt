@@ -4,7 +4,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -19,8 +18,8 @@ import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
+import net.flipper.bridge.connection.feature.events.api.get
 import net.flipper.bridge.connection.feature.events.api.getBsbUpdateFlow
-import net.flipper.bridge.connection.feature.events.api.getUpdateFlow
 import net.flipper.bridge.connection.feature.events.model.BsbUpdateEvent
 import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
 import net.flipper.bridge.connection.feature.events.model.ConsumableUpdateEvent
@@ -104,7 +103,7 @@ class FFirmwareUpdateFeatureApiImpl(
     }
 
     override val isAutoUpdateEnabledFlow = fEventsFeatureApi
-        ?.getUpdateFlow(BsbUpdateEvent.AUTO_UPDATE_CHANGED)
+        ?.get<BusyLibUpdateEvent.AutoUpdateChanged>()
         .orEmpty()
         .merge(flowOf(ConsumableUpdateEvent.Empty))
         .transformWhileSubscribed(scope = scope) { flow ->
@@ -121,13 +120,11 @@ class FFirmwareUpdateFeatureApiImpl(
                         }
                     }
 
-                    is ConsumableUpdateEvent.BusyLib<*> -> {
-                        consumable.busyLibUpdateEvent
-                            .tryCast<BusyLibUpdateEvent.AutoUpdateChanged>()
-                            ?.isEnabled
+                    is ConsumableUpdateEvent.BusyLib<BusyLibUpdateEvent.AutoUpdateChanged> -> {
+                        consumable.busyLibUpdateEvent.isEnabled
                     }
                 }
-            }.filterNotNull()
+            }
         }
         .wrap()
 
