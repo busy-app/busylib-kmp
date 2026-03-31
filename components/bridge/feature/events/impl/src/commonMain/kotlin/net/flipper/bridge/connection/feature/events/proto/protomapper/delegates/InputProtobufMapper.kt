@@ -1,4 +1,4 @@
-package net.flipper.bridge.connection.feature.events.impl.protomapper.delegates
+package net.flipper.bridge.connection.feature.events.proto.protomapper.delegates
 
 import BSB_Input.ButtonAction
 import BSB_Input.InputEvent
