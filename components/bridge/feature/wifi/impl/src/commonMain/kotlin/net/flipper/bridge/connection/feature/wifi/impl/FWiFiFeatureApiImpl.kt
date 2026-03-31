@@ -15,8 +15,9 @@ import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
-import net.flipper.bridge.connection.feature.events.api.getBsbUpdateFlow
-import net.flipper.bridge.connection.feature.events.model.BsbUpdateEvent
+import net.flipper.bridge.connection.feature.events.api.get
+import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
+import net.flipper.bridge.connection.feature.events.model.ConsumableUpdateEvent
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.ConnectRequestConfig
 import net.flipper.bridge.connection.feature.rpc.api.model.StatusResponse
@@ -35,13 +36,12 @@ import net.flipper.busylib.core.wrapper.CResult
 import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.toCResult
 import net.flipper.busylib.core.wrapper.wrap
-import net.flipper.core.busylib.ktx.common.DefaultConsumable
 import net.flipper.core.busylib.ktx.common.asFlow
 import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.merge
 import net.flipper.core.busylib.ktx.common.orElse
 import net.flipper.core.busylib.ktx.common.orEmpty
-import net.flipper.core.busylib.ktx.common.throttleLatest
+import net.flipper.core.busylib.ktx.common.throttleLatestCached
 import net.flipper.core.busylib.ktx.common.transformWhileSubscribed
 import net.flipper.core.busylib.ktx.common.tryConsume
 import net.flipper.core.busylib.log.LogTagProvider
@@ -93,17 +93,34 @@ class FWiFiFeatureApiImpl(
     }
 
     private val wifiStatusSharedFlow = fEventsFeatureApi
-        ?.getBsbUpdateFlow(BsbUpdateEvent.WIFI_STATUS)
+        ?.get<BusyLibUpdateEvent.Wifi>()
         .orEmpty()
-        .merge(flowOf(DefaultConsumable(false)))
+        .merge(flowOf(ConsumableUpdateEvent.Empty))
         .transformWhileSubscribed(scope = scope) { flow ->
-            flow.throttleLatest { consumable ->
+            flow.throttleLatestCached { consumable, wifi: StatusResponse? ->
                 val couldConsume = consumable.tryConsume()
-                exponentialRetry {
-                    rpcFeatureApi
-                        .fRpcWifiApi
-                        .getWifiStatus(couldConsume)
-                        .onFailure { error(it) { "Failed to get WiFi networks" } }
+                when (consumable) {
+                    is ConsumableUpdateEvent.BusyLib<BusyLibUpdateEvent.Wifi> if wifi != null -> {
+                        consumable.busyLibUpdateEvent.let { wifiUpdateEvent ->
+                            wifi.copy(
+                                // todo fix wifi proto model mapping?
+                                state = when {
+                                    wifiUpdateEvent.isConnected -> StatusResponse.State.CONNECTED
+                                    else -> wifi.state
+                                },
+                                ssid = wifi.ssid,
+                            )
+                        }
+                    }
+
+                    else -> {
+                        exponentialRetry {
+                            rpcFeatureApi
+                                .fRpcWifiApi
+                                .getWifiStatus(couldConsume)
+                                .onFailure { error(it) { "Failed to get WiFi networks" } }
+                        }
+                    }
                 }
             }
         }

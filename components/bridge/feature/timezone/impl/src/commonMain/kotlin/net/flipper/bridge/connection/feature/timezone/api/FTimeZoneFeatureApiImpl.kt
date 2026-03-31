@@ -10,9 +10,13 @@ import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
+import net.flipper.bridge.connection.feature.events.api.get
 import net.flipper.bridge.connection.feature.events.api.getBsbUpdateFlow
 import net.flipper.bridge.connection.feature.events.model.BsbUpdateEvent
+import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
+import net.flipper.bridge.connection.feature.events.model.ConsumableUpdateEvent
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
+import net.flipper.bridge.connection.feature.rpc.api.model.RpcTimezoneInfo
 import net.flipper.bridge.connection.feature.timezone.api.model.TimestampInfo
 import net.flipper.bridge.connection.feature.timezone.api.model.TimezoneInfo
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
@@ -65,19 +69,28 @@ class FTimeZoneFeatureApiImpl(
     }
 
     private val timeZoneInfoSharedFlow = fEventsFeatureApi
-        ?.getBsbUpdateFlow(BsbUpdateEvent.TIMEZONE_CHANGED)
+        ?.get<BusyLibUpdateEvent.Timezone>()
         .orEmpty()
-        .merge(flowOf(DefaultConsumable(false)))
+        .merge(flowOf(ConsumableUpdateEvent.Empty))
         .transformWhileSubscribed(scope = scope) { flow ->
             flow.throttleLatest { consumable ->
                 val couldConsume = consumable.tryConsume()
-                exponentialRetry {
-                    rpcFeatureApi.fRpcTimeZoneApi.getTimeTimezone(couldConsume)
+                when (consumable) {
+                    ConsumableUpdateEvent.Empty,
+                    is ConsumableUpdateEvent.Bsb -> {
+                        exponentialRetry {
+                            rpcFeatureApi.fRpcTimeZoneApi.getTimeTimezone(couldConsume)
+                        }
+                    }
+
+                    is ConsumableUpdateEvent.BusyLib<BusyLibUpdateEvent.Timezone> -> {
+                        RpcTimezoneInfo(consumable.busyLibUpdateEvent.name)
+                    }
                 }
             }
         }
         .asFlow()
-        .map { it.toPublic() }
+        .map { rpcTimezoneInfo -> rpcTimezoneInfo.toPublic() }
         .wrap()
 
     override fun getTimeZoneInfoFlow(): WrappedFlow<TimezoneInfo> {

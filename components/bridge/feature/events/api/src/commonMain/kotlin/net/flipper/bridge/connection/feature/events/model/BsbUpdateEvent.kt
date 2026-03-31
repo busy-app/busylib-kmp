@@ -8,13 +8,7 @@ enum class BsbUpdateEvent(
     val bitIndex: Int? = null,
     val webSocketKey: String? = null
 ) : UpdateEvent {
-    DEVICE_NAME(bitIndex = 0, webSocketKey = "name"),
-    BRIGHTNESS(webSocketKey = "front_brightness"),
     BLE_STATUS,
-    WIFI_STATUS,
     UPDATER_UPDATE_STATUS(webSocketKey = "update_available_version"),
-    SMART_HOME_STATUS_CHANGED,
     TIMESTAMP_CHANGED,
-    AUTO_UPDATE_CHANGED,
-    TIMEZONE_CHANGED,
 }

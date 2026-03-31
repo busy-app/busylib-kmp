@@ -36,25 +36,6 @@ fun FEventsFeatureApi.getBsbUpdateFlow(event: BsbUpdateEvent): Flow<ConsumableUp
         .filter { consumableUpdateEvent -> consumableUpdateEvent.bsbUpdateEvent == event }
 }
 
-/**
- * Receive [BsbUpdateEvent] along with [BusyLibUpdateEvent] if it's supported for this event type
- */
-@Deprecated("Use BusyLibUpdateEvent instead")
-fun FEventsFeatureApi.getUpdateFlow(event: BsbUpdateEvent): Flow<ConsumableUpdateEvent> {
-    return when (event) {
-        BsbUpdateEvent.BRIGHTNESS -> get<BusyLibUpdateEvent.Brightness>()
-            .merge(getBsbUpdateFlow(event))
-
-        BsbUpdateEvent.DEVICE_NAME -> get<BusyLibUpdateEvent.DeviceName>()
-            .merge(getBsbUpdateFlow(event))
-
-        BsbUpdateEvent.AUTO_UPDATE_CHANGED -> get<BusyLibUpdateEvent.AutoUpdateChanged>()
-            .merge(getBsbUpdateFlow(event))
-
-        else -> getBsbUpdateFlow(event)
-    }
-}
-
 inline fun <reified T : BusyLibUpdateEvent> FEventsFeatureApi.get(): Flow<ConsumableUpdateEvent.BusyLib<T>> {
     return getBusyLibUpdateEvents()
         .filterIsInstance<ConsumableUpdateEvent.BusyLib<T>>()
@@ -65,13 +46,15 @@ inline fun <reified T : BusyLibUpdateEvent, R> FEventsFeatureApi?.get(
     crossinline initial: suspend (couldConsume: Boolean) -> Result<T>,
     crossinline mapper: (Flow<T>) -> Flow<R>
 ): SharedFlow<R> {
-    return this?.get<T>()
+    return this
+        ?.get<T>()
         .orEmpty()
         .merge(flowOf(ConsumableUpdateEvent.Empty))
         .transformWhileSubscribed(scope = scope) { flow ->
             flow.throttleLatest { consumable ->
                 val couldConsume = consumable.tryConsume()
                 when (consumable) {
+                    is ConsumableUpdateEvent.Bsb,
                     ConsumableUpdateEvent.Empty -> {
                         exponentialRetry {
                             initial(couldConsume)
@@ -82,11 +65,8 @@ inline fun <reified T : BusyLibUpdateEvent, R> FEventsFeatureApi?.get(
                         @Suppress("UNCHECKED_CAST")
                         consumable.busyLibUpdateEvent as? T
                     }
-
-                    is ConsumableUpdateEvent.Bsb -> TODO()
                 }
-            }.filterNotNull()
-                .run(mapper)
+            }.filterNotNull().run(mapper)
         }
 }
 

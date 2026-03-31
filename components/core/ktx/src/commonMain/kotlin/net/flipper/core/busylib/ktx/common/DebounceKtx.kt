@@ -30,3 +30,20 @@ public fun <T> Flow<T>.onLatest(
     action(value)
     return@transformLatest emit(value)
 }
+
+fun <T, K> Flow<T>.throttleLatestCached(
+    transform: suspend (T, K?) -> K
+): Flow<K> = channelFlow {
+    val scope = this
+    var job: Job? = null
+    var previous: K? = null
+
+    collectLatest { value ->
+        job?.join()
+        job = scope.launch {
+            val current = transform.invoke(value, previous)
+            send(current)
+            previous = current
+        }
+    }
+}

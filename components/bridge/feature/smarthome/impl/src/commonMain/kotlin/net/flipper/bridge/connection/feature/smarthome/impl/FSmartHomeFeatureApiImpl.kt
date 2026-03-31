@@ -13,8 +13,9 @@ import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
-import net.flipper.bridge.connection.feature.events.api.getBsbUpdateFlow
-import net.flipper.bridge.connection.feature.events.model.BsbUpdateEvent
+import net.flipper.bridge.connection.feature.events.api.get
+import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
+import net.flipper.bridge.connection.feature.events.model.ConsumableUpdateEvent
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcMatterApi
 import net.flipper.bridge.connection.feature.rpc.api.model.MatterCommissionedFabrics
@@ -27,12 +28,11 @@ import net.flipper.busylib.core.wrapper.CResult
 import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.toCResult
 import net.flipper.busylib.core.wrapper.wrap
-import net.flipper.core.busylib.ktx.common.DefaultConsumable
 import net.flipper.core.busylib.ktx.common.asFlow
 import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.merge
 import net.flipper.core.busylib.ktx.common.orEmpty
-import net.flipper.core.busylib.ktx.common.throttleLatest
+import net.flipper.core.busylib.ktx.common.throttleLatestCached
 import net.flipper.core.busylib.ktx.common.transformWhileSubscribed
 import net.flipper.core.busylib.ktx.common.tryConsume
 import net.flipper.core.busylib.log.LogTagProvider
@@ -49,14 +49,22 @@ class FSmartHomeFeatureApiImpl(
     override val TAG = "FSmartHomeFeatureApi"
 
     private val commissionedFabricsSharedFlow = fEventsFeatureApi
-        ?.getBsbUpdateFlow(BsbUpdateEvent.SMART_HOME_STATUS_CHANGED)
+        ?.get<BusyLibUpdateEvent.Matter>()
         .orEmpty()
-        .merge(flowOf(DefaultConsumable(false)))
+        .merge(flowOf(ConsumableUpdateEvent.Empty))
         .transformWhileSubscribed(scope = scope) { flow ->
-            flow.throttleLatest { consumable ->
+            flow.throttleLatestCached { consumable, matter: MatterCommissionedFabrics? ->
                 val couldConsume = consumable.tryConsume()
-                exponentialRetry {
-                    fRpcMatterApi1.getMatterCommissioning(couldConsume)
+                when (consumable) {
+                    is ConsumableUpdateEvent.BusyLib<BusyLibUpdateEvent.Matter> if matter != null -> {
+                        matter.copy(fabricCount = consumable.busyLibUpdateEvent.fabricCount)
+                    }
+
+                    else -> {
+                        exponentialRetry {
+                            fRpcMatterApi1.getMatterCommissioning(couldConsume)
+                        }
+                    }
                 }
             }
         }
