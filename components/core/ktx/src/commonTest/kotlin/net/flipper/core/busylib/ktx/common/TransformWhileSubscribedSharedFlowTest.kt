@@ -6,13 +6,17 @@ import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -25,7 +29,7 @@ import kotlin.time.Duration.Companion.seconds
 
 class TransformWhileSubscribedSharedFlowTest {
 
-    private fun createFlow(): Flow<Int> {
+    private fun createCounterFlow(): Flow<Int> {
         return flow {
             var i = 0
             while (currentCoroutineContext().isActive) {
@@ -48,7 +52,6 @@ class TransformWhileSubscribedSharedFlowTest {
             }.transformWhileSubscribed(
                 timeout = 5.seconds,
                 scope = backgroundScope,
-                transformFlow = { flow -> flow }
             )
             advanceTimeBy(10000)
             assertEquals(
@@ -63,10 +66,9 @@ class TransformWhileSubscribedSharedFlowTest {
     fun GIVEN_no_subscribers_WHEN_first_subscriber_added_THEN_upstream_starts_emitting() {
         runTest {
             var transformationCount = 0
-            val sharedFlow = createFlow().transformWhileSubscribed(
+            val sharedFlow = createCounterFlow().transformWhileSubscribed(
                 timeout = 5.seconds,
                 scope = backgroundScope,
-                transformFlow = { flow -> flow }
             )
 
             async {
@@ -85,10 +87,9 @@ class TransformWhileSubscribedSharedFlowTest {
     @Test
     fun GIVEN_one_subscriber_WHEN_second_subscriber_added_THEN_both_receive_same_values() {
         runTest {
-            val sharedFlow = createFlow().transformWhileSubscribed(
+            val sharedFlow = createCounterFlow().transformWhileSubscribed(
                 timeout = 5.seconds,
                 scope = backgroundScope,
-                transformFlow = { flow -> flow }
             )
 
             val firstSubscriberValue = async {
@@ -118,10 +119,9 @@ class TransformWhileSubscribedSharedFlowTest {
     fun GIVEN_two_subscribers_WHEN_one_subscriber_removed_THEN_remaining_subscriber_still_receives_values() {
         runTest {
             var emissionCount = 0
-            val sharedFlow = createFlow().transformWhileSubscribed(
+            val sharedFlow = createCounterFlow().transformWhileSubscribed(
                 timeout = 5.seconds,
                 scope = backgroundScope,
-                transformFlow = { flow -> flow }
             )
             val job1 = launch { sharedFlow.take(100).collect() }
             val job2 = launch { sharedFlow.collect { emissionCount++ } }
@@ -145,14 +145,10 @@ class TransformWhileSubscribedSharedFlowTest {
     fun GIVEN_one_subscriber_WHEN_subscriber_removed_THEN_transform_stops_during_grace_period() {
         runTest {
             var transformationCount = 0
-            val sharedFlow = createFlow().transformWhileSubscribed(
+            val sharedFlow = createCounterFlow().transformWhileSubscribed(
                 timeout = 5.seconds,
                 scope = backgroundScope,
-                transformFlow = { flow ->
-                    transformationCount++
-                    flow
-                }
-            )
+            ).onEach { transformationCount++ }
 
             val job = launch { sharedFlow.take(100).collect() }
 
@@ -175,23 +171,23 @@ class TransformWhileSubscribedSharedFlowTest {
     @Test
     fun GIVEN_no_subscribers_in_grace_period_WHEN_timeout_expires_THEN_upstream_stops() {
         runTest {
-            var transformationCount = 0
-            val sharedFlow = createFlow().transformWhileSubscribed(
+            val sharedFlow = createCounterFlow().transformWhileSubscribed(
                 timeout = 5.seconds,
                 scope = backgroundScope,
-                transformFlow = { flow -> flow }
             )
-
-            val job = launch { sharedFlow.take(100).collect() }
-
-            advanceTimeBy(1500)
+            val transformationCountBeforeTimeout = sharedFlow.first()
+            val job = sharedFlow.launchIn(backgroundScope)
+            advanceTimeBy(61.seconds)
+            assertEquals(
+                expected = 60,
+                actual = sharedFlow.first(),
+                message = "Shared flow should count exactly 60 times"
+            )
             job.cancel()
-
-            val transformationCountBeforeTimeout = transformationCount
 
             advanceTimeBy(6000)
 
-            val transformationCountAfterTimeout = transformationCount
+            val transformationCountAfterTimeout = sharedFlow.first()
 
             assertEquals(
                 expected = transformationCountBeforeTimeout,
@@ -204,10 +200,9 @@ class TransformWhileSubscribedSharedFlowTest {
     @Test
     fun GIVEN_upstream_stopped_after_timeout_WHEN_new_subscriber_added_THEN_upstream_restarts() {
         runTest {
-            val sharedFlow = createFlow().transformWhileSubscribed(
+            val sharedFlow = createCounterFlow().transformWhileSubscribed(
                 timeout = 5.seconds,
                 scope = backgroundScope,
-                transformFlow = { flow -> flow }
             )
 
             launch { sharedFlow.take(100).collect() }
@@ -230,10 +225,9 @@ class TransformWhileSubscribedSharedFlowTest {
     @Test
     fun GIVEN_subscriber_active_WHEN_value_emitted_THEN_transformed_value_is_cached() {
         runTest {
-            val sharedFlow = createFlow().transformWhileSubscribed(
+            val sharedFlow = createCounterFlow().transformWhileSubscribed(
                 timeout = 5.seconds,
                 scope = backgroundScope,
-                transformFlow = { flow -> flow }
             )
 
             launch { sharedFlow.collect() }
@@ -252,15 +246,12 @@ class TransformWhileSubscribedSharedFlowTest {
     fun GIVEN_latest_subscriber_in_grace_period_WHEN_collects_THEN_values_equals() {
         runTest {
             var transformationCount = 0
-            val sharedFlow = createFlow().transformWhileSubscribed(
+            val sharedFlow = createCounterFlow().transformWhileSubscribed(
                 timeout = 500.seconds,
                 scope = backgroundScope,
-                transformFlow = { flow ->
-                    flow.onEach {
-                        transformationCount++
-                    }.mapLatest { "mapped_$it" }
-                }
-            )
+            ).onEach {
+                transformationCount++
+            }.mapLatest { "mapped_$it" }
 
             val firstDeferred = async { sharedFlow.drop(2).first() }
 
@@ -279,10 +270,87 @@ class TransformWhileSubscribedSharedFlowTest {
                 actual = secondDeferred.await()
             )
             assertEquals(
-                expected = 5,
+                expected = 6,
                 actual = transformationCount,
                 message = "Transformation should be applied only from [0;2] and [6;7]"
             )
+        }
+    }
+
+
+    @Test
+    fun GIVEN_default_transform_and_whie_subscribed_WHEN_compare_transform_count_THEN_default_flow_bigger() {
+        runTest {
+            var transformationCount = 0
+            val sharedFlow = createCounterFlow().transformWhileSubscribed(
+                timeout = 500.seconds,
+                scope = backgroundScope,
+            ).onEach { transformationCount++ }
+
+            var defaultFlowCounter = 0
+            createCounterFlow()
+                .onEach { defaultFlowCounter++ }
+                .shareIn(backgroundScope, SharingStarted.Eagerly)
+
+            advanceTimeBy(5.seconds)
+            assertEquals(
+                0,
+                transformationCount,
+                "Shared flow should not be yet transformed"
+            )
+            sharedFlow.first()
+            assertEquals(
+                1,
+                transformationCount,
+                "Shared flow should be transformed exact one time"
+            )
+
+            assertEquals(
+                6,
+                defaultFlowCounter,
+                "Default flow counter should be emitted exactly 5 times"
+            )
+        }
+    }
+
+    @Test
+    fun GIVEN_tws_WHEN_mapped_THEN_return_mapped() {
+        runTest {
+            val sharedFlow = createCounterFlow()
+                .transformWhileSubscribed(
+                    timeout = 30.seconds,
+                    scope = backgroundScope,
+                )
+                .map { "Count_$it".also { println("I'M MAPPED!") } }
+                .shareIn(backgroundScope, SharingStarted.WhileSubscribed(30), 1)
+//            assertEquals(
+//                expected = "Count_10",
+//                actual = sharedFlow.drop(10).first()
+//            )
+            advanceTimeBy(5.seconds)
+//            assertEquals(
+//                expected = "Count_10",
+//                actual = sharedFlow.first()
+//            )
+            advanceTimeBy(100.seconds)
+            assertEquals(
+                expected = "Count_0",
+                actual = sharedFlow.first()
+            )
+
+            assertEquals(
+                expected = "Count_0",
+                actual = sharedFlow.first()
+            )
+        }
+    }
+
+    @Test
+    fun testShareIn() {
+        runTest {
+            createCounterFlow()
+                .shareIn(backgroundScope, SharingStarted.Eagerly, 1)
+
         }
     }
 }

@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
@@ -28,15 +30,14 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalForInheritanceCoroutinesApi::class)
-private class TransformWhileSubscribedSharedFlow<T, R>(
+private class TransformWhileSubscribedSharedFlow<T>(
     private val scope: CoroutineScope,
     private val upstreamFlow: Flow<T>,
     private val timeoutDuration: Duration = 5.seconds,
-    private val collector: suspend Flow<T>.(collector: FlowCollector<R>) -> Unit,
-) : SharedFlow<R>, LogTagProvider by TaggedLogger("TransformWhileSubscribedSharedFlow") {
-    private val resultFlow = MutableSharedFlow<R>(replay = 1, extraBufferCapacity = 0)
+) : SharedFlow<T>, LogTagProvider by TaggedLogger("TransformWhileSubscribedSharedFlow") {
+    private val resultFlow = MutableSharedFlow<T>(replay = 1, extraBufferCapacity = 0)
 
-    override val replayCache: List<R>
+    override val replayCache: List<T>
         get() = resultFlow.replayCache
     private val subscriberMutex = Mutex()
     private val hasSubscribersFlow = resultFlow.subscriptionCount
@@ -49,17 +50,18 @@ private class TransformWhileSubscribedSharedFlow<T, R>(
             .filter { hasSubscribers -> hasSubscribers }
             .first()
     }
+
     private suspend fun startUpstreamCollectionUnsafe() {
         upstreamJob?.cancelAndJoin()
         upstreamJob = scope.launch {
             try {
-                collector.invoke(
-                    upstreamFlow.mapLatest { upstreamValue ->
+                upstreamFlow
+                    .mapLatest { upstreamValue ->
                         awaitForSubscribers()
                         upstreamValue
-                    },
-                    resultFlow
-                )
+                    }
+                    .onEach { value -> resultFlow.emit(value) }
+                    .collect()
             } catch (_: CancellationException) {
                 resultFlow.resetReplayCache()
             } catch (e: Exception) {
@@ -71,7 +73,7 @@ private class TransformWhileSubscribedSharedFlow<T, R>(
     private suspend fun stopUpstreamCollectionUnsafe() {
         debug {
             "#stopUpstreamCollection Stopping upstream collection " +
-                "after $timeoutDuration seconds of no subscribers"
+                    "after $timeoutDuration seconds of no subscribers"
         }
         upstreamJob?.cancelAndJoin()
         upstreamJob = null
@@ -105,7 +107,7 @@ private class TransformWhileSubscribedSharedFlow<T, R>(
         val count = resultFlow.subscriptionCount.first()
         debug { "#onSubscriberAddedUnsage Subscriber added. Count: $count" }
 
-        if (upstreamJob?.isActive == true)return
+        if (upstreamJob?.isActive == true) return
 
         debug { "#onSubscriberAddedUnsage Starting upstream collection due to new subscriber" }
         startUpstreamCollectionUnsafe()
@@ -130,7 +132,7 @@ private class TransformWhileSubscribedSharedFlow<T, R>(
             .launchIn(scope)
     }
 
-    override suspend fun collect(collector: FlowCollector<R>): Nothing {
+    override suspend fun collect(collector: FlowCollector<T>): Nothing {
         resultFlow.collect(collector)
     }
 
@@ -166,20 +168,17 @@ private class TransformWhileSubscribedSharedFlow<T, R>(
  * - After the timeout expires with no subscribers, upstream stops and the replay cache is cleared
  *
  * **Transformation:**
- * - The [transformFlow] lambda allows custom transformation logic during collection
  * - Use `collect { emit(transform(it)) }` for simple transformations
  * - Use `collectLatest { emit(transform(it)) }` for conflated values
  */
 @DelicateBusyLibApi
-fun <T, R> Flow<T>.transformWhileSubscribed(
+fun <T> Flow<T>.transformWhileSubscribed(
     timeout: Duration = 30.seconds,
     scope: CoroutineScope,
-    transformFlow: (flow: Flow<T>) -> Flow<R>,
-): SharedFlow<R> {
+): SharedFlow<T> {
     return TransformWhileSubscribedSharedFlow(
         timeoutDuration = timeout,
         upstreamFlow = this,
         scope = scope,
-        collector = { collector -> transformFlow.invoke(this).collect(collector) }
     )
 }
