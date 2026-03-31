@@ -1,4 +1,4 @@
-package net.flipper.bridge.connection.feature.events.impl.protomapper.delegates
+package net.flipper.bridge.connection.feature.events.proto.protomapper.delegates
 
 import BSB_State.Matter
 import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent

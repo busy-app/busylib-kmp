@@ -1,4 +1,4 @@
-package net.flipper.bridge.connection.feature.events.impl.protomapper.delegates
+package net.flipper.bridge.connection.feature.events.proto.protomapper.delegates
 
 import BSB_Update.UpdateAction
 import BSB_Update.UpdateState
