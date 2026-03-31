@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.job
@@ -77,11 +78,14 @@ class FirmwareUpdaterApiImpl(
 
     override val state: WrappedStateFlow<FwUpdateState> = combine(
         flow = updateStatusProvider.getUpdateStatus()
+            .onEach { info { "#updateStatus: $it" } }
             .shareIn(scope, SharingStarted.WhileSubscribed(), 1),
         flow2 = fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
+            .onEach { info { "#fFeatureProvider: $it" } }
             .map { status -> status.tryCast<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>() }
             .map { status -> status?.featureApi }
             .flatMapLatest { feature -> feature?.updateVersionFlow.orNullable() }
+            .onEach { info { "#fFeatureProvider: $it" } }
             .filterNotNull()
             .shareIn(scope, SharingStarted.WhileSubscribed(), 1),
         flow3 = firmwareDownloaderApi.state,
@@ -91,7 +95,7 @@ class FirmwareUpdaterApiImpl(
                 is BsbUpdateVersion.Default -> {
                     FwUpdateStatusMapper.toFwUpdateState(
                         updateStatusSource = updateStatusSource,
-                    )
+                    ).also { info { "bsbUpdateVersion: $bsbUpdateVersion $it" } }
                 }
 
                 is BsbUpdateVersion.Url -> {
@@ -99,11 +103,11 @@ class FirmwareUpdaterApiImpl(
                         downloaderState = downloaderState,
                         uploaderState = uploaderState,
                         bsbUrlUpdateVersion = bsbUpdateVersion,
-                    )
+                    ).also { info { "bsbUpdateVersion: $bsbUpdateVersion $it" } }
                 }
             }
         }
-    ).stateIn(scope, SharingStarted.Lazily, FwUpdateState.Pending).wrap()
+    ).stateIn(scope, SharingStarted.Eagerly, FwUpdateState.Pending).wrap()
 
     override val events = previousVersionFlowProvider
         .getAutoRestartedPreviousVersionFlow(state)

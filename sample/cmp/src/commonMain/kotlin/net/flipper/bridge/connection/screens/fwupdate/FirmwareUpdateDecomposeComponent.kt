@@ -77,6 +77,7 @@ class FirmwareUpdateDecomposeComponent(
         }
     }
 
+    @Suppress("LongMethod")
     @Composable
     private fun StateSection(state: FwUpdateState) {
         Text(
@@ -172,13 +173,20 @@ class FirmwareUpdateDecomposeComponent(
                     color = MaterialTheme.colors.onBackground
                 )
             }
+
+            FwUpdateState.DownloadFailure -> {
+                Text(
+                    text = "Download failure happened!",
+                    color = MaterialTheme.colors.error
+                )
+            }
         }
     }
 
     @Composable
     private fun EventBanner(event: FwUpdateEvent) {
         val (text, color) = when (event) {
-            FwUpdateEvent.UpdateFinished -> "Update completed successfully!" to Color(0xFF4CAF50)
+            FwUpdateEvent.UpdateFinished -> "Update completed successfully!" to Color.Green
             FwUpdateEvent.UpdateFailed -> "Update failed!" to Color.Red
         }
         Text(
@@ -232,6 +240,7 @@ class FirmwareUpdateDecomposeComponent(
         FwUpdateState.UpdateAvailable -> "Update Available"
         is FwUpdateState.Uploading -> "Uploading"
         is FwUpdateState.Downloading -> "Downloading"
+        FwUpdateState.DownloadFailure -> "Download failure"
     }
 
     class Factory(

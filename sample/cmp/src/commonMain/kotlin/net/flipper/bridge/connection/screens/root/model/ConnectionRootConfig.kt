@@ -1,4 +1,4 @@
-package net.flipper.bridge.connection.screens.models
+package net.flipper.bridge.connection.screens.root.model
 
 import kotlinx.serialization.Serializable
 
@@ -15,7 +15,4 @@ sealed class ConnectionRootConfig {
 
     @Serializable
     data object Dashboard : ConnectionRootConfig()
-
-    @Serializable
-    data object FirmwareUpdate : ConnectionRootConfig()
 }
