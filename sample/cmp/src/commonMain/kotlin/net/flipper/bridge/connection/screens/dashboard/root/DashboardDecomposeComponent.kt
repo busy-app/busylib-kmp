@@ -1,4 +1,4 @@
-package net.flipper.bridge.connection.screens.dashboard
+package net.flipper.bridge.connection.screens.dashboard.root
 
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.ChildStack
@@ -17,11 +17,14 @@ import net.flipper.bridge.connection.screens.dashboard.oncall.OnCallDashboardDec
 import net.flipper.bridge.connection.screens.dashboard.oncall.OnCallDashboardViewModel
 import net.flipper.bridge.connection.screens.dashboard.overview.OverviewDashboardDecomposeComponent
 import net.flipper.bridge.connection.screens.dashboard.overview.OverviewDashboardViewModel
+import net.flipper.bridge.connection.screens.dashboard.root.model.DashboardConfig
 import net.flipper.bridge.connection.screens.dashboard.screenstreaming.ScreenStreamingDashboardDecomposeComponent
 import net.flipper.bridge.connection.screens.dashboard.screenstreaming.ScreenStreamingDashboardViewModel
 import net.flipper.bridge.connection.screens.decompose.CompositeDecomposeComponent
 import net.flipper.bridge.connection.screens.decompose.DecomposeComponent
 import net.flipper.bridge.connection.screens.decompose.DecomposeOnBackParameter
+import net.flipper.bridge.connection.screens.fwupdate.FirmwareUpdateDecomposeComponent
+import net.flipper.bridge.connection.screens.fwupdate.FirmwareUpdateViewModel
 
 class DashboardDecomposeComponent(
     componentContext: ComponentContext,
@@ -31,7 +34,8 @@ class DashboardDecomposeComponent(
     private val accountViewModelFactory: () -> AccountDashboardViewModel,
     private val hardwareViewModelFactory: () -> HardwareDashboardViewModel,
     private val onCallViewModelFactory: () -> OnCallDashboardViewModel,
-    private val screenStreamingViewModelFactory: () -> ScreenStreamingDashboardViewModel
+    private val screenStreamingViewModelFactory: () -> ScreenStreamingDashboardViewModel,
+    private val firmwareUpdateViewModelFactory: () -> FirmwareUpdateViewModel,
 ) : CompositeDecomposeComponent<DashboardConfig>(), ComponentContext by componentContext {
     override val stack: Value<ChildStack<DashboardConfig, DecomposeComponent>> = childStack(
         source = navigation,
@@ -53,7 +57,8 @@ class DashboardDecomposeComponent(
             onOpenAccount = { navigation.pushNew(DashboardConfig.Account) },
             onOpenHardware = { navigation.pushNew(DashboardConfig.Hardware) },
             onOpenOnCall = { navigation.pushNew(DashboardConfig.OnCall) },
-            onOpenScreenStreaming = { navigation.pushNew(DashboardConfig.ScreenStreaming) }
+            onOpenScreenStreaming = { navigation.pushNew(DashboardConfig.ScreenStreaming) },
+            onOpenFwUpdate = { navigation.pushNew(DashboardConfig.FirmwareUpdate) }
         )
 
         DashboardConfig.Overview -> OverviewDashboardDecomposeComponent(
@@ -91,6 +96,12 @@ class DashboardDecomposeComponent(
             onBack = navigation::pop,
             viewModelFactory = screenStreamingViewModelFactory
         )
+
+        DashboardConfig.FirmwareUpdate -> FirmwareUpdateDecomposeComponent(
+            componentContext = componentContext,
+            onBack = navigation::pop,
+            firmwareUpdateViewModelFactory = firmwareUpdateViewModelFactory
+        )
     }
 
     class Factory(
@@ -99,7 +110,8 @@ class DashboardDecomposeComponent(
         private val accountViewModelFactory: () -> AccountDashboardViewModel,
         private val hardwareViewModelFactory: () -> HardwareDashboardViewModel,
         private val onCallViewModelFactory: () -> OnCallDashboardViewModel,
-        private val screenStreamingViewModelFactory: () -> ScreenStreamingDashboardViewModel
+        private val screenStreamingViewModelFactory: () -> ScreenStreamingDashboardViewModel,
+        private val firmwareUpdateViewModelFactory: () -> FirmwareUpdateViewModel,
     ) {
         operator fun invoke(
             componentContext: ComponentContext,
@@ -113,7 +125,8 @@ class DashboardDecomposeComponent(
                 accountViewModelFactory = accountViewModelFactory,
                 hardwareViewModelFactory = hardwareViewModelFactory,
                 onCallViewModelFactory = onCallViewModelFactory,
-                screenStreamingViewModelFactory = screenStreamingViewModelFactory
+                screenStreamingViewModelFactory = screenStreamingViewModelFactory,
+                firmwareUpdateViewModelFactory = firmwareUpdateViewModelFactory
             )
         }
     }

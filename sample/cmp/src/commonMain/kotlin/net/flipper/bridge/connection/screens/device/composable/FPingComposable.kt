@@ -22,7 +22,6 @@ fun FPingComposable(
     onSendPing: () -> Unit,
     onForget: () -> Unit,
     toDashboard: () -> Unit,
-    onStartDownloadUpdate: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier) {
@@ -46,15 +45,6 @@ fun FPingComposable(
         ) {
             Text(
                 text = "Send ping",
-                color = MaterialTheme.colors.onBackground
-            )
-        }
-        Button(
-            modifier = Modifier.fillMaxWidth(),
-            onClick = onStartDownloadUpdate
-        ) {
-            Text(
-                text = "Start download and update",
                 color = MaterialTheme.colors.onBackground
             )
         }

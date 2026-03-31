@@ -10,7 +10,7 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.lightColors
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.window.Window
-import net.flipper.bridge.connection.screens.ConnectionRootDecomposeComponent
+import net.flipper.bridge.connection.screens.root.ConnectionRootDecomposeComponent
 
 fun rootWindow(
     root: ConnectionRootDecomposeComponent

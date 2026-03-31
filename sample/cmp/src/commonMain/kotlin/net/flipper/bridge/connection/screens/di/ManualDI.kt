@@ -4,19 +4,19 @@ import com.arkivanov.decompose.ComponentContext
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
-import net.flipper.bridge.connection.screens.ConnectionRootDecomposeComponent
-import net.flipper.bridge.connection.screens.dashboard.DashboardDecomposeComponent
 import net.flipper.bridge.connection.screens.dashboard.account.AccountDashboardViewModel
 import net.flipper.bridge.connection.screens.dashboard.deviceinfo.DeviceInfoDashboardViewModel
 import net.flipper.bridge.connection.screens.dashboard.hardware.HardwareDashboardViewModel
 import net.flipper.bridge.connection.screens.dashboard.oncall.OnCallDashboardViewModel
 import net.flipper.bridge.connection.screens.dashboard.overview.OverviewDashboardViewModel
+import net.flipper.bridge.connection.screens.dashboard.root.DashboardDecomposeComponent
 import net.flipper.bridge.connection.screens.dashboard.screenstreaming.ScreenStreamingDashboardViewModel
 import net.flipper.bridge.connection.screens.device.ConnectionDeviceScreenDecomposeComponent
 import net.flipper.bridge.connection.screens.device.viewmodel.FCurrentDeviceViewModel
 import net.flipper.bridge.connection.screens.device.viewmodel.FDevicesViewModel
 import net.flipper.bridge.connection.screens.device.viewmodel.PingViewModel
-import net.flipper.bridge.connection.screens.device.viewmodel.UpdaterViewModel
+import net.flipper.bridge.connection.screens.fwupdate.FirmwareUpdateViewModel
+import net.flipper.bridge.connection.screens.root.ConnectionRootDecomposeComponent
 import net.flipper.bridge.connection.screens.search.ConnectionSearchDecomposeComponent
 import net.flipper.bridge.connection.screens.search.ConnectionSearchViewModel
 import net.flipper.bridge.connection.screens.utils.PermissionChecker
@@ -66,12 +66,12 @@ private fun getRootDecomposeComponentFactory(
             orchestrator = orchestrator,
             featureProvider = featureProvider,
             fService = fConnectionService,
-            firmwareUpdaterApi = firmwareUpdaterApi
         ),
         dashboardDecomposeComponentFactory = getDashboardDecomposeComponentFactory(
             fFeatureProvider = featureProvider,
-            principalApi = principalApi
-        )
+            principalApi = principalApi,
+            firmwareUpdaterApi = firmwareUpdaterApi
+        ),
     )
 }
 
@@ -88,7 +88,6 @@ private fun getConnectionDeviceScreenDecomposeComponentFactory(
     orchestrator: FDeviceOrchestrator,
     featureProvider: FFeatureProvider,
     fService: FConnectionService,
-    firmwareUpdaterApi: FirmwareUpdaterApi
 ): ConnectionDeviceScreenDecomposeComponent.Factory {
     return ConnectionDeviceScreenDecomposeComponent.Factory(
         devicesViewModelProvider = { FDevicesViewModel(persistedStorage) },
@@ -100,14 +99,14 @@ private fun getConnectionDeviceScreenDecomposeComponentFactory(
             )
         },
         pingViewModelProvider = { PingViewModel(featureProvider, orchestrator) },
-        updaterViewModelProvider = { UpdaterViewModel(firmwareUpdaterApi) }
 
     )
 }
 
 private fun getDashboardDecomposeComponentFactory(
     fFeatureProvider: FFeatureProvider,
-    principalApi: UserPrincipalApiSampleImpl?
+    principalApi: UserPrincipalApiSampleImpl?,
+    firmwareUpdaterApi: FirmwareUpdaterApi
 ): DashboardDecomposeComponent.Factory {
     return DashboardDecomposeComponent.Factory(
         overviewViewModelFactory = { OverviewDashboardViewModel(fFeatureProvider) },
@@ -115,6 +114,7 @@ private fun getDashboardDecomposeComponentFactory(
         accountViewModelFactory = { AccountDashboardViewModel(fFeatureProvider, principalApi) },
         hardwareViewModelFactory = { HardwareDashboardViewModel(fFeatureProvider) },
         onCallViewModelFactory = { OnCallDashboardViewModel(fFeatureProvider) },
-        screenStreamingViewModelFactory = { ScreenStreamingDashboardViewModel(fFeatureProvider) }
+        screenStreamingViewModelFactory = { ScreenStreamingDashboardViewModel(fFeatureProvider) },
+        firmwareUpdateViewModelFactory = { FirmwareUpdateViewModel(firmwareUpdaterApi) }
     )
 }
