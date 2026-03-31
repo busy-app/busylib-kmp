@@ -4,7 +4,13 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -25,6 +31,7 @@ import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import net.flipper.busylib.core.wrapper.WrappedStateFlow
 import net.flipper.busylib.core.wrapper.wrap
+import net.flipper.core.busylib.ktx.common.asFlow
 import kotlin.reflect.KClass
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -48,7 +55,7 @@ class CloudProvisioningWatcherTest {
             )
 
             val setup = createSetup(
-                devices = mutableListOf(device),
+                devices = listOf(device),
                 connectedDevice = device,
                 linkedInfo = RpcLinkedAccountInfo(linked = true, cloudId = cloudId.toString())
             )
@@ -56,11 +63,11 @@ class CloudProvisioningWatcherTest {
             setup.watcher.onLaunch()
             advanceUntilIdle()
 
-            val updated = setup.storage.findDevice("device-1")
+            val updated = setup.storage.findDevice("device-1").drop(1).first()
             assertNotNull(updated)
-            assertNotNull(updated.cloud)
-            assertEquals(cloudId, updated.cloud!!.deviceId)
-            assertNotNull(updated.ble)
+            assertNotNull(updated?.cloud)
+            assertEquals(cloudId, updated?.cloud?.deviceId)
+            assertNotNull(updated?.ble)
         }
 
     @Test
@@ -71,7 +78,7 @@ class CloudProvisioningWatcherTest {
         )
 
         val setup = createSetup(
-            devices = mutableListOf(device),
+            devices = listOf(device),
             connectedDevice = device,
             linkedInfo = RpcLinkedAccountInfo(linked = false, cloudId = null)
         )
@@ -81,7 +88,7 @@ class CloudProvisioningWatcherTest {
 
         val updated = setup.storage.findDevice("device-1")
         assertNotNull(updated)
-        assertEquals(device.connectionWays, updated.connectionWays)
+        assertEquals(device.connectionWays, updated?.first()?.connectionWays)
     }
 
     @Test
@@ -95,7 +102,7 @@ class CloudProvisioningWatcherTest {
             )
 
             val setup = createSetup(
-                devices = mutableListOf(device),
+                devices = listOf(device),
                 connectedDevice = device,
                 linkedInfo = RpcLinkedAccountInfo(linked = true, cloudId = cloudId.toString())
             )
@@ -105,7 +112,7 @@ class CloudProvisioningWatcherTest {
 
             val updated = setup.storage.findDevice("device-1")
             assertNotNull(updated)
-            assertEquals(device.connectionWays, updated.connectionWays)
+            assertEquals(device.connectionWays, updated?.first()?.connectionWays)
         }
 
     @Test
@@ -120,7 +127,7 @@ class CloudProvisioningWatcherTest {
             )
 
             val setup = createSetup(
-                devices = mutableListOf(device),
+                devices = listOf(device),
                 connectedDevice = device,
                 linkedInfo = RpcLinkedAccountInfo(linked = true, cloudId = newCloudId.toString())
             )
@@ -131,16 +138,18 @@ class CloudProvisioningWatcherTest {
             // Original device should still exist unchanged
             val original = setup.storage.findDevice("device-1")
             assertNotNull(original)
-            assertEquals(device.connectionWays, original.connectionWays)
+            assertEquals(device.connectionWays, original?.first()?.connectionWays)
 
             // New device should be created with the new cloud connection
-            val newDevice = setup.storage.devices.find { it.uniqueId != "device-1" }
+            val newDevice = setup.storage.devices.mapNotNull { list ->
+                list.firstOrNull { it.uniqueId != "device-1" }
+            }.first()
             assertNotNull(newDevice, "New device should be created")
             assertNotNull(newDevice.cloud)
             assertEquals(newCloudId, newDevice.cloud!!.deviceId)
 
             // Current device should be switched to new device
-            assertEquals(newDevice, setup.storage.currentDevice)
+            assertEquals(newDevice, setup.storage.getCurrentDeviceFlow().first())
         }
 
     @Test
@@ -159,7 +168,7 @@ class CloudProvisioningWatcherTest {
             )
 
             val setup = createSetup(
-                devices = mutableListOf(device, existingDevice),
+                devices = listOf(device, existingDevice),
                 connectedDevice = device,
                 linkedInfo = RpcLinkedAccountInfo(
                     linked = true,
@@ -171,9 +180,9 @@ class CloudProvisioningWatcherTest {
             advanceUntilIdle()
 
             // Should switch to existing device
-            assertEquals(existingDevice, setup.storage.currentDevice)
+            assertEquals(existingDevice, setup.storage.getCurrentDeviceFlow().drop(1).first())
             // No new devices created
-            assertEquals(2, setup.storage.devices.size)
+            assertEquals(2, setup.storage.devices.first().size)
         }
 
     @Test
@@ -187,7 +196,7 @@ class CloudProvisioningWatcherTest {
             )
 
             val setup = createSetup(
-                devices = mutableListOf(device),
+                devices = listOf(device),
                 connectedDevice = device,
                 linkedInfo = RpcLinkedAccountInfo(linked = false, cloudId = null)
             )
@@ -197,8 +206,8 @@ class CloudProvisioningWatcherTest {
 
             val updated = setup.storage.findDevice("device-1")
             assertNotNull(updated)
-            assertNull(updated.cloud, "Cloud connection should be removed")
-            assertNotNull(updated.ble, "BLE connection should remain")
+            assertNull(updated?.drop(1)?.first()?.cloud, "Cloud connection should be removed")
+            assertNotNull(updated?.first()?.ble, "BLE connection should remain")
         }
 
     @Test
@@ -209,7 +218,7 @@ class CloudProvisioningWatcherTest {
         )
 
         val setup = createSetup(
-            devices = mutableListOf(device),
+            devices = listOf(device),
             connectedDevice = device,
             linkedInfo = null
         )
@@ -219,7 +228,7 @@ class CloudProvisioningWatcherTest {
 
         val updated = setup.storage.findDevice("device-1")
         assertNotNull(updated)
-        assertEquals(device.connectionWays, updated.connectionWays)
+        assertEquals(device.connectionWays, updated.first()?.connectionWays)
     }
 
     @Test
@@ -232,7 +241,7 @@ class CloudProvisioningWatcherTest {
         )
 
         val setup = createSetup(
-            devices = mutableListOf(device),
+            devices = listOf(device),
             connectedDevice = device,
             linkedInfo = RpcLinkedAccountInfo(linked = true, cloudId = cloudId.toString())
         )
@@ -243,13 +252,14 @@ class CloudProvisioningWatcherTest {
         val updated = setup.storage.findDevice("device-1")
         assertNotNull(updated)
         // All connection ways should be present
-        assertNotNull(updated.lan)
-        assertNotNull(updated.cloud)
-        assertNotNull(updated.ble)
+        assertNotNull(updated.filterNotNull().mapNotNull { it.lan }.first())
+        assertNotNull(updated.filterNotNull().mapNotNull { it.cloud }.first())
+        assertNotNull(updated.filterNotNull().mapNotNull { it.ble }.first())
         // Priority order in connectionWays: Lan(100) > Cloud(10) > BLE(0)
-        assertTrue(updated.connectionWays[0] is BUSYBar.ConnectionWay.Lan)
-        assertTrue(updated.connectionWays[1] is BUSYBar.ConnectionWay.Cloud)
-        assertTrue(updated.connectionWays[2] is BUSYBar.ConnectionWay.BLE)
+
+        assertTrue(updated.filterNotNull().mapNotNull { it.connectionWays[0] }.first() is BUSYBar.ConnectionWay.Lan)
+        assertTrue(updated.filterNotNull().mapNotNull { it.connectionWays[1] }.first() is BUSYBar.ConnectionWay.Cloud)
+        assertTrue(updated.filterNotNull().mapNotNull { it.connectionWays[2] }.first() is BUSYBar.ConnectionWay.BLE)
     }
 
     // endregion
@@ -262,11 +272,11 @@ class CloudProvisioningWatcherTest {
     )
 
     private fun TestScope.createSetup(
-        devices: MutableList<BUSYBar>,
+        devices: List<BUSYBar>,
         connectedDevice: BUSYBar,
         linkedInfo: RpcLinkedAccountInfo?
     ): TestSetup {
-        val storage = FakePersistedStorage(devices)
+        val storage = FakePersistedStorage(MutableStateFlow(devices))
 
         val rpcApi = FakeRpcCriticalFeatureApi(
             accountInfoFlow = MutableStateFlow(linkedInfo)
@@ -322,27 +332,29 @@ class CloudProvisioningWatcherTest {
     // region Fakes
 
     private class FakePersistedStorage(
-        val devices: MutableList<BUSYBar>
+        val devices: MutableStateFlow<List<BUSYBar>>
     ) : FDevicePersistedStorage {
-        var currentDevice: BUSYBar? = null
+        private val currentDeviceFlow = MutableStateFlow<BUSYBar?>(null)
 
-        fun findDevice(id: String): BUSYBar? = devices.find { it.uniqueId == id }
+        fun findDevice(id: String): Flow<BUSYBar?> = devices.map { list -> list.firstOrNull { it.uniqueId == id } }
 
-        override fun getCurrentDeviceFlow() = flowOf(currentDevice).wrap()
-        override fun getAllDevicesFlow() = flowOf(devices.toList()).wrap()
+        override fun getCurrentDeviceFlow() = currentDeviceFlow.asFlow().wrap()
+        override fun getAllDevicesFlow() = devices.asFlow().wrap()
 
         override suspend fun <T> transaction(block: suspend PersistedStorageTransactionScope.() -> T): T {
             val scope = object : PersistedStorageTransactionScope {
-                override fun getCurrentDevice() = this@FakePersistedStorage.currentDevice
-                override fun getAllDevices() = this@FakePersistedStorage.devices.toList()
+                override fun getCurrentDevice() = this@FakePersistedStorage.currentDeviceFlow.value
+                override fun getAllDevices() = this@FakePersistedStorage.devices.value.toList()
 
                 override fun setCurrentDevice(device: BUSYBar) {
-                    this@FakePersistedStorage.currentDevice = device
+                    this@FakePersistedStorage.currentDeviceFlow.value = device
                 }
 
                 override fun addOrReplace(device: BUSYBar) {
-                    this@FakePersistedStorage.devices.removeAll { it.uniqueId == device.uniqueId }
-                    this@FakePersistedStorage.devices.add(device)
+                    this@FakePersistedStorage.devices.update { list ->
+                        list.filter { it.uniqueId != device.uniqueId } +
+                            device
+                    }
                 }
             }
             return scope.block()

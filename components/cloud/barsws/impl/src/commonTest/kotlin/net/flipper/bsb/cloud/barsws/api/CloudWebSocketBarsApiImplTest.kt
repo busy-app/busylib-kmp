@@ -11,9 +11,12 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.runBlocking
@@ -88,7 +91,11 @@ class CloudWebSocketBarsApiImplTest {
             if (webSockets.isNotEmpty()) {
                 val firstWs = webSockets.first()
                 webSockets.forEach { ws ->
-                    assertSame(firstWs, ws, "All subscribers should receive the same WebSocket instance")
+                    assertSame(
+                        firstWs,
+                        ws,
+                        "All subscribers should receive the same WebSocket instance"
+                    )
                 }
             }
 
@@ -122,7 +129,11 @@ class CloudWebSocketBarsApiImplTest {
 
             // Then - late subscriber should get the same instance due to replay
             if (firstWs != null && lateWs != null) {
-                assertSame(firstWs, lateWs, "Late subscriber should receive same WebSocket via replay")
+                assertSame(
+                    firstWs,
+                    lateWs,
+                    "Late subscriber should receive same WebSocket via replay"
+                )
             }
 
             job1.cancel()
@@ -322,15 +333,20 @@ class CloudWebSocketBarsApiImplTest {
                 principal = testToken()
             )
 
-            val receivedWebSockets = mutableListOf<BSBWebSocket?>()
+            val receivedWebSockets = MutableStateFlow(listOf<BSBWebSocket?>())
             val job = testSetup.api.getWSFlow()
-                .onEach { receivedWebSockets.add(it) }
+                .onEach { receivedWebSockets.update { list -> list + it } }
                 .launchIn(backgroundScope)
 
             advanceUntilIdle()
 
             // Initially no WebSocket
-            assertTrue(receivedWebSockets.all { it == null }, "No WebSocket initially")
+            assertTrue(
+                receivedWebSockets.map { list -> list.all { it == null } }
+                    .filter { it }
+                    .first(),
+                "No WebSocket initially"
+            )
 
             // When - network becomes available
             networkFlow.value = true
@@ -338,7 +354,7 @@ class CloudWebSocketBarsApiImplTest {
 
             // Then - WebSocket should be emitted
             assertTrue(
-                receivedWebSockets.any { it != null },
+                receivedWebSockets.map { list -> list.any { it != null } }.filter { it }.first(),
                 "WebSocket should be emitted when network becomes available"
             )
             job.cancel()
@@ -354,22 +370,25 @@ class CloudWebSocketBarsApiImplTest {
             principalFlow = principalFlow
         )
 
-        val receivedWebSockets = mutableListOf<BSBWebSocket?>()
+        val listFlow = MutableStateFlow(listOf<BSBWebSocket?>())
         val job = testSetup.api.getWSFlow()
-            .onEach { receivedWebSockets.add(it) }
+            .onEach { listFlow.update { list -> list + it } }
             .launchIn(backgroundScope)
 
         advanceUntilIdle()
 
         // Initially no WebSocket
-        assertTrue(receivedWebSockets.all { it == null }, "No WebSocket initially")
+        assertTrue(listFlow.drop(1).first().all { it == null }, "No WebSocket initially")
 
         // When - user logs in
         principalFlow.value = testToken("new-token")
         advanceUntilIdle()
 
         // Then - WebSocket should be emitted
-        assertTrue(receivedWebSockets.any { it != null }, "WebSocket should be emitted when user logs in")
+        assertTrue(
+            listFlow.drop(1).first().any { it != null },
+            "WebSocket should be emitted when user logs in"
+        )
         job.cancel()
     }
 
@@ -430,17 +449,16 @@ class CloudWebSocketBarsApiImplTest {
         // Given
         val hostFlow = MutableStateFlow("host1.example.com")
         val createdHostsMutex = Mutex()
-        val createdHosts = mutableListOf<String>()
+        val createdHostsFlow = MutableStateFlow(listOf<String>())
 
         val testSetup = createTestSetup(
-
             isNetworkAvailable = true,
             principal = testToken(),
             hostFlow = hostFlow,
             onWebSocketCreatedForHost = { host ->
                 runBlocking {
                     createdHostsMutex.withLock {
-                        createdHosts.add(host)
+                        createdHostsFlow.update { list -> list + host }
                     }
                 }
             }
@@ -455,7 +473,10 @@ class CloudWebSocketBarsApiImplTest {
 
         // Then - new WebSocket should be created for new host
         // The combine operator should trigger a new websocket creation
-        assertTrue(createdHosts.size >= 1, "At least one WebSocket should be created")
+        assertTrue(
+            createdHostsFlow.filter { it.size >= 1 }.first().size >= 1,
+            "At least one WebSocket should be created"
+        )
         job.cancel()
     }
 

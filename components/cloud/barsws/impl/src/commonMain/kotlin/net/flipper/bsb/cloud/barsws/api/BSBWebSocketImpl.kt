@@ -6,6 +6,7 @@ import io.ktor.http.URLProtocol
 import io.ktor.http.path
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -44,6 +45,9 @@ class BSBWebSocketImpl(
         while (currentCoroutineContext().isActive) {
             val message = try {
                 session.receive()
+            } catch (e: ClosedReceiveChannelException) {
+                error(e) { "Channel closed for receive" }
+                null
             } catch (e: SerializationException) {
                 error(e) { "Failed deserialize message from websocket" }
                 null
@@ -53,8 +57,7 @@ class BSBWebSocketImpl(
             val webSocketEvent = message?.let { getWebSocketEvent(it) }
             webSocketEvent?.let { send(it) }
         }
-    }.flowOn(dispatcher)
-        .shareIn(scope, SharingStarted.WhileSubscribed(), replay = 1)
+    }.flowOn(dispatcher).shareIn(scope, SharingStarted.WhileSubscribed(), 1)
 
     private fun getWebSocketEvent(jsonObject: JsonObject): WebSocketEvent? {
         val barIdPrimitive = jsonObject[JSON_KEY_BAR_ID] as? JsonPrimitive
