@@ -47,11 +47,11 @@ class FRpcAssetsApiImpl(
     }
 
     override suspend fun removeDraw(
-        appId: String?
+        appId: String
     ): Result<SuccessResponse> {
         return runSuspendCatching(dispatcher) {
             httpClient.delete("/api/display/draw") {
-                appId?.let { parameter("application_name", it) }
+                parameter("application_name", appId)
             }.requireSuccessResponse()
         }
     }

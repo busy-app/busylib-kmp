@@ -11,5 +11,5 @@ interface FRpcAssetsApi {
     ): Result<SuccessResponse>
 
     suspend fun displayDraw(request: DrawRequest): Result<SuccessResponse>
-    suspend fun removeDraw(appId: String? = null): Result<SuccessResponse>
+    suspend fun removeDraw(appId: String): Result<SuccessResponse>
 }
