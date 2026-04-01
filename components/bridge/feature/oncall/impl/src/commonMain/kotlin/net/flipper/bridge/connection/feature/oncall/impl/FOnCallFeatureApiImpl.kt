@@ -75,9 +75,6 @@ class FOnCallFeatureApiImpl(
                     display = DrawRequest.Display.FRONT,
                     type = DrawRequest.Element.ElementType.ANIMATION,
                     stockPath = ANIM_PATH,
-                    x = 0,
-                    y = 0,
-                    section = "default",
                     loop = true
                 )
             )

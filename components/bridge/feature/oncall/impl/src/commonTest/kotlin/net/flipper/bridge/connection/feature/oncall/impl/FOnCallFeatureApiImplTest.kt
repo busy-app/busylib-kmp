@@ -89,7 +89,7 @@ class FOnCallFeatureApiImplTest {
         advanceTimeBy(1)
 
         val request = fakeAssetsApi.drawRequests.first()
-        assertEquals("my_app_debug_1", request.applicationName)
+        assertEquals("my_app_debug_1", request.appId)
         assertEquals(50, request.priority)
 
         val element = request.elements.first()
@@ -111,7 +111,7 @@ private class FakeRpcAssetsApi : FRpcAssetsApi {
     val removedAppIds = mutableListOf<String>()
 
     override suspend fun uploadAsset(
-        applicationName: String,
+        appId: String,
         file: String,
         content: ByteArray
     ): Result<SuccessResponse> {
@@ -123,8 +123,8 @@ private class FakeRpcAssetsApi : FRpcAssetsApi {
         return Result.success(SuccessResponse("ok"))
     }
 
-    override suspend fun removeDraw(applicationName: String): Result<SuccessResponse> {
-        removedAppIds.add(applicationName)
+    override suspend fun removeDraw(appId: String): Result<SuccessResponse> {
+        removedAppIds.add(appId)
         return Result.success(SuccessResponse("ok"))
     }
 }
