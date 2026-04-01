@@ -19,8 +19,8 @@ data class BusyBarStatus(
 data class BusyBarStatusDevice(
     @SerialName("serial_number") val serialNumber: String,
     @SerialName("usb_mac") val usbMac: String,
-    @SerialName("wifi_mac") val wifiMac: String = "",
-    @SerialName("ble_mac") val bleMac: String = "",
+    @SerialName("wifi_mac") val wifiMac: String? = null,
+    @SerialName("ble_mac") val bleMac: String? = null,
     @SerialName("otp_valid") val otpValid: Boolean,
     @SerialName("otp_model") val otpModel: String? = null,
     @SerialName("otp_timestamp")
