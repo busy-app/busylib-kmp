@@ -53,7 +53,7 @@ class FOnCallFeatureApiImplTest {
         api.stop()
         advanceTimeBy(1)
 
-        assertEquals("on_call", fakeAssetsApi.removedAppIds.last())
+        assertEquals("my_app_debug_1", fakeAssetsApi.removedAppIds.last())
     }
 
     @Test
@@ -89,16 +89,17 @@ class FOnCallFeatureApiImplTest {
         advanceTimeBy(1)
 
         val request = fakeAssetsApi.drawRequests.first()
-        assertEquals("on_call", request.appId)
+        assertEquals("my_app_debug_1", request.applicationName)
         assertEquals(50, request.priority)
 
         val element = request.elements.first()
-        assertEquals("0", element.id)
-        assertEquals(30, element.timeout)
+        assertEquals("anim_debug_1", element.id)
         assertEquals(DrawRequest.Display.FRONT, element.display)
         assertEquals(DrawRequest.Element.ElementType.ANIMATION, element.type)
-        assertEquals("shared/on_call_72x16", element.stockPath)
-        assertEquals("loop", element.section)
+        assertEquals("shared/on_call_72x16.anim", element.stockPath)
+        assertEquals(0, element.x)
+        assertEquals(0, element.y)
+        assertEquals("default", element.section)
         assertEquals(true, element.loop)
 
         api.stop()
@@ -107,10 +108,10 @@ class FOnCallFeatureApiImplTest {
 
 private class FakeRpcAssetsApi : FRpcAssetsApi {
     val drawRequests = mutableListOf<DrawRequest>()
-    val removedAppIds = mutableListOf<String?>()
+    val removedAppIds = mutableListOf<String>()
 
     override suspend fun uploadAsset(
-        appId: String,
+        applicationName: String,
         file: String,
         content: ByteArray
     ): Result<SuccessResponse> {
@@ -122,8 +123,8 @@ private class FakeRpcAssetsApi : FRpcAssetsApi {
         return Result.success(SuccessResponse("ok"))
     }
 
-    override suspend fun removeDraw(appId: String?): Result<SuccessResponse> {
-        removedAppIds.add(appId)
+    override suspend fun removeDraw(applicationName: String): Result<SuccessResponse> {
+        removedAppIds.add(applicationName)
         return Result.success(SuccessResponse("ok"))
     }
 }
