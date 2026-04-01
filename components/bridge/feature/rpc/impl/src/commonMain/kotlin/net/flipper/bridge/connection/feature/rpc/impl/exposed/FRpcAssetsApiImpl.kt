@@ -32,7 +32,7 @@ class FRpcAssetsApiImpl(
                 parameter("file", file)
                 contentType(ContentType.Application.OctetStream)
                 setBody(content)
-            }.requireSuccessResponse()
+            }.body<SuccessResponse>()
         }
     }
 
@@ -42,7 +42,7 @@ class FRpcAssetsApiImpl(
         return runSuspendCatching(dispatcher) {
             httpClient.post("/api/display/draw") {
                 setBody(request)
-            }.requireSuccessResponse()
+            }.body<SuccessResponse>()
         }
     }
 
@@ -52,14 +52,7 @@ class FRpcAssetsApiImpl(
         return runSuspendCatching(dispatcher) {
             httpClient.delete("/api/display/draw") {
                 parameter("application_name", appId)
-            }.requireSuccessResponse()
-        }
-    }
-
-    private suspend fun HttpResponse.requireSuccessResponse(): SuccessResponse {
-        return when (val response = body<ApiResponse>()) {
-            is SuccessResponse -> response
-            is ErrorResponse -> error("Received error response (${status.value}): ${response.error}")
+            }.body<SuccessResponse>()
         }
     }
 }
