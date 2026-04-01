@@ -5,6 +5,8 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class RpcTimezoneInfo(
-    @SerialName("timezone")
-    val timezone: String
+    @SerialName("name")
+    val timezone: String,
+    val offset: String? = null,
+    val abbr: String? = null
 )

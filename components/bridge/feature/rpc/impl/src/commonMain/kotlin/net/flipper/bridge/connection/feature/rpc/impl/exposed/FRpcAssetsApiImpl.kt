@@ -1,6 +1,7 @@
 package net.flipper.bridge.connection.feature.rpc.impl.exposed
 
 import io.ktor.client.HttpClient
+import io.ktor.client.statement.HttpResponse
 import io.ktor.client.call.body
 import io.ktor.client.request.delete
 import io.ktor.client.request.parameter
@@ -10,7 +11,9 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import kotlinx.coroutines.CoroutineDispatcher
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcAssetsApi
+import net.flipper.bridge.connection.feature.rpc.api.model.ApiResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.DrawRequest
+import net.flipper.bridge.connection.feature.rpc.api.model.ErrorResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
 
@@ -25,11 +28,11 @@ class FRpcAssetsApiImpl(
     ): Result<SuccessResponse> {
         return runSuspendCatching(dispatcher) {
             httpClient.post("/api/assets/upload") {
-                parameter("app_id", appId)
+                parameter("application_name", appId)
                 parameter("file", file)
                 contentType(ContentType.Application.OctetStream)
                 setBody(content)
-            }.body<SuccessResponse>()
+            }.requireSuccessResponse()
         }
     }
 
@@ -39,17 +42,24 @@ class FRpcAssetsApiImpl(
         return runSuspendCatching(dispatcher) {
             httpClient.post("/api/display/draw") {
                 setBody(request)
-            }.body<SuccessResponse>()
+            }.requireSuccessResponse()
         }
     }
 
     override suspend fun removeDraw(
-        appId: String
+        appId: String?
     ): Result<SuccessResponse> {
         return runSuspendCatching(dispatcher) {
             httpClient.delete("/api/display/draw") {
-                parameter("app_id", appId)
-            }.body<SuccessResponse>()
+                appId?.let { parameter("application_name", it) }
+            }.requireSuccessResponse()
+        }
+    }
+
+    private suspend fun HttpResponse.requireSuccessResponse(): SuccessResponse {
+        return when (val response = body<ApiResponse>()) {
+            is SuccessResponse -> response
+            is ErrorResponse -> error("Received error response (${status.value}): ${response.error}")
         }
     }
 }

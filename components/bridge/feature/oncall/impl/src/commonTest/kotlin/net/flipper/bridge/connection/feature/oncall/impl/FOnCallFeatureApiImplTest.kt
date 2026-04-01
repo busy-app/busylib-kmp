@@ -90,14 +90,14 @@ class FOnCallFeatureApiImplTest {
 
         val request = fakeAssetsApi.drawRequests.first()
         assertEquals("on_call", request.appId)
+        assertEquals(50, request.priority)
 
         val element = request.elements.first()
         assertEquals("0", element.id)
         assertEquals(30, element.timeout)
-        assertEquals(50, element.priority)
         assertEquals(DrawRequest.Display.FRONT, element.display)
-        assertEquals(DrawRequest.Element.ElementType.ANIM, element.type)
-        assertEquals("shared/on_call_72x16", element.builtinAnim)
+        assertEquals(DrawRequest.Element.ElementType.ANIMATION, element.type)
+        assertEquals("shared/on_call_72x16", element.stockPath)
         assertEquals("loop", element.section)
         assertEquals(true, element.loop)
 
@@ -107,7 +107,7 @@ class FOnCallFeatureApiImplTest {
 
 private class FakeRpcAssetsApi : FRpcAssetsApi {
     val drawRequests = mutableListOf<DrawRequest>()
-    val removedAppIds = mutableListOf<String>()
+    val removedAppIds = mutableListOf<String?>()
 
     override suspend fun uploadAsset(
         appId: String,
@@ -122,7 +122,7 @@ private class FakeRpcAssetsApi : FRpcAssetsApi {
         return Result.success(SuccessResponse("ok"))
     }
 
-    override suspend fun removeDraw(appId: String): Result<SuccessResponse> {
+    override suspend fun removeDraw(appId: String?): Result<SuccessResponse> {
         removedAppIds.add(appId)
         return Result.success(SuccessResponse("ok"))
     }

@@ -9,6 +9,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcMatterApi
 import net.flipper.bridge.connection.feature.rpc.api.model.MatterCommissionedFabrics
 import net.flipper.bridge.connection.feature.rpc.api.model.MatterCommissioningPayload
+import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
 import net.flipper.core.busylib.ktx.common.cache.ObjectCache
 import net.flipper.core.busylib.ktx.common.cache.getOrElse
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
@@ -20,20 +21,20 @@ class FRpcMatterApiImpl(
 ) : FRpcMatterApi {
     override suspend fun postMatterCommissioning(): Result<MatterCommissioningPayload> {
         return runSuspendCatching(dispatcher) {
-            httpClient.post("/api/matter/commissioning").body<MatterCommissioningPayload>()
+            httpClient.post("/api/smart_home/pairing").body<MatterCommissioningPayload>()
         }
     }
 
     override suspend fun deleteMatterCommissioning(): Result<Unit> {
         return runSuspendCatching(dispatcher) {
-            httpClient.delete("/api/matter/commissioning").body<MatterCommissioningPayload>()
-        }
+            httpClient.delete("/api/smart_home/pairing").body<SuccessResponse>()
+        }.map { }
     }
 
     override suspend fun getMatterCommissioning(ignoreCache: Boolean): Result<MatterCommissionedFabrics> {
         return runSuspendCatching(dispatcher) {
             objectCache.getOrElse(ignoreCache) {
-                httpClient.get("/api/matter/commissioning").body<MatterCommissionedFabrics>()
+                httpClient.get("/api/smart_home/pairing").body<MatterCommissionedFabrics>()
             }
         }
     }
