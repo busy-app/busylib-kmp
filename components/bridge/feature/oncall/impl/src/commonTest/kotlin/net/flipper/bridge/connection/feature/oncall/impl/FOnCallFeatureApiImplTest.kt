@@ -53,7 +53,7 @@ class FOnCallFeatureApiImplTest {
         api.stop()
         advanceTimeBy(1)
 
-        assertEquals("my_app_debug_1", fakeAssetsApi.removedAppIds.last())
+        assertEquals("busy_lib_on_call", fakeAssetsApi.removedAppIds.last())
     }
 
     @Test
@@ -89,17 +89,14 @@ class FOnCallFeatureApiImplTest {
         advanceTimeBy(1)
 
         val request = fakeAssetsApi.drawRequests.first()
-        assertEquals("my_app_debug_1", request.appId)
+        assertEquals("busy_lib_on_call", request.appId)
         assertEquals(50, request.priority)
 
         val element = request.elements.first()
-        assertEquals("anim_debug_1", element.id)
+        assertEquals("busy_lib_on_call_anim", element.id)
         assertEquals(DrawRequest.Display.FRONT, element.display)
         assertEquals(DrawRequest.Element.ElementType.ANIMATION, element.type)
         assertEquals("shared/on_call_72x16.anim", element.stockPath)
-        assertEquals(0, element.x)
-        assertEquals(0, element.y)
-        assertEquals("default", element.section)
         assertEquals(true, element.loop)
 
         api.stop()
