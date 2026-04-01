@@ -44,16 +44,18 @@ class AutoProvisioningTimeZone(
             return
         }
         val newTimeZone = findClosestTimeZone(allTimeZones)
-        timeZoneFeature.setTimezone(TimezoneInfo(
+        timeZoneFeature.setTimezone(
+            TimezoneInfo(
             timezone = newTimeZone.name,
             offset = newTimeZone.offset,
             abbr = newTimeZone.abbr
-        ))
-        .onFailure {
-            error(it) { "Failed setup timezone" }
-        }.onSuccess {
-            info { "Successfully setup new timezone: $newTimeZone" }
-        }
+        )
+        )
+            .onFailure {
+                error(it) { "Failed setup timezone" }
+            }.onSuccess {
+                info { "Successfully setup new timezone: $newTimeZone" }
+            }
     }
 
     private fun findClosestTimeZone(timeZones: List<TimezoneListItem>): TimezoneListItem {
