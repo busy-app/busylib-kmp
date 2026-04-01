@@ -11,11 +11,10 @@ import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
 import net.flipper.bridge.connection.feature.events.api.get
-import net.flipper.bridge.connection.feature.events.api.getBsbUpdateFlow
-import net.flipper.bridge.connection.feature.events.model.BsbUpdateEvent
 import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
 import net.flipper.bridge.connection.feature.events.model.ConsumableUpdateEvent
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
+import net.flipper.bridge.connection.feature.rpc.api.model.RpcTimestampInfo
 import net.flipper.bridge.connection.feature.rpc.api.model.RpcTimezoneInfo
 import net.flipper.bridge.connection.feature.timezone.api.model.TimestampInfo
 import net.flipper.bridge.connection.feature.timezone.api.model.TimezoneInfo
@@ -25,12 +24,12 @@ import net.flipper.busylib.core.wrapper.CResult
 import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.toCResult
 import net.flipper.busylib.core.wrapper.wrap
-import net.flipper.core.busylib.ktx.common.DefaultConsumable
 import net.flipper.core.busylib.ktx.common.asFlow
 import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.merge
 import net.flipper.core.busylib.ktx.common.orEmpty
 import net.flipper.core.busylib.ktx.common.throttleLatest
+import net.flipper.core.busylib.ktx.common.throttleLatestCached
 import net.flipper.core.busylib.ktx.common.transformWhileSubscribed
 import net.flipper.core.busylib.ktx.common.tryConsume
 import net.flipper.core.busylib.log.LogTagProvider
@@ -44,14 +43,26 @@ class FTimeZoneFeatureApiImpl(
     override val TAG: String = "FTimeZoneFeatureApi"
 
     private val timestampInfoSharedFlow = fEventsFeatureApi
-        ?.getBsbUpdateFlow(BsbUpdateEvent.TIMESTAMP_CHANGED)
+        ?.get<BusyLibUpdateEvent.Timestamp>()
         .orEmpty()
-        .merge(flowOf(DefaultConsumable(false)))
+        .merge(flowOf(ConsumableUpdateEvent.Empty))
         .transformWhileSubscribed(scope = scope) { flow ->
-            flow.throttleLatest { consumable ->
+            flow.throttleLatestCached { consumable, rpcTimestampInfo: RpcTimestampInfo? ->
                 val couldConsume = consumable.tryConsume()
-                exponentialRetry {
-                    rpcFeatureApi.fRpcTimeZoneApi.getTime(couldConsume)
+                when (consumable) {
+                    is ConsumableUpdateEvent.BusyLib<BusyLibUpdateEvent.Timestamp> if rpcTimestampInfo != null -> {
+                        consumable.busyLibUpdateEvent.let { event ->
+                            rpcTimestampInfo.copy(
+                                timestamp = event.timestamp
+                            )
+                        }
+                    }
+
+                    else -> {
+                        exponentialRetry {
+                            rpcFeatureApi.fRpcTimeZoneApi.getTime(couldConsume)
+                        }
+                    }
                 }
             }
         }
@@ -64,7 +75,12 @@ class FTimeZoneFeatureApiImpl(
     }
 
     override suspend fun setTimestamp(timestampInfo: TimestampInfo): CResult<Unit> {
-        return rpcFeatureApi.fRpcTimeZoneApi.postTimeTimestamp(timestampInfo.toInternal())
+        return rpcFeatureApi.fRpcTimeZoneApi
+            .postTimeTimestamp(timestampInfo.toInternal())
+            .onSuccess {
+                val event = BusyLibUpdateEvent.Timestamp(timestampInfo.timestamp)
+                fEventsFeatureApi?.onBusyLibEvent(event)
+            }
             .toCResult()
     }
 
@@ -76,8 +92,7 @@ class FTimeZoneFeatureApiImpl(
             flow.throttleLatest { consumable ->
                 val couldConsume = consumable.tryConsume()
                 when (consumable) {
-                    ConsumableUpdateEvent.Empty,
-                    is ConsumableUpdateEvent.Bsb -> {
+                    ConsumableUpdateEvent.Empty -> {
                         exponentialRetry {
                             rpcFeatureApi.fRpcTimeZoneApi.getTimeTimezone(couldConsume)
                         }
@@ -98,7 +113,9 @@ class FTimeZoneFeatureApiImpl(
     }
 
     override suspend fun setTimezone(timezoneInfo: TimezoneInfo): CResult<Unit> {
-        return rpcFeatureApi.fRpcTimeZoneApi.postTimeTimezone(timezoneInfo.toInternal()).toCResult()
+        return rpcFeatureApi.fRpcTimeZoneApi
+            .postTimeTimezone(timezoneInfo.toInternal())
+            .toCResult()
     }
 
     override suspend fun getTimezones(): CResult<List<TimezoneInfo>> {

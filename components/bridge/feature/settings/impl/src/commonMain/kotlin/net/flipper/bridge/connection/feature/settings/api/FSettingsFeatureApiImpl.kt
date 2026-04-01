@@ -54,7 +54,6 @@ class FSettingsFeatureApiImpl(
         .transformWhileSubscribed(scope = scope) { flow ->
             flow.throttleLatest { consumable ->
                 when (consumable) {
-                    is ConsumableUpdateEvent.Bsb,
                     ConsumableUpdateEvent.Empty -> {
                         val couldConsume = consumable.tryConsume()
                         exponentialRetry {
@@ -80,8 +79,7 @@ class FSettingsFeatureApiImpl(
             flow.throttleLatest { consumable ->
                 val couldConsume = consumable.tryConsume()
                 when (consumable) {
-                    ConsumableUpdateEvent.Empty,
-                    is ConsumableUpdateEvent.Bsb -> {
+                    ConsumableUpdateEvent.Empty -> {
                         exponentialRetry {
                             rpcFeatureApi
                                 .fRpcSettingsApi

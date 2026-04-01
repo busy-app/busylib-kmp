@@ -6,7 +6,7 @@ import net.flipper.bridge.connection.feature.rpc.api.model.Fraction
 /**
  * This update events consumed/received only through BusyLib
  */
-sealed interface BusyLibUpdateEvent : UpdateEvent {
+sealed interface BusyLibUpdateEvent {
     data class Brightness(val bsbBrightnessInfo: BsbBrightnessInfo) : BusyLibUpdateEvent
 
     data class Volume(val volume: Fraction) : BusyLibUpdateEvent
@@ -23,36 +23,44 @@ sealed interface BusyLibUpdateEvent : UpdateEvent {
         val ssid: String?,
     ) : BusyLibUpdateEvent
 
-    data class UpdateState(
-        val action: Action,
-        val status: Status
-    ) : BusyLibUpdateEvent {
+    sealed interface Update : BusyLibUpdateEvent {
+        data class UpdateState(
+            val action: Action,
+            val status: Status
+        ) : Update {
 
-        enum class Action {
-            DOWNLOAD, SHA_VERIFICATION, UNPACK, PREPARE, APPLY, NONE
+            enum class Action {
+                DOWNLOAD, SHA_VERIFICATION, UNPACK, PREPARE, APPLY, NONE
+            }
+
+            enum class Status {
+                OK, BATTERY_LOW, BUSY,
+                DOWNLOAD_FAILURE, DOWNLOAD_ABORT, SHA_MISMATCH,
+                UNPACK_STAGING_DIR_FAILURE, UNPACK_ARCHIVE_OPEN_FAILURE, UNPACK_ARCHIVE_UNPACK_FAILURE,
+                INSTALL_MANIFEST_NOT_FOUND, INSTALL_MANIFEST_INVALID,
+                INSTALL_SESSION_CONFIG_FAILURE, INSTALL_POINTER_SETUP_FAILURE,
+                UNKNOWN_FAILURE
+            }
+
+            enum class CheckResult {
+                AVAILABLE, NOT_AVAILABLE, FAILURE, NONE
+            }
         }
 
-        enum class Status {
-            OK, BATTERY_LOW, BUSY,
-            DOWNLOAD_FAILURE, DOWNLOAD_ABORT, SHA_MISMATCH,
-            UNPACK_STAGING_DIR_FAILURE, UNPACK_ARCHIVE_OPEN_FAILURE, UNPACK_ARCHIVE_UNPACK_FAILURE,
-            INSTALL_MANIFEST_NOT_FOUND, INSTALL_MANIFEST_INVALID,
-            INSTALL_SESSION_CONFIG_FAILURE, INSTALL_POINTER_SETUP_FAILURE,
-            UNKNOWN_FAILURE
-        }
+        data class UpdateCheck(
+            val availableVersion: String?,
+        ) : Update
 
-        enum class CheckResult {
-            AVAILABLE, NOT_AVAILABLE, FAILURE, NONE
-        }
+        data object CheckOnce : Update
     }
-
-    data class UpdateCheck(
-        val availableVersion: String?,
-    ) : BusyLibUpdateEvent
 
     data class Timezone(
         val name: String,
         val offsetMinutes: Int,
+    ) : BusyLibUpdateEvent
+
+    data class Timestamp(
+        val timestamp: String
     ) : BusyLibUpdateEvent
 
     data class Matter(

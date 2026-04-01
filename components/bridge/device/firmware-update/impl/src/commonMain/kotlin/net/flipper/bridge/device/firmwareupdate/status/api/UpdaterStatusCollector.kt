@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
-import net.flipper.bridge.connection.feature.events.model.BsbUpdateEvent
+import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
 import net.flipper.bridge.connection.feature.provider.api.get
@@ -40,7 +40,7 @@ class UpdaterStatusCollector(
             .map { status -> status.featureApi }
             .onEach { eventsFeatureApi ->
                 info { "#start sent UPDATER_UPDATE_STATUS" }
-                eventsFeatureApi.onBsbEvent(BsbUpdateEvent.UPDATER_UPDATE_STATUS)
+                eventsFeatureApi.onBusyLibEvent(BusyLibUpdateEvent.Update.CheckOnce)
             }
             .launchIn(singleJobScope, SingleJobMode.CANCEL_PREVIOUS)
     }
