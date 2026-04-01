@@ -10,7 +10,7 @@ class MatterCommissionedFabrics(
     @SerialName("fabric_count")
     val fabricCount: Int,
     @SerialName("latest_pairing_status")
-    val latestCommissioningStatus: CommissioningStatus? = null
+    val latestCommissioningStatus: CommissioningStatus
 ) {
     @Serializable
     data class CommissioningStatus(

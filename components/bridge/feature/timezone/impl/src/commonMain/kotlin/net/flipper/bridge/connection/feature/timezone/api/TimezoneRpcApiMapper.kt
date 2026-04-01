@@ -8,7 +8,11 @@ import net.flipper.bridge.connection.feature.timezone.api.model.TimezoneInfo
 import net.flipper.bridge.connection.feature.timezone.api.model.TimezoneListItem
 
 fun RpcTimezoneInfo.toPublic(): TimezoneInfo {
-    return TimezoneInfo(timezone = timezone)
+    return TimezoneInfo(
+        timezone = timezone,
+        abbr = abbr,
+        offset = offset
+    )
 }
 
 fun RpcTimestampInfo.toPublic(): TimestampInfo {
@@ -24,5 +28,9 @@ fun TimestampInfo.toInternal(): RpcTimestampInfo {
 }
 
 fun TimezoneInfo.toInternal(): RpcTimezoneInfo {
-    return RpcTimezoneInfo(timezone = timezone)
+    return RpcTimezoneInfo(
+        timezone = timezone,
+        abbr = abbr,
+        offset = offset
+    )
 }

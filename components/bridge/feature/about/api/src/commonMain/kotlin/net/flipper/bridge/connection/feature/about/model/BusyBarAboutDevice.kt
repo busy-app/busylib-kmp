@@ -4,8 +4,8 @@ import kotlin.time.Instant
 
 data class BusyBarAboutDevice(
     val serialNumber: String,
-    val macAddressBluetooth: String?,
-    val macAddressWifi: String?,
+    val macAddressBluetooth: String,
+    val macAddressWifi: String,
     val macAddressUsb: String,
     val hardwareVersion: String?,
     val productionDate: Instant?,
