@@ -6,7 +6,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
@@ -67,11 +66,11 @@ class CloudProvisioningWatcherTest {
             setup.watcher.onLaunch()
             advanceUntilIdle()
 
-            val updated = setup.storage.findDevice("device-1").drop(1).first()
+            val updated = setup.storage.findDevice("device-1").first()
             assertNotNull(updated)
-            assertNotNull(updated?.cloud)
-            assertEquals(cloudId, updated?.cloud?.deviceId)
-            assertNotNull(updated?.ble)
+            assertNotNull(updated.cloud)
+            assertEquals(cloudId, updated.cloud?.deviceId)
+            assertNotNull(updated.ble)
         }
 
     @Test
@@ -92,7 +91,7 @@ class CloudProvisioningWatcherTest {
 
         val updated = setup.storage.findDevice("device-1")
         assertNotNull(updated)
-        assertEquals(device.connectionWays, updated?.first()?.connectionWays)
+        assertEquals(device.connectionWays, updated.first()?.connectionWays)
     }
 
     @Test
@@ -116,7 +115,7 @@ class CloudProvisioningWatcherTest {
 
             val updated = setup.storage.findDevice("device-1")
             assertNotNull(updated)
-            assertEquals(device.connectionWays, updated?.first()?.connectionWays)
+            assertEquals(device.connectionWays, updated.first()?.connectionWays)
         }
 
     @Test
@@ -184,7 +183,7 @@ class CloudProvisioningWatcherTest {
             advanceUntilIdle()
 
             // Should switch to existing device
-            assertEquals(existingDevice, setup.storage.getCurrentDeviceFlow().drop(1).first())
+            assertEquals(existingDevice, setup.storage.getCurrentDeviceFlow().first())
             // No new devices created
             assertEquals(2, setup.storage.devices.first().size)
         }
@@ -210,7 +209,7 @@ class CloudProvisioningWatcherTest {
 
             val updated = setup.storage.findDevice("device-1")
             assertNotNull(updated)
-            assertNull(updated?.drop(1)?.first()?.cloud, "Cloud connection should be removed")
+            assertNull(updated.first()?.cloud, "Cloud connection should be removed")
             assertNotNull(updated?.first()?.ble, "BLE connection should remain")
         }
 
