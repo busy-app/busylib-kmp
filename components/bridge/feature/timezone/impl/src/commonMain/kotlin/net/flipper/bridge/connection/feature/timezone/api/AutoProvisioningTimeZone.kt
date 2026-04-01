@@ -46,10 +46,10 @@ class AutoProvisioningTimeZone(
         val newTimeZone = findClosestTimeZone(allTimeZones)
         timeZoneFeature.setTimezone(
             TimezoneInfo(
-            timezone = newTimeZone.name,
-            offset = newTimeZone.offset,
-            abbr = newTimeZone.abbr
-        )
+                timezone = newTimeZone.name,
+                offset = newTimeZone.offset,
+                abbr = newTimeZone.abbr
+            )
         )
             .onFailure {
                 error(it) { "Failed setup timezone" }
