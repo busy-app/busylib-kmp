@@ -9,7 +9,6 @@ import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.feature.common.api.FOnDeviceReadyFeatureApi
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.feature.timezone.api.model.TimezoneInfo
-import net.flipper.bridge.connection.feature.timezone.api.model.TimezoneListItem
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.log.LogTagProvider
@@ -34,9 +33,9 @@ class AutoProvisioningTimeZone(
         val activeTimeZone = timeZoneFeature.getTimeZoneInfoFlow()
             .first()
         debug { "Receive timezone $activeTimeZone" }
-        val activeTimeZoneItem = allTimeZones.find { it.name == activeTimeZone.timezone }
+        val activeTimeZoneItem = allTimeZones.find { it.name == activeTimeZone.name }
         if (activeTimeZoneItem == null) {
-            error { "Failed to find active time zone (${activeTimeZone.timezone}) from list" }
+            error { "Failed to find active time zone (${activeTimeZone.name}) from list" }
             return
         }
         if (isCurrentTimeZone(activeTimeZoneItem)) {
@@ -44,13 +43,7 @@ class AutoProvisioningTimeZone(
             return
         }
         val newTimeZone = findClosestTimeZone(allTimeZones)
-        timeZoneFeature.setTimezone(
-            TimezoneInfo(
-                timezone = newTimeZone.name,
-                offset = newTimeZone.offset,
-                abbr = newTimeZone.abbr
-            )
-        )
+        timeZoneFeature.setTimezone(newTimeZone)
             .onFailure {
                 error(it) { "Failed setup timezone" }
             }.onSuccess {
@@ -58,7 +51,7 @@ class AutoProvisioningTimeZone(
             }
     }
 
-    private fun findClosestTimeZone(timeZones: List<TimezoneListItem>): TimezoneListItem {
+    private fun findClosestTimeZone(timeZones: List<TimezoneInfo>): TimezoneInfo {
         val currentTz = TimeZone.currentSystemDefault()
         val currentAbbr = currentTimeZoneAbbreviation()
         val currentTzCity = currentTz.id.substringAfterLast('/')
@@ -93,7 +86,7 @@ class AutoProvisioningTimeZone(
         }
     }
 
-    private fun isCurrentTimeZone(timeZone: TimezoneListItem): Boolean {
+    private fun isCurrentTimeZone(timeZone: TimezoneInfo): Boolean {
         return timeZone.abbr == currentTimeZoneAbbreviation()
     }
 
