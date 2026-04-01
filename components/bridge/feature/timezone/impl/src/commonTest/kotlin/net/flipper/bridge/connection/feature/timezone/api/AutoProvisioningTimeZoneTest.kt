@@ -28,12 +28,13 @@ class AutoProvisioningTimeZoneTest {
     }
 
     @Test
-    fun GIVEN_active_timezone_not_in_list_WHEN_on_ready_THEN_does_not_set_timezone() = runTest {
+    fun GIVEN_active_timezone_already_matches_target_WHEN_on_ready_THEN_does_not_set_timezone() = runTest {
+        val systemAbbr = currentTimeZoneAbbreviation()
         val fake = FakeTimeZoneFeatureApi(
             timezonesResult = CResult.success(
-                listOf(TimezoneInfo("London", "+00:00", "GMT"))
+                listOf(TimezoneInfo("London", "+00:00", systemAbbr))
             ),
-            timezoneInfoFlow = flowOf(TimezoneInfo("Unknown", "", "")).wrap()
+            timezoneInfoFlow = flowOf(TimezoneInfo("London", "+00:00", systemAbbr)).wrap()
         )
         val sut = AutoProvisioningTimeZone(fake)
 
@@ -49,7 +50,7 @@ class AutoProvisioningTimeZoneTest {
             timezonesResult = CResult.success(
                 listOf(TimezoneInfo("Current", "+00:00", systemAbbr))
             ),
-            timezoneInfoFlow = flowOf(TimezoneInfo("Current", "", "")).wrap()
+            timezoneInfoFlow = flowOf(TimezoneInfo("Current", "+00:00", systemAbbr)).wrap()
         )
         val sut = AutoProvisioningTimeZone(fake)
 
@@ -69,7 +70,7 @@ class AutoProvisioningTimeZoneTest {
                     TimezoneInfo("OtherCity", "+03:00", "FAKE_OTHER")
                 )
             ),
-            timezoneInfoFlow = flowOf(TimezoneInfo("OldCity", "", "")).wrap()
+            timezoneInfoFlow = flowOf(TimezoneInfo("OldCity", "+00:00", "FAKE_OLD")).wrap()
         )
         val sut = AutoProvisioningTimeZone(fake)
 
@@ -92,7 +93,7 @@ class AutoProvisioningTimeZoneTest {
                     TimezoneInfo("AnotherWrong", "+07:00", systemAbbr)
                 )
             ),
-            timezoneInfoFlow = flowOf(TimezoneInfo("OldCity", "", "")).wrap()
+            timezoneInfoFlow = flowOf(TimezoneInfo("OldCity", "+00:00", "FAKE_OLD")).wrap()
         )
         val sut = AutoProvisioningTimeZone(fake)
 
@@ -113,7 +114,7 @@ class AutoProvisioningTimeZoneTest {
                     TimezoneInfo("Xville_B", "+05:00", systemAbbr)
                 )
             ),
-            timezoneInfoFlow = flowOf(TimezoneInfo("OldCity", "", "")).wrap()
+            timezoneInfoFlow = flowOf(TimezoneInfo("OldCity", "+00:00", "FAKE_OLD")).wrap()
         )
         val sut = AutoProvisioningTimeZone(fake)
 
@@ -134,7 +135,7 @@ class AutoProvisioningTimeZoneTest {
                     TimezoneInfo("OtherCity", "+03:00", "FAKE_OTHER")
                 )
             ),
-            timezoneInfoFlow = flowOf(TimezoneInfo("OldCity", "", "")).wrap()
+            timezoneInfoFlow = flowOf(TimezoneInfo("OldCity", "+00:00", "FAKE_OLD")).wrap()
         )
         val sut = AutoProvisioningTimeZone(fake)
 
@@ -149,12 +150,12 @@ class AutoProvisioningTimeZoneTest {
         val fake = FakeTimeZoneFeatureApi(
             timezonesResult = CResult.success(
                 listOf(
-                    TimezoneInfo("Xville_1", "+00:00", "FAKE_ACTIVE"),
+                    TimezoneInfo("Xville_1", "+00:00", "FAKE_CLOSEST"),
                     TimezoneInfo("Xville_2", "+12:00", "FAKE_FAR"),
                     TimezoneInfo("Xville_3", "-12:00", "FAKE_VERY_FAR")
                 )
             ),
-            timezoneInfoFlow = flowOf(TimezoneInfo("Xville_1", "", "")).wrap()
+            timezoneInfoFlow = flowOf(TimezoneInfo("OldCity", "+09:00", "FAKE_ACTIVE")).wrap()
         )
         val sut = AutoProvisioningTimeZone(fake)
 
@@ -178,7 +179,7 @@ class AutoProvisioningTimeZoneTest {
                     TimezoneInfo("NewCity", "+01:00", systemAbbr)
                 )
             ),
-            timezoneInfoFlow = flowOf(TimezoneInfo("OldCity", "", "")).wrap(),
+            timezoneInfoFlow = flowOf(TimezoneInfo("OldCity", "+00:00", "FAKE_OLD")).wrap(),
             setTimezoneResult = CResult.failure(RuntimeException("write error"))
         )
         val sut = AutoProvisioningTimeZone(fake)
@@ -189,7 +190,7 @@ class AutoProvisioningTimeZoneTest {
 
 private class FakeTimeZoneFeatureApi(
     private val timezonesResult: CResult<List<TimezoneInfo>> = CResult.success(emptyList()),
-    private val timezoneInfoFlow: WrappedFlow<TimezoneInfo> = flowOf(TimezoneInfo("UTC", "", "")).wrap(),
+    private val timezoneInfoFlow: WrappedFlow<TimezoneInfo> = flowOf(TimezoneInfo("UTC", "+00:00", "UTC")).wrap(),
     private val setTimezoneResult: CResult<Unit> = CResult.success(Unit)
 ) : FTimeZoneFeatureApi {
     val setTimezoneCalls = mutableListOf<TimezoneInfo>()

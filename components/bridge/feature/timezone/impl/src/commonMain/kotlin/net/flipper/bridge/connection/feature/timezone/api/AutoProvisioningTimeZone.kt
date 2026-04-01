@@ -33,16 +33,11 @@ class AutoProvisioningTimeZone(
         val activeTimeZone = timeZoneFeature.getTimeZoneInfoFlow()
             .first()
         debug { "Receive timezone $activeTimeZone" }
-        val activeTimeZoneItem = allTimeZones.find { it.name == activeTimeZone.name }
-        if (activeTimeZoneItem == null) {
-            error { "Failed to find active time zone (${activeTimeZone.name}) from list" }
-            return
-        }
-        if (isCurrentTimeZone(activeTimeZoneItem)) {
-            info { "Found same timezone, skip" }
-            return
-        }
         val newTimeZone = findClosestTimeZone(allTimeZones)
+        if (activeTimeZone == newTimeZone) {
+            info { "Timezone already matches, skip" }
+            return
+        }
         timeZoneFeature.setTimezone(newTimeZone)
             .onFailure {
                 error(it) { "Failed setup timezone" }
@@ -84,10 +79,6 @@ class AutoProvisioningTimeZone(
         return timeZones.minBy {
             abs(UtcOffset.parse(it.offset).totalSeconds - currentOffsetSeconds)
         }
-    }
-
-    private fun isCurrentTimeZone(timeZone: TimezoneInfo): Boolean {
-        return timeZone.abbr == currentTimeZoneAbbreviation()
     }
 
     @Inject
