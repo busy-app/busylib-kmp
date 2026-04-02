@@ -3,7 +3,6 @@ package net.flipper.bridge.connection.config.impl
 import com.russhwolf.settings.ObservableSettings
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Mutex
-import dev.zacsweers.metro.Inject
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.config.api.PersistedStorageTransactionScope
 import net.flipper.bridge.connection.config.api.model.BUSYBar
@@ -23,7 +22,6 @@ import dev.zacsweers.metro.ContributesBinding
 import dev.zacsweers.metro.binding
 import dev.zacsweers.metro.SingleIn
 
-@Inject
 @SingleIn(BusyLibGraph::class)
 @ContributesBinding(BusyLibGraph::class, binding = binding<FInternalDevicePersistedStorage>())
 @ContributesBinding(BusyLibGraph::class, binding = binding<FDevicePersistedStorage>())

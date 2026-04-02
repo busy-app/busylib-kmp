@@ -2,7 +2,6 @@ package net.flipper.bridge.connection.transport.mock.impl
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
-import dev.zacsweers.metro.Inject
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionType
@@ -17,7 +16,6 @@ import dev.zacsweers.metro.ContributesBinding
 import dev.zacsweers.metro.binding
 import kotlin.time.Duration.Companion.seconds
 
-@Inject
 @ContributesBinding(BusyLibGraph::class, binding = binding<MockDeviceConnectionApi>())
 class MockDeviceConnectionApiImpl : MockDeviceConnectionApi {
     override suspend fun connect(

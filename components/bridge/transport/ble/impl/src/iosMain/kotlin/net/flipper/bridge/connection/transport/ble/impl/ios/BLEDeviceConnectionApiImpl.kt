@@ -6,7 +6,6 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withTimeoutOrNull
-import dev.zacsweers.metro.Inject
 import net.flipper.bridge.connection.transport.ble.api.BleDeviceConnectionApi
 import net.flipper.bridge.connection.transport.ble.api.FBleApi
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceConnectionConfig
@@ -30,7 +29,6 @@ import dev.zacsweers.metro.ContributesBinding
 import dev.zacsweers.metro.binding
 import kotlin.time.Duration
 
-@Inject
 @ContributesBinding(BusyLibGraph::class, binding = binding<BleDeviceConnectionApi>())
 class BLEDeviceConnectionApiImpl(
     private val centralManager: FCentralManagerApi

@@ -5,7 +5,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import dev.zacsweers.metro.Inject
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.config.api.getDevice
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
@@ -23,7 +22,6 @@ import net.flipper.core.busylib.log.info
 import dev.zacsweers.metro.ContributesIntoSet
 import dev.zacsweers.metro.binding
 
-@Inject
 @ContributesIntoSet(BusyLibGraph::class, binding = binding<InternalBUSYLibStartupListener>())
 class BUSYLibNameWatcher(
     scope: CoroutineScope,

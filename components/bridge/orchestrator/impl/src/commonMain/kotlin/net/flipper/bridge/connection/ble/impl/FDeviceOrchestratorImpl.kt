@@ -3,7 +3,6 @@ package net.flipper.bridge.connection.ble.impl
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
-import dev.zacsweers.metro.Inject
 import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.configbuilder.api.FDeviceConnectionConfigMapper
 import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
@@ -19,7 +18,6 @@ import dev.zacsweers.metro.ContributesBinding
 import dev.zacsweers.metro.binding
 import dev.zacsweers.metro.SingleIn
 
-@Inject
 @SingleIn(BusyLibGraph::class)
 @ContributesBinding(BusyLibGraph::class, binding = binding<FDeviceOrchestrator>())
 @ContributesBinding(BusyLibGraph::class, binding = binding<FInternalDeviceOrchestrator>())

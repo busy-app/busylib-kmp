@@ -12,7 +12,6 @@ import io.ktor.http.URLProtocol
 import io.ktor.http.isSuccess
 import io.ktor.http.path
 import kotlinx.coroutines.CoroutineDispatcher
-import dev.zacsweers.metro.Inject
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
 import net.flipper.bsb.cloud.api.BUSYLibHostApi
 import net.flipper.bsb.cloud.rest.model.BSBApiPinRequest
@@ -27,7 +26,6 @@ import dev.zacsweers.metro.binding
 import dev.zacsweers.metro.SingleIn
 import kotlin.uuid.Uuid
 
-@Inject
 @SingleIn(BusyLibGraph::class)
 @ContributesBinding(BusyLibGraph::class, binding = binding<BusyCloudBarsApi>())
 class BusyCloudBarsApiImpl(

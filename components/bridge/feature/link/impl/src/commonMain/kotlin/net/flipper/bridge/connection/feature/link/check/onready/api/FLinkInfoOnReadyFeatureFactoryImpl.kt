@@ -1,7 +1,6 @@
 package net.flipper.bridge.connection.feature.link.check.onready.api
 
 import kotlinx.coroutines.CoroutineScope
-import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.Provides
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
@@ -17,7 +16,6 @@ import dev.zacsweers.metro.ContributesIntoSet
 import dev.zacsweers.metro.binding
 import dev.zacsweers.metro.ContributesTo
 
-@Inject
 @ContributesIntoSet(BusyLibGraph::class, binding = binding<FOnDeviceReadyFeatureApi.Factory>())
 class FLinkInfoOnReadyFeatureFactoryImpl(
     private val fLinkInfoOnReadyFeatureApiImpl: FLinkInfoOnReadyFeatureApiImpl.InternalFactory,

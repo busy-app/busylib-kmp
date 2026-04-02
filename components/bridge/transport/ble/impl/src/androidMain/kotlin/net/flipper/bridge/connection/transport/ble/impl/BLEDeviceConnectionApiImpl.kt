@@ -8,7 +8,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withTimeout
-import dev.zacsweers.metro.Inject
 import net.flipper.bridge.connection.transport.ble.api.BleDeviceConnectionApi
 import net.flipper.bridge.connection.transport.ble.api.FBleApi
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceConnectionConfig
@@ -30,7 +29,6 @@ import no.nordicsemi.kotlin.ble.core.Phy
 import dev.zacsweers.metro.ContributesBinding
 import dev.zacsweers.metro.binding
 
-@Inject
 @ContributesBinding(BusyLibGraph::class, binding = binding<BleDeviceConnectionApi>())
 class BLEDeviceConnectionApiImpl(
     private val context: Context,

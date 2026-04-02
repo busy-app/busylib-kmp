@@ -12,7 +12,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import dev.zacsweers.metro.Inject
 import net.flipper.bridge.api.scanner.DiscoveredBluetoothDevice
 import net.flipper.bridge.api.scanner.FlipperScanner
 import net.flipper.bridge.api.utils.Constants
@@ -26,7 +25,6 @@ import dev.zacsweers.metro.binding
 import kotlin.collections.map
 import kotlin.uuid.toKotlinUuid
 
-@Inject
 @ContributesBinding(BusyLibGraph::class, binding = binding<FlipperScanner>())
 class FlipperScannerImpl(
     private val centralManager: CentralManager,

@@ -9,5 +9,6 @@ kotlin {
         implementation(projects.components.bridge.transport.common.api)
 
         implementation(libs.kotlin.coroutines)
+        implementation(libs.metro.utils.annotations)
     }
 }

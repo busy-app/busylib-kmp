@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.shareIn
-import dev.zacsweers.metro.Inject
 import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
 import net.flipper.bsb.cloud.api.BUSYLibHostApi
@@ -26,7 +25,6 @@ import dev.zacsweers.metro.SingleIn
 
 private val NETWORK_DISPATCHER = FlipperDispatchers.default
 
-@Inject
 @SingleIn(BusyLibGraph::class)
 @ContributesBinding(BusyLibGraph::class, binding = binding<CloudWebSocketBarsApi>())
 class CloudWebSocketBarsApiImpl(

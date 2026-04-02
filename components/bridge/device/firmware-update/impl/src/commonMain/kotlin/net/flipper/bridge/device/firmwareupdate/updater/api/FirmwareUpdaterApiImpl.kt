@@ -16,7 +16,6 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.job
-import dev.zacsweers.metro.Inject
 import net.flipper.bridge.connection.feature.firmwareupdate.api.FFirmwareUpdateFeatureApi
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateVersion
 import net.flipper.bridge.connection.feature.info.api.FDeviceInfoFeatureApi
@@ -55,7 +54,6 @@ import dev.zacsweers.metro.ContributesBinding
 import dev.zacsweers.metro.binding
 import dev.zacsweers.metro.SingleIn
 
-@Inject
 @ContributesBinding(BusyLibGraph::class, binding = binding<FirmwareUpdaterApi>())
 @SingleIn(BusyLibGraph::class)
 class FirmwareUpdaterApiImpl(

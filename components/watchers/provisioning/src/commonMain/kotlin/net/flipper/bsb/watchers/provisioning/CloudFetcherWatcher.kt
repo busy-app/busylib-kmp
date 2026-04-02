@@ -5,7 +5,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import dev.zacsweers.metro.Inject
 import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.config.internal.FInternalDevicePersistedStorage
 import net.flipper.bridge.connection.config.internal.InternalStorageTransactionScope
@@ -27,7 +26,6 @@ import kotlin.uuid.Uuid
 
 private const val DEFAULT_BUSY_BAR_NAME = "BUSY Bar"
 
-@Inject
 @ContributesIntoSet(BusyLibGraph::class, binding = binding<InternalBUSYLibStartupListener>())
 class CloudFetcherWatcher(
     scope: CoroutineScope,

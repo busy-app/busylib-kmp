@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import dev.zacsweers.metro.Inject
 import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.config.internal.FInternalDevicePersistedStorage
 import net.flipper.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
@@ -36,7 +35,6 @@ import dev.zacsweers.metro.ContributesIntoSet
 import dev.zacsweers.metro.SingleIn
 
 @SingleIn(BusyLibGraph::class)
-@Inject
 @ContributesBinding(BusyLibGraph::class, binding = binding<FConnectionService>())
 @ContributesIntoSet(BusyLibGraph::class, binding = binding<InternalBUSYLibStartupListener>())
 class FConnectionServiceImpl(

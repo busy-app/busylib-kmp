@@ -1,7 +1,6 @@
 package net.flipper.bridge.connection.connectionbuilder.impl
 
 import kotlinx.coroutines.CoroutineScope
-import dev.zacsweers.metro.Inject
 import net.flipper.bridge.connection.connectionbuilder.api.FDeviceConfigToConnection
 import net.flipper.bridge.connection.transport.combined.CombinedConnectionApi
 import net.flipper.bridge.connection.transport.combined.FCombinedConnectionConfig
@@ -15,7 +14,6 @@ import dev.zacsweers.metro.ContributesBinding
 import dev.zacsweers.metro.binding
 import kotlin.reflect.KClass
 
-@Inject
 @ContributesBinding(BusyLibGraph::class, binding = binding<FDeviceConfigToConnection>())
 class FDeviceConfigToConnectionImpl(
     private val configToConnectionMap: Map<KClass<*>, DeviceConnectionApiHolder>,

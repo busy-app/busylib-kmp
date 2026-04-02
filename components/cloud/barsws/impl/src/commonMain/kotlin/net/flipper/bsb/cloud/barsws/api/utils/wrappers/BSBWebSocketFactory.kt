@@ -3,7 +3,6 @@ package net.flipper.bsb.cloud.barsws.api.utils.wrappers
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import dev.zacsweers.metro.Inject
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
 import net.flipper.bsb.cloud.barsws.api.BSBWebSocket
 import net.flipper.bsb.cloud.barsws.api.getBSBWebSocket
@@ -42,7 +41,6 @@ interface BSBWebSocketFactory {
 /**
  * Default implementation that creates real WebSocket connections using Ktor.
  */
-@Inject
 @SingleIn(BusyLibGraph::class)
 @ContributesBinding(BusyLibGraph::class, binding = binding<BSBWebSocketFactory>())
 class BSBWebSocketFactoryImpl(

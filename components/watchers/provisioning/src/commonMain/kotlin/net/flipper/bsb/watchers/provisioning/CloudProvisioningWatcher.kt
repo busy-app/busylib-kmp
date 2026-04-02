@@ -6,7 +6,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import dev.zacsweers.metro.Inject
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.config.api.PersistedStorageTransactionScope
 import net.flipper.bridge.connection.config.api.getDevice
@@ -30,7 +29,6 @@ import dev.zacsweers.metro.ContributesIntoSet
 import dev.zacsweers.metro.binding
 import kotlin.uuid.Uuid
 
-@Inject
 @ContributesIntoSet(BusyLibGraph::class, binding = binding<InternalBUSYLibStartupListener>())
 class CloudProvisioningWatcher(
     scope: CoroutineScope,

@@ -1,6 +1,5 @@
 package net.flipper.bridge.connection.configbuilder.impl
 
-import dev.zacsweers.metro.Inject
 import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.configbuilder.api.FDeviceConnectionConfigMapper
 import net.flipper.bridge.connection.configbuilder.impl.builders.BUSYBarBLEBuilderConfig
@@ -13,7 +12,6 @@ import net.flipper.busylib.core.di.BusyLibGraph
 import dev.zacsweers.metro.ContributesBinding
 import dev.zacsweers.metro.binding
 
-@Inject
 @ContributesBinding(BusyLibGraph::class, binding = binding<FDeviceConnectionConfigMapper>())
 class FDeviceConnectionConfigMapperImpl(
     private val mockBuilderConfig: BUSYBarMockBuilderConfig,

@@ -2,7 +2,6 @@ package net.flipper.bsb.watchers.desktop
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import dev.zacsweers.metro.Inject
 import net.flipper.bridge.connection.config.internal.FInternalDevicePersistedStorage
 import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
 import net.flipper.bsb.watchers.desktop.hook.DesktopActiveDevice
@@ -14,7 +13,6 @@ import net.flipper.core.busylib.ktx.common.SingleJobMode
 import net.flipper.core.busylib.ktx.common.asSingleJobScope
 import dev.zacsweers.metro.ContributesIntoSet
 
-@Inject
 @ContributesIntoSet(BusyLibGraph::class)
 class DesktopLanBarsWatcher(
     scope: CoroutineScope,

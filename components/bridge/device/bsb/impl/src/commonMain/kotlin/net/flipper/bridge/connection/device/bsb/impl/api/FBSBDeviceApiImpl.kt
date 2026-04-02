@@ -9,9 +9,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import dev.zacsweers.metro.Assisted
-import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.AssistedInject
-import dev.zacsweers.metro.Inject
 import net.flipper.bridge.connection.device.bsb.api.FBSBDeviceApi
 import net.flipper.bridge.connection.device.bsb.impl.utils.FZeroFeatureClassToEnumMapper
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
@@ -24,14 +22,14 @@ import net.flipper.busylib.kmp.components.core.buildkonfig.BuildKonfig
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
-import dev.zacsweers.metro.ContributesBinding
-import dev.zacsweers.metro.binding
+import uk.kulikov.metro.assisted.ContributesAssistedFactory
 import kotlin.reflect.KClass
 
 @AssistedInject
+@ContributesAssistedFactory(BusyLibGraph::class, FBSBDeviceApi.Factory::class)
 class FBSBDeviceApiImpl(
-    @Assisted private val scope: CoroutineScope,
-    @Assisted private val connectedDevice: FConnectedDeviceApi,
+    @Assisted("scope") private val scope: CoroutineScope,
+    @Assisted("connectedDevice") private val connectedDevice: FConnectedDeviceApi,
     onReadyFeaturesApiFactories: Set<FOnDeviceReadyFeatureApi.Factory>,
     private val factories: Map<FDeviceFeature, FDeviceFeatureApi.Factory>
 ) : FBSBDeviceApi, FUnsafeDeviceFeatureApi, LogTagProvider {
@@ -132,22 +130,4 @@ class FBSBDeviceApiImpl(
         }
     }.awaitAll()
 
-    @AssistedFactory
-    fun interface InternalAssistedFactory {
-        operator fun invoke(
-            scope: CoroutineScope,
-            connectedDevice: FConnectedDeviceApi
-        ): FBSBDeviceApiImpl
-    }
-
-    @Inject
-    @ContributesBinding(BusyLibGraph::class, binding = binding<FBSBDeviceApi.Factory>())
-    class Factory(
-        private val factory: InternalAssistedFactory
-    ) : FBSBDeviceApi.Factory {
-        override fun invoke(
-            scope: CoroutineScope,
-            connectedDevice: FConnectedDeviceApi,
-        ): FBSBDeviceApiImpl = factory(scope, connectedDevice)
-    }
 }
