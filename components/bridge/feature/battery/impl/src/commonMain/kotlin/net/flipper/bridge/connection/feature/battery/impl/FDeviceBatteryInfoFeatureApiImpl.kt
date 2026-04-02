@@ -3,11 +3,13 @@ package net.flipper.bridge.connection.feature.battery.impl
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.feature.battery.api.FDeviceBatteryInfoFeatureApi
@@ -17,21 +19,24 @@ import net.flipper.bridge.connection.feature.rpc.api.model.PowerState
 import net.flipper.bridge.connection.transport.common.api.meta.FTransportMetaInfoApi
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoData
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
-import net.flipper.bridge.connection.transport.common.api.meta.getOrEmpty
+import net.flipper.bridge.connection.transport.common.api.meta.getOrNullable
 import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.wrap
+import net.flipper.core.busylib.log.LogTagProvider
+import net.flipper.core.busylib.log.TaggedLogger
+import net.flipper.core.busylib.log.info
 import kotlin.experimental.and
 
 @Inject
 class FDeviceBatteryInfoFeatureApiImpl(
     @Assisted private val rpcFeatureApi: FRpcFeatureApi,
     @Assisted private val metaInfoApi: FTransportMetaInfoApi?,
-) : FDeviceBatteryInfoFeatureApi {
+) : FDeviceBatteryInfoFeatureApi, LogTagProvider by TaggedLogger("FDeviceBatteryInfoFeatureApi") {
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun getBatteryLevelFlow(): Flow<Int?> {
         return metaInfoApi
-            .getOrEmpty(TransportMetaInfoKey.BATTERY_LEVEL)
+            .getOrNullable(TransportMetaInfoKey.BATTERY_LEVEL)
             .map { data ->
                 val byteArray = (data as? TransportMetaInfoData.RawBytes)?.bytes
                 byteArray?.firstOrNull()
@@ -46,7 +51,7 @@ class FDeviceBatteryInfoFeatureApiImpl(
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun getBatteryPowerStateFlow(): Flow<BSBDeviceBatteryInfo.BSBBatteryState?> {
         return metaInfoApi
-            .getOrEmpty(TransportMetaInfoKey.BATTERY_POWER_STATE)
+            .getOrNullable(TransportMetaInfoKey.BATTERY_POWER_STATE)
             .map { data ->
                 val byteArray = (data as? TransportMetaInfoData.RawBytes)?.bytes
                 // https://github.com/flipperdevices/bsb-firmware/blob/9acca0c947e764bb0fbdabb4b7b513afa6519de7/applications/services/ble/service/battery/ble_service_battery_i.h#L13
@@ -65,8 +70,10 @@ class FDeviceBatteryInfoFeatureApiImpl(
 
     private fun getGattBatteryInfoFlow(): Flow<BSBDeviceBatteryInfo?> {
         return combine(
-            flow = getBatteryLevelFlow(),
-            flow2 = getBatteryPowerStateFlow(),
+            flow = getBatteryLevelFlow()
+                .onEach { info { "#getBatteryLevelFlow: $it" } },
+            flow2 = getBatteryPowerStateFlow()
+                .onEach { info { "#getBatteryPowerStateFlow: $it" } },
             transform = { level, state ->
                 if (level != null && state != null) {
                     BSBDeviceBatteryInfo(
@@ -82,6 +89,7 @@ class FDeviceBatteryInfoFeatureApiImpl(
 
     private fun getRpcBatteryInfoFlow(): Flow<BSBDeviceBatteryInfo> {
         return flow { emit(rpcFeatureApi.fRpcSystemApi.getStatusPower().getOrNull()) }
+            .onEach { info { "#getRpcBatteryInfoFlow: $it" } }
             .filterNotNull()
             .map { status ->
                 BSBDeviceBatteryInfo(
@@ -96,8 +104,11 @@ class FDeviceBatteryInfoFeatureApiImpl(
     }
 
     override fun getDeviceBatteryInfo(): WrappedFlow<BSBDeviceBatteryInfo> {
+        info { "#getDeviceBatteryInfo metaInfoApi: $metaInfoApi" }
         return getGattBatteryInfoFlow()
+            .distinctUntilChanged()
             .flatMapLatest { batteryInfo ->
+                info { "#getDeviceBatteryInfo: $batteryInfo" }
                 if (batteryInfo == null) {
                     getRpcBatteryInfoFlow()
                 } else {
