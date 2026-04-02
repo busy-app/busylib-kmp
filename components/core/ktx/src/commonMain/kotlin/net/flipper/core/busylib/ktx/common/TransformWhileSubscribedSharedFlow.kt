@@ -2,7 +2,6 @@ package net.flipper.core.busylib.ktx.common
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalForInheritanceCoroutinesApi
-import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
@@ -45,47 +44,44 @@ private class TransformWhileSubscribedSharedFlow<T, R>(
             replay = 1
         )
 
-    private val transformFlowCollectorJob = CoroutineRestartableJob(scope) {
-        try {
-            collector.invoke(
-                upstreamSharedFlow,
-                resultFlow
-            )
-        } catch (e: Exception) {
-            error(e) { "#startTransformFlowCollectionUnsafe" }
-        }
-    }
-    private val replayCacheResetJob = CoroutineRestartableJob(scope) {
-        delay(timeoutDuration)
-        resultFlow.resetReplayCache()
-    }
+    private val transformFlowCollectorScope = scope.asSingleJobScope()
+    private val replayCacheResetScope = scope.asSingleJobScope()
 
     private fun startTransformFlowCollectionUnsafe() {
-        debug { "#startTransformFlowCollectionUnsafe" }
-        transformFlowCollectorJob.start()
+        transformFlowCollectorScope.launch(SingleJobMode.SKIP_IF_RUNNING) {
+            debug { "#startTransformFlowCollectionUnsafe" }
+            try {
+                collector.invoke(
+                    upstreamSharedFlow,
+                    resultFlow
+                )
+            } catch (e: Exception) {
+                error(e) { "#startTransformFlowCollectionUnsafe" }
+            }
+        }
     }
 
     private suspend fun stopTransformFlowCollectionUnsafe() {
         debug { "#stopTransformFlowCollectionUnsafe Stopping transform collection" }
-        transformFlowCollectorJob.cancelAndJoin()
+        transformFlowCollectorScope.cancelPrevious().join()
     }
 
     private fun startReplayCacheResetJobUnsafe() {
         debug { "#startReplayCacheResetJobUnsafe" }
-        replayCacheResetJob.start()
+        replayCacheResetScope.launch(SingleJobMode.SKIP_IF_RUNNING) {
+            delay(timeoutDuration)
+            resultFlow.resetReplayCache()
+        }
     }
 
     private suspend fun stopReplayCacheResetJobUnsafe() {
         debug { "#stopReplayCacheResetJobUnsafe" }
-        replayCacheResetJob.cancelAndJoin()
+        replayCacheResetScope.cancelPrevious().join()
     }
 
     private suspend fun onSubscriberAddedUnsafe() {
         val count = resultFlow.subscriptionCount.first()
         debug { "#onSubscriberAddedUnsage Subscriber added. Count: $count" }
-        if (transformFlowCollectorJob.isActive) return
-
-        debug { "#onSubscriberAddedUnsage Starting upstream collection due to new subscriber" }
         stopReplayCacheResetJobUnsafe()
         startTransformFlowCollectionUnsafe()
     }
