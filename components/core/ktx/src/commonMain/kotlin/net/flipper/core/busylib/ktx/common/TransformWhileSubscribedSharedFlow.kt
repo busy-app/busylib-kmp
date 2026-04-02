@@ -2,7 +2,6 @@ package net.flipper.core.busylib.ktx.common
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalForInheritanceCoroutinesApi
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -17,9 +16,6 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.shareIn
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.TaggedLogger
 import net.flipper.core.busylib.log.debug
@@ -49,54 +45,45 @@ private class TransformWhileSubscribedSharedFlow<T, R>(
             replay = 1
         )
 
-    private val subscriberMutex = Mutex()
-    private val hasSubscribersFlow = resultFlow.subscriptionCount
-        .map { count -> count != 0 }
-        .distinctUntilChanged()
-    private var transformFlowCollectorJob: Job? = null
-    private var replayCacheResetJob: Job? = null
-
-    private suspend fun startTransformFlowCollectionUnsafe() {
-        debug { "#startTransformFlowCollectionUnsafe" }
-        transformFlowCollectorJob?.cancelAndJoin()
-        transformFlowCollectorJob = scope.launch {
-            try {
-                collector.invoke(
-                    upstreamSharedFlow,
-                    resultFlow
-                )
-            } catch (e: Exception) {
-                error(e) { "#startTransformFlowCollectionUnsafe" }
-            }
+    private val transformFlowCollectorJob = CoroutineRestartableJob(scope) {
+        try {
+            collector.invoke(
+                upstreamSharedFlow,
+                resultFlow
+            )
+        } catch (e: Exception) {
+            error(e) { "#startTransformFlowCollectionUnsafe" }
         }
+    }
+    private val replayCacheResetJob = CoroutineRestartableJob(scope) {
+        delay(timeoutDuration)
+        resultFlow.resetReplayCache()
+    }
+
+    private fun startTransformFlowCollectionUnsafe() {
+        debug { "#startTransformFlowCollectionUnsafe" }
+        transformFlowCollectorJob.start()
     }
 
     private suspend fun stopTransformFlowCollectionUnsafe() {
         debug { "#stopTransformFlowCollectionUnsafe Stopping transform collection" }
-        transformFlowCollectorJob?.cancelAndJoin()
-        transformFlowCollectorJob = null
+        transformFlowCollectorJob.cancelAndJoin()
     }
 
-    private suspend fun startReplayCacheResetJobUnsafe() {
+    private fun startReplayCacheResetJobUnsafe() {
         debug { "#startReplayCacheResetJobUnsafe" }
-        replayCacheResetJob?.cancelAndJoin()
-        replayCacheResetJob = scope.launch {
-            delay(timeoutDuration)
-            resultFlow.resetReplayCache()
-            upstreamSharedFlow.replayCache
-        }
+        replayCacheResetJob.start()
     }
 
     private suspend fun stopReplayCacheResetJobUnsafe() {
         debug { "#stopReplayCacheResetJobUnsafe" }
-        replayCacheResetJob?.cancelAndJoin()
-        replayCacheResetJob = null
+        replayCacheResetJob.cancelAndJoin()
     }
 
     private suspend fun onSubscriberAddedUnsafe() {
         val count = resultFlow.subscriptionCount.first()
         debug { "#onSubscriberAddedUnsage Subscriber added. Count: $count" }
-        if (transformFlowCollectorJob?.isActive == true) return
+        if (transformFlowCollectorJob.isActive) return
 
         debug { "#onSubscriberAddedUnsage Starting upstream collection due to new subscriber" }
         stopReplayCacheResetJobUnsafe()
@@ -112,12 +99,14 @@ private class TransformWhileSubscribedSharedFlow<T, R>(
     }
 
     private fun startSubscriberCountJob() {
-        hasSubscribersFlow
+        resultFlow.subscriptionCount
+            .map { count -> count != 0 }
+            .distinctUntilChanged()
             .onEach { hasSubscribers ->
                 if (hasSubscribers) {
-                    subscriberMutex.withLock { onSubscriberAddedUnsafe() }
+                    onSubscriberAddedUnsafe()
                 } else {
-                    subscriberMutex.withLock { onSubscriberRemovedUnsafe() }
+                    onSubscriberRemovedUnsafe()
                 }
             }
             .launchIn(scope)
