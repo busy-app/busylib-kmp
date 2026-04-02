@@ -3,7 +3,7 @@ package net.flipper.bsb.cloud.barsws.api.utils.wrappers
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import me.tatarka.inject.annotations.Inject
+import dev.zacsweers.metro.Inject
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
 import net.flipper.bsb.cloud.barsws.api.BSBWebSocket
 import net.flipper.bsb.cloud.barsws.api.getBSBWebSocket
@@ -11,8 +11,9 @@ import net.flipper.bsb.cloud.rest.api.BusyCloudWebSocketTicketApi
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.ktor.di.qualifier.KtorNetworkClientQualifier
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
-import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
+import dev.zacsweers.metro.ContributesBinding
+import dev.zacsweers.metro.binding
+import dev.zacsweers.metro.SingleIn
 
 /**
  * Factory interface for creating BSBWebSocket instances.
@@ -43,7 +44,7 @@ interface BSBWebSocketFactory {
  */
 @Inject
 @SingleIn(BusyLibGraph::class)
-@ContributesBinding(BusyLibGraph::class, BSBWebSocketFactory::class)
+@ContributesBinding(BusyLibGraph::class, binding = binding<BSBWebSocketFactory>())
 class BSBWebSocketFactoryImpl(
     @KtorNetworkClientQualifier
     private val httpClient: HttpClient,

@@ -5,7 +5,7 @@ import com.flipperdevices.core.network.BUSYLibNetworkStateApiNoop
 import com.russhwolf.settings.ObservableSettings
 import com.russhwolf.settings.PreferencesSettings
 import kotlinx.coroutines.CoroutineScope
-import me.tatarka.inject.annotations.Inject
+import dev.zacsweers.metro.Inject
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
@@ -15,8 +15,8 @@ import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.cloud.api.BUSYLibHostApi
 import net.flipper.bsb.cloud.api.BUSYLibHostApiStub
 import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
+import dev.zacsweers.metro.createGraphFactory
 import net.flipper.busylib.di.BUSYLibGraphDesktop
-import net.flipper.busylib.di.create
 import kotlin.collections.forEach
 
 @Inject
@@ -43,7 +43,7 @@ class BUSYLibDesktop(
             hostApi: BUSYLibHostApi = BUSYLibHostApiStub("cloud.busy.app"),
             networkStateApi: BUSYLibNetworkStateApi = BUSYLibNetworkStateApiNoop()
         ): BUSYLibDesktop {
-            val graph = BUSYLibGraphDesktop::class.create(
+            val graph = createGraphFactory<BUSYLibGraphDesktop.Factory>().create(
                 scope,
                 principalApi,
                 observableSettings,

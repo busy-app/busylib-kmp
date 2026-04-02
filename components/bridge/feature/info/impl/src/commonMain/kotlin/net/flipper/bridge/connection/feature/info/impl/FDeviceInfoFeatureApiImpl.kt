@@ -4,11 +4,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.shareIn
-import me.tatarka.inject.annotations.Inject
-import me.tatarka.inject.annotations.IntoMap
-import me.tatarka.inject.annotations.Provides
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.IntoMap
+import dev.zacsweers.metro.Provides
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
+import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureMapKey
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.feature.info.api.FDeviceInfoFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
@@ -23,7 +24,7 @@ import net.flipper.busylib.core.wrapper.toCResult
 import net.flipper.busylib.core.wrapper.wrapFlow
 import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.log.LogTagProvider
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
+import dev.zacsweers.metro.ContributesTo
 
 class FDeviceInfoFeatureApiImpl(
     private val rpcFeatureApi: FRpcFeatureApi,
@@ -73,10 +74,11 @@ class FDeviceInfoFeatureApiImpl(
     interface FFeatureComponent {
         @Provides
         @IntoMap
+        @FDeviceFeatureMapKey(FDeviceFeature.DEVICE_INFO)
         fun provideFeatureFactory(
             fDeviceFeatureApiFactory: FDeviceFeatureApiFactory
-        ): Pair<FDeviceFeature, FDeviceFeatureApi.Factory> {
-            return FDeviceFeature.DEVICE_INFO to fDeviceFeatureApiFactory
+        ): FDeviceFeatureApi.Factory {
+            return fDeviceFeatureApiFactory
         }
     }
 }

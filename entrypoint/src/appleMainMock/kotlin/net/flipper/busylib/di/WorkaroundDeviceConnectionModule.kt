@@ -1,13 +1,13 @@
 package net.flipper.busylib.di
 
-import me.tatarka.inject.annotations.IntoMap
-import me.tatarka.inject.annotations.Provides
+import dev.zacsweers.metro.IntoMap
+import dev.zacsweers.metro.Provides
 import net.flipper.bridge.connection.transport.common.api.DeviceConnectionApiHolder
 import net.flipper.bridge.connection.transport.mock.FMockDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.mock.MockDeviceConnectionApi
 import net.flipper.busylib.core.di.BusyLibGraph
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
-import kotlin.reflect.KClass
+import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.ClassKey
 
 /**
  * Workaround for kotlin-inject-anvil limitation in Kotlin Multiplatform projects.
@@ -49,10 +49,11 @@ import kotlin.reflect.KClass
 interface WorkaroundDeviceConnectionModule {
     @IntoMap
     @Provides
+    @ClassKey(FMockDeviceConnectionConfig::class)
     fun getWorkaroundMockDeviceConnection(
         mockDeviceConnectionApi: MockDeviceConnectionApi
-    ): Pair<KClass<*>, DeviceConnectionApiHolder> {
-        return FMockDeviceConnectionConfig::class to DeviceConnectionApiHolder(
+    ): DeviceConnectionApiHolder {
+        return DeviceConnectionApiHolder(
             mockDeviceConnectionApi
         )
     }

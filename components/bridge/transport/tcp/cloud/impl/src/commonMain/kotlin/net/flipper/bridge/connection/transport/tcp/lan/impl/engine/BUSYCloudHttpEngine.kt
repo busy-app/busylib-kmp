@@ -13,16 +13,17 @@ import io.ktor.http.encodedPath
 import io.ktor.utils.io.InternalAPI
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import me.tatarka.inject.annotations.Assisted
-import me.tatarka.inject.annotations.Inject
+import dev.zacsweers.metro.Assisted
+import dev.zacsweers.metro.AssistedFactory
+import dev.zacsweers.metro.AssistedInject
 import net.flipper.bridge.connection.transport.tcp.lan.impl.engine.token.ProxyTokenProvider
 import net.flipper.bsb.cloud.api.BUSYLibHostApi
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
 
-typealias BUSYCloudHttpEngineFactory = (HttpClientEngine, ProxyTokenProvider) -> BUSYCloudHttpEngine
+typealias BUSYCloudHttpEngineFactory = BUSYCloudHttpEngine.InternalAssistedFactory
 
-@Inject
+@AssistedInject
 class BUSYCloudHttpEngine(
     @Assisted private val delegate: HttpClientEngine,
     @Assisted private val tokenProvider: ProxyTokenProvider,
@@ -70,5 +71,13 @@ class BUSYCloudHttpEngine(
     override fun close() {
         delegate.close()
         super.close()
+    }
+
+    @AssistedFactory
+    fun interface InternalAssistedFactory {
+        operator fun invoke(
+            delegate: HttpClientEngine,
+            tokenProvider: ProxyTokenProvider
+        ): BUSYCloudHttpEngine
     }
 }

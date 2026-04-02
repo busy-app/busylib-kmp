@@ -13,6 +13,7 @@ dependencies {
     implementation(libs.klibs.gradle.android)
     implementation(libs.klibs.gradle.convention)
     implementation(libs.detekt.gradle)
+    implementation(libs.metro.gradle)
 
     implementation(files(libs.javaClass.superclass.protectionDomain.codeSource.location))
 }

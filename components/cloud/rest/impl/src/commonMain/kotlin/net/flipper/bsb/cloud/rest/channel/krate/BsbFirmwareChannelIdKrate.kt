@@ -1,7 +1,7 @@
 package net.flipper.bsb.cloud.rest.channel.krate
 
 import com.russhwolf.settings.Settings
-import me.tatarka.inject.annotations.Inject
+import dev.zacsweers.metro.Inject
 import net.flipper.bsb.cloud.rest.model.BsbFirmwareChannelId
 import ru.astrainteractive.klibs.kstorage.api.StateFlowMutableKrate
 import ru.astrainteractive.klibs.kstorage.api.impl.DefaultMutableKrate

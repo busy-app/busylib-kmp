@@ -3,11 +3,12 @@ package net.flipper.bridge.connection.feature.timezone.api
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import me.tatarka.inject.annotations.Inject
-import me.tatarka.inject.annotations.IntoMap
-import me.tatarka.inject.annotations.Provides
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.IntoMap
+import dev.zacsweers.metro.Provides
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
+import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureMapKey
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
 import net.flipper.bridge.connection.feature.events.api.getBsbUpdateFlow
@@ -31,7 +32,7 @@ import net.flipper.core.busylib.ktx.common.throttleLatest
 import net.flipper.core.busylib.ktx.common.transformWhileSubscribed
 import net.flipper.core.busylib.ktx.common.tryConsume
 import net.flipper.core.busylib.log.LogTagProvider
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
+import dev.zacsweers.metro.ContributesTo
 
 class FTimeZoneFeatureApiImpl(
     private val scope: CoroutineScope,
@@ -120,10 +121,11 @@ class FTimeZoneFeatureApiImpl(
     interface Component {
         @Provides
         @IntoMap
+        @FDeviceFeatureMapKey(FDeviceFeature.TIME_ZONE)
         fun provideFeatureFactory(
             factory: Factory
-        ): Pair<FDeviceFeature, FDeviceFeatureApi.Factory> {
-            return FDeviceFeature.TIME_ZONE to factory
+        ): FDeviceFeatureApi.Factory {
+            return factory
         }
     }
 }

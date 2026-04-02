@@ -8,8 +8,10 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import me.tatarka.inject.annotations.Assisted
-import me.tatarka.inject.annotations.Inject
+import dev.zacsweers.metro.Assisted
+import dev.zacsweers.metro.AssistedFactory
+import dev.zacsweers.metro.AssistedInject
+
 import net.flipper.bridge.connection.feature.battery.api.FDeviceBatteryInfoFeatureApi
 import net.flipper.bridge.connection.feature.battery.model.BSBDeviceBatteryInfo
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
@@ -22,7 +24,7 @@ import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.wrap
 import kotlin.experimental.and
 
-@Inject
+@AssistedInject
 class FDeviceBatteryInfoFeatureApiImpl(
     @Assisted private val rpcFeatureApi: FRpcFeatureApi,
     @Assisted private val metaInfoApi: FTransportMetaInfoApi?,
@@ -106,14 +108,12 @@ class FDeviceBatteryInfoFeatureApiImpl(
             }.wrap()
     }
 
-    @Inject
-    class InternalFactory(
-        private val factory: (FRpcFeatureApi, FTransportMetaInfoApi?) -> FDeviceBatteryInfoFeatureApiImpl
-    ) {
+    @AssistedFactory
+    fun interface InternalFactory {
         operator fun invoke(
             rpcFeatureApi: FRpcFeatureApi,
             metaInfoApi: FTransportMetaInfoApi?
-        ): FDeviceBatteryInfoFeatureApiImpl = factory(rpcFeatureApi, metaInfoApi)
+        ): FDeviceBatteryInfoFeatureApiImpl
     }
 
     companion object {

@@ -1,7 +1,7 @@
 package net.flipper.bridge.connection.transport.tcp.lan.impl
 
 import kotlinx.coroutines.CoroutineScope
-import me.tatarka.inject.annotations.Inject
+import dev.zacsweers.metro.Inject
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.bridge.connection.transport.tcp.cloud.api.CloudDeviceConnectionApi
 import net.flipper.bridge.connection.transport.tcp.cloud.api.FCloudApi
@@ -12,10 +12,11 @@ import net.flipper.bridge.connection.transport.tcp.lan.impl.metainfo.FCloudMetaI
 import net.flipper.bridge.connection.transport.tcp.lan.impl.monitor.CloudDeviceMonitor
 import net.flipper.bsb.cloud.barsws.api.CloudWebSocketBarsApi
 import net.flipper.busylib.core.di.BusyLibGraph
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
+import dev.zacsweers.metro.ContributesBinding
+import dev.zacsweers.metro.binding
 
 @Inject
-@ContributesBinding(BusyLibGraph::class, CloudDeviceConnectionApi::class)
+@ContributesBinding(BusyLibGraph::class, binding = binding<CloudDeviceConnectionApi>())
 class CloudDeviceConnectionApiImpl(
     private val webSocketBarsApi: CloudWebSocketBarsApi,
     private val proxyTokenProvider: ProxyTokenProviderFactory,

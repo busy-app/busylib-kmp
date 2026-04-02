@@ -4,27 +4,31 @@ import android.content.Context
 import com.flipperdevices.core.network.BUSYLibNetworkStateApi
 import com.russhwolf.settings.ObservableSettings
 import com.russhwolf.settings.Settings
+import dev.zacsweers.metro.DependencyGraph
+import dev.zacsweers.metro.Provides
+import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.CoroutineScope
-import me.tatarka.inject.annotations.Provides
 import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.cloud.api.BUSYLibHostApi
 import net.flipper.busylib.BUSYLibAndroid
 import net.flipper.busylib.core.di.BusyLibGraph
-import software.amazon.lastmile.kotlin.inject.anvil.MergeComponent
-import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 
-@Suppress("LongParameterList")
-@MergeComponent(BusyLibGraph::class)
+@DependencyGraph(BusyLibGraph::class)
 @SingleIn(BusyLibGraph::class)
-abstract class BUSYLibGraphAndroid(
-    @get:Provides protected val scope: CoroutineScope,
-    @get:Provides protected val principalApi: BUSYLibPrincipalApi,
-    @get:Provides protected val observableSettings: ObservableSettings,
-    // Android-specific factory
-    @get:Provides protected val context: Context,
-    @get:Provides protected val hostApi: BUSYLibHostApi,
-    @get:Provides protected val networkStateApi: BUSYLibNetworkStateApi,
-    @get:Provides protected val settings: Settings
-) {
-    abstract val busyLib: BUSYLibAndroid
+interface BUSYLibGraphAndroid {
+    val busyLib: BUSYLibAndroid
+
+    @DependencyGraph.Factory
+    fun interface Factory {
+        @Suppress("LongParameterList")
+        fun create(
+            @Provides scope: CoroutineScope,
+            @Provides principalApi: BUSYLibPrincipalApi,
+            @Provides observableSettings: ObservableSettings,
+            @Provides context: Context,
+            @Provides hostApi: BUSYLibHostApi,
+            @Provides networkStateApi: BUSYLibNetworkStateApi,
+            @Provides settings: Settings
+        ): BUSYLibGraphAndroid
+    }
 }

@@ -8,18 +8,19 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.serialization.json.JsonPrimitive
-import me.tatarka.inject.annotations.Assisted
-import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.transport.common.api.meta.FTransportMetaInfoApi
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoData
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
+import dev.zacsweers.metro.Assisted
+import dev.zacsweers.metro.AssistedFactory
+import dev.zacsweers.metro.AssistedInject
 import net.flipper.bsb.cloud.barsws.api.BSBWebSocket
 import net.flipper.bsb.cloud.barsws.api.CloudWebSocketBarsApi
 import kotlin.uuid.Uuid
 
-internal typealias FCloudMetaInfoFactory = (Uuid) -> FCloudMetaInfoImpl
+internal typealias FCloudMetaInfoFactory = FCloudMetaInfoImpl.InternalAssistedFactory
 
-@Inject
+@AssistedInject
 class FCloudMetaInfoImpl(
     @Assisted private val deviceId: Uuid,
     private val webSocketBarsApi: CloudWebSocketBarsApi,
@@ -49,5 +50,10 @@ class FCloudMetaInfoImpl(
                     null
                 }
             }
+    }
+
+    @AssistedFactory
+    fun interface InternalAssistedFactory {
+        operator fun invoke(deviceId: Uuid): FCloudMetaInfoImpl
     }
 }

@@ -2,13 +2,13 @@ package net.flipper.bridge.connection.feature.ble.api
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.flowOf
-import me.tatarka.inject.annotations.Assisted
-import me.tatarka.inject.annotations.Inject
-import me.tatarka.inject.annotations.IntoMap
-import me.tatarka.inject.annotations.Provides
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.IntoMap
+import dev.zacsweers.metro.Provides
 import net.flipper.bridge.connection.feature.ble.api.model.FBleStatus
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
+import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureMapKey
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
 import net.flipper.bridge.connection.feature.events.api.getBsbUpdateFlow
@@ -29,13 +29,12 @@ import net.flipper.core.busylib.ktx.common.transformWhileSubscribed
 import net.flipper.core.busylib.ktx.common.tryConsume
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
+import dev.zacsweers.metro.ContributesTo
 
-@Inject
 class FBleFeatureApiImpl(
-    @Assisted private val rpcFeatureApi: FRpcFeatureApi,
-    @Assisted private val fEventsFeatureApi: FEventsFeatureApi?,
-    @Assisted private val scope: CoroutineScope
+    private val rpcFeatureApi: FRpcFeatureApi,
+    private val fEventsFeatureApi: FEventsFeatureApi?,
+    private val scope: CoroutineScope
 ) : FBleFeatureApi, LogTagProvider {
     override val TAG: String = "FBleFeatureApi"
 
@@ -108,10 +107,11 @@ class FBleFeatureApiImpl(
     interface FBleFeatureComponent {
         @Provides
         @IntoMap
+        @FDeviceFeatureMapKey(FDeviceFeature.BLE)
         fun provideFBleFeatureFactory(
             fBleFeatureFactory: FBleFeatureFactoryImpl
-        ): Pair<FDeviceFeature, FDeviceFeatureApi.Factory> {
-            return FDeviceFeature.BLE to fBleFeatureFactory
+        ): FDeviceFeatureApi.Factory {
+            return fBleFeatureFactory
         }
     }
 }

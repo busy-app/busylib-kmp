@@ -2,13 +2,14 @@ package net.flipper.bridge.connection.feature.finishsetup.api
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.combine
-import me.tatarka.inject.annotations.Inject
-import me.tatarka.inject.annotations.IntoMap
-import me.tatarka.inject.annotations.Provides
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.IntoMap
+import dev.zacsweers.metro.Provides
 import net.flipper.bridge.connection.feature.ble.api.FBleFeatureApi
 import net.flipper.bridge.connection.feature.ble.api.model.FBleStatus
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
+import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureMapKey
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.feature.finishsetup.krate.SetupFinishedBeforeKrate
 import net.flipper.bridge.connection.feature.finishsetup.model.DeviceSetupTask
@@ -32,7 +33,7 @@ import net.flipper.core.busylib.ktx.common.throttleLatest
 import net.flipper.core.busylib.ktx.common.transformWhileSubscribed
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.verbose
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
+import dev.zacsweers.metro.ContributesTo
 import kotlin.time.Duration.Companion.seconds
 
 class FFinishSetupFeatureApiImpl(
@@ -249,10 +250,11 @@ class FFinishSetupFeatureApiImpl(
     interface FFeatureComponent {
         @Provides
         @IntoMap
+        @FDeviceFeatureMapKey(FDeviceFeature.FINISH_SETUP)
         fun provideFeatureFactory(
             fDeviceFeatureApiFactory: FDeviceFeatureApiFactory
-        ): Pair<FDeviceFeature, FDeviceFeatureApi.Factory> {
-            return FDeviceFeature.FINISH_SETUP to fDeviceFeatureApiFactory
+        ): FDeviceFeatureApi.Factory {
+            return fDeviceFeatureApiFactory
         }
     }
 }

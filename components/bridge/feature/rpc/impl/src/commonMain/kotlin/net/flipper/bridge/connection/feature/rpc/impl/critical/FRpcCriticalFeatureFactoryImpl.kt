@@ -1,17 +1,18 @@
 package net.flipper.bridge.connection.feature.rpc.impl.critical
 
 import kotlinx.coroutines.CoroutineScope
-import me.tatarka.inject.annotations.Inject
-import me.tatarka.inject.annotations.IntoMap
-import me.tatarka.inject.annotations.Provides
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.IntoMap
+import dev.zacsweers.metro.Provides
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
+import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureMapKey
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.feature.rpc.impl.util.getHttpClient
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPDeviceApi
 import net.flipper.busylib.core.di.BusyLibGraph
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
+import dev.zacsweers.metro.ContributesTo
 
 @Inject
 class FRpcCriticalFeatureFactoryImpl(
@@ -33,9 +34,10 @@ class FRpcCriticalFeatureFactoryImpl(
 interface FRpcCriticalFeatureComponent {
     @Provides
     @IntoMap
+    @FDeviceFeatureMapKey(FDeviceFeature.RPC_CRITICAL)
     fun provideFRpcCriticalFeatureFactory(
         fRpcCriticalFeatureFactory: FRpcCriticalFeatureFactoryImpl
-    ): Pair<FDeviceFeature, FDeviceFeatureApi.Factory> {
-        return FDeviceFeature.RPC_CRITICAL to fRpcCriticalFeatureFactory
+    ): FDeviceFeatureApi.Factory {
+        return fRpcCriticalFeatureFactory
     }
 }

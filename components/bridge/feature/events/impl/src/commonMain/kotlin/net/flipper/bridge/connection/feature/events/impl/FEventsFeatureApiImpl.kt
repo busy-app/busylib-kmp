@@ -13,8 +13,10 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
-import me.tatarka.inject.annotations.Assisted
-import me.tatarka.inject.annotations.Inject
+import dev.zacsweers.metro.Assisted
+import dev.zacsweers.metro.AssistedFactory
+import dev.zacsweers.metro.AssistedInject
+
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
 import net.flipper.bridge.connection.feature.events.impl.bits.BitIndicationEventsFlow
 import net.flipper.bridge.connection.feature.events.impl.ws.WSEventsFlow
@@ -27,7 +29,7 @@ import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.verbose
 import kotlin.time.Duration.Companion.seconds
 
-@Inject
+@AssistedInject
 class FEventsFeatureApiImpl(
     @Assisted private val metaInfoApi: FTransportMetaInfoApi,
     @Assisted private val scope: CoroutineScope
@@ -71,13 +73,11 @@ class FEventsFeatureApiImpl(
         }
     }
 
-    @Inject
-    class InternalFactory(
-        private val factory: (FTransportMetaInfoApi, CoroutineScope) -> FEventsFeatureApiImpl
-    ) {
+    @AssistedFactory
+    fun interface InternalFactory {
         operator fun invoke(
             metaInfoApi: FTransportMetaInfoApi,
             scope: CoroutineScope
-        ): FEventsFeatureApiImpl = factory(metaInfoApi, scope)
+        ): FEventsFeatureApiImpl
     }
 }

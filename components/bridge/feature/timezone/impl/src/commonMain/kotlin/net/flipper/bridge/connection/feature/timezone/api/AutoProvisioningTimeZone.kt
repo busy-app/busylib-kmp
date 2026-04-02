@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.UtcOffset
 import kotlinx.datetime.offsetAt
-import me.tatarka.inject.annotations.Inject
+import dev.zacsweers.metro.Inject
 import net.flipper.bridge.connection.feature.common.api.FOnDeviceReadyFeatureApi
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.feature.timezone.api.model.TimezoneInfo
@@ -17,7 +17,7 @@ import net.flipper.core.busylib.log.debug
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
 import net.flipper.core.busylib.timezone.currentTimeZoneAbbreviation
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
+import dev.zacsweers.metro.ContributesIntoSet
 import kotlin.math.abs
 import kotlin.time.Clock
 
@@ -92,11 +92,7 @@ class AutoProvisioningTimeZone(
     }
 
     @Inject
-    @ContributesBinding(
-        BusyLibGraph::class,
-        FOnDeviceReadyFeatureApi.Factory::class,
-        multibinding = true
-    )
+    @ContributesIntoSet(BusyLibGraph::class)
     class Factory : FOnDeviceReadyFeatureApi.Factory {
         override suspend fun invoke(
             unsafeFeatureDeviceApi: FUnsafeDeviceFeatureApi,

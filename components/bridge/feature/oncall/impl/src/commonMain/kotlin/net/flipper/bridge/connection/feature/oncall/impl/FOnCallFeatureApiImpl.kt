@@ -7,12 +7,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
-import me.tatarka.inject.annotations.Assisted
-import me.tatarka.inject.annotations.Inject
-import me.tatarka.inject.annotations.IntoMap
-import me.tatarka.inject.annotations.Provides
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.IntoMap
+import dev.zacsweers.metro.Provides
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
+import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureMapKey
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.feature.oncall.api.FOnCallFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
@@ -24,13 +24,12 @@ import net.flipper.core.busylib.ktx.common.asSingleJobScope
 import net.flipper.core.busylib.ktx.common.cancelPrevious
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
+import dev.zacsweers.metro.ContributesTo
 import kotlin.time.Duration.Companion.seconds
 
-@Inject
 class FOnCallFeatureApiImpl(
-    @Assisted private val rpcFeatureApi: FRpcFeatureApi,
-    @Assisted private val scope: CoroutineScope
+    private val rpcFeatureApi: FRpcFeatureApi,
+    private val scope: CoroutineScope
 ) : FOnCallFeatureApi, LogTagProvider {
 
     override val TAG: String = "FOnCallFeatureApi"
@@ -114,10 +113,11 @@ class FOnCallFeatureApiImpl(
     interface FOnCallFeatureComponent {
         @Provides
         @IntoMap
+        @FDeviceFeatureMapKey(FDeviceFeature.ON_CALL)
         fun provideFOnCallFeatureFactory(
             featureFactory: FOnCallFeatureFactoryImpl
-        ): Pair<FDeviceFeature, FDeviceFeatureApi.Factory> {
-            return FDeviceFeature.ON_CALL to featureFactory
+        ): FDeviceFeatureApi.Factory {
+            return featureFactory
         }
     }
 }
