@@ -1,3 +1,9 @@
+import co.touchlab.skie.configuration.DefaultArgumentInterop
+import co.touchlab.skie.configuration.EnumInterop
+import co.touchlab.skie.configuration.FlowInterop
+import co.touchlab.skie.configuration.FunctionInterop
+import co.touchlab.skie.configuration.SealedInterop
+import co.touchlab.skie.configuration.SuspendInterop
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.konan.target.Family
@@ -7,6 +13,20 @@ plugins {
     id("flipper.multiplatform-compose")
     id("org.jetbrains.kotlin.plugin.serialization")
     alias(libs.plugins.skie)
+}
+
+skie {
+    features {
+        coroutinesInterop.set(true)
+        group {
+            SuspendInterop.Enabled(true)
+            SealedInterop.Enabled(true)
+            EnumInterop.Enabled(false)
+            FlowInterop.Enabled(false)
+            DefaultArgumentInterop.Enabled(false)
+            FunctionInterop.FileScopeConversion.Enabled(false)
+        }
+    }
 }
 
 afterEvaluate {
