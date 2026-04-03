@@ -1,16 +1,16 @@
-package net.flipper.bridge.connection.screens
+package net.flipper.bridge.connection.screens.root
 
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.value.Value
-import net.flipper.bridge.connection.screens.dashboard.DashboardDecomposeComponent
+import net.flipper.bridge.connection.screens.dashboard.root.DashboardDecomposeComponent
 import net.flipper.bridge.connection.screens.decompose.CompositeDecomposeComponent
 import net.flipper.bridge.connection.screens.decompose.DecomposeComponent
 import net.flipper.bridge.connection.screens.device.ConnectionDeviceScreenDecomposeComponent
-import net.flipper.bridge.connection.screens.models.ConnectionRootConfig
 import net.flipper.bridge.connection.screens.nopermission.ConnectionNoPermissionDecomposeComponent
+import net.flipper.bridge.connection.screens.root.model.ConnectionRootConfig
 import net.flipper.bridge.connection.screens.search.ConnectionSearchDecomposeComponent
 import net.flipper.bridge.connection.screens.utils.PermissionChecker
 
@@ -19,7 +19,7 @@ class ConnectionRootDecomposeComponent(
     permissionChecker: PermissionChecker,
     private val searchDecomposeFactory: ConnectionSearchDecomposeComponent.Factory,
     private val connectionDeviceScreenDecomposeComponentFactory: ConnectionDeviceScreenDecomposeComponent.Factory,
-    private val dashboardDecomposeComponentFactory: DashboardDecomposeComponent.Factory
+    private val dashboardDecomposeComponentFactory: DashboardDecomposeComponent.Factory,
 ) : CompositeDecomposeComponent<ConnectionRootConfig>(), ComponentContext by componentContext {
     override val stack: Value<ChildStack<ConnectionRootConfig, DecomposeComponent>> = childStack(
         source = navigation,
@@ -61,7 +61,7 @@ class ConnectionRootDecomposeComponent(
         private val permissionChecker: PermissionChecker,
         private val searchDecomposeFactory: ConnectionSearchDecomposeComponent.Factory,
         private val connectionDeviceScreenDecomposeComponentFactory: ConnectionDeviceScreenDecomposeComponent.Factory,
-        private val dashboardDecomposeComponentFactory: DashboardDecomposeComponent.Factory
+        private val dashboardDecomposeComponentFactory: DashboardDecomposeComponent.Factory,
     ) {
         fun invoke(
             componentContext: ComponentContext
@@ -71,7 +71,7 @@ class ConnectionRootDecomposeComponent(
                 permissionChecker,
                 searchDecomposeFactory,
                 connectionDeviceScreenDecomposeComponentFactory,
-                dashboardDecomposeComponentFactory
+                dashboardDecomposeComponentFactory,
             )
         }
     }

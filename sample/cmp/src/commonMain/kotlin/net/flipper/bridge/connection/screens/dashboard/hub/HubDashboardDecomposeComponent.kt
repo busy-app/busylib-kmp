@@ -14,7 +14,8 @@ class HubDashboardDecomposeComponent(
     private val onOpenAccount: () -> Unit,
     private val onOpenHardware: () -> Unit,
     private val onOpenOnCall: () -> Unit,
-    private val onOpenScreenStreaming: () -> Unit
+    private val onOpenScreenStreaming: () -> Unit,
+    private val onOpenFwUpdate: () -> Unit
 ) : ScreenDecomposeComponent(componentContext) {
     @Composable
     override fun Render(modifier: Modifier) {
@@ -26,7 +27,8 @@ class HubDashboardDecomposeComponent(
             onOpenAccount = onOpenAccount,
             onOpenHardware = onOpenHardware,
             onOpenOnCall = onOpenOnCall,
-            onOpenScreenStreaming = onOpenScreenStreaming
+            onOpenScreenStreaming = onOpenScreenStreaming,
+            onOpenFwUpdate = onOpenFwUpdate
         )
     }
 }

@@ -17,6 +17,7 @@ fun HubDashboardContent(
     onOpenHardware: () -> Unit,
     onOpenOnCall: () -> Unit,
     onOpenScreenStreaming: () -> Unit,
+    onOpenFwUpdate: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     DashboardScreenLayout(
@@ -34,6 +35,7 @@ fun HubDashboardContent(
             DashboardFeatureButton(title = "Hardware", onClick = onOpenHardware)
             DashboardFeatureButton(title = "On-Call", onClick = onOpenOnCall)
             DashboardFeatureButton(title = "Screen Streaming", onClick = onOpenScreenStreaming)
+            DashboardFeatureButton(title = "Firmware Update", onClick = onOpenFwUpdate)
         }
     }
 }
