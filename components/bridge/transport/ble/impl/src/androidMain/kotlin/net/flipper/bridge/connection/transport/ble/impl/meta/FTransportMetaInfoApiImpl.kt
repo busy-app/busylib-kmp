@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
@@ -15,6 +16,7 @@ import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfo
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
 import net.flipper.busylib.core.wrapper.WrappedStateFlow
 import net.flipper.core.busylib.log.LogTagProvider
+import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
 import net.flipper.core.busylib.log.warn
 import no.nordicsemi.kotlin.ble.client.RemoteService
@@ -61,13 +63,19 @@ class FTransportMetaInfoApiImpl(
                 "Not found PROPERTY_NOTIFY or PROPERTY_INDICATE for property $address, " +
                     "so fallback on one-time read value"
             }
-            return flowOf(TransportMetaInfoData.RawBytes(characteristic.read()))
+            return flow {
+                runCatching { characteristic.read() }
+                    .onSuccess { emit(TransportMetaInfoData.RawBytes(it)) }
+                    .onFailure { t -> error(t) { "Could not read characteristic for $address" } }
+            }
         }
         info { "Subscribe on $address characteristic" }
         // Don't block one flow by another
         return listOf(
-            flow { emit(characteristic.read()) },
+            flow { emit(characteristic.read()) }
+                .catch { t -> error(t) { "Could not read characteristic for $address" } },
             characteristic.subscribe()
+                .catch { t -> error(t) { "Could not subscribe to characteristic $address" } }
         ).merge().map { TransportMetaInfoData.RawBytes(it) }
     }
 }
