@@ -103,6 +103,7 @@ kotlin {
         implementation(libs.settings)
         implementation(libs.settings.observable)
         implementation(libs.settings.coroutines)
+        implementation(libs.kotlin.serialization.json)
     }
     sourceSets.androidMain.dependencies {
         api(projects.components.bridge.device.firstpair.connection.api)

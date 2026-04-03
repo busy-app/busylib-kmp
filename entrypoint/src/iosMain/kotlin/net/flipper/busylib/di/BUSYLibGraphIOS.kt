@@ -4,6 +4,7 @@ import com.flipperdevices.core.network.BUSYLibNetworkStateApi
 import com.russhwolf.settings.ObservableSettings
 import com.russhwolf.settings.Settings
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.serialization.json.Json
 import me.tatarka.inject.annotations.Provides
 import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.cloud.api.BUSYLibHostApi
@@ -23,7 +24,8 @@ abstract class BUSYLibGraphIOS(
     @get:Provides protected val manager: CBCentralManager,
     @get:Provides protected val hostApi: BUSYLibHostApi,
     @get:Provides protected val networkStateApi: BUSYLibNetworkStateApi,
-    @get:Provides protected val settings: Settings
+    @get:Provides protected val settings: Settings,
+    @get:Provides protected val json: Json
 ) {
     abstract val busyLib: BUSYLibIOS
 }
@@ -37,5 +39,6 @@ expect fun create(
     manager: CBCentralManager,
     hostApi: BUSYLibHostApi,
     networkStateApi: BUSYLibNetworkStateApi,
-    settings: Settings
+    settings: Settings,
+    json: Json
 ): BUSYLibGraphIOS

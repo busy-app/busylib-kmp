@@ -5,6 +5,7 @@ import com.flipperdevices.core.network.BUSYLibNetworkStateApiNoop
 import com.russhwolf.settings.ObservableSettings
 import com.russhwolf.settings.PreferencesSettings
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.serialization.json.Json
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
@@ -49,7 +50,14 @@ class BUSYLibDesktop(
                 observableSettings,
                 hostApi,
                 networkStateApi,
-                PreferencesSettings.Factory().create("busylib_settings")
+                PreferencesSettings.Factory().create("busylib_settings"),
+                Json {
+                    prettyPrint = false
+                    isLenient = true
+                    ignoreUnknownKeys = true
+                    coerceInputValues = false
+                    encodeDefaults = false
+                }
             )
             return graph.busyLib
         }

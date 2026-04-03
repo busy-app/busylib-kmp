@@ -9,5 +9,7 @@ import net.flipper.busylib.core.wrapper.WrappedFlow
 interface FLinkedInfoOnDemandFeatureApi : FDeviceFeatureApi {
     val status: WrappedFlow<LinkedAccountInfo>
 
-    suspend fun deleteAccount(): CResult<SuccessResponse>
+    suspend fun forceUnlink(): CResult<SuccessResponse>
+
+    suspend fun forceLink()
 }

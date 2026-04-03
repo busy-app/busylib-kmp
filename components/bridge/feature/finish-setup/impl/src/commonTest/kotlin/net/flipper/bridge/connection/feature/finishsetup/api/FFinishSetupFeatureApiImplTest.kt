@@ -62,7 +62,7 @@ class FFinishSetupFeatureApiImplTest {
         private val _status = MutableStateFlow(initialStatus)
         override val status: WrappedFlow<LinkedAccountInfo> = _status.asFlow().wrap()
 
-        override suspend fun deleteAccount(): CResult<SuccessResponse> =
+        override suspend fun forceUnlink(): CResult<SuccessResponse> =
             CResult.Success(SuccessResponse("ok"))
     }
 
@@ -211,7 +211,7 @@ class FFinishSetupFeatureApiImplTest {
             fBleFeatureApi = FakeBleFeatureApi(FBleStatus.Connected("AA:BB:CC")),
             fLinkedInfoOnDemandFeatureApi = object : FLinkedInfoOnDemandFeatureApi {
                 override val status: WrappedFlow<LinkedAccountInfo> = linkedFlow.asFlow().wrap()
-                override suspend fun deleteAccount(): CResult<SuccessResponse> =
+                override suspend fun forceUnlink(): CResult<SuccessResponse> =
                     CResult.Success(SuccessResponse("ok"))
             },
             fWiFiFeatureApi = FakeWiFiFeatureApi(wifiStatus(StatusResponse.State.CONNECTED)),

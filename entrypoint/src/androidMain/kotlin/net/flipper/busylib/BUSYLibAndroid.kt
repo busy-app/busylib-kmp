@@ -6,6 +6,7 @@ import com.flipperdevices.core.network.BUSYLibNetworkStateApiNoop
 import com.russhwolf.settings.ObservableSettings
 import com.russhwolf.settings.SharedPreferencesSettings
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.serialization.json.Json
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.api.scanner.FlipperScanner
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
@@ -58,7 +59,14 @@ class BUSYLibAndroid(
                 context,
                 hostApi,
                 networkStateApi,
-                SharedPreferencesSettings.Factory(context).create("busylib_settings")
+                SharedPreferencesSettings.Factory(context).create("busylib_settings"),
+                Json {
+                    prettyPrint = false
+                    isLenient = true
+                    ignoreUnknownKeys = true
+                    coerceInputValues = false
+                    encodeDefaults = false
+                }
             )
             return graph.busyLib
         }

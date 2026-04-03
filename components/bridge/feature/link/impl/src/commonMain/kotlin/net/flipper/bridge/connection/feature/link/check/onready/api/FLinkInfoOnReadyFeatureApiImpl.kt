@@ -1,7 +1,9 @@
 package net.flipper.bridge.connection.feature.link.check.onready.api
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
@@ -9,16 +11,24 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.withTimeout
-import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
+import me.tatarka.inject.annotations.IntoMap
+import me.tatarka.inject.annotations.Provides
+import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
+import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
+import net.flipper.bridge.connection.feature.common.api.FOnDeviceReadyFeatureApi
+import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.feature.link.check.ondemand.api.FLinkedInfoOnDemandFeatureApi
+import net.flipper.bridge.connection.feature.link.check.onready.krate.ForceUnlinkedAccountsInfoKrate
 import net.flipper.bridge.connection.feature.link.model.LinkedAccountInfo
 import net.flipper.bridge.connection.feature.rpc.api.critical.FRpcCriticalFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.RpcLinkedAccountInfo
 import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
+import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
 import net.flipper.bsb.cloud.rest.api.BusyCloudBarsApi
+import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.core.wrapper.CResult
 import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.toCResult
@@ -29,15 +39,18 @@ import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
+import ru.astrainteractive.klibs.kstorage.util.save
+import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
+import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
 import kotlin.time.Duration.Companion.seconds
 import kotlin.uuid.Uuid
 
-@Inject
 class FLinkInfoOnReadyFeatureApiImpl(
-    @Assisted private val rpcFeatureApi: FRpcCriticalFeatureApi,
-    @Assisted private val scope: CoroutineScope,
+    private val rpcFeatureApi: FRpcCriticalFeatureApi,
+    private val scope: CoroutineScope,
     private val busyLibPrincipalApi: BUSYLibPrincipalApi,
-    private val busyLibBarsApi: BusyCloudBarsApi
+    private val busyLibBarsApi: BusyCloudBarsApi,
+    private val forceUnlinkedAccountsInfoKrate: ForceUnlinkedAccountsInfoKrate
 ) : FLinkedInfoOnReadyFeatureApi, FLinkedInfoOnDemandFeatureApi, LogTagProvider {
     override val TAG = "FLinkedInfoOnReadyFeatureApi"
     private val _status = MutableStateFlow<LinkedAccountInfo?>(null)
@@ -46,8 +59,11 @@ class FLinkInfoOnReadyFeatureApiImpl(
 
     override suspend fun onReady() {
         busyLibPrincipalApi.getPrincipalFlow()
-            .filter { it !is BUSYLibUserPrincipal.Loading }
-            .map { it as? BUSYLibUserPrincipal.Token }
+            .filter { principal -> principal !is BUSYLibUserPrincipal.Loading }
+            .map { principal -> principal as? BUSYLibUserPrincipal.Token }
+            .combine(forceUnlinkedAccountsInfoKrate.cachedStateFlow) { principal, _ ->
+                principal
+            }
             .onEach { principal -> tryCheckLinkedInfo(principal) }
             .launchIn(scope)
     }
@@ -74,32 +90,43 @@ class FLinkInfoOnReadyFeatureApiImpl(
         }
     }
 
+    private suspend fun checkLinkedInfo(principal: BUSYLibUserPrincipal.Token?) {
+        info { "Local principal is ${principal?.userId}" }
+
+        val info = exponentialRetry {
+            rpcFeatureApi.invalidateLinkedUser(principal?.userId)
+                .map { result -> result.asSealed(principal?.userId) }
+        }
+
+        info { "BUSY Bar info is $info" }
+        if (info is LinkedAccountInfo.NotLinked && principal != null) {
+            info { "Start authorization for BUSY Bar..." }
+            exponentialRetry {
+                authBusyBar(principal)
+                    .onFailure { t ->
+                        error(t) { "Failed authorize for BUSY Bar" }
+                    }
+            }
+        }
+        _status.emit(info)
+    }
+
     private fun tryCheckLinkedInfo(principal: BUSYLibUserPrincipal.Token?) {
         singleJobScope.launch(SingleJobMode.CANCEL_PREVIOUS) {
-            info { "Local principal is ${principal?.userId}" }
-
-            val info = exponentialRetry {
-                rpcFeatureApi.invalidateLinkedUser(principal?.userId)
-                    .map { result -> result.asSealed(principal?.userId) }
-            }
-
-            info { "BUSY Bar info is $info" }
-            if (info is LinkedAccountInfo.NotLinked && principal != null) {
-                info { "Start authorization for BUSY Bar..." }
-                exponentialRetry {
-                    authBusyBar(principal)
-                        .onFailure { t ->
-                            error(t) { "Failed authorize for BUSY Bar" }
-                        }
-                }
-            }
-            _status.emit(info)
+            checkLinkedInfo(principal)
         }
+    }
+
+    private fun isPrincipalForceUnlinked(principal: BUSYLibUserPrincipal.Token): Boolean {
+        return forceUnlinkedAccountsInfoKrate.getValue()
+            .forceUnlinkedUserIds
+            .contains(principal.userId)
     }
 
     private suspend fun authBusyBar(
         principal: BUSYLibUserPrincipal.Token
     ): Result<Unit> = runCatching {
+        if (isPrincipalForceUnlinked(principal)) return@runCatching
         val linkCode = rpcFeatureApi.getLinkCode().getOrThrow()
 
         info { "Receive link code from BUSY Bar: $linkCode" }
@@ -120,9 +147,22 @@ class FLinkInfoOnReadyFeatureApiImpl(
         info { "Completed authorization for BUSY Bar" }
     }
 
-    override suspend fun deleteAccount(): CResult<SuccessResponse> {
+    override suspend fun forceUnlink(): CResult<SuccessResponse> {
         return rpcFeatureApi.deleteAccount()
             .onSuccess {
+                val tokenPrincipal = busyLibPrincipalApi
+                    .getPrincipalFlow()
+                    .filter { it !is BUSYLibUserPrincipal.Loading }
+                    .first() as? BUSYLibUserPrincipal.Token
+                if (tokenPrincipal != null) {
+                    forceUnlinkedAccountsInfoKrate.save { forceUnlinkedAccountsInfo ->
+                        forceUnlinkedAccountsInfo.copy(
+                            forceUnlinkedUserIds = forceUnlinkedAccountsInfo
+                                .forceUnlinkedUserIds
+                                .plus(tokenPrincipal.userId)
+                        )
+                    }
+                }
                 tryCheckLinkedInfo(
                     principal = busyLibPrincipalApi
                         .getPrincipalFlow()
@@ -133,20 +173,63 @@ class FLinkInfoOnReadyFeatureApiImpl(
             .toCResult()
     }
 
+    override suspend fun forceLink() {
+        val tokenPrincipal = busyLibPrincipalApi
+            .getPrincipalFlow()
+            .filter { principal -> principal !is BUSYLibUserPrincipal.Loading }
+            .first() as? BUSYLibUserPrincipal.Token
+        if (tokenPrincipal != null) {
+            forceUnlinkedAccountsInfoKrate.save { forceUnlinkedAccountsInfo ->
+                forceUnlinkedAccountsInfo.copy(
+                    forceUnlinkedUserIds = forceUnlinkedAccountsInfo
+                        .forceUnlinkedUserIds
+                        .minus(tokenPrincipal.userId)
+                )
+            }
+
+            return singleJobScope.async { checkLinkedInfo(tokenPrincipal) }.await()
+        }
+    }
+
     @Inject
-    class InternalFactory(
-        private val factory: (
-            FRpcCriticalFeatureApi,
-            CoroutineScope,
-        ) -> FLinkInfoOnReadyFeatureApiImpl
-    ) {
-        operator fun invoke(
-            rpcFeatureApi: FRpcCriticalFeatureApi,
+    @ContributesBinding(
+        BusyLibGraph::class,
+        FOnDeviceReadyFeatureApi.Factory::class,
+        multibinding = true
+    )
+    class Factory(
+        private val busyLibPrincipalApi: BUSYLibPrincipalApi,
+        private val busyLibBarsApi: BusyCloudBarsApi,
+        private val forceUnlinkedAccountsInfoKrate: ForceUnlinkedAccountsInfoKrate
+    ) : FOnDeviceReadyFeatureApi.Factory, FDeviceFeatureApi.Factory {
+        override suspend fun invoke(
+            unsafeFeatureDeviceApi: FUnsafeDeviceFeatureApi,
             scope: CoroutineScope,
-        ): FLinkInfoOnReadyFeatureApiImpl = factory(
-            rpcFeatureApi,
-            scope,
-        )
+            connectedDevice: FConnectedDeviceApi
+        ): FOnDeviceReadyFeatureApi? {
+            val fRpcFeatureApi = unsafeFeatureDeviceApi
+                .get(FRpcCriticalFeatureApi::class)
+                ?.await()
+                ?: return null
+            return FLinkInfoOnReadyFeatureApiImpl(
+                rpcFeatureApi = fRpcFeatureApi,
+                scope = scope,
+                busyLibPrincipalApi = busyLibPrincipalApi,
+                busyLibBarsApi = busyLibBarsApi,
+                forceUnlinkedAccountsInfoKrate = forceUnlinkedAccountsInfoKrate
+            )
+        }
+    }
+
+    @ContributesTo(BusyLibGraph::class)
+    interface Component {
+        @Provides
+        @IntoMap
+        fun provideFeatureFactory(
+            factory: Factory
+        ): Pair<FDeviceFeature, FDeviceFeatureApi.Factory> {
+            return FDeviceFeature.LINKED_USER_STATUS to factory
+        }
     }
 
     companion object {
