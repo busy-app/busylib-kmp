@@ -5,7 +5,9 @@ import kotlinx.coroutines.flow.StateFlow
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.DrawRequest
+import net.flipper.bridge.connection.screens.dashboard.common.DISPLAY_UNTIL_OFFSET_SECONDS
 import net.flipper.bridge.connection.screens.dashboard.common.DashboardFeatureViewModel
+import net.flipper.bridge.connection.screens.dashboard.common.MILLIS_PER_SECOND
 import net.flipper.bridge.connection.screens.dashboard.common.SAMPLE_ANIMATION_ID
 import net.flipper.bridge.connection.screens.dashboard.common.SAMPLE_APP_ID
 import net.flipper.bridge.connection.screens.dashboard.common.SAMPLE_DRAW_ID
