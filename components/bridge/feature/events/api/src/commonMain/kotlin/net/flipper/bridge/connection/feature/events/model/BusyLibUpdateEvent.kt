@@ -59,10 +59,6 @@ sealed interface BusyLibUpdateEvent {
         val offsetMinutes: Int,
     ) : BusyLibUpdateEvent
 
-    data class Timestamp(
-        val timestamp: String
-    ) : BusyLibUpdateEvent
-
     data class Matter(
         val fabricCount: Int,
     ) : BusyLibUpdateEvent
