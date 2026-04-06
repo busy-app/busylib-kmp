@@ -4,8 +4,8 @@ import com.russhwolf.settings.Settings
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bsb.cloud.rest.model.BsbFirmwareChannelId
 import ru.astrainteractive.klibs.kstorage.api.StateFlowMutableKrate
+import ru.astrainteractive.klibs.kstorage.api.asStateFlowMutableKrate
 import ru.astrainteractive.klibs.kstorage.api.impl.DefaultMutableKrate
-import ru.astrainteractive.klibs.kstorage.util.asStateFlowMutableKrate
 
 private const val BSB_FIRMWARE_CHANGELOG_ID_KEY = "bsb_firmware_channel_id_key"
 
