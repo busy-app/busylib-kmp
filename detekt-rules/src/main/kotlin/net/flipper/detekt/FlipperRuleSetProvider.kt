@@ -5,6 +5,7 @@ import dev.detekt.api.RuleSetId
 import dev.detekt.api.RuleSetProvider
 import net.flipper.detekt.rules.ApiWrappedTypeRule
 import net.flipper.detekt.rules.ForbiddenApiModuleDependencyRule
+import net.flipper.detekt.rules.SerialNameNotProvidedRule
 
 class FlipperRuleSetProvider : RuleSetProvider {
     override val ruleSetId = RuleSetId("FlipperRule")
@@ -14,7 +15,8 @@ class FlipperRuleSetProvider : RuleSetProvider {
             id = ruleSetId,
             rules = listOf(
                 ::ForbiddenApiModuleDependencyRule,
-                ::ApiWrappedTypeRule
+                ::ApiWrappedTypeRule,
+                ::SerialNameNotProvidedRule
             )
         )
     }

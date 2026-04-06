@@ -7,7 +7,9 @@ import kotlinx.serialization.Serializable
 data class DrawRequest(
     @SerialName("application_name")
     val appId: String,
+    @SerialName("priority")
     val priority: Int? = null,
+    @SerialName("elements")
     val elements: List<Element>
 ) {
     @Serializable
@@ -21,29 +23,45 @@ data class DrawRequest(
 
     @Serializable
     data class Element(
+        @SerialName("id")
         val id: String,
+        @SerialName("timeout")
         val timeout: Int? = null,
         @SerialName("display_until")
         val displayUntil: String? = null,
+        @SerialName("display")
         val display: Display = Display.FRONT,
+        @SerialName("type")
         val type: ElementType,
+        @SerialName("text")
         val text: String? = null,
+        @SerialName("path")
         val path: String? = null,
         @SerialName("stock_path")
         val stockPath: String? = null,
+        @SerialName("x")
         val x: Int? = null,
+        @SerialName("y")
         val y: Int? = null,
+        @SerialName("align")
         val align: Alignment? = null,
+        @SerialName("font")
         val font: Font? = null,
+        @SerialName("color")
         val color: String? = null,
+        @SerialName("width")
         val width: Int? = null,
         @SerialName("scroll_rate")
         val scrollRate: Int? = null,
+        @SerialName("section")
         val section: String? = null,
+        @SerialName("loop")
         val loop: Boolean? = null,
         @SerialName("await_previous_end")
         val awaitPreviousEnd: Boolean? = null,
+        @SerialName("timestamp")
         val timestamp: String? = null,
+        @SerialName("direction")
         val direction: CountdownDirection? = null,
         @SerialName("show_hours")
         val showHours: ShowHours? = null

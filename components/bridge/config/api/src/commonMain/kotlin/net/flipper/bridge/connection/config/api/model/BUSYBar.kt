@@ -2,6 +2,7 @@ package net.flipper.bridge.connection.config.api.model
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import kotlin.uuid.Uuid
 
 @Serializable
@@ -23,6 +24,7 @@ data class BUSYBar(
      * Returns all non-null connection ways ordered by priority (highest first):
      * Lan(100) > Cloud(10) > BLE(0) > Mock(-1)
      */
+    @Transient
     val connectionWays: List<ConnectionWay>
         get() = listOfNotNull(lan, cloud, ble, mock)
 
