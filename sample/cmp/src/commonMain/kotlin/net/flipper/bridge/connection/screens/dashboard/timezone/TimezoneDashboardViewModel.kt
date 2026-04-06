@@ -40,7 +40,7 @@ class TimezoneDashboardViewModel(
         require(allTimezones.isNotEmpty()) { "Timezone list is empty" }
         val activeTimezone = timezoneInfoFlow.value?.name
         val targetTimezone = allTimezones.firstOrNull { it.name == activeTimezone } ?: allTimezones.first()
-        timezoneApi.setTimezone(targetTimezone)
+        timezoneApi.setTimezone(targetTimezone).getOrThrow()
         mutableState.value = mutableState.value.copy(
             lastSetTimezone = "${targetTimezone.name} (${targetTimezone.abbr}, ${targetTimezone.offset})"
         )

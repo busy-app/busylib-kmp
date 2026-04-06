@@ -5,15 +5,16 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import com.arkivanov.decompose.ComponentContext
+import com.arkivanov.essenty.instancekeeper.getOrCreate
 import net.flipper.bridge.connection.screens.decompose.DecomposeOnBackParameter
 import net.flipper.bridge.connection.screens.decompose.ScreenDecomposeComponent
 
 class TimezoneDashboardDecomposeComponent(
     componentContext: ComponentContext,
     private val onBack: DecomposeOnBackParameter,
-    viewModelFactory: () -> TimezoneDashboardViewModel
+    private val viewModelFactory: () -> TimezoneDashboardViewModel
 ) : ScreenDecomposeComponent(componentContext) {
-    private val viewModel = viewModelFactory()
+    private val viewModel = instanceKeeper.getOrCreate { viewModelFactory() }
 
     @Composable
     override fun Render(modifier: Modifier) {
@@ -25,7 +26,7 @@ class TimezoneDashboardDecomposeComponent(
             modifier = modifier,
             onBack = onBack::invoke,
             timezoneInfo = timezoneInfo?.name,
-            timestampInfo = timestampInfo?.timestamp.toString(),
+            timestampInfo = timestampInfo?.timestamp,
             state = state,
             actionState = actionState,
             onRefreshTimezones = viewModel::refreshTimezones,
