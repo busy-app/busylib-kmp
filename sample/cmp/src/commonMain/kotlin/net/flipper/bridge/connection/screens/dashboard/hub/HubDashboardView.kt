@@ -11,11 +11,15 @@ import net.flipper.bridge.connection.screens.dashboard.common.DashboardSectionCa
 @Composable
 fun HubDashboardContent(
     onBack: () -> Unit,
-    onOpenOverview: () -> Unit,
+    onOpenSettings: () -> Unit,
     onOpenDeviceInfo: () -> Unit,
     onOpenAccount: () -> Unit,
     onOpenHardware: () -> Unit,
     onOpenOnCall: () -> Unit,
+    onOpenSmartHome: () -> Unit,
+    onOpenTimezone: () -> Unit,
+    onOpenAssets: () -> Unit,
+    onOpenDisplay: () -> Unit,
     onOpenScreenStreaming: () -> Unit,
     onOpenFwUpdate: () -> Unit,
     modifier: Modifier = Modifier
@@ -29,11 +33,15 @@ fun HubDashboardContent(
             title = "Features",
             modifier = Modifier.padding(horizontal = 16.dp)
         ) {
-            DashboardFeatureButton(title = "Overview", onClick = onOpenOverview)
+            DashboardFeatureButton(title = "Settings", onClick = onOpenSettings)
             DashboardFeatureButton(title = "Device Info", onClick = onOpenDeviceInfo)
             DashboardFeatureButton(title = "Account", onClick = onOpenAccount)
             DashboardFeatureButton(title = "Hardware", onClick = onOpenHardware)
             DashboardFeatureButton(title = "On-Call", onClick = onOpenOnCall)
+            DashboardFeatureButton(title = "Smart Home", onClick = onOpenSmartHome)
+            DashboardFeatureButton(title = "Timezone", onClick = onOpenTimezone)
+            DashboardFeatureButton(title = "Assets", onClick = onOpenAssets)
+            DashboardFeatureButton(title = "Display", onClick = onOpenDisplay)
             DashboardFeatureButton(title = "Screen Streaming", onClick = onOpenScreenStreaming)
             DashboardFeatureButton(title = "Firmware Update", onClick = onOpenFwUpdate)
         }

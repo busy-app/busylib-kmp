@@ -5,12 +5,16 @@ import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
 import net.flipper.bridge.connection.screens.dashboard.account.AccountDashboardViewModel
+import net.flipper.bridge.connection.screens.dashboard.assets.AssetsDashboardViewModel
 import net.flipper.bridge.connection.screens.dashboard.deviceinfo.DeviceInfoDashboardViewModel
+import net.flipper.bridge.connection.screens.dashboard.display.DisplayDashboardViewModel
 import net.flipper.bridge.connection.screens.dashboard.hardware.HardwareDashboardViewModel
 import net.flipper.bridge.connection.screens.dashboard.oncall.OnCallDashboardViewModel
-import net.flipper.bridge.connection.screens.dashboard.overview.OverviewDashboardViewModel
 import net.flipper.bridge.connection.screens.dashboard.root.DashboardDecomposeComponent
 import net.flipper.bridge.connection.screens.dashboard.screenstreaming.ScreenStreamingDashboardViewModel
+import net.flipper.bridge.connection.screens.dashboard.settings.SettingsDashboardViewModel
+import net.flipper.bridge.connection.screens.dashboard.smarthome.SmartHomeDashboardViewModel
+import net.flipper.bridge.connection.screens.dashboard.timezone.TimezoneDashboardViewModel
 import net.flipper.bridge.connection.screens.device.ConnectionDeviceScreenDecomposeComponent
 import net.flipper.bridge.connection.screens.device.viewmodel.FCurrentDeviceViewModel
 import net.flipper.bridge.connection.screens.device.viewmodel.FDevicesViewModel
@@ -109,11 +113,15 @@ private fun getDashboardDecomposeComponentFactory(
     firmwareUpdaterApi: FirmwareUpdaterApi
 ): DashboardDecomposeComponent.Factory {
     return DashboardDecomposeComponent.Factory(
-        overviewViewModelFactory = { OverviewDashboardViewModel(fFeatureProvider) },
+        settingsViewModelFactory = { SettingsDashboardViewModel(fFeatureProvider) },
         deviceInfoViewModelFactory = { DeviceInfoDashboardViewModel(fFeatureProvider) },
         accountViewModelFactory = { AccountDashboardViewModel(fFeatureProvider, principalApi) },
         hardwareViewModelFactory = { HardwareDashboardViewModel(fFeatureProvider) },
         onCallViewModelFactory = { OnCallDashboardViewModel(fFeatureProvider) },
+        smartHomeViewModelFactory = { SmartHomeDashboardViewModel(fFeatureProvider) },
+        timezoneViewModelFactory = { TimezoneDashboardViewModel(fFeatureProvider) },
+        assetsViewModelFactory = { AssetsDashboardViewModel(fFeatureProvider) },
+        displayViewModelFactory = { DisplayDashboardViewModel(fFeatureProvider) },
         screenStreamingViewModelFactory = { ScreenStreamingDashboardViewModel(fFeatureProvider) },
         firmwareUpdateViewModelFactory = { FirmwareUpdateViewModel(firmwareUpdaterApi) }
     )

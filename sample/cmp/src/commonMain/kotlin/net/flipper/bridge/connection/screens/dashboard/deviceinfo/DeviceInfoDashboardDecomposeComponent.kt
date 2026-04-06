@@ -21,11 +21,15 @@ class DeviceInfoDashboardDecomposeComponent(
     @Composable
     override fun Render(modifier: Modifier) {
         val deviceInfo by viewModel.deviceInfoFlow.collectAsState()
+        val deviceFirmware by viewModel.deviceFirmwareFlow.collectAsState()
+        val deviceVersion by viewModel.deviceVersionFlow.collectAsState()
 
         DeviceInfoDashboardContent(
             modifier = modifier,
             onBack = onBack::invoke,
-            deviceInfo = deviceInfo?.getOrNull()
+            deviceInfo = deviceInfo,
+            deviceFirmware = deviceFirmware,
+            deviceVersion = deviceVersion
         )
     }
 }
