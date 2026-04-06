@@ -21,7 +21,11 @@ data class BusyBarStatusDevice(
     @SerialName("usb_mac") val usbMac: String,
     @SerialName("wifi_mac") val wifiMac: String,
     @SerialName("ble_mac") val bleMac: String,
-    @SerialName("otp_valid") val otpValid: Boolean
+    @SerialName("otp_valid") val otpValid: Boolean,
+    @SerialName("otp_model") val otpModel: String,
+    @SerialName("otp_timestamp")
+    @Serializable(InstantUtcSerializer::class)
+    val otpTimestamp: Instant
 )
 
 @Serializable

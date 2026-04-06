@@ -1,6 +1,6 @@
 package net.flipper.bridge.connection.feature.battery.model
 
-class BSBDeviceBatteryInfo(
+data class BSBDeviceBatteryInfo(
     val state: BSBBatteryState,
     val percentage: Int
 ) {

@@ -68,15 +68,13 @@ class FOnCallFeatureApiImpl(
     private fun createDrawRequest(): DrawRequest {
         return DrawRequest(
             appId = APP_ID,
+            priority = DRAW_PRIORITY,
             elements = listOf(
                 DrawRequest.Element(
-                    id = "0",
-                    timeout = ELEMENT_TIMEOUT,
-                    priority = ELEMENT_PRIORITY,
+                    id = ANIM_ID,
                     display = DrawRequest.Display.FRONT,
-                    type = DrawRequest.Element.ElementType.ANIM,
-                    builtinAnim = BUILTIN_ANIM,
-                    section = "loop",
+                    type = DrawRequest.Element.ElementType.ANIMATION,
+                    stockPath = ANIM_PATH,
                     loop = true
                 )
             )
@@ -84,10 +82,10 @@ class FOnCallFeatureApiImpl(
     }
 
     companion object {
-        private const val APP_ID = "on_call"
-        private const val BUILTIN_ANIM = "shared/on_call_72x16"
-        private const val ELEMENT_TIMEOUT = 30
-        private const val ELEMENT_PRIORITY = 50
+        private const val APP_ID = "busy_lib_on_call"
+        private const val DRAW_PRIORITY = 50
+        private const val ANIM_ID = "busy_lib_on_call_anim"
+        private const val ANIM_PATH = "shared/on_call_72x16.anim"
         private val UPDATE_DELAY = 10.seconds
     }
 

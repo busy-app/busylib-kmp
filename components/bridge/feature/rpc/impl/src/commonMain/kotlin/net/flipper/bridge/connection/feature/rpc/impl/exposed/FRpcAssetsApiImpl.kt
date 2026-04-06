@@ -25,7 +25,7 @@ class FRpcAssetsApiImpl(
     ): Result<SuccessResponse> {
         return runSuspendCatching(dispatcher) {
             httpClient.post("/api/assets/upload") {
-                parameter("app_id", appId)
+                parameter("application_name", appId)
                 parameter("file", file)
                 contentType(ContentType.Application.OctetStream)
                 setBody(content)
@@ -48,7 +48,7 @@ class FRpcAssetsApiImpl(
     ): Result<SuccessResponse> {
         return runSuspendCatching(dispatcher) {
             httpClient.delete("/api/display/draw") {
-                parameter("app_id", appId)
+                parameter("application_name", appId)
             }.body<SuccessResponse>()
         }
     }
