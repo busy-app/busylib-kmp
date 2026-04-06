@@ -47,7 +47,7 @@ class FRpcTimeZoneApiImpl(
     override suspend fun postTimeTimezone(timezoneInfo: RpcTimezoneInfo): Result<Unit> {
         return runSuspendCatching(dispatcher) {
             httpClient.post("/api/time/timezone") {
-                this.parameter("timezone", timezoneInfo.timezone)
+                this.parameter("timezone", timezoneInfo.name)
             }.body<SuccessResponse>()
         }.map { }
     }

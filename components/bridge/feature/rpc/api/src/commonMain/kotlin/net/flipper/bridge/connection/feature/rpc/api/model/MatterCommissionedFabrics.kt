@@ -9,7 +9,7 @@ import kotlin.time.Instant
 class MatterCommissionedFabrics(
     @SerialName("fabric_count")
     val fabricCount: Int,
-    @SerialName("latest_commissioning_status")
+    @SerialName("latest_pairing_status")
     val latestCommissioningStatus: CommissioningStatus
 ) {
     @Serializable
