@@ -5,18 +5,21 @@ import net.flipper.bridge.connection.feature.rpc.api.model.RpcTimezoneInfo
 import net.flipper.bridge.connection.feature.rpc.api.model.RpcTimezoneListResponse
 import net.flipper.bridge.connection.feature.timezone.api.model.TimestampInfo
 import net.flipper.bridge.connection.feature.timezone.api.model.TimezoneInfo
-import net.flipper.bridge.connection.feature.timezone.api.model.TimezoneListItem
 
 fun RpcTimezoneInfo.toPublic(): TimezoneInfo {
-    return TimezoneInfo(timezone = timezone)
+    return TimezoneInfo(
+        name = name,
+        abbr = abbr,
+        offset = offset
+    )
 }
 
 fun RpcTimestampInfo.toPublic(): TimestampInfo {
     return TimestampInfo(timestamp = timestamp)
 }
 
-fun RpcTimezoneListResponse.toPublic(): List<TimezoneListItem> {
-    return list.map { TimezoneListItem(name = it.name, offset = it.offset, abbr = it.abbr) }
+fun RpcTimezoneListResponse.toPublic(): List<TimezoneInfo> {
+    return list.map { TimezoneInfo(name = it.name, offset = it.offset, abbr = it.abbr) }
 }
 
 fun TimestampInfo.toInternal(): RpcTimestampInfo {
@@ -24,5 +27,9 @@ fun TimestampInfo.toInternal(): RpcTimestampInfo {
 }
 
 fun TimezoneInfo.toInternal(): RpcTimezoneInfo {
-    return RpcTimezoneInfo(timezone = timezone)
+    return RpcTimezoneInfo(
+        name = name,
+        abbr = abbr,
+        offset = offset
+    )
 }

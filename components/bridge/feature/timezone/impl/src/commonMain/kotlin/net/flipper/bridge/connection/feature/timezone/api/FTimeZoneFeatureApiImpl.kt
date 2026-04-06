@@ -15,7 +15,6 @@ import net.flipper.bridge.connection.feature.events.model.BsbUpdateEvent
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.timezone.api.model.TimestampInfo
 import net.flipper.bridge.connection.feature.timezone.api.model.TimezoneInfo
-import net.flipper.bridge.connection.feature.timezone.api.model.TimezoneListItem
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.core.wrapper.CResult
@@ -89,7 +88,7 @@ class FTimeZoneFeatureApiImpl(
         return rpcFeatureApi.fRpcTimeZoneApi.postTimeTimezone(timezoneInfo.toInternal()).toCResult()
     }
 
-    override suspend fun getTimezones(): CResult<List<TimezoneListItem>> {
+    override suspend fun getTimezones(): CResult<List<TimezoneInfo>> {
         return rpcFeatureApi.fRpcTimeZoneApi.getTimeTzList().map { it.toPublic() }.toCResult()
     }
 
