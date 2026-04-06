@@ -37,11 +37,7 @@ class FEventsFeatureApiImpl(
     private val busyLibUpdateEventFlow = MutableSharedFlow<BusyLibUpdateEvent>()
 
     override fun onBusyLibEvent(event: BusyLibUpdateEvent) {
-        scope.launch {
-            val subscriptionCount = busyLibUpdateEventFlow.subscriptionCount.first()
-            if (subscriptionCount <= 0) return@launch
-            busyLibUpdateEventFlow.emit(event)
-        }
+        scope.launch { busyLibUpdateEventFlow.emit(event) }
     }
 
     override fun getBusyLibUpdateEvents(): Flow<ConsumableUpdateEvent.BusyLib<*>> {
