@@ -17,10 +17,10 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
 
-// TODO: Re-enable after Kotlin/Native fixes Network framework interop regression in K/N 2.3.20.
+//  Re-enable after Kotlin/Native fixes Network framework interop regression in K/N 2.3.20.
 //  nw_protocol_stack_set_transport_protocol crashes with TypeCastException
 //  because NW protocol options cannot be cast to NSObject.
-//  Tracked in: https://youtrack.jetbrains.com/issue/KT-XXXXX
+//  Tracked in: https://youtrack.jetbrains.com/issue/KT-85508/
 @Ignore
 @OptIn(ExperimentalForeignApi::class)
 @Suppress("TooManyFunctions")
