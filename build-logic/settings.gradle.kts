@@ -10,8 +10,6 @@ pluginManagement {
                 includeGroupByRegex("androidx.*")
             }
         }
-        maven { url = uri("https://reposilite.flipp.dev/releases") }
-        maven { url = uri("https://reposilite.flipp.dev/snapshots") }
         mavenCentral()
         gradlePluginPortal()
     }
@@ -27,8 +25,6 @@ dependencyResolutionManagement {
                 includeGroupByRegex("androidx.*")
             }
         }
-        maven { url = uri("https://reposilite.flipp.dev/releases") }
-        maven { url = uri("https://reposilite.flipp.dev/snapshots") }
         mavenCentral()
         gradlePluginPortal()
     }

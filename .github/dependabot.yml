@@ -11,7 +11,6 @@ updates:
     rebase-strategy: "disabled"
     ignore:
       - dependency-name: "io.github.adokky:bitvector"
-      - dependency-name: "co.touchlab.skie*"
     groups:
       all-gradle-deps:
         patterns:
