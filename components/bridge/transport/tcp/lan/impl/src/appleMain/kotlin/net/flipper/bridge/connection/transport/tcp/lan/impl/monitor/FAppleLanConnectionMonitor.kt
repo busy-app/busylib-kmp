@@ -18,6 +18,7 @@ import net.flipper.core.busylib.log.debug
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
 import platform.Foundation.NSLock
+import platform.Network.NW_PARAMETERS_DISABLE_PROTOCOL
 import platform.Network.nw_connection_cancel
 import platform.Network.nw_connection_create
 import platform.Network.nw_connection_force_cancel
@@ -34,13 +35,10 @@ import platform.Network.nw_connection_state_ready
 import platform.Network.nw_connection_state_waiting
 import platform.Network.nw_connection_t
 import platform.Network.nw_endpoint_create_host
-import platform.Network.nw_parameters_copy_default_protocol_stack
-import platform.Network.nw_parameters_create
+import platform.Network.nw_parameters_create_secure_tcp
 import platform.Network.nw_parameters_set_include_peer_to_peer
 import platform.Network.nw_path_get_status
 import platform.Network.nw_path_status_satisfied
-import platform.Network.nw_protocol_stack_set_transport_protocol
-import platform.Network.nw_tcp_create_options
 import platform.Network.nw_tcp_options_set_enable_keepalive
 import platform.Network.nw_tcp_options_set_keepalive_count
 import platform.Network.nw_tcp_options_set_keepalive_idle_time
@@ -74,16 +72,14 @@ class FAppleLanConnectionMonitor(
             connection?.let { nw_connection_cancel(it) }
 
             val endpoint = nw_endpoint_create_host(config.host, port)
-            val parameters = nw_parameters_create()
-            val protocolStack = nw_parameters_copy_default_protocol_stack(parameters)
-
-            val tcpOptions = nw_tcp_create_options()
-            nw_tcp_options_set_enable_keepalive(tcpOptions, true)
-            nw_tcp_options_set_keepalive_idle_time(tcpOptions, KEEPALIVE_IDLE_TIME_SEC)
-            nw_tcp_options_set_keepalive_interval(tcpOptions, KEEPALIVE_INTERVAL_SEC)
-            nw_tcp_options_set_keepalive_count(tcpOptions, KEEPALIVE_COUNT)
-
-            nw_protocol_stack_set_transport_protocol(protocolStack, tcpOptions)
+            val parameters = nw_parameters_create_secure_tcp(
+                NW_PARAMETERS_DISABLE_PROTOCOL
+            ) { tcpOptions ->
+                nw_tcp_options_set_enable_keepalive(tcpOptions, true)
+                nw_tcp_options_set_keepalive_idle_time(tcpOptions, KEEPALIVE_IDLE_TIME_SEC)
+                nw_tcp_options_set_keepalive_interval(tcpOptions, KEEPALIVE_INTERVAL_SEC)
+                nw_tcp_options_set_keepalive_count(tcpOptions, KEEPALIVE_COUNT)
+            }
             nw_parameters_set_include_peer_to_peer(parameters, true)
 
             val createdConnection = nw_connection_create(endpoint, parameters)
