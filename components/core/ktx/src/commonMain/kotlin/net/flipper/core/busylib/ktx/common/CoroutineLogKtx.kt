@@ -17,7 +17,7 @@ fun LogTagProvider.launchWithLock(
     tag: String? = null,
     action: suspend CoroutineScope.() -> Unit
 ) {
-    scope.launch(FlipperDispatchers.default) {
+    scope.launch {
         withLock(mutex, tag) { action.invoke(this) }
     }
 }

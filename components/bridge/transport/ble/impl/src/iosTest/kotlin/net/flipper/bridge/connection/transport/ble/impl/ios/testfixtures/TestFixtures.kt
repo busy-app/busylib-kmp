@@ -19,6 +19,7 @@ import platform.CoreBluetooth.CBUUID
 import platform.Foundation.NSError
 import platform.Foundation.NSNumber
 import platform.Foundation.NSUUID
+import platform.Foundation.addObserver
 import platform.Foundation.setValue
 import kotlin.uuid.Uuid
 
@@ -47,7 +48,26 @@ internal data class WriteRequest(
 
 @OptIn(ExperimentalForeignApi::class)
 internal class RecordingPeripheral : CBPeripheral() {
+    // Store delegate locally to prevent CoreBluetooth from managing KVO observers
+    // on "delegate" key path, which causes crashes during dealloc.
+    private var _localDelegate: platform.CoreBluetooth.CBPeripheralDelegateProtocol? = null
+
+    override fun delegate(): platform.CoreBluetooth.CBPeripheralDelegateProtocol? = _localDelegate
+    override fun setDelegate(delegate: platform.CoreBluetooth.CBPeripheralDelegateProtocol?) {
+        _localDelegate = delegate
+    }
+
     init {
+        // CBPeripheral.dealloc removes a KVO observer for "delegate" that is
+        // normally registered by the framework when creating peripherals via
+        // CBCentralManager. Since we create CBPeripheral() directly, we must
+        // register the observer ourselves to prevent an NSRangeException.
+        addObserver(
+            observer = this,
+            forKeyPath = "delegate",
+            options = 0u,
+            context = null
+        )
         setValue(NSUUID(), forKey = "identifier")
     }
 
