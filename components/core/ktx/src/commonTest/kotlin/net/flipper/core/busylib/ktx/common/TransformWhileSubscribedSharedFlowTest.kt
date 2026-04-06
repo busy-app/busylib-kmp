@@ -2,14 +2,16 @@ package net.flipper.core.busylib.ktx.common
 
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
-import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
@@ -210,20 +212,16 @@ class TransformWhileSubscribedSharedFlowTest {
                 transformFlow = { flow -> flow }
             )
 
-            launch { sharedFlow.take(100).collect() }
-                .also { advanceTimeBy(1500) }
-                .cancelAndJoin()
-                .also { advanceTimeBy(6000) }
+            // Pass some values
+            sharedFlow.drop(10).first()
 
-            val job2 = launch { sharedFlow.first() }
+            advanceTimeBy(600.seconds)
 
             assertEquals(
                 expected = 0,
                 actual = sharedFlow.first(),
                 message = "Upstream should restart when new subscriber is added after timeout"
             )
-
-            job2.cancel()
         }
     }
 
@@ -282,6 +280,45 @@ class TransformWhileSubscribedSharedFlowTest {
                 expected = 5,
                 actual = transformationCount,
                 message = "Transformation should be applied only from [0;2] and [6;7]"
+            )
+        }
+    }
+
+    class TickFlowProvider {
+        fun getTickFlow() = TickFlow(1.seconds).map { "inner_tick_$it" }
+    }
+
+    @Test
+    fun GIVEN_flatmapped_flow_provider_WHEN_no_subscribers_THEN_no_transforming() {
+        runTest {
+            var transformationCount = 0
+
+            val sharedFlow = flowOf(TickFlowProvider())
+                .transformWhileSubscribed(
+                    timeout = 30.seconds,
+                    scope = backgroundScope,
+                    transformFlow = { providerFlow ->
+                        providerFlow
+                            .flatMapLatest { provider -> provider.getTickFlow() }
+                            .onEach { transformationCount++ }
+                    }
+                )
+            advanceTimeBy(2.seconds)
+
+            advanceTimeBy(100.seconds)
+            sharedFlow.first()
+
+            assertEquals(
+                expected = transformationCount,
+                actual = 1,
+                message = "Transformation tick should tick exactly one time after subscriber attached"
+            )
+            advanceTimeBy(1000.seconds)
+
+            assertEquals(
+                expected = 1,
+                actual = transformationCount,
+                message = "Transformation tick should not tick when subscriber removed"
             )
         }
     }
