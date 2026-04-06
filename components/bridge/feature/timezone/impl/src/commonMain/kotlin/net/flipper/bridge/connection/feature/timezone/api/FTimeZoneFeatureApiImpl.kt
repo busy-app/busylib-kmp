@@ -15,7 +15,6 @@ import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
 import net.flipper.bridge.connection.feature.events.model.ConsumableUpdateEvent
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.RpcTimezoneInfo
-import net.flipper.bridge.connection.feature.rpc.api.model.UpdateStatus
 import net.flipper.bridge.connection.feature.timezone.api.model.TimezoneInfo
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.busylib.core.di.BusyLibGraph
@@ -27,12 +26,10 @@ import net.flipper.core.busylib.ktx.common.asFlow
 import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.merge
 import net.flipper.core.busylib.ktx.common.orEmpty
-import net.flipper.core.busylib.ktx.common.throttleLatest
 import net.flipper.core.busylib.ktx.common.throttleLatestCached
 import net.flipper.core.busylib.ktx.common.transformWhileSubscribed
 import net.flipper.core.busylib.ktx.common.tryConsume
 import net.flipper.core.busylib.log.LogTagProvider
-import net.flipper.core.busylib.log.error
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
 
 class FTimeZoneFeatureApiImpl(
@@ -53,7 +50,8 @@ class FTimeZoneFeatureApiImpl(
                     is ConsumableUpdateEvent.BusyLib<BusyLibUpdateEvent.Timezone> if value != null -> {
                         value.copy(
                             name = event.busyLibUpdateEvent.name,
-                            // offset = event.busyLibUpdateEvent.offsetMinutes.toString() // TODO offset duration currently being discuss
+                            // TODO offset duration currently being discuss
+                            // offset = event.busyLibUpdateEvent.offsetMinutes.toString()
                         )
                     }
 

@@ -51,7 +51,7 @@ sealed interface BusyLibUpdateEvent {
             val availableVersion: String?,
         ) : Update
 
-        data class UpdateStatus(val status: net.flipper.bridge.connection.feature.rpc.api.model.UpdateStatus): Update
+        data class UpdateStatus(val status: net.flipper.bridge.connection.feature.rpc.api.model.UpdateStatus) : Update
     }
 
     data class Timezone(
