@@ -11,10 +11,12 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withTimeoutOrNull
 import net.flipper.bridge.connection.transport.ble.impl.BleConstants.POLLING_RESET_INTERVAL
 import no.nordicsemi.kotlin.ble.client.RemoteCharacteristic
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class FResetSerialBleApiImplTest {
@@ -99,7 +101,9 @@ class FResetSerialBleApiImplTest {
             )
 
             runCurrent()
-            assertEquals(0, sut.getRequestCounterFlow().first())
+            // No characteristic yet — shared flow has no replay value
+            val initial = withTimeoutOrNull(0) { sut.getRequestCounterFlow().first() }
+            assertNull(initial)
 
             val characteristic = createMockCharacteristic(byteArrayOf(0x07, 0x00, 0x00, 0x00))
             characteristicFlow.value = characteristic
@@ -109,7 +113,7 @@ class FResetSerialBleApiImplTest {
         }
 
     @Test
-    fun GIVEN_characteristic_flow_initially_empty_WHEN_sut_created_THEN_stateflow_starts_with_zero() =
+    fun GIVEN_characteristic_flow_initially_empty_WHEN_sut_created_THEN_no_values_emitted() =
         runTest {
             val characteristicFlow = MutableStateFlow<RemoteCharacteristic?>(null)
 
@@ -120,6 +124,8 @@ class FResetSerialBleApiImplTest {
 
             runCurrent()
 
-            assertEquals(0, sut.getRequestCounterFlow().first())
+            // No characteristic is available, so the counter flow has no value yet
+            val value = withTimeoutOrNull(0) { sut.getRequestCounterFlow().first() }
+            assertNull(value)
         }
 }

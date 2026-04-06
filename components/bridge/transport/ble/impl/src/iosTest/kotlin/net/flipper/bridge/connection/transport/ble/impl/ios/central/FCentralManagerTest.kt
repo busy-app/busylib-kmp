@@ -132,7 +132,7 @@ class FCentralManagerTest {
                 setStateRaw(5L)
             }
 
-            val sut = FCentralManager(manager = manager, scope = this)
+            val sut = FCentralManager(manager = manager, scope = backgroundScope)
             manager.emitStateUpdate()
             advanceUntilIdle()
 
@@ -214,7 +214,7 @@ class FCentralManagerTest {
 
     private fun TestScope.createSut(): Sut {
         val manager = RecordingCentralManager()
-        val sut = FCentralManager(manager = manager, scope = this)
+        val sut = FCentralManager(manager = manager, scope = backgroundScope)
         return Sut(manager = manager, sut = sut)
     }
 }
