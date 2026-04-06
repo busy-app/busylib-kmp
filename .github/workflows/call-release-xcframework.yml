@@ -22,7 +22,10 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
       - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4
+        with:
+          # Pin to 16.0 (v3 default) — cmdline-tools 20.0 crashes on self-hosted macOS runners
+          cmdline-tools-version: '12266719'
       - name: Replace gradle properties with sed
         run: |
           sed -i -e 's/^makeevrserg.project.version.string=.*$/makeevrserg.project.version.string=${{ inputs.VERSION_NAME }}/g' gradle.properties
@@ -43,7 +46,7 @@ jobs:
           ORG_GRADLE_PROJECT_current_flavor_type: DEBUG
       - name: Publish release
         id: create_release
-        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2
+        uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe # v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
