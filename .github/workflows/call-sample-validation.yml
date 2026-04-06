@@ -24,7 +24,10 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
       - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4
+        with:
+          # Pin to 16.0 (v3 default) — cmdline-tools 20.0 crashes on self-hosted macOS runners
+          cmdline-tools-version: '12266719'
       - name: Give gradle permission
         run: chmod +x gradlew
       - name: Build sample:cmp target
@@ -52,7 +55,10 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
       - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4
+        with:
+          # Pin to 16.0 (v3 default) — cmdline-tools 20.0 crashes on self-hosted macOS runners
+          cmdline-tools-version: '12266719'
       - name: Give gradle permission
         run: chmod +x gradlew
       - name: Build sample:cmp target

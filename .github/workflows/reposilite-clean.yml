@@ -18,8 +18,8 @@ jobs:
       matrix:
         repo: [releases, snapshots]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - name: Scan for old artifacts
@@ -32,11 +32,11 @@ jobs:
             --exclude-file .github/workflows/reposilite-cleaner/exclude.txt \
             --output scan_result.csv \
             --cleanup-output cleanup_dirs.csv
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: scan-${{ matrix.repo }}
           path: scan_result.csv
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: cleanup-${{ matrix.repo }}
           path: cleanup_dirs.csv
@@ -49,11 +49,11 @@ jobs:
       matrix:
         repo: [releases, snapshots]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: scan-${{ matrix.repo }}
       - name: Delete old artifacts
@@ -69,11 +69,11 @@ jobs:
       matrix:
         repo: [releases, snapshots]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: cleanup-${{ matrix.repo }}
       - name: Remove empty directories
@@ -90,11 +90,11 @@ jobs:
       contents: read
       actions: read
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           path: artifacts
       - name: Generate report
