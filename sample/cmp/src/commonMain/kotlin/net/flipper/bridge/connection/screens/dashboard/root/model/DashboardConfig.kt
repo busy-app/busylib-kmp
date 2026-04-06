@@ -1,4 +1,4 @@
-package net.flipper.bridge.connection.screens.dashboard
+package net.flipper.bridge.connection.screens.dashboard.root.model
 
 import kotlinx.serialization.Serializable
 
@@ -24,4 +24,7 @@ sealed class DashboardConfig {
 
     @Serializable
     data object ScreenStreaming : DashboardConfig()
+
+    @Serializable
+    data object FirmwareUpdate : DashboardConfig()
 }

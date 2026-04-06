@@ -9,8 +9,12 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -61,9 +65,9 @@ class BSBWebSocketImplTest {
         )
 
         // When - simulate receiving an event
-        val receivedEvents = mutableListOf<WebSocketEvent>()
+        val receivedEvents = MutableStateFlow(listOf<WebSocketEvent>())
         val job = webSocket.getEventsFlow()
-            .onEach { receivedEvents.add(it) }
+            .onEach { receivedEvents.update { list -> list + it } }
             .launchIn(backgroundScope)
 
         advanceUntilIdle()
@@ -72,7 +76,11 @@ class BSBWebSocketImplTest {
         advanceUntilIdle()
 
         // Then
-        assertEquals(1, receivedEvents.size, "Should receive exactly one event")
+        assertEquals(
+            1,
+            receivedEvents.filter { it.size == 1 }.first().size,
+            "Should receive exactly one event"
+        )
         job.cancel()
     }
 
@@ -91,9 +99,9 @@ class BSBWebSocketImplTest {
             )
 
             // When
-            val receivedEvents = mutableListOf<WebSocketEvent>()
+            val receivedEvents = MutableStateFlow(listOf<WebSocketEvent>())
             val job = webSocket.getEventsFlow()
-                .onEach { receivedEvents.add(it) }
+                .onEach { receivedEvents.update { list -> list + it } }
                 .launchIn(backgroundScope)
 
             advanceUntilIdle()
@@ -104,7 +112,7 @@ class BSBWebSocketImplTest {
             advanceUntilIdle()
 
             // Then
-            assertEquals(5, receivedEvents.size, "Should receive all 5 events")
+            assertEquals(5, receivedEvents.first { it.size == 5 }.size, "Should receive all 5 events")
             job.cancel()
         }
 
@@ -123,15 +131,15 @@ class BSBWebSocketImplTest {
         )
 
         // When - two subscribers
-        val subscriber1Events = mutableListOf<WebSocketEvent>()
-        val subscriber2Events = mutableListOf<WebSocketEvent>()
+        val subscriber1Events = MutableStateFlow(listOf<WebSocketEvent>())
+        val subscriber2Events = MutableStateFlow(listOf<WebSocketEvent>())
 
         val job1 = webSocket.getEventsFlow()
-            .onEach { subscriber1Events.add(it) }
+            .onEach { subscriber1Events.update { list -> list + it } }
             .launchIn(backgroundScope)
 
         val job2 = webSocket.getEventsFlow()
-            .onEach { subscriber2Events.add(it) }
+            .onEach { subscriber2Events.update { list -> list + it } }
             .launchIn(backgroundScope)
 
         advanceUntilIdle()
@@ -140,8 +148,16 @@ class BSBWebSocketImplTest {
         advanceUntilIdle()
 
         // Then - both should receive the event
-        assertEquals(1, subscriber1Events.size, "Subscriber 1 should receive the event")
-        assertEquals(1, subscriber2Events.size, "Subscriber 2 should receive the event")
+        assertEquals(
+            1,
+            subscriber1Events.first { it.size == 1 }.size,
+            "Subscriber 1 should receive the event"
+        )
+        assertEquals(
+            1,
+            subscriber2Events.first { it.size == 1 }.size,
+            "Subscriber 2 should receive the event"
+        )
 
         job1.cancel()
         job2.cancel()
@@ -161,9 +177,9 @@ class BSBWebSocketImplTest {
         )
 
         // When - first subscriber receives event
-        val firstSubscriberEvents = mutableListOf<WebSocketEvent>()
+        val firstSubscriberEvents = MutableStateFlow(listOf<WebSocketEvent>())
         val job1 = webSocket.getEventsFlow()
-            .onEach { firstSubscriberEvents.add(it) }
+            .onEach { firstSubscriberEvents.update { list -> list + it } }
             .launchIn(backgroundScope)
 
         advanceUntilIdle()
@@ -171,18 +187,26 @@ class BSBWebSocketImplTest {
         mockSession.emitEvent(createMockEvent())
         advanceUntilIdle()
 
-        assertEquals(1, firstSubscriberEvents.size, "First subscriber should receive the event")
+        assertEquals(
+            1,
+            firstSubscriberEvents.first { it.size == 1 }.size,
+            "First subscriber should receive the event"
+        )
 
         // Then late subscriber joins
-        val lateSubscriberEvents = mutableListOf<WebSocketEvent>()
+        val lateSubscriberEvents = MutableStateFlow(listOf<WebSocketEvent>())
         val job2 = webSocket.getEventsFlow()
-            .onEach { lateSubscriberEvents.add(it) }
+            .onEach { lateSubscriberEvents.update { list -> list + it } }
             .launchIn(backgroundScope)
 
         advanceUntilIdle()
 
         // Then - late subscriber should get replayed event due to replay = 1
-        assertEquals(1, lateSubscriberEvents.size, "Late subscriber should receive replayed event")
+        assertEquals(
+            1,
+            lateSubscriberEvents.first { it.size == 1 }.size,
+            "Late subscriber should receive replayed event"
+        )
 
         job1.cancel()
         job2.cancel()
@@ -275,9 +299,9 @@ class BSBWebSocketImplTest {
                 dispatcher = testDispatcher
             )
 
-            val receivedEvents = mutableListOf<WebSocketEvent>()
+            val receivedEvents = MutableStateFlow(listOf<WebSocketEvent>())
             val job = webSocket.getEventsFlow()
-                .onEach { receivedEvents.add(it) }
+                .onEach { receivedEvents.update { list -> list + it } }
                 .launchIn(backgroundScope)
 
             advanceUntilIdle()
@@ -289,7 +313,11 @@ class BSBWebSocketImplTest {
             advanceUntilIdle()
 
             // Then - should still receive the valid message after error
-            assertEquals(1, receivedEvents.size, "Should receive the valid event after error")
+            assertEquals(
+                1,
+                receivedEvents.first { it.size == 1 }.size,
+                "Should receive the valid event after error"
+            )
             job.cancel()
         }
 
@@ -354,7 +382,11 @@ class BSBWebSocketImplTest {
         mockSession.emitEvent(createMockEvent())
         advanceUntilIdle()
 
-        assertEquals(countBefore, receivedEvents.size, "Should not receive events after scope cancellation")
+        assertEquals(
+            countBefore,
+            receivedEvents.size,
+            "Should not receive events after scope cancellation"
+        )
     }
 
     @Test
@@ -433,9 +465,9 @@ class BSBWebSocketImplTest {
             dispatcher = testDispatcher
         )
 
-        val receivedEvents = mutableListOf<WebSocketEvent>()
+        val receivedEvents = MutableStateFlow(listOf<WebSocketEvent>())
         val job = webSocket.getEventsFlow()
-            .onEach { receivedEvents.add(it) }
+            .onEach { receivedEvents.update { list -> list + it } }
             .launchIn(backgroundScope)
 
         advanceUntilIdle()
@@ -457,7 +489,11 @@ class BSBWebSocketImplTest {
 
         // Then
         assertEquals(20, mockSession.sentRequests.size, "All sends should complete")
-        assertEquals(20, receivedEvents.size, "All receives should complete")
+        assertEquals(
+            20,
+            receivedEvents.filter { it.size == 20 }.first().size,
+            "All receives should complete"
+        )
         job.cancel()
     }
 
@@ -474,9 +510,9 @@ class BSBWebSocketImplTest {
             dispatcher = testDispatcher
         )
 
-        val receivedEvents = mutableListOf<WebSocketEvent>()
+        val receivedEvents = MutableStateFlow(listOf<WebSocketEvent>())
         val job = webSocket.getEventsFlow()
-            .onEach { receivedEvents.add(it) }
+            .onEach { receivedEvents.update { list -> list + it } }
             .launchIn(backgroundScope)
 
         advanceUntilIdle()
@@ -488,7 +524,11 @@ class BSBWebSocketImplTest {
         advanceUntilIdle()
 
         // Then
-        assertEquals(1000, receivedEvents.size, "All high frequency events should be received")
+        assertEquals(
+            1000,
+            receivedEvents.first { it.size == 1000 }.size,
+            "All high frequency events should be received"
+        )
         job.cancel()
     }
 
@@ -545,9 +585,9 @@ class BSBWebSocketImplTest {
 
             // When - sequential collections
             repeat(5) { iteration ->
-                val events = mutableListOf<WebSocketEvent>()
+                val events = MutableStateFlow(listOf<WebSocketEvent>())
                 val job = webSocket.getEventsFlow()
-                    .onEach { events.add(it) }
+                    .onEach { events.update { list -> list + it } }
                     .launchIn(backgroundScope)
 
                 advanceUntilIdle()
@@ -557,7 +597,7 @@ class BSBWebSocketImplTest {
 
                 // Should receive at least one event (might be more due to replay)
                 assertTrue(
-                    events.isNotEmpty(),
+                    events.first { it.isNotEmpty() }.isNotEmpty(),
                     "Should receive events in iteration $iteration"
                 )
                 job.cancel()
@@ -578,12 +618,12 @@ class BSBWebSocketImplTest {
             dispatcher = testDispatcher
         )
 
-        val fastSubscriberEvents = mutableListOf<WebSocketEvent>()
+        val fastSubscriberEvents = MutableStateFlow(listOf<WebSocketEvent>())
         val slowSubscriberEvents = mutableListOf<WebSocketEvent>()
 
         // Fast subscriber
         val fastJob = webSocket.getEventsFlow()
-            .onEach { fastSubscriberEvents.add(it) }
+            .onEach { fastSubscriberEvents.update { list -> list + it } }
             .launchIn(backgroundScope)
 
         // Slow subscriber (simulated with processing delay)
@@ -603,7 +643,11 @@ class BSBWebSocketImplTest {
         advanceUntilIdle()
 
         // Then - fast subscriber should receive all events
-        assertEquals(5, fastSubscriberEvents.size, "Fast subscriber should receive all events")
+        assertEquals(
+            5,
+            fastSubscriberEvents.first { it.size == 5 }.size,
+            "Fast subscriber should receive all events"
+        )
 
         fastJob.cancel()
         slowJob.cancel()
@@ -622,9 +666,9 @@ class BSBWebSocketImplTest {
             dispatcher = testDispatcher
         )
 
-        val receivedEvents = mutableListOf<WebSocketEvent>()
+        val receivedEvents = MutableStateFlow(listOf<WebSocketEvent>())
         val job = webSocket.getEventsFlow()
-            .onEach { receivedEvents.add(it) }
+            .onEach { receivedEvents.update { list -> list + it } }
             .launchIn(backgroundScope)
 
         advanceUntilIdle()
@@ -632,7 +676,7 @@ class BSBWebSocketImplTest {
         mockSession.emitEvent(createMockEvent())
         advanceUntilIdle()
 
-        assertEquals(1, receivedEvents.size)
+        assertEquals(1, receivedEvents.first { it.size == 1 }.size)
 
         // When - cancel job first to avoid race condition with channel close
         job.cancel()

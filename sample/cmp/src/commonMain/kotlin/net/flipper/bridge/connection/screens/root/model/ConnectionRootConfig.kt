@@ -1,4 +1,4 @@
-package net.flipper.bridge.connection.screens.models
+package net.flipper.bridge.connection.screens.root.model
 
 import kotlinx.serialization.Serializable
 
