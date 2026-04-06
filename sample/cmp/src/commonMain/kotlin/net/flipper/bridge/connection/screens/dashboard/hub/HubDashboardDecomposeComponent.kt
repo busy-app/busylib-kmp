@@ -9,11 +9,15 @@ import net.flipper.bridge.connection.screens.decompose.ScreenDecomposeComponent
 class HubDashboardDecomposeComponent(
     componentContext: ComponentContext,
     private val onBack: DecomposeOnBackParameter,
-    private val onOpenOverview: () -> Unit,
+    private val onOpenSettings: () -> Unit,
     private val onOpenDeviceInfo: () -> Unit,
     private val onOpenAccount: () -> Unit,
     private val onOpenHardware: () -> Unit,
     private val onOpenOnCall: () -> Unit,
+    private val onOpenSmartHome: () -> Unit,
+    private val onOpenTimezone: () -> Unit,
+    private val onOpenAssets: () -> Unit,
+    private val onOpenDisplay: () -> Unit,
     private val onOpenScreenStreaming: () -> Unit,
     private val onOpenFwUpdate: () -> Unit
 ) : ScreenDecomposeComponent(componentContext) {
@@ -22,11 +26,15 @@ class HubDashboardDecomposeComponent(
         HubDashboardContent(
             modifier = modifier,
             onBack = onBack::invoke,
-            onOpenOverview = onOpenOverview,
+            onOpenSettings = onOpenSettings,
             onOpenDeviceInfo = onOpenDeviceInfo,
             onOpenAccount = onOpenAccount,
             onOpenHardware = onOpenHardware,
             onOpenOnCall = onOpenOnCall,
+            onOpenSmartHome = onOpenSmartHome,
+            onOpenTimezone = onOpenTimezone,
+            onOpenAssets = onOpenAssets,
+            onOpenDisplay = onOpenDisplay,
             onOpenScreenStreaming = onOpenScreenStreaming,
             onOpenFwUpdate = onOpenFwUpdate
         )

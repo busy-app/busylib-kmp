@@ -1,4 +1,4 @@
-package net.flipper.bridge.connection.screens.dashboard.deviceinfo
+package net.flipper.bridge.connection.screens.dashboard.display
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -9,27 +9,25 @@ import com.arkivanov.essenty.instancekeeper.getOrCreate
 import net.flipper.bridge.connection.screens.decompose.DecomposeOnBackParameter
 import net.flipper.bridge.connection.screens.decompose.ScreenDecomposeComponent
 
-class DeviceInfoDashboardDecomposeComponent(
+class DisplayDashboardDecomposeComponent(
     componentContext: ComponentContext,
     private val onBack: DecomposeOnBackParameter,
-    private val viewModelFactory: () -> DeviceInfoDashboardViewModel
+    private val viewModelFactory: () -> DisplayDashboardViewModel
 ) : ScreenDecomposeComponent(componentContext) {
-    private val viewModel = instanceKeeper.getOrCreate {
-        viewModelFactory()
-    }
+    private val viewModel = instanceKeeper.getOrCreate { viewModelFactory() }
 
     @Composable
     override fun Render(modifier: Modifier) {
-        val deviceInfo by viewModel.deviceInfoFlow.collectAsState()
-        val deviceFirmware by viewModel.deviceFirmwareFlow.collectAsState()
-        val deviceVersion by viewModel.deviceVersionFlow.collectAsState()
-
-        DeviceInfoDashboardContent(
+        val state by viewModel.state.collectAsState()
+        val actionState by viewModel.actionState.collectAsState()
+        DisplayDashboardContent(
             modifier = modifier,
             onBack = onBack::invoke,
-            deviceInfo = deviceInfo,
-            deviceFirmware = deviceFirmware,
-            deviceVersion = deviceVersion
+            state = state,
+            actionState = actionState,
+            onDrawSampleText = viewModel::drawSampleText,
+            onDrawSampleAnimation = viewModel::drawSampleAnimation,
+            onClearSampleDraw = viewModel::clearSampleDraw
         )
     }
 }
