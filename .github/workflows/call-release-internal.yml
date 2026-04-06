@@ -52,6 +52,9 @@ jobs:
           java-version: '17'
       - name: Setup Android SDK
         uses: android-actions/setup-android@v4
+        with:
+          # Pin to 16.0 (v3 default) — cmdline-tools 20.0 crashes on self-hosted macOS runners
+          cmdline-tools-version: '12266719'
       - name: Replace gradle properties with sed
         run: |
           sed -i -e 's/^makeevrserg.project.version.string=.*$/makeevrserg.project.version.string=${{ inputs.VERSION_NAME }}/g' gradle.properties
