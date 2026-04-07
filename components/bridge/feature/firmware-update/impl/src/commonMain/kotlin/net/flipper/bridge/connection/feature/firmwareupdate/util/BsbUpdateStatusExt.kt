@@ -21,7 +21,5 @@ internal fun BsbUpdateStatus.merge(event: BusyLibUpdateEvent.Update): BsbUpdateS
                 )
             )
         }
-
-        is BusyLibUpdateEvent.Update.BsbUpdateStatusChanged -> event.bsbUpdateStatus
     }
 }

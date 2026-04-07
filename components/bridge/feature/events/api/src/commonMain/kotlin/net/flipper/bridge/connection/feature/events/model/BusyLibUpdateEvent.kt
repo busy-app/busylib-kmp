@@ -37,10 +37,6 @@ sealed interface BusyLibUpdateEvent {
         data class UpdateCheck(
             val availableVersion: String?,
         ) : Update
-
-        data class BsbUpdateStatusChanged(
-            val bsbUpdateStatus: BsbUpdateStatus
-        ) : Update
     }
 
     data class Timezone(

@@ -3,7 +3,6 @@ package net.flipper.bridge.connection.feature.events.proto.protomapper.delegates
 import BSB_State.Wifi
 import BSB_State.WifiConnectionStatus
 import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
-import net.flipper.bridge.connection.feature.wifi.api.model.BsbWifiStatusResponse
 import net.flipper.bridge.connection.feature.wifi.api.model.BsbWifiStatusResponse.BsbWifiState
 
 object WifiProtobufMapper {
