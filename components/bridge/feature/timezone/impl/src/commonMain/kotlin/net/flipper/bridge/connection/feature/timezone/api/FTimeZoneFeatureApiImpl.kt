@@ -16,7 +16,6 @@ import net.flipper.bridge.connection.feature.events.model.BsbUpdateEvent
 import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
 import net.flipper.bridge.connection.feature.events.model.ConsumableUpdateEvent
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
-import net.flipper.bridge.connection.feature.rpc.api.model.RpcTimezoneInfo
 import net.flipper.bridge.connection.feature.timezone.api.model.TimestampInfo
 import net.flipper.bridge.connection.feature.timezone.api.model.TimezoneInfo
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
@@ -77,14 +76,13 @@ class FTimeZoneFeatureApiImpl(
                 val couldConsume = consumable.tryConsume()
                 when (consumable) {
                     ConsumableUpdateEvent.Empty,
-                    is ConsumableUpdateEvent.Bsb -> {
+                    is ConsumableUpdateEvent.Bsb,
+                    is ConsumableUpdateEvent.BusyLib<BusyLibUpdateEvent.Timezone> -> {
+                        @Suppress("ForbiddenComment")
+                        // TODO: https://flipper.atlassian.net/browse/FW-781
                         exponentialRetry {
                             rpcFeatureApi.fRpcTimeZoneApi.getTimeTimezone(couldConsume)
                         }
-                    }
-
-                    is ConsumableUpdateEvent.BusyLib<BusyLibUpdateEvent.Timezone> -> {
-                        RpcTimezoneInfo(consumable.busyLibUpdateEvent.name)
                     }
                 }
             }
