@@ -26,7 +26,6 @@ import net.flipper.bridge.connection.feature.wifi.api.model.WiFiNetwork
 import net.flipper.bridge.connection.feature.wifi.api.model.WiFiSecurity
 import net.flipper.bridge.connection.feature.wifi.mapper.toBsbWifiSecurityMethod
 import net.flipper.bridge.connection.feature.wifi.mapper.toBsbWifiStatusResponse
-import net.flipper.bridge.connection.feature.wifi.mapper.toStatusResponseState
 import net.flipper.bridge.connection.feature.wifi.mapper.toWiFiNetwork
 import net.flipper.bridge.connection.feature.wifi.mapper.toWifiSecurityMethod
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
@@ -105,7 +104,7 @@ class FWiFiFeatureApiImpl(
                     is ConsumableUpdateEvent.BusyLib<BusyLibUpdateEvent.Wifi> if wifi != null -> {
                         consumable.busyLibUpdateEvent.let { wifiUpdateEvent ->
                             BsbWifiStatusResponse(
-                                state = wifiUpdateEvent.state.toStatusResponseState(),
+                                state = wifiUpdateEvent.state,
                                 ssid = wifiUpdateEvent.ssid,
                                 bssid = wifiUpdateEvent.bssid,
                                 channel = wifiUpdateEvent.channel,

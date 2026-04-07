@@ -130,7 +130,6 @@ class FFinishSetupFeatureApiImplTest {
         ),
         check = BsbUpdateStatus.BsbCheck(
             availableVersion = "",
-            event = BsbUpdateStatus.BsbCheck.BsbCheckEvent.NONE,
             status = checkResult
         )
     )
