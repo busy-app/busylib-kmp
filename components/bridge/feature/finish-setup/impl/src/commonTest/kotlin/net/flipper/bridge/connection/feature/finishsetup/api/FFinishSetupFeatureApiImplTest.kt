@@ -8,7 +8,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
@@ -37,6 +36,8 @@ import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.WrappedSharedFlow
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.ktx.common.asFlow
+import ru.astrainteractive.klibs.kstorage.suspend.StateFlowSuspendMutableKrate
+import ru.astrainteractive.klibs.kstorage.suspend.impl.DefaultStateFlowSuspendMutableKrate
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -106,24 +107,14 @@ class FFinishSetupFeatureApiImplTest {
             MutableStateFlow("").asFlow().wrap()
     }
 
-    private class FakeSetupFinishedBeforeKrate(
-        initialValue: Boolean = false
-    ) : SetupFinishedBeforeKrate {
-        private val _state = MutableStateFlow(initialValue)
-        override val cachedStateFlow: StateFlow<Boolean> = _state.asStateFlow()
-        var savedValue: Boolean? = null
-
-        override suspend fun save(value: Boolean) {
-            savedValue = value
-            _state.value = value
-        }
-
-        override suspend fun reset() {
-            _state.value = false
-            savedValue = false
-        }
-
-        override suspend fun getValue(): Boolean = _state.value
+    fun FakeSetupFinishedBeforeKrate(initialValue: Boolean = false): SetupFinishedBeforeKrate {
+        var value = initialValue
+        val krate = DefaultStateFlowSuspendMutableKrate(
+            factory = { value },
+            saver = { newValue -> value = newValue },
+            loader = { value },
+        )
+        return object : SetupFinishedBeforeKrate, StateFlowSuspendMutableKrate<Boolean> by krate {}
     }
 
     private fun defaultUpdateStatus(
