@@ -1,7 +1,10 @@
 package net.flipper.bridge.connection.feature.ble.api
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.WhileSubscribed
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.shareIn
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
 import me.tatarka.inject.annotations.IntoMap
@@ -11,25 +14,18 @@ import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
-import net.flipper.bridge.connection.feature.events.api.getBsbUpdateFlow
-import net.flipper.bridge.connection.feature.events.model.BsbUpdateEvent
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.BleStatusResponse
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.wrap
-import net.flipper.core.busylib.ktx.common.DefaultConsumable
 import net.flipper.core.busylib.ktx.common.asFlow
 import net.flipper.core.busylib.ktx.common.exponentialRetry
-import net.flipper.core.busylib.ktx.common.merge
-import net.flipper.core.busylib.ktx.common.orEmpty
-import net.flipper.core.busylib.ktx.common.throttleLatest
-import net.flipper.core.busylib.ktx.common.transformWhileSubscribed
-import net.flipper.core.busylib.ktx.common.tryConsume
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
+import kotlin.time.Duration.Companion.seconds
 
 @Inject
 class FBleFeatureApiImpl(
@@ -59,23 +55,15 @@ class FBleFeatureApiImpl(
         }
     }
 
-    private val bleStatusSharedFlow = fEventsFeatureApi
-        ?.getBsbUpdateFlow(BsbUpdateEvent.BLE_STATUS)
-        .orEmpty()
-        .merge(flowOf(DefaultConsumable(false)))
-        .transformWhileSubscribed(scope = scope) { flow ->
-            flow.throttleLatest { consumable ->
-                val couldConsume = consumable.tryConsume()
-                exponentialRetry {
-                    rpcFeatureApi.fRpcBleApi
-                        .getBleStatus(couldConsume)
-                        .onFailure { error(it) { "Failed to get Ble status" } }
-                        .map { response -> response.toFBleStatus() }
-                }
-            }
+    private val bleStatusSharedFlow = flow {
+        val status = exponentialRetry {
+            rpcFeatureApi.fRpcBleApi
+                .getBleStatus(false)
+                .onFailure { error(it) { "Failed to get Ble status" } }
+                .map { response -> response.toFBleStatus() }
         }
-        .asFlow()
-        .wrap()
+        emit(status)
+    }.shareIn(scope, SharingStarted.WhileSubscribed(30.seconds), 1).asFlow().wrap()
 
     override fun getBleStatus(): WrappedFlow<FBleStatus> {
         return bleStatusSharedFlow

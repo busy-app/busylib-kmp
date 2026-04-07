@@ -6,6 +6,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -67,9 +68,9 @@ class CloudProvisioningWatcherTest {
 
             val updated = setup.storage.findDevice("device-1").first()
             assertNotNull(updated)
-            assertNotNull(updated?.cloud)
-            assertEquals(cloudId, updated?.cloud?.deviceId)
-            assertNotNull(updated?.ble)
+            assertNotNull(updated.cloud)
+            assertEquals(cloudId, updated.cloud?.deviceId)
+            assertNotNull(updated.ble)
         }
 
     @Test
@@ -90,7 +91,7 @@ class CloudProvisioningWatcherTest {
 
         val updated = setup.storage.findDevice("device-1")
         assertNotNull(updated)
-        assertEquals(device.connectionWays, updated?.first()?.connectionWays)
+        assertEquals(device.connectionWays, updated.first()?.connectionWays)
     }
 
     @Test
@@ -114,7 +115,7 @@ class CloudProvisioningWatcherTest {
 
             val updated = setup.storage.findDevice("device-1")
             assertNotNull(updated)
-            assertEquals(device.connectionWays, updated?.first()?.connectionWays)
+            assertEquals(device.connectionWays, updated.first()?.connectionWays)
         }
 
     @Test
