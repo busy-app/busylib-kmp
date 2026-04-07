@@ -297,6 +297,8 @@ val copyXCFrameworkDebug by tasks.registering(Exec::class) {
 
     val destination = bridgeFolder.resolve("BusyLibKMP.xcframework")
 
+    // Gradle up-to-date checking is intentional: if the xcframework hasn't changed,
+    // there is no need to run xcodebuild clean or -resolvePackageDependencies either.
     inputs.dir(source)
     outputs.dir(destination)
 
@@ -310,11 +312,12 @@ val copyXCFrameworkDebug by tasks.registering(Exec::class) {
     // So we must copy the new xcframework first, then clean, then resolve.
     workingDir(xcodeFolder)
     commandLine(
-        "bash", "-c",
-        "rm -rf '${destination.absolutePath}' && " +
-            "ditto '${source.absolutePath}' '${destination.absolutePath}' && " +
-            "xcodebuild clean && " +
-            "xcodebuild -resolvePackageDependencies"
+        "bash",
+        "-c",
+        $$"rm -rf \"$1\" && ditto \"$2\" \"$1\" && xcodebuild clean && xcodebuild -resolvePackageDependencies",
+        "bash", // $0 (program name placeholder required by bash -c positional parameter convention)
+        destination.absolutePath, // $1
+        source.absolutePath       // $2
     )
 }
 
