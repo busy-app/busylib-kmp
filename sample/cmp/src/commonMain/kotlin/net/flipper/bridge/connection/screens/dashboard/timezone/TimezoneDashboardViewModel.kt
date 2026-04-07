@@ -13,10 +13,6 @@ class TimezoneDashboardViewModel(
         .get(FTimeZoneFeatureApi::class)
         .getResource { it.getTimeZoneInfoFlow() }
 
-    val timestampInfoFlow = featureProvider
-        .get(FTimeZoneFeatureApi::class)
-        .getResource { it.getTimestampInfoFlow() }
-
     private val mutableState = MutableStateFlow(TimezoneDashboardState())
     val state: StateFlow<TimezoneDashboardState> = mutableState
 

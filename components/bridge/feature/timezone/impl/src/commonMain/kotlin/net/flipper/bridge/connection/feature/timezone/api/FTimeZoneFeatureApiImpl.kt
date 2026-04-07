@@ -14,8 +14,6 @@ import net.flipper.bridge.connection.feature.events.api.get
 import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
 import net.flipper.bridge.connection.feature.events.model.ConsumableUpdateEvent
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
-import net.flipper.bridge.connection.feature.rpc.api.model.RpcTimestampInfo
-import net.flipper.bridge.connection.feature.timezone.api.model.TimestampInfo
 import net.flipper.bridge.connection.feature.timezone.api.model.TimezoneInfo
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.busylib.core.di.BusyLibGraph
@@ -28,7 +26,6 @@ import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.merge
 import net.flipper.core.busylib.ktx.common.orEmpty
 import net.flipper.core.busylib.ktx.common.throttleLatest
-import net.flipper.core.busylib.ktx.common.throttleLatestCached
 import net.flipper.core.busylib.ktx.common.transformWhileSubscribed
 import net.flipper.core.busylib.ktx.common.tryConsume
 import net.flipper.core.busylib.log.LogTagProvider
@@ -40,48 +37,6 @@ class FTimeZoneFeatureApiImpl(
     private val fEventsFeatureApi: FEventsFeatureApi?,
 ) : FTimeZoneFeatureApi, LogTagProvider {
     override val TAG: String = "FTimeZoneFeatureApi"
-
-    private val timestampInfoSharedFlow = fEventsFeatureApi
-        ?.get<BusyLibUpdateEvent.Timestamp>()
-        .orEmpty()
-        .merge(flowOf(ConsumableUpdateEvent.Empty))
-        .transformWhileSubscribed(scope = scope) { flow ->
-            flow.throttleLatestCached { consumable, rpcTimestampInfo: RpcTimestampInfo? ->
-                val couldConsume = consumable.tryConsume()
-                when (consumable) {
-                    is ConsumableUpdateEvent.BusyLib<BusyLibUpdateEvent.Timestamp> if rpcTimestampInfo != null -> {
-                        consumable.busyLibUpdateEvent.let { event ->
-                            rpcTimestampInfo.copy(
-                                timestamp = event.timestamp
-                            )
-                        }
-                    }
-
-                    else -> {
-                        exponentialRetry {
-                            rpcFeatureApi.fRpcTimeZoneApi.getTime(couldConsume)
-                        }
-                    }
-                }
-            }
-        }
-        .asFlow()
-        .map { it.toPublic() }
-        .wrap()
-
-    override fun getTimestampInfoFlow(): WrappedFlow<TimestampInfo> {
-        return timestampInfoSharedFlow
-    }
-
-    override suspend fun setTimestamp(timestampInfo: TimestampInfo): CResult<Unit> {
-        return rpcFeatureApi.fRpcTimeZoneApi
-            .postTimeTimestamp(timestampInfo.toInternal())
-            .onSuccess {
-                val event = BusyLibUpdateEvent.Timestamp(timestampInfo.timestamp)
-                fEventsFeatureApi?.onBusyLibEvent(event)
-            }
-            .toCResult()
-    }
 
     private val timeZoneInfoSharedFlow = fEventsFeatureApi
         ?.get<BusyLibUpdateEvent.Timezone>()

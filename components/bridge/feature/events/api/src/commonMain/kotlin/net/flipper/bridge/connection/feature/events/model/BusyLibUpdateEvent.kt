@@ -3,7 +3,6 @@ package net.flipper.bridge.connection.feature.events.model
 import net.flipper.bridge.connection.feature.rpc.api.model.BsbBrightnessInfo
 import net.flipper.core.busylib.data.Fraction
 
-
 /**
  * This update events consumed/received only through BusyLib
  */
