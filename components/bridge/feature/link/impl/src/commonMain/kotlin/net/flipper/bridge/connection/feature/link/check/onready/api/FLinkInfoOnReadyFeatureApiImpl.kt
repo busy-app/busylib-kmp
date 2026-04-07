@@ -15,12 +15,12 @@ import net.flipper.bridge.connection.feature.link.check.ondemand.api.FLinkedInfo
 import net.flipper.bridge.connection.feature.link.model.LinkedAccountInfo
 import net.flipper.bridge.connection.feature.rpc.api.critical.FRpcCriticalFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.RpcLinkedAccountInfo
-import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
 import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
 import net.flipper.bsb.cloud.rest.api.BusyCloudBarsApi
 import net.flipper.busylib.core.wrapper.CResult
 import net.flipper.busylib.core.wrapper.WrappedFlow
+import net.flipper.busylib.core.wrapper.map
 import net.flipper.busylib.core.wrapper.toCResult
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.ktx.common.SingleJobMode
@@ -120,7 +120,7 @@ class FLinkInfoOnReadyFeatureApiImpl(
         info { "Completed authorization for BUSY Bar" }
     }
 
-    override suspend fun deleteAccount(): CResult<SuccessResponse> {
+    override suspend fun deleteAccount(): CResult<Unit> {
         return rpcFeatureApi.deleteAccount()
             .onSuccess {
                 tryCheckLinkedInfo(
@@ -130,6 +130,7 @@ class FLinkInfoOnReadyFeatureApiImpl(
                         .first() as? BUSYLibUserPrincipal.Token
                 )
             }
+            .map { }
             .toCResult()
     }
 

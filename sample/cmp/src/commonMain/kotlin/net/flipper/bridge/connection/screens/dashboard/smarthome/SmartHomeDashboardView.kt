@@ -5,8 +5,8 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import net.flipper.bridge.connection.feature.rpc.api.model.MatterCommissionedFabrics
-import net.flipper.bridge.connection.feature.smarthome.model.MatterCommissioningTimeLeftPayload
+import net.flipper.bridge.connection.feature.smarthome.model.BsbMatterCommissionedFabrics
+import net.flipper.bridge.connection.feature.smarthome.model.BsbMatterCommissioningTimeLeftPayload
 import net.flipper.bridge.connection.screens.dashboard.common.DashboardActionState
 import net.flipper.bridge.connection.screens.dashboard.common.DashboardButtonRow
 import net.flipper.bridge.connection.screens.dashboard.common.DashboardInfoRow
@@ -18,8 +18,8 @@ import net.flipper.bridge.connection.screens.dashboard.common.orUnavailable
 @Composable
 fun SmartHomeDashboardContent(
     onBack: () -> Unit,
-    commissionedFabrics: MatterCommissionedFabrics?,
-    pairCodeWithTimeLeft: MatterCommissioningTimeLeftPayload?,
+    commissionedFabrics: BsbMatterCommissionedFabrics?,
+    pairCodeWithTimeLeft: BsbMatterCommissioningTimeLeftPayload?,
     state: SmartHomeDashboardState,
     actionState: DashboardActionState,
     onRequestPairCode: () -> Unit,

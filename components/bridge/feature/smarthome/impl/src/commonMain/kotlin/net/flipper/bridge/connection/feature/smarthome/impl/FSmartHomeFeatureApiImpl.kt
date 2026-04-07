@@ -18,10 +18,12 @@ import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
 import net.flipper.bridge.connection.feature.events.model.ConsumableUpdateEvent
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcMatterApi
-import net.flipper.bridge.connection.feature.rpc.api.model.MatterCommissionedFabrics
-import net.flipper.bridge.connection.feature.rpc.api.model.MatterCommissioningPayload
 import net.flipper.bridge.connection.feature.smarthome.api.FSmartHomeFeatureApi
-import net.flipper.bridge.connection.feature.smarthome.model.MatterCommissioningTimeLeftPayload
+import net.flipper.bridge.connection.feature.smarthome.mapper.toBsbMatterCommissionedFabrics
+import net.flipper.bridge.connection.feature.smarthome.mapper.toBsbMatterCommissioningPayload
+import net.flipper.bridge.connection.feature.smarthome.model.BsbMatterCommissionedFabrics
+import net.flipper.bridge.connection.feature.smarthome.model.BsbMatterCommissioningPayload
+import net.flipper.bridge.connection.feature.smarthome.model.BsbMatterCommissioningTimeLeftPayload
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.core.wrapper.CResult
@@ -53,7 +55,7 @@ class FSmartHomeFeatureApiImpl(
         .orEmpty()
         .merge(flowOf(ConsumableUpdateEvent.Empty))
         .transformWhileSubscribed(scope = scope) { flow ->
-            flow.throttleLatestCached { consumable, matter: MatterCommissionedFabrics? ->
+            flow.throttleLatestCached { consumable, matter: BsbMatterCommissionedFabrics? ->
                 val couldConsume = consumable.tryConsume()
                 when (consumable) {
                     is ConsumableUpdateEvent.BusyLib<BusyLibUpdateEvent.Matter> if matter != null -> {
@@ -63,6 +65,10 @@ class FSmartHomeFeatureApiImpl(
                     else -> {
                         exponentialRetry {
                             fRpcMatterApi1.getMatterCommissioning(couldConsume)
+                                .map { matterCommissionedFabrics ->
+                                    matterCommissionedFabrics
+                                        .toBsbMatterCommissionedFabrics()
+                                }
                         }
                     }
                 }
@@ -71,15 +77,17 @@ class FSmartHomeFeatureApiImpl(
         .asFlow()
         .wrap()
 
-    override fun getCommissionedFabricsFlow(): WrappedFlow<MatterCommissionedFabrics> {
+    override fun getCommissionedFabricsFlow(): WrappedFlow<BsbMatterCommissionedFabrics> {
         return commissionedFabricsSharedFlow
     }
 
-    override suspend fun getPairCode(): CResult<MatterCommissioningPayload> {
-        return fRpcMatterApi1.postMatterCommissioning().toCResult()
+    override suspend fun getPairCode(): CResult<BsbMatterCommissioningPayload> {
+        return fRpcMatterApi1.postMatterCommissioning()
+            .map { matterCommissioningPayload -> matterCommissioningPayload.toBsbMatterCommissioningPayload() }
+            .toCResult()
     }
 
-    override fun getPairCodeWithTimeLeft(): WrappedFlow<MatterCommissioningTimeLeftPayload?> {
+    override fun getPairCodeWithTimeLeft(): WrappedFlow<BsbMatterCommissioningTimeLeftPayload?> {
         return flow {
             while (currentCoroutineContext().isActive) {
                 emit(null)
@@ -89,7 +97,7 @@ class FSmartHomeFeatureApiImpl(
                     val timeLeft = pairCode.availableUntil.minus(now)
                         .takeIf { duration -> duration > 0.seconds }
                         ?: 0.seconds
-                    val timeLeftData = MatterCommissioningTimeLeftPayload(
+                    val timeLeftData = BsbMatterCommissioningTimeLeftPayload(
                         instance = pairCode,
                         timeLeft = timeLeft
                     )

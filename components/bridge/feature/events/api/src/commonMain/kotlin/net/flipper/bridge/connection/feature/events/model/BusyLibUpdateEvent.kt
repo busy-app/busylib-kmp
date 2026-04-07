@@ -1,6 +1,6 @@
 package net.flipper.bridge.connection.feature.events.model
 
-import net.flipper.bridge.connection.feature.rpc.api.model.BsbBrightnessInfo
+import net.flipper.bridge.connection.feature.settings.model.BsbBrightnessInfo
 import net.flipper.core.busylib.data.Fraction
 
 /**
@@ -62,8 +62,6 @@ sealed interface BusyLibUpdateEvent {
         data class UpdateCheck(
             val availableVersion: String?,
         ) : Update
-
-        data class UpdateStatus(val status: net.flipper.bridge.connection.feature.rpc.api.model.UpdateStatus) : Update
     }
 
     data class Timezone(

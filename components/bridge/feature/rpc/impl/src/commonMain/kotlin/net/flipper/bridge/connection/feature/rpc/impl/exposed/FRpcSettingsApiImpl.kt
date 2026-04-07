@@ -9,7 +9,6 @@ import io.ktor.client.request.setBody
 import kotlinx.coroutines.CoroutineDispatcher
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcSettingsApi
 import net.flipper.bridge.connection.feature.rpc.api.model.AudioVolumeInfo
-import net.flipper.bridge.connection.feature.rpc.api.model.BsbBrightness
 import net.flipper.bridge.connection.feature.rpc.api.model.DisplayBrightnessInfo
 import net.flipper.bridge.connection.feature.rpc.api.model.NameInfo
 import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
@@ -46,19 +45,10 @@ class FRpcSettingsApiImpl(
         }
     }
 
-    private fun BsbBrightness.asDisplayBrightnessInfo(): DisplayBrightnessInfo {
-        return when (this) {
-            BsbBrightness.Auto -> DisplayBrightnessInfo("auto")
-            is BsbBrightness.Number -> DisplayBrightnessInfo(this.value.toWholePercent().toInt().toString())
-        }
-    }
-
-    override suspend fun setDisplayBrightness(
-        value: BsbBrightness,
-    ): Result<SuccessResponse> {
+    override suspend fun setDisplayBrightness(brightnessInfo: DisplayBrightnessInfo): Result<SuccessResponse> {
         return runSuspendCatching(dispatcher) {
             httpClient.post("/api/display/brightness") {
-                parameter("value", value.asDisplayBrightnessInfo().value)
+                parameter("value", brightnessInfo)
             }.body<SuccessResponse>()
         }
     }

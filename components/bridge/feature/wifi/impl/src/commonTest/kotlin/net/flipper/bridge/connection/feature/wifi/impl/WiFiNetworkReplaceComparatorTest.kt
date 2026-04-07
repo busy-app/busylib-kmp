@@ -1,6 +1,6 @@
 package net.flipper.bridge.connection.feature.wifi.impl
 
-import net.flipper.bridge.connection.feature.rpc.api.model.WifiSecurityMethod
+import net.flipper.bridge.connection.feature.wifi.api.model.BsbWifiSecurityMethod
 import net.flipper.bridge.connection.feature.wifi.api.model.WiFiNetwork
 import net.flipper.bridge.connection.feature.wifi.api.model.WiFiSecurity
 import kotlin.test.Test
@@ -14,7 +14,7 @@ class WiFiNetworkReplaceComparatorTest {
                 ssid = "Test",
                 rssi = 12,
                 wifiSecurity = WiFiSecurity.Other(
-                    WifiSecurityMethod.WPA2_WPA3
+                    BsbWifiSecurityMethod.WPA2_WPA3
                 )
             ),
             WiFiNetwork(
@@ -40,7 +40,7 @@ class WiFiNetworkReplaceComparatorTest {
                 ssid = "Test",
                 rssi = 10,
                 wifiSecurity = WiFiSecurity.Other(
-                    WifiSecurityMethod.WPA2_WPA3
+                    BsbWifiSecurityMethod.WPA2_WPA3
                 )
             ),
             WiFiNetwork(

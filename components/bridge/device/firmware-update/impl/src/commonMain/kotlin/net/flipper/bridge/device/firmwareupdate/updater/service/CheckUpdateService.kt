@@ -8,11 +8,11 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.feature.firmwareupdate.api.FFirmwareUpdateFeatureApi
+import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateStatus
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
 import net.flipper.bridge.connection.feature.provider.api.get
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
-import net.flipper.bridge.connection.feature.rpc.api.model.UpdateStatus
 import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.ktx.common.exponentialRetry
@@ -45,11 +45,11 @@ class CheckUpdateService(
             .filter { status -> status?.check?.availableVersion.isNullOrEmpty() }
             .filter { status ->
                 when (status?.check?.status) {
-                    UpdateStatus.Check.CheckResult.AVAILABLE -> false
+                    BsbUpdateStatus.BsbCheck.BsbCheckResult.AVAILABLE -> false
                     null,
-                    UpdateStatus.Check.CheckResult.FAILURE,
-                    UpdateStatus.Check.CheckResult.NONE,
-                    UpdateStatus.Check.CheckResult.NOT_AVAILABLE -> true
+                    BsbUpdateStatus.BsbCheck.BsbCheckResult.FAILURE,
+                    BsbUpdateStatus.BsbCheck.BsbCheckResult.NONE,
+                    BsbUpdateStatus.BsbCheck.BsbCheckResult.NOT_AVAILABLE -> true
                 }
             }
             .flatMapLatest { fFeatureProvider.get<FRpcFeatureApi>() }

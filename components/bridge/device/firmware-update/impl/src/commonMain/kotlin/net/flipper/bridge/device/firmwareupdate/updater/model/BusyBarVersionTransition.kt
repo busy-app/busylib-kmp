@@ -1,8 +1,8 @@
 package net.flipper.bridge.device.firmwareupdate.updater.model
 
-import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarVersion
+import net.flipper.bridge.connection.feature.info.model.BsbBusyBarVersion
 
 internal data class BusyBarVersionTransition(
-    val previousVersion: BusyBarVersion?,
-    val currentVersion: BusyBarVersion
+    val previousVersion: BsbBusyBarVersion?,
+    val currentVersion: BsbBusyBarVersion
 )

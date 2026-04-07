@@ -8,7 +8,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
-import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
 import net.flipper.bridge.connection.feature.provider.api.get
@@ -52,8 +51,8 @@ class UpdaterStatusCollector(
                         .getUpdateStatus(true)
                         .onFailure { throwable -> error(throwable) { "Failed to get update status" } }
                 }
-                val event = BusyLibUpdateEvent.Update.UpdateStatus(updateStatus)
-                eventsFeatureApi.onBusyLibEvent(event)
+//                val event = BusyLibUpdateEvent.Update.UpdateStatus(updateStatus)
+//                eventsFeatureApi.onBusyLibEvent(event)
             }
             .launchIn(singleJobScope, SingleJobMode.CANCEL_PREVIOUS)
     }
