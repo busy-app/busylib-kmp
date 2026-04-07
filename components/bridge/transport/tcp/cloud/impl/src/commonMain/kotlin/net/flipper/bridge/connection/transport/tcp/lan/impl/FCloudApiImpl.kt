@@ -8,13 +8,13 @@ import kotlinx.coroutines.flow.shareIn
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
-import net.flipper.bridge.connection.transport.common.api.meta.FTransportMetaInfoApi
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPTransportCapability
+import net.flipper.bridge.connection.transport.common.api.serial.FStatusStreamingApi
 import net.flipper.bridge.connection.transport.tcp.cloud.api.FCloudApi
 import net.flipper.bridge.connection.transport.tcp.cloud.api.FCloudDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.tcp.lan.impl.engine.BUSYCloudHttpEngineFactory
 import net.flipper.bridge.connection.transport.tcp.lan.impl.engine.token.ProxyTokenProviderFactory
-import net.flipper.bridge.connection.transport.tcp.lan.impl.metainfo.FCloudMetaInfoFactory
+import net.flipper.bridge.connection.transport.tcp.lan.impl.metainfo.FCloudStreamingFactory
 import net.flipper.bridge.connection.transport.tcp.lan.impl.monitor.CloudDeviceMonitor
 import net.flipper.core.ktor.getPlatformEngineFactory
 
@@ -26,8 +26,8 @@ class FCloudApiImpl(
     cloudDeviceMonitorFactory: CloudDeviceMonitor.Factory,
     tokenProviderFactory: ProxyTokenProviderFactory,
     cloudEngineFactory: BUSYCloudHttpEngineFactory,
-    cloudMetaInfoFactory: FCloudMetaInfoFactory
-) : FCloudApi, FTransportMetaInfoApi by cloudMetaInfoFactory(currentConfig.deviceId) {
+    cloudStreamingFactory: FCloudStreamingFactory
+) : FCloudApi, FStatusStreamingApi by cloudStreamingFactory(currentConfig.deviceId) {
     private val httpEngineOriginal = getPlatformEngineFactory().create()
     private val httpEngine = cloudEngineFactory(
         httpEngineOriginal,

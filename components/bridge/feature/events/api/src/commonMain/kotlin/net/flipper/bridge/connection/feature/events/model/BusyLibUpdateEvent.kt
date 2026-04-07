@@ -76,26 +76,53 @@ sealed interface BusyLibUpdateEvent {
     ) : BusyLibUpdateEvent
 
     data class Frame(
+        val screen: Screen,
         val width: Int,
         val height: Int,
+        val encoding: Encoding,
+        val pixelFormat: PixelFormat,
         val data: ByteArray,
     ) : BusyLibUpdateEvent {
+        enum class Screen {
+            FRONT,
+            BACK,
+        }
+
+        enum class Encoding {
+            PLAIN,
+            RUN_LENGTH,
+            DEFLATE,
+            DEFLATE_RUN_LENGTH,
+        }
+
+        enum class PixelFormat {
+            RGB888,
+            L8,
+            L4,
+        }
+
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
             if (other == null || this::class != other::class) return false
 
             other as Frame
 
+            if (screen != other.screen) return false
             if (width != other.width) return false
             if (height != other.height) return false
+            if (encoding != other.encoding) return false
+            if (pixelFormat != other.pixelFormat) return false
             if (!data.contentEquals(other.data)) return false
 
             return true
         }
 
         override fun hashCode(): Int {
-            var result = width
+            var result = screen.hashCode()
+            result = 31 * result + width
             result = 31 * result + height
+            result = 31 * result + encoding.hashCode()
+            result = 31 * result + pixelFormat.hashCode()
             result = 31 * result + data.contentHashCode()
             return result
         }

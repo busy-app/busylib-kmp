@@ -8,7 +8,7 @@ import net.flipper.bridge.connection.transport.tcp.cloud.api.FCloudApi
 import net.flipper.bridge.connection.transport.tcp.cloud.api.FCloudDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.tcp.lan.impl.engine.BUSYCloudHttpEngineFactory
 import net.flipper.bridge.connection.transport.tcp.lan.impl.engine.token.ProxyTokenProviderFactory
-import net.flipper.bridge.connection.transport.tcp.lan.impl.metainfo.FCloudMetaInfoFactory
+import net.flipper.bridge.connection.transport.tcp.lan.impl.metainfo.FCloudStreamingFactory
 import net.flipper.bridge.connection.transport.tcp.lan.impl.monitor.CloudDeviceMonitor
 import net.flipper.bsb.cloud.barsws.api.CloudWebSocketBarsApi
 import net.flipper.busylib.core.di.BusyLibGraph
@@ -20,7 +20,7 @@ class CloudDeviceConnectionApiImpl(
     private val webSocketBarsApi: CloudWebSocketBarsApi,
     private val proxyTokenProvider: ProxyTokenProviderFactory,
     private val cloudEngineFactory: BUSYCloudHttpEngineFactory,
-    private val cloudMetaInfoFactory: FCloudMetaInfoFactory
+    private val cloudStreamingFactory: FCloudStreamingFactory
 ) : CloudDeviceConnectionApi {
     override suspend fun connect(
         scope: CoroutineScope,
@@ -37,7 +37,7 @@ class CloudDeviceConnectionApiImpl(
             cloudDeviceMonitorFactory = cloudDeviceMonitorFactory,
             tokenProviderFactory = proxyTokenProvider,
             cloudEngineFactory = cloudEngineFactory,
-            cloudMetaInfoFactory = cloudMetaInfoFactory,
+            cloudStreamingFactory = cloudStreamingFactory,
             scope = scope
         )
         return@runCatching lanApi

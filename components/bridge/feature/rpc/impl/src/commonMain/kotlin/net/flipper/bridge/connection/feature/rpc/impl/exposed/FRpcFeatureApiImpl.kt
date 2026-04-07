@@ -9,7 +9,6 @@ import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcStreamingApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcSystemApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcTimeZoneApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcUpdaterApi
-import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcWebSocketApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcWifiApi
 
 @Suppress("LongParameterList")
@@ -23,5 +22,4 @@ class FRpcFeatureApiImpl(
     override val fRpcUpdaterApi: FRpcUpdaterApi,
     override val fRpcMatterApi: FRpcMatterApi,
     override val fRpcTimeZoneApi: FRpcTimeZoneApi,
-    override val fRpcWebSocketApi: FRpcWebSocketApi
 ) : FRpcFeatureApi
