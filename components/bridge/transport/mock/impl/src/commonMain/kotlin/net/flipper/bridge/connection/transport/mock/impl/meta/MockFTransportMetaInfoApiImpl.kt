@@ -22,7 +22,6 @@ class MockFTransportMetaInfoApiImpl : FTransportMetaInfoApi {
             TransportMetaInfoKey.BATTERY_LEVEL -> TransportMetaInfoData.RawBytes(byteArrayOf(0.5.toInt().toByte()))
             TransportMetaInfoKey.BATTERY_POWER_STATE -> TransportMetaInfoData.RawBytes(byteArrayOf(0))
             TransportMetaInfoKey.EVENTS_INDICATION -> TransportMetaInfoData.RawBytes(byteArrayOf(0))
-            TransportMetaInfoKey.WS_EVENT -> null
         }
     }
 }

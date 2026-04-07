@@ -1,23 +1,5 @@
 package net.flipper.bridge.connection.feature.screenstreaming.impl.delegates
 
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
-import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
-import net.flipper.bridge.connection.feature.screenstreaming.model.BusyImageFormat
-
-private const val BLK_SIZE = 3
-
-class WebSocketScreenFramesProvider(
-    private val rpcFeatureApi: FRpcFeatureApi
-) : ScreenFramesProvider {
-    override fun getScreens(): Flow<BusyImageFormat> {
-        return rpcFeatureApi.fRpcWebSocketApi
-            .getScreenFrames()
-            .map { rleDecompress(it, BLK_SIZE) }
-            .map(::BusyImageFormat)
-    }
-}
-
 /**
  * Decompresses run-length encoded data.
  *

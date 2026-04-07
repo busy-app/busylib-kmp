@@ -3,7 +3,7 @@ package net.flipper.bridge.connection.feature.events.proto.protomapper.delegates
 import BSB_State.BatteryStatus
 import BSB_State.Power
 import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
-import net.flipper.bridge.connection.feature.rpc.api.model.Fraction
+import net.flipper.core.busylib.data.Fraction
 
 object PowerProtobufMapper {
     fun map(power: Power): BusyLibUpdateEvent.Power? {

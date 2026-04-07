@@ -54,9 +54,6 @@ class FEventsFeatureApiImpl(
         metaInfoApi.get(TransportMetaInfoKey.EVENTS_INDICATION)
             .mapNotNull { bitsMaskFlowResult -> bitsMaskFlowResult.getOrNull() }
             .flatMapLatest { flow -> bitIndicationEventsFlow.getEventFlow(flow) },
-        metaInfoApi.get(TransportMetaInfoKey.WS_EVENT)
-            .mapNotNull { bitsMaskFlowResult -> bitsMaskFlowResult.getOrNull() }
-            .flatMapLatest { flow -> wsEventsFlow.getEventFlow(flow) },
         fEventsInternalApi.getBsbEventsFlow(),
     )
         .onEach { verbose { "Receive update event: $it" } }
