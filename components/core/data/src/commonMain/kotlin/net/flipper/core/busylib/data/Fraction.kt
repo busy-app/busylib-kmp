@@ -1,6 +1,6 @@
-package net.flipper.bridge.connection.feature.rpc.api.model
+package net.flipper.core.busylib.data
 
-import net.flipper.bridge.connection.feature.rpc.api.model.Fraction.Companion.fromWholePercent
+import net.flipper.core.busylib.data.Fraction.Companion.fromWholePercent
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.TaggedLogger
 import net.flipper.core.busylib.log.error
