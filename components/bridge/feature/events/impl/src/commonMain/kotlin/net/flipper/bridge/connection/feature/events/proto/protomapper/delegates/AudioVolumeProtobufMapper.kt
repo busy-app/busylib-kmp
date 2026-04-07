@@ -2,7 +2,7 @@ package net.flipper.bridge.connection.feature.events.proto.protomapper.delegates
 
 import BSB_State.AudioVolume
 import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
-import net.flipper.bridge.connection.feature.rpc.api.model.Fraction
+import net.flipper.core.busylib.data.Fraction
 
 object AudioVolumeProtobufMapper {
     fun map(audioVolume: AudioVolume): BusyLibUpdateEvent.Volume {
