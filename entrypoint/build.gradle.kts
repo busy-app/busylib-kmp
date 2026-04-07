@@ -317,7 +317,7 @@ val copyXCFrameworkDebug by tasks.registering(Exec::class) {
         $$"rm -rf \"$1\" && ditto \"$2\" \"$1\" && xcodebuild clean && xcodebuild -resolvePackageDependencies",
         "bash", // $0 (program name placeholder required by bash -c positional parameter convention)
         destination.absolutePath, // $1
-        source.absolutePath       // $2
+        source.absolutePath // $2
     )
 }
 
