@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.onStart
 import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
 import net.flipper.bridge.connection.feature.screenstreaming.model.BusyImageFormat
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoData
@@ -19,7 +20,7 @@ private const val BLK_SIZE = 3
 class ScreenFramesProvider(
     private val screenFlow: Flow<BusyLibUpdateEvent.Frame>
 ) : LogTagProvider {
-    override val TAG = "MetaInfoScreenFramesProvider"
+    override val TAG = "ScreenFramesProvider"
     fun getScreens(): Flow<BusyImageFormat> {
         return screenFlow
             .onEach { verbose { "Receive event: $it" } }

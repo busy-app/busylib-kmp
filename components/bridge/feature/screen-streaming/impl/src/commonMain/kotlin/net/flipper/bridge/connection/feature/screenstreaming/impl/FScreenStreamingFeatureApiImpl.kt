@@ -13,6 +13,7 @@ import net.flipper.bridge.connection.feature.screenstreaming.model.BusyImageForm
 import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.log.LogTagProvider
+import net.flipper.core.busylib.log.error
 import kotlin.io.encoding.Base64
 
 private const val DEFAULT_BB_WIDTH = 72
@@ -46,12 +47,14 @@ class FScreenStreamingFeatureApiImpl(
                 streamingApi.getScreen(display = 0).mapCatching { rawData ->
                     BusyLibUpdateEvent.Frame(
                         screen = BusyLibUpdateEvent.Frame.Screen.FRONT,
-                        data = Base64.decode(rawData),
+                        data = Base64.decode(rawData.replace("\\s".toRegex(), "")),
                         encoding = BusyLibUpdateEvent.Frame.Encoding.PLAIN,
                         pixelFormat = BusyLibUpdateEvent.Frame.PixelFormat.RGB888,
                         height = DEFAULT_BB_HEIGHT,
                         width = DEFAULT_BB_WIDTH
                     )
+                }.onFailure {
+                    error(it) { "Failed get screen frame" }
                 }
             }
         )
