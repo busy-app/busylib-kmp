@@ -19,14 +19,12 @@ class TimezoneDashboardDecomposeComponent(
     @Composable
     override fun Render(modifier: Modifier) {
         val timezoneInfo by viewModel.timezoneInfoFlow.collectAsState()
-        val timestampInfo by viewModel.timestampInfoFlow.collectAsState()
         val state by viewModel.state.collectAsState()
         val actionState by viewModel.actionState.collectAsState()
         TimezoneDashboardContent(
             modifier = modifier,
             onBack = onBack::invoke,
             timezoneInfo = timezoneInfo?.name,
-            timestampInfo = timestampInfo?.timestamp,
             state = state,
             actionState = actionState,
             onRefreshTimezones = viewModel::refreshTimezones,

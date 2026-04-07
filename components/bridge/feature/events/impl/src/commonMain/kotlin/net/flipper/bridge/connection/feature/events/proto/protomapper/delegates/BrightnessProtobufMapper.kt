@@ -4,7 +4,7 @@ import BSB_State.Brightness
 import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
 import net.flipper.bridge.connection.feature.rpc.api.model.BsbBrightness
 import net.flipper.bridge.connection.feature.rpc.api.model.BsbBrightnessInfo
-import net.flipper.bridge.connection.feature.rpc.api.model.Fraction
+import net.flipper.core.busylib.data.Fraction
 
 object BrightnessProtobufMapper {
     fun map(brightness: Brightness): BusyLibUpdateEvent.Brightness {
