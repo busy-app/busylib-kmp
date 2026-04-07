@@ -17,13 +17,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import net.flipper.bridge.connection.feature.rpc.api.model.BsbBrightness
-import net.flipper.bridge.connection.feature.rpc.api.model.Fraction
 import net.flipper.bridge.connection.screens.dashboard.common.DashboardActionState
 import net.flipper.bridge.connection.screens.dashboard.common.DashboardInfoRow
 import net.flipper.bridge.connection.screens.dashboard.common.DashboardLogCard
 import net.flipper.bridge.connection.screens.dashboard.common.DashboardScreenLayout
 import net.flipper.bridge.connection.screens.dashboard.common.DashboardSectionCard
 import net.flipper.bridge.connection.screens.dashboard.common.orUnavailable
+import net.flipper.core.busylib.data.Fraction
 import kotlin.math.roundToInt
 
 @Composable

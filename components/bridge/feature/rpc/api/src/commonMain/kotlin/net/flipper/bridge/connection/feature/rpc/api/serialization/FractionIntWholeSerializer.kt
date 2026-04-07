@@ -5,7 +5,7 @@ import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-import net.flipper.bridge.connection.feature.rpc.api.model.Fraction
+import net.flipper.core.busylib.data.Fraction
 
 object FractionIntWholeSerializer : KSerializer<Fraction> {
     override val descriptor = PrimitiveSerialDescriptor(
