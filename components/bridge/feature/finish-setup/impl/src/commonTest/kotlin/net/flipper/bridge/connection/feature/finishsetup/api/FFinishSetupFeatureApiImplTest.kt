@@ -120,10 +120,8 @@ class FFinishSetupFeatureApiImplTest {
     ) = BsbUpdateStatus(
         install = BsbUpdateStatus.BsbInstall(
             isAllowed = false,
-            event = BsbUpdateStatus.BsbInstall.BsbEvent.NONE,
             action = BsbUpdateStatus.BsbInstall.BsbAction.NONE,
             status = BsbUpdateStatus.BsbInstall.BsbStatus.OK,
-            detail = "",
             download = BsbUpdateStatus.BsbInstall.BsbDownload(
                 speedBytesPerSec = 0,
                 receivedBytes = 0,

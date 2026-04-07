@@ -8,11 +8,13 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
+import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
 import net.flipper.bridge.connection.feature.provider.api.get
 import net.flipper.bridge.connection.feature.provider.api.getSync
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
+import net.flipper.bridge.device.firmwareupdate.status.mapper.toBsbUpdateStatus
 import net.flipper.core.busylib.ktx.common.SingleJobMode
 import net.flipper.core.busylib.ktx.common.TickFlow
 import net.flipper.core.busylib.ktx.common.asSingleJobScope
@@ -50,9 +52,9 @@ class UpdaterStatusCollector(
                         .fRpcUpdaterApi
                         .getUpdateStatus(true)
                         .onFailure { throwable -> error(throwable) { "Failed to get update status" } }
-                }
-//                val event = BusyLibUpdateEvent.Update.UpdateStatus(updateStatus)
-//                eventsFeatureApi.onBusyLibEvent(event)
+                }.toBsbUpdateStatus()
+                val event = BusyLibUpdateEvent.Update.BsbUpdateStatusChanged(updateStatus)
+                eventsFeatureApi.onBusyLibEvent(event)
             }
             .launchIn(singleJobScope, SingleJobMode.CANCEL_PREVIOUS)
     }

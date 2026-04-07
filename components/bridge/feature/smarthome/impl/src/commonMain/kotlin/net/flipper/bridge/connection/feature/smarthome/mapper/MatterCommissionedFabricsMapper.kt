@@ -9,14 +9,12 @@ import net.flipper.bridge.connection.feature.smarthome.model.BsbMatterCommission
 
 private fun CommissioningStatus.toBsbCommissioningStatus(): BsbCommissioningStatus {
     return BsbCommissioningStatus(
-        timestamp = timestamp,
         value = value.toBsbCommissioningStatusType()
     )
 }
 
 private fun BsbCommissioningStatus.toCommissioningStatus(): CommissioningStatus {
     return CommissioningStatus(
-        timestamp = timestamp,
         value = value.toCommissioningStatusType()
     )
 }

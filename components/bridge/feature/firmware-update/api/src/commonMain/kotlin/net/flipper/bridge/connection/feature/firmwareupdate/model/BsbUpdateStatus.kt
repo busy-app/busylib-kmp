@@ -6,22 +6,10 @@ data class BsbUpdateStatus(
 ) {
     data class BsbInstall(
         val isAllowed: Boolean,
-        val event: BsbEvent,
         val action: BsbAction,
         val status: BsbStatus,
-        val detail: String,
         val download: BsbDownload
     ) {
-        enum class BsbEvent {
-            SESSION_START,
-            SESSION_STOP,
-            ACTION_BEGIN,
-            ACTION_DONE,
-            DETAIL_CHANGE,
-            ACTION_PROGRESS,
-            NONE
-        }
-
         enum class BsbAction {
             DOWNLOAD,
             SHA_VERIFICATION,
@@ -57,15 +45,8 @@ data class BsbUpdateStatus(
 
     data class BsbCheck(
         val availableVersion: String,
-        val event: BsbCheckEvent,
         val status: BsbCheckResult
     ) {
-        enum class BsbCheckEvent {
-            START,
-            STOP,
-            NONE
-        }
-
         enum class BsbCheckResult {
             AVAILABLE,
             NOT_AVAILABLE,

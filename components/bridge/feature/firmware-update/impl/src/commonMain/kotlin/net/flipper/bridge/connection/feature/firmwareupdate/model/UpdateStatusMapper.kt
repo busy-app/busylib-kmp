@@ -1,22 +1,8 @@
 package net.flipper.bridge.connection.feature.firmwareupdate.model
 
-import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateStatus.BsbInstall.BsbEvent
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateStatus.BsbInstall.BsbStatus
 import net.flipper.bridge.connection.feature.rpc.api.model.UpdateStatus
-import net.flipper.bridge.connection.feature.rpc.api.model.UpdateStatus.Install.Event
 import net.flipper.bridge.connection.feature.rpc.api.model.UpdateStatus.Install.Status
-
-private fun Event.toBsbEvent(): BsbEvent {
-    return when (this) {
-        Event.SESSION_START -> BsbEvent.SESSION_START
-        Event.SESSION_STOP -> BsbEvent.SESSION_STOP
-        Event.ACTION_BEGIN -> BsbEvent.ACTION_BEGIN
-        Event.ACTION_DONE -> BsbEvent.ACTION_DONE
-        Event.DETAIL_CHANGE -> BsbEvent.DETAIL_CHANGE
-        Event.ACTION_PROGRESS -> BsbEvent.ACTION_PROGRESS
-        Event.NONE -> BsbEvent.NONE
-    }
-}
 
 private fun UpdateStatus.Install.Action.toBsbAction(): BsbUpdateStatus.BsbInstall.BsbAction {
     return when (this) {
@@ -59,20 +45,10 @@ private fun UpdateStatus.Install.Download.toBsbDownload(): BsbUpdateStatus.BsbIn
 private fun UpdateStatus.Install.toBsbInstall(): BsbUpdateStatus.BsbInstall {
     return BsbUpdateStatus.BsbInstall(
         isAllowed = isAllowed,
-        event = event.toBsbEvent(),
         action = action.toBsbAction(),
         status = status.toBsbStatus(),
-        detail = detail,
         download = download.toBsbDownload()
     )
-}
-
-private fun UpdateStatus.Check.CheckEvent.toBsbCheckEvent(): BsbUpdateStatus.BsbCheck.BsbCheckEvent {
-    return when (this) {
-        UpdateStatus.Check.CheckEvent.START -> BsbUpdateStatus.BsbCheck.BsbCheckEvent.START
-        UpdateStatus.Check.CheckEvent.STOP -> BsbUpdateStatus.BsbCheck.BsbCheckEvent.STOP
-        UpdateStatus.Check.CheckEvent.NONE -> BsbUpdateStatus.BsbCheck.BsbCheckEvent.NONE
-    }
 }
 
 private fun UpdateStatus.Check.CheckResult.toBsbCheckResult(): BsbUpdateStatus.BsbCheck.BsbCheckResult {
@@ -87,7 +63,6 @@ private fun UpdateStatus.Check.CheckResult.toBsbCheckResult(): BsbUpdateStatus.B
 private fun UpdateStatus.Check.toBsbCheck(): BsbUpdateStatus.BsbCheck {
     return BsbUpdateStatus.BsbCheck(
         availableVersion = availableVersion,
-        event = event.toBsbCheckEvent(),
         status = status.toBsbCheckResult()
     )
 }

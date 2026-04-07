@@ -54,13 +54,7 @@ internal object FwUpdateStatusMapper {
             }
 
             BsbUpdateStatus.BsbInstall.BsbAction.NONE -> {
-                when (updateStatus.check.event) {
-                    BsbUpdateStatus.BsbCheck.BsbCheckEvent.START,
-                    BsbUpdateStatus.BsbCheck.BsbCheckEvent.NONE,
-                    BsbUpdateStatus.BsbCheck.BsbCheckEvent.STOP -> {
-                        fromCheckStatus(updateStatus = updateStatus)
-                    }
-                }
+                fromCheckStatus(updateStatus = updateStatus)
             }
         }
     }

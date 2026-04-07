@@ -44,10 +44,6 @@ fun SmartHomeDashboardContent(
                 value = commissionedFabrics?.latestCommissioningStatus?.value.orUnavailable()
             )
             DashboardInfoRow(
-                label = "Status timestamp",
-                value = commissionedFabrics?.latestCommissioningStatus?.timestamp.orUnavailable()
-            )
-            DashboardInfoRow(
                 label = "Time left",
                 value = pairCodeWithTimeLeft?.timeLeft.orUnavailable()
             )

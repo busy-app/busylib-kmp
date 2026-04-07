@@ -1,5 +1,6 @@
 package net.flipper.bridge.connection.feature.events.model
 
+import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateStatus
 import net.flipper.bridge.connection.feature.settings.model.BsbBrightnessInfo
 import net.flipper.core.busylib.data.Fraction
 
@@ -53,14 +54,14 @@ sealed interface BusyLibUpdateEvent {
                 INSTALL_SESSION_CONFIG_FAILURE, INSTALL_POINTER_SETUP_FAILURE,
                 UNKNOWN_FAILURE
             }
-
-            enum class CheckResult {
-                AVAILABLE, NOT_AVAILABLE, FAILURE, NONE
-            }
         }
 
         data class UpdateCheck(
             val availableVersion: String?,
+        ) : Update
+
+        data class BsbUpdateStatusChanged(
+            val bsbUpdateStatus: BsbUpdateStatus
         ) : Update
     }
 
