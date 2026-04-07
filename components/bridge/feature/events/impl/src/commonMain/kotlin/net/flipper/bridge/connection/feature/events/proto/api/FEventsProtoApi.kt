@@ -4,6 +4,7 @@ import BSB_State.State
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -13,9 +14,11 @@ import net.flipper.bridge.connection.feature.events.proto.protomapper.BSBProtobu
 import net.flipper.bridge.connection.transport.common.api.serial.FStatusStreamingApi
 import net.flipper.bridge.connection.transport.common.api.serial.StatusStreamingEvent
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
+import net.flipper.core.busylib.ktx.common.throttleLatest
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.TaggedLogger
 import net.flipper.core.busylib.log.error
+import net.flipper.core.busylib.log.info
 import net.flipper.core.busylib.log.verbose
 
 internal class FEventsProtoApi(
@@ -37,10 +40,15 @@ internal class FEventsProtoApi(
     private suspend fun onProtobufStatesUpdate(
         data: StatusStreamingEvent.Protobuf
     ) = runSuspendCatching {
-        val state = State.Companion.ADAPTER.decode(data.data)
+        val state = State.ADAPTER.decode(data.data)
         verbose { "Process ${state.updates.size} updates: $state" }
         val updates = state.updates.mapNotNull { update ->
             BSBProtobufEventMapper.map(update)
+        }
+        val subscriptionCount = busyLibEventsFlow.subscriptionCount.first()
+        if (subscriptionCount <= 0) {
+            info { "Drop events $updates because subscription counts is zero" }
+            return@runSuspendCatching
         }
         updates.forEach { update ->
             busyLibEventsFlow.emit(update)
