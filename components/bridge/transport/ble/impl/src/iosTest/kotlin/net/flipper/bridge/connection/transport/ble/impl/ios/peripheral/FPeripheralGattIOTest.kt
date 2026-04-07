@@ -7,6 +7,7 @@ import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import net.flipper.bridge.connection.transport.ble.api.MAX_ATTRIBUTE_SIZE
@@ -28,12 +29,15 @@ import kotlin.test.assertTrue
 class FPeripheralGattIOTest {
 
     @Test
-    fun GIVEN_not_connected_state_WHEN_writeValue_called_THEN_write_is_ignored() = runTest {
+    fun GIVEN_not_connected_state_WHEN_writeValue_called_THEN_write_is_not_dispatched() = runTest {
         val sut = createSut()
 
-        sut.sut.writeValue(byteArrayOf(1, 2, 3))
-
+        // writeValue suspends at waitConnected() when not connected
+        val writeJob = async { sut.sut.writeValue(byteArrayOf(1, 2, 3)) }
+        runCurrent()
         assertTrue(sut.peripheral.writeRequests.isEmpty())
+        assertFalse(writeJob.isCompleted)
+        writeJob.cancel()
     }
 
     @Test
@@ -246,7 +250,7 @@ class FPeripheralGattIOTest {
     }
 
     @Test
-    fun GIVEN_pending_generic_read_or_write_WHEN_disconnect_happens_THEN_waiters_fail_and_cleanup_happens() =
+    fun GIVEN_pending_generic_read_or_write_WHEN_disconnect_happens_THEN_waiters_fail_and_new_ops_suspend() =
         runTest {
             val sut = createConnectedSut()
             val resetUuid = sut.config.serialConfig.resetCharUuid
@@ -256,16 +260,19 @@ class FPeripheralGattIOTest {
             runCurrent()
 
             sut.sut.onDisconnect()
+            advanceUntilIdle()
 
             assertFailsWith<CancellationException> { readJob.await() }
             assertFailsWith<CancellationException> { writeJob.await() }
 
-            assertFailsWith<IllegalStateException> {
-                sut.sut.readValue(resetUuid)
-            }
-            assertFailsWith<IllegalStateException> {
-                sut.sut.writeValue(resetUuid, byteArrayOf(0, 0, 0, 0))
-            }
+            // After disconnect, new operations suspend at waitConnected()
+            val postRead = async { sut.sut.readValue(resetUuid) }
+            val postWrite = async { sut.sut.writeValue(resetUuid, byteArrayOf(0, 0, 0, 0)) }
+            runCurrent()
+            assertFalse(postRead.isCompleted)
+            assertFalse(postWrite.isCompleted)
+            postRead.cancel()
+            postWrite.cancel()
         }
 
     @Test
