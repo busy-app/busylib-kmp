@@ -24,7 +24,7 @@ skie {
         group {
             SuspendInterop.Enabled(true)
             SealedInterop.Enabled(true)
-            EnumInterop.Enabled(false)
+            EnumInterop.Enabled(true)
             FlowInterop.Enabled(false)
             DefaultArgumentInterop.Enabled(false)
             FunctionInterop.FileScopeConversion.Enabled(false)
@@ -282,6 +282,14 @@ val copyXCFrameworkDebug by tasks.registering(Exec::class) {
         "Couldn't copy debug framework into iOS project, flipper.iosProjectBridgeAbsolutePath is not set"
     }
 
+    val xcodeFolder = secretProperty("flipper.iosProjectAbsolutePath")
+        .stringOrNull
+        ?.let(::File)
+
+    require(xcodeFolder != null) {
+        "Couldn't copy debug framework into iOS project, flipper.iosProjectAbsolutePath is not set"
+    }
+
     val source = layout.buildDirectory.asFile.get()
         .resolve("XCFrameworks")
         .resolve("debug")
@@ -289,18 +297,24 @@ val copyXCFrameworkDebug by tasks.registering(Exec::class) {
 
     val destination = bridgeFolder.resolve("BusyLibKMP.xcframework")
 
-    doFirst {
-        destination.deleteRecursively()
-    }
+    inputs.dir(source)
+    outputs.dir(destination)
 
     doLast {
         logger.lifecycle("Copied BusyLibKMP.xcframework to ${destination.absolutePath}")
     }
 
+    // Order matters: xcodebuild validates local binary targets (including xcframeworks)
+    // before executing ANY operation, even "clean". If the xcframework is missing at
+    // that point, xcodebuild fails with "does not contain a binary artifact".
+    // So we must copy the new xcframework first, then clean, then resolve.
+    workingDir(xcodeFolder)
     commandLine(
-        "ditto",
-        source.absolutePath,
-        destination.absolutePath
+        "bash", "-c",
+        "rm -rf '${destination.absolutePath}' && " +
+            "ditto '${source.absolutePath}' '${destination.absolutePath}' && " +
+            "xcodebuild clean && " +
+            "xcodebuild -resolvePackageDependencies"
     )
 }
 
