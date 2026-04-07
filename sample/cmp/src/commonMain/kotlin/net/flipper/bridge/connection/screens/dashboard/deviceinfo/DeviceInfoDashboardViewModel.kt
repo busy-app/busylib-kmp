@@ -10,5 +10,13 @@ class DeviceInfoDashboardViewModel(
 ) : DashboardFeatureViewModel() {
     val deviceInfoFlow = featureProvider
         .get(FDeviceInfoFeatureApi::class)
-        .getResource { flow { emit(it.getDeviceInfo()) } }
+        .getResource { flow { emit(it.getDeviceInfo().getOrNull()) } }
+
+    val deviceFirmwareFlow = featureProvider
+        .get(FDeviceInfoFeatureApi::class)
+        .getResource { flow { emit(it.getDeviceFirmware().getOrNull()) } }
+
+    val deviceVersionFlow = featureProvider
+        .get(FDeviceInfoFeatureApi::class)
+        .getResource { it.deviceVersionFlow }
 }

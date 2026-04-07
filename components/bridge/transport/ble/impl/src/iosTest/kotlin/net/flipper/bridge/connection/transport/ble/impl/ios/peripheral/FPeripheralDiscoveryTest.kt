@@ -3,6 +3,7 @@ package net.flipper.bridge.connection.transport.ble.impl.ios.peripheral
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import net.flipper.bridge.connection.transport.ble.impl.ios.testfixtures.BATTERY_LEVEL_SHORT_UUID
@@ -74,6 +75,7 @@ class FPeripheralDiscoveryTest {
         runCurrent()
         assertTrue(sut.peripheral.writeRequests.isNotEmpty())
         sut.sut.handleDidWriteValue(tx, error = null)
+        advanceUntilIdle()
         writeJob.await()
     }
 
@@ -131,8 +133,11 @@ class FPeripheralDiscoveryTest {
                 newCharacteristic(DEVICE_NAME_SHORT_UUID, payload = "connected".encodeToByteArray()),
                 error = null,
             )
-            backgroundScope.launch { sut.sut.writeValue(byteArrayOf(9, 9, 9)) }
+            // writeValue suspends indefinitely waiting for the serial write characteristic
+            // that was never set due to the discovery error. Verify no write is dispatched.
+            val writeJob = async { sut.sut.writeValue(byteArrayOf(9, 9, 9)) }
             runCurrent()
             assertTrue(sut.peripheral.writeRequests.isEmpty())
+            writeJob.cancel()
         }
 }

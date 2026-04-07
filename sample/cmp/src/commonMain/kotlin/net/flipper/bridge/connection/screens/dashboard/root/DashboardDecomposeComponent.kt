@@ -8,18 +8,26 @@ import com.arkivanov.decompose.router.stack.pushNew
 import com.arkivanov.decompose.value.Value
 import net.flipper.bridge.connection.screens.dashboard.account.AccountDashboardDecomposeComponent
 import net.flipper.bridge.connection.screens.dashboard.account.AccountDashboardViewModel
+import net.flipper.bridge.connection.screens.dashboard.assets.AssetsDashboardDecomposeComponent
+import net.flipper.bridge.connection.screens.dashboard.assets.AssetsDashboardViewModel
 import net.flipper.bridge.connection.screens.dashboard.deviceinfo.DeviceInfoDashboardDecomposeComponent
 import net.flipper.bridge.connection.screens.dashboard.deviceinfo.DeviceInfoDashboardViewModel
+import net.flipper.bridge.connection.screens.dashboard.display.DisplayDashboardDecomposeComponent
+import net.flipper.bridge.connection.screens.dashboard.display.DisplayDashboardViewModel
 import net.flipper.bridge.connection.screens.dashboard.hardware.HardwareDashboardDecomposeComponent
 import net.flipper.bridge.connection.screens.dashboard.hardware.HardwareDashboardViewModel
 import net.flipper.bridge.connection.screens.dashboard.hub.HubDashboardDecomposeComponent
 import net.flipper.bridge.connection.screens.dashboard.oncall.OnCallDashboardDecomposeComponent
 import net.flipper.bridge.connection.screens.dashboard.oncall.OnCallDashboardViewModel
-import net.flipper.bridge.connection.screens.dashboard.overview.OverviewDashboardDecomposeComponent
-import net.flipper.bridge.connection.screens.dashboard.overview.OverviewDashboardViewModel
 import net.flipper.bridge.connection.screens.dashboard.root.model.DashboardConfig
 import net.flipper.bridge.connection.screens.dashboard.screenstreaming.ScreenStreamingDashboardDecomposeComponent
 import net.flipper.bridge.connection.screens.dashboard.screenstreaming.ScreenStreamingDashboardViewModel
+import net.flipper.bridge.connection.screens.dashboard.settings.SettingsDashboardDecomposeComponent
+import net.flipper.bridge.connection.screens.dashboard.settings.SettingsDashboardViewModel
+import net.flipper.bridge.connection.screens.dashboard.smarthome.SmartHomeDashboardDecomposeComponent
+import net.flipper.bridge.connection.screens.dashboard.smarthome.SmartHomeDashboardViewModel
+import net.flipper.bridge.connection.screens.dashboard.timezone.TimezoneDashboardDecomposeComponent
+import net.flipper.bridge.connection.screens.dashboard.timezone.TimezoneDashboardViewModel
 import net.flipper.bridge.connection.screens.decompose.CompositeDecomposeComponent
 import net.flipper.bridge.connection.screens.decompose.DecomposeComponent
 import net.flipper.bridge.connection.screens.decompose.DecomposeOnBackParameter
@@ -29,11 +37,15 @@ import net.flipper.bridge.connection.screens.fwupdate.FirmwareUpdateViewModel
 class DashboardDecomposeComponent(
     componentContext: ComponentContext,
     private val onBack: DecomposeOnBackParameter,
-    private val overviewViewModelFactory: () -> OverviewDashboardViewModel,
+    private val settingsViewModelFactory: () -> SettingsDashboardViewModel,
     private val deviceInfoViewModelFactory: () -> DeviceInfoDashboardViewModel,
     private val accountViewModelFactory: () -> AccountDashboardViewModel,
     private val hardwareViewModelFactory: () -> HardwareDashboardViewModel,
     private val onCallViewModelFactory: () -> OnCallDashboardViewModel,
+    private val smartHomeViewModelFactory: () -> SmartHomeDashboardViewModel,
+    private val timezoneViewModelFactory: () -> TimezoneDashboardViewModel,
+    private val assetsViewModelFactory: () -> AssetsDashboardViewModel,
+    private val displayViewModelFactory: () -> DisplayDashboardViewModel,
     private val screenStreamingViewModelFactory: () -> ScreenStreamingDashboardViewModel,
     private val firmwareUpdateViewModelFactory: () -> FirmwareUpdateViewModel,
 ) : CompositeDecomposeComponent<DashboardConfig>(), ComponentContext by componentContext {
@@ -49,22 +61,12 @@ class DashboardDecomposeComponent(
         config: DashboardConfig,
         componentContext: ComponentContext
     ): DecomposeComponent = when (config) {
-        DashboardConfig.Hub -> HubDashboardDecomposeComponent(
-            componentContext = componentContext,
-            onBack = onBack,
-            onOpenOverview = { navigation.pushNew(DashboardConfig.Overview) },
-            onOpenDeviceInfo = { navigation.pushNew(DashboardConfig.DeviceInfo) },
-            onOpenAccount = { navigation.pushNew(DashboardConfig.Account) },
-            onOpenHardware = { navigation.pushNew(DashboardConfig.Hardware) },
-            onOpenOnCall = { navigation.pushNew(DashboardConfig.OnCall) },
-            onOpenScreenStreaming = { navigation.pushNew(DashboardConfig.ScreenStreaming) },
-            onOpenFwUpdate = { navigation.pushNew(DashboardConfig.FirmwareUpdate) }
-        )
+        DashboardConfig.Hub -> createHubComponent(componentContext)
 
-        DashboardConfig.Overview -> OverviewDashboardDecomposeComponent(
+        DashboardConfig.Settings -> SettingsDashboardDecomposeComponent(
             componentContext = componentContext,
             onBack = navigation::pop,
-            viewModelFactory = overviewViewModelFactory
+            viewModelFactory = settingsViewModelFactory
         )
 
         DashboardConfig.DeviceInfo -> DeviceInfoDashboardDecomposeComponent(
@@ -91,6 +93,30 @@ class DashboardDecomposeComponent(
             viewModelFactory = onCallViewModelFactory
         )
 
+        DashboardConfig.SmartHome -> SmartHomeDashboardDecomposeComponent(
+            componentContext = componentContext,
+            onBack = navigation::pop,
+            viewModelFactory = smartHomeViewModelFactory
+        )
+
+        DashboardConfig.Timezone -> TimezoneDashboardDecomposeComponent(
+            componentContext = componentContext,
+            onBack = navigation::pop,
+            viewModelFactory = timezoneViewModelFactory
+        )
+
+        DashboardConfig.Assets -> AssetsDashboardDecomposeComponent(
+            componentContext = componentContext,
+            onBack = navigation::pop,
+            viewModelFactory = assetsViewModelFactory
+        )
+
+        DashboardConfig.Display -> DisplayDashboardDecomposeComponent(
+            componentContext = componentContext,
+            onBack = navigation::pop,
+            viewModelFactory = displayViewModelFactory
+        )
+
         DashboardConfig.ScreenStreaming -> ScreenStreamingDashboardDecomposeComponent(
             componentContext = componentContext,
             onBack = navigation::pop,
@@ -104,12 +130,32 @@ class DashboardDecomposeComponent(
         )
     }
 
+    private fun createHubComponent(componentContext: ComponentContext) = HubDashboardDecomposeComponent(
+        componentContext = componentContext,
+        onBack = onBack,
+        onOpenSettings = { navigation.pushNew(DashboardConfig.Settings) },
+        onOpenDeviceInfo = { navigation.pushNew(DashboardConfig.DeviceInfo) },
+        onOpenAccount = { navigation.pushNew(DashboardConfig.Account) },
+        onOpenHardware = { navigation.pushNew(DashboardConfig.Hardware) },
+        onOpenOnCall = { navigation.pushNew(DashboardConfig.OnCall) },
+        onOpenSmartHome = { navigation.pushNew(DashboardConfig.SmartHome) },
+        onOpenTimezone = { navigation.pushNew(DashboardConfig.Timezone) },
+        onOpenAssets = { navigation.pushNew(DashboardConfig.Assets) },
+        onOpenDisplay = { navigation.pushNew(DashboardConfig.Display) },
+        onOpenScreenStreaming = { navigation.pushNew(DashboardConfig.ScreenStreaming) },
+        onOpenFwUpdate = { navigation.pushNew(DashboardConfig.FirmwareUpdate) }
+    )
+
     class Factory(
-        private val overviewViewModelFactory: () -> OverviewDashboardViewModel,
+        private val settingsViewModelFactory: () -> SettingsDashboardViewModel,
         private val deviceInfoViewModelFactory: () -> DeviceInfoDashboardViewModel,
         private val accountViewModelFactory: () -> AccountDashboardViewModel,
         private val hardwareViewModelFactory: () -> HardwareDashboardViewModel,
         private val onCallViewModelFactory: () -> OnCallDashboardViewModel,
+        private val smartHomeViewModelFactory: () -> SmartHomeDashboardViewModel,
+        private val timezoneViewModelFactory: () -> TimezoneDashboardViewModel,
+        private val assetsViewModelFactory: () -> AssetsDashboardViewModel,
+        private val displayViewModelFactory: () -> DisplayDashboardViewModel,
         private val screenStreamingViewModelFactory: () -> ScreenStreamingDashboardViewModel,
         private val firmwareUpdateViewModelFactory: () -> FirmwareUpdateViewModel,
     ) {
@@ -120,11 +166,15 @@ class DashboardDecomposeComponent(
             return DashboardDecomposeComponent(
                 componentContext = componentContext,
                 onBack = onBack,
-                overviewViewModelFactory = overviewViewModelFactory,
+                settingsViewModelFactory = settingsViewModelFactory,
                 deviceInfoViewModelFactory = deviceInfoViewModelFactory,
                 accountViewModelFactory = accountViewModelFactory,
                 hardwareViewModelFactory = hardwareViewModelFactory,
                 onCallViewModelFactory = onCallViewModelFactory,
+                smartHomeViewModelFactory = smartHomeViewModelFactory,
+                timezoneViewModelFactory = timezoneViewModelFactory,
+                assetsViewModelFactory = assetsViewModelFactory,
+                displayViewModelFactory = displayViewModelFactory,
                 screenStreamingViewModelFactory = screenStreamingViewModelFactory,
                 firmwareUpdateViewModelFactory = firmwareUpdateViewModelFactory
             )
