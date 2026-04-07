@@ -52,6 +52,6 @@ internal fun UpdateStatus.merge(event: BusyLibUpdateEvent.Update): UpdateStatus 
             )
         }
 
-        BusyLibUpdateEvent.Update.CheckOnce -> this
+        is BusyLibUpdateEvent.Update.UpdateStatus -> event.status
     }
 }

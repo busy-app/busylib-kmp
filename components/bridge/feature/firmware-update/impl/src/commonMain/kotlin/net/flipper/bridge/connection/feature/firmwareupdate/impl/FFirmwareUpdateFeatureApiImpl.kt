@@ -92,12 +92,8 @@ class FFirmwareUpdateFeatureApiImpl(
                                 value.merge(updateEvent)
                             }
 
-                            is BusyLibUpdateEvent.Update.CheckOnce -> {
-                                exponentialRetry {
-                                    rpcFeatureApi.fRpcUpdaterApi
-                                        .getUpdateStatus(couldConsume)
-                                        .onFailure { throwable -> error(throwable) { "Failed to get update status" } }
-                                }
+                            is BusyLibUpdateEvent.Update.UpdateStatus -> {
+                                updateEvent.status
                             }
                         }
                     }

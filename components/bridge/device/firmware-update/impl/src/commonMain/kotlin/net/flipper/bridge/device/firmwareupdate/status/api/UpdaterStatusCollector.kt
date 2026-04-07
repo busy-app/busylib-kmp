@@ -5,7 +5,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
@@ -13,14 +12,19 @@ import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
 import net.flipper.bridge.connection.feature.provider.api.get
+import net.flipper.bridge.connection.feature.provider.api.getSync
+import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.core.busylib.ktx.common.SingleJobMode
 import net.flipper.core.busylib.ktx.common.TickFlow
 import net.flipper.core.busylib.ktx.common.asSingleJobScope
 import net.flipper.core.busylib.ktx.common.cancelPrevious
+import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.launchIn
+import net.flipper.core.busylib.ktx.common.throttleLatest
 import net.flipper.core.busylib.ktx.common.tryCast
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.TaggedLogger
+import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
 import kotlin.time.Duration.Companion.seconds
 
@@ -38,9 +42,18 @@ class UpdaterStatusCollector(
             .map { status -> status.tryCast<FFeatureStatus.Supported<FEventsFeatureApi>>() }
             .filterNotNull()
             .map { status -> status.featureApi }
-            .onEach { eventsFeatureApi ->
+            .throttleLatest { eventsFeatureApi ->
                 info { "#start sent UPDATER_UPDATE_STATUS" }
-                eventsFeatureApi.onBusyLibEvent(BusyLibUpdateEvent.Update.CheckOnce)
+                val updateStatus = exponentialRetry {
+                    val fRpcFeatureApi = fFeatureProvider.getSync<FRpcFeatureApi>()
+                        ?: error("Could not get RPC feature api")
+                    fRpcFeatureApi
+                        .fRpcUpdaterApi
+                        .getUpdateStatus(true)
+                        .onFailure { throwable -> error(throwable) { "Failed to get update status" } }
+                }
+                val event = BusyLibUpdateEvent.Update.UpdateStatus(updateStatus)
+                eventsFeatureApi.onBusyLibEvent(event)
             }
             .launchIn(singleJobScope, SingleJobMode.CANCEL_PREVIOUS)
     }
