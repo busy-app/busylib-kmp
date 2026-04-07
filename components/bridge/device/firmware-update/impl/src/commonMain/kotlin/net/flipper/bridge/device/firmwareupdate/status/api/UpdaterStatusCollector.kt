@@ -14,6 +14,7 @@ import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
 import net.flipper.bridge.connection.feature.provider.api.get
 import net.flipper.bridge.connection.feature.provider.api.getSync
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
+import net.flipper.bridge.device.firmwareupdate.status.mapper.toBsbUpdateStatus
 import net.flipper.core.busylib.ktx.common.SingleJobMode
 import net.flipper.core.busylib.ktx.common.TickFlow
 import net.flipper.core.busylib.ktx.common.asSingleJobScope
@@ -51,8 +52,11 @@ class UpdaterStatusCollector(
                         .fRpcUpdaterApi
                         .getUpdateStatus(true)
                         .onFailure { throwable -> error(throwable) { "Failed to get update status" } }
-                }
-                val event = BusyLibUpdateEvent.Update.UpdateStatus(updateStatus)
+                }.toBsbUpdateStatus()
+                val event = BusyLibUpdateEvent.Update.UpdateState(
+                    action = updateStatus.install.action,
+                    status = updateStatus.install.status
+                )
                 eventsFeatureApi.onBusyLibEvent(event)
             }
             .launchIn(singleJobScope, SingleJobMode.CANCEL_PREVIOUS)

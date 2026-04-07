@@ -71,6 +71,7 @@ kotlin {
         implementation(libs.ktor.client.core)
         implementation(libs.kotlinx.crypto)
         implementation(libs.kotlinx.crypto.provider)
+        implementation(projects.components.bridge.feature.rpc.api)
     }
 
     sourceSets.jvmMain.dependencies {

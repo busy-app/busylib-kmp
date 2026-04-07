@@ -2,8 +2,8 @@ package net.flipper.bridge.connection.feature.events.proto.protomapper.delegates
 
 import BSB_State.Brightness
 import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
-import net.flipper.bridge.connection.feature.rpc.api.model.BsbBrightness
-import net.flipper.bridge.connection.feature.rpc.api.model.BsbBrightnessInfo
+import net.flipper.bridge.connection.feature.settings.model.BsbBrightness
+import net.flipper.bridge.connection.feature.settings.model.BsbBrightnessInfo
 import net.flipper.core.busylib.data.Fraction
 
 object BrightnessProtobufMapper {

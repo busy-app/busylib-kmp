@@ -1,6 +1,8 @@
 package net.flipper.bridge.connection.feature.events.model
 
-import net.flipper.bridge.connection.feature.rpc.api.model.BsbBrightnessInfo
+import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateStatus
+import net.flipper.bridge.connection.feature.settings.model.BsbBrightnessInfo
+import net.flipper.bridge.connection.feature.wifi.api.model.BsbWifiStatusResponse
 import net.flipper.core.busylib.data.Fraction
 
 /**
@@ -19,51 +21,22 @@ sealed interface BusyLibUpdateEvent {
     ) : BusyLibUpdateEvent
 
     data class Wifi(
-        val state: State,
+        val state: BsbWifiStatusResponse.BsbWifiState,
         val ssid: String?,
         val bssid: String?,
         val channel: Int?,
         val rssi: Int?,
-    ) : BusyLibUpdateEvent {
-        enum class State {
-            UNKNOWN,
-            DISCONNECTED,
-            CONNECTED,
-            CONNECTING,
-            DISCONNECTING,
-            RECONNECTING,
-        }
-    }
+    ) : BusyLibUpdateEvent
 
     sealed interface Update : BusyLibUpdateEvent {
         data class UpdateState(
-            val action: Action,
-            val status: Status
-        ) : Update {
-
-            enum class Action {
-                DOWNLOAD, SHA_VERIFICATION, UNPACK, PREPARE, APPLY, NONE
-            }
-
-            enum class Status {
-                OK, BATTERY_LOW, BUSY,
-                DOWNLOAD_FAILURE, DOWNLOAD_ABORT, SHA_MISMATCH,
-                UNPACK_STAGING_DIR_FAILURE, UNPACK_ARCHIVE_OPEN_FAILURE, UNPACK_ARCHIVE_UNPACK_FAILURE,
-                INSTALL_MANIFEST_NOT_FOUND, INSTALL_MANIFEST_INVALID,
-                INSTALL_SESSION_CONFIG_FAILURE, INSTALL_POINTER_SETUP_FAILURE,
-                UNKNOWN_FAILURE
-            }
-
-            enum class CheckResult {
-                AVAILABLE, NOT_AVAILABLE, FAILURE, NONE
-            }
-        }
+            val action: BsbUpdateStatus.BsbInstall.BsbAction,
+            val status: BsbUpdateStatus.BsbInstall.BsbStatus
+        ) : Update
 
         data class UpdateCheck(
             val availableVersion: String?,
         ) : Update
-
-        data class UpdateStatus(val status: net.flipper.bridge.connection.feature.rpc.api.model.UpdateStatus) : Update
     }
 
     data class Timezone(

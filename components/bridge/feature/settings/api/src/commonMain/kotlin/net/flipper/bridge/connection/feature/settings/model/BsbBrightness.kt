@@ -1,4 +1,4 @@
-package net.flipper.bridge.connection.feature.rpc.api.model
+package net.flipper.bridge.connection.feature.settings.model
 
 import net.flipper.core.busylib.data.Fraction
 
@@ -6,7 +6,7 @@ import net.flipper.core.busylib.data.Fraction
  * Don't put @Serializable here
  *
  * @see net.flipper.bridge.connection.feature.rpc.api.serialization.BsbBrightnessSerializer
- * @see DisplayBrightnessInfo
+ * @see net.flipper.bridge.connection.feature.rpc.api.model.DisplayBrightnessInfo
  */
 sealed interface BsbBrightness {
     data object Auto : BsbBrightness

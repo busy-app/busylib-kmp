@@ -3,6 +3,7 @@ package net.flipper.bridge.connection.feature.events.proto.protomapper.delegates
 import BSB_State.Wifi
 import BSB_State.WifiConnectionStatus
 import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
+import net.flipper.bridge.connection.feature.wifi.api.model.BsbWifiStatusResponse.BsbWifiState
 
 object WifiProtobufMapper {
     fun map(wifi: Wifi): BusyLibUpdateEvent.Wifi {
@@ -16,14 +17,14 @@ object WifiProtobufMapper {
                 rssi = connected.rssi,
             )
             wifi.disconnected != null -> BusyLibUpdateEvent.Wifi(
-                state = BusyLibUpdateEvent.Wifi.State.DISCONNECTED,
+                state = BsbWifiState.DISCONNECTED,
                 ssid = null,
                 bssid = null,
                 channel = null,
                 rssi = null,
             )
             else -> BusyLibUpdateEvent.Wifi(
-                state = BusyLibUpdateEvent.Wifi.State.UNKNOWN,
+                state = BsbWifiState.UNKNOWN,
                 ssid = null,
                 bssid = null,
                 channel = null,
@@ -32,13 +33,13 @@ object WifiProtobufMapper {
         }
     }
 
-    private fun WifiConnectionStatus.toState(): BusyLibUpdateEvent.Wifi.State {
+    private fun WifiConnectionStatus.toState(): BsbWifiState {
         return when (this) {
-            WifiConnectionStatus.CONNECTED -> BusyLibUpdateEvent.Wifi.State.CONNECTED
-            WifiConnectionStatus.CONNECTING -> BusyLibUpdateEvent.Wifi.State.CONNECTING
-            WifiConnectionStatus.DISCONNECTING -> BusyLibUpdateEvent.Wifi.State.DISCONNECTING
-            WifiConnectionStatus.RECONNECTING -> BusyLibUpdateEvent.Wifi.State.RECONNECTING
-            else -> BusyLibUpdateEvent.Wifi.State.UNKNOWN
+            WifiConnectionStatus.CONNECTED -> BsbWifiState.CONNECTED
+            WifiConnectionStatus.CONNECTING -> BsbWifiState.CONNECTING
+            WifiConnectionStatus.DISCONNECTING -> BsbWifiState.DISCONNECTING
+            WifiConnectionStatus.RECONNECTING -> BsbWifiState.RECONNECTING
+            else -> BsbWifiState.UNKNOWN
         }
     }
 }

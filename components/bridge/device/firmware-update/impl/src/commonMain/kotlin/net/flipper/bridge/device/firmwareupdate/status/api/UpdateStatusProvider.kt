@@ -8,10 +8,10 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.feature.firmwareupdate.api.FFirmwareUpdateFeatureApi
+import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateStatus
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
 import net.flipper.bridge.connection.feature.provider.api.get
-import net.flipper.bridge.connection.feature.rpc.api.model.UpdateStatus
 import net.flipper.bridge.device.firmwareupdate.status.model.UpdateStatusSource
 import net.flipper.core.busylib.ktx.common.orNullable
 import net.flipper.core.busylib.ktx.common.tryCast
@@ -22,7 +22,7 @@ class UpdateStatusProvider(
 ) {
 
     private fun UpdateStatusSource?.withLatestStatus(
-        latestUpdateStatus: UpdateStatus?
+        latestUpdateStatus: BsbUpdateStatus?
     ): UpdateStatusSource {
         return when (val localSource = this) {
             null -> {

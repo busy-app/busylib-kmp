@@ -1,8 +1,6 @@
 package net.flipper.core.busylib.data
 
 import net.flipper.core.busylib.data.Fraction.Companion.fromWholePercent
-import net.flipper.core.busylib.log.LogTagProvider
-import net.flipper.core.busylib.log.TaggedLogger
 import net.flipper.core.busylib.log.error
 
 /**
@@ -37,7 +35,7 @@ import net.flipper.core.busylib.log.error
 @ConsistentCopyVisibility
 data class Fraction private constructor(
     private val value: Double
-) : LogTagProvider by TaggedLogger("Fraction") {
+) {
 
     init {
         if (value !in MIN_FRACTION..MAX_FRACTION) {

@@ -16,10 +16,13 @@ import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
 import net.flipper.bridge.connection.feature.events.model.ConsumableUpdateEvent
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.AudioVolumeInfo
-import net.flipper.bridge.connection.feature.rpc.api.model.BsbBrightness
-import net.flipper.bridge.connection.feature.rpc.api.model.BsbBrightnessInfo
 import net.flipper.bridge.connection.feature.rpc.api.model.NameInfo
-import net.flipper.bridge.connection.feature.rpc.api.model.toBsbBrightnessInfo
+import net.flipper.bridge.connection.feature.settings.mapper.toBsbBrightnessInfo
+import net.flipper.bridge.connection.feature.settings.mapper.toBsbVolume
+import net.flipper.bridge.connection.feature.settings.mapper.toDisplayBrightnessInfo
+import net.flipper.bridge.connection.feature.settings.model.BsbBrightness
+import net.flipper.bridge.connection.feature.settings.model.BsbBrightnessInfo
+import net.flipper.bridge.connection.feature.settings.model.BsbVolume
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.core.wrapper.CResult
@@ -111,12 +114,14 @@ class FSettingsFeatureApiImpl(
                 val couldConsume = consumable.tryConsume()
                 when (consumable) {
                     is ConsumableUpdateEvent.BusyLib<BusyLibUpdateEvent.Volume> -> {
-                        AudioVolumeInfo(consumable.busyLibUpdateEvent.volume)
+                        BsbVolume(consumable.busyLibUpdateEvent.volume)
                     }
 
                     else -> {
                         exponentialRetry {
-                            rpcFeatureApi.fRpcSettingsApi.getAudioVolume(couldConsume)
+                            rpcFeatureApi.fRpcSettingsApi
+                                .getAudioVolume(couldConsume)
+                                .map { audioVolumeInfo -> audioVolumeInfo.toBsbVolume() }
                         }
                     }
                 }
@@ -125,7 +130,7 @@ class FSettingsFeatureApiImpl(
         .asFlow()
         .wrap()
 
-    override fun getVolumeFlow(): WrappedFlow<AudioVolumeInfo> {
+    override fun getVolumeFlow(): WrappedFlow<BsbVolume> {
         return volumeFlow
     }
 
@@ -161,7 +166,7 @@ class FSettingsFeatureApiImpl(
         value: BsbBrightness,
     ): CResult<Unit> {
         return rpcFeatureApi.fRpcSettingsApi
-            .setDisplayBrightness(value = value)
+            .setDisplayBrightness(value.toDisplayBrightnessInfo())
             .map { }
             .onSuccess {
                 val model = BsbBrightnessInfo(value)

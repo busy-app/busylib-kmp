@@ -1,4 +1,4 @@
-package net.flipper.bridge.connection.feature.rpc.api.serialization
+package net.flipper.core.busylib.data.serialization
 
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.descriptors.PrimitiveKind

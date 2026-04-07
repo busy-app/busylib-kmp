@@ -22,13 +22,14 @@ import net.flipper.bridge.connection.feature.events.api.get
 import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
 import net.flipper.bridge.connection.feature.events.model.ConsumableUpdateEvent
 import net.flipper.bridge.connection.feature.firmwareupdate.api.FFirmwareUpdateFeatureApi
+import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateStatus
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateVersion
+import net.flipper.bridge.connection.feature.firmwareupdate.model.toBsbUpdateStatus
 import net.flipper.bridge.connection.feature.firmwareupdate.util.merge
 import net.flipper.bridge.connection.feature.info.api.FDeviceInfoFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.AutoUpdate
 import net.flipper.bridge.connection.feature.rpc.api.model.GetUpdateChangelogResponse
-import net.flipper.bridge.connection.feature.rpc.api.model.UpdateStatus
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPDeviceApi
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPTransportCapability
@@ -70,12 +71,12 @@ class FFirmwareUpdateFeatureApiImpl(
 ) : FFirmwareUpdateFeatureApi, LogTagProvider {
     override val TAG: String = "FFirmwareUpdateFeatureApi"
 
-    override val updateStatusFlow: WrappedSharedFlow<UpdateStatus> = fEventsFeatureApi
+    override val updateStatusFlow: WrappedSharedFlow<BsbUpdateStatus> = fEventsFeatureApi
         ?.get<BusyLibUpdateEvent.Update>()
         .orEmpty()
         .merge(flowOf(ConsumableUpdateEvent.Empty))
         .transformWhileSubscribed(scope = scope) { flow ->
-            flow.throttleLatestCached { event, value: UpdateStatus? ->
+            flow.throttleLatestCached { event, value: BsbUpdateStatus? ->
                 val couldConsume = event.tryConsume()
                 when (event) {
                     is ConsumableUpdateEvent.BusyLib<BusyLibUpdateEvent.Update> if value != null -> {
@@ -91,10 +92,6 @@ class FFirmwareUpdateFeatureApiImpl(
                             is BusyLibUpdateEvent.Update.UpdateState -> {
                                 value.merge(updateEvent)
                             }
-
-                            is BusyLibUpdateEvent.Update.UpdateStatus -> {
-                                updateEvent.status
-                            }
                         }
                     }
 
@@ -102,6 +99,7 @@ class FFirmwareUpdateFeatureApiImpl(
                         exponentialRetry {
                             rpcFeatureApi.fRpcUpdaterApi
                                 .getUpdateStatus(couldConsume)
+                                .map { updateStatus -> updateStatus.toBsbUpdateStatus() }
                                 .onFailure { throwable -> error(throwable) { "Failed to get update status" } }
                         }
                     }

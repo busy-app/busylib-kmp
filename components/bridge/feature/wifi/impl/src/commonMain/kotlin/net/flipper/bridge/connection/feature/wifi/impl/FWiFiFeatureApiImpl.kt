@@ -6,7 +6,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.isActive
 import me.tatarka.inject.annotations.Inject
 import me.tatarka.inject.annotations.IntoMap
@@ -20,13 +19,15 @@ import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
 import net.flipper.bridge.connection.feature.events.model.ConsumableUpdateEvent
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.ConnectRequestConfig
-import net.flipper.bridge.connection.feature.rpc.api.model.StatusResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.WifiIpMethod
 import net.flipper.bridge.connection.feature.wifi.api.FWiFiFeatureApi
+import net.flipper.bridge.connection.feature.wifi.api.model.BsbWifiStatusResponse
 import net.flipper.bridge.connection.feature.wifi.api.model.WiFiNetwork
 import net.flipper.bridge.connection.feature.wifi.api.model.WiFiSecurity
-import net.flipper.bridge.connection.feature.wifi.util.toInternalSecurity
-import net.flipper.bridge.connection.feature.wifi.util.toWiFiNetwork
+import net.flipper.bridge.connection.feature.wifi.mapper.toBsbWifiSecurityMethod
+import net.flipper.bridge.connection.feature.wifi.mapper.toBsbWifiStatusResponse
+import net.flipper.bridge.connection.feature.wifi.mapper.toWiFiNetwork
+import net.flipper.bridge.connection.feature.wifi.mapper.toWifiSecurityMethod
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPDeviceApi
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPTransportCapability
@@ -97,13 +98,13 @@ class FWiFiFeatureApiImpl(
         .orEmpty()
         .merge(flowOf(ConsumableUpdateEvent.Empty))
         .transformWhileSubscribed(scope = scope) { flow ->
-            flow.throttleLatestCached { consumable, wifi: StatusResponse? ->
+            flow.throttleLatestCached { consumable, wifi: BsbWifiStatusResponse? ->
                 val couldConsume = consumable.tryConsume()
                 when (consumable) {
                     is ConsumableUpdateEvent.BusyLib<BusyLibUpdateEvent.Wifi> if wifi != null -> {
                         consumable.busyLibUpdateEvent.let { wifiUpdateEvent ->
-                            StatusResponse(
-                                state = wifiUpdateEvent.state.toStatusResponseState(),
+                            BsbWifiStatusResponse(
+                                state = wifiUpdateEvent.state,
                                 ssid = wifiUpdateEvent.ssid,
                                 bssid = wifiUpdateEvent.bssid,
                                 channel = wifiUpdateEvent.channel,
@@ -117,6 +118,7 @@ class FWiFiFeatureApiImpl(
                             rpcFeatureApi
                                 .fRpcWifiApi
                                 .getWifiStatus(couldConsume)
+                                .map { it.toBsbWifiStatusResponse() }
                                 .onFailure { error(it) { "Failed to get WiFi networks" } }
                         }
                     }
@@ -126,7 +128,7 @@ class FWiFiFeatureApiImpl(
         .asFlow()
         .wrap()
 
-    override fun getWifiStatusFlow(): WrappedFlow<StatusResponse> {
+    override fun getWifiStatusFlow(): WrappedFlow<BsbWifiStatusResponse> {
         return wifiStatusSharedFlow
     }
 
@@ -139,7 +141,9 @@ class FWiFiFeatureApiImpl(
             ConnectRequestConfig(
                 ssid = ssid,
                 password = password,
-                security = security.toInternalSecurity(),
+                security = security
+                    .toBsbWifiSecurityMethod()
+                    .toWifiSecurityMethod(),
                 ipConfig = ConnectRequestConfig.IpConfig(
                     ipMethod = WifiIpMethod.DHCP
                 )
@@ -189,16 +193,5 @@ class FWiFiFeatureApiImpl(
         ): Pair<FDeviceFeature, FDeviceFeatureApi.Factory> {
             return FDeviceFeature.WIFI to factory
         }
-    }
-}
-
-private fun BusyLibUpdateEvent.Wifi.State.toStatusResponseState(): StatusResponse.State {
-    return when (this) {
-        BusyLibUpdateEvent.Wifi.State.UNKNOWN -> StatusResponse.State.UNKNOWN
-        BusyLibUpdateEvent.Wifi.State.DISCONNECTED -> StatusResponse.State.DISCONNECTED
-        BusyLibUpdateEvent.Wifi.State.CONNECTED -> StatusResponse.State.CONNECTED
-        BusyLibUpdateEvent.Wifi.State.CONNECTING -> StatusResponse.State.CONNECTING
-        BusyLibUpdateEvent.Wifi.State.DISCONNECTING -> StatusResponse.State.DISCONNECTING
-        BusyLibUpdateEvent.Wifi.State.RECONNECTING -> StatusResponse.State.RECONNECTING
     }
 }
