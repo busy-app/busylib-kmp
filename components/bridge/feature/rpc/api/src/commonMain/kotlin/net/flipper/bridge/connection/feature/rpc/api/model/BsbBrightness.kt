@@ -1,5 +1,7 @@
 package net.flipper.bridge.connection.feature.rpc.api.model
 
+import net.flipper.core.busylib.data.Fraction
+
 /**
  * Don't put @Serializable here
  *

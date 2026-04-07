@@ -18,7 +18,6 @@ import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.AudioVolumeInfo
 import net.flipper.bridge.connection.feature.rpc.api.model.BsbBrightness
 import net.flipper.bridge.connection.feature.rpc.api.model.BsbBrightnessInfo
-import net.flipper.bridge.connection.feature.rpc.api.model.Fraction
 import net.flipper.bridge.connection.feature.rpc.api.model.NameInfo
 import net.flipper.bridge.connection.feature.rpc.api.model.toBsbBrightnessInfo
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
@@ -28,6 +27,7 @@ import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.WrappedStateFlow
 import net.flipper.busylib.core.wrapper.toCResult
 import net.flipper.busylib.core.wrapper.wrap
+import net.flipper.core.busylib.data.Fraction
 import net.flipper.core.busylib.ktx.common.asFlow
 import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.merge

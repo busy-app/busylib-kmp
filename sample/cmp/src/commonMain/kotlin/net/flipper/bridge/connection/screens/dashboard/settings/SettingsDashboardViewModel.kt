@@ -5,9 +5,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.feature.rpc.api.model.BsbBrightness
-import net.flipper.bridge.connection.feature.rpc.api.model.Fraction
 import net.flipper.bridge.connection.feature.settings.api.FSettingsFeatureApi
 import net.flipper.bridge.connection.screens.dashboard.common.DashboardFeatureViewModel
+import net.flipper.core.busylib.data.Fraction
 
 data class SettingsDashboardState(
     val isUpdatingDeviceName: Boolean = false,
