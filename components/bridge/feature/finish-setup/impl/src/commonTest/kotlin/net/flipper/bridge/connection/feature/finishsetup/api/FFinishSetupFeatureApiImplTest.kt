@@ -22,13 +22,12 @@ import net.flipper.bridge.connection.feature.finishsetup.model.DeviceSetupTaskSt
 import net.flipper.bridge.connection.feature.finishsetup.model.DeviceSetupTaskType
 import net.flipper.bridge.connection.feature.finishsetup.model.FFinishSetupState
 import net.flipper.bridge.connection.feature.firmwareupdate.api.FFirmwareUpdateFeatureApi
+import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateStatus
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateVersion
 import net.flipper.bridge.connection.feature.link.check.ondemand.api.FLinkedInfoOnDemandFeatureApi
 import net.flipper.bridge.connection.feature.link.model.LinkedAccountInfo
-import net.flipper.bridge.connection.feature.rpc.api.model.StatusResponse
-import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
-import net.flipper.bridge.connection.feature.rpc.api.model.UpdateStatus
 import net.flipper.bridge.connection.feature.wifi.api.FWiFiFeatureApi
+import net.flipper.bridge.connection.feature.wifi.api.model.BsbWifiStatusResponse
 import net.flipper.bridge.connection.feature.wifi.api.model.WiFiNetwork
 import net.flipper.bridge.connection.feature.wifi.api.model.WiFiSecurity
 import net.flipper.busylib.core.wrapper.CResult
@@ -63,16 +62,15 @@ class FFinishSetupFeatureApiImplTest {
         private val _status = MutableStateFlow(initialStatus)
         override val status: WrappedFlow<LinkedAccountInfo> = _status.asFlow().wrap()
 
-        override suspend fun deleteAccount(): CResult<SuccessResponse> =
-            CResult.Success(SuccessResponse("ok"))
+        override suspend fun deleteAccount(): CResult<Unit> = CResult.Success(Unit)
     }
 
     private class FakeWiFiFeatureApi(
-        initialStatus: StatusResponse
+        initialStatus: BsbWifiStatusResponse
     ) : FWiFiFeatureApi {
         private val _wifiStatus = MutableStateFlow(initialStatus)
 
-        override fun getWifiStatusFlow(): WrappedFlow<StatusResponse> = _wifiStatus.asFlow().wrap()
+        override fun getWifiStatusFlow(): WrappedFlow<BsbWifiStatusResponse> = _wifiStatus.asFlow().wrap()
 
         override fun getWifiStateFlow(): WrappedFlow<ImmutableList<WiFiNetwork>> =
             MutableStateFlow(persistentListOf<WiFiNetwork>()).asFlow().wrap()
@@ -89,11 +87,11 @@ class FFinishSetupFeatureApiImplTest {
     }
 
     private class FakeFirmwareUpdateFeatureApi(
-        initialUpdateStatus: UpdateStatus
+        initialUpdateStatus: BsbUpdateStatus
     ) : FFirmwareUpdateFeatureApi {
         private val _updateStatus = MutableStateFlow(initialUpdateStatus)
-        override val updateStatusFlow: WrappedSharedFlow<UpdateStatus> =
-            (_updateStatus.asStateFlow() as SharedFlow<UpdateStatus>).wrap()
+        override val updateStatusFlow: WrappedSharedFlow<BsbUpdateStatus> =
+            (_updateStatus.asStateFlow() as SharedFlow<BsbUpdateStatus>).wrap()
 
         override suspend fun setAutoUpdate(isEnabled: Boolean): CResult<Unit> =
             CResult.Success(Unit)
@@ -118,28 +116,25 @@ class FFinishSetupFeatureApiImplTest {
     }
 
     private fun defaultUpdateStatus(
-        checkResult: UpdateStatus.Check.CheckResult = UpdateStatus.Check.CheckResult.NOT_AVAILABLE
-    ) = UpdateStatus(
-        install = UpdateStatus.Install(
+        checkResult: BsbUpdateStatus.BsbCheck.BsbCheckResult = BsbUpdateStatus.BsbCheck.BsbCheckResult.NOT_AVAILABLE
+    ) = BsbUpdateStatus(
+        install = BsbUpdateStatus.BsbInstall(
             isAllowed = false,
-            event = UpdateStatus.Install.Event.NONE,
-            action = UpdateStatus.Install.Action.NONE,
-            status = UpdateStatus.Install.Status.OK,
-            detail = "",
-            download = UpdateStatus.Install.Download(
+            action = BsbUpdateStatus.BsbInstall.BsbAction.NONE,
+            status = BsbUpdateStatus.BsbInstall.BsbStatus.OK,
+            download = BsbUpdateStatus.BsbInstall.BsbDownload(
                 speedBytesPerSec = 0,
                 receivedBytes = 0,
                 totalBytes = 0
             )
         ),
-        check = UpdateStatus.Check(
+        check = BsbUpdateStatus.BsbCheck(
             availableVersion = "",
-            event = UpdateStatus.Check.CheckEvent.NONE,
             status = checkResult
         )
     )
 
-    private fun wifiStatus(state: StatusResponse.State) = StatusResponse(state = state)
+    private fun wifiStatus(state: BsbWifiStatusResponse.BsbWifiState) = BsbWifiStatusResponse(state = state)
 
     private val testUuid = Uuid.parse("00000000-0000-0000-0000-000000000001")
 
@@ -147,8 +142,8 @@ class FFinishSetupFeatureApiImplTest {
         scope: CoroutineScope,
         fBleFeatureApi: FBleFeatureApi? = null,
         linkedAccountInfo: LinkedAccountInfo = LinkedAccountInfo.NotLinked,
-        wifiStatus: StatusResponse = wifiStatus(StatusResponse.State.CONNECTED),
-        updateStatus: UpdateStatus = defaultUpdateStatus(),
+        wifiStatus: BsbWifiStatusResponse = wifiStatus(BsbWifiStatusResponse.BsbWifiState.CONNECTED),
+        updateStatus: BsbUpdateStatus = defaultUpdateStatus(),
         isSetupFinishedBefore: Boolean = false
     ): FFinishSetupFeatureApiImpl {
         return FFinishSetupFeatureApiImpl(
@@ -170,7 +165,7 @@ class FFinishSetupFeatureApiImplTest {
             scope = backgroundScope,
             fBleFeatureApi = FakeBleFeatureApi(FBleStatus.Connected("AA:BB:CC")),
             linkedAccountInfo = LinkedAccountInfo.NotLinked,
-            wifiStatus = wifiStatus(StatusResponse.State.CONNECTED),
+            wifiStatus = wifiStatus(BsbWifiStatusResponse.BsbWifiState.CONNECTED),
             updateStatus = defaultUpdateStatus(),
             isSetupFinishedBefore = true
         )
@@ -185,7 +180,7 @@ class FFinishSetupFeatureApiImplTest {
             scope = backgroundScope,
             fBleFeatureApi = FakeBleFeatureApi(null),
             linkedAccountInfo = LinkedAccountInfo.NotLinked,
-            wifiStatus = wifiStatus(StatusResponse.State.CONNECTED),
+            wifiStatus = wifiStatus(BsbWifiStatusResponse.BsbWifiState.CONNECTED),
             updateStatus = defaultUpdateStatus(),
             isSetupFinishedBefore = false
         )
@@ -202,10 +197,9 @@ class FFinishSetupFeatureApiImplTest {
             fBleFeatureApi = FakeBleFeatureApi(FBleStatus.Connected("AA:BB:CC")),
             fLinkedInfoOnDemandFeatureApi = object : FLinkedInfoOnDemandFeatureApi {
                 override val status: WrappedFlow<LinkedAccountInfo> = linkedFlow.asFlow().wrap()
-                override suspend fun deleteAccount(): CResult<SuccessResponse> =
-                    CResult.Success(SuccessResponse("ok"))
+                override suspend fun deleteAccount(): CResult<Unit> = CResult.Success(Unit)
             },
-            fWiFiFeatureApi = FakeWiFiFeatureApi(wifiStatus(StatusResponse.State.CONNECTED)),
+            fWiFiFeatureApi = FakeWiFiFeatureApi(wifiStatus(BsbWifiStatusResponse.BsbWifiState.CONNECTED)),
             fFirmwareUpdateFeatureApi = FakeFirmwareUpdateFeatureApi(defaultUpdateStatus()),
             setupFinishedBeforeKrate = FakeSetupFinishedBeforeKrate(false)
         )
@@ -219,13 +213,13 @@ class FFinishSetupFeatureApiImplTest {
 
     @Test
     fun GIVEN_wifi_null_WHEN_ble_and_linked_ready_THEN_no_emission() = runTest {
-        val wifiFlow = MutableSharedFlow<StatusResponse>()
+        val wifiFlow = MutableSharedFlow<BsbWifiStatusResponse>()
         val impl = FFinishSetupFeatureApiImpl(
             scope = backgroundScope,
             fBleFeatureApi = FakeBleFeatureApi(FBleStatus.Connected("AA:BB:CC")),
             fLinkedInfoOnDemandFeatureApi = FakeLinkedInfoOnDemandFeatureApi(LinkedAccountInfo.NotLinked),
             fWiFiFeatureApi = object : FWiFiFeatureApi {
-                override fun getWifiStatusFlow(): WrappedFlow<StatusResponse> =
+                override fun getWifiStatusFlow(): WrappedFlow<BsbWifiStatusResponse> =
                     wifiFlow.asFlow().wrap()
 
                 override fun getWifiStateFlow(): WrappedFlow<ImmutableList<WiFiNetwork>> =
@@ -258,7 +252,7 @@ class FFinishSetupFeatureApiImplTest {
             scope = backgroundScope,
             fBleFeatureApi = FakeBleFeatureApi(null),
             linkedAccountInfo = LinkedAccountInfo.NotLinked,
-            wifiStatus = wifiStatus(StatusResponse.State.CONNECTED),
+            wifiStatus = wifiStatus(BsbWifiStatusResponse.BsbWifiState.CONNECTED),
             updateStatus = defaultUpdateStatus(),
             isSetupFinishedBefore = false
         )
@@ -273,8 +267,8 @@ class FFinishSetupFeatureApiImplTest {
             scope = backgroundScope,
             fBleFeatureApi = FakeBleFeatureApi(FBleStatus.Initialization),
             linkedAccountInfo = LinkedAccountInfo.Linked.SameUser(testUuid, "a@b.com"),
-            wifiStatus = wifiStatus(StatusResponse.State.CONNECTED),
-            updateStatus = defaultUpdateStatus(UpdateStatus.Check.CheckResult.NOT_AVAILABLE),
+            wifiStatus = wifiStatus(BsbWifiStatusResponse.BsbWifiState.CONNECTED),
+            updateStatus = defaultUpdateStatus(BsbUpdateStatus.BsbCheck.BsbCheckResult.NOT_AVAILABLE),
             isSetupFinishedBefore = false
         )
 
@@ -288,7 +282,7 @@ class FFinishSetupFeatureApiImplTest {
             scope = backgroundScope,
             fBleFeatureApi = FakeBleFeatureApi(FBleStatus.Connected("AA:BB:CC")),
             linkedAccountInfo = LinkedAccountInfo.NotLinked,
-            wifiStatus = wifiStatus(StatusResponse.State.CONNECTING),
+            wifiStatus = wifiStatus(BsbWifiStatusResponse.BsbWifiState.CONNECTING),
             updateStatus = defaultUpdateStatus(),
             isSetupFinishedBefore = false
         )
@@ -303,8 +297,8 @@ class FFinishSetupFeatureApiImplTest {
             scope = backgroundScope,
             fBleFeatureApi = FakeBleFeatureApi(FBleStatus.Connected("AA:BB:CC")),
             linkedAccountInfo = LinkedAccountInfo.Linked.SameUser(testUuid, "a@b.com"),
-            wifiStatus = wifiStatus(StatusResponse.State.RECONNECTING),
-            updateStatus = defaultUpdateStatus(UpdateStatus.Check.CheckResult.NOT_AVAILABLE),
+            wifiStatus = wifiStatus(BsbWifiStatusResponse.BsbWifiState.RECONNECTING),
+            updateStatus = defaultUpdateStatus(BsbUpdateStatus.BsbCheck.BsbCheckResult.NOT_AVAILABLE),
             isSetupFinishedBefore = false
         )
 
@@ -318,8 +312,8 @@ class FFinishSetupFeatureApiImplTest {
             scope = backgroundScope,
             fBleFeatureApi = FakeBleFeatureApi(FBleStatus.Connected("AA:BB:CC")),
             linkedAccountInfo = LinkedAccountInfo.Linked.SameUser(testUuid, "a@b.com"),
-            wifiStatus = wifiStatus(StatusResponse.State.CONNECTED),
-            updateStatus = defaultUpdateStatus(UpdateStatus.Check.CheckResult.NOT_AVAILABLE),
+            wifiStatus = wifiStatus(BsbWifiStatusResponse.BsbWifiState.CONNECTED),
+            updateStatus = defaultUpdateStatus(BsbUpdateStatus.BsbCheck.BsbCheckResult.NOT_AVAILABLE),
             isSetupFinishedBefore = false
         )
 
@@ -333,8 +327,8 @@ class FFinishSetupFeatureApiImplTest {
             scope = backgroundScope,
             fBleFeatureApi = null,
             linkedAccountInfo = LinkedAccountInfo.Linked.SameUser(testUuid, "a@b.com"),
-            wifiStatus = wifiStatus(StatusResponse.State.CONNECTED),
-            updateStatus = defaultUpdateStatus(UpdateStatus.Check.CheckResult.NOT_AVAILABLE),
+            wifiStatus = wifiStatus(BsbWifiStatusResponse.BsbWifiState.CONNECTED),
+            updateStatus = defaultUpdateStatus(BsbUpdateStatus.BsbCheck.BsbCheckResult.NOT_AVAILABLE),
             isSetupFinishedBefore = false
         )
 
@@ -349,8 +343,8 @@ class FFinishSetupFeatureApiImplTest {
                 scope = backgroundScope,
                 fBleFeatureApi = FakeBleFeatureApi(FBleStatus.Enabled),
                 linkedAccountInfo = LinkedAccountInfo.Linked.SameUser(testUuid, "a@b.com"),
-                wifiStatus = wifiStatus(StatusResponse.State.CONNECTED),
-                updateStatus = defaultUpdateStatus(UpdateStatus.Check.CheckResult.NOT_AVAILABLE),
+                wifiStatus = wifiStatus(BsbWifiStatusResponse.BsbWifiState.CONNECTED),
+                updateStatus = defaultUpdateStatus(BsbUpdateStatus.BsbCheck.BsbCheckResult.NOT_AVAILABLE),
                 isSetupFinishedBefore = false
             )
 
@@ -373,8 +367,8 @@ class FFinishSetupFeatureApiImplTest {
             scope = backgroundScope,
             fBleFeatureApi = FakeBleFeatureApi(FBleStatus.Disabled),
             linkedAccountInfo = LinkedAccountInfo.Linked.SameUser(testUuid, "a@b.com"),
-            wifiStatus = wifiStatus(StatusResponse.State.CONNECTED),
-            updateStatus = defaultUpdateStatus(UpdateStatus.Check.CheckResult.NOT_AVAILABLE),
+            wifiStatus = wifiStatus(BsbWifiStatusResponse.BsbWifiState.CONNECTED),
+            updateStatus = defaultUpdateStatus(BsbUpdateStatus.BsbCheck.BsbCheckResult.NOT_AVAILABLE),
             isSetupFinishedBefore = false
         )
 
@@ -391,8 +385,8 @@ class FFinishSetupFeatureApiImplTest {
                 scope = backgroundScope,
                 fBleFeatureApi = FakeBleFeatureApi(FBleStatus.InternalError),
                 linkedAccountInfo = LinkedAccountInfo.Linked.SameUser(testUuid, "a@b.com"),
-                wifiStatus = wifiStatus(StatusResponse.State.CONNECTED),
-                updateStatus = defaultUpdateStatus(UpdateStatus.Check.CheckResult.NOT_AVAILABLE),
+                wifiStatus = wifiStatus(BsbWifiStatusResponse.BsbWifiState.CONNECTED),
+                updateStatus = defaultUpdateStatus(BsbUpdateStatus.BsbCheck.BsbCheckResult.NOT_AVAILABLE),
                 isSetupFinishedBefore = false
             )
 
@@ -408,8 +402,8 @@ class FFinishSetupFeatureApiImplTest {
             scope = backgroundScope,
             fBleFeatureApi = FakeBleFeatureApi(FBleStatus.Connectable),
             linkedAccountInfo = LinkedAccountInfo.Linked.SameUser(testUuid, "a@b.com"),
-            wifiStatus = wifiStatus(StatusResponse.State.CONNECTED),
-            updateStatus = defaultUpdateStatus(UpdateStatus.Check.CheckResult.NOT_AVAILABLE),
+            wifiStatus = wifiStatus(BsbWifiStatusResponse.BsbWifiState.CONNECTED),
+            updateStatus = defaultUpdateStatus(BsbUpdateStatus.BsbCheck.BsbCheckResult.NOT_AVAILABLE),
             isSetupFinishedBefore = false
         )
 
@@ -425,8 +419,8 @@ class FFinishSetupFeatureApiImplTest {
             scope = backgroundScope,
             fBleFeatureApi = FakeBleFeatureApi(FBleStatus.Reset),
             linkedAccountInfo = LinkedAccountInfo.Linked.SameUser(testUuid, "a@b.com"),
-            wifiStatus = wifiStatus(StatusResponse.State.CONNECTED),
-            updateStatus = defaultUpdateStatus(UpdateStatus.Check.CheckResult.NOT_AVAILABLE),
+            wifiStatus = wifiStatus(BsbWifiStatusResponse.BsbWifiState.CONNECTED),
+            updateStatus = defaultUpdateStatus(BsbUpdateStatus.BsbCheck.BsbCheckResult.NOT_AVAILABLE),
             isSetupFinishedBefore = false
         )
 
@@ -442,8 +436,8 @@ class FFinishSetupFeatureApiImplTest {
             scope = backgroundScope,
             fBleFeatureApi = FakeBleFeatureApi(FBleStatus.Connected("AA:BB:CC")),
             linkedAccountInfo = LinkedAccountInfo.Linked.SameUser(testUuid, "a@b.com"),
-            wifiStatus = wifiStatus(StatusResponse.State.DISCONNECTED),
-            updateStatus = defaultUpdateStatus(UpdateStatus.Check.CheckResult.AVAILABLE),
+            wifiStatus = wifiStatus(BsbWifiStatusResponse.BsbWifiState.DISCONNECTED),
+            updateStatus = defaultUpdateStatus(BsbUpdateStatus.BsbCheck.BsbCheckResult.AVAILABLE),
             isSetupFinishedBefore = false
         )
 
@@ -466,8 +460,8 @@ class FFinishSetupFeatureApiImplTest {
             scope = backgroundScope,
             fBleFeatureApi = FakeBleFeatureApi(FBleStatus.Connected("AA:BB:CC")),
             linkedAccountInfo = LinkedAccountInfo.NotLinked,
-            wifiStatus = wifiStatus(StatusResponse.State.DISCONNECTING),
-            updateStatus = defaultUpdateStatus(UpdateStatus.Check.CheckResult.AVAILABLE),
+            wifiStatus = wifiStatus(BsbWifiStatusResponse.BsbWifiState.DISCONNECTING),
+            updateStatus = defaultUpdateStatus(BsbUpdateStatus.BsbCheck.BsbCheckResult.AVAILABLE),
             isSetupFinishedBefore = false
         )
 
@@ -490,8 +484,8 @@ class FFinishSetupFeatureApiImplTest {
             scope = backgroundScope,
             fBleFeatureApi = FakeBleFeatureApi(FBleStatus.Connected("AA:BB:CC")),
             linkedAccountInfo = LinkedAccountInfo.NotLinked,
-            wifiStatus = wifiStatus(StatusResponse.State.UNKNOWN),
-            updateStatus = defaultUpdateStatus(UpdateStatus.Check.CheckResult.AVAILABLE),
+            wifiStatus = wifiStatus(BsbWifiStatusResponse.BsbWifiState.UNKNOWN),
+            updateStatus = defaultUpdateStatus(BsbUpdateStatus.BsbCheck.BsbCheckResult.AVAILABLE),
             isSetupFinishedBefore = false
         )
 
@@ -514,8 +508,8 @@ class FFinishSetupFeatureApiImplTest {
             scope = backgroundScope,
             fBleFeatureApi = FakeBleFeatureApi(FBleStatus.Connected("AA:BB:CC")),
             linkedAccountInfo = LinkedAccountInfo.NotLinked,
-            wifiStatus = wifiStatus(StatusResponse.State.CONNECTED),
-            updateStatus = defaultUpdateStatus(UpdateStatus.Check.CheckResult.NOT_AVAILABLE),
+            wifiStatus = wifiStatus(BsbWifiStatusResponse.BsbWifiState.CONNECTED),
+            updateStatus = defaultUpdateStatus(BsbUpdateStatus.BsbCheck.BsbCheckResult.NOT_AVAILABLE),
             isSetupFinishedBefore = false
         )
 
@@ -531,8 +525,8 @@ class FFinishSetupFeatureApiImplTest {
             scope = backgroundScope,
             fBleFeatureApi = FakeBleFeatureApi(FBleStatus.Connected("AA:BB:CC")),
             linkedAccountInfo = LinkedAccountInfo.NotLinked,
-            wifiStatus = wifiStatus(StatusResponse.State.DISCONNECTED),
-            updateStatus = defaultUpdateStatus(UpdateStatus.Check.CheckResult.AVAILABLE),
+            wifiStatus = wifiStatus(BsbWifiStatusResponse.BsbWifiState.DISCONNECTED),
+            updateStatus = defaultUpdateStatus(BsbUpdateStatus.BsbCheck.BsbCheckResult.AVAILABLE),
             isSetupFinishedBefore = false
         )
 
@@ -555,8 +549,8 @@ class FFinishSetupFeatureApiImplTest {
             scope = backgroundScope,
             fBleFeatureApi = FakeBleFeatureApi(FBleStatus.Connected("AA:BB:CC")),
             linkedAccountInfo = LinkedAccountInfo.Linked.DifferentUser(testUuid, "x@y.com"),
-            wifiStatus = wifiStatus(StatusResponse.State.CONNECTED),
-            updateStatus = defaultUpdateStatus(UpdateStatus.Check.CheckResult.NOT_AVAILABLE),
+            wifiStatus = wifiStatus(BsbWifiStatusResponse.BsbWifiState.CONNECTED),
+            updateStatus = defaultUpdateStatus(BsbUpdateStatus.BsbCheck.BsbCheckResult.NOT_AVAILABLE),
             isSetupFinishedBefore = false
         )
 
@@ -572,8 +566,8 @@ class FFinishSetupFeatureApiImplTest {
             scope = backgroundScope,
             fBleFeatureApi = FakeBleFeatureApi(FBleStatus.Connected("AA:BB:CC")),
             linkedAccountInfo = LinkedAccountInfo.Linked.MissingBusyCloud(testUuid, "m@c.com"),
-            wifiStatus = wifiStatus(StatusResponse.State.CONNECTED),
-            updateStatus = defaultUpdateStatus(UpdateStatus.Check.CheckResult.NOT_AVAILABLE),
+            wifiStatus = wifiStatus(BsbWifiStatusResponse.BsbWifiState.CONNECTED),
+            updateStatus = defaultUpdateStatus(BsbUpdateStatus.BsbCheck.BsbCheckResult.NOT_AVAILABLE),
             isSetupFinishedBefore = false
         )
 
@@ -589,8 +583,8 @@ class FFinishSetupFeatureApiImplTest {
             scope = backgroundScope,
             fBleFeatureApi = FakeBleFeatureApi(FBleStatus.Connected("AA:BB:CC")),
             linkedAccountInfo = LinkedAccountInfo.Error,
-            wifiStatus = wifiStatus(StatusResponse.State.CONNECTED),
-            updateStatus = defaultUpdateStatus(UpdateStatus.Check.CheckResult.NOT_AVAILABLE),
+            wifiStatus = wifiStatus(BsbWifiStatusResponse.BsbWifiState.CONNECTED),
+            updateStatus = defaultUpdateStatus(BsbUpdateStatus.BsbCheck.BsbCheckResult.NOT_AVAILABLE),
             isSetupFinishedBefore = false
         )
 
@@ -606,8 +600,8 @@ class FFinishSetupFeatureApiImplTest {
             scope = backgroundScope,
             fBleFeatureApi = FakeBleFeatureApi(FBleStatus.Connected("AA:BB:CC")),
             linkedAccountInfo = LinkedAccountInfo.Disconnected,
-            wifiStatus = wifiStatus(StatusResponse.State.CONNECTED),
-            updateStatus = defaultUpdateStatus(UpdateStatus.Check.CheckResult.NOT_AVAILABLE),
+            wifiStatus = wifiStatus(BsbWifiStatusResponse.BsbWifiState.CONNECTED),
+            updateStatus = defaultUpdateStatus(BsbUpdateStatus.BsbCheck.BsbCheckResult.NOT_AVAILABLE),
             isSetupFinishedBefore = false
         )
 
@@ -623,8 +617,8 @@ class FFinishSetupFeatureApiImplTest {
             scope = backgroundScope,
             fBleFeatureApi = FakeBleFeatureApi(FBleStatus.Connected("AA:BB:CC")),
             linkedAccountInfo = LinkedAccountInfo.Linked.DifferentUser(testUuid, "x@y.com"),
-            wifiStatus = wifiStatus(StatusResponse.State.DISCONNECTING),
-            updateStatus = defaultUpdateStatus(UpdateStatus.Check.CheckResult.AVAILABLE),
+            wifiStatus = wifiStatus(BsbWifiStatusResponse.BsbWifiState.DISCONNECTING),
+            updateStatus = defaultUpdateStatus(BsbUpdateStatus.BsbCheck.BsbCheckResult.AVAILABLE),
             isSetupFinishedBefore = false
         )
 
@@ -647,8 +641,8 @@ class FFinishSetupFeatureApiImplTest {
             scope = backgroundScope,
             fBleFeatureApi = FakeBleFeatureApi(FBleStatus.Connected("AA:BB:CC")),
             linkedAccountInfo = LinkedAccountInfo.Linked.SameUser(testUuid, "a@b.com"),
-            wifiStatus = wifiStatus(StatusResponse.State.CONNECTED),
-            updateStatus = defaultUpdateStatus(UpdateStatus.Check.CheckResult.AVAILABLE),
+            wifiStatus = wifiStatus(BsbWifiStatusResponse.BsbWifiState.CONNECTED),
+            updateStatus = defaultUpdateStatus(BsbUpdateStatus.BsbCheck.BsbCheckResult.AVAILABLE),
             isSetupFinishedBefore = false
         )
 
@@ -664,8 +658,8 @@ class FFinishSetupFeatureApiImplTest {
             scope = backgroundScope,
             fBleFeatureApi = FakeBleFeatureApi(FBleStatus.Connected("AA:BB:CC")),
             linkedAccountInfo = LinkedAccountInfo.Linked.SameUser(testUuid, "a@b.com"),
-            wifiStatus = wifiStatus(StatusResponse.State.CONNECTED),
-            updateStatus = defaultUpdateStatus(UpdateStatus.Check.CheckResult.NOT_AVAILABLE),
+            wifiStatus = wifiStatus(BsbWifiStatusResponse.BsbWifiState.CONNECTED),
+            updateStatus = defaultUpdateStatus(BsbUpdateStatus.BsbCheck.BsbCheckResult.NOT_AVAILABLE),
             isSetupFinishedBefore = false
         )
 
@@ -679,8 +673,8 @@ class FFinishSetupFeatureApiImplTest {
             scope = backgroundScope,
             fBleFeatureApi = FakeBleFeatureApi(FBleStatus.Connected("AA:BB:CC")),
             linkedAccountInfo = LinkedAccountInfo.Linked.SameUser(testUuid, "a@b.com"),
-            wifiStatus = wifiStatus(StatusResponse.State.CONNECTED),
-            updateStatus = defaultUpdateStatus(UpdateStatus.Check.CheckResult.FAILURE),
+            wifiStatus = wifiStatus(BsbWifiStatusResponse.BsbWifiState.CONNECTED),
+            updateStatus = defaultUpdateStatus(BsbUpdateStatus.BsbCheck.BsbCheckResult.FAILURE),
             isSetupFinishedBefore = false
         )
 
@@ -696,8 +690,8 @@ class FFinishSetupFeatureApiImplTest {
             scope = backgroundScope,
             fBleFeatureApi = FakeBleFeatureApi(FBleStatus.Connected("AA:BB:CC")),
             linkedAccountInfo = LinkedAccountInfo.Linked.SameUser(testUuid, "a@b.com"),
-            wifiStatus = wifiStatus(StatusResponse.State.CONNECTED),
-            updateStatus = defaultUpdateStatus(UpdateStatus.Check.CheckResult.NONE),
+            wifiStatus = wifiStatus(BsbWifiStatusResponse.BsbWifiState.CONNECTED),
+            updateStatus = defaultUpdateStatus(BsbUpdateStatus.BsbCheck.BsbCheckResult.NONE),
             isSetupFinishedBefore = false
         )
 
@@ -713,8 +707,8 @@ class FFinishSetupFeatureApiImplTest {
             scope = backgroundScope,
             fBleFeatureApi = FakeBleFeatureApi(FBleStatus.Connected("AA:BB:CC")),
             linkedAccountInfo = LinkedAccountInfo.Linked.SameUser(testUuid, "a@b.com"),
-            wifiStatus = wifiStatus(StatusResponse.State.DISCONNECTED),
-            updateStatus = defaultUpdateStatus(UpdateStatus.Check.CheckResult.AVAILABLE),
+            wifiStatus = wifiStatus(BsbWifiStatusResponse.BsbWifiState.DISCONNECTED),
+            updateStatus = defaultUpdateStatus(BsbUpdateStatus.BsbCheck.BsbCheckResult.AVAILABLE),
             isSetupFinishedBefore = false
         )
 
@@ -730,8 +724,8 @@ class FFinishSetupFeatureApiImplTest {
             scope = backgroundScope,
             fBleFeatureApi = FakeBleFeatureApi(FBleStatus.Connected("AA:BB:CC")),
             linkedAccountInfo = LinkedAccountInfo.Linked.SameUser(testUuid, "a@b.com"),
-            wifiStatus = wifiStatus(StatusResponse.State.DISCONNECTING),
-            updateStatus = defaultUpdateStatus(UpdateStatus.Check.CheckResult.AVAILABLE),
+            wifiStatus = wifiStatus(BsbWifiStatusResponse.BsbWifiState.DISCONNECTING),
+            updateStatus = defaultUpdateStatus(BsbUpdateStatus.BsbCheck.BsbCheckResult.AVAILABLE),
             isSetupFinishedBefore = false
         )
 
@@ -748,8 +742,8 @@ class FFinishSetupFeatureApiImplTest {
                 scope = backgroundScope,
                 fBleFeatureApi = FakeBleFeatureApi(FBleStatus.Enabled),
                 linkedAccountInfo = LinkedAccountInfo.NotLinked,
-                wifiStatus = wifiStatus(StatusResponse.State.DISCONNECTED),
-                updateStatus = defaultUpdateStatus(UpdateStatus.Check.CheckResult.AVAILABLE),
+                wifiStatus = wifiStatus(BsbWifiStatusResponse.BsbWifiState.DISCONNECTED),
+                updateStatus = defaultUpdateStatus(BsbUpdateStatus.BsbCheck.BsbCheckResult.AVAILABLE),
                 isSetupFinishedBefore = false
             )
 
@@ -772,8 +766,8 @@ class FFinishSetupFeatureApiImplTest {
             scope = backgroundScope,
             fBleFeatureApi = FakeBleFeatureApi(FBleStatus.Connected("AA:BB:CC")),
             linkedAccountInfo = LinkedAccountInfo.NotLinked,
-            wifiStatus = wifiStatus(StatusResponse.State.DISCONNECTED),
-            updateStatus = defaultUpdateStatus(UpdateStatus.Check.CheckResult.AVAILABLE),
+            wifiStatus = wifiStatus(BsbWifiStatusResponse.BsbWifiState.DISCONNECTED),
+            updateStatus = defaultUpdateStatus(BsbUpdateStatus.BsbCheck.BsbCheckResult.AVAILABLE),
             isSetupFinishedBefore = false
         )
 
@@ -796,8 +790,8 @@ class FFinishSetupFeatureApiImplTest {
             scope = backgroundScope,
             fBleFeatureApi = FakeBleFeatureApi(FBleStatus.Connected("AA:BB:CC")),
             linkedAccountInfo = LinkedAccountInfo.NotLinked,
-            wifiStatus = wifiStatus(StatusResponse.State.CONNECTED),
-            updateStatus = defaultUpdateStatus(UpdateStatus.Check.CheckResult.AVAILABLE),
+            wifiStatus = wifiStatus(BsbWifiStatusResponse.BsbWifiState.CONNECTED),
+            updateStatus = defaultUpdateStatus(BsbUpdateStatus.BsbCheck.BsbCheckResult.AVAILABLE),
             isSetupFinishedBefore = false
         )
 
@@ -820,8 +814,8 @@ class FFinishSetupFeatureApiImplTest {
             scope = backgroundScope,
             fBleFeatureApi = null,
             linkedAccountInfo = LinkedAccountInfo.NotLinked,
-            wifiStatus = wifiStatus(StatusResponse.State.DISCONNECTED),
-            updateStatus = defaultUpdateStatus(UpdateStatus.Check.CheckResult.AVAILABLE),
+            wifiStatus = wifiStatus(BsbWifiStatusResponse.BsbWifiState.DISCONNECTED),
+            updateStatus = defaultUpdateStatus(BsbUpdateStatus.BsbCheck.BsbCheckResult.AVAILABLE),
             isSetupFinishedBefore = false
         )
 
@@ -844,8 +838,8 @@ class FFinishSetupFeatureApiImplTest {
             scope = backgroundScope,
             fBleFeatureApi = null,
             linkedAccountInfo = LinkedAccountInfo.Linked.SameUser(testUuid, "a@b.com"),
-            wifiStatus = wifiStatus(StatusResponse.State.CONNECTED),
-            updateStatus = defaultUpdateStatus(UpdateStatus.Check.CheckResult.AVAILABLE),
+            wifiStatus = wifiStatus(BsbWifiStatusResponse.BsbWifiState.CONNECTED),
+            updateStatus = defaultUpdateStatus(BsbUpdateStatus.BsbCheck.BsbCheckResult.AVAILABLE),
             isSetupFinishedBefore = false
         )
 
@@ -868,8 +862,8 @@ class FFinishSetupFeatureApiImplTest {
             scope = backgroundScope,
             fBleFeatureApi = FakeBleFeatureApi(FBleStatus.Connected("AA:BB:CC")),
             linkedAccountInfo = LinkedAccountInfo.Linked.SameUser(testUuid, "a@b.com"),
-            wifiStatus = wifiStatus(StatusResponse.State.DISCONNECTED),
-            updateStatus = defaultUpdateStatus(UpdateStatus.Check.CheckResult.AVAILABLE),
+            wifiStatus = wifiStatus(BsbWifiStatusResponse.BsbWifiState.DISCONNECTED),
+            updateStatus = defaultUpdateStatus(BsbUpdateStatus.BsbCheck.BsbCheckResult.AVAILABLE),
             isSetupFinishedBefore = false
         )
 
@@ -892,8 +886,8 @@ class FFinishSetupFeatureApiImplTest {
             scope = backgroundScope,
             fBleFeatureApi = FakeBleFeatureApi(FBleStatus.Connected("AA:BB:CC")),
             linkedAccountInfo = LinkedAccountInfo.Linked.SameUser(testUuid, "a@b.com"),
-            wifiStatus = wifiStatus(StatusResponse.State.UNKNOWN),
-            updateStatus = defaultUpdateStatus(UpdateStatus.Check.CheckResult.AVAILABLE),
+            wifiStatus = wifiStatus(BsbWifiStatusResponse.BsbWifiState.UNKNOWN),
+            updateStatus = defaultUpdateStatus(BsbUpdateStatus.BsbCheck.BsbCheckResult.AVAILABLE),
             isSetupFinishedBefore = false
         )
 
@@ -916,8 +910,8 @@ class FFinishSetupFeatureApiImplTest {
             scope = backgroundScope,
             fBleFeatureApi = null,
             linkedAccountInfo = LinkedAccountInfo.Linked.SameUser(testUuid, "a@b.com"),
-            wifiStatus = wifiStatus(StatusResponse.State.CONNECTED),
-            updateStatus = defaultUpdateStatus(UpdateStatus.Check.CheckResult.NOT_AVAILABLE),
+            wifiStatus = wifiStatus(BsbWifiStatusResponse.BsbWifiState.CONNECTED),
+            updateStatus = defaultUpdateStatus(BsbUpdateStatus.BsbCheck.BsbCheckResult.NOT_AVAILABLE),
             isSetupFinishedBefore = false
         )
 

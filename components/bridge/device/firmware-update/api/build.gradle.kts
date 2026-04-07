@@ -7,8 +7,6 @@ kotlin {
         implementation(projects.components.bridge.feature.firmwareUpdate.api)
         implementation(projects.components.core.wrapper)
 
-        implementation(projects.components.bridge.feature.rpc.api)
-
         implementation(libs.kotlin.coroutines)
     }
 }

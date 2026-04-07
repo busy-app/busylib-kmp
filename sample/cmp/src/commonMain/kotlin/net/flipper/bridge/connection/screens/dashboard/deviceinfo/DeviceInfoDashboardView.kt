@@ -4,9 +4,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarStatusSystem
-import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarVersion
-import net.flipper.bridge.connection.feature.rpc.api.model.StatusFirmware
+import net.flipper.bridge.connection.feature.info.model.BsbBusyBarStatusSystem
+import net.flipper.bridge.connection.feature.info.model.BsbBusyBarVersion
+import net.flipper.bridge.connection.feature.info.model.BsbStatusFirmware
 import net.flipper.bridge.connection.screens.dashboard.common.DashboardInfoRow
 import net.flipper.bridge.connection.screens.dashboard.common.DashboardScreenLayout
 import net.flipper.bridge.connection.screens.dashboard.common.DashboardSectionCard
@@ -15,9 +15,9 @@ import net.flipper.bridge.connection.screens.dashboard.common.orUnavailable
 @Composable
 fun DeviceInfoDashboardContent(
     onBack: () -> Unit,
-    deviceInfo: BusyBarStatusSystem?,
-    deviceFirmware: StatusFirmware?,
-    deviceVersion: BusyBarVersion?,
+    deviceInfo: BsbBusyBarStatusSystem?,
+    deviceFirmware: BsbStatusFirmware?,
+    deviceVersion: BsbBusyBarVersion?,
     modifier: Modifier = Modifier
 ) {
     DashboardScreenLayout(

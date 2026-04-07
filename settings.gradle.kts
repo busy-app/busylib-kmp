@@ -47,6 +47,8 @@ include(
     ":components:core:timezone",
     ":components:core:data",
 
+    ":components:bridge:bsbprotobuf",
+
     ":components:bridge:config:api",
     ":components:bridge:config:impl",
     ":components:bridge:config:internal",

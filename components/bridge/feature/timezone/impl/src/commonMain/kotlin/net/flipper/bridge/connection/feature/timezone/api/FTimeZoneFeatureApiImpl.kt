@@ -10,10 +10,10 @@ import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
-import net.flipper.bridge.connection.feature.events.api.getBsbUpdateFlow
-import net.flipper.bridge.connection.feature.events.model.BsbUpdateEvent
+import net.flipper.bridge.connection.feature.events.api.get
+import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
+import net.flipper.bridge.connection.feature.events.model.ConsumableUpdateEvent
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
-import net.flipper.bridge.connection.feature.timezone.api.model.TimestampInfo
 import net.flipper.bridge.connection.feature.timezone.api.model.TimezoneInfo
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.busylib.core.di.BusyLibGraph
@@ -21,7 +21,6 @@ import net.flipper.busylib.core.wrapper.CResult
 import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.toCResult
 import net.flipper.busylib.core.wrapper.wrap
-import net.flipper.core.busylib.ktx.common.DefaultConsumable
 import net.flipper.core.busylib.ktx.common.asFlow
 import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.merge
@@ -39,45 +38,27 @@ class FTimeZoneFeatureApiImpl(
 ) : FTimeZoneFeatureApi, LogTagProvider {
     override val TAG: String = "FTimeZoneFeatureApi"
 
-    private val timestampInfoSharedFlow = fEventsFeatureApi
-        ?.getBsbUpdateFlow(BsbUpdateEvent.TIMESTAMP_CHANGED)
-        .orEmpty()
-        .merge(flowOf(DefaultConsumable(false)))
-        .transformWhileSubscribed(scope = scope) { flow ->
-            flow.throttleLatest { consumable ->
-                val couldConsume = consumable.tryConsume()
-                exponentialRetry {
-                    rpcFeatureApi.fRpcTimeZoneApi.getTime(couldConsume)
-                }
-            }
-        }
-        .asFlow()
-        .map { it.toPublic() }
-        .wrap()
-
-    override fun getTimestampInfoFlow(): WrappedFlow<TimestampInfo> {
-        return timestampInfoSharedFlow
-    }
-
-    override suspend fun setTimestamp(timestampInfo: TimestampInfo): CResult<Unit> {
-        return rpcFeatureApi.fRpcTimeZoneApi.postTimeTimestamp(timestampInfo.toInternal())
-            .toCResult()
-    }
-
     private val timeZoneInfoSharedFlow = fEventsFeatureApi
-        ?.getBsbUpdateFlow(BsbUpdateEvent.TIMEZONE_CHANGED)
+        ?.get<BusyLibUpdateEvent.Timezone>()
         .orEmpty()
-        .merge(flowOf(DefaultConsumable(false)))
+        .merge(flowOf(ConsumableUpdateEvent.Empty))
         .transformWhileSubscribed(scope = scope) { flow ->
             flow.throttleLatest { consumable ->
                 val couldConsume = consumable.tryConsume()
-                exponentialRetry {
-                    rpcFeatureApi.fRpcTimeZoneApi.getTimeTimezone(couldConsume)
+                when (consumable) {
+                    ConsumableUpdateEvent.Empty,
+                    is ConsumableUpdateEvent.BusyLib<BusyLibUpdateEvent.Timezone> -> {
+                        @Suppress("ForbiddenComment")
+                        // TODO: https://flipper.atlassian.net/browse/FW-781
+                        exponentialRetry {
+                            rpcFeatureApi.fRpcTimeZoneApi.getTimeTimezone(couldConsume)
+                        }
+                    }
                 }
             }
         }
         .asFlow()
-        .map { it.toPublic() }
+        .map { rpcTimezoneInfo -> rpcTimezoneInfo.toPublic() }
         .wrap()
 
     override fun getTimeZoneInfoFlow(): WrappedFlow<TimezoneInfo> {
@@ -85,7 +66,9 @@ class FTimeZoneFeatureApiImpl(
     }
 
     override suspend fun setTimezone(timezoneInfo: TimezoneInfo): CResult<Unit> {
-        return rpcFeatureApi.fRpcTimeZoneApi.postTimeTimezone(timezoneInfo.toInternal()).toCResult()
+        return rpcFeatureApi.fRpcTimeZoneApi
+            .postTimeTimezone(timezoneInfo.toInternal())
+            .toCResult()
     }
 
     override suspend fun getTimezones(): CResult<List<TimezoneInfo>> {

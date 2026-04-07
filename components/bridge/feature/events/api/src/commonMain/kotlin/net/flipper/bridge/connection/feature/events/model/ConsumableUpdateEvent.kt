@@ -5,21 +5,15 @@ import net.flipper.core.busylib.ktx.common.DefaultConsumable
 import net.flipper.core.busylib.ktx.common.MutexConsumable
 
 /**
- * Wraps an [BsbUpdateEvent] in a [Consumable] so that it can be delivered at most once
+ * Wraps an [BusyLibUpdateEvent] in a [Consumable] so that it can be delivered at most once
  *
  * @see Consumable
  */
-sealed interface ConsumableUpdateEvent : Consumable {
-    data class Bsb(
-        val bsbUpdateEvent: BsbUpdateEvent,
-        val value: String?
-    ) : ConsumableUpdateEvent,
-        Consumable by MutexConsumable()
-
+sealed interface ConsumableUpdateEvent<out T : BusyLibUpdateEvent> : Consumable {
     data class BusyLib<out T : BusyLibUpdateEvent>(
         val busyLibUpdateEvent: T,
-    ) : ConsumableUpdateEvent,
+    ) : ConsumableUpdateEvent<T>,
         Consumable by MutexConsumable()
 
-    data object Empty : ConsumableUpdateEvent, Consumable by DefaultConsumable(false)
+    data object Empty : ConsumableUpdateEvent<Nothing>, Consumable by DefaultConsumable(false)
 }

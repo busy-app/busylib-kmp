@@ -13,6 +13,8 @@ import net.flipper.bridge.connection.transport.tcp.lan.FLanApi
 import net.flipper.bridge.connection.transport.tcp.lan.FLanDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.tcp.lan.impl.engine.BUSYBarHttpEngine
 import net.flipper.bridge.connection.transport.tcp.lan.impl.monitor.getConnectionMonitorApi
+import net.flipper.bridge.connection.transport.tcp.lan.impl.streaming.FLanStreamingApiImpl
+import net.flipper.core.ktor.getHttpClient
 import net.flipper.core.ktor.getPlatformEngineFactory
 
 class FLanApiImpl(
@@ -22,6 +24,8 @@ class FLanApiImpl(
 ) : FLanApi {
     private val httpEngineOriginal = getPlatformEngineFactory().create()
     private val httpEngine = BUSYBarHttpEngine(httpEngineOriginal, currentConfig.host)
+    private val httpClient = getHttpClient(httpEngine)
+    private val lanStreamingApi = FLanStreamingApiImpl(httpClient, scope)
 
     private val connectionMonitor = getConnectionMonitorApi(
         listener = listener,
@@ -64,10 +68,13 @@ class FLanApiImpl(
         return Result.failure(IllegalArgumentException("Config $config has different non-name fields"))
     }
 
+    override fun getEvents() = lanStreamingApi.getEvents()
+
     override suspend fun disconnect() {
         connectionMonitor.stopMonitoring()
         httpEngine.close()
         httpEngineOriginal.close()
+        httpClient.close()
         listener.onStatusUpdate(FInternalTransportConnectionStatus.Disconnected)
     }
 

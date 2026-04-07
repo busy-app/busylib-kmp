@@ -7,7 +7,6 @@ import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import kotlinx.coroutines.CoroutineDispatcher
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcTimeZoneApi
-import net.flipper.bridge.connection.feature.rpc.api.model.RpcTimestampInfo
 import net.flipper.bridge.connection.feature.rpc.api.model.RpcTimezoneInfo
 import net.flipper.bridge.connection.feature.rpc.api.model.RpcTimezoneListResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
@@ -20,21 +19,6 @@ class FRpcTimeZoneApiImpl(
     private val dispatcher: CoroutineDispatcher,
     private val objectCache: ObjectCache
 ) : FRpcTimeZoneApi {
-    override suspend fun getTime(ignoreCache: Boolean): Result<RpcTimestampInfo> {
-        return runSuspendCatching(dispatcher) {
-            objectCache.getOrElse(ignoreCache) {
-                httpClient.get("/api/time").body<RpcTimestampInfo>()
-            }
-        }
-    }
-
-    override suspend fun postTimeTimestamp(timestampInfo: RpcTimestampInfo): Result<Unit> {
-        return runSuspendCatching(dispatcher) {
-            httpClient.post("/api/time/timestamp") {
-                parameter("timestamp", timestampInfo.timestamp)
-            }.body<SuccessResponse>()
-        }.map { }
-    }
 
     override suspend fun getTimeTimezone(ignoreCache: Boolean): Result<RpcTimezoneInfo> {
         return runSuspendCatching(dispatcher) {

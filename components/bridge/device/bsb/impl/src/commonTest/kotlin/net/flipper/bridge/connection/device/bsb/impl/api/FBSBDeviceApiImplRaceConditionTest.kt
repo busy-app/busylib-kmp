@@ -15,9 +15,9 @@ import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.common.api.FOnDeviceReadyFeatureApi
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.feature.info.api.FDeviceInfoFeatureApi
-import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarStatusSystem
-import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarVersion
-import net.flipper.bridge.connection.feature.rpc.api.model.StatusFirmware
+import net.flipper.bridge.connection.feature.info.model.BsbBusyBarStatusSystem
+import net.flipper.bridge.connection.feature.info.model.BsbBusyBarVersion
+import net.flipper.bridge.connection.feature.info.model.BsbStatusFirmware
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import net.flipper.busylib.core.wrapper.CResult
@@ -444,9 +444,9 @@ class FBSBDeviceApiImplRaceConditionTest {
 
     // Test implementations
     private open class TestFeatureApi : FDeviceInfoFeatureApi {
-        override suspend fun getDeviceInfo(): CResult<BusyBarStatusSystem> {
+        override suspend fun getDeviceInfo(): CResult<BsbBusyBarStatusSystem> {
             return Result.success(
-                BusyBarStatusSystem(
+                BsbBusyBarStatusSystem(
                     apiSemver = "6.3.0",
                     uptime = 1.days,
                     bootTime = Instant.fromEpochMilliseconds(0)
@@ -454,12 +454,12 @@ class FBSBDeviceApiImplRaceConditionTest {
             ).toCResult()
         }
 
-        override suspend fun getDeviceFirmware(): CResult<StatusFirmware> {
+        override suspend fun getDeviceFirmware(): CResult<BsbStatusFirmware> {
             return CResult.failure(NotImplementedError())
         }
 
-        override val deviceVersionFlow: WrappedFlow<BusyBarVersion> =
-            emptyFlow<BusyBarVersion>()
+        override val deviceVersionFlow: WrappedFlow<BsbBusyBarVersion> =
+            emptyFlow<BsbBusyBarVersion>()
                 .wrapFlow()
     }
 

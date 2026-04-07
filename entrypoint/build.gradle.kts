@@ -42,6 +42,7 @@ kotlin {
         api(projects.components.core.wrapper)
         api(projects.components.principal.api)
         api(projects.components.cloud.api)
+        api(projects.components.core.data)
 
         implementation(projects.components.cloud.barsws.api)
         implementation(projects.components.cloud.barsws.impl)

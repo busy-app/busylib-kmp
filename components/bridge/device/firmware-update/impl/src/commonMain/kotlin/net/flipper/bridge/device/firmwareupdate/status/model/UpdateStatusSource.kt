@@ -1,16 +1,16 @@
 package net.flipper.bridge.device.firmwareupdate.status.model
 
-import net.flipper.bridge.connection.feature.rpc.api.model.UpdateStatus
+import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateStatus
 
 sealed interface UpdateStatusSource {
-    val freshUpdateStatus: UpdateStatus?
+    val freshUpdateStatus: BsbUpdateStatus?
 
     data class Fresh(
-        override val freshUpdateStatus: UpdateStatus?
+        override val freshUpdateStatus: BsbUpdateStatus?
     ) : UpdateStatusSource
 
     data class Cached(
-        val cachedUpdateStatus: UpdateStatus,
-        override val freshUpdateStatus: UpdateStatus?
+        val cachedUpdateStatus: BsbUpdateStatus,
+        override val freshUpdateStatus: BsbUpdateStatus?
     ) : UpdateStatusSource
 }

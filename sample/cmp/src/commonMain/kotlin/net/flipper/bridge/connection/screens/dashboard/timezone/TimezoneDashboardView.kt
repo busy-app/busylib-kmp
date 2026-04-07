@@ -17,7 +17,6 @@ import net.flipper.bridge.connection.screens.dashboard.common.orUnavailable
 fun TimezoneDashboardContent(
     onBack: () -> Unit,
     timezoneInfo: String?,
-    timestampInfo: String?,
     state: TimezoneDashboardState,
     actionState: DashboardActionState,
     onRefreshTimezones: () -> Unit,
@@ -34,7 +33,6 @@ fun TimezoneDashboardContent(
             modifier = Modifier.padding(horizontal = 16.dp)
         ) {
             DashboardInfoRow(label = "Current timezone", value = timezoneInfo.orUnavailable())
-            DashboardInfoRow(label = "Current timestamp", value = timestampInfo.orUnavailable())
             Text("Last timezone list: ${state.lastTimezonesSummary.orUnavailable()}")
             Text("Last set timezone: ${state.lastSetTimezone.orUnavailable()}")
             DashboardButtonRow(

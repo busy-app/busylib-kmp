@@ -2,11 +2,11 @@ package net.flipper.bridge.connection.feature.rpc.api.model
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import net.flipper.bridge.connection.feature.rpc.api.serialization.InstantUtcSerializer
+import net.flipper.core.busylib.data.serialization.InstantUtcSerializer
 import kotlin.time.Instant
 
 @Serializable
-class MatterCommissionedFabrics(
+data class MatterCommissionedFabrics(
     @SerialName("fabric_count")
     val fabricCount: Int,
     @SerialName("latest_pairing_status")

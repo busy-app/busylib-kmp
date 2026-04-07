@@ -11,7 +11,6 @@ import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcStreamingApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcSystemApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcTimeZoneApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcUpdaterApi
-import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcWebSocketApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcWifiApi
 import net.flipper.bridge.connection.feature.rpc.api.model.DrawRequest
 import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
@@ -137,5 +136,4 @@ private class FakeRpcFeatureApi(
     override val fRpcUpdaterApi: FRpcUpdaterApi get() = error("Not used")
     override val fRpcMatterApi: FRpcMatterApi get() = error("Not used")
     override val fRpcTimeZoneApi: FRpcTimeZoneApi get() = error("Not used")
-    override val fRpcWebSocketApi: FRpcWebSocketApi get() = error("Not used")
 }

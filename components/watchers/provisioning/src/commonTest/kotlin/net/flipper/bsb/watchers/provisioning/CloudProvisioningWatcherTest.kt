@@ -1,16 +1,19 @@
 package net.flipper.bsb.watchers.provisioning
 
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.job
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -63,11 +66,11 @@ class CloudProvisioningWatcherTest {
             setup.watcher.onLaunch()
             advanceUntilIdle()
 
-            val updated = setup.storage.findDevice("device-1").drop(1).first()
+            val updated = setup.storage.findDevice("device-1").first()
             assertNotNull(updated)
-            assertNotNull(updated?.cloud)
-            assertEquals(cloudId, updated?.cloud?.deviceId)
-            assertNotNull(updated?.ble)
+            assertNotNull(updated.cloud)
+            assertEquals(cloudId, updated.cloud?.deviceId)
+            assertNotNull(updated.ble)
         }
 
     @Test
@@ -88,7 +91,7 @@ class CloudProvisioningWatcherTest {
 
         val updated = setup.storage.findDevice("device-1")
         assertNotNull(updated)
-        assertEquals(device.connectionWays, updated?.first()?.connectionWays)
+        assertEquals(device.connectionWays, updated.first()?.connectionWays)
     }
 
     @Test
@@ -112,7 +115,7 @@ class CloudProvisioningWatcherTest {
 
             val updated = setup.storage.findDevice("device-1")
             assertNotNull(updated)
-            assertEquals(device.connectionWays, updated?.first()?.connectionWays)
+            assertEquals(device.connectionWays, updated.first()?.connectionWays)
         }
 
     @Test
@@ -180,7 +183,7 @@ class CloudProvisioningWatcherTest {
             advanceUntilIdle()
 
             // Should switch to existing device
-            assertEquals(existingDevice, setup.storage.getCurrentDeviceFlow().drop(1).first())
+            assertEquals(existingDevice, setup.storage.getCurrentDeviceFlow().first())
             // No new devices created
             assertEquals(2, setup.storage.devices.first().size)
         }
@@ -206,8 +209,8 @@ class CloudProvisioningWatcherTest {
 
             val updated = setup.storage.findDevice("device-1")
             assertNotNull(updated)
-            assertNull(updated?.drop(1)?.first()?.cloud, "Cloud connection should be removed")
-            assertNotNull(updated?.first()?.ble, "BLE connection should remain")
+            assertNull(updated.first()?.cloud, "Cloud connection should be removed")
+            assertNotNull(updated.first()?.ble, "BLE connection should remain")
         }
 
     @Test
@@ -285,9 +288,13 @@ class CloudProvisioningWatcherTest {
             FFeatureStatus.Supported(rpcApi)
         )
 
+        val scope = CoroutineScope(
+            SupervisorJob(backgroundScope.coroutineContext.job) + StandardTestDispatcher(testScheduler)
+        )
+
         val orchestratorState = MutableStateFlow<FDeviceConnectStatus>(
             FDeviceConnectStatus.Connected(
-                scope = backgroundScope,
+                scope = scope,
                 device = connectedDevice,
                 deviceApi = FakeConnectedDeviceApi(),
                 transportType = null
@@ -295,7 +302,7 @@ class CloudProvisioningWatcherTest {
         )
 
         val watcher = CloudProvisioningWatcher(
-            scope = backgroundScope,
+            scope = scope,
             featureProvider = FakeFeatureProvider(featureFlow),
             orchestrator = FakeOrchestrator(orchestratorState),
             persistedStorage = storage

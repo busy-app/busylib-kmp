@@ -16,7 +16,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import net.flipper.bridge.connection.feature.rpc.api.model.BsbBrightness
+import net.flipper.bridge.connection.feature.settings.model.BsbBrightness
 import net.flipper.bridge.connection.screens.dashboard.common.DashboardActionState
 import net.flipper.bridge.connection.screens.dashboard.common.DashboardInfoRow
 import net.flipper.bridge.connection.screens.dashboard.common.DashboardLogCard
