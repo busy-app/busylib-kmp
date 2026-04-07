@@ -3,7 +3,6 @@ package net.flipper.bridge.connection.feature.timezone.api
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.TimeZone
-import net.flipper.bridge.connection.feature.timezone.api.model.TimestampInfo
 import net.flipper.bridge.connection.feature.timezone.api.model.TimezoneInfo
 import net.flipper.busylib.core.wrapper.CResult
 import net.flipper.busylib.core.wrapper.WrappedFlow
@@ -203,7 +202,4 @@ private class FakeTimeZoneFeatureApi(
         setTimezoneCalls.add(timezoneInfo)
         return setTimezoneResult
     }
-
-    override fun getTimestampInfoFlow(): WrappedFlow<TimestampInfo> = error("Not used")
-    override suspend fun setTimestamp(timestampInfo: TimestampInfo): CResult<Unit> = error("Not used")
 }

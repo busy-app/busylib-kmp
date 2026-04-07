@@ -51,16 +51,12 @@ sealed interface BusyLibUpdateEvent {
             val availableVersion: String?,
         ) : Update
 
-        data object CheckOnce : Update
+        data class UpdateStatus(val status: net.flipper.bridge.connection.feature.rpc.api.model.UpdateStatus) : Update
     }
 
     data class Timezone(
         val name: String,
         val offsetMinutes: Int,
-    ) : BusyLibUpdateEvent
-
-    data class Timestamp(
-        val timestamp: String
     ) : BusyLibUpdateEvent
 
     data class Matter(
