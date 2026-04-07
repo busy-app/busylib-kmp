@@ -1,19 +1,12 @@
 package net.flipper.bridge.connection.feature.screenstreaming.impl.delegates
 
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.filterIsInstance
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.onStart
 import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
 import net.flipper.bridge.connection.feature.screenstreaming.model.BusyImageFormat
-import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoData
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.verbose
-import kotlin.io.encoding.Base64
 
 private const val BLK_SIZE = 3
 

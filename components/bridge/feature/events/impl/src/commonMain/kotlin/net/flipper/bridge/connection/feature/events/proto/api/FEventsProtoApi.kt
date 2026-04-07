@@ -14,7 +14,6 @@ import net.flipper.bridge.connection.feature.events.proto.protomapper.BSBProtobu
 import net.flipper.bridge.connection.transport.common.api.serial.FStatusStreamingApi
 import net.flipper.bridge.connection.transport.common.api.serial.StatusStreamingEvent
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
-import net.flipper.core.busylib.ktx.common.throttleLatest
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.TaggedLogger
 import net.flipper.core.busylib.log.error

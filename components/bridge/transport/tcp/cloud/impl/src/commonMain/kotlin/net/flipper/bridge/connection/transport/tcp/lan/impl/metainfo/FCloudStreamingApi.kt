@@ -6,13 +6,10 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapConcat
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.serialization.json.JsonPrimitive
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
-import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoData
-import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
 import net.flipper.bridge.connection.transport.common.api.serial.FStatusStreamingApi
 import net.flipper.bridge.connection.transport.common.api.serial.StatusStreamingEvent
 import net.flipper.bsb.cloud.barsws.api.BSBWebSocket

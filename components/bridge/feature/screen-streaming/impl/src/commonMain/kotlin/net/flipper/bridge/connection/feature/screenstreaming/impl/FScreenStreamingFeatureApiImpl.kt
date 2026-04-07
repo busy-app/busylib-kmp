@@ -19,7 +19,6 @@ import kotlin.io.encoding.Base64
 private const val DEFAULT_BB_WIDTH = 72
 private const val DEFAULT_BB_HEIGHT = 16
 
-
 class FScreenStreamingFeatureApiImpl(
     private val scope: CoroutineScope,
     fEventsFeatureApi: FEventsFeatureApi,
@@ -39,7 +38,8 @@ class FScreenStreamingFeatureApiImpl(
         .wrap()
 
     private fun getFramesFlow(
-        eventsApi: FEventsFeatureApi, streamingApi: FRpcStreamingApi
+        eventsApi: FEventsFeatureApi,
+        streamingApi: FRpcStreamingApi
     ): Flow<BusyLibUpdateEvent.Frame> {
         return eventsApi.get(
             scope = scope,
