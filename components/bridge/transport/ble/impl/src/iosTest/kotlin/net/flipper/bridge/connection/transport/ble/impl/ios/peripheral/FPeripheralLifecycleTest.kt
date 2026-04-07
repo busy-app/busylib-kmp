@@ -5,7 +5,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.toList
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import net.flipper.bridge.connection.transport.ble.impl.ios.testfixtures.RecordingPeripheral
@@ -14,6 +13,9 @@ import net.flipper.bridge.connection.transport.ble.impl.ios.testfixtures.createC
 import net.flipper.bridge.connection.transport.ble.impl.ios.testfixtures.error
 import net.flipper.bridge.connection.transport.ble.impl.ios.testfixtures.newCharacteristic
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
+import platform.CoreBluetooth.CBATTErrorInsufficientEncryption
+import platform.CoreBluetooth.CBErrorEncryptionTimedOut
+import platform.CoreBluetooth.CBErrorPeerRemovedPairingInformation
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
@@ -62,13 +64,13 @@ class FPeripheralLifecycleTest {
         val sut = createSut().sut
 
         // onError dispatches state updates on Dispatchers.Default, so await the state transition
-        sut.onError(error(domain = "CBATTErrorDomain", code = 15L))
+        sut.onError(error(domain = "CBATTErrorDomain", code = CBATTErrorInsufficientEncryption))
         sut.stateStream.first { it == FPeripheralState.PAIRING_FAILED }
 
-        sut.onError(error(domain = "CBErrorDomain", code = 7L))
+        sut.onError(error(domain = "CBErrorDomain", code = CBErrorPeerRemovedPairingInformation))
         sut.stateStream.first { it == FPeripheralState.INVALID_PAIRING }
 
-        sut.onError(error(domain = "CBErrorDomain", code = 17L))
+        sut.onError(error(domain = "CBErrorDomain", code = CBErrorEncryptionTimedOut))
         sut.stateStream.first { it == FPeripheralState.DISCONNECTED }
     }
 
@@ -94,7 +96,7 @@ class FPeripheralLifecycleTest {
         val sut = createConnectedSut()
         assertTrue(sut.sut.metaInfoKeysStream.value.isNotEmpty())
 
-        sut.sut.onError(error(domain = "CBATTErrorDomain", code = 15L))
+        sut.sut.onError(error(domain = "CBATTErrorDomain", code = CBATTErrorInsufficientEncryption))
         sut.sut.stateStream.first { it == FPeripheralState.PAIRING_FAILED }
 
         sut.sut.onDisconnect()
@@ -104,7 +106,7 @@ class FPeripheralLifecycleTest {
     }
 
     @Test
-    fun GIVEN_connected_peripheral_WHEN_disconnect_called_THEN_generic_operations_fail_and_cleanup_is_applied() =
+    fun GIVEN_connected_peripheral_WHEN_disconnect_called_THEN_cleanup_is_applied_and_new_ops_suspend() =
         runTest {
             val connected = createConnectedSut()
             val resetUuid = connected.config.serialConfig.resetCharUuid
@@ -115,12 +117,14 @@ class FPeripheralLifecycleTest {
             assertEquals(FPeripheralState.DISCONNECTED, connected.sut.stateStream.value)
             assertEquals(emptyMap<TransportMetaInfoKey, ByteArray?>(), connected.sut.metaInfoKeysStream.value)
 
-            // After disconnect, new operations suspend in waitConnected()
-            val readJob = backgroundScope.launch { connected.sut.readValue(resetUuid) }
-            val writeJob = backgroundScope.launch { connected.sut.writeValue(resetUuid, byteArrayOf(0, 0, 0, 0)) }
+            // After disconnect, new operations suspend at waitConnected()
+            val readJob = async { connected.sut.readValue(resetUuid) }
+            val writeJob = async { connected.sut.writeValue(resetUuid, byteArrayOf(0, 0, 0, 0)) }
             runCurrent()
             assertFalse(readJob.isCompleted)
             assertFalse(writeJob.isCompleted)
+            readJob.cancel()
+            writeJob.cancel()
         }
 
     @Test

@@ -45,6 +45,7 @@ include(
     ":components:core:network",
     ":components:core:ktor",
     ":components:core:timezone",
+    ":components:core:data",
 
     ":components:bridge:bsbprotobuf",
 

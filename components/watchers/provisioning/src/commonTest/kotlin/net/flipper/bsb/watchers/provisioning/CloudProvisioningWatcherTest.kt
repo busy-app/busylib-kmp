@@ -210,7 +210,7 @@ class CloudProvisioningWatcherTest {
             val updated = setup.storage.findDevice("device-1")
             assertNotNull(updated)
             assertNull(updated.first()?.cloud, "Cloud connection should be removed")
-            assertNotNull(updated?.first()?.ble, "BLE connection should remain")
+            assertNotNull(updated.first()?.ble, "BLE connection should remain")
         }
 
     @Test

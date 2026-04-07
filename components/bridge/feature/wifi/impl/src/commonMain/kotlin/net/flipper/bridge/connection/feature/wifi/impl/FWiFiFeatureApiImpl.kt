@@ -102,13 +102,12 @@ class FWiFiFeatureApiImpl(
                 when (consumable) {
                     is ConsumableUpdateEvent.BusyLib<BusyLibUpdateEvent.Wifi> if wifi != null -> {
                         consumable.busyLibUpdateEvent.let { wifiUpdateEvent ->
-                            wifi.copy(
-                                // todo fix wifi proto model mapping?
-                                state = when {
-                                    wifiUpdateEvent.isConnected -> StatusResponse.State.CONNECTED
-                                    else -> wifi.state
-                                },
-                                ssid = wifi.ssid,
+                            StatusResponse(
+                                state = wifiUpdateEvent.state.toStatusResponseState(),
+                                ssid = wifiUpdateEvent.ssid,
+                                bssid = wifiUpdateEvent.bssid,
+                                channel = wifiUpdateEvent.channel,
+                                rssi = wifiUpdateEvent.rssi,
                             )
                         }
                     }
@@ -190,5 +189,16 @@ class FWiFiFeatureApiImpl(
         ): Pair<FDeviceFeature, FDeviceFeatureApi.Factory> {
             return FDeviceFeature.WIFI to factory
         }
+    }
+}
+
+private fun BusyLibUpdateEvent.Wifi.State.toStatusResponseState(): StatusResponse.State {
+    return when (this) {
+        BusyLibUpdateEvent.Wifi.State.UNKNOWN -> StatusResponse.State.UNKNOWN
+        BusyLibUpdateEvent.Wifi.State.DISCONNECTED -> StatusResponse.State.DISCONNECTED
+        BusyLibUpdateEvent.Wifi.State.CONNECTED -> StatusResponse.State.CONNECTED
+        BusyLibUpdateEvent.Wifi.State.CONNECTING -> StatusResponse.State.CONNECTING
+        BusyLibUpdateEvent.Wifi.State.DISCONNECTING -> StatusResponse.State.DISCONNECTING
+        BusyLibUpdateEvent.Wifi.State.RECONNECTING -> StatusResponse.State.RECONNECTING
     }
 }

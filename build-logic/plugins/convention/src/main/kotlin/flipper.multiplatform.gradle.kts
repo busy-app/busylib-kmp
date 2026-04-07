@@ -11,7 +11,7 @@ pluginManager.apply(ru.astrainteractive.gradleplugin.plugin.AndroidNamespacePlug
 pluginManager.apply(ru.astrainteractive.gradleplugin.plugin.JavaVersionPlugin::class)
 
 tasks.withType<TestReport>().configureEach {
-    enabled = false
+    enabled = true
 }
 
 kotlin {

@@ -1,7 +1,10 @@
 package net.flipper.bridge.connection.transport.ble.impl.ios.central
 
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
@@ -12,6 +15,7 @@ import net.flipper.bridge.connection.transport.ble.impl.ios.testfixtures.Recordi
 import net.flipper.bridge.connection.transport.ble.impl.ios.testfixtures.SERIAL_SERVICE_SHORT_UUID
 import net.flipper.bridge.connection.transport.ble.impl.ios.testfixtures.createConfig
 import net.flipper.bridge.connection.transport.ble.impl.ios.testfixtures.error
+import platform.CoreBluetooth.CBErrorPeerRemovedPairingInformation
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -92,7 +96,10 @@ class FCentralManagerTest {
         sut.sut.connect(this, createConfig(macAddress = peripheral.identifier.UUIDString))
         val device = checkNotNull(sut.sut.connectedStream.value[peripheral.identifier])
 
-        sut.manager.emitDidFailToConnect(peripheral, error = error(domain = "CBErrorDomain", code = 7L))
+        sut.manager.emitDidFailToConnect(
+            peripheral,
+            error = error(domain = "CBErrorDomain", code = CBErrorPeerRemovedPairingInformation)
+        )
         advanceUntilIdle()
 
         assertEquals(FPeripheralState.INVALID_PAIRING, device.stateStream.value)
@@ -132,7 +139,10 @@ class FCentralManagerTest {
                 setStateRaw(5L)
             }
 
-            val sut = FCentralManager(manager = manager, scope = backgroundScope)
+            val childJob = Job()
+            val childScope = CoroutineScope(coroutineContext + childJob)
+            backgroundScope.coroutineContext[Job]!!.invokeOnCompletion { childJob.cancel() }
+            val sut = FCentralManager(manager = manager, scope = childScope)
             manager.emitStateUpdate()
             advanceUntilIdle()
 
@@ -212,9 +222,18 @@ class FCentralManagerTest {
         val sut: FCentralManager,
     )
 
+    /**
+     * Creates an FCentralManager with a child scope that shares the test dispatcher
+     * but uses an independent Job so the event loop coroutine doesn't cause
+     * [UncompletedCoroutinesError] at the end of runTest.
+     */
     private fun TestScope.createSut(): Sut {
         val manager = RecordingCentralManager()
-        val sut = FCentralManager(manager = manager, scope = backgroundScope)
+        val childJob = Job()
+        val childScope = CoroutineScope(coroutineContext + childJob)
+        // Auto-cancel when test finishes to avoid leaked coroutines
+        backgroundScope.coroutineContext[Job]!!.invokeOnCompletion { childJob.cancel() }
+        val sut = FCentralManager(manager = manager, scope = childScope)
         return Sut(manager = manager, sut = sut)
     }
 }

@@ -19,9 +19,21 @@ sealed interface BusyLibUpdateEvent {
     ) : BusyLibUpdateEvent
 
     data class Wifi(
-        val isConnected: Boolean,
+        val state: State,
         val ssid: String?,
-    ) : BusyLibUpdateEvent
+        val bssid: String?,
+        val channel: Int?,
+        val rssi: Int?,
+    ) : BusyLibUpdateEvent {
+        enum class State {
+            UNKNOWN,
+            DISCONNECTED,
+            CONNECTED,
+            CONNECTING,
+            DISCONNECTING,
+            RECONNECTING,
+        }
+    }
 
     sealed interface Update : BusyLibUpdateEvent {
         data class UpdateState(

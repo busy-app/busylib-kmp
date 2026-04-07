@@ -92,14 +92,14 @@ class FTimeZoneFeatureApiImpl(
             flow.throttleLatest { consumable ->
                 val couldConsume = consumable.tryConsume()
                 when (consumable) {
-                    ConsumableUpdateEvent.Empty -> {
+                    ConsumableUpdateEvent.Empty,
+                    is ConsumableUpdateEvent.Bsb,
+                    is ConsumableUpdateEvent.BusyLib<BusyLibUpdateEvent.Timezone> -> {
+                        @Suppress("ForbiddenComment")
+                        // TODO: https://flipper.atlassian.net/browse/FW-781
                         exponentialRetry {
                             rpcFeatureApi.fRpcTimeZoneApi.getTimeTimezone(couldConsume)
                         }
-                    }
-
-                    is ConsumableUpdateEvent.BusyLib<BusyLibUpdateEvent.Timezone> -> {
-                        RpcTimezoneInfo(consumable.busyLibUpdateEvent.name)
                     }
                 }
             }

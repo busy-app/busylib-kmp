@@ -5,6 +5,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarStatusSystem
+import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarVersion
+import net.flipper.bridge.connection.feature.rpc.api.model.StatusFirmware
 import net.flipper.bridge.connection.screens.dashboard.common.DashboardInfoRow
 import net.flipper.bridge.connection.screens.dashboard.common.DashboardScreenLayout
 import net.flipper.bridge.connection.screens.dashboard.common.DashboardSectionCard
@@ -14,6 +16,8 @@ import net.flipper.bridge.connection.screens.dashboard.common.orUnavailable
 fun DeviceInfoDashboardContent(
     onBack: () -> Unit,
     deviceInfo: BusyBarStatusSystem?,
+    deviceFirmware: StatusFirmware?,
+    deviceVersion: BusyBarVersion?,
     modifier: Modifier = Modifier
 ) {
     DashboardScreenLayout(
@@ -25,9 +29,22 @@ fun DeviceInfoDashboardContent(
             title = "Device Info",
             modifier = Modifier.padding(horizontal = 16.dp)
         ) {
+            DashboardInfoRow(label = "Device version", value = deviceVersion?.version.orUnavailable())
             DashboardInfoRow(label = "API semver", value = deviceInfo?.apiSemver.orUnavailable())
             DashboardInfoRow(label = "Uptime", value = deviceInfo?.uptime.orUnavailable())
             DashboardInfoRow(label = "Boot time", value = deviceInfo?.bootTime.orUnavailable())
+        }
+
+        DashboardSectionCard(
+            title = "Firmware",
+            modifier = Modifier.padding(horizontal = 16.dp)
+        ) {
+            DashboardInfoRow(label = "Version", value = deviceFirmware?.version.orUnavailable())
+            DashboardInfoRow(label = "Target", value = deviceFirmware?.target.orUnavailable())
+            DashboardInfoRow(label = "Branch", value = deviceFirmware?.branch.orUnavailable())
+            DashboardInfoRow(label = "Build date", value = deviceFirmware?.buildDate.orUnavailable())
+            DashboardInfoRow(label = "Commit hash", value = deviceFirmware?.commitHash.orUnavailable())
+            DashboardInfoRow(label = "NWP version", value = deviceFirmware?.nwpVersion.orUnavailable())
         }
     }
 }

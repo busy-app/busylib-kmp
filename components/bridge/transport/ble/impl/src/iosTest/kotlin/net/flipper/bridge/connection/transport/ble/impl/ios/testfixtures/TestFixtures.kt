@@ -59,10 +59,15 @@ internal class RecordingPeripheral : CBPeripheral() {
 
     init {
         // CBPeripheral.dealloc removes a KVO observer for "delegate" that is
-        // normally registered by the framework when creating peripherals.
-        // Since we create CBPeripheral() directly, we must register the
-        // observer ourselves to prevent an NSRangeException during dealloc.
-        addObserver(this, forKeyPath = "delegate", options = 0u, context = null)
+        // normally registered by the framework when creating peripherals via
+        // CBCentralManager. Since we create CBPeripheral() directly, we must
+        // register the observer ourselves to prevent an NSRangeException.
+        addObserver(
+            observer = this,
+            forKeyPath = "delegate",
+            options = 0u,
+            context = null
+        )
         setValue(NSUUID(), forKey = "identifier")
     }
 
@@ -109,15 +114,6 @@ internal class RecordingPeripheral : CBPeripheral() {
 
 @OptIn(ExperimentalForeignApi::class)
 internal class RecordingCentralManager : CBCentralManager(delegate = null, queue = null, options = null) {
-    // Store delegate locally to prevent real CBCentralManager from firing
-    // centralManagerDidUpdateState: when the delegate is assigned.
-    private var _localDelegate: platform.CoreBluetooth.CBCentralManagerDelegateProtocol? = null
-
-    override fun delegate(): platform.CoreBluetooth.CBCentralManagerDelegateProtocol? = _localDelegate
-    override fun setDelegate(delegate: platform.CoreBluetooth.CBCentralManagerDelegateProtocol?) {
-        _localDelegate = delegate
-    }
-
     private val peripherals: MutableMap<NSUUID, CBPeripheral> = mutableMapOf()
 
     val connectRequests: MutableList<CBPeripheral> = mutableListOf()

@@ -8,7 +8,7 @@ sealed class DashboardConfig {
     data object Hub : DashboardConfig()
 
     @Serializable
-    data object Overview : DashboardConfig()
+    data object Settings : DashboardConfig()
 
     @Serializable
     data object DeviceInfo : DashboardConfig()
@@ -21,6 +21,18 @@ sealed class DashboardConfig {
 
     @Serializable
     data object OnCall : DashboardConfig()
+
+    @Serializable
+    data object SmartHome : DashboardConfig()
+
+    @Serializable
+    data object Timezone : DashboardConfig()
+
+    @Serializable
+    data object Assets : DashboardConfig()
+
+    @Serializable
+    data object Display : DashboardConfig()
 
     @Serializable
     data object ScreenStreaming : DashboardConfig()

@@ -24,7 +24,8 @@ class FLanApiImpl(
 ) : FLanApi {
     private val httpEngineOriginal = getPlatformEngineFactory().create()
     private val httpEngine = BUSYBarHttpEngine(httpEngineOriginal, currentConfig.host)
-    private val lanStreamingApi = FLanStreamingApiImpl(getHttpClient(httpEngine), scope)
+    private val httpClient = getHttpClient(httpEngine)
+    private val lanStreamingApi = FLanStreamingApiImpl(httpClient, scope)
 
     private val connectionMonitor = getConnectionMonitorApi(
         listener = listener,
@@ -73,6 +74,7 @@ class FLanApiImpl(
         connectionMonitor.stopMonitoring()
         httpEngine.close()
         httpEngineOriginal.close()
+        httpClient.close()
         listener.onStatusUpdate(FInternalTransportConnectionStatus.Disconnected)
     }
 
