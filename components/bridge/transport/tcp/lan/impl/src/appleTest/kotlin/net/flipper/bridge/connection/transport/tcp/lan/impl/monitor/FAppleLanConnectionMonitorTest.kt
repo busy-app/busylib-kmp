@@ -11,17 +11,11 @@ import net.flipper.bridge.connection.transport.common.api.FInternalTransportConn
 import net.flipper.bridge.connection.transport.tcp.lan.impl.monitor.fixture.FAppleLanConnectionMonitorTestFixture
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
 
-//  Re-enable after Kotlin/Native fixes Network framework interop regression in K/N 2.3.20.
-//  nw_protocol_stack_set_transport_protocol crashes with TypeCastException
-//  because NW protocol options cannot be cast to NSObject.
-//  Tracked in: https://youtrack.jetbrains.com/issue/KT-85508/
-@Ignore
 @OptIn(ExperimentalForeignApi::class)
 @Suppress("TooManyFunctions")
 class FAppleLanConnectionMonitorTest {
