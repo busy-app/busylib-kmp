@@ -1,18 +1,18 @@
 package net.flipper.bridge.connection.feature.sync.impl
 
 import kotlinx.coroutines.CoroutineScope
-import me.tatarka.inject.annotations.Inject
+import dev.zacsweers.metro.binding
+import dev.zacsweers.metro.ContributesIntoSet
+import dev.zacsweers.metro.Inject
 import net.flipper.bridge.connection.feature.common.api.FOnDeviceReadyFeatureApi
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.busylib.core.di.BusyLibGraph
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 
 @Inject
-@ContributesBinding(
+@ContributesIntoSet(
     BusyLibGraph::class,
-    FOnDeviceReadyFeatureApi.Factory::class,
-    multibinding = true
+    binding = binding<FOnDeviceReadyFeatureApi.Factory>()
 )
 class FTimerSyncFactoryImpl(
     private val timerSyncFeatureFactory: FTimerSyncFeatureApiImpl.InternalFactory

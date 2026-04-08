@@ -14,8 +14,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import me.tatarka.inject.annotations.Assisted
-import me.tatarka.inject.annotations.Inject
+import dev.zacsweers.metro.Assisted
+import dev.zacsweers.metro.AssistedFactory
+import dev.zacsweers.metro.AssistedInject
 import net.flipper.bridge.connection.transport.ble.api.MAX_ATTRIBUTE_SIZE
 import net.flipper.bridge.connection.transport.ble.impl.exception.BLEConnectionPermissionException
 import net.flipper.core.busylib.log.LogTagProvider
@@ -27,7 +28,7 @@ import no.nordicsemi.kotlin.ble.core.CharacteristicProperty
 import no.nordicsemi.kotlin.ble.core.WriteType
 import no.nordicsemi.kotlin.ble.core.util.chunked
 
-@Inject
+@AssistedInject
 @OptIn(ExperimentalStdlibApi::class)
 class FSerialUnsafeApiImpl(
     @Assisted private val rxCharacteristic: Flow<RemoteCharacteristic?>,
@@ -86,19 +87,13 @@ class FSerialUnsafeApiImpl(
         }
     }
 
-    @Inject
-    class Factory(
-        private val factory: (
-            Flow<RemoteCharacteristic?>,
-            Flow<RemoteCharacteristic?>,
-            CoroutineScope
-        ) -> FSerialUnsafeApiImpl
-    ) {
+    @AssistedFactory
+    fun interface Factory {
         operator fun invoke(
             rxCharacteristic: Flow<RemoteCharacteristic?>,
             txCharacteristic: Flow<RemoteCharacteristic?>,
             scope: CoroutineScope
-        ): FSerialUnsafeApiImpl = factory(rxCharacteristic, txCharacteristic, scope)
+        ): FSerialUnsafeApiImpl
     }
 }
 

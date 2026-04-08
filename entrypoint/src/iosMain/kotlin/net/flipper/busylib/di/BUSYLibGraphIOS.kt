@@ -3,39 +3,30 @@ package net.flipper.busylib.di
 import com.flipperdevices.core.network.BUSYLibNetworkStateApi
 import com.russhwolf.settings.ObservableSettings
 import com.russhwolf.settings.Settings
+import dev.zacsweers.metro.DependencyGraph
+import dev.zacsweers.metro.Provides
 import kotlinx.coroutines.CoroutineScope
-import me.tatarka.inject.annotations.Provides
 import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.cloud.api.BUSYLibHostApi
 import net.flipper.busylib.BUSYLibIOS
 import net.flipper.busylib.core.di.BusyLibGraph
 import platform.CoreBluetooth.CBCentralManager
-import software.amazon.lastmile.kotlin.inject.anvil.MergeComponent
-import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 
 @Suppress("LongParameterList")
-@SingleIn(BusyLibGraph::class)
-@MergeComponent(BusyLibGraph::class)
-abstract class BUSYLibGraphIOS(
-    @get:Provides protected val scope: CoroutineScope,
-    @get:Provides protected val principalApi: BUSYLibPrincipalApi,
-    @get:Provides protected val observableSettings: ObservableSettings,
-    @get:Provides protected val manager: CBCentralManager,
-    @get:Provides protected val hostApi: BUSYLibHostApi,
-    @get:Provides protected val networkStateApi: BUSYLibNetworkStateApi,
-    @get:Provides protected val settings: Settings
-) {
+@DependencyGraph(scope = BusyLibGraph::class)
+abstract class BUSYLibGraphIOS {
     abstract val busyLib: BUSYLibIOS
-}
 
-@Suppress("LongParameterList")
-@MergeComponent.CreateComponent
-expect fun create(
-    scope: CoroutineScope,
-    principalApi: BUSYLibPrincipalApi,
-    observableSettings: ObservableSettings,
-    manager: CBCentralManager,
-    hostApi: BUSYLibHostApi,
-    networkStateApi: BUSYLibNetworkStateApi,
-    settings: Settings
-): BUSYLibGraphIOS
+    @DependencyGraph.Factory
+    interface Factory {
+        fun create(
+            @Provides scope: CoroutineScope,
+            @Provides principalApi: BUSYLibPrincipalApi,
+            @Provides observableSettings: ObservableSettings,
+            @Provides manager: CBCentralManager,
+            @Provides hostApi: BUSYLibHostApi,
+            @Provides networkStateApi: BUSYLibNetworkStateApi,
+            @Provides settings: Settings
+        ): BUSYLibGraphIOS
+    }
+}

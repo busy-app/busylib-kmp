@@ -8,8 +8,9 @@ import io.ktor.client.request.post
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
-import me.tatarka.inject.annotations.Assisted
-import me.tatarka.inject.annotations.Inject
+import dev.zacsweers.metro.Assisted
+import dev.zacsweers.metro.AssistedFactory
+import dev.zacsweers.metro.AssistedInject
 import net.flipper.bridge.connection.feature.rpc.api.client.FRpcClientModeApi
 import net.flipper.bridge.connection.feature.rpc.api.critical.FRpcCriticalFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarLinkCode
@@ -21,7 +22,7 @@ import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.busylib.log.LogTagProvider
 import kotlin.uuid.Uuid
 
-@Inject
+@AssistedInject
 @Suppress("TooManyFunctions")
 class FRpcCriticalFeatureApiImpl(
     @Suppress("UnusedPrivateProperty")
@@ -60,12 +61,8 @@ class FRpcCriticalFeatureApiImpl(
         }
     }
 
-    @Inject
-    class InternalFactory(
-        private val factory: (HttpClient) -> FRpcCriticalFeatureApiImpl
-    ) {
-        operator fun invoke(
-            client: HttpClient
-        ): FRpcCriticalFeatureApiImpl = factory(client)
+    @AssistedFactory
+    fun interface InternalFactory {
+        operator fun invoke(client: HttpClient): FRpcCriticalFeatureApiImpl
     }
 }

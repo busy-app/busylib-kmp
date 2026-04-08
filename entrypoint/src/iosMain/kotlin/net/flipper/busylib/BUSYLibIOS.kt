@@ -4,8 +4,9 @@ import com.flipperdevices.core.network.BUSYLibNetworkStateApi
 import com.flipperdevices.core.network.BUSYLibNetworkStateApiNoop
 import com.russhwolf.settings.NSUserDefaultsSettings
 import com.russhwolf.settings.ObservableSettings
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.createGraphFactory
 import kotlinx.coroutines.CoroutineScope
-import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
@@ -16,7 +17,7 @@ import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.cloud.api.BUSYLibHostApi
 import net.flipper.bsb.cloud.api.BUSYLibHostApiStub
 import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
-import net.flipper.busylib.di.create
+import net.flipper.busylib.di.BUSYLibGraphIOS
 import platform.CoreBluetooth.CBCentralManager
 
 @Inject
@@ -45,7 +46,7 @@ class BUSYLibIOS(
             hostApi: BUSYLibHostApi = BUSYLibHostApiStub("cloud.busy.app"),
             networkStateApi: BUSYLibNetworkStateApi = BUSYLibNetworkStateApiNoop()
         ): BUSYLibIOS {
-            val graph = create(
+            val graph = createGraphFactory<BUSYLibGraphIOS.Factory>().create(
                 scope,
                 principalApi,
                 observableSettings,

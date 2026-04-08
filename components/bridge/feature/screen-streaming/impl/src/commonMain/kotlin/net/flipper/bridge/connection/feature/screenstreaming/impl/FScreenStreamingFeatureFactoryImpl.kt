@@ -1,18 +1,19 @@
 package net.flipper.bridge.connection.feature.screenstreaming.impl
 
 import kotlinx.coroutines.CoroutineScope
-import me.tatarka.inject.annotations.Inject
-import me.tatarka.inject.annotations.IntoMap
-import me.tatarka.inject.annotations.Provides
+import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.IntoMap
+import dev.zacsweers.metro.Provides
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
+import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureKey
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.feature.common.api.get
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.busylib.core.di.BusyLibGraph
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
 
 @Inject
 class FScreenStreamingFeatureFactoryImpl : FDeviceFeatureApi.Factory {
@@ -41,9 +42,10 @@ class FScreenStreamingFeatureFactoryImpl : FDeviceFeatureApi.Factory {
 interface FScreenStreamingFeatureComponent {
     @Provides
     @IntoMap
+    @FDeviceFeatureKey(FDeviceFeature.SCREEN_STREAMING)
     fun provideFScreenStreamingFeatureFactory(
         fScreenStreamingFeatureFactory: FScreenStreamingFeatureFactoryImpl
-    ): Pair<FDeviceFeature, FDeviceFeatureApi.Factory> {
-        return FDeviceFeature.SCREEN_STREAMING to fScreenStreamingFeatureFactory
+    ): FDeviceFeatureApi.Factory {
+        return fScreenStreamingFeatureFactory
     }
 }

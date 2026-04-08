@@ -1,6 +1,6 @@
 package net.flipper.core.ktor.di.qualifier
 
-import me.tatarka.inject.annotations.Qualifier
+import dev.zacsweers.metro.Qualifier
 
 @Qualifier
 @Target(

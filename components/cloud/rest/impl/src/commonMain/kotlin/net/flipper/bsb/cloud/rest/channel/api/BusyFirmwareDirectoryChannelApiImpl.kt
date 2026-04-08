@@ -1,16 +1,17 @@
 package net.flipper.bsb.cloud.rest.channel.api
 
 import kotlinx.coroutines.flow.StateFlow
-import me.tatarka.inject.annotations.Inject
+import dev.zacsweers.metro.binding
+import dev.zacsweers.metro.Inject
 import net.flipper.bsb.cloud.rest.channel.krate.BsbFirmwareChannelIdKrate
 import net.flipper.bsb.cloud.rest.model.BsbFirmwareChannelId
 import net.flipper.busylib.core.di.BusyLibGraph
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
-import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
+import dev.zacsweers.metro.ContributesBinding
+import dev.zacsweers.metro.SingleIn
 
 @Inject
 @SingleIn(BusyLibGraph::class)
-@ContributesBinding(BusyLibGraph::class, BusyFirmwareDirectoryChannelApi::class)
+@ContributesBinding(BusyLibGraph::class, binding = binding<BusyFirmwareDirectoryChannelApi>())
 class BusyFirmwareDirectoryChannelApiImpl(
     private val bsbFirmwareChannelIdKrate: BsbFirmwareChannelIdKrate
 ) : BusyFirmwareDirectoryChannelApi {

@@ -1,6 +1,7 @@
 package net.flipper.bridge.connection.configbuilder.impl
 
-import me.tatarka.inject.annotations.Inject
+import dev.zacsweers.metro.binding
+import dev.zacsweers.metro.Inject
 import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.configbuilder.api.FDeviceConnectionConfigMapper
 import net.flipper.bridge.connection.configbuilder.impl.builders.BUSYBarBLEBuilderConfig
@@ -10,10 +11,10 @@ import net.flipper.bridge.connection.configbuilder.impl.builders.BUSYBarLanBuild
 import net.flipper.bridge.connection.configbuilder.impl.builders.BUSYBarMockBuilderConfig
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import net.flipper.busylib.core.di.BusyLibGraph
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
+import dev.zacsweers.metro.ContributesBinding
 
 @Inject
-@ContributesBinding(BusyLibGraph::class, FDeviceConnectionConfigMapper::class)
+@ContributesBinding(BusyLibGraph::class, binding = binding<FDeviceConnectionConfigMapper>())
 class FDeviceConnectionConfigMapperImpl(
     private val mockBuilderConfig: BUSYBarMockBuilderConfig,
     private val bleBuilderConfig: BUSYBarBLEBuilderConfig,

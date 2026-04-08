@@ -1,7 +1,8 @@
 package net.flipper.bridge.connection.connectionbuilder.impl
 
 import kotlinx.coroutines.CoroutineScope
-import me.tatarka.inject.annotations.Inject
+import dev.zacsweers.metro.binding
+import dev.zacsweers.metro.Inject
 import net.flipper.bridge.connection.connectionbuilder.api.FDeviceConfigToConnection
 import net.flipper.bridge.connection.transport.combined.CombinedConnectionApi
 import net.flipper.bridge.connection.transport.combined.FCombinedConnectionConfig
@@ -11,11 +12,11 @@ import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.busylib.core.di.BusyLibGraph
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
+import dev.zacsweers.metro.ContributesBinding
 import kotlin.reflect.KClass
 
 @Inject
-@ContributesBinding(BusyLibGraph::class, FDeviceConfigToConnection::class)
+@ContributesBinding(BusyLibGraph::class, binding = binding<FDeviceConfigToConnection>())
 class FDeviceConfigToConnectionImpl(
     private val configToConnectionMap: Map<KClass<*>, DeviceConnectionApiHolder>,
     private val combinedConnectionApi: CombinedConnectionApi

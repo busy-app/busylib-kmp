@@ -1,6 +1,6 @@
 package net.flipper.bridge.connection.configbuilder.impl.builders
 
-import me.tatarka.inject.annotations.Inject
+import dev.zacsweers.metro.Inject
 import net.flipper.bridge.connection.transport.tcp.lan.FLanDeviceConnectionConfig
 
 @Inject

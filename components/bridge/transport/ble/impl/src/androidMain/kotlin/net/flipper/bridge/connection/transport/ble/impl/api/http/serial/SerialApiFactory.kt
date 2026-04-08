@@ -2,7 +2,7 @@ package net.flipper.bridge.connection.transport.ble.impl.api.http.serial
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.map
-import me.tatarka.inject.annotations.Inject
+import dev.zacsweers.metro.Inject
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceSerialConfig
 import net.flipper.bridge.connection.transport.ble.impl.serial.FSerialBleApi
 import net.flipper.busylib.core.wrapper.WrappedStateFlow

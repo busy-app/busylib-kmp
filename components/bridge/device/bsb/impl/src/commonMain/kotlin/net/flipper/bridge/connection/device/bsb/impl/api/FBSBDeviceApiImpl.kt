@@ -8,8 +8,11 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import me.tatarka.inject.annotations.Assisted
-import me.tatarka.inject.annotations.Inject
+import dev.zacsweers.metro.binding
+import dev.zacsweers.metro.Assisted
+import dev.zacsweers.metro.AssistedFactory
+import dev.zacsweers.metro.AssistedInject
+import dev.zacsweers.metro.ContributesBinding
 import net.flipper.bridge.connection.device.bsb.api.FBSBDeviceApi
 import net.flipper.bridge.connection.device.bsb.impl.utils.FZeroFeatureClassToEnumMapper
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
@@ -22,10 +25,9 @@ import net.flipper.busylib.kmp.components.core.buildkonfig.BuildKonfig
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 import kotlin.reflect.KClass
 
-@Inject
+@AssistedInject
 class FBSBDeviceApiImpl(
     @Assisted private val scope: CoroutineScope,
     @Assisted private val connectedDevice: FConnectedDeviceApi,
@@ -129,14 +131,12 @@ class FBSBDeviceApiImpl(
         }
     }.awaitAll()
 
-    @Inject
-    @ContributesBinding(BusyLibGraph::class, FBSBDeviceApi.Factory::class)
-    class Factory(
-        private val factory: (CoroutineScope, FConnectedDeviceApi) -> FBSBDeviceApiImpl
-    ) : FBSBDeviceApi.Factory {
+    @AssistedFactory
+    @ContributesBinding(BusyLibGraph::class, binding = binding<FBSBDeviceApi.Factory>())
+    fun interface GeneratedFactory : FBSBDeviceApi.Factory {
         override fun invoke(
             scope: CoroutineScope,
-            connectedDevice: FConnectedDeviceApi,
-        ): FBSBDeviceApiImpl = factory(scope, connectedDevice)
+            connectedDevice: FConnectedDeviceApi
+        ): FBSBDeviceApiImpl
     }
 }

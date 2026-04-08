@@ -9,8 +9,9 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.withTimeout
-import me.tatarka.inject.annotations.Assisted
-import me.tatarka.inject.annotations.Inject
+import dev.zacsweers.metro.Assisted
+import dev.zacsweers.metro.AssistedFactory
+import dev.zacsweers.metro.AssistedInject
 import net.flipper.bridge.connection.feature.link.check.ondemand.api.FLinkedInfoOnDemandFeatureApi
 import net.flipper.bridge.connection.feature.link.model.LinkedAccountInfo
 import net.flipper.bridge.connection.feature.rpc.api.critical.FRpcCriticalFeatureApi
@@ -32,7 +33,7 @@ import net.flipper.core.busylib.log.info
 import kotlin.time.Duration.Companion.seconds
 import kotlin.uuid.Uuid
 
-@Inject
+@AssistedInject
 class FLinkInfoOnReadyFeatureApiImpl(
     @Assisted private val rpcFeatureApi: FRpcCriticalFeatureApi,
     @Assisted private val scope: CoroutineScope,
@@ -134,20 +135,12 @@ class FLinkInfoOnReadyFeatureApiImpl(
             .toCResult()
     }
 
-    @Inject
-    class InternalFactory(
-        private val factory: (
-            FRpcCriticalFeatureApi,
-            CoroutineScope,
-        ) -> FLinkInfoOnReadyFeatureApiImpl
-    ) {
+    @AssistedFactory
+    fun interface InternalFactory {
         operator fun invoke(
             rpcFeatureApi: FRpcCriticalFeatureApi,
             scope: CoroutineScope,
-        ): FLinkInfoOnReadyFeatureApiImpl = factory(
-            rpcFeatureApi,
-            scope,
-        )
+        ): FLinkInfoOnReadyFeatureApiImpl
     }
 
     companion object {

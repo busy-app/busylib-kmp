@@ -12,9 +12,9 @@ import net.flipper.bridge.connection.transport.common.api.serial.FHTTPTransportC
 import net.flipper.bridge.connection.transport.common.api.serial.FStatusStreamingApi
 import net.flipper.bridge.connection.transport.tcp.cloud.api.FCloudApi
 import net.flipper.bridge.connection.transport.tcp.cloud.api.FCloudDeviceConnectionConfig
-import net.flipper.bridge.connection.transport.tcp.lan.impl.engine.BUSYCloudHttpEngineFactory
-import net.flipper.bridge.connection.transport.tcp.lan.impl.engine.token.ProxyTokenProviderFactory
-import net.flipper.bridge.connection.transport.tcp.lan.impl.metainfo.FCloudStreamingFactory
+import net.flipper.bridge.connection.transport.tcp.lan.impl.engine.BUSYCloudHttpEngine
+import net.flipper.bridge.connection.transport.tcp.lan.impl.engine.token.ProxyTokenProvider
+import net.flipper.bridge.connection.transport.tcp.lan.impl.metainfo.FCloudStreamingApi
 import net.flipper.bridge.connection.transport.tcp.lan.impl.monitor.CloudDeviceMonitor
 import net.flipper.core.ktor.getPlatformEngineFactory
 
@@ -24,14 +24,14 @@ class FCloudApiImpl(
     private var currentConfig: FCloudDeviceConnectionConfig,
     scope: CoroutineScope,
     cloudDeviceMonitorFactory: CloudDeviceMonitor.Factory,
-    tokenProviderFactory: ProxyTokenProviderFactory,
-    cloudEngineFactory: BUSYCloudHttpEngineFactory,
-    cloudStreamingFactory: FCloudStreamingFactory
-) : FCloudApi, FStatusStreamingApi by cloudStreamingFactory(currentConfig.deviceId) {
+    tokenProviderFactory: ProxyTokenProvider.Factory,
+    cloudEngineFactory: BUSYCloudHttpEngine.Factory,
+    cloudStreamingFactory: FCloudStreamingApi.Factory
+) : FCloudApi, FStatusStreamingApi by cloudStreamingFactory.create(currentConfig.deviceId) {
     private val httpEngineOriginal = getPlatformEngineFactory().create()
-    private val httpEngine = cloudEngineFactory(
+    private val httpEngine = cloudEngineFactory.create(
         httpEngineOriginal,
-        tokenProviderFactory(
+        tokenProviderFactory.create(
             currentConfig.deviceId
         )
     )
