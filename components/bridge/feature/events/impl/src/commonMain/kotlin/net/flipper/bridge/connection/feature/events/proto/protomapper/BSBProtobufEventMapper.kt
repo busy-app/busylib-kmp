@@ -3,6 +3,8 @@ package net.flipper.bridge.connection.feature.events.proto.protomapper
 import BSB_State.StateUpdate
 import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
 import net.flipper.bridge.connection.feature.events.proto.protomapper.delegates.AudioVolumeProtobufMapper
+import net.flipper.bridge.connection.feature.events.proto.protomapper.delegates.AutoUpdateStateProtobufMapper
+import net.flipper.bridge.connection.feature.events.proto.protomapper.delegates.BleProtobufMapper
 import net.flipper.bridge.connection.feature.events.proto.protomapper.delegates.BrightnessProtobufMapper
 import net.flipper.bridge.connection.feature.events.proto.protomapper.delegates.DeviceNameProtobufMapper
 import net.flipper.bridge.connection.feature.events.proto.protomapper.delegates.FrameProtobufMapper
@@ -29,6 +31,8 @@ object BSBProtobufEventMapper {
         state.frame?.let { return FrameProtobufMapper.map(it) }
         state.input?.let { return InputProtobufMapper.map(it) }
         state.timer?.let { return TimerProtobufMapper.map(it) }
+        state.ble?.let { return BleProtobufMapper.map(it) }
+        state.auto_update_state?.let { return AutoUpdateStateProtobufMapper.map(it) }
         return null
     }
 }

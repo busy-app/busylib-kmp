@@ -1,14 +1,16 @@
 package net.flipper.bridge.connection.feature.timezone.api
 
+import kotlinx.datetime.UtcOffset
+import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
 import net.flipper.bridge.connection.feature.rpc.api.model.RpcTimezoneInfo
 import net.flipper.bridge.connection.feature.rpc.api.model.RpcTimezoneListResponse
 import net.flipper.bridge.connection.feature.timezone.api.model.TimezoneInfo
 
-fun RpcTimezoneInfo.toPublic(): TimezoneInfo {
-    return TimezoneInfo(
+fun RpcTimezoneInfo.toEvent(): BusyLibUpdateEvent.Timezone {
+    return BusyLibUpdateEvent.Timezone(
         name = name,
-        abbr = abbr,
-        offset = offset
+        abbreviation = abbr,
+        offset = UtcOffset.parse(offset),
     )
 }
 
