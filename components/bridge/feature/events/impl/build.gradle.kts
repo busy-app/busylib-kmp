@@ -17,6 +17,7 @@ kotlin {
         implementation(projects.components.bridge.bsbprotobuf)
 
         implementation(libs.kotlin.coroutines)
+        implementation(libs.kotlin.datetime)
         implementation(libs.bitvector)
     }
     sourceSets.commonTest.dependencies {

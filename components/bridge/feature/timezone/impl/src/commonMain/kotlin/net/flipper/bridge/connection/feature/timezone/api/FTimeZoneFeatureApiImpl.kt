@@ -3,6 +3,9 @@ package net.flipper.bridge.connection.feature.timezone.api
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.datetime.LocalDate.Formats
+import kotlinx.datetime.UtcOffset
+import kotlinx.datetime.format
 import me.tatarka.inject.annotations.Inject
 import me.tatarka.inject.annotations.IntoMap
 import me.tatarka.inject.annotations.Provides
@@ -39,26 +42,27 @@ class FTimeZoneFeatureApiImpl(
     override val TAG: String = "FTimeZoneFeatureApi"
 
     private val timeZoneInfoSharedFlow = fEventsFeatureApi
-        ?.get<BusyLibUpdateEvent.Timezone>()
-        .orEmpty()
-        .merge(flowOf(ConsumableUpdateEvent.Empty))
-        .transformWhileSubscribed(scope = scope) { flow ->
-            flow.throttleLatest { consumable ->
-                val couldConsume = consumable.tryConsume()
-                when (consumable) {
-                    ConsumableUpdateEvent.Empty,
-                    is ConsumableUpdateEvent.BusyLib<BusyLibUpdateEvent.Timezone> -> {
-                        @Suppress("ForbiddenComment")
-                        // TODO: https://flipper.atlassian.net/browse/FW-781
-                        exponentialRetry {
-                            rpcFeatureApi.fRpcTimeZoneApi.getTimeTimezone(couldConsume)
-                        }
+        .get(
+            scope = scope,
+            initial = { couldConsume ->
+                rpcFeatureApi
+                    .fRpcTimeZoneApi
+                    .getTimeTimezone(couldConsume)
+                    .mapCatching { response ->
+                        response.toEvent()
                     }
+            },
+            mapper = { flow ->
+                flow.map { event ->
+                    TimezoneInfo(
+                        name = event.name,
+                        offset = event.offset.format(UtcOffset.Formats.ISO),
+                        abbr = event.abbreviation
+                    )
                 }
             }
-        }
+        )
         .asFlow()
-        .map { rpcTimezoneInfo -> rpcTimezoneInfo.toPublic() }
         .wrap()
 
     override fun getTimeZoneInfoFlow(): WrappedFlow<TimezoneInfo> {
