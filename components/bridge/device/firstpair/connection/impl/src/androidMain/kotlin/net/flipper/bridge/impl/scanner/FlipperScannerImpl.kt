@@ -83,11 +83,18 @@ class FlipperScannerImpl(
         ) {
             return flowOf()
         }
-        val ids = bluetoothAdapter.bondedDevices?.filter { device ->
-            device.uuids.any { uuid -> uuid.uuid.toKotlinUuid() == Constants.BLEInformationService.SERVICE_UUID }
-        }?.map {
-            it.address
-        } ?: return flowOf()
+        val ids = bluetoothAdapter
+            .bondedDevices
+            .orEmpty()
+            .filterNotNull()
+            .filter { device ->
+                device.uuids
+                    .orEmpty()
+                    .map { parcelUuid -> parcelUuid?.uuid?.toKotlinUuid() }
+                    .any { uuid -> uuid == Constants.BLEInformationService.SERVICE_UUID }
+            }
+            .map { device -> device.address }
+        if (ids.isEmpty()) return flowOf()
         return centralManager.getPeripheralsById(ids)
             .map { DiscoveredBluetoothDeviceImpl(it) }
             .asFlow()
