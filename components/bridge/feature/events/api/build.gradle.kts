@@ -14,5 +14,6 @@ kotlin {
         api(projects.components.bridge.feature.wifi.api)
 
         implementation(libs.kotlin.coroutines)
+        implementation(libs.kotlin.datetime)
     }
 }
