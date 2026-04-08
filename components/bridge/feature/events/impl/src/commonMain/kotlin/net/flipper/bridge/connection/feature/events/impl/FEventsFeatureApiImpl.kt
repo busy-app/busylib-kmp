@@ -31,8 +31,8 @@ import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
 class FEventsFeatureApiImpl(
     streamingApi: FStatusStreamingApi?,
     private val scope: CoroutineScope,
+    override val TAG: String = "FEventsFeatureApi"
 ) : FEventsFeatureApi, LogTagProvider {
-    override val TAG = "FEventsFeatureApi"
     private val busyLibUpdateEventFlow = MutableSharedFlow<BusyLibUpdateEvent>()
 
     override fun onBusyLibEvent(event: BusyLibUpdateEvent) {
