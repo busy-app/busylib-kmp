@@ -1,4 +1,4 @@
-package net.flipper.bsb.cloud.barsws.api
+package net.flipper.bsb.cloud.barsws.api.model
 
 import kotlin.uuid.Uuid
 

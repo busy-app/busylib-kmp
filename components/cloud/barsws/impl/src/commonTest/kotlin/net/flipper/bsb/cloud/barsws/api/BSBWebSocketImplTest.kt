@@ -23,6 +23,8 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import net.flipper.bsb.cloud.barsws.api.model.InternalWebSocketRequest
+import net.flipper.bsb.cloud.barsws.api.model.WebSocketEvent
+import net.flipper.bsb.cloud.barsws.api.utils.BSBWebSocketImpl
 import net.flipper.bsb.cloud.barsws.api.utils.wrappers.BSBWebSocketSession
 import net.flipper.core.busylib.log.LogTagProvider
 import kotlin.test.Test
@@ -228,7 +230,7 @@ class BSBWebSocketImplTest {
         )
 
         // When
-        val request = WebSocketRequest.Subscribe(deviceId = TEST_DEVICE_ID)
+        val request = InternalWebSocketRequest.SubscribeState(listOf(TEST_DEVICE_ID))
         webSocket.send(request)
         advanceUntilIdle()
 
@@ -249,7 +251,7 @@ class BSBWebSocketImplTest {
 
         // When
         repeat(10) {
-            webSocket.send(WebSocketRequest.Subscribe(deviceId = TEST_DEVICE_ID))
+            webSocket.send(InternalWebSocketRequest.SubscribeState(listOf(TEST_DEVICE_ID)))
         }
         advanceUntilIdle()
 
@@ -271,7 +273,7 @@ class BSBWebSocketImplTest {
         // When - concurrent sends
         val jobs = List(50) {
             async {
-                webSocket.send(WebSocketRequest.Subscribe(deviceId = TEST_DEVICE_ID))
+                webSocket.send(InternalWebSocketRequest.SubscribeState(listOf(TEST_DEVICE_ID)))
             }
         }
         jobs.awaitAll()
@@ -335,7 +337,7 @@ class BSBWebSocketImplTest {
         // When/Then - send should throw
         var errorOccurred = false
         try {
-            webSocket.send(WebSocketRequest.Subscribe(deviceId = TEST_DEVICE_ID))
+            webSocket.send(InternalWebSocketRequest.SubscribeState(listOf(TEST_DEVICE_ID)))
         } catch (_: Exception) {
             errorOccurred = true
         }
@@ -475,7 +477,7 @@ class BSBWebSocketImplTest {
         // When - concurrent send and receive
         val sendJobs = List(20) {
             async {
-                webSocket.send(WebSocketRequest.Subscribe(deviceId = TEST_DEVICE_ID))
+                webSocket.send(InternalWebSocketRequest.SubscribeState(listOf(TEST_DEVICE_ID)))
             }
         }
 
@@ -557,7 +559,7 @@ class BSBWebSocketImplTest {
         // Then - should handle gracefully (either complete or throw CancellationException)
         var exceptionThrown = false
         try {
-            webSocket.send(WebSocketRequest.Subscribe(deviceId = TEST_DEVICE_ID))
+            webSocket.send(InternalWebSocketRequest.SubscribeState(listOf(TEST_DEVICE_ID)))
         } catch (_: CancellationException) {
             exceptionThrown = true
         } catch (_: Exception) {

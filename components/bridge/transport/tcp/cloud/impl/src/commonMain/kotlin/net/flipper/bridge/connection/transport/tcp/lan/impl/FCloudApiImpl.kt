@@ -9,7 +9,7 @@ import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfi
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPTransportCapability
-import net.flipper.bridge.connection.transport.common.api.serial.FStatusStreamingApi
+import net.flipper.bridge.connection.transport.common.api.serial.StatusStreamingEvent
 import net.flipper.bridge.connection.transport.tcp.cloud.api.FCloudApi
 import net.flipper.bridge.connection.transport.tcp.cloud.api.FCloudDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.tcp.lan.impl.engine.BUSYCloudHttpEngineFactory
@@ -23,11 +23,10 @@ class FCloudApiImpl(
     private val listener: FTransportConnectionStatusListener,
     private var currentConfig: FCloudDeviceConnectionConfig,
     scope: CoroutineScope,
-    cloudDeviceMonitorFactory: CloudDeviceMonitor.Factory,
     tokenProviderFactory: ProxyTokenProviderFactory,
     cloudEngineFactory: BUSYCloudHttpEngineFactory,
     cloudStreamingFactory: FCloudStreamingFactory
-) : FCloudApi, FStatusStreamingApi by cloudStreamingFactory(currentConfig.deviceId) {
+) : FCloudApi {
     private val httpEngineOriginal = getPlatformEngineFactory().create()
     private val httpEngine = cloudEngineFactory(
         httpEngineOriginal,
@@ -35,9 +34,12 @@ class FCloudApiImpl(
             currentConfig.deviceId
         )
     )
-    private val cloudDeviceMonitor = cloudDeviceMonitorFactory.create(
+    private val cloudStreamingApi = cloudStreamingFactory(currentConfig.deviceId)
+    private val cloudDeviceMonitor = CloudDeviceMonitor(
         deviceApi = this,
-        deviceId = currentConfig.deviceId
+        deviceId = currentConfig.deviceId,
+        eventSource = cloudStreamingApi,
+        scope = scope
     )
 
     init {
@@ -77,5 +79,9 @@ class FCloudApiImpl(
 
     override fun getCapabilities(): Flow<List<FHTTPTransportCapability>> {
         return _capabilities
+    }
+
+    override fun getEvents(): Flow<StatusStreamingEvent> {
+        return cloudStreamingApi.getEvents()
     }
 }

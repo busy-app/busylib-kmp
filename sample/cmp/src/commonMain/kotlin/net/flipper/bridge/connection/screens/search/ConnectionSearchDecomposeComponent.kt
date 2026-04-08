@@ -3,6 +3,7 @@ package net.flipper.bridge.connection.screens.search
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -13,6 +14,7 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import busylibkmp.sample.cmp.generated.resources.Res
@@ -21,20 +23,27 @@ import busylibkmp.sample.cmp.generated.resources.material_ic_add_box
 import busylibkmp.sample.cmp.generated.resources.material_ic_delete
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.instancekeeper.getOrCreate
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.map
+import net.flipper.bridge.connection.screens.dashboard.screenstreaming.ScreenStreamingBlock
 import net.flipper.bridge.connection.screens.decompose.DecomposeOnBackParameter
 import net.flipper.bridge.connection.screens.decompose.ScreenDecomposeComponent
+import net.flipper.tools.multistream.api.MultiStreamApi
+import net.flipper.tools.multistream.api.MultiStreamState
 import org.jetbrains.compose.resources.painterResource
 
 class ConnectionSearchDecomposeComponent(
     componentContext: ComponentContext,
     private val onBack: DecomposeOnBackParameter,
-    private val searchViewModelProvider: () -> ConnectionSearchViewModel
+    private val searchViewModelProvider: () -> ConnectionSearchViewModel,
+    private val multiStreamApi: MultiStreamApi
 ) : ScreenDecomposeComponent(componentContext) {
     private val searchViewModel = instanceKeeper.getOrCreate {
         searchViewModelProvider.invoke()
     }
 
     @Composable
+    @Suppress("LongMethod")
     override fun Render(modifier: Modifier) {
         val devices by searchViewModel.getDevicesFlow().collectAsState()
 
@@ -62,6 +71,17 @@ class ConnectionSearchDecomposeComponent(
                     key = { device -> device.address }
                 ) { searchItem ->
                     Row {
+                        val frame by remember(searchItem.deviceModel) {
+                            multiStreamApi.get(searchItem.deviceModel)
+                                .filterIsInstance<MultiStreamState.Frame>()
+                                .map { it.image }
+                        }.collectAsState(null)
+
+                        ScreenStreamingBlock(
+                            modifier = Modifier.height(32.dp).padding(2.dp),
+                            image = frame
+                        )
+
                         Text(
                             modifier = Modifier
                                 .weight(1f)
@@ -92,7 +112,8 @@ class ConnectionSearchDecomposeComponent(
     }
 
     class Factory(
-        private val searchViewModelProvider: () -> ConnectionSearchViewModel
+        private val searchViewModelProvider: () -> ConnectionSearchViewModel,
+        private val multiStreamApi: MultiStreamApi
     ) {
         fun invoke(
             componentContext: ComponentContext,
@@ -101,7 +122,8 @@ class ConnectionSearchDecomposeComponent(
             return ConnectionSearchDecomposeComponent(
                 componentContext,
                 onBack,
-                searchViewModelProvider
+                searchViewModelProvider,
+                multiStreamApi
             )
         }
     }

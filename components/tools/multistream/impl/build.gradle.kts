@@ -15,6 +15,7 @@ kotlin {
         implementation(projects.components.bridge.orchestrator.api)
         implementation(projects.components.bridge.config.api)
         implementation(projects.components.bridge.transport.common.api)
+        implementation(projects.components.bridge.transport.tcp.cloud.impl)
         implementation(projects.components.bridge.feature.provider.api)
         implementation(projects.components.bridge.feature.events.api)
         implementation(projects.components.bridge.feature.events.impl)

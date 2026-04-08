@@ -1,6 +1,5 @@
 plugins {
     id("flipper.multiplatform")
-    id("org.jetbrains.kotlin.plugin.serialization")
 }
 
 kotlin {

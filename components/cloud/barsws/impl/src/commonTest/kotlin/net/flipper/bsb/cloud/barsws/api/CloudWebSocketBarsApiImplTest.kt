@@ -1,673 +1,523 @@
 package net.flipper.bsb.cloud.barsws.api
 
-import com.flipperdevices.core.network.BUSYLibNetworkStateApi
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.TestScope
-import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.withTimeoutOrNull
-import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
-import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
-import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipalToken
-import net.flipper.bsb.cloud.api.BUSYLibHostApi
-import net.flipper.bsb.cloud.barsws.api.utils.wrappers.BSBWebSocketFactory
-import net.flipper.busylib.core.wrapper.WrappedStateFlow
-import net.flipper.busylib.core.wrapper.wrap
-import net.flipper.core.busylib.log.LogTagProvider
+import net.flipper.bsb.cloud.barsws.api.model.InternalWebSocketRequest
+import net.flipper.bsb.cloud.barsws.api.model.WebSocketEvent
+import net.flipper.bsb.cloud.barsws.api.utils.BSBWebSocket
+import net.flipper.bsb.cloud.barsws.api.utils.CloudWebSocketApi
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
-import kotlin.test.assertSame
 import kotlin.test.assertTrue
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.uuid.Uuid
 
-/**
- * Comprehensive tests for CloudWebSocketBarsApiImpl covering:
- * - WebSocket singleton behavior (single instance reused across subscribers)
- * - Resource cleanup when no subscribers exist
- * - State transitions based on network, authentication, and host changes
- * - Reconnection logic with exponential backoff
- * - Race conditions and concurrent access patterns
- * - Error handling and recovery
- *
- * These tests use the real CloudWebSocketBarsApiImpl with a mock BSBWebSocketFactory,
- * allowing us to test the actual implementation logic without needing real network connections.
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 class CloudWebSocketBarsApiImplTest {
 
-    // region Singleton WebSocket Tests
+    private val barId1 = Uuid.parse("11111111-1111-1111-1111-111111111111")
+    private val barId2 = Uuid.parse("22222222-2222-2222-2222-222222222222")
+
+    // region Subscribe/Unsubscribe Lifecycle
 
     @Test
-    fun GIVEN_multiple_subscribers_WHEN_subscribing_to_ws_flow_THEN_same_websocket_instance_is_shared() =
-        runTest {
-            // Given
-            val testSetup = createTestSetup(
-                isNetworkAvailable = true,
-                principal = testToken()
+    fun GIVEN_single_subscriber_WHEN_collecting_THEN_sends_subscribe() =
+        runTest(UnconfinedTestDispatcher()) {
+            val env = TestEnvironment()
+
+            val job = env.orchestrator.getEventsFlow(barId1)
+                .launchIn(backgroundScope)
+
+            assertEquals(
+                listOf(InternalWebSocketRequest.SubscribeState(listOf(barId1))),
+                env.mockWs.sentRequests
             )
 
-            // When - multiple subscribers
-            val webSocketsMutex = Mutex()
-            val webSockets = mutableListOf<BSBWebSocket?>()
-
-            val jobs = List(5) {
-                testSetup.api.getWSFlow()
-                    .onEach { ws ->
-                        webSocketsMutex.withLock {
-                            webSockets.add(ws)
-                        }
-                    }
-                    .launchIn(backgroundScope)
-            }
-
-            advanceUntilIdle()
-
-            // Then - all should receive the same WebSocket instance
-            if (webSockets.isNotEmpty()) {
-                val firstWs = webSockets.first()
-                webSockets.forEach { ws ->
-                    assertSame(
-                        firstWs,
-                        ws,
-                        "All subscribers should receive the same WebSocket instance"
-                    )
-                }
-            }
-
-            jobs.forEach { it.cancel() }
+            job.cancel()
         }
 
     @Test
-    fun GIVEN_websocket_flow_WHEN_subscriber_joins_later_THEN_receives_existing_websocket() =
-        runTest {
-            // Given
-            val testSetup = createTestSetup(
-                isNetworkAvailable = true,
-                principal = testToken()
+    fun GIVEN_single_subscriber_WHEN_cancelled_THEN_sends_unsubscribe() =
+        runTest(UnconfinedTestDispatcher()) {
+            val env = TestEnvironment()
+
+            val job = env.orchestrator.getEventsFlow(barId1)
+                .launchIn(backgroundScope)
+
+            job.cancel()
+            advanceUntilIdle()
+
+            assertEquals(
+                listOf(
+                    InternalWebSocketRequest.SubscribeState(listOf(barId1)),
+                    InternalWebSocketRequest.UnsubscribeState(listOf(barId1))
+                ),
+                env.mockWs.sentRequests
             )
+        }
 
-            // When - first subscriber
-            var firstWs: BSBWebSocket? = null
-            val job1 = testSetup.api.getWSFlow()
-                .onEach { firstWs = it }
+    @Test
+    fun GIVEN_two_subscribers_same_bar_WHEN_both_active_THEN_sends_one_subscribe() =
+        runTest(UnconfinedTestDispatcher()) {
+            val env = TestEnvironment()
+
+            val job1 = env.orchestrator.getEventsFlow(barId1)
+                .launchIn(backgroundScope)
+            val job2 = env.orchestrator.getEventsFlow(barId1)
                 .launchIn(backgroundScope)
 
-            advanceUntilIdle()
-
-            // Late subscriber
-            var lateWs: BSBWebSocket? = null
-            val job2 = testSetup.api.getWSFlow()
-                .onEach { lateWs = it }
-                .launchIn(backgroundScope)
-
-            advanceUntilIdle()
-
-            // Then - late subscriber should get the same instance due to replay
-            if (firstWs != null && lateWs != null) {
-                assertSame(
-                    firstWs,
-                    lateWs,
-                    "Late subscriber should receive same WebSocket via replay"
-                )
-            }
+            val subscribes = env.mockWs.sentRequests
+                .filterIsInstance<InternalWebSocketRequest.SubscribeState>()
+            assertEquals(1, subscribes.size)
 
             job1.cancel()
             job2.cancel()
         }
 
     @Test
-    fun GIVEN_websocket_WHEN_factory_called_multiple_times_THEN_creates_only_one_instance() =
-        runTest {
-            // Given
-            val factoryCallCount = MutableStateFlow(0)
-            val testSetup = createTestSetup(
-                isNetworkAvailable = true,
-                principal = testToken(),
-                onWebSocketCreated = { factoryCallCount.update { it + 1 } }
-            )
+    fun GIVEN_two_subscribers_same_bar_WHEN_first_cancels_THEN_no_unsubscribe() =
+        runTest(UnconfinedTestDispatcher()) {
+            val env = TestEnvironment()
 
-            // When - multiple concurrent subscribers
-            val jobs = List(10) {
-                async {
-                    try {
-                        testSetup.api.getWSFlow().first()
-                    } catch (_: Exception) {
-                        null
-                    }
-                }
-            }
+            val job1 = env.orchestrator.getEventsFlow(barId1)
+                .launchIn(backgroundScope)
+            val job2 = env.orchestrator.getEventsFlow(barId1)
+                .launchIn(backgroundScope)
 
+            job1.cancel()
             advanceUntilIdle()
-            jobs.awaitAll()
 
-            // Then - factory should ideally be called once (depending on shareIn behavior)
-            assertTrue(
-                factoryCallCount.value <= 1,
-                "WebSocket factory should be called at most once, but was called ${factoryCallCount.value} times"
-            )
+            val unsubscribes = env.mockWs.sentRequests
+                .filterIsInstance<InternalWebSocketRequest.UnsubscribeState>()
+            assertEquals(0, unsubscribes.size)
 
-            jobs.forEach { it.cancel() }
+            job2.cancel()
+        }
+
+    @Test
+    fun GIVEN_two_subscribers_same_bar_WHEN_both_cancel_THEN_sends_one_unsubscribe() =
+        runTest(UnconfinedTestDispatcher()) {
+            val env = TestEnvironment()
+
+            val job1 = env.orchestrator.getEventsFlow(barId1)
+                .launchIn(backgroundScope)
+            val job2 = env.orchestrator.getEventsFlow(barId1)
+                .launchIn(backgroundScope)
+
+            job1.cancel()
+            advanceUntilIdle()
+            job2.cancel()
+            advanceUntilIdle()
+
+            val unsubscribes = env.mockWs.sentRequests
+                .filterIsInstance<InternalWebSocketRequest.UnsubscribeState>()
+            assertEquals(1, unsubscribes.size)
+        }
+
+    @Test
+    fun GIVEN_subscribers_to_different_bars_WHEN_active_THEN_each_gets_own_subscribe() =
+        runTest(UnconfinedTestDispatcher()) {
+            val env = TestEnvironment()
+
+            val job1 = env.orchestrator.getEventsFlow(barId1)
+                .launchIn(backgroundScope)
+            val job2 = env.orchestrator.getEventsFlow(barId2)
+                .launchIn(backgroundScope)
+
+            val subscribes = env.mockWs.sentRequests
+                .filterIsInstance<InternalWebSocketRequest.SubscribeState>()
+            assertEquals(2, subscribes.size)
+            assertTrue(subscribes.any { barId1 in it.idsToSubscribe })
+            assertTrue(subscribes.any { barId2 in it.idsToSubscribe })
+
+            job1.cancel()
+            job2.cancel()
+        }
+
+    @Test
+    fun GIVEN_subscribers_to_different_bars_WHEN_one_cancels_THEN_only_that_bar_unsubscribes() =
+        runTest(UnconfinedTestDispatcher()) {
+            val env = TestEnvironment()
+
+            val job1 = env.orchestrator.getEventsFlow(barId1)
+                .launchIn(backgroundScope)
+            val job2 = env.orchestrator.getEventsFlow(barId2)
+                .launchIn(backgroundScope)
+
+            job1.cancel()
+            advanceUntilIdle()
+
+            val unsubscribes = env.mockWs.sentRequests
+                .filterIsInstance<InternalWebSocketRequest.UnsubscribeState>()
+            assertEquals(1, unsubscribes.size)
+            assertTrue(barId1 in unsubscribes[0].idsToUnsubscribe)
+
+            job2.cancel()
+            advanceUntilIdle()
+
+            val finalUnsubscribes = env.mockWs.sentRequests
+                .filterIsInstance<InternalWebSocketRequest.UnsubscribeState>()
+            assertEquals(2, finalUnsubscribes.size)
+        }
+
+    @Test
+    fun GIVEN_all_cancelled_WHEN_resubscribing_THEN_sends_subscribe_again() =
+        runTest(UnconfinedTestDispatcher()) {
+            val env = TestEnvironment()
+
+            // First cycle
+            val job1 = env.orchestrator.getEventsFlow(barId1)
+                .launchIn(backgroundScope)
+            job1.cancel()
+            advanceUntilIdle()
+
+            // Second cycle
+            val job2 = env.orchestrator.getEventsFlow(barId1)
+                .launchIn(backgroundScope)
+            job2.cancel()
+            advanceUntilIdle()
+
+            val subscribes = env.mockWs.sentRequests
+                .filterIsInstance<InternalWebSocketRequest.SubscribeState>()
+            val unsubscribes = env.mockWs.sentRequests
+                .filterIsInstance<InternalWebSocketRequest.UnsubscribeState>()
+            assertEquals(2, subscribes.size)
+            assertEquals(2, unsubscribes.size)
         }
 
     // endregion
 
-    // region Resource Cleanup Tests
+    // region Event Routing
 
     @Test
-    fun GIVEN_websocket_WHEN_all_subscribers_unsubscribe_THEN_websocket_should_be_closed() =
-        runTest {
-            // Given
-            val closedFlow = MutableStateFlow(false)
-            val testSetup = createTestSetup(
-                isNetworkAvailable = true,
-                principal = testToken(),
-                onWebSocketClosed = { closedFlow.value = true }
-            )
+    fun GIVEN_event_for_subscribed_bar_WHEN_emitted_THEN_received_by_collector() =
+        runTest(UnconfinedTestDispatcher()) {
+            val env = TestEnvironment()
+            val received = mutableListOf<Pair<String, Any>>()
 
-            // When - subscribe then unsubscribe
-            val job = testSetup.api.getWSFlow().launchIn(backgroundScope)
-            advanceUntilIdle()
+            val job = env.orchestrator.getEventsFlow(barId1)
+                .onEach { received.add(it) }
+                .launchIn(backgroundScope)
+
+            env.mockWs.emitEvent(WebSocketEvent(barId1, mapOf("key" to "value")))
+
+            assertEquals(1, received.size)
+            assertEquals("key" to ("value" as Any), received[0])
 
             job.cancel()
-            advanceUntilIdle()
-
-            // Then - WebSocket should be closed due to WhileSubscribed sharing
-            assertTrue(
-                true,
-                "WebSocket should be closed when no subscribers remain"
-            )
         }
 
     @Test
-    fun GIVEN_websocket_WHEN_scope_is_cancelled_THEN_all_resources_are_cleaned_up() = runTest {
-        // Given
-        val cleanupCalled = MutableStateFlow(false)
-        val cancellableScope = CoroutineScope(StandardTestDispatcher(testScheduler) + Job())
+    fun GIVEN_event_for_other_bar_WHEN_emitted_THEN_not_received() =
+        runTest(UnconfinedTestDispatcher()) {
+            val env = TestEnvironment()
+            val received = mutableListOf<Pair<String, Any>>()
 
-        val testSetup = createTestSetup(
-            isNetworkAvailable = true,
-            principal = testToken(),
-            onWebSocketClosed = { cleanupCalled.value = true },
-            scopeOverride = cancellableScope
-        )
+            val job = env.orchestrator.getEventsFlow(barId1)
+                .onEach { received.add(it) }
+                .launchIn(backgroundScope)
 
-        val job = testSetup.api.getWSFlow().launchIn(cancellableScope)
-        advanceUntilIdle()
+            env.mockWs.emitEvent(WebSocketEvent(barId2, mapOf("key" to "value")))
 
-        // When - cancel the scope
-        cancellableScope.cancel()
-        advanceUntilIdle()
+            assertTrue(received.isEmpty())
 
-        // Then - resources should be cleaned up
-        assertTrue(job.isCancelled, "Job should be cancelled")
-        assertTrue(cleanupCalled.value, "WebSocket should be closed on scope cancellation")
-    }
+            job.cancel()
+        }
 
     @Test
-    fun GIVEN_rapid_subscribe_unsubscribe_cycles_WHEN_no_leaks_THEN_resources_properly_managed() =
-        runTest {
-            // Given
-            val testSetup = createTestSetup(
+    fun GIVEN_event_with_multiple_values_WHEN_emitted_THEN_flattened_to_pairs() =
+        runTest(UnconfinedTestDispatcher()) {
+            val env = TestEnvironment()
+            val received = mutableListOf<Pair<String, Any>>()
 
-                isNetworkAvailable = true,
-                principal = testToken()
+            val job = env.orchestrator.getEventsFlow(barId1)
+                .onEach { received.add(it) }
+                .launchIn(backgroundScope)
+
+            env.mockWs.emitEvent(
+                WebSocketEvent(barId1, mapOf("a" to 1, "b" to "two", "c" to true))
             )
 
-            // When - rapid subscribe/unsubscribe
+            assertEquals(3, received.size)
+            assertTrue(received.contains("a" to (1 as Any)))
+            assertTrue(received.contains("b" to ("two" as Any)))
+            assertTrue(received.contains("c" to (true as Any)))
+
+            job.cancel()
+        }
+
+    @Test
+    fun GIVEN_multiple_events_WHEN_emitted_sequentially_THEN_all_received_in_order() =
+        runTest(UnconfinedTestDispatcher()) {
+            val env = TestEnvironment()
+            val received = mutableListOf<Pair<String, Any>>()
+
+            val job = env.orchestrator.getEventsFlow(barId1)
+                .onEach { received.add(it) }
+                .launchIn(backgroundScope)
+
+            env.mockWs.emitEvent(WebSocketEvent(barId1, mapOf("first" to 1)))
+            env.mockWs.emitEvent(WebSocketEvent(barId1, mapOf("second" to 2)))
+
+            assertEquals(
+                listOf("first" to (1 as Any), "second" to (2 as Any)),
+                received
+            )
+
+            job.cancel()
+        }
+
+    @Test
+    fun GIVEN_event_with_empty_values_WHEN_emitted_THEN_no_pairs_emitted() =
+        runTest(UnconfinedTestDispatcher()) {
+            val env = TestEnvironment()
+            val received = mutableListOf<Pair<String, Any>>()
+
+            val job = env.orchestrator.getEventsFlow(barId1)
+                .onEach { received.add(it) }
+                .launchIn(backgroundScope)
+
+            env.mockWs.emitEvent(WebSocketEvent(barId1, emptyMap()))
+
+            assertTrue(received.isEmpty())
+
+            job.cancel()
+        }
+
+    @Test
+    fun GIVEN_two_subscribers_same_bar_WHEN_event_emitted_THEN_both_receive_it() =
+        runTest(UnconfinedTestDispatcher()) {
+            val env = TestEnvironment()
+            val received1 = mutableListOf<Pair<String, Any>>()
+            val received2 = mutableListOf<Pair<String, Any>>()
+
+            val job1 = env.orchestrator.getEventsFlow(barId1)
+                .onEach { received1.add(it) }
+                .launchIn(backgroundScope)
+            val job2 = env.orchestrator.getEventsFlow(barId1)
+                .onEach { received2.add(it) }
+                .launchIn(backgroundScope)
+
+            env.mockWs.emitEvent(WebSocketEvent(barId1, mapOf("key" to "value")))
+
+            assertEquals(listOf("key" to ("value" as Any)), received1)
+            assertEquals(listOf("key" to ("value" as Any)), received2)
+
+            job1.cancel()
+            job2.cancel()
+        }
+
+    @Test
+    fun GIVEN_mixed_events_WHEN_emitted_THEN_each_subscriber_gets_only_own_bar() =
+        runTest(UnconfinedTestDispatcher()) {
+            val env = TestEnvironment()
+            val received1 = mutableListOf<Pair<String, Any>>()
+            val received2 = mutableListOf<Pair<String, Any>>()
+
+            val job1 = env.orchestrator.getEventsFlow(barId1)
+                .onEach { received1.add(it) }
+                .launchIn(backgroundScope)
+            val job2 = env.orchestrator.getEventsFlow(barId2)
+                .onEach { received2.add(it) }
+                .launchIn(backgroundScope)
+
+            env.mockWs.emitEvent(WebSocketEvent(barId1, mapOf("bar1" to "a")))
+            env.mockWs.emitEvent(WebSocketEvent(barId2, mapOf("bar2" to "b")))
+            env.mockWs.emitEvent(WebSocketEvent(barId1, mapOf("bar1again" to "c")))
+
+            assertEquals(
+                listOf("bar1" to ("a" as Any), "bar1again" to ("c" as Any)),
+                received1
+            )
+            assertEquals(
+                listOf("bar2" to ("b" as Any)),
+                received2
+            )
+
+            job1.cancel()
+            job2.cancel()
+        }
+
+    // endregion
+
+    // region Concurrency
+
+    @Test
+    fun GIVEN_many_concurrent_subscribers_same_bar_WHEN_active_THEN_one_subscribe_one_unsubscribe() =
+        runTest(UnconfinedTestDispatcher()) {
+            val env = TestEnvironment()
+
+            val jobs = List(20) {
+                env.orchestrator.getEventsFlow(barId1)
+                    .launchIn(backgroundScope)
+            }
+
+            val subscribes = env.mockWs.sentRequests
+                .filterIsInstance<InternalWebSocketRequest.SubscribeState>()
+            assertEquals(1, subscribes.size)
+
+            jobs.forEach { it.cancel() }
+            advanceUntilIdle()
+
+            val unsubscribes = env.mockWs.sentRequests
+                .filterIsInstance<InternalWebSocketRequest.UnsubscribeState>()
+            assertEquals(1, unsubscribes.size)
+        }
+
+    @Test
+    fun GIVEN_five_subscribers_WHEN_three_cancel_THEN_no_unsubscribe_yet() =
+        runTest(UnconfinedTestDispatcher()) {
+            val env = TestEnvironment()
+
+            val jobs = List(5) {
+                env.orchestrator.getEventsFlow(barId1)
+                    .launchIn(backgroundScope)
+            }
+
+            // Cancel 3 of 5
+            jobs.take(3).forEach { it.cancel() }
+            advanceUntilIdle()
+
+            val unsubscribes = env.mockWs.sentRequests
+                .filterIsInstance<InternalWebSocketRequest.UnsubscribeState>()
+            assertEquals(0, unsubscribes.size)
+
+            // Cancel remaining 2
+            jobs.drop(3).forEach { it.cancel() }
+            advanceUntilIdle()
+
+            val finalUnsubscribes = env.mockWs.sentRequests
+                .filterIsInstance<InternalWebSocketRequest.UnsubscribeState>()
+            assertEquals(1, finalUnsubscribes.size)
+        }
+
+    @Test
+    fun GIVEN_rapid_subscribe_unsubscribe_cycles_WHEN_same_bar_THEN_balanced_subscribe_unsubscribe() =
+        runTest(UnconfinedTestDispatcher()) {
+            val env = TestEnvironment()
+
             repeat(50) {
-                val job = testSetup.api.getWSFlow().launchIn(backgroundScope)
-                advanceUntilIdle()
+                val job = env.orchestrator.getEventsFlow(barId1)
+                    .launchIn(backgroundScope)
                 job.cancel()
                 advanceUntilIdle()
             }
 
-            // Then - should not crash or leak resources
-            val finalJob = testSetup.api.getWSFlow().launchIn(backgroundScope)
+            val subscribes = env.mockWs.sentRequests
+                .filterIsInstance<InternalWebSocketRequest.SubscribeState>()
+            val unsubscribes = env.mockWs.sentRequests
+                .filterIsInstance<InternalWebSocketRequest.UnsubscribeState>()
+            assertEquals(subscribes.size, unsubscribes.size)
+            assertEquals(50, subscribes.size)
+        }
+
+    @Test
+    fun GIVEN_interleaved_bars_WHEN_subscribing_unsubscribing_THEN_no_cross_contamination() =
+        runTest(UnconfinedTestDispatcher()) {
+            val env = TestEnvironment()
+
+            val job1 = env.orchestrator.getEventsFlow(barId1)
+                .launchIn(backgroundScope)
+            val job2 = env.orchestrator.getEventsFlow(barId2)
+                .launchIn(backgroundScope)
+
+            job1.cancel()
             advanceUntilIdle()
-            assertNotNull(finalJob)
-            finalJob.cancel()
+
+            val unsubscribes = env.mockWs.sentRequests
+                .filterIsInstance<InternalWebSocketRequest.UnsubscribeState>()
+            assertEquals(1, unsubscribes.size)
+            assertTrue(barId1 in unsubscribes[0].idsToUnsubscribe)
+
+            val job3 = env.orchestrator.getEventsFlow(barId1)
+                .launchIn(backgroundScope)
+
+            val allSubscribes = env.mockWs.sentRequests
+                .filterIsInstance<InternalWebSocketRequest.SubscribeState>()
+            assertEquals(3, allSubscribes.size)
+
+            job2.cancel()
+            job3.cancel()
         }
 
     // endregion
 
-    // region State Transition Tests
+    // region WebSocket Reconnection
 
     @Test
-    fun GIVEN_network_unavailable_WHEN_subscribing_THEN_no_websocket_emitted() = runTest {
-        // Given
-        val testSetup = createTestSetup(
+    fun GIVEN_active_subscriber_WHEN_websocket_changes_THEN_resubscribes_on_new_websocket() =
+        runTest(UnconfinedTestDispatcher()) {
+            val env = TestEnvironment()
 
-            isNetworkAvailable = false,
-            principal = testToken()
-        )
-
-        // When
-        var receivedWs: BSBWebSocket? = null
-        val job = testSetup.api.getWSFlow()
-            .onEach { receivedWs = it }
-            .launchIn(backgroundScope)
-
-        advanceUntilIdle()
-
-        // Then - no WebSocket should be emitted when network is unavailable
-        assertNull(receivedWs, "No WebSocket should be emitted when network unavailable")
-        job.cancel()
-    }
-
-    @Test
-    fun GIVEN_user_not_authenticated_WHEN_subscribing_THEN_no_websocket_emitted() = runTest {
-        // Given
-        val testSetup = createTestSetup(
-
-            isNetworkAvailable = true,
-            principal = BUSYLibUserPrincipal.Empty
-        )
-
-        // When
-        var receivedWs: BSBWebSocket? = null
-        val job = testSetup.api.getWSFlow()
-            .onEach { receivedWs = it }
-            .launchIn(backgroundScope)
-
-        advanceUntilIdle()
-
-        // Then
-        assertNull(receivedWs, "No WebSocket should be emitted when user not authenticated")
-        job.cancel()
-    }
-
-    @Test
-    fun GIVEN_user_loading_WHEN_subscribing_THEN_no_websocket_emitted() = runTest {
-        // Given
-        val testSetup = createTestSetup(
-
-            isNetworkAvailable = true,
-            principal = BUSYLibUserPrincipal.Loading
-        )
-
-        // When
-        var receivedWs: BSBWebSocket? = null
-        val job = testSetup.api.getWSFlow()
-            .onEach { receivedWs = it }
-            .launchIn(backgroundScope)
-
-        advanceUntilIdle()
-
-        // Then
-        assertNull(receivedWs, "No WebSocket should be emitted when principal is loading")
-        job.cancel()
-    }
-
-    @Test
-    fun GIVEN_network_becomes_available_WHEN_already_subscribed_THEN_websocket_emitted() =
-        runTest {
-            // Given
-            val networkFlow = MutableStateFlow(false)
-            val testSetup = createTestSetup(
-                networkFlow = networkFlow,
-                principal = testToken()
-            )
-
-            val receivedWebSockets = MutableStateFlow(listOf<BSBWebSocket?>())
-            val job = testSetup.api.getWSFlow()
-                .onEach { receivedWebSockets.update { list -> list + it } }
+            val job = env.orchestrator.getEventsFlow(barId1)
                 .launchIn(backgroundScope)
 
+            assertEquals(1, env.mockWs.sentRequests.size)
+
+            val newWs = MockBSBWebSocket()
+            env.mockApi.setWebSocket(newWs)
             advanceUntilIdle()
 
-            // Initially no WebSocket
-            assertTrue(
-                receivedWebSockets.map { list -> list.all { it == null } }
-                    .filter { it }
-                    .first(),
-                "No WebSocket initially"
-            )
+            val newSubscribes = newWs.sentRequests
+                .filterIsInstance<InternalWebSocketRequest.SubscribeState>()
+            assertEquals(1, newSubscribes.size)
+            assertTrue(barId1 in newSubscribes[0].idsToSubscribe)
 
-            // When - network becomes available
-            networkFlow.value = true
-            advanceUntilIdle()
-
-            // Then - WebSocket should be emitted
-            assertTrue(
-                receivedWebSockets.map { list -> list.any { it != null } }.filter { it }.first(),
-                "WebSocket should be emitted when network becomes available"
-            )
             job.cancel()
         }
 
     @Test
-    fun GIVEN_user_logs_in_WHEN_already_subscribed_THEN_websocket_emitted() = runTest {
-        // Given
-        val principalFlow = MutableStateFlow<BUSYLibUserPrincipal>(BUSYLibUserPrincipal.Empty)
-        val testSetup = createTestSetup(
+    fun GIVEN_multiple_subscribers_same_bar_WHEN_websocket_changes_THEN_only_one_subscribe_on_new_ws() =
+        runTest(UnconfinedTestDispatcher()) {
+            val env = TestEnvironment()
 
-            isNetworkAvailable = true,
-            principalFlow = principalFlow
-        )
-
-        val listFlow = MutableStateFlow(listOf<BSBWebSocket?>())
-        val job = testSetup.api.getWSFlow()
-            .onEach { listFlow.update { list -> list + it } }
-            .launchIn(backgroundScope)
-
-        advanceUntilIdle()
-
-        // Initially no WebSocket
-        assertTrue(listFlow.drop(1).first().all { it == null }, "No WebSocket initially")
-
-        // When - user logs in
-        principalFlow.value = testToken("new-token")
-        advanceUntilIdle()
-
-        // Then - WebSocket should be emitted
-        assertTrue(
-            listFlow.drop(1).first().any { it != null },
-            "WebSocket should be emitted when user logs in"
-        )
-        job.cancel()
-    }
-
-    @Test
-    fun GIVEN_network_disconnects_WHEN_websocket_active_THEN_websocket_flow_stops() = runTest {
-        // Given
-        val networkFlow = MutableStateFlow(true)
-        val testSetup = createTestSetup(
-
-            networkFlow = networkFlow,
-            principal = testToken()
-        )
-
-        val receivedWebSockets = mutableListOf<BSBWebSocket?>()
-        val job = testSetup.api.getWSFlow()
-            .onEach { receivedWebSockets.add(it) }
-            .launchIn(backgroundScope)
-
-        advanceUntilIdle()
-
-        // When - network disconnects
-        networkFlow.value = false
-        advanceUntilIdle()
-
-        // Then - the flow should switch to empty (flatMapLatest to flowOf())
-        // No new websockets should be created after network disconnect
-        job.cancel()
-    }
-
-    @Test
-    fun GIVEN_user_logs_out_WHEN_websocket_active_THEN_websocket_flow_stops() = runTest {
-        // Given
-        val principalFlow =
-            MutableStateFlow<BUSYLibUserPrincipal>(testToken())
-        val testSetup = createTestSetup(
-
-            isNetworkAvailable = true,
-            principalFlow = principalFlow
-        )
-
-        var wsCount = 0
-        val job = testSetup.api.getWSFlow()
-            .onEach { wsCount++ }
-            .launchIn(backgroundScope)
-
-        advanceUntilIdle()
-
-        // When - user logs out
-        principalFlow.value = BUSYLibUserPrincipal.Empty
-        advanceUntilIdle()
-
-        // Then - flow should stop emitting (switches to flowOf())
-        job.cancel()
-    }
-
-    @Test
-    fun GIVEN_host_changes_WHEN_websocket_active_THEN_new_websocket_created() = runTest {
-        // Given
-        val hostFlow = MutableStateFlow("host1.example.com")
-        val createdHostsMutex = Mutex()
-        val createdHostsFlow = MutableStateFlow(listOf<String>())
-
-        val testSetup = createTestSetup(
-            isNetworkAvailable = true,
-            principal = testToken(),
-            hostFlow = hostFlow,
-            onWebSocketCreatedForHost = { host ->
-                runBlocking {
-                    createdHostsMutex.withLock {
-                        createdHostsFlow.update { list -> list + host }
-                    }
-                }
-            }
-        )
-
-        val job = testSetup.api.getWSFlow().launchIn(backgroundScope)
-        advanceUntilIdle()
-
-        // When - host changes
-        hostFlow.value = "host2.example.com"
-        advanceUntilIdle()
-
-        // Then - new WebSocket should be created for new host
-        // The combine operator should trigger a new websocket creation
-        assertTrue(
-            createdHostsFlow.filter { it.size >= 1 }.first().size >= 1,
-            "At least one WebSocket should be created"
-        )
-        job.cancel()
-    }
-
-    // endregion
-
-    // region Error Handling and Reconnection Tests
-
-    @Test
-    fun GIVEN_websocket_connection_fails_WHEN_retrying_THEN_uses_exponential_backoff() = runTest {
-        // Given
-        val connectionAttempts = MutableStateFlow(0)
-        val testSetup = createTestSetup(
-
-            isNetworkAvailable = true,
-            principal = testToken(),
-            onWebSocketCreated = {
-                connectionAttempts.update { it + 1 }
-                error("Connection failed")
-            }
-        )
-
-        // When - subscribe and let it retry
-        val job = testSetup.api.getWSFlow().launchIn(backgroundScope)
-
-        // Advance time to allow retries with exponential backoff
-        advanceTimeBy(100.milliseconds)
-
-        advanceTimeBy(200.milliseconds)
-
-        advanceTimeBy(400.milliseconds)
-
-        // Then - should have attempted multiple retries
-        assertTrue(
-            connectionAttempts.value >= 1,
-            "Should attempt reconnection, got ${connectionAttempts.value} attempts"
-        )
-
-        job.cancel()
-    }
-
-    @Test
-    fun GIVEN_websocket_disconnects_WHEN_network_still_available_THEN_reconnects_automatically() =
-        runTest {
-            // Given
-            val connectionAttempts = MutableStateFlow(0)
-            val testSetup = createTestSetup(
-
-                isNetworkAvailable = true,
-                principal = testToken(),
-                onWebSocketCreated = { connectionAttempts.update { it + 1 } }
-            )
-
-            val job = testSetup.api.getWSFlow().launchIn(backgroundScope)
-            advanceUntilIdle()
-
-            // Note: Due to wrapWebsocket's infinite loop with retry logic,
-            // reconnection should happen automatically on failure
-            job.cancel()
-        }
-
-    // endregion
-
-    // region Race Condition Tests
-
-    @Test
-    fun GIVEN_concurrent_subscribers_WHEN_state_changes_rapidly_THEN_all_receive_consistent_state() =
-        runTest {
-            // Given
-            val networkFlow = MutableStateFlow(true)
-            val principalFlow =
-                MutableStateFlow<BUSYLibUserPrincipal>(testToken())
-
-            val testSetup = createTestSetup(
-
-                networkFlow = networkFlow,
-                principalFlow = principalFlow
-            )
-
-            val subscriber1Results = mutableListOf<BSBWebSocket?>()
-            val subscriber2Results = mutableListOf<BSBWebSocket?>()
-
-            val job1 = testSetup.api.getWSFlow()
-                .onEach { subscriber1Results.add(it) }
+            val job1 = env.orchestrator.getEventsFlow(barId1)
+                .launchIn(backgroundScope)
+            val job2 = env.orchestrator.getEventsFlow(barId1)
                 .launchIn(backgroundScope)
 
-            val job2 = testSetup.api.getWSFlow()
-                .onEach { subscriber2Results.add(it) }
-                .launchIn(backgroundScope)
-
+            val newWs = MockBSBWebSocket()
+            env.mockApi.setWebSocket(newWs)
             advanceUntilIdle()
 
-            // When - rapid state changes
-            networkFlow.value = false
-            advanceUntilIdle()
-            networkFlow.value = true
-            advanceUntilIdle()
-            principalFlow.value = BUSYLibUserPrincipal.Empty
-            advanceUntilIdle()
-            principalFlow.value = testToken("new-token")
-            advanceUntilIdle()
+            val newSubscribes = newWs.sentRequests
+                .filterIsInstance<InternalWebSocketRequest.SubscribeState>()
+            assertEquals(1, newSubscribes.size)
 
-            // Then - both subscribers should have received consistent state
             job1.cancel()
             job2.cancel()
         }
 
     @Test
-    fun GIVEN_high_concurrency_WHEN_subscribing_unsubscribing_THEN_no_deadlock_or_race() =
-        runTest {
-            // Given
-            val testSetup = createTestSetup(
+    fun GIVEN_subscriber_WHEN_websocket_changes_THEN_events_from_new_ws_are_received() =
+        runTest(UnconfinedTestDispatcher()) {
+            val env = TestEnvironment()
+            val received = mutableListOf<Pair<String, Any>>()
 
-                isNetworkAvailable = true,
-                principal = testToken()
-            )
+            val job = env.orchestrator.getEventsFlow(barId1)
+                .onEach { received.add(it) }
+                .launchIn(backgroundScope)
 
-            // When - high concurrency subscribe/unsubscribe
-            val jobs = List(100) {
-                async {
-                    val job = testSetup.api.getWSFlow().launchIn(backgroundScope)
-                    delay(10.milliseconds)
-                    job.cancel()
-                }
-            }
+            env.mockWs.emitEvent(WebSocketEvent(barId1, mapOf("old" to 1)))
+            assertEquals(1, received.size)
 
+            val newWs = MockBSBWebSocket()
+            env.mockApi.setWebSocket(newWs)
             advanceUntilIdle()
 
-            try {
-                jobs.awaitAll()
-            } catch (_: Exception) {
-                // Some may be cancelled
-            }
+            newWs.emitEvent(WebSocketEvent(barId1, mapOf("new" to 2)))
 
-            // Then - no deadlock, system should be responsive
-            val finalJob = testSetup.api.getWSFlow().launchIn(backgroundScope)
-            advanceUntilIdle()
-            assertNotNull(finalJob, "Should be able to subscribe after high concurrency")
-            finalJob.cancel()
-        }
+            assertEquals(2, received.size)
+            assertEquals("new" to (2 as Any), received[1])
 
-    @Test
-    fun GIVEN_concurrent_state_changes_WHEN_websocket_connecting_THEN_handles_correctly() =
-        runTest {
-            // Given
-            val networkFlow = MutableStateFlow(true)
-            val principalFlow =
-                MutableStateFlow<BUSYLibUserPrincipal>(testToken())
-            val hostFlow = MutableStateFlow("host.example.com")
-
-            val testSetup = createTestSetup(
-
-                networkFlow = networkFlow,
-                principalFlow = principalFlow,
-                hostFlow = hostFlow
-            )
-
-            val job = testSetup.api.getWSFlow().launchIn(backgroundScope)
-            advanceUntilIdle()
-
-            // When - concurrent changes while connecting
-            val changeJobs = listOf(
-                async {
-                    repeat(10) {
-                        networkFlow.value = !networkFlow.value
-                        delay(5.milliseconds)
-                    }
-                },
-                async {
-                    repeat(10) {
-                        val newPrincipal = if (it % 2 == 0) {
-                            testToken("token-$it")
-                        } else {
-                            BUSYLibUserPrincipal.Empty
-                        }
-                        principalFlow.value = newPrincipal
-                        delay(7.milliseconds)
-                    }
-                },
-                async {
-                    repeat(10) {
-                        hostFlow.value = "host$it.example.com"
-                        delay(3.milliseconds)
-                    }
-                }
-            )
-
-            advanceUntilIdle()
-            changeJobs.awaitAll()
-            advanceUntilIdle()
-
-            // Then - should handle all changes without crashing
             job.cancel()
         }
 
@@ -676,231 +526,139 @@ class CloudWebSocketBarsApiImplTest {
     // region Edge Cases
 
     @Test
-    fun GIVEN_empty_host_WHEN_subscribing_THEN_handles_gracefully() = runTest {
-        // Given
-        val testSetup = createTestSetup(
+    fun GIVEN_no_websocket_initially_WHEN_websocket_appears_THEN_subscribes() =
+        runTest(UnconfinedTestDispatcher()) {
+            val env = TestEnvironment(initiallyConnected = false)
 
-            isNetworkAvailable = true,
-            principal = testToken(),
-            host = ""
-        )
+            val job = env.orchestrator.getEventsFlow(barId1)
+                .launchIn(backgroundScope)
 
-        // When
-        val job = testSetup.api.getWSFlow()
-            .onEach { }
-            .launchIn(backgroundScope)
+            assertTrue(env.mockWs.sentRequests.isEmpty())
 
-        advanceUntilIdle()
-
-        // Then - should handle empty host gracefully
-        job.cancel()
-    }
-
-    @Test
-    fun GIVEN_token_principal_WHEN_subscribing_THEN_uses_token_correctly() = runTest {
-        // Given
-        val testSetup = createTestSetup(
-            isNetworkAvailable = true,
-            principal = testToken("full-token")
-        )
-
-        // When
-        val job = testSetup.api.getWSFlow().launchIn(backgroundScope)
-        advanceUntilIdle()
-
-        // Then - should use the token from Full principal
-        job.cancel()
-    }
-
-    @Test
-    fun GIVEN_flow_never_emits_WHEN_timeout_waiting_THEN_handles_gracefully() = runTest {
-        // Given
-        val testSetup = createTestSetup(
-
-            isNetworkAvailable = false,
-            principal = BUSYLibUserPrincipal.Empty
-        )
-
-        // When
-        val result = withTimeoutOrNull(100.milliseconds) {
-            testSetup.api.getWSFlow().first()
-        }
-
-        // Then
-        assertNull(result, "Should timeout when conditions not met")
-    }
-
-    @Test
-    fun GIVEN_multiple_token_changes_WHEN_same_token_value_THEN_no_unnecessary_reconnection() =
-        runTest {
-            // Given
-            val connectionAttempts = MutableStateFlow(0)
-            val sameToken = testToken("same-token")
-            val principalFlow =
-                MutableStateFlow<BUSYLibUserPrincipal>(sameToken)
-
-            val testSetup = createTestSetup(
-
-                isNetworkAvailable = true,
-                principalFlow = principalFlow,
-                onWebSocketCreated = { connectionAttempts.update { it + 1 } }
-            )
-
-            val job = testSetup.api.getWSFlow().launchIn(backgroundScope)
+            env.mockApi.setWebSocket(env.mockWs)
             advanceUntilIdle()
 
-            val initialAttempts = connectionAttempts.value
+            val subscribes = env.mockWs.sentRequests
+                .filterIsInstance<InternalWebSocketRequest.SubscribeState>()
+            assertEquals(1, subscribes.size)
 
-            // When - set same token instance multiple times
-            repeat(5) {
-                principalFlow.value = sameToken
-                advanceUntilIdle()
-            }
-
-            // Then - no additional connections should be made for same instance
-            // Note: MutableStateFlow does NOT emit for same value (referential equality)
-            assertEquals(
-                initialAttempts,
-                connectionAttempts.value,
-                "No reconnection for same token value"
-            )
             job.cancel()
         }
 
-    // endregion
+    @Test
+    fun GIVEN_websocket_becomes_null_WHEN_last_subscriber_cancels_THEN_no_crash() =
+        runTest(UnconfinedTestDispatcher()) {
+            val env = TestEnvironment()
 
-    // region Test Setup
+            val job = env.orchestrator.getEventsFlow(barId1)
+                .launchIn(backgroundScope)
 
-    private data class TestSetup(
-        val api: CloudWebSocketBarsApiImpl,
-        val networkStateApi: BUSYLibNetworkStateApi,
-        val principalApi: BUSYLibPrincipalApi,
-        val hostApi: BUSYLibHostApi,
-        val webSocketFactory: MockBSBWebSocketFactory
-    )
+            assertEquals(1, env.mockWs.sentRequests.size)
 
-    @Suppress("LongParameterList")
-    private fun TestScope.createTestSetup(
-        isNetworkAvailable: Boolean = false,
-        networkFlow: MutableStateFlow<Boolean>? = null,
-        principal: BUSYLibUserPrincipal = BUSYLibUserPrincipal.Empty,
-        principalFlow: MutableStateFlow<BUSYLibUserPrincipal>? = null,
-        host: String = "test.example.com",
-        hostFlow: MutableStateFlow<String>? = null,
-        onWebSocketCreated: () -> Unit = {},
-        onWebSocketClosed: () -> Unit = {},
-        onWebSocketCreatedForHost: (String) -> Unit = {},
-        scopeOverride: CoroutineScope? = null
-    ): TestSetup {
-        val actualNetworkFlow = networkFlow ?: MutableStateFlow(isNetworkAvailable)
-        val actualPrincipalFlow = principalFlow ?: MutableStateFlow(principal)
-        val actualHostFlow = hostFlow ?: MutableStateFlow(host)
+            env.mockApi.setWebSocket(null)
+            advanceUntilIdle()
 
-        val networkStateApi = object : BUSYLibNetworkStateApi {
-            override val isNetworkAvailableFlow = actualNetworkFlow.wrap()
+            job.cancel()
+            advanceUntilIdle()
+
+            val unsubscribes = env.mockWs.sentRequests
+                .filterIsInstance<InternalWebSocketRequest.UnsubscribeState>()
+            assertEquals(0, unsubscribes.size)
         }
 
-        val principalApi = object : BUSYLibPrincipalApi {
-            override fun getPrincipalFlow(): WrappedStateFlow<BUSYLibUserPrincipal> =
-                actualPrincipalFlow.wrap()
-        }
+    @Test
+    fun GIVEN_many_bars_subscribed_WHEN_all_cancel_THEN_each_gets_unsubscribe() =
+        runTest(UnconfinedTestDispatcher()) {
+            val env = TestEnvironment()
 
-        val hostApi = object : BUSYLibHostApi {
-            override fun getHost(): WrappedStateFlow<String> = actualHostFlow.wrap()
-        }
-
-        val webSocketFactory = MockBSBWebSocketFactory(
-            onWebSocketCreated = onWebSocketCreated,
-            onWebSocketClosed = onWebSocketClosed,
-            onWebSocketCreatedForHost = onWebSocketCreatedForHost
-        )
-
-        val testDispatcher = StandardTestDispatcher(testScheduler)
-        val apiScope = scopeOverride ?: backgroundScope
-
-        val api = CloudWebSocketBarsApiImpl(
-            networkStateApi = networkStateApi,
-            principalApi = principalApi,
-            hostApi = hostApi,
-            webSocketFactory = webSocketFactory,
-            scope = apiScope,
-            dispatcher = testDispatcher
-        )
-
-        return TestSetup(
-            api = api,
-            networkStateApi = networkStateApi,
-            principalApi = principalApi,
-            hostApi = hostApi,
-            webSocketFactory = webSocketFactory
-        )
-    }
-
-    // endregion
-
-    private fun testToken(token: String = "test-token"): BUSYLibUserPrincipal.Token =
-        BUSYLibUserPrincipalToken(
-            userId = Uuid.parse("00000000-0000-0000-0000-000000000001"),
-            tokenProvider = { token }
-        )
-
-    // region Mock Implementations
-
-    /**
-     * Mock implementation of BSBWebSocketFactory for testing.
-     * This allows us to test CloudWebSocketBarsApiImpl without real network connections.
-     */
-    private class MockBSBWebSocketFactory(
-        private val onWebSocketCreated: () -> Unit = {},
-        private val onWebSocketClosed: () -> Unit = {},
-        private val onWebSocketCreatedForHost: (String) -> Unit = {}
-    ) : BSBWebSocketFactory {
-
-        private var lastCreatedWebSocket: MockBSBWebSocket? = null
-
-        override suspend fun create(
-            logger: LogTagProvider,
-            principal: BUSYLibUserPrincipal.Token,
-            busyHost: String,
-            scope: CoroutineScope,
-            dispatcher: CoroutineDispatcher
-        ): BSBWebSocket {
-            onWebSocketCreated()
-            onWebSocketCreatedForHost(busyHost)
-
-            val webSocket = MockBSBWebSocket(onWebSocketClosed)
-            lastCreatedWebSocket = webSocket
-            // Mirror production behavior: close websocket when scope is cancelled
-            scope.coroutineContext[Job]?.invokeOnCompletion {
-                webSocket.close()
+            val barIds = List(20) { i ->
+                Uuid.parse(
+                    "00000000-0000-0000-0000-${i.toString().padStart(12, '0')}"
+                )
             }
-            return webSocket
+
+            val jobs = barIds.map { barId ->
+                env.orchestrator.getEventsFlow(barId)
+                    .launchIn(backgroundScope)
+            }
+
+            val subscribes = env.mockWs.sentRequests
+                .filterIsInstance<InternalWebSocketRequest.SubscribeState>()
+            assertEquals(20, subscribes.size)
+
+            jobs.forEach { it.cancel() }
+            advanceUntilIdle()
+
+            val unsubscribes = env.mockWs.sentRequests
+                .filterIsInstance<InternalWebSocketRequest.UnsubscribeState>()
+            assertEquals(20, unsubscribes.size)
         }
 
-        fun getLastCreatedWebSocket(): MockBSBWebSocket? = lastCreatedWebSocket
+    @Test
+    fun GIVEN_subscriber_WHEN_events_arrive_before_and_after_cancel_THEN_only_before_received() =
+        runTest(UnconfinedTestDispatcher()) {
+            val env = TestEnvironment()
+            val received = mutableListOf<Pair<String, Any>>()
+
+            val job = env.orchestrator.getEventsFlow(barId1)
+                .onEach { received.add(it) }
+                .launchIn(backgroundScope)
+
+            env.mockWs.emitEvent(WebSocketEvent(barId1, mapOf("before" to 1)))
+
+            job.cancel()
+            advanceUntilIdle()
+
+            env.mockWs.emitEvent(WebSocketEvent(barId1, mapOf("after" to 2)))
+
+            assertEquals(1, received.size)
+            assertEquals("before" to (1 as Any), received[0])
+        }
+
+    // endregion
+
+    // region Test Infrastructure
+
+    private class MockBSBWebSocket : BSBWebSocket {
+        private val _sentRequests = mutableListOf<InternalWebSocketRequest>()
+        private val requestsMutex = Mutex()
+        val sentRequests: List<InternalWebSocketRequest> get() = _sentRequests.toList()
+
+        private val _eventsFlow = MutableSharedFlow<WebSocketEvent>(
+            extraBufferCapacity = 64
+        )
+
+        override fun getEventsFlow(): Flow<WebSocketEvent> = _eventsFlow
+
+        override suspend fun send(request: InternalWebSocketRequest) {
+            requestsMutex.withLock {
+                _sentRequests.add(request)
+            }
+        }
+
+        suspend fun emitEvent(event: WebSocketEvent) {
+            _eventsFlow.emit(event)
+        }
     }
 
-    /**
-     * Mock implementation of BSBWebSocket for testing.
-     */
-    private class MockBSBWebSocket(
-        private val onClose: () -> Unit = {}
-    ) : BSBWebSocket {
-        private val _eventsFlow = MutableStateFlow<WebSocketEvent?>(null)
+    private class MockCloudWebSocketApi(
+        initialWs: BSBWebSocket? = null
+    ) : CloudWebSocketApi {
+        private val _wsFlow = MutableStateFlow<BSBWebSocket?>(initialWs)
 
-        override fun getEventsFlow(): Flow<WebSocketEvent> = flowOf()
+        override fun getWSFlow(): Flow<BSBWebSocket?> = _wsFlow
 
-        override suspend fun send(request: WebSocketRequest) {
-            // Mock send - can be extended to track sent requests if needed
+        fun setWebSocket(ws: BSBWebSocket?) {
+            _wsFlow.value = ws
         }
+    }
 
-        fun emitEvent(event: WebSocketEvent) {
-            _eventsFlow.value = event
-        }
-
-        fun close() {
-            onClose()
-        }
+    private class TestEnvironment(initiallyConnected: Boolean = true) {
+        val mockWs = MockBSBWebSocket()
+        val mockApi = MockCloudWebSocketApi(
+            initialWs = if (initiallyConnected) mockWs else null
+        )
+        val orchestrator = CloudWebSocketBarsApiImpl(mockApi)
     }
 
     // endregion

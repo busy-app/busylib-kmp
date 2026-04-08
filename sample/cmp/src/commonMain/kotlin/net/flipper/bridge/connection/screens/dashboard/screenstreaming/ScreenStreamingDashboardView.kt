@@ -2,6 +2,7 @@ package net.flipper.bridge.connection.screens.dashboard.screenstreaming
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -34,34 +35,37 @@ fun ScreenStreamingDashboardContent(
             modifier = Modifier.padding(horizontal = 16.dp)
         ) {
             ScreenStreamingBlock(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth()
+                    .height(220.dp),
                 image = streamImage
             )
         }
     }
 }
 
+private const val BUSY_BAR_SCREEN_ASPECT_RATIO = 72f / 16f
+
 @Composable
-private fun ScreenStreamingBlock(
+fun ScreenStreamingBlock(
     image: BusyImageFormat?,
     modifier: Modifier = Modifier
 ) {
     val painter = rememberBusyImagePainter(image)
     Box(
         modifier = modifier
-            .fillMaxWidth()
-            .height(220.dp)
     ) {
         if (painter != null) {
             Image(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxSize()
+                    .aspectRatio(BUSY_BAR_SCREEN_ASPECT_RATIO),
                 painter = painter,
                 contentDescription = null,
                 contentScale = ContentScale.FillWidth
             )
         } else {
             Surface(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxSize()
+                    .aspectRatio(BUSY_BAR_SCREEN_ASPECT_RATIO),
                 color = MaterialTheme.colors.onSurface.copy(alpha = 0.05f),
                 shape = RoundedCornerShape(10.dp)
             ) {
