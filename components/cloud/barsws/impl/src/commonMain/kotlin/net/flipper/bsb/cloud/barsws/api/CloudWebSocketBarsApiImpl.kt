@@ -33,7 +33,7 @@ import kotlin.uuid.Uuid
 class CloudWebSocketBarsApiImpl(
     private val webSocketApi: CloudWebSocketApi
 ) : CloudWebSocketBarsApi, LogTagProvider {
-    override val TAG = "BUSYBarWebSocketOrchestrator"
+    override val TAG = "CloudWebSocketBarsApi"
 
     private val mutex = Mutex()
     private val subscriberCounts = mutableMapOf<Uuid, Int>()

@@ -67,13 +67,13 @@ private fun getRootDecomposeComponentFactory(
         permissionChecker = permissionChecker,
         searchDecomposeFactory = getSearchDecomposeFactory(
             searchViewModelProvider = searchViewModelProvider,
-            multiStreamApi = multiStreamApi
         ),
         connectionDeviceScreenDecomposeComponentFactory = getConnectionDeviceScreenDecomposeComponentFactory(
             persistedStorage = persistedStorage,
             orchestrator = orchestrator,
             featureProvider = featureProvider,
             fService = fConnectionService,
+            multiStreamApi = multiStreamApi,
         ),
         dashboardDecomposeComponentFactory = getDashboardDecomposeComponentFactory(
             fFeatureProvider = featureProvider,
@@ -85,11 +85,9 @@ private fun getRootDecomposeComponentFactory(
 
 private fun getSearchDecomposeFactory(
     searchViewModelProvider: () -> ConnectionSearchViewModel,
-    multiStreamApi: MultiStreamApi
 ): ConnectionSearchDecomposeComponent.Factory {
     return ConnectionSearchDecomposeComponent.Factory(
         searchViewModelProvider = searchViewModelProvider,
-        multiStreamApi = multiStreamApi
     )
 }
 
@@ -98,6 +96,7 @@ private fun getConnectionDeviceScreenDecomposeComponentFactory(
     orchestrator: FDeviceOrchestrator,
     featureProvider: FFeatureProvider,
     fService: FConnectionService,
+    multiStreamApi: MultiStreamApi,
 ): ConnectionDeviceScreenDecomposeComponent.Factory {
     return ConnectionDeviceScreenDecomposeComponent.Factory(
         devicesViewModelProvider = { FDevicesViewModel(persistedStorage) },
@@ -109,7 +108,7 @@ private fun getConnectionDeviceScreenDecomposeComponentFactory(
             )
         },
         pingViewModelProvider = { PingViewModel(featureProvider, orchestrator) },
-
+        multiStreamApi = multiStreamApi,
     )
 }
 

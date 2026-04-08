@@ -43,7 +43,7 @@ fun ScreenStreamingDashboardContent(
     }
 }
 
-private const val BUSY_BAR_SCREEN_ASPECT_RATIO = 72f / 16f
+const val BUSY_BAR_SCREEN_ASPECT_RATIO = 72f / 16f
 
 @Composable
 fun ScreenStreamingBlock(

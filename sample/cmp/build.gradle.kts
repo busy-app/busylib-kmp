@@ -61,6 +61,7 @@ kotlin {
         implementation(libs.settings)
         implementation(libs.settings.observable)
         implementation(libs.settings.coroutines)
+        implementation(libs.settings.serialization)
         implementation(libs.kotlin.coroutines)
         implementation(libs.kotlin.immutable)
         implementation(libs.kotlin.serialization.json)

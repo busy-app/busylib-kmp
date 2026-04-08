@@ -17,6 +17,7 @@ import net.flipper.bridge.connection.screens.device.viewmodel.FCurrentDeviceView
 import net.flipper.bridge.connection.screens.device.viewmodel.FDevicesViewModel
 import net.flipper.bridge.connection.screens.device.viewmodel.PingViewModel
 import net.flipper.bridge.connection.screens.root.model.ConnectionRootConfig
+import net.flipper.tools.multistream.api.MultiStreamApi
 
 class ConnectionDeviceScreenDecomposeComponent(
     componentContext: ComponentContext,
@@ -24,6 +25,7 @@ class ConnectionDeviceScreenDecomposeComponent(
     private val devicesViewModelProvider: () -> FDevicesViewModel,
     private val currentDeviceViewModelProvider: () -> FCurrentDeviceViewModel,
     private val pingViewModelProvider: () -> PingViewModel,
+    private val multiStreamApi: MultiStreamApi
 ) : ScreenDecomposeComponent(componentContext) {
     private val devicesViewModel = instanceKeeper.getOrCreate {
         devicesViewModelProvider.invoke()
@@ -42,7 +44,8 @@ class ConnectionDeviceScreenDecomposeComponent(
             FDeviceDropdownComposable(
                 devicesState = deviceState,
                 onDeviceSelect = devicesViewModel::onSelectDevice,
-                onOpenSearch = { navigation.pushNew(ConnectionRootConfig.Search) }
+                onOpenSearch = { navigation.pushNew(ConnectionRootConfig.Search) },
+                multiStreamApi = multiStreamApi
             )
             val currentDevice by currentDeviceViewModel.getState().collectAsState()
             FCurrentDeviceComposable(currentDevice)
@@ -62,6 +65,7 @@ class ConnectionDeviceScreenDecomposeComponent(
         private val devicesViewModelProvider: () -> FDevicesViewModel,
         private val currentDeviceViewModelProvider: () -> FCurrentDeviceViewModel,
         private val pingViewModelProvider: () -> PingViewModel,
+        private val multiStreamApi: MultiStreamApi,
     ) {
         operator fun invoke(
             componentContext: ComponentContext,
@@ -73,6 +77,7 @@ class ConnectionDeviceScreenDecomposeComponent(
                 devicesViewModelProvider = devicesViewModelProvider,
                 currentDeviceViewModelProvider = currentDeviceViewModelProvider,
                 pingViewModelProvider = pingViewModelProvider,
+                multiStreamApi = multiStreamApi,
             )
         }
     }

@@ -3,6 +3,7 @@ package net.flipper.bridge.connection.feature.events.api
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOf
@@ -24,6 +25,7 @@ interface FEventsFeatureApi : FDeviceFeatureApi {
 
 inline fun <reified T : BusyLibUpdateEvent> FEventsFeatureApi.get(): Flow<ConsumableUpdateEvent.BusyLib<T>> {
     return getBusyLibUpdateEvents()
+        .filter { it.busyLibUpdateEvent is T }
         .filterIsInstance<ConsumableUpdateEvent.BusyLib<T>>()
 }
 

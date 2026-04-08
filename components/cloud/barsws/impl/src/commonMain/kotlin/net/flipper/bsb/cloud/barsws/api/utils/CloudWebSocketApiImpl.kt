@@ -35,7 +35,7 @@ class CloudWebSocketApiImpl(
     scope: CoroutineScope,
     dispatcher: CoroutineDispatcher = NETWORK_DISPATCHER
 ) : CloudWebSocketApi, LogTagProvider {
-    override val TAG = "CloudWebSocketBarsApiImpl"
+    override val TAG = "CloudWebSocketApi"
 
     private val wsStateFlow = combine(
         networkStateApi.isNetworkAvailableFlow,

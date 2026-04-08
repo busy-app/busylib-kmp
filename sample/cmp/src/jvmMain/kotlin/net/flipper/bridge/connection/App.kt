@@ -42,8 +42,7 @@ suspend fun main() {
     val hostApi = BUSYLibHostApiStub(
         host = "cloud.dev.busy.app",
     )
-    val authSettings = PreferencesSettings(Preferences.userRoot().node(AUTH_PREFS_NODE))
-    val principalApi = UserPrincipalApiSampleImpl(applicationScope, hostApi, authSettings)
+    val principalApi = UserPrincipalApiSampleImpl(applicationScope, hostApi, settings)
     val busyLib = BUSYLibDesktop.build(
         scope = applicationScope,
         principalApi = principalApi,
