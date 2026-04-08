@@ -9,7 +9,7 @@ object TimezoneProtobufMapper {
         return BusyLibUpdateEvent.Timezone(
             name = timezone.name,
             offset = UtcOffset(minutes = timezone.offset),
-            abbreviation = timezone.abbr.ifEmpty { null } ?: return null ,
+            abbreviation = timezone.abbr.ifEmpty { null } ?: return null,
         )
     }
 }
