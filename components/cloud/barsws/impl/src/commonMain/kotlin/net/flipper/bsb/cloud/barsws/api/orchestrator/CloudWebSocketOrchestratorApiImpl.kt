@@ -1,4 +1,4 @@
-package net.flipper.bsb.cloud.barsws.api.orhestrator
+package net.flipper.bsb.cloud.barsws.api.orchestrator
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
