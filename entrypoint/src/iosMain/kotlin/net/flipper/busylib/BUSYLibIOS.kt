@@ -17,6 +17,7 @@ import net.flipper.bsb.cloud.api.BUSYLibHostApi
 import net.flipper.bsb.cloud.api.BUSYLibHostApiStub
 import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
 import net.flipper.busylib.di.create
+import net.flipper.tools.multistream.api.MultiStreamApi
 import platform.CoreBluetooth.CBCentralManager
 
 @Inject
@@ -26,6 +27,7 @@ class BUSYLibIOS(
     override val featureProvider: FFeatureProvider,
     override val firmwareUpdaterApi: FirmwareUpdaterApi,
     override val persistedStorage: FDevicePersistedStorage,
+    override val multiStreamApi: MultiStreamApi,
     val fCentralManagerApi: FCentralManagerApi,
     private val startUpListeners: Set<InternalBUSYLibStartupListener>
 ) : BUSYLibApple {

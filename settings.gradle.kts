@@ -128,6 +128,9 @@ include(
     ":components:tools:oncall:api",
     ":components:tools:oncall:impl",
 
+    ":components:tools:multistream:api",
+    ":components:tools:multistream:impl",
+
     ":components:watchers:api",
     ":components:watchers:changename",
     ":components:watchers:provisioning",

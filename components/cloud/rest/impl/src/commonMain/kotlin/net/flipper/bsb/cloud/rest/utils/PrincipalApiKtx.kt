@@ -1,6 +1,7 @@
 package net.flipper.bsb.cloud.rest.utils
 
 import io.ktor.client.plugins.ResponseException
+import io.ktor.client.plugins.expectSuccess
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
@@ -44,6 +45,7 @@ private fun Throwable.isAuthError(): Boolean {
 
 class BsbUserPrincipalScopeImpl(val token: String) {
     fun HttpRequestBuilder.addAuth() {
+        expectSuccess = true
         headers[HttpHeaders.Authorization] = "Bearer $token"
     }
 }

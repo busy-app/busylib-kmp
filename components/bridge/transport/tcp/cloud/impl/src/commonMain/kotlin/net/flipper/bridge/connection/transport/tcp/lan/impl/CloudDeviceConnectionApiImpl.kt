@@ -9,15 +9,12 @@ import net.flipper.bridge.connection.transport.tcp.cloud.api.FCloudDeviceConnect
 import net.flipper.bridge.connection.transport.tcp.lan.impl.engine.BUSYCloudHttpEngineFactory
 import net.flipper.bridge.connection.transport.tcp.lan.impl.engine.token.ProxyTokenProviderFactory
 import net.flipper.bridge.connection.transport.tcp.lan.impl.metainfo.FCloudStreamingFactory
-import net.flipper.bridge.connection.transport.tcp.lan.impl.monitor.CloudDeviceMonitor
-import net.flipper.bsb.cloud.barsws.api.CloudWebSocketBarsApi
 import net.flipper.busylib.core.di.BusyLibGraph
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 
 @Inject
 @ContributesBinding(BusyLibGraph::class, CloudDeviceConnectionApi::class)
 class CloudDeviceConnectionApiImpl(
-    private val webSocketBarsApi: CloudWebSocketBarsApi,
     private val proxyTokenProvider: ProxyTokenProviderFactory,
     private val cloudEngineFactory: BUSYCloudHttpEngineFactory,
     private val cloudStreamingFactory: FCloudStreamingFactory
@@ -27,14 +24,9 @@ class CloudDeviceConnectionApiImpl(
         config: FCloudDeviceConnectionConfig,
         listener: FTransportConnectionStatusListener
     ): Result<FCloudApi> = runCatching {
-        val cloudDeviceMonitorFactory = CloudDeviceMonitor.Factory(
-            webSocketBarsApi = webSocketBarsApi,
-            scope = scope
-        )
         val lanApi = FCloudApiImpl(
             listener = listener,
             currentConfig = config,
-            cloudDeviceMonitorFactory = cloudDeviceMonitorFactory,
             tokenProviderFactory = proxyTokenProvider,
             cloudEngineFactory = cloudEngineFactory,
             cloudStreamingFactory = cloudStreamingFactory,

@@ -17,6 +17,7 @@ import net.flipper.bsb.cloud.api.BUSYLibHostApiStub
 import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
 import net.flipper.busylib.di.BUSYLibGraphDesktop
 import net.flipper.busylib.di.create
+import net.flipper.tools.multistream.api.MultiStreamApi
 import kotlin.collections.forEach
 
 @Inject
@@ -26,6 +27,7 @@ class BUSYLibDesktop(
     override val featureProvider: FFeatureProvider,
     override val firmwareUpdaterApi: FirmwareUpdaterApi,
     override val persistedStorage: FDevicePersistedStorage,
+    override val multiStreamApi: MultiStreamApi,
     private val startUpListeners: Set<InternalBUSYLibStartupListener>
 ) : BUSYLib {
     override fun launch() {

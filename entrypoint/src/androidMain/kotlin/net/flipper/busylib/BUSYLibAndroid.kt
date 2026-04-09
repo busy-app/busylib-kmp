@@ -19,6 +19,7 @@ import net.flipper.bsb.cloud.api.BUSYLibHostApiStub
 import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
 import net.flipper.busylib.di.BUSYLibGraphAndroid
 import net.flipper.busylib.di.create
+import net.flipper.tools.multistream.api.MultiStreamApi
 import no.nordicsemi.kotlin.ble.client.android.CentralManager
 
 @Inject
@@ -29,6 +30,7 @@ class BUSYLibAndroid(
     override val featureProvider: FFeatureProvider,
     override val firmwareUpdaterApi: FirmwareUpdaterApi,
     override val persistedStorage: FDevicePersistedStorage,
+    override val multiStreamApi: MultiStreamApi,
     val flipperScanner: FlipperScanner,
     val centralManager: CentralManager,
     private val startUpListeners: Set<InternalBUSYLibStartupListener>

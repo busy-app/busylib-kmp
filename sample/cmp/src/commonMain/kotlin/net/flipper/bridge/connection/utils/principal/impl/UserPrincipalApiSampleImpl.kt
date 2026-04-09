@@ -1,6 +1,13 @@
+@file:Suppress("ClockNowForbiddenRule")
+
 package net.flipper.bridge.connection.utils.principal.impl
 
 import com.russhwolf.settings.Settings
+import com.russhwolf.settings.get
+import com.russhwolf.settings.serialization.decodeValue
+import com.russhwolf.settings.serialization.encodeValue
+import com.russhwolf.settings.serialization.removeValue
+import com.russhwolf.settings.set
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -8,21 +15,19 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import net.flipper.bridge.connection.utils.principal.impl.model.UserData
+import net.flipper.bridge.connection.utils.principal.impl.token.AuthTokenProvider
+import net.flipper.bridge.connection.utils.principal.impl.token.AuthTokens
 import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
-import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipalToken
 import net.flipper.bsb.cloud.api.BUSYLibHostApi
 import net.flipper.busylib.core.wrapper.wrap
+import net.flipper.core.busylib.log.info
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
-import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
-private const val KEY_ACCESS_TOKEN = "auth_access_token"
-private const val KEY_REFRESH_TOKEN = "auth_refresh_token"
-private const val KEY_EXPIRES_AT_EPOCH_SEC = "auth_expires_at_epoch_sec"
-private const val KEY_USER_ID = "auth_user_id"
-private const val KEY_EMAIL = "auth_email"
+private const val KEY_USER = "auth_user_data"
 
 class UserPrincipalApiSampleImpl(
     private val scope: CoroutineScope,
@@ -32,117 +37,116 @@ class UserPrincipalApiSampleImpl(
     private val principalFlow = MutableStateFlow<BUSYLibUserPrincipal>(BUSYLibUserPrincipal.Loading)
     private val mutex = Mutex()
 
-    private var cachedAccessToken: String? = null
-    private var cachedRefreshToken: String? = null
-    private var tokenExpireTime: Instant = Instant.DISTANT_PAST
-    private var cachedUserId: Uuid? = null
-    private var cachedEmail: String? = null
-
     val authStateFlow: StateFlow<BUSYLibUserPrincipal> = principalFlow.asStateFlow()
 
     init {
         scope.launch {
-            loadPersistedTokens()
+            val userData = loadUserData()
+            onNewUserData(userData)
         }
     }
 
     override fun getPrincipalFlow() = principalFlow.wrap()
 
+    private suspend fun onNewUserData(userData: UserData?) {
+        if (userData == null) {
+            principalFlow.emit(BUSYLibUserPrincipal.Empty)
+            return
+        }
+        val authTokens = AuthTokens(
+            accessToken = userData.accessToken,
+            refreshToken = userData.refreshToken,
+            expiresIn = userData.expiresIn
+        )
+        val tokenProvider = AuthTokenProvider(
+            initialAuthTokens = authTokens,
+            saveNewTokens = { tokens ->
+                set(
+                    tokens = tokens,
+                    email = userData.email,
+                    userId = userData.userId
+                )
+            },
+            exchangeTokens = ::exchangeTokens
+        )
+        val loggedUser = UserPrincipalImpl(
+            tokenProvider = tokenProvider,
+            email = userData.email,
+            userId = userData.userId
+        )
+        principalFlow.emit(loggedUser)
+    }
+
     suspend fun login(email: String, password: String): Result<Unit> = runCatching {
         val host = hostApi.getHost().value
         val tokens = SampleAuthClient.signIn(host, email, password)
-
-        cachedAccessToken = tokens.accessToken
-        cachedRefreshToken = tokens.refreshToken
-        tokenExpireTime = Clock.System.now() + tokens.expiresInSec.seconds
-
         val me = SampleAuthClient.getMe(host, tokens.accessToken)
-        cachedUserId = me.uid
-        cachedEmail = me.email
 
-        saveTokens()
-        principalFlow.emit(createTokenPrincipal(me.uid))
+        val userData = UserData(
+            accessToken = tokens.accessToken,
+            refreshToken = tokens.refreshToken,
+            expiresIn = Clock.System.now() + tokens.expiresInSec.seconds,
+            email = me.email,
+            userId = me.uid
+        )
+        saveUserData(userData)
+        onNewUserData(userData)
     }
 
     fun logout() {
         scope.launch {
             val host = hostApi.getHost().value
-            val token = cachedAccessToken
-            if (token != null) {
-                runCatching { SampleAuthClient.logout(host, token) }
+            val principal = principalFlow.value
+            if (principal is UserPrincipalImpl) {
+                runCatching {
+                    val token = principal.getToken(null)
+                    SampleAuthClient.logout(host, token)
+                }
             }
-            clearTokens()
+            clearUserData()
             principalFlow.emit(BUSYLibUserPrincipal.Empty)
         }
     }
 
-    private suspend fun loadPersistedTokens() {
-        val accessToken = settings.getStringOrNull(KEY_ACCESS_TOKEN)
-        val refreshToken = settings.getStringOrNull(KEY_REFRESH_TOKEN)
-        val expiresAtSec = settings.getLongOrNull(KEY_EXPIRES_AT_EPOCH_SEC)
-        val userId = settings.getStringOrNull(KEY_USER_ID)
-
-        if (accessToken != null && refreshToken != null && userId != null && expiresAtSec != null) {
-            cachedAccessToken = accessToken
-            cachedRefreshToken = refreshToken
-            tokenExpireTime = Instant.fromEpochSeconds(expiresAtSec)
-            cachedUserId = Uuid.parse(userId)
-            cachedEmail = settings.getStringOrNull(KEY_EMAIL)
-
-            principalFlow.emit(createTokenPrincipal(cachedUserId!!))
-        } else {
-            principalFlow.emit(BUSYLibUserPrincipal.Empty)
-        }
-    }
-
-    private fun saveTokens() {
-        settings.putString(KEY_ACCESS_TOKEN, cachedAccessToken ?: return)
-        settings.putString(KEY_REFRESH_TOKEN, cachedRefreshToken ?: return)
-        settings.putLong(KEY_EXPIRES_AT_EPOCH_SEC, tokenExpireTime.epochSeconds)
-        settings.putString(KEY_USER_ID, cachedUserId?.toString() ?: return)
-        cachedEmail?.let { settings.putString(KEY_EMAIL, it) }
-    }
-
-    private fun clearTokens() {
-        cachedAccessToken = null
-        cachedRefreshToken = null
-        tokenExpireTime = Instant.DISTANT_PAST
-        cachedUserId = null
-        cachedEmail = null
-        settings.remove(KEY_ACCESS_TOKEN)
-        settings.remove(KEY_REFRESH_TOKEN)
-        settings.remove(KEY_EXPIRES_AT_EPOCH_SEC)
-        settings.remove(KEY_USER_ID)
-        settings.remove(KEY_EMAIL)
-    }
-
-    private fun shouldUpdateToken(): Boolean {
-        return tokenExpireTime < Clock.System.now()
-    }
-
-    private suspend fun refreshTokensInternal(): String {
-        val refreshToken = cachedRefreshToken ?: error("No refresh token")
+    private suspend fun exchangeTokens(refreshToken: String): AuthTokens {
         val host = hostApi.getHost().value
         val tokens = SampleAuthClient.refreshTokens(host, refreshToken)
-
-        cachedAccessToken = tokens.accessToken
-        if (tokens.refreshToken != null) {
-            cachedRefreshToken = tokens.refreshToken
-        }
-        tokenExpireTime = Clock.System.now() + tokens.expiresInSec.seconds
-        saveTokens()
-        return tokens.accessToken
+        return AuthTokens(
+            accessToken = tokens.accessToken,
+            refreshToken = tokens.refreshToken ?: refreshToken,
+            expiresIn = Clock.System.now() + tokens.expiresInSec.seconds
+        )
     }
 
-    private fun createTokenPrincipal(userId: Uuid): BUSYLibUserPrincipal.Token {
-        return BUSYLibUserPrincipalToken(userId) { failedToken ->
-            mutex.withLock {
-                val accessToken = cachedAccessToken ?: error("No access token")
-                if (failedToken == accessToken || shouldUpdateToken()) {
-                    return@withLock refreshTokensInternal()
-                }
-                return@withLock accessToken
-            }
-        }
+    private suspend fun set(
+        tokens: AuthTokens,
+        email: String,
+        userId: Uuid
+    ) = mutex.withLock {
+        saveUserData(
+            UserData(
+                accessToken = tokens.accessToken,
+                refreshToken = tokens.refreshToken,
+                expiresIn = tokens.expiresIn,
+                email = email,
+                userId = userId
+            )
+        )
+    }
+
+    private fun loadUserData(): UserData? {
+        val userData = settings.decodeValue<UserData?>(KEY_USER, null)
+        info { "Get user data: $userData" }
+        return userData
+    }
+
+    private fun saveUserData(userData: UserData) {
+        info { "Save user data $userData" }
+        settings.encodeValue(KEY_USER, userData)
+    }
+
+    private fun clearUserData() {
+        info { "Clear user data" }
+        settings.removeValue<UserData>(KEY_USER)
     }
 }

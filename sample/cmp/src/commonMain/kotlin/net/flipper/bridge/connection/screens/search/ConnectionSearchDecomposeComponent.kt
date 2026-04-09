@@ -35,6 +35,7 @@ class ConnectionSearchDecomposeComponent(
     }
 
     @Composable
+    @Suppress("LongMethod")
     override fun Render(modifier: Modifier) {
         val devices by searchViewModel.getDevicesFlow().collectAsState()
 
@@ -92,7 +93,7 @@ class ConnectionSearchDecomposeComponent(
     }
 
     class Factory(
-        private val searchViewModelProvider: () -> ConnectionSearchViewModel
+        private val searchViewModelProvider: () -> ConnectionSearchViewModel,
     ) {
         fun invoke(
             componentContext: ComponentContext,

@@ -118,6 +118,9 @@ kotlin {
         implementation(projects.components.watchers.changename)
         implementation(projects.components.watchers.provisioning)
 
+        api(projects.components.tools.multistream.api)
+        implementation(projects.components.tools.multistream.impl)
+
         implementation(libs.kotlin.coroutines)
         implementation(libs.ktor.client.core)
 
@@ -186,7 +189,7 @@ kotlin {
         sourceSets.macosMain.dependencies {
             implementation(projects.components.bridge.transport.tcp.lan.impl)
 
-            implementation(projects.components.tools.oncall.api)
+            api(projects.components.tools.oncall.api)
             implementation(projects.components.tools.oncall.impl)
 
             implementation(projects.components.watchers.desktop)

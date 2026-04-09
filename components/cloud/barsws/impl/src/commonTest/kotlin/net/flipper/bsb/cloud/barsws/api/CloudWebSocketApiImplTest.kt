@@ -32,6 +32,10 @@ import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipalToken
 import net.flipper.bsb.cloud.api.BUSYLibHostApi
+import net.flipper.bsb.cloud.barsws.api.model.InternalWebSocketRequest
+import net.flipper.bsb.cloud.barsws.api.model.WebSocketEvent
+import net.flipper.bsb.cloud.barsws.api.utils.BSBWebSocket
+import net.flipper.bsb.cloud.barsws.api.utils.CloudWebSocketApiImpl
 import net.flipper.bsb.cloud.barsws.api.utils.wrappers.BSBWebSocketFactory
 import net.flipper.busylib.core.wrapper.WrappedStateFlow
 import net.flipper.busylib.core.wrapper.wrap
@@ -58,7 +62,7 @@ import kotlin.uuid.Uuid
  * allowing us to test the actual implementation logic without needing real network connections.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-class CloudWebSocketBarsApiImplTest {
+class CloudWebSocketApiImplTest {
 
     // region Singleton WebSocket Tests
 
@@ -772,7 +776,7 @@ class CloudWebSocketBarsApiImplTest {
     // region Test Setup
 
     private data class TestSetup(
-        val api: CloudWebSocketBarsApiImpl,
+        val api: CloudWebSocketApiImpl,
         val networkStateApi: BUSYLibNetworkStateApi,
         val principalApi: BUSYLibPrincipalApi,
         val hostApi: BUSYLibHostApi,
@@ -818,7 +822,7 @@ class CloudWebSocketBarsApiImplTest {
         val testDispatcher = StandardTestDispatcher(testScheduler)
         val apiScope = scopeOverride ?: backgroundScope
 
-        val api = CloudWebSocketBarsApiImpl(
+        val api = CloudWebSocketApiImpl(
             networkStateApi = networkStateApi,
             principalApi = principalApi,
             hostApi = hostApi,
@@ -890,7 +894,7 @@ class CloudWebSocketBarsApiImplTest {
 
         override fun getEventsFlow(): Flow<WebSocketEvent> = flowOf()
 
-        override suspend fun send(request: WebSocketRequest) {
+        override suspend fun send(request: InternalWebSocketRequest) {
             // Mock send - can be extended to track sent requests if needed
         }
 

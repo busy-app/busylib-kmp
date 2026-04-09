@@ -5,6 +5,7 @@ import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
 import net.flipper.bridge.connection.service.api.FConnectionService
 import net.flipper.bridge.device.firmwareupdate.updater.api.FirmwareUpdaterApi
+import net.flipper.tools.multistream.api.MultiStreamApi
 
 interface BUSYLib {
     val connectionService: FConnectionService
@@ -12,6 +13,7 @@ interface BUSYLib {
     val featureProvider: FFeatureProvider
     val firmwareUpdaterApi: FirmwareUpdaterApi
     val persistedStorage: FDevicePersistedStorage
+    val multiStreamApi: MultiStreamApi
 
     fun launch()
 }

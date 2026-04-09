@@ -28,6 +28,7 @@ import net.flipper.bridge.connection.service.api.FConnectionService
 import net.flipper.bridge.connection.utils.principal.impl.UserPrincipalApiSampleImpl
 import net.flipper.bridge.device.firmwareupdate.updater.api.FirmwareUpdaterApi
 import net.flipper.busylib.BUSYLib
+import net.flipper.tools.multistream.api.MultiStreamApi
 
 fun getRootDecomposeComponent(
     componentContext: ComponentContext,
@@ -45,7 +46,8 @@ fun getRootDecomposeComponent(
         searchViewModelProvider = searchViewModelProvider,
         fConnectionService = busyLib.connectionService,
         firmwareUpdaterApi = busyLib.firmwareUpdaterApi,
-        principalApi = principalApi
+        principalApi = principalApi,
+        multiStreamApi = busyLib.multiStreamApi
     ).invoke(componentContext)
 }
 
@@ -58,18 +60,20 @@ private fun getRootDecomposeComponentFactory(
     fConnectionService: FConnectionService,
     searchViewModelProvider: () -> ConnectionSearchViewModel,
     firmwareUpdaterApi: FirmwareUpdaterApi,
-    principalApi: UserPrincipalApiSampleImpl?
+    principalApi: UserPrincipalApiSampleImpl?,
+    multiStreamApi: MultiStreamApi
 ): ConnectionRootDecomposeComponent.Factory {
     return ConnectionRootDecomposeComponent.Factory(
         permissionChecker = permissionChecker,
         searchDecomposeFactory = getSearchDecomposeFactory(
-            searchViewModelProvider = searchViewModelProvider
+            searchViewModelProvider = searchViewModelProvider,
         ),
         connectionDeviceScreenDecomposeComponentFactory = getConnectionDeviceScreenDecomposeComponentFactory(
             persistedStorage = persistedStorage,
             orchestrator = orchestrator,
             featureProvider = featureProvider,
             fService = fConnectionService,
+            multiStreamApi = multiStreamApi,
         ),
         dashboardDecomposeComponentFactory = getDashboardDecomposeComponentFactory(
             fFeatureProvider = featureProvider,
@@ -80,10 +84,10 @@ private fun getRootDecomposeComponentFactory(
 }
 
 private fun getSearchDecomposeFactory(
-    searchViewModelProvider: () -> ConnectionSearchViewModel
+    searchViewModelProvider: () -> ConnectionSearchViewModel,
 ): ConnectionSearchDecomposeComponent.Factory {
     return ConnectionSearchDecomposeComponent.Factory(
-        searchViewModelProvider = searchViewModelProvider
+        searchViewModelProvider = searchViewModelProvider,
     )
 }
 
@@ -92,6 +96,7 @@ private fun getConnectionDeviceScreenDecomposeComponentFactory(
     orchestrator: FDeviceOrchestrator,
     featureProvider: FFeatureProvider,
     fService: FConnectionService,
+    multiStreamApi: MultiStreamApi,
 ): ConnectionDeviceScreenDecomposeComponent.Factory {
     return ConnectionDeviceScreenDecomposeComponent.Factory(
         devicesViewModelProvider = { FDevicesViewModel(persistedStorage) },
@@ -103,7 +108,7 @@ private fun getConnectionDeviceScreenDecomposeComponentFactory(
             )
         },
         pingViewModelProvider = { PingViewModel(featureProvider, orchestrator) },
-
+        multiStreamApi = multiStreamApi,
     )
 }
 

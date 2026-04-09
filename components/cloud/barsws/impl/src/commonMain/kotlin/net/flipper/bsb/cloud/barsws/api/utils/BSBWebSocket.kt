@@ -1,4 +1,4 @@
-package net.flipper.bsb.cloud.barsws.api
+package net.flipper.bsb.cloud.barsws.api.utils
 
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.websocket.webSocketSession
@@ -20,7 +20,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
 import net.flipper.bsb.cloud.barsws.api.model.InternalWebSocketRequest
-import net.flipper.bsb.cloud.barsws.api.model.toInternal
+import net.flipper.bsb.cloud.barsws.api.model.WebSocketEvent
 import net.flipper.bsb.cloud.barsws.api.utils.wrappers.BSBWebSocketSession
 import net.flipper.bsb.cloud.barsws.api.utils.wrappers.KtorBSBWebSocketSession
 import net.flipper.bsb.cloud.rest.api.BusyCloudWebSocketTicketApi
@@ -34,6 +34,12 @@ import net.flipper.core.busylib.log.warn
 import kotlin.uuid.Uuid
 
 private const val JSON_KEY_BAR_ID = "bar_id"
+
+interface BSBWebSocket {
+    fun getEventsFlow(): Flow<WebSocketEvent>
+
+    suspend fun send(request: InternalWebSocketRequest)
+}
 
 class BSBWebSocketImpl(
     private val session: BSBWebSocketSession,
@@ -80,10 +86,9 @@ class BSBWebSocketImpl(
         return eventsFlow
     }
 
-    override suspend fun send(request: WebSocketRequest) {
-        val requestInternal = request.toInternal()
-        info { "Send $requestInternal" }
-        session.send(requestInternal)
+    override suspend fun send(request: InternalWebSocketRequest) {
+        info { "Send $request" }
+        session.send(request)
     }
 }
 

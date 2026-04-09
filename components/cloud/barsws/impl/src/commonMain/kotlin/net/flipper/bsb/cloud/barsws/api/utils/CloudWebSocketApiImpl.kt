@@ -1,4 +1,4 @@
-package net.flipper.bsb.cloud.barsws.api
+package net.flipper.bsb.cloud.barsws.api.utils
 
 import com.flipperdevices.core.network.BUSYLibNetworkStateApi
 import kotlinx.coroutines.CoroutineDispatcher
@@ -14,7 +14,6 @@ import me.tatarka.inject.annotations.Inject
 import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
 import net.flipper.bsb.cloud.api.BUSYLibHostApi
-import net.flipper.bsb.cloud.barsws.api.utils.wrapWebsocket
 import net.flipper.bsb.cloud.barsws.api.utils.wrappers.BSBWebSocketFactory
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
@@ -27,16 +26,16 @@ private val NETWORK_DISPATCHER = FlipperDispatchers.default
 
 @Inject
 @SingleIn(BusyLibGraph::class)
-@ContributesBinding(BusyLibGraph::class, CloudWebSocketBarsApi::class)
-class CloudWebSocketBarsApiImpl(
+@ContributesBinding(BusyLibGraph::class, CloudWebSocketApi::class)
+class CloudWebSocketApiImpl(
     networkStateApi: BUSYLibNetworkStateApi,
     principalApi: BUSYLibPrincipalApi,
     hostApi: BUSYLibHostApi,
     private val webSocketFactory: BSBWebSocketFactory,
     scope: CoroutineScope,
     dispatcher: CoroutineDispatcher = NETWORK_DISPATCHER
-) : CloudWebSocketBarsApi, LogTagProvider {
-    override val TAG = "CloudWebSocketBarsApiImpl"
+) : CloudWebSocketApi, LogTagProvider {
+    override val TAG = "CloudWebSocketApi"
 
     private val wsStateFlow = combine(
         networkStateApi.isNetworkAvailableFlow,
@@ -47,7 +46,7 @@ class CloudWebSocketBarsApiImpl(
             wrapWebsocket {
                 channelFlow {
                     webSocketFactory.create(
-                        logger = this@CloudWebSocketBarsApiImpl,
+                        logger = this@CloudWebSocketApiImpl,
                         principal = principal,
                         busyHost = host,
                         scope = this,
