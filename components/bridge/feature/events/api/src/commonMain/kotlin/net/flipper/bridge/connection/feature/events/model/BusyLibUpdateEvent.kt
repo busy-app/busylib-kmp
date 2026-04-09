@@ -1,5 +1,6 @@
 package net.flipper.bridge.connection.feature.events.model
 
+import kotlinx.datetime.UtcOffset
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateStatus
 import net.flipper.bridge.connection.feature.settings.model.BsbBrightnessInfo
 import net.flipper.bridge.connection.feature.wifi.api.model.BsbWifiStatusResponse
@@ -41,8 +42,24 @@ sealed interface BusyLibUpdateEvent {
 
     data class Timezone(
         val name: String,
-        val offsetMinutes: Int,
+        val offset: UtcOffset,
+        val abbreviation: String,
     ) : BusyLibUpdateEvent
+
+    data class Ble(
+        val status: BleServiceStatus,
+        val remoteAddress: String?,
+    ) : BusyLibUpdateEvent {
+        enum class BleServiceStatus {
+            RESET,
+            INITIALIZATION,
+            READY,
+            ADVERTISING,
+            CONNECTABLE,
+            CONNECTED,
+            ERROR,
+        }
+    }
 
     data class Matter(
         val fabricCount: Int,
