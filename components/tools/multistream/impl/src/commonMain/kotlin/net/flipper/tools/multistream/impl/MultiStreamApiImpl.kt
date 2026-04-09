@@ -20,7 +20,7 @@ import net.flipper.bridge.connection.feature.screenstreaming.impl.delegates.Scre
 import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
 import net.flipper.bridge.connection.orchestrator.api.model.deviceOrNull
 import net.flipper.bridge.connection.transport.tcp.lan.impl.metainfo.FCloudStreamingApi
-import net.flipper.bsb.cloud.barsws.api.CloudWebSocketBarsApi
+import net.flipper.bsb.cloud.barsws.api.CloudWebSocketOrchestratorApi
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.wrap
@@ -34,7 +34,7 @@ import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 class MultiStreamApiImpl(
     private val orchestrator: FDeviceOrchestrator,
     private val featureProvider: FFeatureProvider,
-    private val wsOrchestrator: CloudWebSocketBarsApi
+    private val wsOrchestrator: CloudWebSocketOrchestratorApi
 ) : MultiStreamApi, LogTagProvider {
     override val TAG = "MultiStreamApi"
 

@@ -22,6 +22,7 @@ import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
 import net.flipper.bsb.cloud.api.BUSYLibHostApi
 import net.flipper.busylib.core.wrapper.wrap
+import net.flipper.core.busylib.log.info
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 import kotlin.uuid.Uuid
@@ -134,14 +135,18 @@ class UserPrincipalApiSampleImpl(
     }
 
     private fun loadUserData(): UserData? {
-        return settings.decodeValue<UserData?>(KEY_USER, null)
+        val userData = settings.decodeValue<UserData?>(KEY_USER, null)
+        info { "Get user data: $userData" }
+        return userData
     }
 
     private fun saveUserData(userData: UserData) {
+        info { "Save user data $userData" }
         settings.encodeValue(KEY_USER, userData)
     }
 
     private fun clearUserData() {
+        info { "Clear user data" }
         settings.removeValue<UserData>(KEY_USER)
     }
 }
