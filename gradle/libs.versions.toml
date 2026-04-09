@@ -92,7 +92,6 @@ mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 
 settings = { module = "com.russhwolf:multiplatform-settings", version.ref = "settings" }
 settings-observable = { module = "com.russhwolf:multiplatform-settings-make-observable", version.ref = "settings" }
-settings-serialization = { module = "com.russhwolf:multiplatform-settings-serialization", version.ref = "settings" }
 settings-coroutines = { module = "com.russhwolf:multiplatform-settings-coroutines", version.ref = "settings" }
 
 # Ktor
