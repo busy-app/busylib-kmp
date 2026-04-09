@@ -8,17 +8,17 @@ import ru.astrainteractive.klibs.kstorage.api.value.ValueFactory
 import ru.astrainteractive.klibs.kstorage.suspend.FlowMutableKrate
 import ru.astrainteractive.klibs.kstorage.suspend.impl.DefaultFlowMutableKrate
 
-interface BleConfigSettingsKrate : FlowMutableKrate<BleConfigSettings>
+interface BBConfigSettingsKrate : FlowMutableKrate<BBConfigSettings>
 
-class BleConfigSettingsKrateImpl(
+class BBConfigSettingsKrateImpl(
     observableSettings: ObservableSettings,
     json: Json = Json {
         isLenient = true
         ignoreUnknownKeys = true
         prettyPrint = false
     }
-) : BleConfigSettingsKrate,
-    FlowMutableKrate<BleConfigSettings> by DefaultFlowMutableKrate(
+) : BBConfigSettingsKrate,
+    FlowMutableKrate<BBConfigSettings> by DefaultFlowMutableKrate(
         factory = { Factory.create() },
         loader = {
             observableSettings
@@ -47,7 +47,7 @@ class BleConfigSettingsKrateImpl(
     ) {
     companion object {
         private const val KEY = "ble_config_v3"
-        private val Factory get() = ValueFactory { BleConfigSettings() }
-        private val Serializer get() = BleConfigSettings.serializer()
+        private val Factory get() = ValueFactory { BBConfigSettings() }
+        private val Serializer get() = BBConfigSettings.serializer()
     }
 }
