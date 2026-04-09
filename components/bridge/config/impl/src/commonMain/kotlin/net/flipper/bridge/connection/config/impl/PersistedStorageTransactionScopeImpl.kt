@@ -7,7 +7,7 @@ import net.flipper.core.busylib.log.info
 import net.flipper.core.busylib.log.warn
 
 class PersistedStorageTransactionScopeImpl(
-    private var settings: BleConfigSettings
+    private var settings: BBConfigSettings
 ) : InternalStorageTransactionScope, LogTagProvider {
     override val TAG = "PersistedStorageTransactionScope"
     override fun getCurrentDevice(): BUSYBar? {

@@ -32,7 +32,7 @@ class FDevicePersistedStorageImpl(
     override val TAG = "FDevicePersistedStorage"
     private val mutex = Mutex()
 
-    private val bleConfigKrate = BleConfigSettingsKrateImpl(observableSettings)
+    private val bleConfigKrate = BBConfigSettingsKrateImpl(observableSettings)
     private var hooks = listOf<TransactionHook>(
         AlwaysActiveHook(),
         RemoveDuplicateCloudHook()
@@ -57,7 +57,7 @@ class FDevicePersistedStorageImpl(
 
     override fun getAllDevicesFlow(): WrappedFlow<List<BUSYBar>> {
         return bleConfigKrate.flow
-            .map { bleConfigSettings -> bleConfigSettings.devices }
+            .map { bbConfigSettings -> bbConfigSettings.devices }
             .wrap()
     }
 
