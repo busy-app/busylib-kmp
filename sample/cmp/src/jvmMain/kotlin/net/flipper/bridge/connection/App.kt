@@ -29,8 +29,6 @@ import net.flipper.busylib.BUSYLibDesktop
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 import java.util.prefs.Preferences
 
-private const val AUTH_PREFS_NODE = "busylib_auth"
-
 @Suppress("LongMethod")
 suspend fun main() {
     val lifecycle = LifecycleRegistry()

@@ -3,11 +3,6 @@
 package net.flipper.bridge.connection.utils.principal.impl
 
 import com.russhwolf.settings.Settings
-import com.russhwolf.settings.get
-import com.russhwolf.settings.serialization.decodeValue
-import com.russhwolf.settings.serialization.encodeValue
-import com.russhwolf.settings.serialization.removeValue
-import com.russhwolf.settings.set
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,13 +10,16 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import net.flipper.bridge.connection.utils.getSerializable
 import net.flipper.bridge.connection.utils.principal.impl.model.UserData
 import net.flipper.bridge.connection.utils.principal.impl.token.AuthTokenProvider
 import net.flipper.bridge.connection.utils.principal.impl.token.AuthTokens
+import net.flipper.bridge.connection.utils.setSerializable
 import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
 import net.flipper.bsb.cloud.api.BUSYLibHostApi
 import net.flipper.busylib.core.wrapper.wrap
+import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
@@ -33,7 +31,8 @@ class UserPrincipalApiSampleImpl(
     private val scope: CoroutineScope,
     private val hostApi: BUSYLibHostApi,
     private val settings: Settings
-) : BUSYLibPrincipalApi {
+) : BUSYLibPrincipalApi, LogTagProvider {
+    override val TAG = "BUSYLibPrincipalApi"
     private val principalFlow = MutableStateFlow<BUSYLibUserPrincipal>(BUSYLibUserPrincipal.Loading)
     private val mutex = Mutex()
 
@@ -135,18 +134,18 @@ class UserPrincipalApiSampleImpl(
     }
 
     private fun loadUserData(): UserData? {
-        val userData = settings.decodeValue<UserData?>(KEY_USER, null)
+        val userData = settings.getSerializable<UserData?>(KEY_USER, null)
         info { "Get user data: $userData" }
         return userData
     }
 
     private fun saveUserData(userData: UserData) {
         info { "Save user data $userData" }
-        settings.encodeValue(KEY_USER, userData)
+        settings.setSerializable(KEY_USER, userData)
     }
 
     private fun clearUserData() {
         info { "Clear user data" }
-        settings.removeValue<UserData>(KEY_USER)
+        settings.remove(KEY_USER)
     }
 }
