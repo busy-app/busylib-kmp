@@ -20,47 +20,51 @@ import kotlin.uuid.Uuid
 
 class BusyCloudBarsApiImplTest {
     @Test
-    fun GIVEN_unlinkBusyBar_WHEN_called_THEN_request_is_sent_to_expected_url() = runTest {
-        val host = "test.flipperzero.one"
-        val testToken = "test-token"
-        val principal = BUSYLibUserPrincipalToken(
-            userId = Uuid.parse("00000000-0000-0000-0000-000000000001"),
-            tokenProvider = { testToken }
-        )
-        val uuid = Uuid.parse("019588ec-6e11-7f56-b24a-bb74d2fb0d5f")
+    fun GIVEN_unlinkBusyBar_WHEN_called_THEN_request_is_sent_to_expected_url() {
+        runTest {
+            val host = "test.flipperzero.one"
+            val testToken = "test-token"
+            val principal = BUSYLibUserPrincipalToken(
+                userId = Uuid.parse("00000000-0000-0000-0000-000000000001"),
+                tokenProvider = { testToken }
+            )
+            val uuid = Uuid.parse("019588ec-6e11-7f56-b24a-bb74d2fb0d5f")
 
-        var requestMethod: HttpMethod? = null
-        var requestUrl: String? = null
-        var authHeader: String? = null
+            var requestMethod: HttpMethod? = null
+            var requestUrl: String? = null
+            var authHeader: String? = null
 
-        val httpClient = HttpClient(
-            MockEngine { request ->
-                requestMethod = request.method
-                requestUrl = request.url.toString()
-                authHeader = request.headers[HttpHeaders.Authorization]
+            listOf(HttpStatusCode.OK, HttpStatusCode.NoContent).forEach { status ->
+                val httpClient = HttpClient(
+                    MockEngine { request ->
+                        requestMethod = request.method
+                        requestUrl = request.url.toString()
+                        authHeader = request.headers[HttpHeaders.Authorization]
 
-                respond(
-                    content = "",
-                    status = HttpStatusCode.OK,
-                    headers = headersOf(
-                        HttpHeaders.ContentType,
-                        ContentType.Text.Plain.toString()
-                    )
+                        respond(
+                            content = "",
+                            status = status,
+                            headers = headersOf(
+                                HttpHeaders.ContentType,
+                                ContentType.Text.Plain.toString()
+                            )
+                        )
+                    }
                 )
+
+                val api = BusyCloudBarsApiImpl(
+                    httpClient = httpClient,
+                    dispatcher = StandardTestDispatcher(testScheduler),
+                    bsbHostApi = BUSYLibHostApiStub(host)
+                )
+
+                val result = api.unlinkBusyBar(principal, uuid)
+
+                assertTrue(result.isSuccess)
+                assertEquals(HttpMethod.Delete, requestMethod)
+                assertEquals("https://$host/api/v0/bars/$uuid", requestUrl)
+                assertEquals("Bearer $testToken", authHeader)
             }
-        )
-
-        val api = BusyCloudBarsApiImpl(
-            httpClient = httpClient,
-            dispatcher = StandardTestDispatcher(testScheduler),
-            bsbHostApi = BUSYLibHostApiStub(host)
-        )
-
-        val result = api.unlinkBusyBar(principal, uuid)
-
-        assertTrue(result.isSuccess)
-        assertEquals(HttpMethod.Delete, requestMethod)
-        assertEquals("https://$host/api/v0/bars/$uuid", requestUrl)
-        assertEquals("Bearer $testToken", authHeader)
+        }
     }
 }

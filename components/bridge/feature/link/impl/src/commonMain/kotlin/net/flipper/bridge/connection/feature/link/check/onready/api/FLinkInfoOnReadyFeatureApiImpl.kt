@@ -2,6 +2,7 @@ package net.flipper.bridge.connection.feature.link.check.onready.api
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
@@ -20,7 +21,6 @@ import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
 import net.flipper.bsb.cloud.rest.api.BusyCloudBarsApi
 import net.flipper.busylib.core.wrapper.CResult
 import net.flipper.busylib.core.wrapper.WrappedFlow
-import net.flipper.busylib.core.wrapper.map
 import net.flipper.busylib.core.wrapper.toCResult
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.ktx.common.SingleJobMode
@@ -48,6 +48,7 @@ class FLinkInfoOnReadyFeatureApiImpl(
         busyLibPrincipalApi.getPrincipalFlow()
             .filter { it !is BUSYLibUserPrincipal.Loading }
             .map { it as? BUSYLibUserPrincipal.Token }
+            .distinctUntilChanged()
             .onEach { principal -> tryCheckLinkedInfo(principal) }
             .launchIn(scope)
     }
@@ -120,7 +121,7 @@ class FLinkInfoOnReadyFeatureApiImpl(
         info { "Completed authorization for BUSY Bar" }
     }
 
-    override suspend fun deleteAccount(): CResult<Unit> {
+    override suspend fun deleteAndLinkAccount(): CResult<Unit> {
         return rpcFeatureApi.deleteAccount()
             .onSuccess {
                 tryCheckLinkedInfo(
