@@ -47,7 +47,7 @@ internal data class AuthTokensData(
     @SerialName("access_token")
     val accessToken: String,
     @SerialName("refresh_token")
-    val refreshToken: String? = null,
+    val refreshToken: String,
     @SerialName("expires_in")
     val expiresInSec: Long
 )

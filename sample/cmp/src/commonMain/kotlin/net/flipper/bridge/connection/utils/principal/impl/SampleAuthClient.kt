@@ -32,7 +32,7 @@ internal object SampleAuthClient {
 
         val signInResponse = httpClient.post("https://$host/api/auth/v1/tokens") {
             contentType(ContentType.Application.Json)
-            header("X-Client-Type", "native")
+            header("X-Refresh-Token-Transport", "json")
             setBody(
                 AuthSignInRequest(
                     username = email,
@@ -44,7 +44,7 @@ internal object SampleAuthClient {
 
         val exchangeResponse = httpClient.post("https://$host/api/auth/v1/tokens/exchange") {
             contentType(ContentType.Application.Json)
-            header("X-Client-Type", "native")
+            header("X-Refresh-Token-Transport", "json")
             setBody(
                 AuthExchangeRequest(
                     authCode = signInResponse.success.authCode,
@@ -63,7 +63,7 @@ internal object SampleAuthClient {
     ): AuthTokensData {
         val response = httpClient.post("https://$host/api/auth/v1/tokens/refresh") {
             contentType(ContentType.Application.Json)
-            header("X-Client-Type", "native")
+            header("X-Refresh-Token-Transport", "json")
             setBody(AuthRefreshRequest(refreshToken = refreshToken))
         }.body<AuthRefreshResponse>()
         return response.success
