@@ -30,6 +30,15 @@ kotlin {
     compilerOptions {
         freeCompilerArgs.add("-XXLanguage:+ExplicitBackingFields")
     }
+    targets.withType<org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget> {
+        binaries.all {
+            //  Workaround for Kotlin/Native interop regression in K/N 2.3.20.
+            //  nw_protocol_stack_set_transport_protocol crashes with TypeCastException
+            //  because NW protocol options cannot be cast to NSObject.
+            //  Tracked in: https://youtrack.jetbrains.com/issue/KT-85508/
+            freeCompilerArgs += "-Xbinary=genericSafeCasts=false"
+        }
+    }
 }
 
 var configurations = arrayListOf(
