@@ -53,6 +53,8 @@ class CheckUpdateService(
                 }
             }
             .flatMapLatest { fFeatureProvider.get<FRpcFeatureApi>() }
+            .filterIsInstance<FFeatureStatus.Supported<*>>()
+            .filter { fFeatureStatus -> fFeatureStatus.featureApi is FRpcFeatureApi }
             .filterIsInstance<FFeatureStatus.Supported<FRpcFeatureApi>>()
             .map { status -> status.featureApi }
             .onLatest { featureApi ->

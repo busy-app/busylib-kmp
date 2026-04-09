@@ -3,6 +3,7 @@ package net.flipper.tools.oncall.impl
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.stateIn
 import me.tatarka.inject.annotations.Inject
@@ -29,6 +30,8 @@ class OnCallSingletonApiImpl(
 ) : OnCallSingletonApi, LogTagProvider {
     override val TAG = "OnCallSingletonApi"
     private val onCallFeatureApiFlow = featureProvider.get<FOnCallFeatureApi>()
+        .filterIsInstance<FFeatureStatus.Supported<*>>()
+        .filter { fFeatureStatus -> fFeatureStatus.featureApi is FOnCallFeatureApi }
         .filterIsInstance<FFeatureStatus.Supported<FOnCallFeatureApi>>()
         .stateIn(scope, SharingStarted.WhileSubscribed(0), null)
 
