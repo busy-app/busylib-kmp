@@ -3,6 +3,7 @@ package net.flipper.tools.multistream.impl
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -45,6 +46,8 @@ class MultiStreamApiImpl(
             if (state.deviceOrNull?.uniqueId == busyBar.uniqueId) {
                 return@flatMapLatest featureProvider
                     .get<FScreenStreamingFeatureApi>()
+                    .filterIsInstance<FFeatureStatus.Supported<*>>()
+                    .filter { fFeatureStatus -> fFeatureStatus.featureApi is FScreenStreamingFeatureApi }
                     .filterIsInstance<FFeatureStatus.Supported<FScreenStreamingFeatureApi>>()
                     .flatMapLatest { status ->
                         status.featureApi.busyImageFormatFlow.map {
