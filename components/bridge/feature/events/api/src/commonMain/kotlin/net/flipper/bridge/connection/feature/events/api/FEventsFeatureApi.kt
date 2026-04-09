@@ -25,7 +25,8 @@ interface FEventsFeatureApi : FDeviceFeatureApi {
 
 inline fun <reified T : BusyLibUpdateEvent> FEventsFeatureApi.get(): Flow<ConsumableUpdateEvent.BusyLib<T>> {
     return getBusyLibUpdateEvents()
-        .filter { it.busyLibUpdateEvent is T }
+        .filterIsInstance<ConsumableUpdateEvent.BusyLib<*>>()
+        .filter { updateEvent -> updateEvent.busyLibUpdateEvent is T }
         .filterIsInstance<ConsumableUpdateEvent.BusyLib<T>>()
 }
 
