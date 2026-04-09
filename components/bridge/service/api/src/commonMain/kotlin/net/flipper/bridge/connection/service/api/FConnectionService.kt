@@ -8,7 +8,7 @@ import net.flipper.bridge.connection.service.model.ForgetDeviceResult
  */
 interface FConnectionService {
     /**
-     * Forget selected [device] and disconnect from it
+     * Attempts to forget the selected [device] and disconnect from it
      */
     suspend fun forgetDevice(device: BUSYBar): ForgetDeviceResult
 }
