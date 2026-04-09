@@ -8,5 +8,9 @@ import net.flipper.busylib.core.wrapper.WrappedFlow
 interface FLinkedInfoOnDemandFeatureApi : FDeviceFeatureApi {
     val status: WrappedFlow<LinkedAccountInfo>
 
-    suspend fun deleteAccount(): CResult<Unit>
+    /**
+     * Deletes current account from BusyBar and tries to
+     * link it to current user
+     */
+    suspend fun deleteAndLinkAccount(): CResult<Unit>
 }

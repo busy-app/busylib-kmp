@@ -50,7 +50,8 @@ class BusyCloudBarsApiImpl(
                 addAuth()
             }
             when (response.status) {
-                HttpStatusCode.OK -> Unit
+                HttpStatusCode.OK,
+                HttpStatusCode.NoContent -> Unit
                 else -> error("Failed to delete bar ${response.bodyAsText()}")
             }
         }

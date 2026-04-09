@@ -19,15 +19,16 @@ import net.flipper.bridge.connection.config.internal.FInternalDevicePersistedSto
 import net.flipper.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
 import net.flipper.bridge.connection.orchestrator.internal.FInternalDeviceOrchestrator
 import net.flipper.bridge.connection.service.api.FConnectionService
+import net.flipper.bridge.connection.service.model.ForgetDeviceResult
 import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
 import net.flipper.bsb.cloud.rest.api.BusyCloudBarsApi
 import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
 import net.flipper.busylib.core.di.BusyLibGraph
-import net.flipper.busylib.core.wrapper.CResult
 import net.flipper.busylib.core.wrapper.toCResult
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 import net.flipper.core.busylib.log.LogTagProvider
+import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
 import net.flipper.core.busylib.log.warn
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
@@ -41,7 +42,7 @@ class FConnectionServiceImpl(
     private val orchestrator: FInternalDeviceOrchestrator,
     private val fDevicePersistedStorage: FInternalDevicePersistedStorage,
     private val barsApi: BusyCloudBarsApi,
-    private val principalApi: BUSYLibPrincipalApi
+    private val principalApi: BUSYLibPrincipalApi,
 ) : FConnectionService, LogTagProvider, InternalBUSYLibStartupListener {
     override val TAG: String = "FConnectionService"
 
@@ -105,32 +106,47 @@ class FConnectionServiceImpl(
 
     override suspend fun forgetDevice(
         device: BUSYBar
-    ): CResult<Unit> {
+    ): ForgetDeviceResult {
+        info { "#forgetDevice" }
         return fDevicePersistedStorage.transactionInternal {
-            val devices = getAllDevices()
-
-            val isDeviceExists = devices
+            val isDeviceExists = getAllDevices()
                 .firstOrNull { listDevice -> listDevice.uniqueId == device.uniqueId } != null
             if (!isDeviceExists) {
-                warn { "#unpairDevice Can't find device $device" }
-                return@transactionInternal CResult.success(Unit)
+                warn { "#forgetDevice Can't find device $device" }
+                return@transactionInternal ForgetDeviceResult.DEVICE_NOT_FOUND
             }
-            val deviceId = device.cloud?.deviceId
-            if (deviceId != null) {
+            val cloudDeviceId = device.cloud?.deviceId
+
+            if (cloudDeviceId != null) {
                 val principal = principalApi.getPrincipalFlow()
                     .filter { principal -> principal !is BUSYLibUserPrincipal.Loading }
                     .first() as? BUSYLibUserPrincipal.Token
                 if (principal == null) {
-                    return@transactionInternal CResult.failure(IllegalStateException("User not authorized"))
+                    info { "#forgetDevice user not authorized" }
+                    return@transactionInternal ForgetDeviceResult.NOT_AUTHORIZED
                 }
-                val result = barsApi
-                    .unlinkBusyBar(principal, deviceId)
-                    .toCResult()
-                if (result.isFailure) return@transactionInternal result
+                val cloudBarsList = barsApi.getBarsList(principal)
+                    .onFailure { t -> error(t) { "#forgetDevice Could not get bars list" } }
+                    .getOrNull()
+                if (cloudBarsList == null) {
+                    return@transactionInternal ForgetDeviceResult.COULD_NOT_GET_CLOUD_BARS_LIST
+                }
+                val isBarOnCloud = cloudBarsList
+                    .firstOrNull { busyCloudBar -> busyCloudBar.id == "$cloudDeviceId" } != null
+                if (isBarOnCloud) {
+                    val result = barsApi
+                        .unlinkBusyBar(principal, cloudDeviceId)
+                        .onFailure { t -> error(t) { "#forgetDevice Could not unlink from bars api" } }
+                        .toCResult()
+                    if (result.isFailure) {
+                        return@transactionInternal ForgetDeviceResult.COULD_NOT_UNLINK_CLOUD_ACCOUNT
+                    }
+                }
             }
             removeDevice(device.uniqueId)
 
-            return@transactionInternal CResult.success(Unit)
+            info { "#forgetDevice device forgotten" }
+            return@transactionInternal ForgetDeviceResult.SUCCESS
         }
     }
 }

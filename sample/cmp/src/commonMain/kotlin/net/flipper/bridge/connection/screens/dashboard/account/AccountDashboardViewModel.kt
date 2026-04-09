@@ -44,7 +44,7 @@ class AccountDashboardViewModel(
 
     fun deleteLinkedAccount() {
         viewModelScope.launch(FlipperDispatchers.default) {
-            featureProvider.getSync(FLinkedInfoOnDemandFeatureApi::class)?.deleteAccount()
+            featureProvider.getSync(FLinkedInfoOnDemandFeatureApi::class)?.deleteAndLinkAccount()
         }
     }
 }
