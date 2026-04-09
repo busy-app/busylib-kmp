@@ -129,6 +129,8 @@ class FirmwareUpdaterApiImpl(
         return when (currentUpdateVersion) {
             is BsbUpdateVersion.Default -> {
                 fFeatureProvider.get<FRpcFeatureApi>()
+                    .filterIsInstance<FFeatureStatus.Supported<*>>()
+                    .filter { fFeatureStatus -> fFeatureStatus.featureApi is FRpcFeatureApi }
                     .filterIsInstance<FFeatureStatus.Supported<FRpcFeatureApi>>()
                     .first()
                     .featureApi
@@ -191,6 +193,8 @@ class FirmwareUpdaterApiImpl(
                     when (bsbUpdateVersion) {
                         is BsbUpdateVersion.Default -> {
                             fFeatureProvider.get<FRpcFeatureApi>()
+                                .filterIsInstance<FFeatureStatus.Supported<*>>()
+                                .filter { fFeatureStatus -> fFeatureStatus.featureApi is FRpcFeatureApi }
                                 .filterIsInstance<FFeatureStatus.Supported<FRpcFeatureApi>>()
                                 .first()
                                 .featureApi

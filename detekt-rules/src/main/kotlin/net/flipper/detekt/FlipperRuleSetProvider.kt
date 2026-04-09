@@ -4,6 +4,7 @@ import dev.detekt.api.RuleSet
 import dev.detekt.api.RuleSetId
 import dev.detekt.api.RuleSetProvider
 import net.flipper.detekt.rules.ApiWrappedTypeRule
+import net.flipper.detekt.rules.FilterIsInstanceWithGenericsRule
 import net.flipper.detekt.rules.ForbiddenApiModuleDependencyRule
 import net.flipper.detekt.rules.SerialNameNotProvidedRule
 
@@ -16,7 +17,8 @@ class FlipperRuleSetProvider : RuleSetProvider {
             rules = listOf(
                 ::ForbiddenApiModuleDependencyRule,
                 ::ApiWrappedTypeRule,
-                ::SerialNameNotProvidedRule
+                ::SerialNameNotProvidedRule,
+                ::FilterIsInstanceWithGenericsRule
             )
         )
     }

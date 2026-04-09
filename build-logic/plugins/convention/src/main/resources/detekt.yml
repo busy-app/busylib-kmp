@@ -822,6 +822,8 @@ DecomposeRule:
     replaceTo: 'pushToFront()'
 
 FlipperRule:
+  FilterIsInstanceWithGenericsRule:
+    active: true
   SerialNameNotProvidedRule:
   ApiWrappedTypeRule:
     active: true
