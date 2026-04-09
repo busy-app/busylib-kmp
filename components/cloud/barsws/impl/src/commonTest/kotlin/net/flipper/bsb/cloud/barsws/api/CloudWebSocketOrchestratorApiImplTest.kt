@@ -565,7 +565,7 @@ class CloudWebSocketOrchestratorApiImplTest {
 
             val unsubscribes = env.mockWs.sentRequests
                 .filterIsInstance<InternalWebSocketRequest.UnsubscribeState>()
-            assertEquals(0, unsubscribes.size)
+            assertEquals(1, unsubscribes.size)
         }
 
     @Test
