@@ -5,9 +5,9 @@ androidx-core = "1.18.0"
 lifecycle = "2.10.0" # https://developer.android.com/jetpack/androidx/releases/lifecycle
 google-services = "4.4.4"
 appcompat = "1.7.1" # https://developer.android.com/jetpack/androidx/releases/appcompat
-compose-plugin = "1.10.3"
+compose-plugin = "1.10.2"
 # Because of SKIE https://skie.touchlab.co/intro#compatibility-with-kotlin
-kotlin = "2.3.20"
+kotlin = "2.3.10"
 kotlin-coroutines = "1.10.2"
 kotlin-serialization-runtime = "1.10.0"
 kotlin-datetime = "0.7.1" # https://github.com/Kotlin/kotlinx-datetime/releases
