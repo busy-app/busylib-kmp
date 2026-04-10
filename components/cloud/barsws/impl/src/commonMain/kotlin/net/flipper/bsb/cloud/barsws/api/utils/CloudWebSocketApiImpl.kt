@@ -64,7 +64,7 @@ class CloudWebSocketApiImpl(
             flowOf<BSBWebSocket?>(null)
         }
     }.flatMapLatest { it }
-        .shareIn(scope, SharingStarted.WhileSubscribed(), replay = 1)
+        .shareIn(scope, SharingStarted.WhileSubscribed(replayExpirationMillis = 0), replay = 1)
 
     override fun getWSFlow() = wsStateFlow
 }

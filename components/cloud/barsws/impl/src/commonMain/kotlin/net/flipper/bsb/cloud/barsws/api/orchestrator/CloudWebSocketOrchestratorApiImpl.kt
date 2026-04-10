@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
@@ -41,10 +42,22 @@ class CloudWebSocketOrchestratorApiImpl(
     private val subscriberCountsFlow = MutableStateFlow(mapOf<Uuid, Int>())
     private val wsEventSharedFlow = getWSEventsFlow()
         .shareIn(scope, SharingStarted.Companion.Lazily)
+
+    private fun getWSFlow() = subscriberCountsFlow.map {
+        it.isNotEmpty()
+    }.distinctUntilChanged()
+        .flatMapLatest { needWs ->
+            if (needWs) {
+                webSocketApi.getWSFlow()
+            } else {
+                flowOf(null)
+            }
+        }
+
     private fun getWSEventsFlow(): Flow<WebSocketEvent> {
         return combine(
             subscriberCountsFlow,
-            webSocketApi.getWSFlow(),
+            getWSFlow(),
         ) { subscriberCounts, webSocket ->
             if (webSocket != null) {
                 activeWebSocketHolder.invalidateSubscribers(
