@@ -35,14 +35,23 @@ class ActiveWebSocketHolder(private val logger: LogTagProvider) {
         logger.info { "Should be active: $shouldBeActive, toSubscribe: $toSubscribe, toUnsubscribe: $toUnsubscribe" }
 
         if (toSubscribe.isNotEmpty()) {
-            webSocketApi.send(InternalWebSocketRequest.SubscribeState(toSubscribe.toList()))
+            runSuspendCatching {
+                webSocketApi.send(InternalWebSocketRequest.SubscribeState(toSubscribe.toList()))
+            }.onSuccess {
+                activeSubscriptionsSet.addAll(toSubscribe)
+            }.onFailure {
+                logger.error(it) { "Failed to send subscribe request" }
+            }
         }
         if (toUnsubscribe.isNotEmpty()) {
-            webSocketApi.send(InternalWebSocketRequest.UnsubscribeState(toUnsubscribe.toList()))
+            runSuspendCatching {
+                webSocketApi.send(InternalWebSocketRequest.UnsubscribeState(toUnsubscribe.toList()))
+            }.onSuccess {
+                activeSubscriptionsSet.removeAll(toUnsubscribe)
+            }.onFailure {
+                logger.error(it) { "Failed to send unsubscribe request" }
+            }
         }
-
-        activeSubscriptionsSet.addAll(toSubscribe)
-        activeSubscriptionsSet.removeAll(toUnsubscribe)
     }
 
     suspend fun resetSubscribers() = logger.withLock(mutex, "clear") {
