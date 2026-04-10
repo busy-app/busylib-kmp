@@ -6,7 +6,6 @@ import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.engine.okhttp.OkHttpConfig
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
-import java.util.concurrent.TimeUnit
 
 actual fun getPlatformEngineFactory(): HttpClientEngineFactory<*> {
     return object : HttpClientEngineFactory<OkHttpConfig> {
@@ -15,7 +14,6 @@ actual fun getPlatformEngineFactory(): HttpClientEngineFactory<*> {
                 block()
                 preconfigured = OkHttpClient.Builder()
                     .protocols(listOf(Protocol.HTTP_1_1))
-                    .pingInterval(WS_PING_INTERVAL.inWholeMilliseconds, TimeUnit.MILLISECONDS)
                     .build()
             }
         }
