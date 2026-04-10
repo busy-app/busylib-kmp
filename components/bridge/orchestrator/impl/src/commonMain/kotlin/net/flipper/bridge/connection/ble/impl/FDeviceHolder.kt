@@ -16,7 +16,9 @@ import net.flipper.bridge.connection.transport.common.api.FTransportConnectionSt
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 import net.flipper.core.busylib.ktx.common.transform
 import net.flipper.core.busylib.log.LogTagProvider
+import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
+import kotlin.coroutines.cancellation.CancellationException
 
 typealias DeviceHolderListener<API, T> = (FDeviceHolder<API>, T) -> Unit
 
@@ -53,15 +55,17 @@ class FDeviceHolder<API : FConnectedDeviceApi>(
 ) : LogTagProvider {
     override val TAG = "FDeviceHolder-$config"
 
-    private val transportConnectionListener = FTransportConnectionStatusListener { transportConnectionStatus ->
-        listener.invoke(this, transportConnectionStatus)
-    }
+    private val transportConnectionListener =
+        FTransportConnectionStatusListener { transportConnectionStatus ->
+            listener.invoke(this, transportConnectionStatus)
+        }
 
     private val scope = CoroutineScope(
         FlipperDispatchers.default + CoroutineExceptionHandler { _, throwable ->
             exceptionHandler(this, throwable)
         }
     )
+
     private val deviceApi: Deferred<API> = scope.async {
         deviceConnectionHelper.connect(
             scope = scope,
@@ -85,11 +89,31 @@ class FDeviceHolder<API : FConnectedDeviceApi>(
     suspend fun disconnect() {
         info { "Find active device api, start disconnect" }
         deviceApi.cancelAndJoin()
-        runCatching {
-            deviceApi.getCompleted()
-        }.getOrNull()?.disconnect()
+        runCatching { deviceApi.getCompleted() }
+            .getOrNull()
+            ?.disconnect()
         info { "Cancel scope" }
         scope.coroutineContext.job.cancelAndJoin()
         scope.cancel()
+    }
+
+    init {
+        scope.coroutineContext.job.invokeOnCompletion { t ->
+            when (t) {
+                null, is CancellationException -> {
+                    listener.invoke(
+                        this,
+                        FInternalTransportConnectionStatus.Disconnected
+                    )
+                }
+
+                else -> {
+                    error(t) {
+                        "#init catch error during invokeOnCompletion. " +
+                            "Status update will be handled inside exception handler"
+                    }
+                }
+            }
+        }
     }
 }
