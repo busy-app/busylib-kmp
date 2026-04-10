@@ -19,6 +19,7 @@ import net.flipper.bridge.connection.config.internal.FInternalDevicePersistedSto
 import net.flipper.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
 import net.flipper.bridge.connection.orchestrator.internal.FInternalDeviceOrchestrator
 import net.flipper.bridge.connection.service.api.FConnectionService
+import net.flipper.bridge.connection.service.model.ExpectedState
 import net.flipper.bridge.connection.service.model.ForgetDeviceResult
 import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal

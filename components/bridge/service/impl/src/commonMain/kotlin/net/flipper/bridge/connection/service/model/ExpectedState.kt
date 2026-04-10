@@ -1,4 +1,4 @@
-package net.flipper.bridge.connection.service.impl
+package net.flipper.bridge.connection.service.model
 
 import net.flipper.bridge.connection.config.api.model.BUSYBar
 
