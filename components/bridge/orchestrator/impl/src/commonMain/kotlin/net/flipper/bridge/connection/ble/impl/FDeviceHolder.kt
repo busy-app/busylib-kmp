@@ -16,7 +16,9 @@ import net.flipper.bridge.connection.transport.common.api.FTransportConnectionSt
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 import net.flipper.core.busylib.ktx.common.transform
 import net.flipper.core.busylib.log.LogTagProvider
+import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
+import kotlin.coroutines.cancellation.CancellationException
 
 typealias DeviceHolderListener<API, T> = (FDeviceHolder<API>, T) -> Unit
 
@@ -97,11 +99,21 @@ class FDeviceHolder<API : FConnectedDeviceApi>(
 
     init {
         scope.coroutineContext.job.invokeOnCompletion { t ->
-            if (t != null) return@invokeOnCompletion
-            listener.invoke(
-                this,
-                FInternalTransportConnectionStatus.Disconnected
-            )
+            when (t) {
+                null, is CancellationException -> {
+                    listener.invoke(
+                        this,
+                        FInternalTransportConnectionStatus.Disconnected
+                    )
+                }
+
+                else -> {
+                    error(t) {
+                        "#init catch error during invokeOnCompletion. " +
+                            "Status update will be handled inside exception handler"
+                    }
+                }
+            }
         }
     }
 }
