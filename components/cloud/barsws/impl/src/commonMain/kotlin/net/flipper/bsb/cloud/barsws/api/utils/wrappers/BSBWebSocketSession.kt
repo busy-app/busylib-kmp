@@ -16,6 +16,7 @@ interface BSBWebSocketSession {
      * Receives and deserializes the next message from the WebSocket.
      * @return The deserialized JsonObject
      * @throws kotlinx.serialization.SerializationException if deserialization fails
+     * @throws kotlinx.coroutines.channels.ClosedReceiveChannelException if a channel was closed
      */
     suspend fun receive(): JsonObject
 
