@@ -1,7 +1,6 @@
 package net.flipper.core.busylib.ktx.common
 
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -12,11 +11,15 @@ suspend fun <T, R> Result<T>.transform(block: suspend (T) -> Result<R>): Result<
 }
 
 suspend inline fun <R> runSuspendCatching(
-    dispatcher: CoroutineDispatcher = Dispatchers.Unconfined,
+    dispatcher: CoroutineDispatcher? = null,
     crossinline block: suspend () -> R
 ): Result<R> {
     return try {
-        val result = withContext(dispatcher) {
+        val result = if (dispatcher != null) {
+            withContext(dispatcher) {
+                block()
+            }
+        } else {
             block()
         }
         Result.success(result)
