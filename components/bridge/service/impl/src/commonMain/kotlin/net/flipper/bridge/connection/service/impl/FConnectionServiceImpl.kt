@@ -10,18 +10,15 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.config.internal.FInternalDevicePersistedStorage
+import net.flipper.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
 import net.flipper.bridge.connection.orchestrator.internal.FInternalDeviceOrchestrator
 import net.flipper.bridge.connection.service.api.FConnectionService
-import net.flipper.bridge.connection.service.mapper.ConnectionStatusMapper
-import net.flipper.bridge.connection.service.model.ConnectionAction
-import net.flipper.bridge.connection.service.model.ExpectedState
 import net.flipper.bridge.connection.service.model.ForgetDeviceResult
 import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
@@ -54,34 +51,44 @@ class FConnectionServiceImpl(
     private fun getExpectedState(): Flow<ExpectedState> {
         return fDevicePersistedStorage.getCurrentDeviceFlow()
             .map { currentDevice ->
-                info { "#getExpectedState currentDevice: $currentDevice" }
                 if (currentDevice == null) {
                     return@map ExpectedState.Disconnected
                 }
                 return@map ExpectedState.Connected(currentDevice)
-            }
-            .distinctUntilChanged()
+            }.distinctUntilChanged()
     }
 
     private fun getConnectionJob(scope: CoroutineScope): Job {
-        val actionFlow = combine(
+        return combine(
             flow = getExpectedState(),
-            flow2 = orchestrator.getState(),
-            transform = { expectedState, realState ->
-                ConnectionStatusMapper.mapAction(expectedState, realState)
-            }
-        )
-        return actionFlow
-            .distinctUntilChanged()
-            .onEach { action ->
-                info { "#getConnectionJob action: $action" }
-                when (action) {
-                    is ConnectionAction.Connect -> orchestrator.connectIfNot(action.device)
-                    ConnectionAction.Disconnect -> orchestrator.disconnectCurrent()
-                    ConnectionAction.Skip -> Unit
+            flow2 = orchestrator.getState()
+        ) { expectedState, realState ->
+            info { "expectedState: $expectedState, realState: $realState" }
+            when (realState) {
+                is FDeviceConnectStatus.Connected -> when (expectedState) {
+                    is ExpectedState.Connected -> if (expectedState.device != realState.device) {
+                        orchestrator.connectIfNot(expectedState.device)
+                    }
+
+                    ExpectedState.Disconnected -> orchestrator.disconnectCurrent()
                 }
+
+                is FDeviceConnectStatus.Disconnected -> when (expectedState) {
+                    is ExpectedState.Connected -> orchestrator.connectIfNot(expectedState.device)
+                    ExpectedState.Disconnected -> Unit
+                }
+
+                is FDeviceConnectStatus.Connecting -> when (expectedState) {
+                    is ExpectedState.Connected -> if (expectedState.device != realState.device) {
+                        orchestrator.connectIfNot(expectedState.device)
+                    }
+
+                    ExpectedState.Disconnected -> orchestrator.disconnectCurrent()
+                }
+
+                is FDeviceConnectStatus.Disconnecting -> Unit // Transition state
             }
-            .launchIn(scope)
+        }.launchIn(scope)
     }
 
     override fun onLaunch() {

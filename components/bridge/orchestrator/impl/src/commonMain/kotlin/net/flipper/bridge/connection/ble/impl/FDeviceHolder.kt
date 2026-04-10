@@ -14,7 +14,6 @@ import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfi
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
-import net.flipper.core.busylib.ktx.common.launchOnCompletion
 import net.flipper.core.busylib.ktx.common.transform
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
@@ -97,7 +96,8 @@ class FDeviceHolder<API : FConnectedDeviceApi>(
     }
 
     init {
-        scope.launchOnCompletion {
+        scope.coroutineContext.job.invokeOnCompletion { t ->
+            if (t != null) return@invokeOnCompletion
             listener.invoke(
                 this,
                 FInternalTransportConnectionStatus.Disconnected
