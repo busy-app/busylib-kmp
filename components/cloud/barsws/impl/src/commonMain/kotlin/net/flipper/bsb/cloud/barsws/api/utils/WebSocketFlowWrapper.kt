@@ -16,16 +16,19 @@ fun <T> LogTagProvider.wrapWebsocket(
 ) = flow<T> {
     var retryCount = 0
     while (currentCoroutineContext().isActive) {
-        info { "Subscribe to websocket" }
-        block().catch {
-            retryCount++
-            error(it) { "Failed request websocket" }
-        }.collect {
-            if (retryCount != 0) {
-                info { "Restore websocket with message: $it" }
+        runSuspendCatching {
+            info { "Subscribe to websocket" }
+            block().catch {
+                retryCount++
+                error(it) { "Failed request websocket" }
+            }.collect {
+                retryCount = 0
+                info { "Receive changes by websocket: $it" }
+                emit(it)
             }
-            retryCount = 0
-            emit(it)
+        }.onFailure { e ->
+            retryCount++
+            error(e) { "Failed request websocket" }
         }
         val delayTimeout = getExponentialDelay(retryCount)
         info { "Stop loop, wait ${delayTimeout.inWholeMilliseconds}ms" }
