@@ -51,7 +51,7 @@ class DiscoveredBluetoothDeviceImpl(
             "lastScanResult=$lastScanResult," +
             "nameInternal=$nameInternal," +
             "servicesResult=$servicesResult," +
-            "servicesResult=$servicesResult," +
+            "address=$address," +
             "name=$name)"
     }
 
