@@ -39,7 +39,7 @@ class FDeviceOrchestratorImpl(
         it?.getState() ?: flowOf(FTransportListenerImpl.DEFAULT_STATUS)
     }.stateIn(
         globalScope,
-        SharingStarted.WhileSubscribed(),
+        SharingStarted.Lazily,
         FTransportListenerImpl.DEFAULT_STATUS
     ).wrap()
     private var currentDevice: FDeviceHolder<*>? = null
