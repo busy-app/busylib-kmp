@@ -7,7 +7,10 @@ import kotlin.coroutines.cancellation.CancellationException
 suspend inline fun <T, R> Result<T>.mapSuspendCatching(
     crossinline transform: suspend (T) -> R
 ): Result<R> {
-    val value = getOrElse { return Result.failure(it) }
+    val value = getOrElse {
+        if (it is CancellationException) throw it
+        return Result.failure(it)
+    }
     return runSuspendCatching { transform(value) }
 }
 
