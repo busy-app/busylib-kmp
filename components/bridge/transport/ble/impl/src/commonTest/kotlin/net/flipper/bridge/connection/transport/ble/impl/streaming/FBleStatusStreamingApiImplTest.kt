@@ -4,7 +4,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
@@ -102,6 +101,22 @@ class FBleStatusStreamingApiImplTest {
             source = flow {
                 emit(byteArrayOf(1))
                 emit(byteArrayOf(2, 3))
+            },
+            scope = backgroundScope
+        )
+
+        val packet = sut.getPackets().first()
+
+        assertContentEquals(byteArrayOf(1, 2, 3), packet)
+    }
+
+    @Test
+    fun GIVEN_upstream_mutates_emitted_chunk_WHEN_packet_emitted_THEN_data_uses_original_bytes() = runTest {
+        val sharedChunk = byteArrayOf(1, 2, 3)
+        val sut = createSut(
+            source = flow {
+                emit(sharedChunk)
+                sharedChunk[0] = 9
             },
             scope = backgroundScope
         )

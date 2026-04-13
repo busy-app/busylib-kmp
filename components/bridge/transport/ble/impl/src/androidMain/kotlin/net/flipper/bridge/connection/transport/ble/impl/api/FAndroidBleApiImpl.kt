@@ -114,6 +114,7 @@ class FAndroidBleApiImpl(
         bleHttpEngine.close()
     }
 
+    // Implement on Android Side
     override fun getEvents(): Flow<StatusStreamingEvent> {
         return flow { StatusStreamingEvent.Protobuf(data = byteArrayOf()) }
     }
