@@ -1,6 +1,11 @@
 package net.flipper.bridge.connection.ble.impl
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import me.tatarka.inject.annotations.Inject
@@ -29,7 +34,14 @@ class FDeviceOrchestratorImpl(
 ) : FInternalDeviceOrchestrator, LogTagProvider {
     override val TAG = "FDeviceOrchestrator"
 
-    private val transportListener = FTransportListenerImpl()
+    private val transportListenerFlow = MutableStateFlow<FTransportListenerImpl?>(null)
+    private val stateFlow = transportListenerFlow.flatMapLatest {
+        it?.getState() ?: flowOf(FTransportListenerImpl.DEFAULT_STATUS)
+    }.stateIn(
+        globalScope,
+        SharingStarted.Lazily,
+        FTransportListenerImpl.DEFAULT_STATUS
+    ).wrap()
     private var currentDevice: FDeviceHolder<*>? = null
     private val mutex = Mutex()
 
@@ -51,6 +63,8 @@ class FDeviceOrchestratorImpl(
 
         disconnectInternalUnsafe()
 
+        val localTransportListener = FTransportListenerImpl(config)
+        transportListenerFlow.emit(localTransportListener)
         info { "Create new device" }
         currentDevice = deviceHolderFactory.build(
             uniqueId = config.uniqueId,
@@ -59,21 +73,21 @@ class FDeviceOrchestratorImpl(
                 info { "Received status update for device ${deviceHolder.uniqueId}: $status" }
                 if (status is FInternalTransportConnectionStatus.Disconnected) {
                     onInternalDisconnect(deviceHolder) {
-                        transportListener.onStatusUpdate(config, status)
+                        localTransportListener.onStatusUpdate(config, status)
                     }
                 } else {
-                    transportListener.onStatusUpdate(config, status)
+                    localTransportListener.onStatusUpdate(config, status)
                 }
             },
             onConnectError = { deviceHolder, error ->
                 onInternalDisconnect(deviceHolder) {
-                    transportListener.onErrorDuringConnect(config, error)
+                    localTransportListener.onErrorDuringConnect(config, error)
                 }
                 error(error) { "Failed connect" }
             },
             exceptionHandler = { deviceHolder, error ->
                 onInternalDisconnect(deviceHolder) {
-                    transportListener.onErrorDuringConnect(config, error)
+                    localTransportListener.onErrorDuringConnect(config, error)
                 }
                 error(error) { "Exception in coroutine" }
             }
@@ -90,7 +104,7 @@ class FDeviceOrchestratorImpl(
         }
     }
 
-    override fun getState() = transportListener.getState().wrap()
+    override fun getState() = stateFlow
 
     override suspend fun disconnectCurrent() = withLock(mutex, "disconnect") {
         disconnectInternalUnsafe()

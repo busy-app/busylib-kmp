@@ -15,15 +15,10 @@ import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
 
-class FTransportListenerImpl : LogTagProvider {
-    override val TAG = "FTransportListener"
+class FTransportListenerImpl(config: BUSYBar) : LogTagProvider {
+    override val TAG = "FTransportListener-${config.uniqueId}"
 
-    private val state = MutableStateFlow<FDeviceConnectStatus>(
-        FDeviceConnectStatus.Disconnected(
-            device = null,
-            reason = DisconnectStatus.NOT_INITIALIZED
-        )
-    )
+    private val state = MutableStateFlow<FDeviceConnectStatus>(DEFAULT_STATUS)
 
     fun getState() = state.asStateFlow()
 
@@ -85,5 +80,12 @@ class FTransportListenerImpl : LogTagProvider {
             }
         }
         info { "New state is $newState" }
+    }
+
+    companion object {
+        val DEFAULT_STATUS = FDeviceConnectStatus.Disconnected(
+            device = null,
+            reason = DisconnectStatus.NOT_INITIALIZED
+        )
     }
 }
