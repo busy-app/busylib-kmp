@@ -7,6 +7,7 @@ import net.flipper.bridge.connection.transport.tcp.lan.FLanApi
 import net.flipper.bridge.connection.transport.tcp.lan.FLanDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.tcp.lan.LanDeviceConnectionApi
 import net.flipper.busylib.core.di.BusyLibGraph
+import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 
 @Inject
@@ -16,13 +17,13 @@ class LanDeviceConnectionApiImpl : LanDeviceConnectionApi {
         scope: CoroutineScope,
         config: FLanDeviceConnectionConfig,
         listener: FTransportConnectionStatusListener
-    ): Result<FLanApi> = runCatching {
+    ): Result<FLanApi> = runSuspendCatching {
         val lanApi = FLanApiImpl(
             listener = listener,
             currentConfig = config,
             scope = scope
         )
         lanApi.startMonitoring()
-        return@runCatching lanApi
+        return@runSuspendCatching lanApi
     }
 }

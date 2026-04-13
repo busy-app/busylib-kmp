@@ -11,6 +11,7 @@ import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.busylib.core.di.BusyLibGraph
+import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 import kotlin.reflect.KClass
 
@@ -24,7 +25,7 @@ class FDeviceConfigToConnectionImpl(
         scope: CoroutineScope,
         config: CONFIG,
         listener: FTransportConnectionStatusListener
-    ): Result<API> = runCatching {
+    ): Result<API> = runSuspendCatching {
         if (config is FCombinedConnectionConfig) {
             @Suppress("UNCHECKED_CAST")
             val result = combinedConnectionApi.connect(
@@ -34,7 +35,7 @@ class FDeviceConfigToConnectionImpl(
                 connectionBuilder = this
             ) as Result<API>
 
-            return@runCatching result.getOrThrow()
+            return@runSuspendCatching result.getOrThrow()
         }
 
         val connectionApiUntyped = configToConnectionMap.entries

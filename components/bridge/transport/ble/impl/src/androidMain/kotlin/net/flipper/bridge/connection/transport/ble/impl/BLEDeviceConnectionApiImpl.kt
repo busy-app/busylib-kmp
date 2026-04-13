@@ -21,6 +21,7 @@ import net.flipper.bridge.connection.transport.common.api.FInternalTransportConn
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.core.wrapper.wrap
+import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
@@ -42,7 +43,7 @@ class BLEDeviceConnectionApiImpl(
         scope: CoroutineScope,
         config: FBleDeviceConnectionConfig,
         listener: FTransportConnectionStatusListener
-    ): Result<FBleApi> = runCatching {
+    ): Result<FBleApi> = runSuspendCatching {
         connectUnsafe(scope, config, listener)
     }
 

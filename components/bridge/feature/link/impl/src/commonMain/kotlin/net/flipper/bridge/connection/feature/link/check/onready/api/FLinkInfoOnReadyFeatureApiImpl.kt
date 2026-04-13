@@ -26,6 +26,7 @@ import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.ktx.common.SingleJobMode
 import net.flipper.core.busylib.ktx.common.asSingleJobScope
 import net.flipper.core.busylib.ktx.common.exponentialRetry
+import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
@@ -100,7 +101,7 @@ class FLinkInfoOnReadyFeatureApiImpl(
 
     private suspend fun authBusyBar(
         principal: BUSYLibUserPrincipal.Token
-    ): Result<Unit> = runCatching {
+    ): Result<Unit> = runSuspendCatching {
         val linkCode = rpcFeatureApi.getLinkCode().getOrThrow()
 
         info { "Receive link code from BUSY Bar: $linkCode" }

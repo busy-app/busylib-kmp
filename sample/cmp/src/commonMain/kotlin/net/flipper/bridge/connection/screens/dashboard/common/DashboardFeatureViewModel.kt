@@ -14,6 +14,7 @@ import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
 import net.flipper.bridge.connection.feature.provider.api.getSync
 import net.flipper.bridge.connection.screens.decompose.DecomposeViewModel
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
+import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import kotlin.time.Clock
 
 private const val STOP_TIMEOUT_MILLIS = 5_000L
@@ -52,7 +53,7 @@ abstract class DashboardFeatureViewModel : DecomposeViewModel() {
     ) {
         viewModelScope.launch(FlipperDispatchers.default) {
             mutableActionState.value = mutableActionState.value.copy(lastAction = actionName)
-            runCatching { block() }
+            runSuspendCatching { block() }
                 .onFailure { error ->
                     appendLog("$actionName failed: ${error.message ?: error::class.simpleName.orEmpty()}")
                 }

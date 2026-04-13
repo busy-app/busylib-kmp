@@ -4,10 +4,18 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.cancellation.CancellationException
 
+suspend inline fun <T, R> Result<T>.mapSuspendCatching(
+    crossinline transform: suspend (T) -> R
+): Result<R> {
+    val value = getOrElse {
+        if (it is CancellationException) throw it
+        return Result.failure(it)
+    }
+    return runSuspendCatching { transform(value) }
+}
+
 suspend fun <T, R> Result<T>.transform(block: suspend (T) -> Result<R>): Result<R> {
-    return mapCatching { firstResult ->
-        block(firstResult)
-    }.mapCatching { it.getOrThrow() }
+    return mapSuspendCatching { block(it).getOrThrow() }
 }
 
 suspend inline fun <R> runSuspendCatching(

@@ -14,6 +14,7 @@ import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfi
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
+import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.busylib.ktx.common.transform
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
@@ -79,7 +80,7 @@ class FDeviceHolder<API : FConnectedDeviceApi>(
     suspend fun tryToUpdateConnectionConfig(
         config: FDeviceConnectionConfig<*>
     ): Result<Unit> {
-        return runCatching {
+        return runSuspendCatching {
             deviceApi.getCompleted()
         }.transform { deviceApi ->
             deviceApi.tryUpdateConnectionConfig(config)
@@ -89,7 +90,7 @@ class FDeviceHolder<API : FConnectedDeviceApi>(
     suspend fun disconnect() {
         info { "Find active device api, start disconnect" }
         deviceApi.cancelAndJoin()
-        runCatching { deviceApi.getCompleted() }
+        runSuspendCatching { deviceApi.getCompleted() }
             .getOrNull()
             ?.disconnect()
         info { "Cancel scope" }

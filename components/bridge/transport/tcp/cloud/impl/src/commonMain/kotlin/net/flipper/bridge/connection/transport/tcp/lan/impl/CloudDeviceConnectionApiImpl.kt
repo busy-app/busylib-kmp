@@ -10,6 +10,7 @@ import net.flipper.bridge.connection.transport.tcp.lan.impl.engine.BUSYCloudHttp
 import net.flipper.bridge.connection.transport.tcp.lan.impl.engine.token.ProxyTokenProviderFactory
 import net.flipper.bridge.connection.transport.tcp.lan.impl.metainfo.FCloudStreamingFactory
 import net.flipper.busylib.core.di.BusyLibGraph
+import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 
 @Inject
@@ -23,7 +24,7 @@ class CloudDeviceConnectionApiImpl(
         scope: CoroutineScope,
         config: FCloudDeviceConnectionConfig,
         listener: FTransportConnectionStatusListener
-    ): Result<FCloudApi> = runCatching {
+    ): Result<FCloudApi> = runSuspendCatching {
         val lanApi = FCloudApiImpl(
             listener = listener,
             currentConfig = config,
@@ -32,6 +33,6 @@ class CloudDeviceConnectionApiImpl(
             cloudStreamingFactory = cloudStreamingFactory,
             scope = scope
         )
-        return@runCatching lanApi
+        return@runSuspendCatching lanApi
     }
 }

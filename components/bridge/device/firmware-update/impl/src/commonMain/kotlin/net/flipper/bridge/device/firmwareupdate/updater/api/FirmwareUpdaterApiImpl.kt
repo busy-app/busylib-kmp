@@ -44,6 +44,7 @@ import net.flipper.core.busylib.ktx.common.asFlow
 import net.flipper.core.busylib.ktx.common.asSingleJobScope
 import net.flipper.core.busylib.ktx.common.cancelPrevious
 import net.flipper.core.busylib.ktx.common.exponentialRetry
+import net.flipper.core.busylib.ktx.common.mapSuspendCatching
 import net.flipper.core.busylib.ktx.common.orNullable
 import net.flipper.core.busylib.ktx.common.tryCast
 import net.flipper.core.busylib.log.LogTagProvider
@@ -208,7 +209,7 @@ class FirmwareUpdaterApiImpl(
                             firmwareDownloaderApi.download(bsbUpdateVersion)
                                 .onSuccess { info { "#startUpdateInstall download finished" } }
                                 .onFailure { t -> error(t) { "#startUpdateInstall could not download" } }
-                                .mapCatching { path ->
+                                .mapSuspendCatching { path ->
                                     info { "#startUpdateInstall start uploading" }
                                     firmwareUploaderApi
                                         .uploadAndInstall(path) { firmwareDownloaderApi.reset() }

@@ -13,6 +13,7 @@ import net.flipper.bridge.connection.transport.mock.FMockDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.mock.MockDeviceConnectionApi
 import net.flipper.bridge.connection.transport.mock.impl.meta.MockFTransportMetaInfoApiImpl
 import net.flipper.busylib.core.di.BusyLibGraph
+import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 import kotlin.time.Duration.Companion.seconds
 
@@ -23,7 +24,7 @@ class MockDeviceConnectionApiImpl : MockDeviceConnectionApi {
         scope: CoroutineScope,
         config: FMockDeviceConnectionConfig,
         listener: FTransportConnectionStatusListener
-    ): Result<FMockApi> = runCatching {
+    ): Result<FMockApi> = runSuspendCatching {
         listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting)
         var currentConfig = config
         val mockApi = object : FMockApi, FTransportMetaInfoApi by MockFTransportMetaInfoApiImpl() {
@@ -59,6 +60,6 @@ class MockDeviceConnectionApiImpl : MockDeviceConnectionApi {
             )
         )
 
-        return@runCatching mockApi
+        return@runSuspendCatching mockApi
     }
 }
