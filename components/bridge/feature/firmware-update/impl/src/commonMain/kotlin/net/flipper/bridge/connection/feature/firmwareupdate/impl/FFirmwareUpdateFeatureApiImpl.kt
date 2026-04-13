@@ -49,6 +49,7 @@ import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.merge
 import net.flipper.core.busylib.ktx.common.orElse
 import net.flipper.core.busylib.ktx.common.orEmpty
+import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.busylib.ktx.common.throttleLatest
 import net.flipper.core.busylib.ktx.common.throttleLatestCached
 import net.flipper.core.busylib.ktx.common.transformWhileSubscribed
@@ -154,7 +155,7 @@ class FFirmwareUpdateFeatureApiImpl(
             .map { channelId -> channelId.id }
             .mapLatest { channelId ->
                 exponentialRetry {
-                    runCatching {
+                    runSuspendCatching {
                         val bsbFirmwareUpdateVersion = busyFirmwareDirectoryApi
                             .getFirmwareDirectory()
                             .getOrThrow()

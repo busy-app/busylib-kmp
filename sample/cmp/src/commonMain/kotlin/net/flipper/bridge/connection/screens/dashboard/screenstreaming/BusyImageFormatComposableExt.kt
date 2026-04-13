@@ -17,6 +17,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
 import net.flipper.bridge.connection.feature.screenstreaming.model.BusyImageFormat
+import net.flipper.core.busylib.ktx.common.runSuspendCatching
 
 private const val BUSY_BAR_SCREEN_WIDTH = 72
 private const val BUSY_BAR_SCREEN_HEIGHT = 16
@@ -74,7 +75,7 @@ fun rememberBusyImagePainter(imageResource: BusyImageFormat?): Painter? {
             return@LaunchedEffect
         }
         withContext(Dispatchers.IO) {
-            painter.value = runCatching {
+            painter.value = runSuspendCatching {
                 val bitmap = toImageBitmap(byteArray)
                 BitmapPainter(bitmap)
             }.onFailure { it.printStackTrace() }.getOrNull()

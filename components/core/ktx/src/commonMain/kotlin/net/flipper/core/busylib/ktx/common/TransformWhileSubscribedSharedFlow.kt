@@ -60,12 +60,12 @@ private class TransformWhileSubscribedSharedFlow<T, R>(
         debug { "#startTransformFlowCollectionUnsafe" }
         transformFlowCollectorJob?.cancelAndJoin()
         transformFlowCollectorJob = scope.launch {
-            try {
+            runSuspendCatching {
                 collector.invoke(
                     upstreamSharedFlow,
                     resultFlow
                 )
-            } catch (e: Exception) {
+            }.onFailure { e ->
                 error(e) { "#startTransformFlowCollectionUnsafe" }
             }
         }

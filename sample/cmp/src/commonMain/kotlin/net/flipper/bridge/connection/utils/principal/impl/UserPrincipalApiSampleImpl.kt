@@ -19,6 +19,7 @@ import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
 import net.flipper.bsb.cloud.api.BUSYLibHostApi
 import net.flipper.busylib.core.wrapper.wrap
+import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
 import kotlin.time.Clock
@@ -76,7 +77,7 @@ class UserPrincipalApiSampleImpl(
         principalFlow.emit(loggedUser)
     }
 
-    suspend fun login(email: String, password: String): Result<Unit> = runCatching {
+    suspend fun login(email: String, password: String): Result<Unit> = runSuspendCatching {
         val host = hostApi.getHost().value
         val tokens = SampleAuthClient.signIn(host, email, password)
         val me = SampleAuthClient.getMe(host, tokens.accessToken)
@@ -97,7 +98,7 @@ class UserPrincipalApiSampleImpl(
             val host = hostApi.getHost().value
             val principal = principalFlow.value
             if (principal is UserPrincipalImpl) {
-                runCatching {
+                runSuspendCatching {
                     val token = principal.getToken(null)
                     SampleAuthClient.logout(host, token)
                 }

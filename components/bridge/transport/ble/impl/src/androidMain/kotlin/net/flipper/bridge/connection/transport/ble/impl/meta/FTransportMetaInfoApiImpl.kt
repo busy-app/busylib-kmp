@@ -15,6 +15,7 @@ import net.flipper.bridge.connection.transport.common.api.meta.FTransportMetaInf
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoData
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
 import net.flipper.busylib.core.wrapper.WrappedStateFlow
+import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
@@ -64,7 +65,7 @@ class FTransportMetaInfoApiImpl(
                     "so fallback on one-time read value"
             }
             return flow {
-                runCatching { characteristic.read() }
+                runSuspendCatching { characteristic.read() }
                     .onSuccess { emit(TransportMetaInfoData.RawBytes(it)) }
                     .onFailure { t -> error(t) { "Could not read characteristic for $address" } }
             }

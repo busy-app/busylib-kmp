@@ -10,6 +10,7 @@ import net.flipper.bridge.connection.transport.combined.impl.connections.AutoRec
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.busylib.core.di.BusyLibGraph
+import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 
 @Inject
@@ -20,7 +21,7 @@ class CombinedConnectionApiImpl : CombinedConnectionApi {
         config: FCombinedConnectionConfig,
         listener: FTransportConnectionStatusListener,
         connectionBuilder: FDeviceConfigToConnection
-    ): Result<FCombinedConnectionApi> = runCatching {
+    ): Result<FCombinedConnectionApi> = runSuspendCatching {
         listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting)
 
         val connections = config.connectionConfigs.map { connectionConfig ->
@@ -30,7 +31,7 @@ class CombinedConnectionApiImpl : CombinedConnectionApi {
                 connectionBuilder = connectionBuilder
             )
         }
-        return@runCatching FCombinedConnectionApiImpl(
+        return@runSuspendCatching FCombinedConnectionApiImpl(
             scope = scope,
             initialConnections = connections,
             listener = listener,
