@@ -20,6 +20,7 @@ import net.flipper.bridge.connection.transport.ble.impl.ios.peripheral.FPeripher
 import net.flipper.bridge.connection.transport.ble.impl.ios.peripheral.FPeripheralState
 import net.flipper.bridge.connection.transport.ble.impl.ios.serial.FIOSResetSerialBleApiImpl
 import net.flipper.bridge.connection.transport.ble.impl.ios.serial.FIOSSerialBleApiImpl
+import net.flipper.bridge.connection.transport.ble.impl.streaming.FBleStatusStreamingApiImpl
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.busylib.core.di.BusyLibGraph
@@ -80,9 +81,14 @@ class BLEDeviceConnectionApiImpl(
             fPeripheralApi = peripheral,
             resetApi = resetApi,
         )
+        val streamingApi = FBleStatusStreamingApiImpl(
+            subscribeFlow = peripheral.streamingDataStream,
+            scope = scope,
+        )
 
         val bleApi = FIOSBleApiImpl(
             serialApi = serialApi,
+            streamingApi = streamingApi,
             currentConfig = config,
             peripheral = peripheral,
             scope = scope,

@@ -13,6 +13,8 @@ interface FPeripheralApi {
     val stateStream: WrappedStateFlow<FPeripheralState>
 
     val rxDataStream: Flow<ByteArray>
+
+    val streamingDataStream: Flow<ByteArray>
     val metaInfoKeysStream: WrappedStateFlow<Map<TransportMetaInfoKey, ByteArray?>>
 
     suspend fun writeValue(data: ByteArray)
