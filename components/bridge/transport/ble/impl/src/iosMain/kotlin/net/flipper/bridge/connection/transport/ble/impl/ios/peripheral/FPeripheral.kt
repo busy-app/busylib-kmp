@@ -51,6 +51,10 @@ class FPeripheral(
     private val _rxDataChannel = Channel<ByteArray>(2048)
     override val rxDataStream: Flow<ByteArray> = _rxDataChannel.receiveAsFlow()
 
+    @Suppress("MagicNumber")
+    private val _streamingDataChannel = Channel<ByteArray>(2048)
+    override val streamingDataStream: Flow<ByteArray> = _streamingDataChannel.receiveAsFlow()
+
     private val _metaInfoKeysStream =
         MutableStateFlow<Map<TransportMetaInfoKey, ByteArray?>>(emptyMap())
     override val metaInfoKeysStream: WrappedStateFlow<Map<TransportMetaInfoKey, ByteArray?>> =
@@ -78,6 +82,7 @@ class FPeripheral(
         config = config,
         stateStream = _stateStream,
         rxDataChannel = _rxDataChannel,
+        streamingDataChannel = _streamingDataChannel,
         metaInfoKeysStream = _metaInfoKeysStream,
         characteristicValueState = characteristicValueState,
         gattIO = gattIO,
@@ -133,6 +138,7 @@ class FPeripheral(
         gattIO.cancelPending(disconnectException)
 
         _rxDataChannel.close()
+        _streamingDataChannel.close()
 
         characteristicsByUuid.update { emptyMap() }
         serialWrite.value = null
