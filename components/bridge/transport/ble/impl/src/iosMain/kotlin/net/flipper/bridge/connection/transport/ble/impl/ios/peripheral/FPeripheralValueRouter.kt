@@ -19,6 +19,7 @@ internal class FPeripheralValueRouter(
     private val config: FBleDeviceConnectionConfig,
     private val stateStream: MutableStateFlow<FPeripheralState>,
     private val rxDataChannel: Channel<ByteArray>,
+    private val streamingDataChannel: Channel<ByteArray>,
     private val metaInfoKeysStream: MutableStateFlow<Map<TransportMetaInfoKey, ByteArray?>>,
     private val characteristicValueState: MutableStateFlow<Map<Uuid, ByteArray?>>,
     private val gattIO: FPeripheralGattIO,
@@ -54,6 +55,16 @@ internal class FPeripheralValueRouter(
                     debug { "RX data chunk bytes=${data.length} id=${identifierProvider()}" }
                 } else {
                     warn { "RX data is null id=${identifierProvider()}" }
+                }
+                return@runBlocking
+            }
+
+            if (characteristicUUID == config.screenStreamingConfig.notifyCharUuid) {
+                if (data != null && payload != null) {
+                    streamingDataChannel.send(payload)
+                    debug { "Streaming data chunk bytes=${data.length} id=${identifierProvider()}" }
+                } else {
+                    warn { "Streaming data is null id=${identifierProvider()}" }
                 }
                 return@runBlocking
             }

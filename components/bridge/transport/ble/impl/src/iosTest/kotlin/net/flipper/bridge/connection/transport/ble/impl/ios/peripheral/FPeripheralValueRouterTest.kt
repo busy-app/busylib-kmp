@@ -9,6 +9,7 @@ import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import net.flipper.bridge.connection.transport.ble.impl.ios.testfixtures.DEVICE_NAME_SHORT_UUID
 import net.flipper.bridge.connection.transport.ble.impl.ios.testfixtures.SERIAL_RX_SHORT_UUID
+import net.flipper.bridge.connection.transport.ble.impl.ios.testfixtures.STREAMING_NOTIFY_SHORT_UUID
 import net.flipper.bridge.connection.transport.ble.impl.ios.testfixtures.error
 import net.flipper.bridge.connection.transport.ble.impl.ios.testfixtures.newCharacteristic
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
@@ -87,12 +88,12 @@ class FPeripheralValueRouterTest {
 
         chunks.forEach { payload ->
             sut.didUpdateValue(
-                newCharacteristic(SERIAL_RX_SHORT_UUID, payload = payload),
+                newCharacteristic(STREAMING_NOTIFY_SHORT_UUID, payload = payload),
                 error = null,
             )
         }
 
-        val received = sut.rxDataStream.take(totalChunks).toList()
+        val received = sut.streamingDataStream.take(totalChunks).toList()
 
         assertEquals(totalChunks, received.size)
         chunks.forEachIndexed { index, expected ->
