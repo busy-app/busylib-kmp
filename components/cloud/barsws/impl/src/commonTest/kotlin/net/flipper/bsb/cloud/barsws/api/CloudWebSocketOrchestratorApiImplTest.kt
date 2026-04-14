@@ -9,8 +9,8 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
-import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import net.flipper.bsb.cloud.barsws.api.model.InternalWebSocketRequest
 import net.flipper.bsb.cloud.barsws.api.model.WebSocketEvent
@@ -22,11 +22,18 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.uuid.Uuid
 
+private const val DEBOUNCE_ADVANCE_MS = 2000L
+
 @OptIn(ExperimentalCoroutinesApi::class)
 class CloudWebSocketOrchestratorApiImplTest {
 
     private val barId1 = Uuid.parse("11111111-1111-1111-1111-111111111111")
     private val barId2 = Uuid.parse("22222222-2222-2222-2222-222222222222")
+
+    private fun TestScope.advanceDebounce() {
+        testScheduler.advanceTimeBy(DEBOUNCE_ADVANCE_MS)
+        testScheduler.runCurrent()
+    }
 
     // region Subscribe/Unsubscribe Lifecycle
 
@@ -37,6 +44,7 @@ class CloudWebSocketOrchestratorApiImplTest {
 
             val job = env.orchestrator.getEventsFlow(barId1)
                 .launchIn(backgroundScope)
+            advanceDebounce()
 
             assertEquals(
                 listOf(InternalWebSocketRequest.SubscribeState(listOf(barId1))),
@@ -53,9 +61,10 @@ class CloudWebSocketOrchestratorApiImplTest {
 
             val job = env.orchestrator.getEventsFlow(barId1)
                 .launchIn(backgroundScope)
+            advanceDebounce()
 
             job.cancel()
-            advanceUntilIdle()
+            advanceDebounce()
 
             assertEquals(
                 listOf(
@@ -75,6 +84,7 @@ class CloudWebSocketOrchestratorApiImplTest {
                 .launchIn(backgroundScope)
             val job2 = env.orchestrator.getEventsFlow(barId1)
                 .launchIn(backgroundScope)
+            advanceDebounce()
 
             val subscribes = env.mockWs.sentRequests
                 .filterIsInstance<InternalWebSocketRequest.SubscribeState>()
@@ -93,9 +103,10 @@ class CloudWebSocketOrchestratorApiImplTest {
                 .launchIn(backgroundScope)
             val job2 = env.orchestrator.getEventsFlow(barId1)
                 .launchIn(backgroundScope)
+            advanceDebounce()
 
             job1.cancel()
-            advanceUntilIdle()
+            advanceDebounce()
 
             val unsubscribes = env.mockWs.sentRequests
                 .filterIsInstance<InternalWebSocketRequest.UnsubscribeState>()
@@ -113,11 +124,12 @@ class CloudWebSocketOrchestratorApiImplTest {
                 .launchIn(backgroundScope)
             val job2 = env.orchestrator.getEventsFlow(barId1)
                 .launchIn(backgroundScope)
+            advanceDebounce()
 
             job1.cancel()
-            advanceUntilIdle()
+            advanceDebounce()
             job2.cancel()
-            advanceUntilIdle()
+            advanceDebounce()
 
             val unsubscribes = env.mockWs.sentRequests
                 .filterIsInstance<InternalWebSocketRequest.UnsubscribeState>()
@@ -133,12 +145,13 @@ class CloudWebSocketOrchestratorApiImplTest {
                 .launchIn(backgroundScope)
             val job2 = env.orchestrator.getEventsFlow(barId2)
                 .launchIn(backgroundScope)
+            advanceDebounce()
 
-            val subscribes = env.mockWs.sentRequests
+            val subscribedIds = env.mockWs.sentRequests
                 .filterIsInstance<InternalWebSocketRequest.SubscribeState>()
-            assertEquals(2, subscribes.size)
-            assertTrue(subscribes.any { barId1 in it.idsToSubscribe })
-            assertTrue(subscribes.any { barId2 in it.idsToSubscribe })
+                .flatMap { it.idsToSubscribe }
+                .toSet()
+            assertEquals(setOf(barId1, barId2), subscribedIds)
 
             job1.cancel()
             job2.cancel()
@@ -153,9 +166,10 @@ class CloudWebSocketOrchestratorApiImplTest {
                 .launchIn(backgroundScope)
             val job2 = env.orchestrator.getEventsFlow(barId2)
                 .launchIn(backgroundScope)
+            advanceDebounce()
 
             job1.cancel()
-            advanceUntilIdle()
+            advanceDebounce()
 
             val unsubscribes = env.mockWs.sentRequests
                 .filterIsInstance<InternalWebSocketRequest.UnsubscribeState>()
@@ -163,7 +177,7 @@ class CloudWebSocketOrchestratorApiImplTest {
             assertTrue(barId1 in unsubscribes[0].idsToUnsubscribe)
 
             job2.cancel()
-            advanceUntilIdle()
+            advanceDebounce()
 
             val finalUnsubscribes = env.mockWs.sentRequests
                 .filterIsInstance<InternalWebSocketRequest.UnsubscribeState>()
@@ -178,14 +192,16 @@ class CloudWebSocketOrchestratorApiImplTest {
             // First cycle
             val job1 = env.orchestrator.getEventsFlow(barId1)
                 .launchIn(backgroundScope)
+            advanceDebounce()
             job1.cancel()
-            advanceUntilIdle()
+            advanceDebounce()
 
             // Second cycle
             val job2 = env.orchestrator.getEventsFlow(barId1)
                 .launchIn(backgroundScope)
+            advanceDebounce()
             job2.cancel()
-            advanceUntilIdle()
+            advanceDebounce()
 
             val subscribes = env.mockWs.sentRequests
                 .filterIsInstance<InternalWebSocketRequest.SubscribeState>()
@@ -208,6 +224,7 @@ class CloudWebSocketOrchestratorApiImplTest {
             val job = env.orchestrator.getEventsFlow(barId1)
                 .onEach { received.add(it) }
                 .launchIn(backgroundScope)
+            advanceDebounce()
 
             env.mockWs.emitEvent(WebSocketEvent(barId1, mapOf("key" to "value")))
 
@@ -226,6 +243,7 @@ class CloudWebSocketOrchestratorApiImplTest {
             val job = env.orchestrator.getEventsFlow(barId1)
                 .onEach { received.add(it) }
                 .launchIn(backgroundScope)
+            advanceDebounce()
 
             env.mockWs.emitEvent(WebSocketEvent(barId2, mapOf("key" to "value")))
 
@@ -243,6 +261,7 @@ class CloudWebSocketOrchestratorApiImplTest {
             val job = env.orchestrator.getEventsFlow(barId1)
                 .onEach { received.add(it) }
                 .launchIn(backgroundScope)
+            advanceDebounce()
 
             env.mockWs.emitEvent(
                 WebSocketEvent(barId1, mapOf("a" to 1, "b" to "two", "c" to true))
@@ -265,6 +284,7 @@ class CloudWebSocketOrchestratorApiImplTest {
             val job = env.orchestrator.getEventsFlow(barId1)
                 .onEach { received.add(it) }
                 .launchIn(backgroundScope)
+            advanceDebounce()
 
             env.mockWs.emitEvent(WebSocketEvent(barId1, mapOf("first" to 1)))
             env.mockWs.emitEvent(WebSocketEvent(barId1, mapOf("second" to 2)))
@@ -286,6 +306,7 @@ class CloudWebSocketOrchestratorApiImplTest {
             val job = env.orchestrator.getEventsFlow(barId1)
                 .onEach { received.add(it) }
                 .launchIn(backgroundScope)
+            advanceDebounce()
 
             env.mockWs.emitEvent(WebSocketEvent(barId1, emptyMap()))
 
@@ -307,6 +328,7 @@ class CloudWebSocketOrchestratorApiImplTest {
             val job2 = env.orchestrator.getEventsFlow(barId1)
                 .onEach { received2.add(it) }
                 .launchIn(backgroundScope)
+            advanceDebounce()
 
             env.mockWs.emitEvent(WebSocketEvent(barId1, mapOf("key" to "value")))
 
@@ -330,6 +352,7 @@ class CloudWebSocketOrchestratorApiImplTest {
             val job2 = env.orchestrator.getEventsFlow(barId2)
                 .onEach { received2.add(it) }
                 .launchIn(backgroundScope)
+            advanceDebounce()
 
             env.mockWs.emitEvent(WebSocketEvent(barId1, mapOf("bar1" to "a")))
             env.mockWs.emitEvent(WebSocketEvent(barId2, mapOf("bar2" to "b")))
@@ -361,13 +384,14 @@ class CloudWebSocketOrchestratorApiImplTest {
                 env.orchestrator.getEventsFlow(barId1)
                     .launchIn(backgroundScope)
             }
+            advanceDebounce()
 
             val subscribes = env.mockWs.sentRequests
                 .filterIsInstance<InternalWebSocketRequest.SubscribeState>()
             assertEquals(1, subscribes.size)
 
             jobs.forEach { it.cancel() }
-            advanceUntilIdle()
+            advanceDebounce()
 
             val unsubscribes = env.mockWs.sentRequests
                 .filterIsInstance<InternalWebSocketRequest.UnsubscribeState>()
@@ -383,10 +407,11 @@ class CloudWebSocketOrchestratorApiImplTest {
                 env.orchestrator.getEventsFlow(barId1)
                     .launchIn(backgroundScope)
             }
+            advanceDebounce()
 
             // Cancel 3 of 5
             jobs.take(3).forEach { it.cancel() }
-            advanceUntilIdle()
+            advanceDebounce()
 
             val unsubscribes = env.mockWs.sentRequests
                 .filterIsInstance<InternalWebSocketRequest.UnsubscribeState>()
@@ -394,7 +419,7 @@ class CloudWebSocketOrchestratorApiImplTest {
 
             // Cancel remaining 2
             jobs.drop(3).forEach { it.cancel() }
-            advanceUntilIdle()
+            advanceDebounce()
 
             val finalUnsubscribes = env.mockWs.sentRequests
                 .filterIsInstance<InternalWebSocketRequest.UnsubscribeState>()
@@ -409,8 +434,9 @@ class CloudWebSocketOrchestratorApiImplTest {
             repeat(50) {
                 val job = env.orchestrator.getEventsFlow(barId1)
                     .launchIn(backgroundScope)
+                advanceDebounce()
                 job.cancel()
-                advanceUntilIdle()
+                advanceDebounce()
             }
 
             val subscribes = env.mockWs.sentRequests
@@ -430,9 +456,10 @@ class CloudWebSocketOrchestratorApiImplTest {
                 .launchIn(backgroundScope)
             val job2 = env.orchestrator.getEventsFlow(barId2)
                 .launchIn(backgroundScope)
+            advanceDebounce()
 
             job1.cancel()
-            advanceUntilIdle()
+            advanceDebounce()
 
             val unsubscribes = env.mockWs.sentRequests
                 .filterIsInstance<InternalWebSocketRequest.UnsubscribeState>()
@@ -441,10 +468,13 @@ class CloudWebSocketOrchestratorApiImplTest {
 
             val job3 = env.orchestrator.getEventsFlow(barId1)
                 .launchIn(backgroundScope)
+            advanceDebounce()
 
-            val allSubscribes = env.mockWs.sentRequests
+            val allSubscribedIds = env.mockWs.sentRequests
                 .filterIsInstance<InternalWebSocketRequest.SubscribeState>()
-            assertEquals(3, allSubscribes.size)
+                .flatMap { it.idsToSubscribe }
+            assertEquals(2, allSubscribedIds.count { it == barId1 })
+            assertEquals(1, allSubscribedIds.count { it == barId2 })
 
             job2.cancel()
             job3.cancel()
@@ -461,12 +491,13 @@ class CloudWebSocketOrchestratorApiImplTest {
 
             val job = env.orchestrator.getEventsFlow(barId1)
                 .launchIn(backgroundScope)
+            advanceDebounce()
 
             assertEquals(1, env.mockWs.sentRequests.size)
 
             val newWs = MockBSBWebSocket()
             env.mockApi.setWebSocket(newWs)
-            advanceUntilIdle()
+            advanceDebounce()
 
             val newSubscribes = newWs.sentRequests
                 .filterIsInstance<InternalWebSocketRequest.SubscribeState>()
@@ -485,10 +516,11 @@ class CloudWebSocketOrchestratorApiImplTest {
                 .launchIn(backgroundScope)
             val job2 = env.orchestrator.getEventsFlow(barId1)
                 .launchIn(backgroundScope)
+            advanceDebounce()
 
             val newWs = MockBSBWebSocket()
             env.mockApi.setWebSocket(newWs)
-            advanceUntilIdle()
+            advanceDebounce()
 
             val newSubscribes = newWs.sentRequests
                 .filterIsInstance<InternalWebSocketRequest.SubscribeState>()
@@ -507,13 +539,14 @@ class CloudWebSocketOrchestratorApiImplTest {
             val job = env.orchestrator.getEventsFlow(barId1)
                 .onEach { received.add(it) }
                 .launchIn(backgroundScope)
+            advanceDebounce()
 
             env.mockWs.emitEvent(WebSocketEvent(barId1, mapOf("old" to 1)))
             assertEquals(1, received.size)
 
             val newWs = MockBSBWebSocket()
             env.mockApi.setWebSocket(newWs)
-            advanceUntilIdle()
+            advanceDebounce()
 
             newWs.emitEvent(WebSocketEvent(barId1, mapOf("new" to 2)))
 
@@ -534,11 +567,12 @@ class CloudWebSocketOrchestratorApiImplTest {
 
             val job = env.orchestrator.getEventsFlow(barId1)
                 .launchIn(backgroundScope)
+            advanceDebounce()
 
             assertTrue(env.mockWs.sentRequests.isEmpty())
 
             env.mockApi.setWebSocket(env.mockWs)
-            advanceUntilIdle()
+            advanceDebounce()
 
             val subscribes = env.mockWs.sentRequests
                 .filterIsInstance<InternalWebSocketRequest.SubscribeState>()
@@ -554,14 +588,15 @@ class CloudWebSocketOrchestratorApiImplTest {
 
             val job = env.orchestrator.getEventsFlow(barId1)
                 .launchIn(backgroundScope)
+            advanceDebounce()
 
             assertEquals(1, env.mockWs.sentRequests.size)
 
             env.mockApi.setWebSocket(null)
-            advanceUntilIdle()
+            advanceDebounce()
 
             job.cancel()
-            advanceUntilIdle()
+            advanceDebounce()
 
             val unsubscribes = env.mockWs.sentRequests
                 .filterIsInstance<InternalWebSocketRequest.UnsubscribeState>()
@@ -583,17 +618,22 @@ class CloudWebSocketOrchestratorApiImplTest {
                 env.orchestrator.getEventsFlow(barId)
                     .launchIn(backgroundScope)
             }
+            advanceDebounce()
 
-            val subscribes = env.mockWs.sentRequests
+            val subscribedIds = env.mockWs.sentRequests
                 .filterIsInstance<InternalWebSocketRequest.SubscribeState>()
-            assertEquals(20, subscribes.size)
+                .flatMap { it.idsToSubscribe }
+                .toSet()
+            assertEquals(barIds.toSet(), subscribedIds)
 
             jobs.forEach { it.cancel() }
-            advanceUntilIdle()
+            advanceDebounce()
 
-            val unsubscribes = env.mockWs.sentRequests
+            val unsubscribedIds = env.mockWs.sentRequests
                 .filterIsInstance<InternalWebSocketRequest.UnsubscribeState>()
-            assertEquals(20, unsubscribes.size)
+                .flatMap { it.idsToUnsubscribe }
+                .toSet()
+            assertEquals(barIds.toSet(), unsubscribedIds)
         }
 
     @Test
@@ -605,11 +645,12 @@ class CloudWebSocketOrchestratorApiImplTest {
             val job = env.orchestrator.getEventsFlow(barId1)
                 .onEach { received.add(it) }
                 .launchIn(backgroundScope)
+            advanceDebounce()
 
             env.mockWs.emitEvent(WebSocketEvent(barId1, mapOf("before" to 1)))
 
             job.cancel()
-            advanceUntilIdle()
+            advanceDebounce()
 
             env.mockWs.emitEvent(WebSocketEvent(barId1, mapOf("after" to 2)))
 
