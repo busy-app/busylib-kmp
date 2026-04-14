@@ -1,13 +1,16 @@
 package net.flipper.bsb.cloud.barsws.api
 
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filter
@@ -661,17 +664,28 @@ class BSBWebSocketImplTest {
         val mockSession = MockBSBWebSocketSession()
         val testDispatcher = StandardTestDispatcher(testScheduler)
 
+        // Use a dedicated scope with SupervisorJob so the ClosedReceiveChannelException
+        // from session close doesn't fail the test (mirrors real usage where the WS scope
+        // handles disconnections)
+        val caughtExceptions = mutableListOf<Throwable>()
+        val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
+            caughtExceptions.add(throwable)
+        }
+        val webSocketScope = CoroutineScope(
+            testDispatcher + SupervisorJob() + exceptionHandler
+        )
+
         val webSocket = BSBWebSocketImpl(
             session = mockSession,
             logger = testLogger,
-            scope = backgroundScope,
+            scope = webSocketScope,
             dispatcher = testDispatcher
         )
 
         val receivedEvents = MutableStateFlow(listOf<WebSocketEvent>())
         val job = webSocket.getEventsFlow()
             .onEach { receivedEvents.update { list -> list + it } }
-            .launchIn(backgroundScope)
+            .launchIn(webSocketScope)
 
         advanceUntilIdle()
 
@@ -680,16 +694,17 @@ class BSBWebSocketImplTest {
 
         assertEquals(1, receivedEvents.first { it.size == 1 }.size)
 
-        // When - cancel job first to avoid race condition with channel close
-        job.cancel()
-        advanceUntilIdle()
-
-        // Then close the session
+        // When - close the session while subscriber is active
         mockSession.simulateClose()
         advanceUntilIdle()
 
-        // Then - job should be cancelled
-        assertTrue(job.isCancelled, "Job should be cancelled after session close")
+        // Then - the ClosedReceiveChannelException should be caught by the scope
+        assertTrue(
+            caughtExceptions.any { it is ClosedReceiveChannelException },
+            "Session close should propagate ClosedReceiveChannelException"
+        )
+
+        webSocketScope.cancel()
     }
 
     // endregion
