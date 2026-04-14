@@ -53,7 +53,7 @@ class BSBWebSocketImpl(
                 session.receive()
             } catch (e: ClosedReceiveChannelException) {
                 error(e) { "Channel closed for receive" }
-                break
+                throw e
             } catch (e: SerializationException) {
                 error(e) { "Failed deserialize message from websocket" }
                 null
