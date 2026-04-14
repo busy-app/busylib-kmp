@@ -78,7 +78,7 @@ class ActiveWebSocketHolder(private val logger: LogTagProvider) {
     ): Result<Unit> {
         logger.verbose { "Send $request" }
         @Suppress("RunCatchingInSuspendRule")
-        return runCatching { // By design ignore cancelation exception from webSocketApi.send
+        return runCatching { // By design ignore cancellation exception from webSocketApi.send
             withTimeout(SEND_TIMEOUT) {
                 webSocketApi.send(
                     request
