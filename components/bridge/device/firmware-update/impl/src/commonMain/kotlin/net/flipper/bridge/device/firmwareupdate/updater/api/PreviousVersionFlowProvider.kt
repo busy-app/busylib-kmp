@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -30,15 +29,15 @@ class PreviousVersionFlowProvider(
     private val fFeatureProvider: FFeatureProvider,
     private val fConnectionService: FDevicePersistedStorage
 ) {
-    private fun getPreviousVersionFlow() = flow(
+    private fun getPreviousVersionFlow() = channelFlow(
         block = {
-            emit(null)
+            send(null)
             var busyBarVersionTransitionOrNull: BusyBarVersionTransition? = null
             // Reset versionTransition on BusyBar change
             fConnectionService.getCurrentDeviceFlow()
                 .distinctUntilChanged()
                 .onEach {
-                    emit(null)
+                    send(null)
                     busyBarVersionTransitionOrNull = null
                 }
                 .flatMapLatest {
@@ -53,7 +52,7 @@ class PreviousVersionFlowProvider(
                         newCurrentVersion = newCurrentVersion
                     )
                     busyBarVersionTransitionOrNull = versionModel
-                    emit(versionModel)
+                    send(versionModel)
                 }
                 .collect()
         }
