@@ -27,14 +27,14 @@ import net.flipper.core.busylib.ktx.common.tryCast
 @Inject
 class PreviousVersionFlowProvider(
     private val fFeatureProvider: FFeatureProvider,
-    private val fConnectionService: FDevicePersistedStorage
+    private val fDevicePersistedStorage: FDevicePersistedStorage
 ) {
     private fun getPreviousVersionFlow() = channelFlow(
         block = {
             send(null)
             var busyBarVersionTransitionOrNull: BusyBarVersionTransition? = null
             // Reset versionTransition on BusyBar change
-            fConnectionService.getCurrentDeviceFlow()
+            fDevicePersistedStorage.getCurrentDeviceFlow()
                 .distinctUntilChanged()
                 .onEach {
                     send(null)
