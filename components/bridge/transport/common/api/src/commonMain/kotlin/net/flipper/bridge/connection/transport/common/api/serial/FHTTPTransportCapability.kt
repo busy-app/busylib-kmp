@@ -16,21 +16,6 @@ enum class FHTTPTransportCapability {
     BB_DOWNLOAD_UPDATE_SUPPORTED,
 
     /**
-     * Capability indicates current transport only supports BLE
-     */
-    BLE_ONLY_CONNECTION_SUPPORTED,
-
-    /**
-     * Capability indicates current transport only supports LAN
-     */
-    LAN_ONLY_CONNECTION_SUPPORTED,
-
-    /**
-     * Capability indicates current transport only supports CLOUD
-     */
-    CLOUD_ONLY_CONNECTION_SUPPORTED,
-
-    /**
      * Capability means a local connection is currently active
      *
      * ### Example:

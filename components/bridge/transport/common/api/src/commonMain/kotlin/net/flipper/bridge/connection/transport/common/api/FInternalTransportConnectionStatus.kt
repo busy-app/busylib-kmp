@@ -12,7 +12,7 @@ sealed class FInternalTransportConnectionStatus {
     data class Connected(
         val scope: CoroutineScope,
         val deviceApi: FConnectedDeviceApi,
-        val connectionType: FInternalTransportConnectionType?
+        val connectionType: FInternalTransportConnectionType
     ) : FInternalTransportConnectionStatus()
 
     data object Disconnecting : FInternalTransportConnectionStatus()

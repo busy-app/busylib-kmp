@@ -68,29 +68,6 @@ class FCombinedConnectionApiImpl(
             .distinctUntilChanged()
     }
 
-    private fun getCurrentConnectionType(
-        capabilities: List<FHTTPTransportCapability>
-    ): FInternalTransportConnectionType? {
-        return when {
-            FHTTPTransportCapability
-                .LAN_ONLY_CONNECTION_SUPPORTED in capabilities -> {
-                FInternalTransportConnectionType.LAN
-            }
-
-            FHTTPTransportCapability
-                .CLOUD_ONLY_CONNECTION_SUPPORTED in capabilities -> {
-                FInternalTransportConnectionType.CLOUD
-            }
-
-            FHTTPTransportCapability
-                .BLE_ONLY_CONNECTION_SUPPORTED in capabilities -> {
-                FInternalTransportConnectionType.BLE
-            }
-
-            else -> null
-        }
-    }
-
     private fun startCollectTransportStatusUpdateJob(): Job {
         return getCurrentConnectionSnapshotFlow()
             .onEach { connectionSnapshot ->
@@ -98,19 +75,7 @@ class FCombinedConnectionApiImpl(
                     ?.status
                     ?: FInternalTransportConnectionStatus.Disconnected
 
-                val capabilities = connectionSnapshot?.capabilities.orEmpty()
-
-                if (transportConnectionStatus is FInternalTransportConnectionStatus.Connected) {
-                    listener.onStatusUpdate(
-                        status = FInternalTransportConnectionStatus.Connected(
-                            scope = scope,
-                            deviceApi = this,
-                            connectionType = getCurrentConnectionType(capabilities)
-                        )
-                    )
-                } else {
-                    listener.onStatusUpdate(transportConnectionStatus)
-                }
+                listener.onStatusUpdate(transportConnectionStatus)
             }
             .launchIn(scope)
     }

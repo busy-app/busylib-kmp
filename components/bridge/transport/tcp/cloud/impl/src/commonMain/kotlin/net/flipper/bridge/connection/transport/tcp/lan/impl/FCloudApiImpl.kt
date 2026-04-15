@@ -72,9 +72,7 @@ class FCloudApiImpl(
     override fun getDeviceHttpEngine() = httpEngine
 
     private val _capabilities = flowOf(
-        listOf(
-            FHTTPTransportCapability.CLOUD_ONLY_CONNECTION_SUPPORTED,
-        )
+        listOf<FHTTPTransportCapability>()
     ).shareIn(scope, SharingStarted.WhileSubscribed(), 1)
 
     override fun getCapabilities(): Flow<List<FHTTPTransportCapability>> {

@@ -48,12 +48,11 @@ class FTransportListenerImpl(config: BUSYBar) : LogTagProvider {
                         FInternalTransportConnectionType.BLE -> FDeviceTransportType.BLE
                         FInternalTransportConnectionType.LAN -> FDeviceTransportType.LAN
                         FInternalTransportConnectionType.CLOUD -> FDeviceTransportType.CLOUD
-                        null -> null
                     }
                 )
 
                 FInternalTransportConnectionStatus.Connecting ->
-                    FDeviceConnectStatus.Connecting(
+                    FDeviceConnectStatus.Connecting.InProgress(
                         device = device,
                         status = ConnectingStatus.CONNECTING
                     )
@@ -73,7 +72,7 @@ class FTransportListenerImpl(config: BUSYBar) : LogTagProvider {
                 )
 
                 FInternalTransportConnectionStatus.Pairing ->
-                    FDeviceConnectStatus.Connecting(
+                    FDeviceConnectStatus.Connecting.InProgress(
                         device = device,
                         status = ConnectingStatus.INITIALIZING
                     )

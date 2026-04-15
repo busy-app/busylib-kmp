@@ -33,6 +33,6 @@ sealed interface FDeviceConnectStatus {
         val scope: CoroutineScope,
         val device: BUSYBar,
         val deviceApi: FConnectedDeviceApi,
-        val transportType: FDeviceTransportType?
+        val transportType: FDeviceTransportType
     ) : FDeviceConnectStatus
 }

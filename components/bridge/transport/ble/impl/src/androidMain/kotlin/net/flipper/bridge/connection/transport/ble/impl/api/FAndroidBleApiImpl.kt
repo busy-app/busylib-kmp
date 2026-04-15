@@ -94,7 +94,6 @@ class FAndroidBleApiImpl(
 
     private val _capabilities = flowOf(
         listOf(
-            FHTTPTransportCapability.BLE_ONLY_CONNECTION_SUPPORTED,
             FHTTPTransportCapability.BB_LOCAL_CONNECTION,
         )
     ).shareIn(scope, SharingStarted.WhileSubscribed(), 1)
