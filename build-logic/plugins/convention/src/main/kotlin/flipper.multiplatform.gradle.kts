@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
+
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("com.android.kotlin.multiplatform.library")
@@ -29,6 +31,11 @@ kotlin {
     applyDefaultHierarchyTemplate()
     compilerOptions {
         freeCompilerArgs.add("-XXLanguage:+ExplicitBackingFields")
+    }
+    targets.withType<KotlinNativeTarget>().configureEach {
+        compilerOptions {
+            freeCompilerArgs.add("-Xforeign-exception-mode=objc-wrap")
+        }
     }
 }
 
