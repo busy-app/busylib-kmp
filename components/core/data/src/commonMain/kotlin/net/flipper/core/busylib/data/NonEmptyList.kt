@@ -3,7 +3,11 @@ package net.flipper.core.busylib.data
 data class NonEmptyList<T> internal constructor(
     val head: T,
     internal val tail: List<T>
-) : List<T> by listOf(head) + tail
+) : List<T> by listOf(head) + tail {
+    override fun toString(): String {
+        return toList().toString()
+    }
+}
 
 fun <T> nonEmptyListOf(head: T, vararg tail: T): NonEmptyList<T> {
     return NonEmptyList(head, tail.toList())

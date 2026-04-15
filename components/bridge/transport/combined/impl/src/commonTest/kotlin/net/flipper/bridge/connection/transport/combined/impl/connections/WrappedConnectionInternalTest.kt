@@ -21,10 +21,12 @@ import net.flipper.bridge.connection.transport.combined.impl.connections.helpers
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
+import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionType
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 /**
@@ -56,8 +58,7 @@ class WrappedConnectionInternalTest {
         )
 
         // Then
-        assertEquals(
-            FInternalTransportConnectionStatus.Connecting,
+        assertIs<FInternalTransportConnectionStatus.Connecting>(
             connection.stateFlow.value,
             "Initial state should be Connecting"
         )
@@ -86,7 +87,7 @@ class WrappedConnectionInternalTest {
             val connectedStatus = FInternalTransportConnectionStatus.Connected(
                 scope = backgroundScope,
                 deviceApi = connectionBuilder.deviceApis.last(),
-                connectionType = null
+                connectionType = FInternalTransportConnectionType.MOCK
             )
             connectionBuilder.latestListener()?.onStatusUpdate(connectedStatus)
 
@@ -174,8 +175,7 @@ class WrappedConnectionInternalTest {
             advanceTimeBy(5000L)
 
             // Then - state should still be connecting since connection hasn't completed
-            assertEquals(
-                FInternalTransportConnectionStatus.Connecting,
+            assertIs<FInternalTransportConnectionStatus.Connecting>(
                 connection.stateFlow.value
             )
         }
@@ -239,7 +239,7 @@ class WrappedConnectionInternalTest {
         val connectedStatus = FInternalTransportConnectionStatus.Connected(
             scope = backgroundScope,
             deviceApi = connectionBuilder.deviceApis.last(),
-            connectionType = null
+            connectionType = FInternalTransportConnectionType.MOCK
         )
         listener.onStatusUpdate(connectedStatus)
         advanceUntilIdle()
@@ -251,7 +251,7 @@ class WrappedConnectionInternalTest {
 
         // Then
         assertTrue(
-            observedStates.contains(FInternalTransportConnectionStatus.Connecting),
+            observedStates.any { it is FInternalTransportConnectionStatus.Connecting },
             "Should have Connecting state"
         )
         assertTrue(
@@ -291,7 +291,7 @@ class WrappedConnectionInternalTest {
                 val status = if (index % 2 == 0) {
                     FInternalTransportConnectionStatus.Pairing
                 } else {
-                    FInternalTransportConnectionStatus.Connecting
+                    FInternalTransportConnectionStatus.Connecting(FInternalTransportConnectionType.MOCK)
                 }
                 listener.onStatusUpdate(status)
             }
@@ -304,7 +304,7 @@ class WrappedConnectionInternalTest {
         val finalState = connection.stateFlow.value
         assertTrue(
             finalState == FInternalTransportConnectionStatus.Pairing ||
-                finalState == FInternalTransportConnectionStatus.Connecting,
+                finalState is FInternalTransportConnectionStatus.Connecting,
             "Final state should be a valid state"
         )
     }
@@ -332,7 +332,7 @@ class WrappedConnectionInternalTest {
         val connectedStatus = FInternalTransportConnectionStatus.Connected(
             scope = backgroundScope,
             deviceApi = connectionBuilder.deviceApis.last(),
-            connectionType = null
+            connectionType = FInternalTransportConnectionType.MOCK
         )
         connectionBuilder.latestListener()?.onStatusUpdate(connectedStatus)
         advanceUntilIdle()
@@ -367,7 +367,7 @@ class WrappedConnectionInternalTest {
         val connectedStatus = FInternalTransportConnectionStatus.Connected(
             scope = backgroundScope,
             deviceApi = connectionBuilder.deviceApis.last(),
-            connectionType = null
+            connectionType = FInternalTransportConnectionType.MOCK
         )
         connectionBuilder.latestListener()?.onStatusUpdate(connectedStatus)
         advanceUntilIdle()
@@ -463,7 +463,7 @@ class WrappedConnectionInternalTest {
         val connectedStatus = FInternalTransportConnectionStatus.Connected(
             scope = backgroundScope,
             deviceApi = connectionBuilder.deviceApis.last(),
-            connectionType = null
+            connectionType = FInternalTransportConnectionType.MOCK
         )
         listener.onStatusUpdate(connectedStatus)
         advanceUntilIdle()
@@ -477,7 +477,7 @@ class WrappedConnectionInternalTest {
         launch {
             delay(50L)
             try {
-                listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting)
+                listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting(FInternalTransportConnectionType.MOCK))
             } catch (_: Exception) {
                 // May fail if scope is cancelled - that's OK
             }
@@ -633,7 +633,7 @@ class WrappedConnectionInternalTest {
             val connectedStatus = FInternalTransportConnectionStatus.Connected(
                 scope = backgroundScope,
                 deviceApi = throwingDeviceApi,
-                connectionType = null
+                connectionType = FInternalTransportConnectionType.MOCK
             )
             connectionBuilder.listener?.onStatusUpdate(connectedStatus)
             advanceUntilIdle()
@@ -707,7 +707,7 @@ class WrappedConnectionInternalTest {
                         if (i % 2 == 0) {
                             FInternalTransportConnectionStatus.Pairing
                         } else {
-                            FInternalTransportConnectionStatus.Connecting
+                            FInternalTransportConnectionStatus.Connecting(FInternalTransportConnectionType.MOCK)
                         }
                     )
                 }

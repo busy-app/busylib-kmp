@@ -23,7 +23,9 @@ import net.flipper.bridge.connection.transport.common.api.FInternalTransportConn
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus.Connected
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus.Connecting
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus.Disconnected
+import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionType
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
+import net.flipper.core.busylib.data.nonEmptyListOf
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -59,10 +61,17 @@ class FCombinedConnectionApiImplTest {
     private fun createConfig(
         name: String = "TestDevice",
         vararg childConfigs: FDeviceConnectionConfig<*>
-    ): FCombinedConnectionConfig = FCombinedConnectionConfig(
-        name = name,
-        connectionConfigs = childConfigs.toList()
-    )
+    ): FCombinedConnectionConfig {
+        val configs = childConfigs.toList()
+        return FCombinedConnectionConfig(
+            name = name,
+            connectionConfigs = if (configs.isEmpty()) {
+                nonEmptyListOf(TestConfig())
+            } else {
+                nonEmptyListOf(configs.first(), configs.drop(1))
+            }
+        )
+    }
 
     /**
      * Creates a [FCombinedConnectionApiImpl] with pre-established [AutoReconnectConnection]s.
@@ -241,7 +250,7 @@ class FCombinedConnectionApiImplTest {
                 Connected(
                     scope = backgroundScope,
                     deviceApi = deviceApi,
-                    connectionType = null
+                    connectionType = FInternalTransportConnectionType.MOCK
                 )
             )
             advanceUntilIdle()
@@ -291,7 +300,7 @@ class FCombinedConnectionApiImplTest {
                 Connected(
                     scope = backgroundScope,
                     deviceApi = deviceApi,
-                    connectionType = null
+                    connectionType = FInternalTransportConnectionType.MOCK
                 )
             )
             advanceUntilIdle()
@@ -685,7 +694,7 @@ class FCombinedConnectionApiImplTest {
                 Connected(
                     scope = backgroundScope,
                     deviceApi = deviceApi,
-                    connectionType = null
+                    connectionType = FInternalTransportConnectionType.MOCK
                 )
             )
             advanceUntilIdle()
@@ -837,7 +846,7 @@ class FCombinedConnectionApiImplTest {
                 Connected(
                     scope = backgroundScope,
                     deviceApi = throwingDeviceApi,
-                    connectionType = null
+                    connectionType = FInternalTransportConnectionType.MOCK
                 )
             )
             advanceUntilIdle()
@@ -929,7 +938,7 @@ class FCombinedConnectionApiImplTest {
 
             // The new AutoReconnectConnection starts in Connecting state
             assertTrue(
-                statusHistory.any { it == Connecting },
+                statusHistory.any { it is Connecting },
                 "Should see Connecting status for new connection. Got: $statusHistory"
             )
         }
@@ -960,7 +969,7 @@ class FCombinedConnectionApiImplTest {
             Connected(
                 scope = backgroundScope,
                 deviceApi = deviceApi,
-                connectionType = null
+                connectionType = FInternalTransportConnectionType.MOCK
             )
         )
         advanceUntilIdle()
@@ -992,7 +1001,7 @@ class FCombinedConnectionApiImplTest {
         val hasDisconnected = statusHistory.any { it == Disconnected }
         // We should NOT see a disconnected state since connA stays connected
         assertTrue(
-            !hasDisconnected || statusHistory.last() is Connected || statusHistory.last() == Connecting,
+            !hasDisconnected || statusHistory.last() is Connected || statusHistory.last() is Connecting,
             "Should remain connected or at worst be connecting (not disconnected). " +
                 "Got: $statusHistory"
         )
@@ -1255,8 +1264,7 @@ class FCombinedConnectionApiImplTest {
             advanceUntilIdle()
 
             // State should be Connecting (not Connected)
-            assertEquals(
-                Connecting,
+            assertIs<Connecting>(
                 conn.stateFlow.value,
                 "Connection should be in Connecting state"
             )
@@ -1304,7 +1312,7 @@ class FCombinedConnectionApiImplTest {
                 Connected(
                     scope = backgroundScope,
                     deviceApi = deviceApi,
-                    connectionType = null
+                    connectionType = FInternalTransportConnectionType.MOCK
                 )
             )
             advanceUntilIdle()
@@ -1343,7 +1351,7 @@ class FCombinedConnectionApiImplTest {
                 Connected(
                     scope = backgroundScope,
                     deviceApi = deviceApi,
-                    connectionType = null
+                    connectionType = FInternalTransportConnectionType.MOCK
                 )
             )
             advanceUntilIdle()
@@ -1424,7 +1432,7 @@ class FCombinedConnectionApiImplTest {
             Connected(
                 scope = backgroundScope,
                 deviceApi = deviceApi,
-                connectionType = null
+                connectionType = FInternalTransportConnectionType.MOCK
             )
         )
         advanceUntilIdle()
@@ -1575,7 +1583,7 @@ class FCombinedConnectionApiImplTest {
             advanceUntilIdle()
 
             assertTrue(
-                statusHistory.any { it == Connecting },
+                statusHistory.any { it is Connecting },
                 "Should transition to Connecting when connection added"
             )
 

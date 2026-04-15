@@ -21,6 +21,7 @@ import net.flipper.bridge.connection.transport.combined.impl.connections.helpers
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
+import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionType
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -60,8 +61,7 @@ class AutoReconnectConnectionTest {
         )
 
         // Then
-        assertEquals(
-            FInternalTransportConnectionStatus.Connecting,
+        assertIs<FInternalTransportConnectionStatus.Connecting>(
             autoReconnect.stateFlow.value,
             "Initial state should be Connecting"
         )
@@ -110,7 +110,7 @@ class AutoReconnectConnectionTest {
             val connectedStatus = FInternalTransportConnectionStatus.Connected(
                 scope = backgroundScope,
                 deviceApi = connectionBuilder.deviceApis.last(),
-                connectionType = null
+                connectionType = FInternalTransportConnectionType.MOCK
             )
             listener.onStatusUpdate(connectedStatus)
             advanceUntilIdle()
@@ -146,7 +146,7 @@ class AutoReconnectConnectionTest {
         val connectedStatus = FInternalTransportConnectionStatus.Connected(
             scope = backgroundScope,
             deviceApi = connectionBuilder.deviceApis.last(),
-            connectionType = null
+            connectionType = FInternalTransportConnectionType.MOCK
         )
         listener1.onStatusUpdate(connectedStatus)
         advanceUntilIdle()
@@ -280,7 +280,7 @@ class AutoReconnectConnectionTest {
         val connectedStatus = FInternalTransportConnectionStatus.Connected(
             scope = backgroundScope,
             deviceApi = connectionBuilder.deviceApis.last(),
-            connectionType = null
+            connectionType = FInternalTransportConnectionType.MOCK
         )
         listener.onStatusUpdate(connectedStatus)
         advanceUntilIdle()
@@ -428,7 +428,7 @@ class AutoReconnectConnectionTest {
         val connectedStatus = FInternalTransportConnectionStatus.Connected(
             scope = backgroundScope,
             deviceApi = connectionBuilder.deviceApis.last(),
-            connectionType = null
+            connectionType = FInternalTransportConnectionType.MOCK
         )
         listener.onStatusUpdate(connectedStatus)
         advanceUntilIdle()
@@ -480,7 +480,7 @@ class AutoReconnectConnectionTest {
         val connectedStatus = FInternalTransportConnectionStatus.Connected(
             scope = backgroundScope,
             deviceApi = connectionBuilder.deviceApis.last(),
-            connectionType = null
+            connectionType = FInternalTransportConnectionType.MOCK
         )
         listener.onStatusUpdate(connectedStatus)
         advanceUntilIdle()
@@ -489,7 +489,7 @@ class AutoReconnectConnectionTest {
 
         // Then
         assertTrue(
-            observedStates.any { it == FInternalTransportConnectionStatus.Connecting },
+            observedStates.any { it is FInternalTransportConnectionStatus.Connecting },
             "Should have Connecting state"
         )
         assertTrue(
@@ -532,7 +532,7 @@ class AutoReconnectConnectionTest {
                     if (i % 2 == 0) {
                         FInternalTransportConnectionStatus.Pairing
                     } else {
-                        FInternalTransportConnectionStatus.Connecting
+                        FInternalTransportConnectionStatus.Connecting(FInternalTransportConnectionType.MOCK)
                     }
                 )
             }
@@ -567,7 +567,7 @@ class AutoReconnectConnectionTest {
         // Track Connecting state emissions
         val collectorJob = launch {
             autoReconnect.stateFlow.collect { state ->
-                if (state == FInternalTransportConnectionStatus.Connecting) {
+                if (state is FInternalTransportConnectionStatus.Connecting) {
                     connectingStatesCount.value++
                 }
             }
@@ -657,7 +657,7 @@ class AutoReconnectConnectionTest {
 
             val updateJob = launch {
                 try {
-                    listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting)
+                    listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting(FInternalTransportConnectionType.MOCK))
                 } catch (_: Exception) {
                     // May throw if scope cancelled - OK
                 }
@@ -795,7 +795,7 @@ class AutoReconnectConnectionTest {
                     deviceApi = connectionBuilder.deviceApis
                         .lastOrNull()
                         ?: TestConnectedDeviceApi(),
-                    connectionType = null
+                    connectionType = FInternalTransportConnectionType.MOCK
                 )
                 listener.onStatusUpdate(connectedStatus)
                 advanceUntilIdle()
@@ -866,7 +866,7 @@ class AutoReconnectConnectionTest {
                 FInternalTransportConnectionStatus.Connected(
                     scope = backgroundScope,
                     deviceApi = connectionBuilder.deviceApis.last(),
-                    connectionType = null
+                    connectionType = FInternalTransportConnectionType.MOCK
                 )
             )
             advanceUntilIdle()
@@ -920,7 +920,7 @@ class AutoReconnectConnectionTest {
             FInternalTransportConnectionStatus.Connected(
                 scope = backgroundScope,
                 deviceApi = connectionBuilder.deviceApis.last(),
-                connectionType = null
+                connectionType = FInternalTransportConnectionType.MOCK
             )
         )
         advanceUntilIdle()
@@ -936,7 +936,7 @@ class AutoReconnectConnectionTest {
             FInternalTransportConnectionStatus.Connected(
                 scope = backgroundScope,
                 deviceApi = connectionBuilder.deviceApis.last(),
-                connectionType = null
+                connectionType = FInternalTransportConnectionType.MOCK
             )
         )
         advanceUntilIdle()
@@ -953,7 +953,7 @@ class AutoReconnectConnectionTest {
             "Should have Connected state"
         )
         assertTrue(
-            stateHistory.count { it == FInternalTransportConnectionStatus.Connecting } >= 1,
+            stateHistory.count { it is FInternalTransportConnectionStatus.Connecting } >= 1,
             "Should have multiple Connecting states"
         )
     }
@@ -978,7 +978,7 @@ class AutoReconnectConnectionTest {
         val connectedStatus = FInternalTransportConnectionStatus.Connected(
             scope = backgroundScope,
             deviceApi = connectionBuilder.deviceApis.last(),
-            connectionType = null
+            connectionType = FInternalTransportConnectionType.MOCK
         )
         listener.onStatusUpdate(connectedStatus)
         advanceUntilIdle()
@@ -1071,7 +1071,7 @@ class AutoReconnectConnectionTest {
                 FInternalTransportConnectionStatus.Connected(
                     scope = testScope,
                     deviceApi = deviceApi1,
-                    connectionType = null
+                    connectionType = FInternalTransportConnectionType.MOCK
                 )
             )
             advanceUntilIdle()
@@ -1181,7 +1181,7 @@ class AutoReconnectConnectionTest {
                 FInternalTransportConnectionStatus.Connected(
                     scope = testScope,
                     deviceApi = deviceApi,
-                    connectionType = null
+                    connectionType = FInternalTransportConnectionType.MOCK
                 )
             )
             advanceUntilIdle()

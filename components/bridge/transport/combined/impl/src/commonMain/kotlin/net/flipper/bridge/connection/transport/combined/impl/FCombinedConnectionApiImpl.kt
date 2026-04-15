@@ -23,7 +23,6 @@ import net.flipper.bridge.connection.transport.combined.impl.streaming.FCombined
 import net.flipper.bridge.connection.transport.combined.impl.utils.UpdateConfigDelegate
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
-import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionType
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoData
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
@@ -62,7 +61,10 @@ class FCombinedConnectionApiImpl(
                     null
                 } else {
                     connectionsList
-                        .maxBy { connectionSnapshot -> getPriority(connectionSnapshot.status) }
+                        .groupBy { connectionSnapshot -> getPriority(connectionSnapshot.status) }
+                        .maxBy { (priority, _) -> priority }
+                        .value
+                        .let(::mergeSnapshots)
                 }
             }
             .distinctUntilChanged()
@@ -148,16 +150,5 @@ class FCombinedConnectionApiImpl(
 
     override fun getEvents(): Flow<StatusStreamingEvent> {
         return streamingApi.getEvents()
-    }
-}
-
-@Suppress("MagicNumber")
-private fun getPriority(status: FInternalTransportConnectionStatus): Int {
-    return when (status) {
-        FInternalTransportConnectionStatus.Disconnected -> 0
-        is FInternalTransportConnectionStatus.Connecting -> 1
-        FInternalTransportConnectionStatus.Disconnecting -> 2
-        FInternalTransportConnectionStatus.Pairing -> 3
-        is FInternalTransportConnectionStatus.Connected -> 4
     }
 }

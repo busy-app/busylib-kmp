@@ -33,6 +33,7 @@ import net.flipper.bridge.connection.feature.rpc.api.model.RpcLinkedAccountInfo
 import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
 import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
 import net.flipper.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
+import net.flipper.bridge.connection.orchestrator.api.model.FDeviceTransportType
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import net.flipper.busylib.core.wrapper.WrappedStateFlow
@@ -300,7 +301,7 @@ class CloudProvisioningWatcherTest {
                 scope = scope,
                 device = connectedDevice,
                 deviceApi = FakeConnectedDeviceApi(),
-                transportType = null
+                transportType = FDeviceTransportType.CLOUD
             )
         )
 
