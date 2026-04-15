@@ -29,6 +29,9 @@ class BUSYBar internal constructor(
     @Transient
     val connectionWays: NonEmptyList<ConnectionWay> =
         listOfNotNull(lan, cloud, ble, mock).let { list ->
+            require(list.isNotEmpty()) {
+                "Invalid BUSYBar '$uniqueId': at least one connection way must be present"
+            }
             val first = list.first() // Can be crashed on deserialization
             return@let nonEmptyListOf(first, list.drop(1))
         }
@@ -82,5 +85,16 @@ class BUSYBar internal constructor(
         result = 31 * result + (lan?.hashCode() ?: 0)
         result = 31 * result + (mock?.hashCode() ?: 0)
         return result
+    }
+
+    override fun toString(): String {
+        return "BUSYBar(" +
+            "humanReadableName='$humanReadableName', " +
+            "uniqueId='$uniqueId', " +
+            "ble=$ble, " +
+            "cloud=$cloud, " +
+            "lan=$lan, " +
+            "mock=$mock" +
+            ")"
     }
 }

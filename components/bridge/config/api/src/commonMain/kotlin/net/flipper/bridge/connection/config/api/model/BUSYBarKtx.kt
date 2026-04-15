@@ -3,7 +3,6 @@ package net.flipper.bridge.connection.config.api.model
 import net.flipper.bridge.connection.config.api.model.BUSYBar.ConnectionWay
 import kotlin.uuid.Uuid
 
-
 fun BUSYBar(
     humanReadableName: String,
     uniqueId: String = Uuid.random().toString(),
@@ -52,7 +51,7 @@ fun BUSYBar(
 fun BUSYBar(
     humanReadableName: String,
     uniqueId: String = Uuid.random().toString(),
-    mock: BUSYBar.ConnectionWay.Mock
+    mock: ConnectionWay.Mock
 ): BUSYBar {
     return BUSYBar(
         humanReadableName = humanReadableName,

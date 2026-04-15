@@ -7,8 +7,6 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import me.tatarka.inject.annotations.Inject
-import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
-import net.flipper.bridge.connection.config.api.PersistedStorageTransactionScope
 import net.flipper.bridge.connection.config.api.getDevice
 import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.config.api.model.addTransport
@@ -128,7 +126,7 @@ class CloudProvisioningWatcher(
         //      new device with cloud device (if not exist already) and switched to it
         info {
             "Found new cloud connection for device $original, " +
-                    "but it is already connected to cloud with id $cloudId"
+                "but it is already connected to cloud with id $cloudId"
         }
         val allDevices = getAllDevices()
         val existedDevice = allDevices.find { deviceFromStorage ->
@@ -150,7 +148,7 @@ class CloudProvisioningWatcher(
     }
 }
 
-fun InternalStorageTransactionScope.modifyOrDelete(
+private fun InternalStorageTransactionScope.modifyOrDelete(
     original: BUSYBar,
     block: (BUSYBar) -> BUSYBar?
 ) {

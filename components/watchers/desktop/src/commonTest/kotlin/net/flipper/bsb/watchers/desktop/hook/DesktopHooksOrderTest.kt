@@ -1,6 +1,7 @@
 package net.flipper.bsb.watchers.desktop.hook
 
 import net.flipper.bridge.connection.config.api.model.BUSYBar
+import net.flipper.bridge.connection.config.api.model.addTransport
 import net.flipper.bridge.connection.config.internal.InternalStorageTransactionScope
 import net.flipper.bridge.connection.config.internal.TransactionHook
 import kotlin.test.Test
@@ -25,9 +26,8 @@ class DesktopHooksOrderTest {
     private val cloudWithLanDevice = BUSYBar(
         humanReadableName = "Cloud+LAN Device",
         uniqueId = "cloud-lan-1",
-        cloud = BUSYBar.ConnectionWay.Cloud(Uuid.parse("00000000-0000-0000-0000-000000000002")),
-        lan = BUSYBar.ConnectionWay.Lan()
-    )
+        cloud = BUSYBar.ConnectionWay.Cloud(Uuid.parse("00000000-0000-0000-0000-000000000002"))
+    ).addTransport(lan = BUSYBar.ConnectionWay.Lan())
 
     private val lanDevice1 = BUSYBar(
         humanReadableName = "LAN Device 1",
@@ -39,16 +39,6 @@ class DesktopHooksOrderTest {
         humanReadableName = "LAN Device 2",
         uniqueId = "lan-2",
         lan = BUSYBar.ConnectionWay.Lan()
-    )
-
-    private val bareDevice1 = BUSYBar(
-        humanReadableName = "Bare Device 1",
-        uniqueId = "bare-1"
-    )
-
-    private val bareDevice2 = BUSYBar(
-        humanReadableName = "Bare Device 2",
-        uniqueId = "bare-2"
     )
 
     private val bleDevice = BUSYBar(
@@ -170,32 +160,6 @@ class DesktopHooksOrderTest {
         assertAllPermutationsProduceSameResult(
             devices = listOf(cloudDevice, lanDevice1, lanDevice2),
             currentDevice = lanDevice1
-        )
-    }
-
-    // ---- Bare device (no connections) ----
-
-    @Test
-    fun GIVEN_single_bare_device_WHEN_all_hook_permutations_run_THEN_results_are_identical() {
-        assertAllPermutationsProduceSameResult(
-            devices = listOf(bareDevice1),
-            currentDevice = null
-        )
-    }
-
-    @Test
-    fun GIVEN_two_bare_devices_WHEN_all_hook_permutations_run_THEN_results_are_identical() {
-        assertAllPermutationsProduceSameResult(
-            devices = listOf(bareDevice1, bareDevice2),
-            currentDevice = null
-        )
-    }
-
-    @Test
-    fun GIVEN_cloud_and_bare_device_WHEN_all_hook_permutations_run_THEN_results_are_identical() {
-        assertAllPermutationsProduceSameResult(
-            devices = listOf(cloudDevice, bareDevice1),
-            currentDevice = null
         )
     }
 
