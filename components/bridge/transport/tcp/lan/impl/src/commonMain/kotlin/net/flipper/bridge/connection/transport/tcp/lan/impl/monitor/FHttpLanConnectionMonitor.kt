@@ -46,7 +46,7 @@ class FHttpLanConnectionMonitor(
     }
 
     override suspend fun startMonitoring() {
-        listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting)
+        listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting(config.getTransportTypes()))
 
         // Start monitoring coroutine
         singleJobScope.launch(SingleJobMode.CANCEL_PREVIOUS) {
@@ -77,7 +77,7 @@ class FHttpLanConnectionMonitor(
         } else if (!isHostAvailable && isConnected) {
             info { "Host ${config.host} became unavailable" }
             isConnected = false
-            listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting)
+            listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting(config.getTransportTypes()))
         }
     }
 

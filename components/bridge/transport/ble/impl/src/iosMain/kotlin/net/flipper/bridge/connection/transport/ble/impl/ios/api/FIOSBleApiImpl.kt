@@ -45,7 +45,10 @@ class FIOSBleApiImpl(
             .stateStream
             .map {
                 when (it) {
-                    FPeripheralState.CONNECTING -> FInternalTransportConnectionStatus.Connecting
+                    FPeripheralState.CONNECTING -> FInternalTransportConnectionStatus.Connecting(
+                        FInternalTransportConnectionType.BLE
+                    )
+
                     FPeripheralState.DISCONNECTING -> FInternalTransportConnectionStatus.Disconnecting
                     FPeripheralState.DISCONNECTED,
                     FPeripheralState.PAIRING_FAILED,

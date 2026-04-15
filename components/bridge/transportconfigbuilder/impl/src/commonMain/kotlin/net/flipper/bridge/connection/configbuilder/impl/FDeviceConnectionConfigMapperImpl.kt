@@ -10,6 +10,7 @@ import net.flipper.bridge.connection.configbuilder.impl.builders.BUSYBarLanBuild
 import net.flipper.bridge.connection.configbuilder.impl.builders.BUSYBarMockBuilderConfig
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import net.flipper.busylib.core.di.BusyLibGraph
+import net.flipper.core.busylib.data.map
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 
 @Inject

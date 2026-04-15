@@ -155,7 +155,7 @@ class FCombinedConnectionApiImpl(
 private fun getPriority(status: FInternalTransportConnectionStatus): Int {
     return when (status) {
         FInternalTransportConnectionStatus.Disconnected -> 0
-        FInternalTransportConnectionStatus.Connecting -> 1
+        is FInternalTransportConnectionStatus.Connecting -> 1
         FInternalTransportConnectionStatus.Disconnecting -> 2
         FInternalTransportConnectionStatus.Pairing -> 3
         is FInternalTransportConnectionStatus.Connected -> 4

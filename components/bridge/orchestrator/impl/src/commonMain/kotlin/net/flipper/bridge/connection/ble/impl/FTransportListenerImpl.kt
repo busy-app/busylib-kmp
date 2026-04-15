@@ -47,11 +47,12 @@ class FTransportListenerImpl(config: BUSYBar) : LogTagProvider {
                     transportType = when (status.connectionType) {
                         FInternalTransportConnectionType.BLE -> FDeviceTransportType.BLE
                         FInternalTransportConnectionType.LAN -> FDeviceTransportType.LAN
+                        FInternalTransportConnectionType.MOCK,
                         FInternalTransportConnectionType.CLOUD -> FDeviceTransportType.CLOUD
                     }
                 )
 
-                FInternalTransportConnectionStatus.Connecting ->
+                is FInternalTransportConnectionStatus.Connecting ->
                     FDeviceConnectStatus.Connecting.InProgress(
                         device = device,
                         status = ConnectingStatus.CONNECTING
