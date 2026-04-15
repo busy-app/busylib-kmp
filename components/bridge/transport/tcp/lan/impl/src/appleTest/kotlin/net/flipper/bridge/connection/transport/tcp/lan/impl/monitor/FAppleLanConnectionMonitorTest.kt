@@ -51,7 +51,7 @@ class FAppleLanConnectionMonitorTest {
                 .awaitStatusWithType<FInternalTransportConnectionStatus.Connected>()
 
             assertTrue(connected is FInternalTransportConnectionStatus.Connected)
-            assertEquals(FInternalTransportConnectionType.LAN, connected.connectionType)
+            assertEquals(FInternalTransportConnectionType.LAN, connected.connectionTypes)
         }
     }
 
@@ -68,7 +68,7 @@ class FAppleLanConnectionMonitorTest {
                 .awaitStatusWithType<FInternalTransportConnectionStatus.Connected>()
 
             assertTrue(connected is FInternalTransportConnectionStatus.Connected)
-            assertEquals(FInternalTransportConnectionType.LAN, connected.connectionType)
+            assertEquals(FInternalTransportConnectionType.LAN, connected.connectionTypes)
             assertEquals(this, connected.scope)
         }
     }

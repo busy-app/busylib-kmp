@@ -16,7 +16,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import busylibkmp.sample.cmp.generated.resources.Res
 import busylibkmp.sample.cmp.generated.resources.material_ic_refresh
-import org.jetbrains.compose.resources.painterResource
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.StackNavigator
 import com.arkivanov.decompose.router.stack.pushNew
@@ -30,6 +29,7 @@ import net.flipper.bridge.connection.screens.device.viewmodel.FDevicesViewModel
 import net.flipper.bridge.connection.screens.device.viewmodel.PingViewModel
 import net.flipper.bridge.connection.screens.root.model.ConnectionRootConfig
 import net.flipper.tools.multistream.api.MultiStreamApi
+import org.jetbrains.compose.resources.painterResource
 
 class ConnectionDeviceScreenDecomposeComponent(
     componentContext: ComponentContext,

@@ -657,7 +657,9 @@ class AutoReconnectConnectionTest {
 
             val updateJob = launch {
                 try {
-                    listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting(FInternalTransportConnectionType.MOCK))
+                    listener.onStatusUpdate(
+                        FInternalTransportConnectionStatus.Connecting(FInternalTransportConnectionType.MOCK)
+                    )
                 } catch (_: Exception) {
                     // May throw if scope cancelled - OK
                 }

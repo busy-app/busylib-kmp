@@ -4,7 +4,6 @@ import kotlinx.collections.immutable.ImmutableMap
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionType
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
-import net.flipper.core.busylib.data.NonEmptyList
 import net.flipper.core.busylib.data.nonEmptyListOf
 import kotlin.uuid.Uuid
 

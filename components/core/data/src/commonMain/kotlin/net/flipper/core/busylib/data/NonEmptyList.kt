@@ -21,10 +21,6 @@ fun <T, R> NonEmptyList<T>.map(block: (T) -> R): NonEmptyList<R> {
     return NonEmptyList(block(head), tail.map(block))
 }
 
-
 fun <T> NonEmptyList<NonEmptyList<T>>.flatten(): NonEmptyList<T> {
     return NonEmptyList(head.head, head.tail + tail.flatMap { it.toList() })
 }
-
-
-

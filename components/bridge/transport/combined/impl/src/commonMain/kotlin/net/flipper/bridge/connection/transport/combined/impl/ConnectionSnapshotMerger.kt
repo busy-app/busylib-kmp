@@ -16,18 +16,18 @@ internal fun mergeSnapshots(snapshots: List<ConnectionSnapshot>): ConnectionSnap
     val combinedStatus = when (val baseStatus = base.status) {
         is FInternalTransportConnectionStatus.Connected -> {
             val allTypes = snapshots
-                .flatMap { (it.status as FInternalTransportConnectionStatus.Connected).connectionType }
+                .flatMap { (it.status as FInternalTransportConnectionStatus.Connected).connectionTypes }
                 .distinct()
             baseStatus.copy(
-                connectionType = nonEmptyListOf(allTypes.first(), allTypes.drop(1))
+                connectionTypes = nonEmptyListOf(allTypes.first(), allTypes.drop(1))
             )
         }
         is FInternalTransportConnectionStatus.Connecting -> {
             val allTypes = snapshots
-                .flatMap { (it.status as FInternalTransportConnectionStatus.Connecting).connectionType }
+                .flatMap { (it.status as FInternalTransportConnectionStatus.Connecting).connectionTypes }
                 .distinct()
             baseStatus.copy(
-                connectionType = nonEmptyListOf(allTypes.first(), allTypes.drop(1))
+                connectionTypes = nonEmptyListOf(allTypes.first(), allTypes.drop(1))
             )
         }
         else -> baseStatus

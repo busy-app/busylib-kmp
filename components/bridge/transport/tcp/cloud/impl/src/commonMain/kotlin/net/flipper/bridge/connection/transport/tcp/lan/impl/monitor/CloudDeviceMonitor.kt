@@ -13,7 +13,6 @@ import net.flipper.bridge.connection.transport.common.api.FInternalTransportConn
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionType
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.bridge.connection.transport.common.api.serial.FStatusStreamingApi
-import net.flipper.core.busylib.data.nonEmptyListOf
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
 import kotlin.time.Duration.Companion.seconds
@@ -42,7 +41,11 @@ class CloudDeviceMonitor(
         )
         delay(INACTIVITY_TIMEOUT) // Should be interrupted by any event from websocket
         emit(FInternalTransportConnectionStatus.Connecting(FInternalTransportConnectionType.CLOUD))
-    }.stateIn(scope, SharingStarted.Lazily, FInternalTransportConnectionStatus.Connecting(FInternalTransportConnectionType.CLOUD))
+    }.stateIn(
+        scope,
+        SharingStarted.Lazily,
+        FInternalTransportConnectionStatus.Connecting(FInternalTransportConnectionType.CLOUD)
+    )
 
     fun subscribe(listener: FTransportConnectionStatusListener) {
         info { "Start monitoring for $deviceId" }

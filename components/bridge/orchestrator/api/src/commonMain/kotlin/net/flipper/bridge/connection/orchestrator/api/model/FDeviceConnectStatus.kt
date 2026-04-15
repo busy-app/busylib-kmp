@@ -4,7 +4,6 @@ import kotlinx.coroutines.CoroutineScope
 import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.busylib.core.wrapper.WrappedNonEmptyList
-import net.flipper.core.busylib.data.NonEmptyList
 
 sealed interface FDeviceConnectStatus {
     data class Disconnected(
@@ -45,6 +44,6 @@ sealed interface FDeviceConnectStatus {
         val scope: CoroutineScope,
         val device: BUSYBar,
         val deviceApi: FConnectedDeviceApi,
-        val transportType: FDeviceTransportType
+        val transportTypes: FDeviceTransportType
     ) : FDeviceConnectStatus
 }

@@ -8,7 +8,7 @@ sealed class FInternalTransportConnectionStatus {
     data object Disconnected : FInternalTransportConnectionStatus()
 
     data class Connecting(
-        val connectionType: NonEmptyList<FInternalTransportConnectionType>
+        val connectionTypes: NonEmptyList<FInternalTransportConnectionType>
     ) : FInternalTransportConnectionStatus() {
         constructor(type: FInternalTransportConnectionType) : this(nonEmptyListOf(type))
     }
@@ -16,7 +16,7 @@ sealed class FInternalTransportConnectionStatus {
     data class Connected(
         val scope: CoroutineScope,
         val deviceApi: FConnectedDeviceApi,
-        val connectionType: NonEmptyList<FInternalTransportConnectionType>
+        val connectionTypes: NonEmptyList<FInternalTransportConnectionType>
     ) : FInternalTransportConnectionStatus() {
         constructor(
             scope: CoroutineScope,

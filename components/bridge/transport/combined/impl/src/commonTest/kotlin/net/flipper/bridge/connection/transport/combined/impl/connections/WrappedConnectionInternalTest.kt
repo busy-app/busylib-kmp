@@ -477,7 +477,9 @@ class WrappedConnectionInternalTest {
         launch {
             delay(50L)
             try {
-                listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting(FInternalTransportConnectionType.MOCK))
+                listener.onStatusUpdate(
+                    FInternalTransportConnectionStatus.Connecting(FInternalTransportConnectionType.MOCK)
+                )
             } catch (_: Exception) {
                 // May fail if scope is cancelled - that's OK
             }

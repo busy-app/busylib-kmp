@@ -4,7 +4,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import net.flipper.bridge.connection.transport.combined.impl.connections.ConnectionSnapshot
 import net.flipper.bridge.connection.transport.combined.impl.connections.helpers.TestConnectedDeviceApi
-import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus.Connected
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus.Connecting
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus.Disconnected
@@ -76,7 +75,7 @@ class ConnectionSnapshotMergerTest {
 
         assertEquals(
             listOf(FInternalTransportConnectionType.LAN, FInternalTransportConnectionType.CLOUD),
-            resultStatus.connectionType.toList()
+            resultStatus.connectionTypes.toList()
         )
     }
 
@@ -124,7 +123,7 @@ class ConnectionSnapshotMergerTest {
 
         assertEquals(
             listOf(FInternalTransportConnectionType.LAN),
-            resultStatus.connectionType.toList()
+            resultStatus.connectionTypes.toList()
         )
     }
 
@@ -138,13 +137,15 @@ class ConnectionSnapshotMergerTest {
         val snapshots = listOf(
             ConnectionSnapshot(
                 status = Connected(
-                    scope1, deviceApi1,
+                    scope1,
+                    deviceApi1,
                     nonEmptyListOf(FInternalTransportConnectionType.LAN, FInternalTransportConnectionType.BLE)
                 )
             ),
             ConnectionSnapshot(
                 status = Connected(
-                    scope2, deviceApi2,
+                    scope2,
+                    deviceApi2,
                     nonEmptyListOf(FInternalTransportConnectionType.CLOUD, FInternalTransportConnectionType.BLE)
                 )
             )
@@ -159,7 +160,7 @@ class ConnectionSnapshotMergerTest {
                 FInternalTransportConnectionType.BLE,
                 FInternalTransportConnectionType.CLOUD
             ),
-            resultStatus.connectionType.toList()
+            resultStatus.connectionTypes.toList()
         )
     }
 
@@ -183,7 +184,7 @@ class ConnectionSnapshotMergerTest {
 
         assertEquals(
             listOf(FInternalTransportConnectionType.LAN, FInternalTransportConnectionType.CLOUD),
-            resultStatus.connectionType.toList()
+            resultStatus.connectionTypes.toList()
         )
     }
 
@@ -203,7 +204,7 @@ class ConnectionSnapshotMergerTest {
 
         assertEquals(
             listOf(FInternalTransportConnectionType.BLE),
-            resultStatus.connectionType.toList()
+            resultStatus.connectionTypes.toList()
         )
     }
 
@@ -229,7 +230,7 @@ class ConnectionSnapshotMergerTest {
                 FInternalTransportConnectionType.BLE,
                 FInternalTransportConnectionType.CLOUD
             ),
-            resultStatus.connectionType.toList()
+            resultStatus.connectionTypes.toList()
         )
     }
 
@@ -395,7 +396,7 @@ class ConnectionSnapshotMergerTest {
         val resultStatus = assertIs<Connected>(result.status)
         assertEquals(
             listOf(FInternalTransportConnectionType.LAN, FInternalTransportConnectionType.CLOUD),
-            resultStatus.connectionType.toList()
+            resultStatus.connectionTypes.toList()
         )
     }
 
