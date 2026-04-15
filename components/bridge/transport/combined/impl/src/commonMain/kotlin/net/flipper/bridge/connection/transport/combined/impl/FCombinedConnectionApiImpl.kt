@@ -75,18 +75,19 @@ class FCombinedConnectionApiImpl(
             .onEach { connectionSnapshot ->
                 val transportConnectionStatus = connectionSnapshot
                     ?.status
-                    ?.let { status ->
-                        when (status) {
-                            is FInternalTransportConnectionStatus.Connected -> status.copy(
-                                deviceApi = this@FCombinedConnectionApiImpl,
-                                scope = scope,
-                                connectionTypes = status.connectionTypes
-                            )
-
-                            else -> status
-                        }
-                    }
                     ?: FInternalTransportConnectionStatus.Disconnected
+
+                if (transportConnectionStatus is FInternalTransportConnectionStatus.Connected) {
+                    listener.onStatusUpdate(
+                        status = FInternalTransportConnectionStatus.Connected(
+                            scope = scope,
+                            deviceApi = this,
+                            connectionTypes = transportConnectionStatus.connectionTypes
+                        )
+                    )
+                } else {
+                    listener.onStatusUpdate(transportConnectionStatus)
+                }
 
                 listener.onStatusUpdate(transportConnectionStatus)
             }

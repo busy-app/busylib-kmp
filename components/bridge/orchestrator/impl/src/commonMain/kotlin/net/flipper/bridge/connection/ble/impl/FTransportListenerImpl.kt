@@ -44,7 +44,7 @@ class FTransportListenerImpl(config: BUSYBar) : LogTagProvider {
                     device = device,
                     deviceApi = status.deviceApi,
                     scope = status.scope,
-                    transportTypes = status.connectionTypes.maxBy { it.priority }.toPublic()
+                    transportType = status.connectionTypes.maxBy { it.priority }.toPublic()
                 )
 
                 is FInternalTransportConnectionStatus.Connecting ->

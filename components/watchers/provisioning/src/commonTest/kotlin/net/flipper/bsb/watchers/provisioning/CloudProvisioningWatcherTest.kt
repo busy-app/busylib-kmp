@@ -300,7 +300,7 @@ class CloudProvisioningWatcherTest {
                 scope = scope,
                 device = connectedDevice,
                 deviceApi = FakeConnectedDeviceApi(),
-                transportTypes = FDeviceTransportType.CLOUD
+                transportType = FDeviceTransportType.CLOUD
             )
         )
 

@@ -8,8 +8,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.config.internal.FInternalDevicePersistedStorage
@@ -48,7 +46,6 @@ class FConnectionServiceImpl(
 
     private val scope = CoroutineScope(SupervisorJob() + FlipperDispatchers.default)
     private val singletonScope = scope.asSingleJobScope()
-    private val mutex = Mutex()
 
     private fun getExpectedState(): Flow<ExpectedState> {
         return fDevicePersistedStorage.getCurrentDeviceFlow()
