@@ -45,7 +45,6 @@ internal fun getPriority(status: FInternalTransportConnectionStatus): Int {
         FInternalTransportConnectionStatus.Disconnected -> 0
         is FInternalTransportConnectionStatus.Connecting -> 1
         FInternalTransportConnectionStatus.Disconnecting -> 2
-        FInternalTransportConnectionStatus.Pairing -> 3
-        is FInternalTransportConnectionStatus.Connected -> 4
+        is FInternalTransportConnectionStatus.Connected -> 3
     }
 }

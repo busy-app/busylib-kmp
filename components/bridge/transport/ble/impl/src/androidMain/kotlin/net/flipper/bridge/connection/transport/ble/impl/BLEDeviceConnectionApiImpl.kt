@@ -79,7 +79,7 @@ class BLEDeviceConnectionApiImpl(
             info { "Device failed to connect, so throw exception" }
             throw FailedConnectToDeviceException()
         }
-        listener.onStatusUpdate(FInternalTransportConnectionStatus.Pairing)
+        listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting(config.getTransportTypes()))
 
         if (!device.hasBondInformation) {
             device.createBond()

@@ -52,7 +52,13 @@ class FDeviceOrchestratorImpl(
             emit(status)
             if (status is FDeviceConnectStatus.Connecting.InProgress) {
                 delay(CONNECTING_TIMEOUT)
-                emit(FDeviceConnectStatus.Connecting.Offline(status.device, status.status))
+                emit(
+                    FDeviceConnectStatus.Connecting.Offline(
+                        device = status.device,
+                        status = status.status,
+                        transportTypes = status.transportTypes
+                    )
+                )
             }
         }.stateIn(
             globalScope,

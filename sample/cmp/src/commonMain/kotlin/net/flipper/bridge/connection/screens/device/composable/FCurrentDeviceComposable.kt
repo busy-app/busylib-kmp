@@ -35,7 +35,8 @@ fun FDeviceConnectStatus.currentDevice() = when (this) {
 
 fun FDeviceConnectStatus.getHumanReadableName() = when (this) {
     is FDeviceConnectStatus.Connected -> "Connected (${this.transportType})"
-    is FDeviceConnectStatus.Connecting -> "Connecting"
+    is FDeviceConnectStatus.Connecting.InProgress -> "Connecting (${this.transportTypes})"
+    is FDeviceConnectStatus.Connecting.Offline -> "Offline ${this.uiOfflineBarStatus} (${this.transportTypes})"
     is FDeviceConnectStatus.Disconnected -> "Disconnected"
     is FDeviceConnectStatus.Disconnecting -> "Disconnecting"
 }

@@ -13,8 +13,6 @@ sealed class FInternalTransportConnectionStatus {
         constructor(type: FInternalTransportConnectionType) : this(nonEmptyListOf(type))
     }
 
-    data object Pairing : FInternalTransportConnectionStatus()
-
     data class Connected(
         val scope: CoroutineScope,
         val deviceApi: FConnectedDeviceApi,

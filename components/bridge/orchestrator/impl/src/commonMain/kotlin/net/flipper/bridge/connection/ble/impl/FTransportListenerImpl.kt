@@ -11,6 +11,8 @@ import net.flipper.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
 import net.flipper.bridge.connection.orchestrator.api.model.FDeviceTransportType
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionType
+import net.flipper.busylib.core.wrapper.wrap
+import net.flipper.core.busylib.data.map
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
@@ -44,18 +46,14 @@ class FTransportListenerImpl(config: BUSYBar) : LogTagProvider {
                     device = device,
                     deviceApi = status.deviceApi,
                     scope = status.scope,
-                    transportType = when (status.connectionType.maxBy { it.priority }) {
-                        FInternalTransportConnectionType.BLE -> FDeviceTransportType.BLE
-                        FInternalTransportConnectionType.LAN -> FDeviceTransportType.LAN
-                        FInternalTransportConnectionType.MOCK,
-                        FInternalTransportConnectionType.CLOUD -> FDeviceTransportType.CLOUD
-                    }
+                    transportType = status.connectionType.maxBy { it.priority }.toPublic()
                 )
 
                 is FInternalTransportConnectionStatus.Connecting ->
                     FDeviceConnectStatus.Connecting.InProgress(
                         device = device,
-                        status = ConnectingStatus.CONNECTING
+                        status = ConnectingStatus.CONNECTING,
+                        transportTypes = status.connectionType.map { it.toPublic() }.wrap()
                     )
 
                 FInternalTransportConnectionStatus.Disconnected ->
@@ -71,12 +69,6 @@ class FTransportListenerImpl(config: BUSYBar) : LogTagProvider {
                 FInternalTransportConnectionStatus.Disconnecting -> FDeviceConnectStatus.Disconnecting(
                     device
                 )
-
-                FInternalTransportConnectionStatus.Pairing ->
-                    FDeviceConnectStatus.Connecting.InProgress(
-                        device = device,
-                        status = ConnectingStatus.INITIALIZING
-                    )
             }
         }
         info { "New state is $newState" }

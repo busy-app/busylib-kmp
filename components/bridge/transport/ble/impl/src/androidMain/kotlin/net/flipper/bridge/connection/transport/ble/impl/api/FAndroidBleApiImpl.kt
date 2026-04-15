@@ -50,7 +50,9 @@ class FAndroidBleApiImpl(
                 when (state) {
                     ConnectionState.Connected -> when (bondState) {
                         BondState.NONE,
-                        BondState.BONDING -> FInternalTransportConnectionStatus.Pairing
+                        BondState.BONDING -> FInternalTransportConnectionStatus.Connecting(
+                            currentConfig.getTransportTypes()
+                        )
 
                         BondState.BONDED -> FInternalTransportConnectionStatus.Connected(
                             scope = scope,

@@ -68,7 +68,7 @@ class BLEDeviceConnectionApiImpl(
         }
 
         info { "Peripheral connected successfully!" }
-        listener.onStatusUpdate(FInternalTransportConnectionStatus.Pairing)
+        listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting(config.getTransportTypes()))
 
         val resetApi = FIOSResetSerialBleApiImpl(
             scope = scope,
