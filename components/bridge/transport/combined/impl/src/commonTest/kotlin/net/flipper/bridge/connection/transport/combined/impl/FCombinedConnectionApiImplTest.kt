@@ -378,7 +378,7 @@ class FCombinedConnectionApiImplTest {
         }
 
     @Test
-    fun GIVEN_all_configs_removed_WHEN_tryUpdateConnectionConfig_THEN_all_connections_disconnected() =
+    fun GIVEN_all_configs_replaced_WHEN_tryUpdateConnectionConfig_THEN_old_connections_disconnected() =
         runTest {
             val testDispatcher = StandardTestDispatcher(testScheduler)
             val sutScope = CoroutineScope(SupervisorJob(backgroundScope.coroutineContext.job) + testDispatcher)
@@ -406,18 +406,17 @@ class FCombinedConnectionApiImplTest {
             )
             advanceUntilIdle()
 
-            // Remove all configs
+            // Replace all configs with a different one
             val config2 = createConfig("Device")
             val result = sut.tryUpdateConnectionConfig(config2)
             advanceUntilIdle()
 
             assertTrue(result.isSuccess)
-            assertEquals(0, sut.connections.value.size)
-            // State should transition to Disconnected
+            // Old connection replaced with new one (NonEmptyList always has at least 1)
+            assertEquals(1, sut.connections.value.size)
             assertTrue(
-                statusHistory.any { it == Disconnected },
-                "Should emit Disconnected when all connections removed. " +
-                    "statusHistory=$statusHistory"
+                sut.connections.value[0] !== conn,
+                "Old connection should be replaced with a new one"
             )
         }
 
@@ -669,7 +668,7 @@ class FCombinedConnectionApiImplTest {
         }
 
     @Test
-    fun GIVEN_connection_removed_WHEN_state_was_connected_THEN_status_listener_notified() =
+    fun GIVEN_connection_replaced_WHEN_state_was_connected_THEN_config_updated() =
         runTest {
             val testDispatcher = StandardTestDispatcher(testScheduler)
             val sutScope = CoroutineScope(SupervisorJob(backgroundScope.coroutineContext.job) + testDispatcher)
@@ -707,17 +706,19 @@ class FCombinedConnectionApiImplTest {
                 scope = sutScope
             )
             advanceUntilIdle()
-            statusHistory.clear()
 
-            // Remove all connections
+            // Replace config — connected connection can be updated in place
             val config2 = createConfig("Device")
-            sut.tryUpdateConnectionConfig(config2)
+            val result = sut.tryUpdateConnectionConfig(config2)
             advanceUntilIdle()
 
-            assertTrue(
-                statusHistory.any { it == Disconnected },
-                "Should emit Disconnected after removing connected connection. " +
-                    "Got: $statusHistory"
+            assertTrue(result.isSuccess)
+            assertEquals(1, sut.connections.value.size)
+            // Connected connection was updated in place via tryUpdateConnectionConfig
+            assertEquals(
+                TestConfig(),
+                sut.connections.value[0].config,
+                "Config should be updated to the new one"
             )
         }
 
@@ -870,7 +871,7 @@ class FCombinedConnectionApiImplTest {
         }
 
     @Test
-    fun GIVEN_disconnect_throws_on_removed_connection_WHEN_tryUpdateConnectionConfig_THEN_still_succeeds() =
+    fun GIVEN_disconnect_on_replaced_connection_WHEN_tryUpdateConnectionConfig_THEN_still_succeeds() =
         runTest {
             val testDispatcher = StandardTestDispatcher(testScheduler)
             val configA = TestConfig("a")
@@ -896,7 +897,7 @@ class FCombinedConnectionApiImplTest {
             )
             advanceUntilIdle()
 
-            // Remove all configs — disconnect will be called on conn
+            // Replace configs — disconnect will be called on old conn
             // disconnect() calls cancelAndJoin() which shouldn't throw normally
             // but the runCatching in the impl protects against any unexpected error
             val config2 = createConfig("Device")
@@ -904,7 +905,8 @@ class FCombinedConnectionApiImplTest {
             advanceUntilIdle()
 
             assertTrue(result.isSuccess, "Should succeed even if disconnect has issues")
-            assertEquals(0, sut.connections.value.size)
+            // Old connection replaced with new one (NonEmptyList always has at least 1)
+            assertEquals(1, sut.connections.value.size)
         }
 
     // endregion
@@ -1555,7 +1557,7 @@ class FCombinedConnectionApiImplTest {
         }
 
     @Test
-    fun GIVEN_no_connections_initially_WHEN_update_then_back_to_empty_THEN_transitions_correct() =
+    fun GIVEN_no_connections_initially_WHEN_update_then_replace_THEN_transitions_correct() =
         runTest {
             val testDispatcher = StandardTestDispatcher(testScheduler)
             val sutScope = CoroutineScope(SupervisorJob(backgroundScope.coroutineContext.job) + testDispatcher)
@@ -1586,15 +1588,16 @@ class FCombinedConnectionApiImplTest {
                 statusHistory.any { it is Connecting },
                 "Should transition to Connecting when connection added"
             )
+            val connAfterAdd = sut.connections.value[0]
 
-            // Remove all connections
-            statusHistory.clear()
+            // Replace with different config — old connection replaced, new one created
             sut.tryUpdateConnectionConfig(createConfig("Device"))
             advanceUntilIdle()
 
+            assertEquals(1, sut.connections.value.size)
             assertTrue(
-                statusHistory.any { it == Disconnected },
-                "Should transition back to Disconnected"
+                sut.connections.value[0] !== connAfterAdd,
+                "Old connection should be replaced with a new one"
             )
         }
 

@@ -8,7 +8,6 @@ import net.flipper.bridge.connection.transport.common.api.FInternalTransportConn
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus.Connecting
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus.Disconnected
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus.Disconnecting
-import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus.Pairing
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionType
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPTransportCapability
 import net.flipper.core.busylib.data.nonEmptyListOf
@@ -17,6 +16,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertNull
 import kotlin.test.assertSame
+import kotlin.test.assertTrue
 
 class ConnectionSnapshotMergerTest {
 
@@ -262,18 +262,6 @@ class ConnectionSnapshotMergerTest {
         assertEquals(Disconnecting, result.status)
     }
 
-    @Test
-    fun `mergeSnapshots with multiple Pairing returns Pairing`() {
-        val snapshots = listOf(
-            ConnectionSnapshot(status = Pairing),
-            ConnectionSnapshot(status = Pairing)
-        )
-
-        val result = mergeSnapshots(snapshots)
-
-        assertEquals(Pairing, result.status)
-    }
-
     // endregion
 
     // region mergeSnapshots - capabilities
@@ -412,13 +400,11 @@ class ConnectionSnapshotMergerTest {
         val disconnected = getPriority(Disconnected)
         val connecting = getPriority(Connecting(FInternalTransportConnectionType.BLE))
         val disconnecting = getPriority(Disconnecting)
-        val pairing = getPriority(Pairing)
         val connected = getPriority(Connected(scope, deviceApi, FInternalTransportConnectionType.LAN))
 
-        assert(disconnected < connecting)
-        assert(connecting < disconnecting)
-        assert(disconnecting < pairing)
-        assert(pairing < connected)
+        assertTrue(disconnected < connecting, "Disconnected < Connecting")
+        assertTrue(connecting < disconnecting, "Connecting < Disconnecting")
+        assertTrue(disconnecting < connected, "Disconnecting < Connected")
     }
 
     // endregion

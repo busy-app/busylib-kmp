@@ -474,9 +474,6 @@ class AutoReconnectConnectionTest {
         // When - simulate state sequence
         val listener = connectionBuilder.latestListener()!!
 
-        listener.onStatusUpdate(FInternalTransportConnectionStatus.Pairing)
-        advanceUntilIdle()
-
         val connectedStatus = FInternalTransportConnectionStatus.Connected(
             scope = backgroundScope,
             deviceApi = connectionBuilder.deviceApis.last(),
@@ -491,10 +488,6 @@ class AutoReconnectConnectionTest {
         assertTrue(
             observedStates.any { it is FInternalTransportConnectionStatus.Connecting },
             "Should have Connecting state"
-        )
-        assertTrue(
-            observedStates.any { it == FInternalTransportConnectionStatus.Pairing },
-            "Should have Pairing state"
         )
         assertTrue(
             observedStates.any { it is FInternalTransportConnectionStatus.Connected },
@@ -530,7 +523,7 @@ class AutoReconnectConnectionTest {
             async {
                 listener.onStatusUpdate(
                     if (i % 2 == 0) {
-                        FInternalTransportConnectionStatus.Pairing
+                        FInternalTransportConnectionStatus.Disconnecting
                     } else {
                         FInternalTransportConnectionStatus.Connecting(FInternalTransportConnectionType.MOCK)
                     }

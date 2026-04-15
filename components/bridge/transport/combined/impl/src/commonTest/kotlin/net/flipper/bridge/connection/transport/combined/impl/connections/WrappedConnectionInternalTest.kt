@@ -233,9 +233,6 @@ class WrappedConnectionInternalTest {
         // When - simulate state transitions
         val listener = connectionBuilder.latestListener()!!
 
-        listener.onStatusUpdate(FInternalTransportConnectionStatus.Pairing)
-        advanceUntilIdle()
-
         val connectedStatus = FInternalTransportConnectionStatus.Connected(
             scope = backgroundScope,
             deviceApi = connectionBuilder.deviceApis.last(),
@@ -253,10 +250,6 @@ class WrappedConnectionInternalTest {
         assertTrue(
             observedStates.any { it is FInternalTransportConnectionStatus.Connecting },
             "Should have Connecting state"
-        )
-        assertTrue(
-            observedStates.contains(FInternalTransportConnectionStatus.Pairing),
-            "Should have Pairing state"
         )
         assertTrue(
             observedStates.any { it is FInternalTransportConnectionStatus.Connected },
@@ -289,7 +282,7 @@ class WrappedConnectionInternalTest {
         val updateJobs = List(100) { index ->
             async {
                 val status = if (index % 2 == 0) {
-                    FInternalTransportConnectionStatus.Pairing
+                    FInternalTransportConnectionStatus.Disconnecting
                 } else {
                     FInternalTransportConnectionStatus.Connecting(FInternalTransportConnectionType.MOCK)
                 }
@@ -303,7 +296,7 @@ class WrappedConnectionInternalTest {
         // Then - state should be one of the valid states (no corruption)
         val finalState = connection.stateFlow.value
         assertTrue(
-            finalState == FInternalTransportConnectionStatus.Pairing ||
+            finalState == FInternalTransportConnectionStatus.Disconnecting ||
                 finalState is FInternalTransportConnectionStatus.Connecting,
             "Final state should be a valid state"
         )
@@ -707,7 +700,7 @@ class WrappedConnectionInternalTest {
                 async {
                     listener.onStatusUpdate(
                         if (i % 2 == 0) {
-                            FInternalTransportConnectionStatus.Pairing
+                            FInternalTransportConnectionStatus.Disconnecting
                         } else {
                             FInternalTransportConnectionStatus.Connecting(FInternalTransportConnectionType.MOCK)
                         }
