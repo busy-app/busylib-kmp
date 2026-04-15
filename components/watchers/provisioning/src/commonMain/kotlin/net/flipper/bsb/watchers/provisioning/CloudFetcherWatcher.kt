@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.config.api.model.BUSYBar
+import net.flipper.bridge.connection.config.api.model.copy
 import net.flipper.bridge.connection.config.internal.FInternalDevicePersistedStorage
 import net.flipper.bridge.connection.config.internal.InternalStorageTransactionScope
 import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
@@ -116,7 +117,7 @@ class CloudFetcherWatcher(
         device: BUSYBar
     ) {
         val withoutCloud = device.copy(cloud = null)
-        if (withoutCloud.connectionWays.isEmpty()) {
+        if (withoutCloud == null) {
             info { "Remove $device, because cloud not found in linked device" }
             removeDevice(device.uniqueId)
         } else {
