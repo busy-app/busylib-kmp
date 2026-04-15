@@ -4,25 +4,35 @@ import kotlinx.coroutines.CoroutineScope
 import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 
-sealed class FDeviceConnectStatus {
+sealed interface FDeviceConnectStatus {
     data class Disconnected(
         val device: BUSYBar?,
         val reason: DisconnectStatus
-    ) : FDeviceConnectStatus()
+    ) : FDeviceConnectStatus
 
-    data class Connecting(
-        val device: BUSYBar,
+    sealed interface Connecting : FDeviceConnectStatus {
+        val device: BUSYBar
         val status: ConnectingStatus
-    ) : FDeviceConnectStatus()
+
+        data class InProgress(
+            override val device: BUSYBar,
+            override val status: ConnectingStatus
+        ) : Connecting
+
+        data class Offline(
+            override val device: BUSYBar,
+            override val status: ConnectingStatus
+        ) : Connecting
+    }
 
     data class Disconnecting(
         val device: BUSYBar
-    ) : FDeviceConnectStatus()
+    ) : FDeviceConnectStatus
 
     class Connected(
         val scope: CoroutineScope,
         val device: BUSYBar,
         val deviceApi: FConnectedDeviceApi,
         val transportType: FDeviceTransportType?
-    ) : FDeviceConnectStatus()
+    ) : FDeviceConnectStatus
 }

@@ -1,10 +1,22 @@
 package net.flipper.bridge.connection.screens.device
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
+import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import busylibkmp.sample.cmp.generated.resources.Res
+import busylibkmp.sample.cmp.generated.resources.material_ic_refresh
+import org.jetbrains.compose.resources.painterResource
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.StackNavigator
 import com.arkivanov.decompose.router.stack.pushNew
@@ -41,12 +53,27 @@ class ConnectionDeviceScreenDecomposeComponent(
     override fun Render(modifier: Modifier) {
         Column {
             val deviceState by devicesViewModel.getState().collectAsState()
-            FDeviceDropdownComposable(
-                devicesState = deviceState,
-                onDeviceSelect = devicesViewModel::onSelectDevice,
-                onOpenSearch = { navigation.pushNew(ConnectionRootConfig.Search) },
-                multiStreamApi = multiStreamApi
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                FDeviceDropdownComposable(
+                    devicesState = deviceState,
+                    onDeviceSelect = devicesViewModel::onSelectDevice,
+                    onOpenSearch = { navigation.pushNew(ConnectionRootConfig.Search) },
+                    multiStreamApi = multiStreamApi,
+                    modifier = Modifier.weight(1f)
+                )
+                IconButton(onClick = currentDeviceViewModel::refresh) {
+                    Icon(
+                        painter = painterResource(Res.drawable.material_ic_refresh),
+                        contentDescription = "Refresh connection",
+                        tint = MaterialTheme.colors.onBackground
+                    )
+                }
+            }
             val currentDevice by currentDeviceViewModel.getState().collectAsState()
             FCurrentDeviceComposable(currentDevice)
             val logs by pingViewModel.getLogLinesState().collectAsState()
