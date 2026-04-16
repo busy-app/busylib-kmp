@@ -25,6 +25,7 @@ kotlin {
             implementation(libs.kotlin.coroutines)
             implementation(libs.ktor.client.core)
             implementation(libs.kotlin.serialization.json)
+            implementation(libs.rwmutex)
         }
     }
 }
