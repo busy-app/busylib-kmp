@@ -23,17 +23,22 @@ private val settings by lazy {
 private val applicationScope by lazy {
     CoroutineScope(SupervisorJob())
 }
+
+private val hostApi = BUSYLibHostApiStub(
+    host = "cloud.dev.busy.app",
+)
+
 private val principalApi by lazy {
-    val hostApi = BUSYLibHostApiStub(
-        host = "cloud.dev.busy.app",
-    )
     UserPrincipalApiSampleImpl(applicationScope, hostApi, settings)
 }
+
 val busyLib: BUSYLibMacOS by lazy {
     BUSYLibMacOS.build(
         applicationScope,
         principalApi = principalApi,
         observableSettings = settings,
+        hostApi = hostApi,
+        networkStateApi = BUSYLibNetworkStateMacOSApi(),
     )
 }
 
