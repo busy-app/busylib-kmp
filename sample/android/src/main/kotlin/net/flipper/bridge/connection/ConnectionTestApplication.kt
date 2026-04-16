@@ -12,17 +12,26 @@ import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 import timber.log.Timber
 
 class ConnectionTestApplication : Application() {
-    val busyLib: BUSYLibAndroid by lazy {
-        val scope = CoroutineScope(SupervisorJob() + FlipperDispatchers.default)
-        val hostApi = BUSYLibHostApiStub(
+    private val scope by lazy {
+        CoroutineScope(SupervisorJob() + FlipperDispatchers.default)
+    }
+    private val hostApi by lazy {
+        BUSYLibHostApiStub(
             host = "cloud.dev.busy.app",
         )
-        val settings = SharedPreferencesSettings(
+    }
+    private val settings by lazy {
+        SharedPreferencesSettings(
             baseContext.getSharedPreferences("settings", MODE_PRIVATE)
         )
+    }
+    val principalApi by lazy {
+        UserPrincipalApiSampleImpl(scope, hostApi, settings)
+    }
+    val busyLib: BUSYLibAndroid by lazy {
         BUSYLibAndroid.build(
             scope = scope,
-            principalApi = UserPrincipalApiSampleImpl(scope, hostApi, settings),
+            principalApi = principalApi,
             settings = settings,
             context = this,
             networkStateApi = BUSYLibNetworkStateApiImpl(this, scope),

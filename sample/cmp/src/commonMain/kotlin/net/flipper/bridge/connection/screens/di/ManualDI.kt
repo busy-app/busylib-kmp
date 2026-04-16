@@ -36,7 +36,7 @@ fun getRootDecomposeComponent(
     persistedStorage: FDevicePersistedStorage,
     busyLib: BUSYLib,
     searchViewModelProvider: () -> ConnectionSearchViewModel,
-    principalApi: UserPrincipalApiSampleImpl? = null
+    principalApi: UserPrincipalApiSampleImpl
 ): ConnectionRootDecomposeComponent {
     return getRootDecomposeComponentFactory(
         permissionChecker = permissionChecker,
@@ -60,7 +60,7 @@ private fun getRootDecomposeComponentFactory(
     fConnectionService: FConnectionService,
     searchViewModelProvider: () -> ConnectionSearchViewModel,
     firmwareUpdaterApi: FirmwareUpdaterApi,
-    principalApi: UserPrincipalApiSampleImpl?,
+    principalApi: UserPrincipalApiSampleImpl,
     multiStreamApi: MultiStreamApi
 ): ConnectionRootDecomposeComponent.Factory {
     return ConnectionRootDecomposeComponent.Factory(
@@ -114,7 +114,7 @@ private fun getConnectionDeviceScreenDecomposeComponentFactory(
 
 private fun getDashboardDecomposeComponentFactory(
     fFeatureProvider: FFeatureProvider,
-    principalApi: UserPrincipalApiSampleImpl?,
+    principalApi: UserPrincipalApiSampleImpl,
     firmwareUpdaterApi: FirmwareUpdaterApi
 ): DashboardDecomposeComponent.Factory {
     return DashboardDecomposeComponent.Factory(
