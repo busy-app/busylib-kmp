@@ -7,7 +7,6 @@ import kotlinx.coroutines.flow.transformLatest
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
-import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionType
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.bridge.connection.transport.common.api.serial.FStatusStreamingApi
 import net.flipper.core.busylib.ktx.common.SingleJobMode
@@ -32,6 +31,7 @@ class WSEventsDeviceMonitor(
     override suspend fun startMonitoring() {
         singleJobScope.launch(SingleJobMode.CANCEL_PREVIOUS) {
             info { "Start monitoring for $config" }
+            listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting(config.getTransportTypes()))
 
             val wsEventFlow = eventSource
                 .getEvents()
@@ -40,11 +40,11 @@ class WSEventsDeviceMonitor(
                     FInternalTransportConnectionStatus.Connected(
                         scope = scope,
                         deviceApi = deviceApi,
-                        connectionType = FInternalTransportConnectionType.CLOUD
+                        connectionTypes = config.getTransportTypes()
                     )
                 )
                 delay(INACTIVITY_TIMEOUT) // Should be interrupted by any event from websocket
-                emit(FInternalTransportConnectionStatus.Connecting)
+                emit(FInternalTransportConnectionStatus.Connecting(config.getTransportTypes()))
             }
 
             connectingState.onEach { info { "Change connecting state for $config to $it" } }

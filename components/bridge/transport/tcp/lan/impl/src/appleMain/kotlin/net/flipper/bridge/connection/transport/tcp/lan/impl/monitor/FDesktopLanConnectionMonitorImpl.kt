@@ -12,6 +12,7 @@ actual fun getConnectionMonitorApi(
     config: FLanDeviceConnectionConfig,
     scope: CoroutineScope,
     deviceApi: FLanApi,
+    @Suppress("UnusedParameter")
     eventSource: FStatusStreamingApi
 ): FConnectionMonitorApi {
     return FAppleLanConnectionMonitor(
