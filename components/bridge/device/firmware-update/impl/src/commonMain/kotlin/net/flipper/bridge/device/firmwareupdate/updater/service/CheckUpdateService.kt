@@ -15,7 +15,6 @@ import net.flipper.bridge.connection.feature.provider.api.get
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
 import net.flipper.busylib.core.di.BusyLibGraph
-import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.onLatest
 import net.flipper.core.busylib.ktx.common.orNullable
 import net.flipper.core.busylib.ktx.common.tryCast
@@ -45,11 +44,12 @@ class CheckUpdateService(
             .filter { status -> status?.check?.availableVersion.isNullOrEmpty() }
             .filter { status ->
                 when (status?.check?.status) {
-                    BsbUpdateStatus.BsbCheck.BsbCheckResult.AVAILABLE -> false
                     null,
+                    BsbUpdateStatus.BsbCheck.BsbCheckResult.NONE -> true
+
+                    BsbUpdateStatus.BsbCheck.BsbCheckResult.AVAILABLE,
                     BsbUpdateStatus.BsbCheck.BsbCheckResult.FAILURE,
-                    BsbUpdateStatus.BsbCheck.BsbCheckResult.NONE,
-                    BsbUpdateStatus.BsbCheck.BsbCheckResult.NOT_AVAILABLE -> true
+                    BsbUpdateStatus.BsbCheck.BsbCheckResult.NOT_AVAILABLE -> false
                 }
             }
             .flatMapLatest { fFeatureProvider.get<FRpcFeatureApi>() }
@@ -58,17 +58,15 @@ class CheckUpdateService(
             .filterIsInstance<FFeatureStatus.Supported<FRpcFeatureApi>>()
             .map { status -> status.featureApi }
             .onLatest { featureApi ->
-                exponentialRetry {
-                    featureApi
-                        .fRpcUpdaterApi
-                        .startUpdateCheck()
-                        .onFailure { throwable ->
-                            error(throwable) {
-                                "#startUpdateCheck could not start update check"
-                            }
+                featureApi
+                    .fRpcUpdaterApi
+                    .startUpdateCheck()
+                    .onFailure { throwable ->
+                        error(throwable) {
+                            "#startUpdateCheck could not start update check"
                         }
-                        .map { }
-                }
+                    }
+                    .map { }
             }
             .launchIn(scope)
     }
