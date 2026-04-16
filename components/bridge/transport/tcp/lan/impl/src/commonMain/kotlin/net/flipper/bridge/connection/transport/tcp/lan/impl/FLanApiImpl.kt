@@ -31,7 +31,8 @@ class FLanApiImpl(
         listener = listener,
         config = currentConfig,
         scope = scope,
-        deviceApi = this
+        deviceApi = this,
+        eventSource = lanStreamingApi
     )
 
     override val deviceName: String
