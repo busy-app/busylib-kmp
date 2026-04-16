@@ -16,6 +16,7 @@ kotlin {
 
             implementation(libs.kotlin.coroutines)
             implementation(libs.ktor.client.core)
+            implementation(libs.rwmutex)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
