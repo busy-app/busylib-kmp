@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.launch
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
@@ -12,10 +13,10 @@ import net.flipper.bridge.connection.transport.common.api.serial.FHTTPTransportC
 import net.flipper.bridge.connection.transport.common.api.serial.StatusStreamingEvent
 import net.flipper.bridge.connection.transport.tcp.cloud.api.FCloudApi
 import net.flipper.bridge.connection.transport.tcp.cloud.api.FCloudDeviceConnectionConfig
+import net.flipper.bridge.connection.transport.tcp.common.monitor.WSEventsDeviceMonitor
 import net.flipper.bridge.connection.transport.tcp.lan.impl.engine.BUSYCloudHttpEngineFactory
 import net.flipper.bridge.connection.transport.tcp.lan.impl.engine.token.ProxyTokenProviderFactory
 import net.flipper.bridge.connection.transport.tcp.lan.impl.metainfo.FCloudStreamingFactory
-import net.flipper.bridge.connection.transport.tcp.lan.impl.monitor.CloudDeviceMonitor
 import net.flipper.core.ktor.getPlatformEngineFactory
 
 @Suppress("LongParameterList")
@@ -35,15 +36,16 @@ class FCloudApiImpl(
         )
     )
     private val cloudStreamingApi = cloudStreamingFactory(currentConfig.deviceId)
-    private val cloudDeviceMonitor = CloudDeviceMonitor(
+    private val wsEventsDeviceMonitor = WSEventsDeviceMonitor(
         deviceApi = this,
-        deviceId = currentConfig.deviceId,
+        config = currentConfig,
         eventSource = cloudStreamingApi,
-        scope = scope
+        scope = scope,
+        listener = listener
     )
 
     init {
-        cloudDeviceMonitor.subscribe(listener)
+        scope.launch { wsEventsDeviceMonitor.startMonitoring() }
     }
 
     override val deviceName: String
