@@ -33,7 +33,7 @@ class WrappedConnectionInternal(
     private var connectionApi: FConnectedDeviceApi? = null
     val stateFlow: StateFlow<FInternalTransportConnectionStatus>
         field = MutableStateFlow<FInternalTransportConnectionStatus>(
-            FInternalTransportConnectionStatus.Connecting
+            FInternalTransportConnectionStatus.Connecting(config.getTransportTypes())
         )
 
     private val scope = ChildSupervisorScope(

@@ -11,4 +11,6 @@ interface FConnectionService {
      * Attempts to forget the selected [device] and disconnect from it
      */
     suspend fun forgetDevice(device: BUSYBar): ForgetDeviceResult
+
+    fun forceRefreshConnection()
 }

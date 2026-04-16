@@ -9,10 +9,12 @@ import kotlinx.coroutines.withContext
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionType
 import net.flipper.bridge.connection.transport.tcp.lan.impl.monitor.fixture.FAppleLanConnectionMonitorTestFixture
+import net.flipper.core.busylib.data.nonEmptyListOf
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
 
@@ -50,8 +52,8 @@ class FAppleLanConnectionMonitorTest {
                 .listener
                 .awaitStatusWithType<FInternalTransportConnectionStatus.Connected>()
 
-            assertTrue(connected is FInternalTransportConnectionStatus.Connected)
-            assertEquals(FInternalTransportConnectionType.LAN, connected.connectionType)
+            val connectedStatus = assertIs<FInternalTransportConnectionStatus.Connected>(connected)
+            assertEquals(nonEmptyListOf(FInternalTransportConnectionType.LAN), connectedStatus.connectionTypes)
         }
     }
 
@@ -67,9 +69,9 @@ class FAppleLanConnectionMonitorTest {
                 .listener
                 .awaitStatusWithType<FInternalTransportConnectionStatus.Connected>()
 
-            assertTrue(connected is FInternalTransportConnectionStatus.Connected)
-            assertEquals(FInternalTransportConnectionType.LAN, connected.connectionType)
-            assertEquals(this, connected.scope)
+            val connectedStatus = assertIs<FInternalTransportConnectionStatus.Connected>(connected)
+            assertEquals(nonEmptyListOf(FInternalTransportConnectionType.LAN), connectedStatus.connectionTypes)
+            assertEquals(this, connectedStatus.scope)
         }
     }
 
@@ -86,10 +88,9 @@ class FAppleLanConnectionMonitorTest {
             // preparing/waiting states should now emit Connecting before Connected
             val firstStatus = testFixture.listener.statuses.first()
 
-            assertEquals(
-                expected = FInternalTransportConnectionStatus.Connecting,
-                actual = firstStatus,
-                message = "Expected first status to be Connecting (from preparing/waiting state), " +
+            assertIs<FInternalTransportConnectionStatus.Connecting>(
+                firstStatus,
+                "Expected first status to be Connecting (from preparing/waiting state), " +
                     "but was $firstStatus. Full statuses: ${testFixture.listener.statuses}"
             )
         }
@@ -112,7 +113,7 @@ class FAppleLanConnectionMonitorTest {
             val status = testFixture
                 .listener
                 .awaitStatusWithType<FInternalTransportConnectionStatus.Connecting>(timeout = 10.seconds)
-            assertEquals(FInternalTransportConnectionStatus.Connecting, status)
+            assertIs<FInternalTransportConnectionStatus.Connecting>(status)
         }
     }
 
@@ -142,7 +143,7 @@ class FAppleLanConnectionMonitorTest {
                     }
                 )
 
-            assertEquals(FInternalTransportConnectionStatus.Connecting, reconnectStatus)
+            assertIs<FInternalTransportConnectionStatus.Connecting>(reconnectStatus)
         }
     }
 

@@ -22,7 +22,7 @@ class CombinedConnectionApiImpl : CombinedConnectionApi {
         listener: FTransportConnectionStatusListener,
         connectionBuilder: FDeviceConfigToConnection
     ): Result<FCombinedConnectionApi> = runSuspendCatching {
-        listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting)
+        listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting(config.getTransportTypes()))
 
         val connections = config.connectionConfigs.map { connectionConfig ->
             AutoReconnectConnection(
