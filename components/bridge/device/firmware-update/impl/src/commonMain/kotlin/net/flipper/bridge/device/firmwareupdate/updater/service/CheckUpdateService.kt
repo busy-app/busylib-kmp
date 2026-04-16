@@ -45,11 +45,11 @@ class CheckUpdateService(
             .filter { status -> status?.check?.availableVersion.isNullOrEmpty() }
             .filter { status ->
                 when (status?.check?.status) {
-                    BsbUpdateStatus.BsbCheck.BsbCheckResult.AVAILABLE -> false
                     null,
+                    BsbUpdateStatus.BsbCheck.BsbCheckResult.NONE -> true
+                    BsbUpdateStatus.BsbCheck.BsbCheckResult.AVAILABLE,
                     BsbUpdateStatus.BsbCheck.BsbCheckResult.FAILURE,
-                    BsbUpdateStatus.BsbCheck.BsbCheckResult.NONE,
-                    BsbUpdateStatus.BsbCheck.BsbCheckResult.NOT_AVAILABLE -> true
+                    BsbUpdateStatus.BsbCheck.BsbCheckResult.NOT_AVAILABLE -> false
                 }
             }
             .flatMapLatest { fFeatureProvider.get<FRpcFeatureApi>() }
