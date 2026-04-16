@@ -19,6 +19,7 @@ import net.flipper.bridge.connection.transport.combined.impl.connections.helpers
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
+import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionType
 import net.flipper.bridge.connection.transport.common.api.meta.FTransportMetaInfoApi
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoData
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
@@ -82,7 +83,7 @@ class CombinedMetaInfoApiImplTest {
                 FInternalTransportConnectionStatus.Connected(
                     scope = backgroundScope,
                     deviceApi = metaDeviceApi,
-                    connectionType = null
+                    connectionType = FInternalTransportConnectionType.MOCK
                 )
             )
             advanceUntilIdle()
@@ -129,7 +130,7 @@ class CombinedMetaInfoApiImplTest {
                 FInternalTransportConnectionStatus.Connected(
                     scope = backgroundScope,
                     deviceApi = metaDeviceApi,
-                    connectionType = null
+                    connectionType = FInternalTransportConnectionType.MOCK
                 )
             )
             advanceUntilIdle()
@@ -171,7 +172,7 @@ class CombinedMetaInfoApiImplTest {
             FInternalTransportConnectionStatus.Connected(
                 scope = backgroundScope,
                 deviceApi = plainDeviceApi,
-                connectionType = null
+                connectionType = FInternalTransportConnectionType.MOCK
             )
         )
         advanceUntilIdle()
@@ -228,7 +229,7 @@ class CombinedMetaInfoApiImplTest {
                 FInternalTransportConnectionStatus.Connected(
                     scope = backgroundScope,
                     deviceApi = meta1,
-                    connectionType = null
+                    connectionType = FInternalTransportConnectionType.MOCK
                 )
             )
 
@@ -242,7 +243,7 @@ class CombinedMetaInfoApiImplTest {
                 FInternalTransportConnectionStatus.Connected(
                     scope = backgroundScope,
                     deviceApi = meta2,
-                    connectionType = null
+                    connectionType = FInternalTransportConnectionType.MOCK
                 )
             )
             advanceUntilIdle()
@@ -291,7 +292,7 @@ class CombinedMetaInfoApiImplTest {
                 FInternalTransportConnectionStatus.Connected(
                     scope = backgroundScope,
                     deviceApi = metaDeviceApi,
-                    connectionType = null
+                    connectionType = FInternalTransportConnectionType.MOCK
                 )
             )
             advanceUntilIdle()
@@ -355,7 +356,7 @@ class CombinedMetaInfoApiImplTest {
             FInternalTransportConnectionStatus.Connected(
                 scope = backgroundScope,
                 deviceApi = metaDeviceApi,
-                connectionType = null
+                connectionType = FInternalTransportConnectionType.MOCK
             )
         )
         advanceUntilIdle()

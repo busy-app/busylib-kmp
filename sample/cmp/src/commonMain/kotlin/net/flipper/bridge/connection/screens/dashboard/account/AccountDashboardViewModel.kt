@@ -7,19 +7,20 @@ import net.flipper.bridge.connection.feature.link.check.ondemand.api.FLinkedInfo
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.screens.dashboard.common.DashboardFeatureViewModel
 import net.flipper.bridge.connection.utils.principal.impl.UserPrincipalApiSampleImpl
-import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
+import net.flipper.core.busylib.log.LogTagProvider
+import net.flipper.core.busylib.log.info
 
 class AccountDashboardViewModel(
     private val featureProvider: FFeatureProvider,
-    private val principalApi: UserPrincipalApiSampleImpl?
-) : DashboardFeatureViewModel() {
+    private val principalApi: UserPrincipalApiSampleImpl
+) : DashboardFeatureViewModel(), LogTagProvider {
+    override val TAG = "AccountDashboardViewModel"
     val linkedAccountStatusFlow = featureProvider
         .get(FLinkedInfoOnDemandFeatureApi::class)
         .getResource { it.status }
 
-    val authState = principalApi?.authStateFlow
-        ?: MutableStateFlow<BUSYLibUserPrincipal>(BUSYLibUserPrincipal.Empty).asStateFlow()
+    val authState = principalApi.authStateFlow
 
     private val _loginError = MutableStateFlow<String?>(null)
     val loginError = _loginError.asStateFlow()
@@ -28,7 +29,8 @@ class AccountDashboardViewModel(
     val isLoggingIn = _isLoggingIn.asStateFlow()
 
     fun login(email: String, password: String) {
-        val api = principalApi ?: return
+        info { "#login $email and $password, principal api is $principalApi" }
+        val api = principalApi
         viewModelScope.launch(FlipperDispatchers.default) {
             _isLoggingIn.value = true
             _loginError.value = null
@@ -39,7 +41,7 @@ class AccountDashboardViewModel(
     }
 
     fun logout() {
-        principalApi?.logout()
+        principalApi.logout()
     }
 
     fun deleteLinkedAccount() {

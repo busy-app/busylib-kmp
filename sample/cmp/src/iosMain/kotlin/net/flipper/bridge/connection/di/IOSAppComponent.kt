@@ -10,7 +10,8 @@ import net.flipper.bridge.connection.screens.di.getRootDecomposeComponent
 import net.flipper.bridge.connection.screens.root.ConnectionRootDecomposeComponent
 import net.flipper.bridge.connection.screens.search.IOSSearchViewModel
 import net.flipper.bridge.connection.utils.PermissionCheckerNoop
-import net.flipper.bridge.connection.utils.principal.impl.UserPrincipalApiNoop
+import net.flipper.bridge.connection.utils.principal.impl.UserPrincipalApiSampleImpl
+import net.flipper.bsb.cloud.api.BUSYLibHostApiStub
 import net.flipper.busylib.BUSYLibIOS
 import platform.CoreBluetooth.CBCentralManager
 import platform.Foundation.NSUserDefaults
@@ -19,13 +20,25 @@ val manager: CBCentralManager by lazy {
     CBCentralManager()
 }
 
+private val settings by lazy {
+    NSUserDefaultsSettings(
+        NSUserDefaults.standardUserDefaults
+    )
+}
+private val applicationScope by lazy {
+    CoroutineScope(SupervisorJob())
+}
+private val principalApi by lazy {
+    val hostApi = BUSYLibHostApiStub(
+        host = "cloud.dev.busy.app",
+    )
+    UserPrincipalApiSampleImpl(applicationScope, hostApi, settings)
+}
 val busyLib: BUSYLibIOS by lazy {
     BUSYLibIOS.build(
-        CoroutineScope(SupervisorJob()),
-        principalApi = UserPrincipalApiNoop(),
-        observableSettings = NSUserDefaultsSettings(
-            NSUserDefaults.standardUserDefaults
-        ),
+        applicationScope,
+        principalApi = principalApi,
+        observableSettings = settings,
         manager = manager,
     )
 }
@@ -45,6 +58,7 @@ fun getRootDecomposeComponent(): ConnectionRootDecomposeComponent {
                 deviceService = busyLib.connectionService,
                 fCentralManagerApi = busyLib.fCentralManagerApi
             )
-        }
+        },
+        principalApi = principalApi
     )
 }
