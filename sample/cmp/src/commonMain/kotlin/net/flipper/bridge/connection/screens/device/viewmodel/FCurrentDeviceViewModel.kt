@@ -14,6 +14,10 @@ class FCurrentDeviceViewModel(
 ) : DecomposeViewModel() {
     fun getState() = orchestrator.getState()
 
+    fun refresh() {
+        service.forceRefreshConnection()
+    }
+
     fun forget() = viewModelScope.launch {
         val device = fDevicePersistedStorage.getCurrentDeviceFlow()
             .firstOrNull()

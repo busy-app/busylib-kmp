@@ -51,7 +51,7 @@ class BLEDeviceConnectionApiImpl(
         config: FBleDeviceConnectionConfig,
         listener: FTransportConnectionStatusListener
     ): FBleApi {
-        listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting)
+        listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting(config.getTransportTypes()))
         info { "Starting BLE connect with ${BleConstants.CONNECT_TIME.inWholeMilliseconds}ms timeout..." }
 
         // Wait for peripheral to connect with timeout (30 seconds)
@@ -68,7 +68,7 @@ class BLEDeviceConnectionApiImpl(
         }
 
         info { "Peripheral connected successfully!" }
-        listener.onStatusUpdate(FInternalTransportConnectionStatus.Pairing)
+        listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting(config.getTransportTypes()))
 
         val resetApi = FIOSResetSerialBleApiImpl(
             scope = scope,

@@ -50,7 +50,9 @@ class FAndroidBleApiImpl(
                 when (state) {
                     ConnectionState.Connected -> when (bondState) {
                         BondState.NONE,
-                        BondState.BONDING -> FInternalTransportConnectionStatus.Pairing
+                        BondState.BONDING -> FInternalTransportConnectionStatus.Connecting(
+                            currentConfig.getTransportTypes()
+                        )
 
                         BondState.BONDED -> FInternalTransportConnectionStatus.Connected(
                             scope = scope,
@@ -59,7 +61,10 @@ class FAndroidBleApiImpl(
                         )
                     }
 
-                    ConnectionState.Connecting -> FInternalTransportConnectionStatus.Connecting
+                    ConnectionState.Connecting -> FInternalTransportConnectionStatus.Connecting(
+                        FInternalTransportConnectionType.BLE
+                    )
+
                     is ConnectionState.Disconnected -> FInternalTransportConnectionStatus.Disconnected
                     ConnectionState.Disconnecting -> FInternalTransportConnectionStatus.Disconnecting
                 }
@@ -94,7 +99,6 @@ class FAndroidBleApiImpl(
 
     private val _capabilities = flowOf(
         listOf(
-            FHTTPTransportCapability.BLE_ONLY_CONNECTION_SUPPORTED,
             FHTTPTransportCapability.BB_LOCAL_CONNECTION,
         )
     ).shareIn(scope, SharingStarted.WhileSubscribed(), 1)

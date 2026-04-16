@@ -38,7 +38,7 @@ class AutoReconnectConnection(
 
     val stateFlow: StateFlow<FInternalTransportConnectionStatus>
         field = MutableStateFlow<FInternalTransportConnectionStatus>(
-            FInternalTransportConnectionStatus.Connecting
+            FInternalTransportConnectionStatus.Connecting(config.getTransportTypes())
         )
 
     init {
