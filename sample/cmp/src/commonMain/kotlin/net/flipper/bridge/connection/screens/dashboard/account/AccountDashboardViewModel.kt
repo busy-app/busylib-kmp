@@ -7,7 +7,6 @@ import net.flipper.bridge.connection.feature.link.check.ondemand.api.FLinkedInfo
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.screens.dashboard.common.DashboardFeatureViewModel
 import net.flipper.bridge.connection.utils.principal.impl.UserPrincipalApiSampleImpl
-import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info

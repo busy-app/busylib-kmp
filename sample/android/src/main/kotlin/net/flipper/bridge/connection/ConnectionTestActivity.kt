@@ -20,7 +20,8 @@ class ConnectionTestActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val busyLib = (application as ConnectionTestApplication).busyLib
+        val app = application as ConnectionTestApplication
+        val busyLib = app.busyLib
 
         enableEdgeToEdge()
 
@@ -35,7 +36,8 @@ class ConnectionTestActivity : AppCompatActivity() {
                     busyLib.connectionService,
                     busyLib.flipperScanner
                 )
-            }
+            },
+            principalApi = app.principalApi
         )
 
         setContent {
