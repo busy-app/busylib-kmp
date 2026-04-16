@@ -11,11 +11,16 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
@@ -25,6 +30,7 @@ import net.flipper.bridge.connection.transport.common.api.serial.HEADER_NAME_REQ
 import net.flipper.bridge.connection.transport.common.api.serial.StatusStreamingEvent
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 import net.flipper.core.busylib.ktx.common.getExponentialDelay
+import net.flipper.core.busylib.ktx.common.wrapWebsocket
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
@@ -32,47 +38,28 @@ import net.flipper.core.busylib.log.verbose
 import kotlin.time.Duration.Companion.seconds
 
 class FLanStreamingApiImpl(
-    httpClient: HttpClient,
+    private val httpClient: HttpClient,
     scope: CoroutineScope
 ) : FStatusStreamingApi, LogTagProvider {
     override val TAG = "FLanStreamingApi"
-    private val eventsFlow = channelFlow {
-        info { "Start flow" }
-        var retryCount = 0
-        while (currentCoroutineContext().isActive) {
-            var session: DefaultClientWebSocketSession? = null
-            try {
-                session = httpClient.webSocketSession("/api/status/ws") {
-                    headers[HEADER_NAME_REQUEST_CAPABILITY] =
-                        FHTTPTransportCapability.BB_WEBSOCKET_SUPPORTED.ordinal.toString()
-                }
-                info { "Init websocket $session" }
-                session.send(Frame.Text("{\"enable\":true}"))
-                retryCount = 0
-                for (frame in session.incoming) {
-                    verbose { "Received frame $frame" }
-                    if (frame is Frame.Binary) {
-                        send(frame.readBytes())
-                    }
-                }
-                info { "WebSocket session ended normally, reconnecting..." }
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                error(e) { "WebSocket error, retryCount=$retryCount" }
-            } finally {
-                withContext(NonCancellable) {
-                    session?.close()
-                }
-            }
-            val delayDuration = getExponentialDelay(retryCount)
-            info { "Reconnecting WebSocket in $delayDuration (retry #$retryCount)" }
-            delay(delayDuration)
-            retryCount++
-        }
-    }.flowOn(FlipperDispatchers.default)
-        .map { StatusStreamingEvent.Protobuf(it) }
+    private val eventsFlow = wrapWebsocket {
+        getWebSocket()
+    }.onEach {
+        verbose { "Received frame $it" }
+    }.filterIsInstance<Frame.Binary>()
+        .flowOn(FlipperDispatchers.default)
+        .map { StatusStreamingEvent.Protobuf(it.data) }
         .shareIn(scope, SharingStarted.WhileSubscribed(5.seconds), 0)
+
+    private suspend fun getWebSocket(): Flow<Frame> {
+        val session = httpClient.webSocketSession("/api/status/ws") {
+            headers[HEADER_NAME_REQUEST_CAPABILITY] =
+                FHTTPTransportCapability.BB_WEBSOCKET_SUPPORTED.ordinal.toString()
+        }
+        info { "Init websocket $session" }
+        session.send(Frame.Text("{\"enable\":true}"))
+        return session.incoming.consumeAsFlow()
+    }
 
     override fun getEvents() = eventsFlow
 }

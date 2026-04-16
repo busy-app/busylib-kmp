@@ -19,6 +19,7 @@ import net.flipper.bsb.cloud.api.BUSYLibHostApi
 import net.flipper.bsb.cloud.barsws.api.utils.wrappers.BSBWebSocketFactory
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
+import net.flipper.core.busylib.ktx.common.wrapWebsocket
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
 import net.flipper.core.busylib.log.verbose
