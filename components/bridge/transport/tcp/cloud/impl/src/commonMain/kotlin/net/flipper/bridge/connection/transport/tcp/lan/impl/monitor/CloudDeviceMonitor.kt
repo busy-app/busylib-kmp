@@ -24,7 +24,7 @@ class CloudDeviceMonitor(
     private val eventSource: FStatusStreamingApi,
     private val scope: CoroutineScope,
     private val deviceApi: FConnectedDeviceApi,
-    private val deviceId: Uuid
+    private val deviceId: Uuid,
 ) : LogTagProvider {
     override val TAG = "CloudDeviceMonitor"
     private val wsEventFlow = eventSource
@@ -40,8 +40,12 @@ class CloudDeviceMonitor(
             )
         )
         delay(INACTIVITY_TIMEOUT) // Should be interrupted by any event from websocket
-        emit(FInternalTransportConnectionStatus.Connecting)
-    }.stateIn(scope, SharingStarted.Lazily, FInternalTransportConnectionStatus.Connecting)
+        emit(FInternalTransportConnectionStatus.Connecting(FInternalTransportConnectionType.CLOUD))
+    }.stateIn(
+        scope,
+        SharingStarted.Lazily,
+        FInternalTransportConnectionStatus.Connecting(FInternalTransportConnectionType.CLOUD)
+    )
 
     fun subscribe(listener: FTransportConnectionStatusListener) {
         info { "Start monitoring for $deviceId" }

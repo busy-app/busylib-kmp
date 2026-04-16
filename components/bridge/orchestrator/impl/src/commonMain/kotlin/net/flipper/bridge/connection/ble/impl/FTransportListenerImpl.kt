@@ -8,9 +8,9 @@ import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.orchestrator.api.model.ConnectingStatus
 import net.flipper.bridge.connection.orchestrator.api.model.DisconnectStatus
 import net.flipper.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
-import net.flipper.bridge.connection.orchestrator.api.model.FDeviceTransportType
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
-import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionType
+import net.flipper.busylib.core.wrapper.wrap
+import net.flipper.core.busylib.data.map
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
@@ -44,18 +44,14 @@ class FTransportListenerImpl(config: BUSYBar) : LogTagProvider {
                     device = device,
                     deviceApi = status.deviceApi,
                     scope = status.scope,
-                    transportType = when (status.connectionType) {
-                        FInternalTransportConnectionType.BLE -> FDeviceTransportType.BLE
-                        FInternalTransportConnectionType.LAN -> FDeviceTransportType.LAN
-                        FInternalTransportConnectionType.CLOUD -> FDeviceTransportType.CLOUD
-                        null -> null
-                    }
+                    transportType = status.connectionTypes.maxBy { it.priority }.toPublic()
                 )
 
-                FInternalTransportConnectionStatus.Connecting ->
-                    FDeviceConnectStatus.Connecting(
+                is FInternalTransportConnectionStatus.Connecting ->
+                    FDeviceConnectStatus.Connecting.InProgress(
                         device = device,
-                        status = ConnectingStatus.CONNECTING
+                        status = ConnectingStatus.CONNECTING,
+                        transportTypes = status.connectionTypes.map { it.toPublic() }.wrap()
                     )
 
                 FInternalTransportConnectionStatus.Disconnected ->
@@ -71,12 +67,6 @@ class FTransportListenerImpl(config: BUSYBar) : LogTagProvider {
                 FInternalTransportConnectionStatus.Disconnecting -> FDeviceConnectStatus.Disconnecting(
                     device
                 )
-
-                FInternalTransportConnectionStatus.Pairing ->
-                    FDeviceConnectStatus.Connecting(
-                        device = device,
-                        status = ConnectingStatus.INITIALIZING
-                    )
             }
         }
         info { "New state is $newState" }

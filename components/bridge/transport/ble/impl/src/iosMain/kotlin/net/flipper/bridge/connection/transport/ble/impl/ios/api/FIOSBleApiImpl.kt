@@ -45,7 +45,10 @@ class FIOSBleApiImpl(
             .stateStream
             .map {
                 when (it) {
-                    FPeripheralState.CONNECTING -> FInternalTransportConnectionStatus.Connecting
+                    FPeripheralState.CONNECTING -> FInternalTransportConnectionStatus.Connecting(
+                        FInternalTransportConnectionType.BLE
+                    )
+
                     FPeripheralState.DISCONNECTING -> FInternalTransportConnectionStatus.Disconnecting
                     FPeripheralState.DISCONNECTED,
                     FPeripheralState.PAIRING_FAILED,
@@ -86,7 +89,6 @@ class FIOSBleApiImpl(
 
     private val _capabilities = flowOf(
         listOf(
-            FHTTPTransportCapability.BLE_ONLY_CONNECTION_SUPPORTED,
             FHTTPTransportCapability.BB_LOCAL_CONNECTION,
         )
     ).shareIn(scope, SharingStarted.WhileSubscribed(), 1)
