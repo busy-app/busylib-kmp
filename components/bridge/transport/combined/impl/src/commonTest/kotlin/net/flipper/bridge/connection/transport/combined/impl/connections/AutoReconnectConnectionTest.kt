@@ -220,18 +220,18 @@ class AutoReconnectConnectionTest {
 
         connectionBuilder.connectCalledDeferred.await()
 
-        // First retry delay is ~100ms (initial delay * 2^0)
-        advanceTimeBy(150.milliseconds)
+        // First retry delay is 1s (initialDelay * 2^0)
+        advanceTimeBy(1100.milliseconds)
         advanceUntilIdle()
         val attemptsAfterFirst = connectionBuilder.connectAttempts
 
-        // Second retry delay is ~200ms (initial delay * 2^1)
-        advanceTimeBy(250.milliseconds)
+        // Second retry delay is 2s (initialDelay * 2^1)
+        advanceTimeBy(2100.milliseconds)
         advanceUntilIdle()
         val attemptsAfterSecond = connectionBuilder.connectAttempts
 
-        // Third retry delay is ~400ms (initial delay * 2^2)
-        advanceTimeBy(450.milliseconds)
+        // Third retry delay is 4s (initialDelay * 2^2)
+        advanceTimeBy(4100.milliseconds)
         advanceUntilIdle()
         val attemptsAfterThird = connectionBuilder.connectAttempts
 
