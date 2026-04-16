@@ -63,7 +63,7 @@ class FAppleLanConnectionMonitor(
 
     private fun restartMonitoring() {
         restartMonitoringScope.launch(SingleJobMode.SKIP_IF_RUNNING) {
-            listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting)
+            listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting(config.getTransportTypes()))
             stopMonitoring()
             startMonitoring()
         }
@@ -121,12 +121,12 @@ class FAppleLanConnectionMonitor(
 
             nw_connection_state_waiting -> {
                 debug { "#handleStateUpdate Waiting for connection: $error" }
-                listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting)
+                listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting(config.getTransportTypes()))
             }
 
             nw_connection_state_preparing -> {
                 debug { "#handleStateUpdate Connection preparing" }
-                listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting)
+                listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting(config.getTransportTypes()))
             }
 
             nw_connection_state_failed -> {

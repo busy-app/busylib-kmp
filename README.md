@@ -57,6 +57,7 @@ flipper.signPublications=false
 # If want to use xcFramework, add destination, where it should be copied
 # Then run ./gradlew :entrypoint:copyXCFrameworkDebug
 flipper.iosProjectBridgeAbsolutePath=/Users/makeevrserg/Desktop/git/iOS/Bridge
+flipper.iosProjectAbsolutePath=/Users/makeevrserg/Desktop/git/iOS/
 # If want more verbose logging, add this
 current_flavor_type=DEVELOP
 ```

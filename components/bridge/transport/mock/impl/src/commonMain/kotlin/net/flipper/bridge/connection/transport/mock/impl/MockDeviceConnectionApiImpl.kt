@@ -25,7 +25,7 @@ class MockDeviceConnectionApiImpl : MockDeviceConnectionApi {
         config: FMockDeviceConnectionConfig,
         listener: FTransportConnectionStatusListener
     ): Result<FMockApi> = runSuspendCatching {
-        listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting)
+        listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting(config.getTransportTypes()))
         var currentConfig = config
         val mockApi = object : FMockApi, FTransportMetaInfoApi by MockFTransportMetaInfoApiImpl() {
             val bsbMockEngine = getBSBMockHttpEngine()

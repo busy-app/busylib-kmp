@@ -58,7 +58,7 @@ class BLEDeviceConnectionApiImpl(
         ) {
             throw BLEConnectionPermissionException()
         }
-        listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting)
+        listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting(config.getTransportTypes()))
         info { "Finding device with ${BleConstants.CONNECT_TIME.inWholeMilliseconds} timeout..." }
         val device = withTimeout(BleConstants.CONNECT_TIME) {
             centralManager.getPeripheralById(config.macAddress)
@@ -79,7 +79,7 @@ class BLEDeviceConnectionApiImpl(
             info { "Device failed to connect, so throw exception" }
             throw FailedConnectToDeviceException()
         }
-        listener.onStatusUpdate(FInternalTransportConnectionStatus.Pairing)
+        listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting(config.getTransportTypes()))
 
         if (!device.hasBondInformation) {
             device.createBond()
@@ -97,6 +97,7 @@ class BLEDeviceConnectionApiImpl(
                         error { "Service discovery failed: ${state.reason}" }
                         null
                     }
+
                     RemoteServices.Discovering,
                     RemoteServices.Unknown -> null
                 }

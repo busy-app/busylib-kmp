@@ -23,7 +23,6 @@ import net.flipper.bridge.connection.transport.combined.impl.streaming.FCombined
 import net.flipper.bridge.connection.transport.combined.impl.utils.UpdateConfigDelegate
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
-import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionType
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoData
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
@@ -62,33 +61,13 @@ class FCombinedConnectionApiImpl(
                     null
                 } else {
                     connectionsList
-                        .maxBy { connectionSnapshot -> getPriority(connectionSnapshot.status) }
+                        .groupBy { connectionSnapshot -> getPriority(connectionSnapshot.status) }
+                        .maxBy { (priority, _) -> priority }
+                        .value
+                        .let(::mergeSnapshots)
                 }
             }
             .distinctUntilChanged()
-    }
-
-    private fun getCurrentConnectionType(
-        capabilities: List<FHTTPTransportCapability>
-    ): FInternalTransportConnectionType? {
-        return when {
-            FHTTPTransportCapability
-                .LAN_ONLY_CONNECTION_SUPPORTED in capabilities -> {
-                FInternalTransportConnectionType.LAN
-            }
-
-            FHTTPTransportCapability
-                .CLOUD_ONLY_CONNECTION_SUPPORTED in capabilities -> {
-                FInternalTransportConnectionType.CLOUD
-            }
-
-            FHTTPTransportCapability
-                .BLE_ONLY_CONNECTION_SUPPORTED in capabilities -> {
-                FInternalTransportConnectionType.BLE
-            }
-
-            else -> null
-        }
     }
 
     private fun startCollectTransportStatusUpdateJob(): Job {
@@ -98,19 +77,19 @@ class FCombinedConnectionApiImpl(
                     ?.status
                     ?: FInternalTransportConnectionStatus.Disconnected
 
-                val capabilities = connectionSnapshot?.capabilities.orEmpty()
-
                 if (transportConnectionStatus is FInternalTransportConnectionStatus.Connected) {
                     listener.onStatusUpdate(
                         status = FInternalTransportConnectionStatus.Connected(
                             scope = scope,
                             deviceApi = this,
-                            connectionType = getCurrentConnectionType(capabilities)
+                            connectionTypes = transportConnectionStatus.connectionTypes
                         )
                     )
                 } else {
                     listener.onStatusUpdate(transportConnectionStatus)
                 }
+
+                listener.onStatusUpdate(transportConnectionStatus)
             }
             .launchIn(scope)
     }
@@ -183,16 +162,5 @@ class FCombinedConnectionApiImpl(
 
     override fun getEvents(): Flow<StatusStreamingEvent> {
         return streamingApi.getEvents()
-    }
-}
-
-@Suppress("MagicNumber")
-private fun getPriority(status: FInternalTransportConnectionStatus): Int {
-    return when (status) {
-        FInternalTransportConnectionStatus.Disconnected -> 0
-        FInternalTransportConnectionStatus.Connecting -> 1
-        FInternalTransportConnectionStatus.Disconnecting -> 2
-        FInternalTransportConnectionStatus.Pairing -> 3
-        is FInternalTransportConnectionStatus.Connected -> 4
     }
 }

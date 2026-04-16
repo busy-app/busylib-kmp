@@ -4,6 +4,8 @@ plugins {
 
 kotlin {
     sourceSets.commonMain.dependencies {
+        api(projects.components.core.data)
+
         implementation(libs.kotlin.coroutines)
         implementation(libs.ktor.client.core)
     }

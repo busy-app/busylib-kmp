@@ -1,18 +1,13 @@
 package net.flipper.bridge.connection.service.impl
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.config.internal.FInternalDevicePersistedStorage
@@ -28,6 +23,8 @@ import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.core.wrapper.toCResult
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
+import net.flipper.core.busylib.ktx.common.SingleJobMode
+import net.flipper.core.busylib.ktx.common.asSingleJobScope
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
@@ -48,7 +45,8 @@ class FConnectionServiceImpl(
     override val TAG: String = "FConnectionService"
 
     private val scope = CoroutineScope(SupervisorJob() + FlipperDispatchers.default)
-    private val mutex = Mutex()
+    private val singletonScope = scope.asSingleJobScope()
+
     private fun getExpectedState(): Flow<ExpectedState> {
         return fDevicePersistedStorage.getCurrentDeviceFlow()
             .map { currentDevice ->
@@ -59,8 +57,8 @@ class FConnectionServiceImpl(
             }.distinctUntilChanged()
     }
 
-    private fun getConnectionJob(scope: CoroutineScope): Job {
-        return combine(
+    private suspend fun connectionLoop() {
+        combine(
             flow = getExpectedState(),
             flow2 = orchestrator.getState()
         ) { expectedState, realState ->
@@ -89,19 +87,19 @@ class FConnectionServiceImpl(
 
                 is FDeviceConnectStatus.Disconnecting -> Unit // Transition state
             }
-        }.launchIn(scope)
+        }.collect { }
     }
 
     override fun onLaunch() {
-        scope.launch {
-            if (mutex.isLocked) {
-                warn { "#onApplicationInit tried to init connection service again" }
-                return@launch
-            }
-            mutex.withLock {
-                val connectionJob = getConnectionJob(this)
-                connectionJob.join()
-            }
+        singletonScope.launch(SingleJobMode.SKIP_IF_RUNNING) {
+            connectionLoop()
+        }
+    }
+
+    override fun forceRefreshConnection() {
+        singletonScope.launch(SingleJobMode.CANCEL_PREVIOUS) {
+            orchestrator.disconnectCurrent()
+            connectionLoop()
         }
     }
 
