@@ -9,12 +9,12 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.WhileSubscribed
-import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.withContext
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPTransportCapability
@@ -49,7 +49,7 @@ class FLanStreamingApiImpl(
         }
         info { "Init websocket $session" }
         session.send(Frame.Text("{\"enable\":true}"))
-        return session.incoming.consumeAsFlow().onCompletion {
+        return session.incoming.receiveAsFlow().onCompletion {
             withContext(NonCancellable) {
                 session.close()
             }
