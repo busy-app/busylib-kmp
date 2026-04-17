@@ -1,5 +1,6 @@
 package net.flipper.core.busylib.ktx.common
 
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
@@ -12,7 +13,7 @@ import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
 
 fun <T> LogTagProvider.wrapWebsocket(
-    block: suspend () -> Flow<T>
+    block: suspend CoroutineScope.() -> Flow<T>
 ) = flow<T> {
     var retryCount = 0
     while (currentCoroutineContext().isActive) {
