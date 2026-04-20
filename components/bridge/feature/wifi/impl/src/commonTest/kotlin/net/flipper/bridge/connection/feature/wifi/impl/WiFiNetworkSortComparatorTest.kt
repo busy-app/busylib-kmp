@@ -106,8 +106,8 @@ class WiFiNetworkSortComparatorTest {
         ssid: String,
         rssi: Int,
         security: WiFiSecurity = WiFiSecurity.Other(
-        BsbWifiSecurityMethod.WPA2_WPA3
-    )
+            BsbWifiSecurityMethod.WPA2_WPA3
+        )
     ): WiFiNetwork {
         return WiFiNetwork(ssid = ssid, rssi = rssi, wifiSecurity = security)
     }
