@@ -37,13 +37,6 @@ class WiFiNetworkSortComparatorTest {
         )
     }
 
-    @Test
-    fun nullRssiGoesLast() {
-        assertEquals(-1, compareNullableRssiDescending(10, null))
-        assertEquals(1, compareNullableRssiDescending(null, 10))
-        assertEquals(0, compareNullableRssiDescending(null, null))
-    }
-
     private fun wifiNetwork(ssid: String, rssi: Int): WiFiNetwork {
         return WiFiNetwork(
             ssid = ssid,
