@@ -93,14 +93,13 @@ class WiFiNetworkSortComparatorTest {
     }
 
     @Test
-    fun sameRssiAndSecurityKeepsOriginalOrder() {
-        val first = wifiNetwork(ssid = "first", rssi = -60, security = WiFiSecurity.Supported.None)
-        val second = wifiNetwork(ssid = "second", rssi = -60, security = WiFiSecurity.Supported.None)
+    fun sameRssiSecurityAndSsidCompareEqual() {
+        val comparator = WiFiNetworkSortComparator()
+        val first = wifiNetwork(ssid = "same", rssi = -60, security = WiFiSecurity.Supported.None)
+        val second = wifiNetwork(ssid = "same", rssi = -60, security = WiFiSecurity.Supported.None)
 
-        assertEquals(
-            listOf(first, second),
-            listOf(first, second).sortedWith(WiFiNetworkSortComparator())
-        )
+        assertEquals(0, comparator.compare(first, second))
+        assertEquals(0, comparator.compare(second, first))
     }
 
     private fun wifiNetwork(
