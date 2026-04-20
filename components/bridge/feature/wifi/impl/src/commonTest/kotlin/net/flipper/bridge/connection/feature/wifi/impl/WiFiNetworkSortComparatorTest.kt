@@ -63,7 +63,11 @@ class WiFiNetworkSortComparatorTest {
     @Test
     fun mixedListFullOrder() {
         val networks = listOf(
-            wifiNetwork(ssid = "other-weak", rssi = -80, security = WiFiSecurity.Other(BsbWifiSecurityMethod.WPA2_WPA3)),
+            wifiNetwork(
+                ssid = "other-weak",
+                rssi = -80,
+                security = WiFiSecurity.Other(BsbWifiSecurityMethod.WPA2_WPA3)
+            ),
             wifiNetwork(ssid = "supported-weak", rssi = -70, security = WiFiSecurity.Supported.Password.WPA2),
             wifiNetwork(ssid = "other-strong", rssi = -50, security = WiFiSecurity.Other(BsbWifiSecurityMethod.WEP)),
             wifiNetwork(ssid = "supported-strong", rssi = -40, security = WiFiSecurity.Supported.Password.WPA3)
@@ -73,8 +77,16 @@ class WiFiNetworkSortComparatorTest {
             listOf(
                 wifiNetwork(ssid = "supported-strong", rssi = -40, security = WiFiSecurity.Supported.Password.WPA3),
                 wifiNetwork(ssid = "supported-weak", rssi = -70, security = WiFiSecurity.Supported.Password.WPA2),
-                wifiNetwork(ssid = "other-strong", rssi = -50, security = WiFiSecurity.Other(BsbWifiSecurityMethod.WEP)),
-                wifiNetwork(ssid = "other-weak", rssi = -80, security = WiFiSecurity.Other(BsbWifiSecurityMethod.WPA2_WPA3))
+                wifiNetwork(
+                    ssid = "other-strong",
+                    rssi = -50,
+                    security = WiFiSecurity.Other(BsbWifiSecurityMethod.WEP)
+                ),
+                wifiNetwork(
+                    ssid = "other-weak",
+                    rssi = -80,
+                    security = WiFiSecurity.Other(BsbWifiSecurityMethod.WPA2_WPA3)
+                )
             ),
             networks.sortedWith(WiFiNetworkSortComparator())
         )
@@ -91,7 +103,13 @@ class WiFiNetworkSortComparatorTest {
         )
     }
 
-    private fun wifiNetwork(ssid: String, rssi: Int, security: WiFiSecurity = WiFiSecurity.Other(BsbWifiSecurityMethod.WPA2_WPA3)): WiFiNetwork {
+    private fun wifiNetwork(
+        ssid: String,
+        rssi: Int,
+        security: WiFiSecurity = WiFiSecurity.Other(
+        BsbWifiSecurityMethod.WPA2_WPA3
+    )
+    ): WiFiNetwork {
         return WiFiNetwork(ssid = ssid, rssi = rssi, wifiSecurity = security)
     }
 }
