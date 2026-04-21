@@ -109,7 +109,6 @@ class CloudProvisioningWatcher(
             return
         }
         // cloudConnection != null
-
         if (cloudConnection.deviceId == cloudId) {
             return // Local and cloud transport, cloud linked to current device - skip
         }

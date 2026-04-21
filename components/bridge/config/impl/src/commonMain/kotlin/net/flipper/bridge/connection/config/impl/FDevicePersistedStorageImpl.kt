@@ -72,12 +72,14 @@ class FDevicePersistedStorageImpl(
                 scope.postTransaction()
             }
         }
+        val toSave = scope.get()
+        if (original == scope.get()) {
+            info { "No changes, so skip current object: $original" }
+        } else {
+            info { "Result of transaction: $toSave from $original" }
+            bleConfigKrate.save(toSave)
+        }
 
-        bleConfigKrate.save(
-            scope.get().also {
-                info { "Result of transaction: $it from $original" }
-            }
-        )
         return@withLockResult result
     }
 
