@@ -30,6 +30,8 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.uuid.Uuid
 
+private const val DEFAULT_TEST_BAR_NAME = "Test Bar"
+
 @OptIn(ExperimentalCoroutinesApi::class)
 class CloudFetcherWatcherTest {
 
@@ -183,7 +185,8 @@ class CloudFetcherWatcherTest {
             isNetworkAvailable = true,
             principal = fakeToken(),
             cloudBarsResult = Result.success(
-                listOf(BusyCloudBar(id = cloudId.toString(), label = "Test"))
+                // Label matches the local humanReadableName, so no rename is needed.
+                listOf(BusyCloudBar(id = cloudId.toString(), label = DEFAULT_TEST_BAR_NAME))
             )
         )
 
@@ -213,8 +216,8 @@ class CloudFetcherWatcherTest {
             cloudBarsResult = Result.success(
                 listOf(
                     // Intentionally reversed order to verify sorted comparison
-                    BusyCloudBar(id = cloudIdB.toString(), label = "B"),
-                    BusyCloudBar(id = cloudIdA.toString(), label = "A")
+                    BusyCloudBar(id = cloudIdB.toString(), label = DEFAULT_TEST_BAR_NAME),
+                    BusyCloudBar(id = cloudIdA.toString(), label = DEFAULT_TEST_BAR_NAME)
                 )
             )
         )
@@ -473,7 +476,7 @@ class CloudFetcherWatcherTest {
             isNetworkAvailable = true,
             principal = fakeToken(),
             cloudBarsResult = Result.success(
-                listOf(BusyCloudBar(id = cloudId.toString(), label = "Present"))
+                listOf(BusyCloudBar(id = cloudId.toString(), label = DEFAULT_TEST_BAR_NAME))
             )
         )
 
@@ -482,6 +485,85 @@ class CloudFetcherWatcherTest {
 
         assertEquals(0, setup.storage.transactionCount)
         assertEquals(listOf(bleOnly, cloudDevice), setup.storage.devices.value)
+    }
+
+    @Test
+    fun GIVEN_matching_ids_but_different_label_THEN_device_renamed() = runTest {
+        val cloudId = Uuid.random()
+        val device = busyBar(
+            id = "device-1",
+            BUSYBar.ConnectionWay.Cloud(cloudId)
+        )
+        val setup = createSetup(
+            devices = listOf(device),
+            isNetworkAvailable = true,
+            principal = fakeToken(),
+            cloudBarsResult = Result.success(
+                listOf(BusyCloudBar(id = cloudId.toString(), label = "Renamed"))
+            )
+        )
+
+        setup.watcher.onLaunch()
+        advanceUntilIdle()
+
+        val updated = setup.storage.devices.value.single()
+        assertEquals("device-1", updated.uniqueId)
+        assertEquals("Renamed", updated.humanReadableName)
+        assertEquals(cloudId, updated.cloud?.deviceId)
+    }
+
+    @Test
+    fun GIVEN_matching_ids_and_null_label_THEN_local_name_preserved() = runTest {
+        val cloudId = Uuid.random()
+        val device = busyBar(
+            id = "device-1",
+            BUSYBar.ConnectionWay.Cloud(cloudId)
+        )
+        val setup = createSetup(
+            devices = listOf(device),
+            isNetworkAvailable = true,
+            principal = fakeToken(),
+            cloudBarsResult = Result.success(
+                listOf(BusyCloudBar(id = cloudId.toString(), label = null))
+            )
+        )
+
+        setup.watcher.onLaunch()
+        advanceUntilIdle()
+
+        assertEquals(listOf(device), setup.storage.devices.value)
+        assertEquals(
+            0,
+            setup.storage.transactionCount,
+            "Null label must not overwrite the local humanReadableName"
+        )
+    }
+
+    @Test
+    fun GIVEN_multi_transport_device_with_label_change_THEN_only_name_updated() = runTest {
+        val cloudId = Uuid.random()
+        val device = busyBar(
+            id = "device-1",
+            BUSYBar.ConnectionWay.Cloud(cloudId),
+            BUSYBar.ConnectionWay.BLE("AA:BB:CC")
+        )
+        val setup = createSetup(
+            devices = listOf(device),
+            isNetworkAvailable = true,
+            principal = fakeToken(),
+            cloudBarsResult = Result.success(
+                listOf(BusyCloudBar(id = cloudId.toString(), label = "Renamed"))
+            )
+        )
+
+        setup.watcher.onLaunch()
+        advanceUntilIdle()
+
+        val updated = setup.storage.devices.value.single()
+        assertEquals("device-1", updated.uniqueId)
+        assertEquals("Renamed", updated.humanReadableName)
+        assertEquals(cloudId, updated.cloud?.deviceId)
+        assertEquals(device.ble, updated.ble, "BLE transport must be preserved")
     }
 
     // endregion
@@ -535,10 +617,10 @@ class CloudFetcherWatcherTest {
         require(connectionWays.isNotEmpty()) { "At least one connection way is required" }
         val first = connectionWays.first()
         var result = when (first) {
-            is BUSYBar.ConnectionWay.BLE -> BUSYBar(humanReadableName = "Test Bar", uniqueId = id, ble = first)
-            is BUSYBar.ConnectionWay.Cloud -> BUSYBar(humanReadableName = "Test Bar", uniqueId = id, cloud = first)
-            is BUSYBar.ConnectionWay.Lan -> BUSYBar(humanReadableName = "Test Bar", uniqueId = id, lan = first)
-            is BUSYBar.ConnectionWay.Mock -> BUSYBar(humanReadableName = "Test Bar", uniqueId = id, mock = first)
+            is BUSYBar.ConnectionWay.BLE -> BUSYBar(humanReadableName = DEFAULT_TEST_BAR_NAME, uniqueId = id, ble = first)
+            is BUSYBar.ConnectionWay.Cloud -> BUSYBar(humanReadableName = DEFAULT_TEST_BAR_NAME, uniqueId = id, cloud = first)
+            is BUSYBar.ConnectionWay.Lan -> BUSYBar(humanReadableName = DEFAULT_TEST_BAR_NAME, uniqueId = id, lan = first)
+            is BUSYBar.ConnectionWay.Mock -> BUSYBar(humanReadableName = DEFAULT_TEST_BAR_NAME, uniqueId = id, mock = first)
         }
         for (way in connectionWays.drop(1)) {
             result = when (way) {

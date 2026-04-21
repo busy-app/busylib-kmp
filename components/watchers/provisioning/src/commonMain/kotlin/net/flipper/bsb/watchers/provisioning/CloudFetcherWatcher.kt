@@ -48,14 +48,8 @@ class CloudFetcherWatcher(
                 busyLibNetworkStateApi.isNetworkAvailableFlow,
                 principalApi.getPrincipalFlow()
             ) { allDevices, isNetworkAvailable, principal ->
-                Triple(
-                    allDevices.mapNotNull {
-                        it.cloud
-                    }.map { it.deviceId },
-                    isNetworkAvailable,
-                    principal
-                )
-            }.collectLatest { (localCloudDeviceIds, isNetworkAvailable, principal) ->
+                Triple(allDevices, isNetworkAvailable, principal)
+            }.collectLatest { (allDevices, isNetworkAvailable, principal) ->
                 val cloudBars = when (principal) {
                     BUSYLibUserPrincipal.Empty -> emptyList()
                     BUSYLibUserPrincipal.Loading -> null
@@ -72,8 +66,11 @@ class CloudFetcherWatcher(
                     debug { "Skip synchronization because busy bar list is null" }
                     return@collectLatest
                 }
+                val localCloudDeviceIds = allDevices.mapNotNull { it.cloud?.deviceId }
                 val cloudBarsId = cloudBars.mapNotNull { Uuid.parseOrNull(it.id) }
-                if (localCloudDeviceIds.sorted() == cloudBarsId.sorted()) {
+                val idsMatch = localCloudDeviceIds.sorted() == cloudBarsId.sorted()
+                val hasNameMismatch = hasCloudLabelMismatch(allDevices, cloudBars)
+                if (idsMatch && !hasNameMismatch) {
                     info { "Cloud devices and local are same, skip invalidation" }
                 } else {
                     info { "Found difference between cloud and local devices, start invalidation" }
@@ -85,10 +82,23 @@ class CloudFetcherWatcher(
         }
     }
 
+    private fun hasCloudLabelMismatch(
+        allDevices: List<BUSYBar>,
+        cloudBars: List<BusyCloudBar>
+    ): Boolean {
+        val cloudBarsById = cloudBars.cloudBarsById()
+        return allDevices.any { device ->
+            val id = device.cloud?.deviceId ?: return@any false
+            val label = cloudBarsById[id]?.label ?: return@any false
+            label != device.humanReadableName
+        }
+    }
+
     private fun InternalStorageTransactionScope.invalidateCloudBars(
         cloudBars: List<BusyCloudBar>
     ) {
-        val cloudBarsId = cloudBars.mapNotNull { Uuid.parseOrNull(it.id) }.toSet()
+        val cloudBarsById = cloudBars.cloudBarsById()
+        val cloudBarsId = cloudBarsById.keys
         val deviceClouds = getAllDevices().mapNotNull { device ->
             val deviceId = device.cloud?.deviceId ?: return@mapNotNull null
             device to deviceId
@@ -100,9 +110,20 @@ class CloudFetcherWatcher(
             removeCloud(device)
         }
 
+        // Rename still-linked devices when cloud label changed
+        deviceClouds.filter { (_, deviceId) -> deviceId in cloudBarsId }
+            .forEach { (device, deviceId) ->
+                val label = cloudBarsById[deviceId]?.label ?: return@forEach
+                if (device.humanReadableName != label) {
+                    info {
+                        "Rename ${device.uniqueId}: '${device.humanReadableName}' -> '$label'"
+                    }
+                    addOrReplace(device.copy(humanReadableName = label))
+                }
+            }
+
         // Add new link
-        cloudBars.mapNotNull { Uuid.parseOrNull(it.id)?.let { id -> id to it } }
-            .filterNot { (id, _) -> id in deviceCloudIds }
+        cloudBarsById.filterKeys { id -> id !in deviceCloudIds }
             .forEach { (id, bar) ->
                 info { "Add new bar: $bar" }
                 val newBusyBar = BUSYBar(
@@ -112,6 +133,9 @@ class CloudFetcherWatcher(
                 addOrReplace(newBusyBar)
             }
     }
+
+    private fun List<BusyCloudBar>.cloudBarsById(): Map<Uuid, BusyCloudBar> =
+        mapNotNull { bar -> Uuid.parseOrNull(bar.id)?.let { id -> id to bar } }.toMap()
 
     private fun InternalStorageTransactionScope.removeCloud(
         device: BUSYBar
