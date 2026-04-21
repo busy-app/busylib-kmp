@@ -4,7 +4,9 @@ import com.flipperdevices.core.network.BUSYLibNetworkStateApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.job
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -19,8 +21,11 @@ import net.flipper.bridge.connection.config.internal.InternalStorageTransactionS
 import net.flipper.bridge.connection.config.internal.TransactionHook
 import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
+import net.flipper.bsb.cloud.barsws.api.BSBWebSocket
+import net.flipper.bsb.cloud.barsws.api.CloudWebSocketApi
 import net.flipper.bsb.cloud.rest.api.BusyCloudBarsApi
 import net.flipper.bsb.cloud.rest.model.BusyCloudBar
+import net.flipper.bsb.watchers.provisioning.utils.CloudFetcher
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.ktx.common.asFlow
 import kotlin.test.Test
@@ -38,7 +43,7 @@ class CloudFetcherWatcherTest {
     // region Test Cases
 
     @Test
-    fun GIVEN_empty_principal_and_no_local_cloud_devices_THEN_no_storage_mutation() = runTest {
+    fun GIVEN_empty_principal_THEN_no_storage_mutation() = runTest {
         val bleDevice = busyBar(
             id = "device-1",
             BUSYBar.ConnectionWay.BLE("AA:BB:CC")
@@ -57,56 +62,10 @@ class CloudFetcherWatcherTest {
     }
 
     @Test
-    fun GIVEN_empty_principal_and_local_cloud_only_device_THEN_device_is_removed() = runTest {
-        val cloudId = Uuid.random()
-        val cloudOnly = busyBar(
-            id = "cloud-only",
-            BUSYBar.ConnectionWay.Cloud(cloudId)
-        )
-        val setup = createSetup(
-            devices = listOf(cloudOnly),
-            isNetworkAvailable = true,
-            principal = BUSYLibUserPrincipal.Empty
-        )
-
-        setup.watcher.onLaunch()
-        advanceUntilIdle()
-
-        assertTrue(
-            setup.storage.devices.value.isEmpty(),
-            "Cloud-only device must be removed when cloud bar list is empty"
-        )
-    }
-
-    @Test
-    fun GIVEN_empty_principal_and_local_device_with_cloud_plus_ble_THEN_cloud_stripped() = runTest {
-        val cloudId = Uuid.random()
-        val device = busyBar(
-            id = "device-1",
-            BUSYBar.ConnectionWay.Cloud(cloudId),
-            BUSYBar.ConnectionWay.BLE("AA:BB:CC")
-        )
-        val setup = createSetup(
-            devices = listOf(device),
-            isNetworkAvailable = true,
-            principal = BUSYLibUserPrincipal.Empty
-        )
-
-        setup.watcher.onLaunch()
-        advanceUntilIdle()
-
-        val updated = setup.storage.devices.value.single()
-        assertEquals("device-1", updated.uniqueId)
-        assertNull(updated.cloud, "Cloud transport should be stripped")
-        assertNotNull(updated.ble, "BLE transport should remain")
-    }
-
-    @Test
     fun GIVEN_loading_principal_THEN_no_storage_mutation() = runTest {
-        val cloudId = Uuid.random()
         val cloudOnly = busyBar(
             id = "cloud-only",
-            BUSYBar.ConnectionWay.Cloud(cloudId)
+            BUSYBar.ConnectionWay.Cloud(Uuid.random())
         )
         val setup = createSetup(
             devices = listOf(cloudOnly),
@@ -128,10 +87,9 @@ class CloudFetcherWatcherTest {
 
     @Test
     fun GIVEN_token_principal_without_network_THEN_no_storage_mutation() = runTest {
-        val cloudId = Uuid.random()
         val cloudOnly = busyBar(
             id = "cloud-only",
-            BUSYBar.ConnectionWay.Cloud(cloudId)
+            BUSYBar.ConnectionWay.Cloud(Uuid.random())
         )
         val setup = createSetup(
             devices = listOf(cloudOnly),
@@ -153,10 +111,9 @@ class CloudFetcherWatcherTest {
 
     @Test
     fun GIVEN_token_principal_and_api_failure_THEN_no_storage_mutation() = runTest {
-        val cloudId = Uuid.random()
         val cloudOnly = busyBar(
             id = "cloud-only",
-            BUSYBar.ConnectionWay.Cloud(cloudId)
+            BUSYBar.ConnectionWay.Cloud(Uuid.random())
         )
         val setup = createSetup(
             devices = listOf(cloudOnly),
@@ -185,8 +142,7 @@ class CloudFetcherWatcherTest {
             isNetworkAvailable = true,
             principal = fakeToken(),
             cloudBarsResult = Result.success(
-                // Label matches the local humanReadableName, so no rename is needed.
-                listOf(BusyCloudBar(id = cloudId.toString(), label = DEFAULT_TEST_BAR_NAME))
+                listOf(cloudBar(cloudId, label = DEFAULT_TEST_BAR_NAME))
             )
         )
 
@@ -216,8 +172,8 @@ class CloudFetcherWatcherTest {
             cloudBarsResult = Result.success(
                 listOf(
                     // Intentionally reversed order to verify sorted comparison
-                    BusyCloudBar(id = cloudIdB.toString(), label = DEFAULT_TEST_BAR_NAME),
-                    BusyCloudBar(id = cloudIdA.toString(), label = DEFAULT_TEST_BAR_NAME)
+                    cloudBar(cloudIdB, label = DEFAULT_TEST_BAR_NAME),
+                    cloudBar(cloudIdA, label = DEFAULT_TEST_BAR_NAME)
                 )
             )
         )
@@ -225,7 +181,11 @@ class CloudFetcherWatcherTest {
         setup.watcher.onLaunch()
         advanceUntilIdle()
 
-        assertEquals(0, setup.storage.transactionCount, "Equal sets differing only in order must not trigger invalidation")
+        assertEquals(
+            0,
+            setup.storage.transactionCount,
+            "Equal sets differing only in order must not trigger invalidation"
+        )
     }
 
     @Test
@@ -236,7 +196,7 @@ class CloudFetcherWatcherTest {
             isNetworkAvailable = true,
             principal = fakeToken(),
             cloudBarsResult = Result.success(
-                listOf(BusyCloudBar(id = cloudId.toString(), label = "My Bar"))
+                listOf(cloudBar(cloudId, label = "My Bar"))
             )
         )
 
@@ -259,7 +219,7 @@ class CloudFetcherWatcherTest {
             isNetworkAvailable = true,
             principal = fakeToken(),
             cloudBarsResult = Result.success(
-                listOf(BusyCloudBar(id = cloudId.toString(), label = null))
+                listOf(cloudBar(cloudId, label = null))
             )
         )
 
@@ -284,7 +244,7 @@ class CloudFetcherWatcherTest {
             isNetworkAvailable = true,
             principal = fakeToken(),
             cloudBarsResult = Result.success(
-                listOf(BusyCloudBar(id = freshCloudId.toString(), label = "Fresh"))
+                listOf(cloudBar(freshCloudId, label = "Fresh"))
             )
         )
 
@@ -323,29 +283,6 @@ class CloudFetcherWatcherTest {
     }
 
     @Test
-    fun GIVEN_cloud_bar_with_invalid_uuid_THEN_ignored_without_crash() = runTest {
-        val validCloudId = Uuid.random()
-        val setup = createSetup(
-            devices = emptyList(),
-            isNetworkAvailable = true,
-            principal = fakeToken(),
-            cloudBarsResult = Result.success(
-                listOf(
-                    BusyCloudBar(id = "not-a-uuid", label = "Junk"),
-                    BusyCloudBar(id = validCloudId.toString(), label = "Valid")
-                )
-            )
-        )
-
-        setup.watcher.onLaunch()
-        advanceUntilIdle()
-
-        val created = setup.storage.devices.value.single()
-        assertEquals(validCloudId, created.cloud?.deviceId)
-        assertEquals("Valid", created.humanReadableName)
-    }
-
-    @Test
     fun GIVEN_mixed_bars_THEN_adds_new_and_removes_orphaned_in_single_transaction() = runTest {
         val keptCloudId = Uuid.random()
         val orphanCloudId = Uuid.random()
@@ -366,8 +303,8 @@ class CloudFetcherWatcherTest {
             principal = fakeToken(),
             cloudBarsResult = Result.success(
                 listOf(
-                    BusyCloudBar(id = keptCloudId.toString(), label = "Kept"),
-                    BusyCloudBar(id = newCloudId.toString(), label = "New")
+                    cloudBar(keptCloudId, label = "Kept"),
+                    cloudBar(newCloudId, label = "New")
                 )
             )
         )
@@ -382,7 +319,11 @@ class CloudFetcherWatcherTest {
         val created = remaining.firstOrNull { it.cloud?.deviceId == newCloudId }
         assertNotNull(created)
         assertEquals("New", created.humanReadableName)
-        assertEquals(1, setup.storage.transactionCount, "All changes must land in a single transaction")
+        assertEquals(
+            1,
+            setup.storage.transactionCount,
+            "All changes must land in a single transaction"
+        )
     }
 
     @Test
@@ -394,7 +335,7 @@ class CloudFetcherWatcherTest {
             isNetworkAvailable = true,
             principalFlow = principalFlow,
             cloudBarsResult = Result.success(
-                listOf(BusyCloudBar(id = cloudId.toString(), label = "Fresh"))
+                listOf(cloudBar(cloudId, label = "Fresh"))
             )
         )
 
@@ -421,7 +362,7 @@ class CloudFetcherWatcherTest {
             networkFlow = networkFlow,
             principal = fakeToken(),
             cloudBarsResult = Result.success(
-                listOf(BusyCloudBar(id = cloudId.toString(), label = "Fresh"))
+                listOf(cloudBar(cloudId, label = "Fresh"))
             )
         )
 
@@ -476,7 +417,7 @@ class CloudFetcherWatcherTest {
             isNetworkAvailable = true,
             principal = fakeToken(),
             cloudBarsResult = Result.success(
-                listOf(BusyCloudBar(id = cloudId.toString(), label = DEFAULT_TEST_BAR_NAME))
+                listOf(cloudBar(cloudId, label = DEFAULT_TEST_BAR_NAME))
             )
         )
 
@@ -499,7 +440,7 @@ class CloudFetcherWatcherTest {
             isNetworkAvailable = true,
             principal = fakeToken(),
             cloudBarsResult = Result.success(
-                listOf(BusyCloudBar(id = cloudId.toString(), label = "Renamed"))
+                listOf(cloudBar(cloudId, label = "Renamed"))
             )
         )
 
@@ -524,7 +465,7 @@ class CloudFetcherWatcherTest {
             isNetworkAvailable = true,
             principal = fakeToken(),
             cloudBarsResult = Result.success(
-                listOf(BusyCloudBar(id = cloudId.toString(), label = null))
+                listOf(cloudBar(cloudId, label = null))
             )
         )
 
@@ -552,7 +493,7 @@ class CloudFetcherWatcherTest {
             isNetworkAvailable = true,
             principal = fakeToken(),
             cloudBarsResult = Result.success(
-                listOf(BusyCloudBar(id = cloudId.toString(), label = "Renamed"))
+                listOf(cloudBar(cloudId, label = "Renamed"))
             )
         )
 
@@ -588,6 +529,12 @@ class CloudFetcherWatcherTest {
         val networkApi = FakeNetworkStateApi(networkFlow ?: MutableStateFlow(isNetworkAvailable))
         val principalApi = FakePrincipalApi(principalFlow ?: MutableStateFlow(principal))
         val cloudBarsApi = FakeCloudBarsApi(cloudBarsResult)
+        val cloudFetcher = CloudFetcher(
+            principalApi = principalApi,
+            networkStateApi = networkApi,
+            busyCloudBarsApi = cloudBarsApi,
+            wsApi = FakeCloudWebSocketApi
+        )
 
         val scope = CoroutineScope(
             SupervisorJob(backgroundScope.coroutineContext.job) +
@@ -597,9 +544,7 @@ class CloudFetcherWatcherTest {
         val watcher = CloudFetcherWatcher(
             scope = scope,
             persistedStorage = storage,
-            busyLibNetworkStateApi = networkApi,
-            principalApi = principalApi,
-            busyCloudBarsApi = cloudBarsApi
+            cloudFetcher = cloudFetcher
         )
 
         return TestSetup(watcher, storage, cloudBarsApi)
@@ -612,6 +557,12 @@ class CloudFetcherWatcherTest {
         override val userId: Uuid = userId
         override suspend fun getToken(failedToken: String?): String = token
     }
+
+    private fun cloudBar(
+        id: Uuid,
+        label: String?,
+        hardwareId: String = "hw-$id"
+    ): BusyCloudBar = BusyCloudBar(id = id, hardwareId = hardwareId, label = label)
 
     private fun busyBar(id: String, vararg connectionWays: BUSYBar.ConnectionWay): BUSYBar {
         require(connectionWays.isNotEmpty()) { "At least one connection way is required" }
@@ -720,6 +671,10 @@ class CloudFetcherWatcherTest {
             principal: BUSYLibUserPrincipal.Token,
             pin: String
         ): Result<Unit> = error("Not used in test")
+    }
+
+    private object FakeCloudWebSocketApi : CloudWebSocketApi {
+        override fun getWSFlow(): Flow<BSBWebSocket?> = emptyFlow()
     }
 
     // endregion

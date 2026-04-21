@@ -1,6 +1,5 @@
 package net.flipper.bsb.watchers.provisioning
 
-import com.flipperdevices.core.network.BUSYLibNetworkStateApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
@@ -10,20 +9,15 @@ import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.config.api.model.copy
 import net.flipper.bridge.connection.config.internal.FInternalDevicePersistedStorage
 import net.flipper.bridge.connection.config.internal.InternalStorageTransactionScope
-import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
-import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
-import net.flipper.bsb.cloud.rest.api.BusyCloudBarsApi
 import net.flipper.bsb.cloud.rest.model.BusyCloudBar
 import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
+import net.flipper.bsb.watchers.provisioning.utils.CloudFetcher
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.ktx.common.SingleJobMode
 import net.flipper.core.busylib.ktx.common.asSingleJobScope
 import net.flipper.core.busylib.log.LogTagProvider
-import net.flipper.core.busylib.log.debug
-import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
-import kotlin.uuid.Uuid
 
 private const val DEFAULT_BUSY_BAR_NAME = "BUSY Bar"
 
@@ -32,9 +26,7 @@ private const val DEFAULT_BUSY_BAR_NAME = "BUSY Bar"
 class CloudFetcherWatcher(
     scope: CoroutineScope,
     private val persistedStorage: FInternalDevicePersistedStorage,
-    private val busyLibNetworkStateApi: BUSYLibNetworkStateApi,
-    private val principalApi: BUSYLibPrincipalApi,
-    private val busyCloudBarsApi: BusyCloudBarsApi,
+    private val cloudFetcher: CloudFetcher,
 ) : InternalBUSYLibStartupListener, LogTagProvider {
     override val TAG = "CloudFetcherWatcher"
 
@@ -45,29 +37,12 @@ class CloudFetcherWatcher(
             combine(
                 persistedStorage.getAllDevicesFlow()
                     .distinctUntilChanged(),
-                busyLibNetworkStateApi.isNetworkAvailableFlow,
-                principalApi.getPrincipalFlow()
-            ) { allDevices, isNetworkAvailable, principal ->
-                Triple(allDevices, isNetworkAvailable, principal)
-            }.collectLatest { (allDevices, isNetworkAvailable, principal) ->
-                val cloudBars = when (principal) {
-                    BUSYLibUserPrincipal.Empty -> emptyList()
-                    BUSYLibUserPrincipal.Loading -> null
-                    is BUSYLibUserPrincipal.Token -> if (isNetworkAvailable) {
-                        busyCloudBarsApi.getBarsList(principal)
-                            .onFailure {
-                                error(it) { "Failed to get bars list" }
-                            }.getOrNull()
-                    } else {
-                        null
-                    }
-                }
-                if (cloudBars == null) {
-                    debug { "Skip synchronization because busy bar list is null" }
-                    return@collectLatest
-                }
+                cloudFetcher.getBarsFlow()
+            ) { allDevices, cloudBars ->
+                allDevices to cloudBars
+            }.collectLatest { (allDevices, cloudBars) ->
                 val localCloudDeviceIds = allDevices.mapNotNull { it.cloud?.deviceId }
-                val cloudBarsId = cloudBars.mapNotNull { Uuid.parseOrNull(it.id) }
+                val cloudBarsId = cloudBars.map { it.id }
                 val idsMatch = localCloudDeviceIds.sorted() == cloudBarsId.sorted()
                 val hasNameMismatch = hasCloudLabelMismatch(allDevices, cloudBars)
                 if (idsMatch && !hasNameMismatch) {
@@ -86,7 +61,7 @@ class CloudFetcherWatcher(
         allDevices: List<BUSYBar>,
         cloudBars: List<BusyCloudBar>
     ): Boolean {
-        val cloudBarsById = cloudBars.cloudBarsById()
+        val cloudBarsById = cloudBars.associateBy { it.id }
         return allDevices.any { device ->
             val id = device.cloud?.deviceId ?: return@any false
             val label = cloudBarsById[id]?.label ?: return@any false
@@ -97,7 +72,7 @@ class CloudFetcherWatcher(
     private fun InternalStorageTransactionScope.invalidateCloudBars(
         cloudBars: List<BusyCloudBar>
     ) {
-        val cloudBarsById = cloudBars.cloudBarsById()
+        val cloudBarsById = cloudBars.associateBy { it.id }
         val cloudBarsId = cloudBarsById.keys
         val deviceClouds = getAllDevices().mapNotNull { device ->
             val deviceId = device.cloud?.deviceId ?: return@mapNotNull null
@@ -133,9 +108,6 @@ class CloudFetcherWatcher(
                 addOrReplace(newBusyBar)
             }
     }
-
-    private fun List<BusyCloudBar>.cloudBarsById(): Map<Uuid, BusyCloudBar> =
-        mapNotNull { bar -> Uuid.parseOrNull(bar.id)?.let { id -> id to bar } }.toMap()
 
     private fun InternalStorageTransactionScope.removeCloud(
         device: BUSYBar

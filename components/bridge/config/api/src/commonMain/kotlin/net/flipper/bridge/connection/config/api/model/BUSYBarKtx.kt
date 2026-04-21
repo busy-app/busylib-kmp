@@ -64,10 +64,12 @@ fun BUSYBar(
 }
 
 fun BUSYBar.copy(
-    humanReadableName: String
+    humanReadableName: String = this.humanReadableName,
+    hardwareId: String? = null
 ): BUSYBar {
     return BUSYBar(
         humanReadableName = humanReadableName,
+        hardwareId = hardwareId,
         uniqueId = uniqueId,
         ble = ble,
         cloud = cloud,
