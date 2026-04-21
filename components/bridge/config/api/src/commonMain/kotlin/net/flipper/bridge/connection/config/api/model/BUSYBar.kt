@@ -13,7 +13,7 @@ class BUSYBar internal constructor(
     @SerialName("human_readable_name")
     val humanReadableName: String,
     @SerialName("hardware_id")
-    val hardwareId: String? = null,
+    val hardwareId: String? = null, // default for serialization
     @SerialName("unique_id")
     val uniqueId: String,
     @SerialName("connection_way_ble")

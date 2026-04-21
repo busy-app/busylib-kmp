@@ -44,8 +44,8 @@ class CloudFetcherWatcher(
                 val localCloudDeviceIds = allDevices.mapNotNull { it.cloud?.deviceId }
                 val cloudBarsId = cloudBars.map { it.id }
                 val idsMatch = localCloudDeviceIds.sorted() == cloudBarsId.sorted()
-                val hasNameMismatch = hasCloudLabelMismatch(allDevices, cloudBars)
-                if (idsMatch && !hasNameMismatch) {
+                val hasMismatch = hasCloudMismatch(allDevices, cloudBars)
+                if (idsMatch && !hasMismatch) {
                     info { "Cloud devices and local are same, skip invalidation" }
                 } else {
                     info { "Found difference between cloud and local devices, start invalidation" }
@@ -57,15 +57,17 @@ class CloudFetcherWatcher(
         }
     }
 
-    private fun hasCloudLabelMismatch(
+    private fun hasCloudMismatch(
         allDevices: List<BUSYBar>,
         cloudBars: List<BusyCloudBar>
     ): Boolean {
         val cloudBarsById = cloudBars.associateBy { it.id }
         return allDevices.any { device ->
             val id = device.cloud?.deviceId ?: return@any false
-            val label = cloudBarsById[id]?.label ?: return@any false
-            label != device.humanReadableName
+            val bar = cloudBarsById[id] ?: return@any true
+            val labelMismatch = bar.label != null && bar.label != device.humanReadableName
+            val hardwareIdMissing = device.hardwareId == null
+            labelMismatch || hardwareIdMissing
         }
     }
 
@@ -85,16 +87,26 @@ class CloudFetcherWatcher(
             removeCloud(device)
         }
 
-        // Rename still-linked devices when cloud label changed
+        // Update still-linked devices: fill missing hardwareId and/or rename when cloud label
+        // changed. A null cloud label is treated as "no opinion" and must not overwrite.
         deviceClouds.filter { (_, deviceId) -> deviceId in cloudBarsId }
             .forEach { (device, deviceId) ->
-                val label = cloudBarsById[deviceId]?.label ?: return@forEach
-                if (device.humanReadableName != label) {
-                    info {
-                        "Rename ${device.uniqueId}: '${device.humanReadableName}' -> '$label'"
-                    }
-                    addOrReplace(device.copy(humanReadableName = label))
+                val bar = cloudBarsById[deviceId] ?: return@forEach
+                val updatedName = bar.label ?: device.humanReadableName
+                if (updatedName == device.humanReadableName && bar.hardwareId == device.hardwareId) {
+                    return@forEach
                 }
+                info {
+                    "Update ${device.uniqueId}: " +
+                        "name='${device.humanReadableName}'->'$updatedName', " +
+                        "hardwareId='${device.hardwareId}'->'${bar.hardwareId}'"
+                }
+                addOrReplace(
+                    device.copy(
+                        humanReadableName = updatedName,
+                        hardwareId = bar.hardwareId
+                    )
+                )
             }
 
         // Add new link
@@ -103,7 +115,8 @@ class CloudFetcherWatcher(
                 info { "Add new bar: $bar" }
                 val newBusyBar = BUSYBar(
                     humanReadableName = bar.label ?: DEFAULT_BUSY_BAR_NAME,
-                    cloud = BUSYBar.ConnectionWay.Cloud(deviceId = id)
+                    cloud = BUSYBar.ConnectionWay.Cloud(deviceId = id),
+                    hardwareId = bar.hardwareId
                 )
                 addOrReplace(newBusyBar)
             }

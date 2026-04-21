@@ -5,11 +5,13 @@ import kotlin.uuid.Uuid
 
 fun BUSYBar(
     humanReadableName: String,
+    hardwareId: String? = null,
     uniqueId: String = Uuid.random().toString(),
     ble: ConnectionWay.BLE
 ): BUSYBar {
     return BUSYBar(
         humanReadableName = humanReadableName,
+        hardwareId = hardwareId,
         uniqueId = uniqueId,
         ble = ble,
         cloud = null,
@@ -20,12 +22,14 @@ fun BUSYBar(
 
 fun BUSYBar(
     humanReadableName: String,
+    hardwareId: String? = null,
     uniqueId: String = Uuid.random().toString(),
     cloud: ConnectionWay.Cloud
 ): BUSYBar {
     return BUSYBar(
         humanReadableName = humanReadableName,
         uniqueId = uniqueId,
+        hardwareId = hardwareId,
         ble = null,
         cloud = cloud,
         lan = null,
@@ -35,11 +39,13 @@ fun BUSYBar(
 
 fun BUSYBar(
     humanReadableName: String,
+    hardwareId: String? = null,
     uniqueId: String = Uuid.random().toString(),
     lan: ConnectionWay.Lan
 ): BUSYBar {
     return BUSYBar(
         humanReadableName = humanReadableName,
+        hardwareId = hardwareId,
         uniqueId = uniqueId,
         ble = null,
         cloud = null,
@@ -50,11 +56,13 @@ fun BUSYBar(
 
 fun BUSYBar(
     humanReadableName: String,
+    hardwareId: String? = null,
     uniqueId: String = Uuid.random().toString(),
     mock: ConnectionWay.Mock
 ): BUSYBar {
     return BUSYBar(
         humanReadableName = humanReadableName,
+        hardwareId = hardwareId,
         uniqueId = uniqueId,
         ble = null,
         cloud = null,
@@ -84,6 +92,7 @@ fun BUSYBar.copyTransports(
     return BUSYBar(
         humanReadableName = humanReadableName,
         uniqueId = uniqueId,
+        hardwareId = hardwareId,
         ble = ble,
         cloud = cloud,
         lan = lan,
@@ -103,6 +112,7 @@ fun BUSYBar.copy(
     }
     return BUSYBar(
         humanReadableName = humanReadableName,
+        hardwareId = hardwareId,
         uniqueId = uniqueId,
         ble = ble,
         cloud = cloud,
@@ -119,6 +129,7 @@ fun BUSYBar.addTransport(
 ): BUSYBar {
     return BUSYBar(
         humanReadableName = humanReadableName,
+        hardwareId = hardwareId,
         uniqueId = uniqueId,
         ble = ble ?: this.ble,
         cloud = cloud ?: this.cloud,
