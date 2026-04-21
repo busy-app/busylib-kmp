@@ -27,8 +27,13 @@ class FBleStatusStreamingApiImpl(
 
     override fun getEvents(): Flow<StatusStreamingEvent> = eventsFlow
 
+    @Suppress("MagicNumber")
     private fun Flow<ByteArray>.reassembleByHeader(): Flow<ByteArray> = flow {
         val chunks = mutableListOf<ByteArray>()
+
+        fun ByteArray.getUShortLE(offset: Int): Int {
+            return (this[offset].toInt() and 0xFF) or ((this[offset + 1].toInt() and 0xFF) shl 8)
+        }
 
         collect { chunk ->
             if (chunk.size < HEADER_SIZE) return@collect
@@ -50,6 +55,3 @@ class FBleStatusStreamingApiImpl(
         }
     }
 }
-
-private fun ByteArray.getUShortLE(offset: Int): Int =
-    (this[offset].toInt() and 0xFF) or ((this[offset + 1].toInt() and 0xFF) shl 8)
