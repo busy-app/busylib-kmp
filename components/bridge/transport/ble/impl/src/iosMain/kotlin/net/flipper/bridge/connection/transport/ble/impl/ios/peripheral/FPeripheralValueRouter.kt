@@ -89,9 +89,7 @@ internal class FPeripheralValueRouter(
                 address.characteristicAddress == characteristicUUID
             }?.key
 
-            if (metaKey == null) {
-                warn { "Unknown meta characteristic updated: $characteristicUUID" }
-            } else {
+            if (metaKey != null) {
                 stateStream.emit(FPeripheralState.CONNECTED)
                 updateMetaInfo(key = metaKey, data = payload)
             }
