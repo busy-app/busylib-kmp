@@ -36,6 +36,7 @@ import kotlin.test.assertTrue
 import kotlin.uuid.Uuid
 
 private const val DEFAULT_TEST_BAR_NAME = "Test Bar"
+private const val DEFAULT_BUSY_BAR_NAME = "BUSY Bar"
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class CloudFetcherWatcherTest {
@@ -436,7 +437,6 @@ class CloudFetcherWatcherTest {
         assertEquals(listOf(bleOnly, cloudDevice), setup.storage.devices.value)
     }
 
-    // TODO: fix
     @Test
     fun GIVEN_matching_ids_but_different_label_THEN_device_renamed() = runTest {
         val cloudId = Uuid.random()
@@ -444,7 +444,8 @@ class CloudFetcherWatcherTest {
         val device = busyBar(
             id = "device-1",
             BUSYBar.ConnectionWay.Cloud(cloudId),
-            hardwareId = hardwareId
+            hardwareId = hardwareId,
+            humanReadableName = DEFAULT_BUSY_BAR_NAME
         )
         val setup = createSetup(
             devices = listOf(device),
@@ -465,14 +466,14 @@ class CloudFetcherWatcherTest {
         assertEquals(hardwareId, updated.hardwareId, "Existing hardwareId must be preserved")
     }
 
-    // TODO: fix
     @Test
     fun GIVEN_null_local_hardware_id_and_label_change_THEN_both_applied_in_single_transaction() = runTest {
         val cloudId = Uuid.random()
         val hardwareId = "hw-$cloudId"
         val device = busyBar(
             id = "device-1",
-            BUSYBar.ConnectionWay.Cloud(cloudId)
+            BUSYBar.ConnectionWay.Cloud(cloudId),
+            humanReadableName = DEFAULT_BUSY_BAR_NAME
         )
         val setup = createSetup(
             devices = listOf(device),
@@ -552,7 +553,6 @@ class CloudFetcherWatcherTest {
         )
     }
 
-    // TODO: fix
     @Test
     fun GIVEN_multi_transport_device_with_label_change_THEN_only_name_updated() = runTest {
         val cloudId = Uuid.random()
@@ -561,7 +561,8 @@ class CloudFetcherWatcherTest {
             id = "device-1",
             BUSYBar.ConnectionWay.Cloud(cloudId),
             BUSYBar.ConnectionWay.BLE("AA:BB:CC"),
-            hardwareId = hardwareId
+            hardwareId = hardwareId,
+            humanReadableName = DEFAULT_BUSY_BAR_NAME
         )
         val setup = createSetup(
             devices = listOf(device),
@@ -643,15 +644,16 @@ class CloudFetcherWatcherTest {
     private fun busyBar(
         id: String,
         vararg connectionWays: BUSYBar.ConnectionWay,
-        hardwareId: String? = null
+        hardwareId: String? = null,
+        humanReadableName: String = DEFAULT_TEST_BAR_NAME
     ): BUSYBar {
         require(connectionWays.isNotEmpty()) { "At least one connection way is required" }
         val first = connectionWays.first()
         var result = when (first) {
-            is BUSYBar.ConnectionWay.BLE -> BUSYBar(humanReadableName = DEFAULT_TEST_BAR_NAME, hardwareId = hardwareId, uniqueId = id, ble = first)
-            is BUSYBar.ConnectionWay.Cloud -> BUSYBar(humanReadableName = DEFAULT_TEST_BAR_NAME, hardwareId = hardwareId, uniqueId = id, cloud = first)
-            is BUSYBar.ConnectionWay.Lan -> BUSYBar(humanReadableName = DEFAULT_TEST_BAR_NAME, hardwareId = hardwareId, uniqueId = id, lan = first)
-            is BUSYBar.ConnectionWay.Mock -> BUSYBar(humanReadableName = DEFAULT_TEST_BAR_NAME, hardwareId = hardwareId, uniqueId = id, mock = first)
+            is BUSYBar.ConnectionWay.BLE -> BUSYBar(humanReadableName = humanReadableName, hardwareId = hardwareId, uniqueId = id, ble = first)
+            is BUSYBar.ConnectionWay.Cloud -> BUSYBar(humanReadableName = humanReadableName, hardwareId = hardwareId, uniqueId = id, cloud = first)
+            is BUSYBar.ConnectionWay.Lan -> BUSYBar(humanReadableName = humanReadableName, hardwareId = hardwareId, uniqueId = id, lan = first)
+            is BUSYBar.ConnectionWay.Mock -> BUSYBar(humanReadableName = humanReadableName, hardwareId = hardwareId, uniqueId = id, mock = first)
         }
         for (way in connectionWays.drop(1)) {
             result = when (way) {

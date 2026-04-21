@@ -119,7 +119,7 @@ class CloudFetcherWatcher(
                 }
                 info { "Update existing busy bar $local" }
                 val newName = if (local.humanReadableName == DEFAULT_BUSY_BAR_NAME) {
-                    cloud.label ?: local.humanReadableName
+                    cloud.label ?: local.humanReadableName // By design doesn't work with renaming
                 } else local.humanReadableName
                 addOrReplace(
                     local.copy(
