@@ -12,11 +12,11 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
+import net.flipper.bsb.cloud.barsws.api.CloudWebSocketApi
 import net.flipper.bsb.cloud.barsws.api.model.InternalWebSocketRequest
 import net.flipper.bsb.cloud.barsws.api.model.WebSocketEvent
 import net.flipper.bsb.cloud.barsws.api.orchestrator.CloudWebSocketOrchestratorApiImpl
 import net.flipper.bsb.cloud.barsws.api.utils.BSBWebSocket
-import net.flipper.bsb.cloud.barsws.api.utils.CloudWebSocketApi
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue

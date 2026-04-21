@@ -5,7 +5,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
-import net.flipper.bsb.cloud.barsws.api.utils.BSBWebSocket
+import net.flipper.bsb.cloud.barsws.api.utils.BSBWebSocketInternal
 import net.flipper.bsb.cloud.barsws.api.utils.getBSBWebSocket
 import net.flipper.bsb.cloud.rest.api.BusyCloudWebSocketTicketApi
 import net.flipper.busylib.core.di.BusyLibGraph
@@ -35,7 +35,7 @@ interface BSBWebSocketFactory {
         busyHost: String,
         scope: CoroutineScope,
         dispatcher: CoroutineDispatcher
-    ): BSBWebSocket
+    ): BSBWebSocketInternal
 }
 
 /**
@@ -56,7 +56,7 @@ class BSBWebSocketFactoryImpl(
         busyHost: String,
         scope: CoroutineScope,
         dispatcher: CoroutineDispatcher
-    ): BSBWebSocket {
+    ): BSBWebSocketInternal {
         return getBSBWebSocket(
             httpClient = httpClient,
             ticketApi = ticketApi,
