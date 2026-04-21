@@ -6,7 +6,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -17,9 +16,12 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
-import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.config.api.PersistedStorageTransactionScope
 import net.flipper.bridge.connection.config.api.model.BUSYBar
+import net.flipper.bridge.connection.config.api.model.addTransport
+import net.flipper.bridge.connection.config.internal.FInternalDevicePersistedStorage
+import net.flipper.bridge.connection.config.internal.InternalStorageTransactionScope
+import net.flipper.bridge.connection.config.internal.TransactionHook
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
@@ -30,6 +32,7 @@ import net.flipper.bridge.connection.feature.rpc.api.model.RpcLinkedAccountInfo
 import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
 import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
 import net.flipper.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
+import net.flipper.bridge.connection.orchestrator.api.model.FDeviceTransportType
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import net.flipper.busylib.core.wrapper.WrappedStateFlow
@@ -297,7 +300,7 @@ class CloudProvisioningWatcherTest {
                 scope = scope,
                 device = connectedDevice,
                 deviceApi = FakeConnectedDeviceApi(),
-                transportType = null
+                transportType = FDeviceTransportType.CLOUD
             )
         )
 
@@ -312,26 +315,23 @@ class CloudProvisioningWatcherTest {
     }
 
     private fun busyBar(id: String, vararg connectionWays: BUSYBar.ConnectionWay): BUSYBar {
-        var ble: BUSYBar.ConnectionWay.BLE? = null
-        var cloud: BUSYBar.ConnectionWay.Cloud? = null
-        var lan: BUSYBar.ConnectionWay.Lan? = null
-        var mock: BUSYBar.ConnectionWay.Mock? = null
-        for (way in connectionWays) {
-            when (way) {
-                is BUSYBar.ConnectionWay.BLE -> ble = way
-                is BUSYBar.ConnectionWay.Cloud -> cloud = way
-                is BUSYBar.ConnectionWay.Lan -> lan = way
-                is BUSYBar.ConnectionWay.Mock -> mock = way
+        require(connectionWays.isNotEmpty()) { "At least one connection way is required" }
+        val first = connectionWays.first()
+        var result = when (first) {
+            is BUSYBar.ConnectionWay.BLE -> BUSYBar(humanReadableName = "Test Bar", uniqueId = id, ble = first)
+            is BUSYBar.ConnectionWay.Cloud -> BUSYBar(humanReadableName = "Test Bar", uniqueId = id, cloud = first)
+            is BUSYBar.ConnectionWay.Lan -> BUSYBar(humanReadableName = "Test Bar", uniqueId = id, lan = first)
+            is BUSYBar.ConnectionWay.Mock -> BUSYBar(humanReadableName = "Test Bar", uniqueId = id, mock = first)
+        }
+        for (way in connectionWays.drop(1)) {
+            result = when (way) {
+                is BUSYBar.ConnectionWay.BLE -> result.addTransport(ble = way)
+                is BUSYBar.ConnectionWay.Cloud -> result.addTransport(cloud = way)
+                is BUSYBar.ConnectionWay.Lan -> result.addTransport(lan = way)
+                is BUSYBar.ConnectionWay.Mock -> result.addTransport(mock = way)
             }
         }
-        return BUSYBar(
-            humanReadableName = "Test Bar",
-            uniqueId = id,
-            ble = ble,
-            cloud = cloud,
-            lan = lan,
-            mock = mock
-        )
+        return result
     }
 
     // endregion
@@ -340,7 +340,7 @@ class CloudProvisioningWatcherTest {
 
     private class FakePersistedStorage(
         val devices: MutableStateFlow<List<BUSYBar>>
-    ) : FDevicePersistedStorage {
+    ) : FInternalDevicePersistedStorage {
         private val currentDeviceFlow = MutableStateFlow<BUSYBar?>(null)
 
         fun findDevice(id: String): Flow<BUSYBar?> = devices.map { list -> list.firstOrNull { it.uniqueId == id } }
@@ -348,12 +348,20 @@ class CloudProvisioningWatcherTest {
         override fun getCurrentDeviceFlow() = currentDeviceFlow.asFlow().wrap()
         override fun getAllDevicesFlow() = devices.asFlow().wrap()
 
-        override suspend fun <T> transaction(block: suspend PersistedStorageTransactionScope.() -> T): T {
-            val scope = object : PersistedStorageTransactionScope {
+        override suspend fun addHook(vararg hook: TransactionHook) {
+            // Not used in test
+        }
+
+        override suspend fun <T> transactionInternal(block: suspend InternalStorageTransactionScope.() -> T): T {
+            val scope = object : InternalStorageTransactionScope {
                 override fun getCurrentDevice() = this@FakePersistedStorage.currentDeviceFlow.value
                 override fun getAllDevices() = this@FakePersistedStorage.devices.value.toList()
 
                 override fun setCurrentDevice(device: BUSYBar) {
+                    this@FakePersistedStorage.currentDeviceFlow.value = device
+                }
+
+                override fun setCurrentDeviceNullable(device: BUSYBar?) {
                     this@FakePersistedStorage.currentDeviceFlow.value = device
                 }
 
@@ -363,8 +371,21 @@ class CloudProvisioningWatcherTest {
                             device
                     }
                 }
+
+                override fun removeDevice(id: String) {
+                    this@FakePersistedStorage.devices.update { list ->
+                        list.filter { it.uniqueId != id }
+                    }
+                    if (this@FakePersistedStorage.currentDeviceFlow.value?.uniqueId == id) {
+                        this@FakePersistedStorage.currentDeviceFlow.value = null
+                    }
+                }
             }
             return scope.block()
+        }
+
+        override suspend fun <T> transaction(block: suspend PersistedStorageTransactionScope.() -> T): T {
+            return transactionInternal { block() }
         }
     }
 

@@ -18,7 +18,6 @@ kotlin {
 
         implementation(libs.kotlin.coroutines)
         implementation(libs.kotlin.datetime)
-        implementation(libs.bitvector)
     }
     sourceSets.commonTest.dependencies {
         implementation(libs.kotlin.test)

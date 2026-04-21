@@ -5,10 +5,12 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.shareIn
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
@@ -17,10 +19,13 @@ import net.flipper.bsb.cloud.api.BUSYLibHostApi
 import net.flipper.bsb.cloud.barsws.api.utils.wrappers.BSBWebSocketFactory
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
+import net.flipper.core.busylib.ktx.common.wrapWebsocket
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
+import net.flipper.core.busylib.log.verbose
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
+import kotlin.time.Duration.Companion.seconds
 
 private val NETWORK_DISPATCHER = FlipperDispatchers.default
 
@@ -64,7 +69,10 @@ class CloudWebSocketApiImpl(
             flowOf<BSBWebSocket?>(null)
         }
     }.flatMapLatest { it }
-        .shareIn(scope, SharingStarted.WhileSubscribed(), replay = 1)
+        .onEach {
+            verbose { "New ws: $it" }
+        }
+        .shareIn(scope, SharingStarted.WhileSubscribed(stopTimeout = 30.seconds), replay = 1)
 
     override fun getWSFlow() = wsStateFlow
 }

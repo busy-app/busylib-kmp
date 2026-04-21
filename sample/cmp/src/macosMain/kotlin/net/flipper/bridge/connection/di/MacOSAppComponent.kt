@@ -10,17 +10,35 @@ import net.flipper.bridge.connection.screens.di.getRootDecomposeComponent
 import net.flipper.bridge.connection.screens.root.ConnectionRootDecomposeComponent
 import net.flipper.bridge.connection.screens.search.LanSearchViewModel
 import net.flipper.bridge.connection.utils.PermissionCheckerNoop
-import net.flipper.bridge.connection.utils.principal.impl.UserPrincipalApiNoop
+import net.flipper.bridge.connection.utils.principal.impl.UserPrincipalApiSampleImpl
+import net.flipper.bsb.cloud.api.BUSYLibHostApiStub
 import net.flipper.busylib.BUSYLibMacOS
 import platform.Foundation.NSUserDefaults
 
+private val settings by lazy {
+    NSUserDefaultsSettings(
+        NSUserDefaults.standardUserDefaults
+    )
+}
+private val applicationScope by lazy {
+    CoroutineScope(SupervisorJob())
+}
+
+private val hostApi = BUSYLibHostApiStub(
+    host = "cloud.dev.busy.app",
+)
+
+private val principalApi by lazy {
+    UserPrincipalApiSampleImpl(applicationScope, hostApi, settings)
+}
+
 val busyLib: BUSYLibMacOS by lazy {
     BUSYLibMacOS.build(
-        CoroutineScope(SupervisorJob()),
-        principalApi = UserPrincipalApiNoop(),
-        observableSettings = NSUserDefaultsSettings(
-            NSUserDefaults.standardUserDefaults
-        ),
+        applicationScope,
+        principalApi = principalApi,
+        observableSettings = settings,
+        hostApi = hostApi,
+        networkStateApi = BUSYLibNetworkStateMacOSApi(),
     )
 }
 
@@ -37,8 +55,9 @@ fun getRootDecomposeComponent(): ConnectionRootDecomposeComponent {
         searchViewModelProvider = {
             LanSearchViewModel(
                 busyLib.persistedStorage,
-                busyLib.connectionService
+                busyLib.connectionService,
             )
-        }
+        },
+        principalApi = principalApi
     )
 }

@@ -31,7 +31,8 @@ class FLanApiImpl(
         listener = listener,
         config = currentConfig,
         scope = scope,
-        deviceApi = this
+        deviceApi = this,
+        eventSource = lanStreamingApi
     )
 
     override val deviceName: String
@@ -41,7 +42,6 @@ class FLanApiImpl(
         listOf(
             FHTTPTransportCapability.BB_WEBSOCKET_SUPPORTED,
             FHTTPTransportCapability.BB_DOWNLOAD_UPDATE_SUPPORTED,
-            FHTTPTransportCapability.LAN_ONLY_CONNECTION_SUPPORTED,
             FHTTPTransportCapability.BB_LOCAL_CONNECTION,
         )
     ).shareIn(scope, SharingStarted.WhileSubscribed(), 1)

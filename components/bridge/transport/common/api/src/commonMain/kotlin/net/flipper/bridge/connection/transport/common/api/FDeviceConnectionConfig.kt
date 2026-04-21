@@ -1,3 +1,7 @@
 package net.flipper.bridge.connection.transport.common.api
 
-abstract class FDeviceConnectionConfig<T : FConnectedDeviceApi>
+import net.flipper.core.busylib.data.NonEmptyList
+
+abstract class FDeviceConnectionConfig<T : FConnectedDeviceApi> {
+    abstract fun getTransportTypes(): NonEmptyList<FInternalTransportConnectionType>
+}

@@ -48,7 +48,7 @@ class FRpcSettingsApiImpl(
     override suspend fun setDisplayBrightness(brightnessInfo: DisplayBrightnessInfo): Result<SuccessResponse> {
         return runSuspendCatching(dispatcher) {
             httpClient.post("/api/display/brightness") {
-                parameter("value", brightnessInfo)
+                parameter("value", brightnessInfo.value)
             }.body<SuccessResponse>()
         }
     }

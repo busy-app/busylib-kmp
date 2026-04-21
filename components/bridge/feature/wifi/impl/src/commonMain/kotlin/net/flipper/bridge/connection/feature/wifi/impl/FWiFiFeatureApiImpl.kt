@@ -86,6 +86,8 @@ class FWiFiFeatureApiImpl(
                     }
                 } + mutableNetworkList
 
+                networks = networks.sortedWith(WiFiNetworkSortComparator())
+
                 send(networks.toPersistentList())
 
                 delay(POOLING_TIME)

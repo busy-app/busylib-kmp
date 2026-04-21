@@ -10,7 +10,7 @@ import kotlin.time.Duration.Companion.seconds
 
 fun getExponentialDelay(
     retryCount: Int,
-    initialDelay: Duration = 0.1.seconds,
+    initialDelay: Duration = 1.seconds,
     maxDelay: Duration = 10.seconds,
     factor: Double = 2.0,
 ): Duration {

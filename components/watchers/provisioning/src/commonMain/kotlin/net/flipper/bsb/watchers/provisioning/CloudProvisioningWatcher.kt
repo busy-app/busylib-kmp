@@ -7,10 +7,13 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import me.tatarka.inject.annotations.Inject
-import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
-import net.flipper.bridge.connection.config.api.PersistedStorageTransactionScope
 import net.flipper.bridge.connection.config.api.getDevice
 import net.flipper.bridge.connection.config.api.model.BUSYBar
+import net.flipper.bridge.connection.config.api.model.addTransport
+import net.flipper.bridge.connection.config.api.model.copy
+import net.flipper.bridge.connection.config.api.model.copyTransports
+import net.flipper.bridge.connection.config.internal.FInternalDevicePersistedStorage
+import net.flipper.bridge.connection.config.internal.InternalStorageTransactionScope
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
 import net.flipper.bridge.connection.feature.provider.api.get
@@ -35,7 +38,7 @@ class CloudProvisioningWatcher(
     scope: CoroutineScope,
     private val featureProvider: FFeatureProvider,
     private val orchestrator: FDeviceOrchestrator,
-    private val persistedStorage: FDevicePersistedStorage
+    private val persistedStorage: FInternalDevicePersistedStorage
 ) : InternalBUSYLibStartupListener, LogTagProvider {
     override val TAG = "CloudProvisioningWatcher"
 
@@ -76,7 +79,7 @@ class CloudProvisioningWatcher(
             return
         }
         val cloudId = linkedInfo.cloudId?.let(Uuid::parseOrNull)
-        persistedStorage.transaction {
+        persistedStorage.transactionInternal {
             getDevice(deviceId)?.let {
                 updateBUSYBar(cloudId, it)
             }
@@ -92,13 +95,14 @@ class CloudProvisioningWatcher(
      *          new device with cloud device (if not exist already) and switched to it
      * - Local and cloud, not connected to cloud - remove cloud connection
      */
-    private fun PersistedStorageTransactionScope.updateBUSYBar(cloudId: Uuid?, original: BUSYBar) {
+    private fun InternalStorageTransactionScope.updateBUSYBar(cloudId: Uuid?, original: BUSYBar) {
         val cloudConnection = original.cloud
         if (cloudConnection == null) {
             if (cloudId != null) { // Only local transport, connected to cloud - add cloud transport to current device
                 info { "Found new cloud connection for device $original with id $cloudId" }
-
-                addOrReplace(original.copy(cloud = BUSYBar.ConnectionWay.Cloud(cloudId)))
+                modifyOrDelete(original) {
+                    it.copy(cloud = BUSYBar.ConnectionWay.Cloud(cloudId))
+                }
                 return
             }
             // Only local transport, not connected to cloud - skip
@@ -111,7 +115,9 @@ class CloudProvisioningWatcher(
         }
 
         if (cloudId == null) { // Local and cloud, not connected to cloud - remove cloud connection
-            addOrReplace(original.copy(cloud = null))
+            modifyOrDelete(original) {
+                it.copy(cloud = null)
+            }
             return
         }
 
@@ -132,11 +138,24 @@ class CloudProvisioningWatcher(
             return
         }
         info { "Create new device for cloud connection with id $cloudId" }
-        val newBUSYBar = original.copy(
+        val newBUSYBar = original.copyTransports(
             uniqueId = Uuid.random().toString(),
+        ).addTransport(
             cloud = BUSYBar.ConnectionWay.Cloud(cloudId)
         )
         addOrReplace(newBUSYBar)
         setCurrentDevice(newBUSYBar)
+    }
+}
+
+private fun InternalStorageTransactionScope.modifyOrDelete(
+    original: BUSYBar,
+    block: (BUSYBar) -> BUSYBar?
+) {
+    val result = block(original)
+    if (result == null) {
+        removeDevice(original.uniqueId)
+    } else {
+        addOrReplace(result)
     }
 }

@@ -7,7 +7,10 @@ import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import kotlinx.coroutines.CoroutineDispatcher
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcWifiApi
+import net.flipper.bridge.connection.feature.rpc.api.model.ApiResponse
+import net.flipper.bridge.connection.feature.rpc.api.model.BsbRpcError
 import net.flipper.bridge.connection.feature.rpc.api.model.ConnectRequestConfig
+import net.flipper.bridge.connection.feature.rpc.api.model.ErrorResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.NetworkResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.StatusResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
@@ -37,13 +40,23 @@ class FRpcWifiApiImpl(
 
     override suspend fun disconnectWifi(): Result<SuccessResponse> {
         return runSuspendCatching(dispatcher) {
-            httpClient.post("/api/wifi/disconnect").body<SuccessResponse>()
+            val response = httpClient.post("/api/wifi/disconnect").body<ApiResponse>()
+            return@runSuspendCatching when (response) {
+                is ErrorResponse if response.error == BsbRpcError.ALREADY_CONNECTED.error -> {
+                    SuccessResponse(response.error)
+                }
+
+                is ErrorResponse -> error(response.error)
+                is SuccessResponse -> response
+            }
         }
     }
 
     override suspend fun getWifiStatus(ignoreCache: Boolean): Result<StatusResponse> {
         return runSuspendCatching(dispatcher) {
-            objectCache.getOrElse(ignoreCache) { httpClient.get("/api/wifi/status").body<StatusResponse>() }
+            objectCache.getOrElse(ignoreCache) {
+                httpClient.get("/api/wifi/status").body<StatusResponse>()
+            }
         }
     }
 }

@@ -22,7 +22,12 @@ internal class LoggingWebsocketConverter(
         value: Any?
     ): Frame {
         val frame = delegate.serialize(charset, typeInfo, value)
-        verbose { ">>>>>>> $frame" }
+        val text = when (frame) {
+            is Frame.Text -> frame.readText()
+
+            else -> frame.toString()
+        }
+        verbose { ">>>>>>> $text" }
         return frame
     }
 

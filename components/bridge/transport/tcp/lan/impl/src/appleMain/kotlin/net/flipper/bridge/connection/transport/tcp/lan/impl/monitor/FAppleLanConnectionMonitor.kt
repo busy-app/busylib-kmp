@@ -7,6 +7,7 @@ import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionType
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
+import net.flipper.bridge.connection.transport.tcp.common.monitor.FConnectionMonitorApi
 import net.flipper.bridge.connection.transport.tcp.lan.FLanDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.tcp.lan.impl.model.KotlinNwError
 import net.flipper.bridge.connection.transport.tcp.lan.impl.model.asKotlinNwError
@@ -54,8 +55,8 @@ class FAppleLanConnectionMonitor(
     private val scope: CoroutineScope,
     private val deviceApi: FConnectedDeviceApi,
     private val port: String = DEFAULT_PORT
-) : FLanConnectionMonitorApi, LogTagProvider {
-    override val TAG: String = "FLanConnectionMonitor"
+) : FConnectionMonitorApi, LogTagProvider {
+    override val TAG: String = "FAppleLanConnectionMonitor"
     private val queue = dispatch_queue_create("net.flipper.lan.connection", null)
     private val restartMonitoringScope = scope.asSingleJobScope()
     private val connectionLock = NSLock()
@@ -63,7 +64,7 @@ class FAppleLanConnectionMonitor(
 
     private fun restartMonitoring() {
         restartMonitoringScope.launch(SingleJobMode.SKIP_IF_RUNNING) {
-            listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting)
+            listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting(config.getTransportTypes()))
             stopMonitoring()
             startMonitoring()
         }
@@ -121,12 +122,12 @@ class FAppleLanConnectionMonitor(
 
             nw_connection_state_waiting -> {
                 debug { "#handleStateUpdate Waiting for connection: $error" }
-                listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting)
+                listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting(config.getTransportTypes()))
             }
 
             nw_connection_state_preparing -> {
                 debug { "#handleStateUpdate Connection preparing" }
-                listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting)
+                listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting(config.getTransportTypes()))
             }
 
             nw_connection_state_failed -> {

@@ -51,7 +51,6 @@ fun FDeviceDropdownComposable(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(16.dp)
             .clickable { expanded = true }
             .border(1.dp, Color.Gray),
         verticalAlignment = Alignment.CenterVertically

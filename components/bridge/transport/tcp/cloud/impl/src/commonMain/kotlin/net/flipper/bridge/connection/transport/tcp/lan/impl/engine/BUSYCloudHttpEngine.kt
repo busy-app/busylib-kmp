@@ -1,5 +1,8 @@
 package net.flipper.bridge.connection.transport.tcp.lan.impl.engine
 
+import com.mayakapps.rwmutex.ReadWriteMutex
+import com.mayakapps.rwmutex.withReadLock
+import com.mayakapps.rwmutex.withWriteLock
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.HttpClientEngineBase
 import io.ktor.client.engine.HttpClientEngineConfig
@@ -11,6 +14,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.URLProtocol
 import io.ktor.http.encodedPath
 import io.ktor.utils.io.InternalAPI
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import me.tatarka.inject.annotations.Assisted
@@ -19,6 +23,7 @@ import net.flipper.bridge.connection.transport.tcp.lan.impl.engine.token.ProxyTo
 import net.flipper.bsb.cloud.api.BUSYLibHostApi
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
+import net.flipper.core.busylib.log.warn
 
 typealias BUSYCloudHttpEngineFactory = (HttpClientEngine, ProxyTokenProvider) -> BUSYCloudHttpEngine
 
@@ -31,17 +36,22 @@ class BUSYCloudHttpEngine(
     override val TAG = "BUSYCloudHttpEngine"
     override val config: HttpClientEngineConfig = delegate.config
     private val mutex = Mutex() // This is workaround for bug from server side
+    private val rwMutex = ReadWriteMutex()
+    private var closed = false
 
     @InternalAPI
     override suspend fun execute(data: HttpRequestData): HttpResponseData {
         return mutex.withLock {
-            val token = tokenProvider.getToken()
-            var result = makeRequest(data, token)
-            if (result.statusCode == HttpStatusCode.Forbidden) {
-                info { "Failed to request because of forbidden, try to refresh token" }
-                result = makeRequest(data, tokenProvider.getToken(token))
+            rwMutex.withReadLock {
+                check(closed.not()) { "Engine is closed" }
+                val token = tokenProvider.getToken()
+                var result = makeRequest(data, token)
+                if (result.statusCode == HttpStatusCode.Forbidden) {
+                    info { "Failed to request because of forbidden, try to refresh token" }
+                    result = makeRequest(data, tokenProvider.getToken(token))
+                }
+                result
             }
-            result
         }
     }
 
@@ -68,7 +78,18 @@ class BUSYCloudHttpEngine(
     }
 
     override fun close() {
-        delegate.close()
-        super.close()
+        runBlocking {
+            if (rwMutex.writeMutex.isLocked) {
+                warn { "Mutex is locked, so close will be wait until request finished" }
+            }
+            rwMutex.withWriteLock {
+                if (closed) {
+                    return@withWriteLock
+                }
+                delegate.close()
+                super.close()
+                closed = true
+            }
+        }
     }
 }
