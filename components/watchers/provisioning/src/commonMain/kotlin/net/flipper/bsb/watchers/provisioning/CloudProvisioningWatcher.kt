@@ -18,6 +18,8 @@ import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
 import net.flipper.bridge.connection.feature.provider.api.get
 import net.flipper.bridge.connection.feature.rpc.api.critical.FRpcCriticalFeatureApi
+import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
+import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarStatusDevice
 import net.flipper.bridge.connection.feature.rpc.api.model.RpcLinkedAccountInfo
 import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
 import net.flipper.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
@@ -46,41 +48,36 @@ class CloudProvisioningWatcher(
 
     override fun onLaunch() {
         singleJobScope.launch(SingleJobMode.CANCEL_PREVIOUS) {
-            combine(
-                orchestrator.getState(),
-                featureProvider.get<FRpcCriticalFeatureApi>()
-            ) { state, rpcApiStatus ->
-                if (state is FDeviceConnectStatus.Connected) {
-                    when (rpcApiStatus) {
-                        FFeatureStatus.NotFound,
-                        FFeatureStatus.Retrieving,
-                        FFeatureStatus.Unsupported -> flowOf()
+            orchestrator.getState().flatMapLatest { state ->
+                if (state is FDeviceConnectStatus.Connected && state.device.hardwareId == null) {
+                    featureProvider.get<FRpcFeatureApi>().map { it to state.device }
+                } else flowOf()
+            }.collectLatest { (rpcApiStatus, device) ->
+                when (rpcApiStatus) {
+                    FFeatureStatus.NotFound,
+                    FFeatureStatus.Retrieving,
+                    FFeatureStatus.Unsupported -> {
+                    } // Nothing
 
-                        is FFeatureStatus.Supported<FRpcCriticalFeatureApi> -> {
-                            rpcApiStatus.featureApi.currentAccountInfo.map { it to state.device.uniqueId }
-                        }
-                    }
-                } else {
-                    flowOf()
-                }
-            }.flatMapLatest { it }
-                .collectLatest { (linkedInfo, deviceId) ->
-                    runSuspendCatching {
-                        onNewLinkedInfo(linkedInfo, deviceId)
-                    }.onFailure {
-                        error(it) { "Failed to handle new linked info" }
+                    is FFeatureStatus.Supported<FRpcFeatureApi> -> {
+                        rpcApiStatus.featureApi.fRpcSystemApi.getDeviceStatus()
+                            .onFailure {
+                                error(it) { "Failed to get system info" }
+                            }.onSuccess { deviceStatus ->
+                                onNewDeviceStatus(
+                                    deviceStatus = deviceStatus,
+                                    device = device
+                                )
+                            }
                     }
                 }
+            }
         }
     }
 
-    private suspend fun onNewLinkedInfo(linkedInfo: RpcLinkedAccountInfo?, deviceId: String) {
-        if (linkedInfo == null) {
-            return
-        }
-        val cloudId = linkedInfo.cloudId?.let(Uuid::parseOrNull)
+    private suspend fun onNewDeviceStatus(deviceStatus: BusyBarStatusDevice, device: BUSYBar) {
         persistedStorage.transactionInternal {
-            getDevice(deviceId)?.let {
+            getDevice(device.uniqueId)?.let {
                 updateBUSYBar(cloudId, it)
             }
         }
@@ -125,7 +122,7 @@ class CloudProvisioningWatcher(
         //      new device with cloud device (if not exist already) and switched to it
         info {
             "Found new cloud connection for device $original, " +
-                "but it is already connected to cloud with id $cloudId"
+                    "but it is already connected to cloud with id $cloudId"
         }
         val allDevices = getAllDevices()
         val existedDevice = allDevices.find { deviceFromStorage ->
