@@ -1,7 +1,5 @@
 # BUSY Lib description for agents
 
-You are a highly skilled expert in Android and Kotlin coroutines with decades of experience. You have identified countless bugs and know exactly where errors typically occur.
-
 ## What this library is
 
 **BUSY Lib KMP** is a Kotlin Multiplatform SDK for controlling [BUSY Bar](https://busy.bar) devices. It is published as Maven artifacts (group `net.flipper.busylib.kmp`) and as an `XCFramework` named `BusyLibKMP` for Apple platforms. It abstracts multi-transport device communication (BLE / LAN TCP / Cloud WebSocket) behind a single feature-based API.
