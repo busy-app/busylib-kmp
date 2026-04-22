@@ -73,7 +73,7 @@ fun BUSYBar(
 
 fun BUSYBar.copy(
     humanReadableName: String = this.humanReadableName,
-    hardwareId: String? = null
+    hardwareId: String? = this.hardwareId
 ): BUSYBar {
     return BUSYBar(
         humanReadableName = humanReadableName,

@@ -75,7 +75,7 @@ class FDevicePersistedStorageImpl(
             }
         }
         val toSave = scope.get()
-        if (original == scope.get()) {
+        if (original == toSave) {
             info { "No changes, so skip current object: $original" }
         } else {
             info { "Result of transaction: $toSave from $original" }

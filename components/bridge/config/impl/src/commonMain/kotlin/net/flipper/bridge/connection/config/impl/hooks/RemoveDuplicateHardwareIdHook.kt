@@ -60,5 +60,6 @@ internal fun mergeIfEmpty(original: BUSYBar, other: BUSYBar): BUSYBar {
     if (result.lan == null) {
         result = result.addTransport(lan = other.lan)
     }
+    // Ignore mock just in case
     return result
 }

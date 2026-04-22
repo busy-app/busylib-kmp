@@ -33,7 +33,7 @@ class HardwareIdProvisioningWatcher(
     private val orchestrator: FDeviceOrchestrator,
     private val persistedStorage: FInternalDevicePersistedStorage
 ) : InternalBUSYLibStartupListener, LogTagProvider {
-    override val TAG = "CloudProvisioningWatcher"
+    override val TAG = "HardwareIdProvisioningWatcher"
 
     private val singleJobScope = scope.asSingleJobScope()
 
