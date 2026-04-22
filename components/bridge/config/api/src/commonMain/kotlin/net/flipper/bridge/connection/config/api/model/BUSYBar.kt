@@ -14,6 +14,8 @@ class BUSYBar internal constructor(
     val humanReadableName: String,
     @SerialName("hardware_id")
     val hardwareId: String? = null, // default for serialization
+    @SerialName("on_call_enabled")
+    val onCallEnabled: Boolean? = null, // default for serialization
     @SerialName("unique_id")
     val uniqueId: String,
     @SerialName("connection_way_ble")
@@ -76,6 +78,7 @@ class BUSYBar internal constructor(
         if (cloud != other.cloud) return false
         if (lan != other.lan) return false
         if (mock != other.mock) return false
+        if (onCallEnabled != other.onCallEnabled) return false
         if (connectionWays != other.connectionWays) return false
 
         return true
@@ -89,12 +92,13 @@ class BUSYBar internal constructor(
         result = 31 * result + (cloud?.hashCode() ?: 0)
         result = 31 * result + (lan?.hashCode() ?: 0)
         result = 31 * result + (mock?.hashCode() ?: 0)
+        result = 31 * result + onCallEnabled.hashCode()
         result = 31 * result + connectionWays.hashCode()
         return result
     }
 
     @Suppress("MaximumLineLength", "MaxLineLength")
     override fun toString(): String {
-        return "BUSYBar(humanReadableName='$humanReadableName', hardwareId=$hardwareId, uniqueId='$uniqueId', ble=$ble, cloud=$cloud, lan=$lan, mock=$mock, connectionWays=$connectionWays)"
+        return "BUSYBar(humanReadableName='$humanReadableName', hardwareId=$hardwareId, uniqueId='$uniqueId', ble=$ble, cloud=$cloud, lan=$lan, mock=$mock, onCallEnabled=$onCallEnabled, connectionWays=$connectionWays)"
     }
 }

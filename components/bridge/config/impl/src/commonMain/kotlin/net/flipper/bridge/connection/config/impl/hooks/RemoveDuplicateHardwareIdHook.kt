@@ -1,8 +1,6 @@
 package net.flipper.bridge.connection.config.impl.hooks
 
-import net.flipper.bridge.connection.config.api.model.BUSYBar
-import net.flipper.bridge.connection.config.api.model.addTransport
-import net.flipper.bridge.connection.config.api.model.copy
+import net.flipper.bridge.connection.config.api.model.mergeBBIfEmpty
 import net.flipper.bridge.connection.config.internal.HookPriority
 import net.flipper.bridge.connection.config.internal.InternalStorageTransactionScope
 import net.flipper.bridge.connection.config.internal.TransactionHook
@@ -42,28 +40,10 @@ class RemoveDuplicateHardwareIdHook : TransactionHook, LogTagProvider {
                         info { "Switching current device to ${best.uniqueId}" }
                         setCurrentDevice(best)
                     }
-                    best = mergeIfEmpty(best, device)
+                    best = mergeBBIfEmpty(best, device)
                 }
             }
             addOrReplace(best)
         }
     }
-}
-
-internal fun mergeIfEmpty(original: BUSYBar, other: BUSYBar): BUSYBar {
-    var result = original
-    if (result.ble == null) {
-        result = result.addTransport(ble = other.ble)
-    }
-    if (result.cloud == null) {
-        result = result.addTransport(cloud = other.cloud)
-    }
-    if (result.lan == null) {
-        result = result.addTransport(lan = other.lan)
-    }
-    if (result.hardwareId == null) {
-        result = result.copy(hardwareId = other.hardwareId)
-    }
-    // Ignore mock just in case
-    return result
 }

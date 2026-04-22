@@ -1,5 +1,6 @@
 package net.flipper.bridge.connection.config.impl.hooks
 
+import net.flipper.bridge.connection.config.api.model.mergeBBIfEmpty
 import net.flipper.bridge.connection.config.internal.HookPriority
 import net.flipper.bridge.connection.config.internal.InternalStorageTransactionScope
 import net.flipper.bridge.connection.config.internal.TransactionHook
@@ -39,7 +40,7 @@ class RemoveDuplicateCloudHook : TransactionHook, LogTagProvider {
                         info { "Switching current device to ${best.uniqueId}" }
                         setCurrentDevice(best)
                     }
-                    best = mergeIfEmpty(best, device)
+                    best = mergeBBIfEmpty(best, device)
                 }
             }
             addOrReplace(best)

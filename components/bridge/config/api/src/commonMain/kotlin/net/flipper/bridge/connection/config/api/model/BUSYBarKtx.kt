@@ -7,6 +7,7 @@ fun BUSYBar(
     humanReadableName: String,
     hardwareId: String? = null,
     uniqueId: String = Uuid.random().toString(),
+    onCallEnabled: Boolean? = null,
     ble: ConnectionWay.BLE
 ): BUSYBar {
     return BUSYBar(
@@ -17,6 +18,7 @@ fun BUSYBar(
         cloud = null,
         lan = null,
         mock = null,
+        onCallEnabled = onCallEnabled,
     )
 }
 
@@ -24,6 +26,7 @@ fun BUSYBar(
     humanReadableName: String,
     hardwareId: String? = null,
     uniqueId: String = Uuid.random().toString(),
+    onCallEnabled: Boolean? = null,
     cloud: ConnectionWay.Cloud
 ): BUSYBar {
     return BUSYBar(
@@ -34,6 +37,7 @@ fun BUSYBar(
         cloud = cloud,
         lan = null,
         mock = null,
+        onCallEnabled = onCallEnabled,
     )
 }
 
@@ -41,6 +45,7 @@ fun BUSYBar(
     humanReadableName: String,
     hardwareId: String? = null,
     uniqueId: String = Uuid.random().toString(),
+    onCallEnabled: Boolean? = null,
     lan: ConnectionWay.Lan
 ): BUSYBar {
     return BUSYBar(
@@ -51,6 +56,7 @@ fun BUSYBar(
         cloud = null,
         lan = lan,
         mock = null,
+        onCallEnabled = onCallEnabled,
     )
 }
 
@@ -58,6 +64,7 @@ fun BUSYBar(
     humanReadableName: String,
     hardwareId: String? = null,
     uniqueId: String = Uuid.random().toString(),
+    onCallEnabled: Boolean? = null,
     mock: ConnectionWay.Mock
 ): BUSYBar {
     return BUSYBar(
@@ -68,12 +75,14 @@ fun BUSYBar(
         cloud = null,
         lan = null,
         mock = mock,
+        onCallEnabled = onCallEnabled,
     )
 }
 
 fun BUSYBar.copy(
     humanReadableName: String = this.humanReadableName,
-    hardwareId: String? = this.hardwareId
+    hardwareId: String? = this.hardwareId,
+    onCallEnabled: Boolean? = this.onCallEnabled
 ): BUSYBar {
     return BUSYBar(
         humanReadableName = humanReadableName,
@@ -82,7 +91,8 @@ fun BUSYBar.copy(
         ble = ble,
         cloud = cloud,
         lan = lan,
-        mock = mock
+        mock = mock,
+        onCallEnabled = onCallEnabled,
     )
 }
 
@@ -96,7 +106,8 @@ fun BUSYBar.copyTransports(
         ble = ble,
         cloud = cloud,
         lan = lan,
-        mock = mock
+        mock = mock,
+        onCallEnabled = onCallEnabled,
     )
 }
 
@@ -106,6 +117,7 @@ fun BUSYBar.copy(
     cloud: ConnectionWay.Cloud? = this.cloud,
     lan: ConnectionWay.Lan? = this.lan,
     mock: ConnectionWay.Mock? = this.mock,
+    onCallEnabled: Boolean? = this.onCallEnabled,
 ): BUSYBar? {
     if (listOfNotNull(lan, cloud, ble, mock).isEmpty()) {
         return null
@@ -117,7 +129,8 @@ fun BUSYBar.copy(
         ble = ble,
         cloud = cloud,
         lan = lan,
-        mock = mock
+        mock = mock,
+        onCallEnabled = onCallEnabled,
     )
 }
 
@@ -134,6 +147,28 @@ fun BUSYBar.addTransport(
         ble = ble ?: this.ble,
         cloud = cloud ?: this.cloud,
         lan = lan ?: this.lan,
-        mock = mock ?: this.mock
+        mock = mock ?: this.mock,
+        onCallEnabled = onCallEnabled,
     )
+}
+
+fun mergeBBIfEmpty(original: BUSYBar, other: BUSYBar): BUSYBar {
+    var result = original
+    if (result.ble == null) {
+        result = result.addTransport(ble = other.ble)
+    }
+    if (result.cloud == null) {
+        result = result.addTransport(cloud = other.cloud)
+    }
+    if (result.lan == null) {
+        result = result.addTransport(lan = other.lan)
+    }
+    if (result.hardwareId == null) {
+        result = result.copy(hardwareId = other.hardwareId)
+    }
+    if (result.onCallEnabled == null) {
+        result = result.copy(onCallEnabled = other.onCallEnabled)
+    }
+    // Ignore mock just in case
+    return result
 }
