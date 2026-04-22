@@ -2,6 +2,7 @@ package net.flipper.bridge.connection.config.impl.hooks
 
 import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.config.api.model.addTransport
+import net.flipper.bridge.connection.config.api.model.copy
 import net.flipper.bridge.connection.config.internal.HookPriority
 import net.flipper.bridge.connection.config.internal.InternalStorageTransactionScope
 import net.flipper.bridge.connection.config.internal.TransactionHook
@@ -59,6 +60,9 @@ internal fun mergeIfEmpty(original: BUSYBar, other: BUSYBar): BUSYBar {
     }
     if (result.lan == null) {
         result = result.addTransport(lan = other.lan)
+    }
+    if (result.hardwareId == null) {
+        result = result.copy(hardwareId = other.hardwareId)
     }
     // Ignore mock just in case
     return result
