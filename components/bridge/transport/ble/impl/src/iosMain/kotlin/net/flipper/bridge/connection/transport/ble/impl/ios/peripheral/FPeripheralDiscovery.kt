@@ -77,8 +77,8 @@ internal class FPeripheralDiscovery(
             return
         }
 
-        if (serviceUUID == config.screenStreamingConfig.serviceUuid) {
-            val streamingNotify = currentCharacteristics[config.screenStreamingConfig.notifyCharUuid]
+        if (serviceUUID == config.statusStreamingConfig.serviceUuid) {
+            val streamingNotify = currentCharacteristics[config.statusStreamingConfig.notifyCharUuid]
             if (streamingNotify != null) {
                 peripheral.setNotifyValue(true, forCharacteristic = streamingNotify)
                 info { "Streaming notify characteristic ready id=${identifierProvider()}" }

@@ -59,7 +59,7 @@ internal class FPeripheralValueRouter(
                 return@runBlocking
             }
 
-            if (characteristicUUID == config.screenStreamingConfig.notifyCharUuid) {
+            if (characteristicUUID == config.statusStreamingConfig.notifyCharUuid) {
                 if (data != null && payload != null) {
                     streamingDataChannel.send(payload)
                     debug { "Streaming data chunk bytes=${data.length} id=${identifierProvider()}" }

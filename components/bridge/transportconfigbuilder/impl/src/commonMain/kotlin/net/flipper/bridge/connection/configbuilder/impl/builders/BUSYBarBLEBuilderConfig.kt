@@ -4,7 +4,7 @@ import kotlinx.collections.immutable.persistentMapOf
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceSerialConfig
-import net.flipper.bridge.connection.transport.ble.api.FBleDeviceStreamingConfig
+import net.flipper.bridge.connection.transport.ble.api.FBleDeviceStatusStreamingConfig
 import net.flipper.bridge.connection.transport.ble.api.GATTCharacteristicAddress
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
 import kotlin.uuid.Uuid
@@ -28,7 +28,7 @@ class BUSYBarBLEBuilderConfig {
             rxServiceCharUuid = Uuid.parse("6E400003-B5A3-F393-E0A9-E50E24DCCA9E"), // Device -> Mobile
             resetCharUuid = Uuid.parse("6E400004-B5A3-F393-E0A9-E50E24DCCA9E")
         ),
-        screenStreamingConfig = FBleDeviceStreamingConfig(
+        statusStreamingConfig = FBleDeviceStatusStreamingConfig(
             serviceUuid = Uuid.parse("0000ffe0-0000-1000-8000-00805f9b34fb"),
             notifyCharUuid = Uuid.parse("0000ffe1-0000-1000-8000-00805f9b34fb"),
             writeCharUuid = Uuid.parse("0000ffe2-0000-1000-8000-00805f9b34fb"),

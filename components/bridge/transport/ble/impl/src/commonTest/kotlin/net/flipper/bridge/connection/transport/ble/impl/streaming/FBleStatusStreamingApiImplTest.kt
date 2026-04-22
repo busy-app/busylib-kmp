@@ -1,3 +1,5 @@
+@file:Suppress("MaxLineLength")
+
 package net.flipper.bridge.connection.transport.ble.impl.streaming
 
 import kotlinx.coroutines.CoroutineScope
@@ -61,6 +63,83 @@ class FBleStatusStreamingApiImplTest {
         assertContentEquals(byteArrayOf(1, 2, 3, 4, 5, 6), packets.single())
     }
 
+    @Test
+    fun GIVEN_stream_starts_mid_message_WHEN_received_THEN_ignored() = runTest {
+        val source = MutableSharedFlow<ByteArray>()
+        val packets = mutableListOf<ByteArray>()
+        val sut = createSut(source, backgroundScope)
+
+        backgroundScope.launch { sut.getPackets().collect { packets.add(it) } }
+        runCurrent()
+
+        source.emit(makeChunk(num = 1, count = 2, payload = byteArrayOf(3, 4)))
+        runCurrent()
+
+        assertTrue(packets.isEmpty())
+    }
+
+    @Test
+    fun GIVEN_out_of_order_chunks_WHEN_received_THEN_partial_message_dropped() = runTest {
+        val source = MutableSharedFlow<ByteArray>()
+        val packets = mutableListOf<ByteArray>()
+        val sut = createSut(source, backgroundScope)
+
+        backgroundScope.launch { sut.getPackets().collect { packets.add(it) } }
+        runCurrent()
+
+        source.emit(makeChunk(num = 0, count = 3, payload = byteArrayOf(1, 2)))
+        runCurrent()
+        source.emit(makeChunk(num = 2, count = 3, payload = byteArrayOf(5, 6)))
+        runCurrent()
+
+        assertTrue(packets.isEmpty())
+    }
+
+    @Test
+    fun GIVEN_broken_sequence_WHEN_new_message_starts_THEN_only_restarted_message_emitted() = runTest {
+        val source = MutableSharedFlow<ByteArray>()
+        val packets = mutableListOf<ByteArray>()
+        val sut = createSut(source, backgroundScope)
+
+        backgroundScope.launch { sut.getPackets().collect { packets.add(it) } }
+        runCurrent()
+
+        source.emit(makeChunk(num = 0, count = 3, payload = byteArrayOf(1, 2)))
+        runCurrent()
+        source.emit(makeChunk(num = 2, count = 3, payload = byteArrayOf(5, 6)))
+        runCurrent()
+
+        source.emit(makeChunk(num = 0, count = 3, payload = byteArrayOf(10, 20)))
+        runCurrent()
+        source.emit(makeChunk(num = 1, count = 3, payload = byteArrayOf(30, 40)))
+        runCurrent()
+        source.emit(makeChunk(num = 2, count = 3, payload = byteArrayOf(50, 60)))
+        runCurrent()
+
+        assertEquals(1, packets.size)
+        assertContentEquals(byteArrayOf(10, 20, 30, 40, 50, 60), packets.single())
+    }
+
+    @Test
+    fun GIVEN_out_of_order_start_chunk_WHEN_received_THEN_same_chunk_restarts_assembly() = runTest {
+        val source = MutableSharedFlow<ByteArray>()
+        val packets = mutableListOf<ByteArray>()
+        val sut = createSut(source, backgroundScope)
+
+        backgroundScope.launch { sut.getPackets().collect { packets.add(it) } }
+        runCurrent()
+
+        source.emit(makeChunk(num = 0, count = 2, payload = byteArrayOf(1, 2)))
+        runCurrent()
+        source.emit(makeChunk(num = 0, count = 2, payload = byteArrayOf(10, 20)))
+        runCurrent()
+        source.emit(makeChunk(num = 1, count = 2, payload = byteArrayOf(30, 40)))
+        runCurrent()
+
+        assertEquals(1, packets.size)
+        assertContentEquals(byteArrayOf(10, 20, 30, 40), packets.single())
+    }
+
     // Two consecutive messages → two separate packets
     @Test
     fun GIVEN_two_separate_messages_WHEN_received_THEN_two_packets_emitted() = runTest {
@@ -113,6 +192,103 @@ class FBleStatusStreamingApiImplTest {
         assertTrue(packets.isEmpty())
     }
 
+    @Test
+    fun GIVEN_chunk_num_greater_than_count_WHEN_received_THEN_ignored() = runTest {
+        val source = MutableSharedFlow<ByteArray>()
+        val packets = mutableListOf<ByteArray>()
+        val sut = createSut(source, backgroundScope)
+
+        backgroundScope.launch { sut.getPackets().collect { packets.add(it) } }
+        runCurrent()
+
+        source.emit(makeChunk(num = 2, count = 2, payload = byteArrayOf(1, 2)))
+        runCurrent()
+
+        assertTrue(packets.isEmpty())
+    }
+
+    @Test
+    fun GIVEN_chunk_num_equal_to_count_WHEN_received_THEN_ignored() = runTest {
+        val source = MutableSharedFlow<ByteArray>()
+        val packets = mutableListOf<ByteArray>()
+        val sut = createSut(source, backgroundScope)
+
+        backgroundScope.launch { sut.getPackets().collect { packets.add(it) } }
+        runCurrent()
+
+        source.emit(makeChunk(num = 3, count = 3, payload = byteArrayOf(1, 2)))
+        runCurrent()
+
+        assertTrue(packets.isEmpty())
+    }
+
+    @Test
+    fun GIVEN_chunk_count_changes_mid_message_WHEN_received_THEN_partial_message_dropped() = runTest {
+        val source = MutableSharedFlow<ByteArray>()
+        val packets = mutableListOf<ByteArray>()
+        val sut = createSut(source, backgroundScope)
+
+        backgroundScope.launch { sut.getPackets().collect { packets.add(it) } }
+        runCurrent()
+
+        source.emit(makeChunk(num = 0, count = 2, payload = byteArrayOf(1, 2)))
+        runCurrent()
+        source.emit(makeChunk(num = 1, count = 3, payload = byteArrayOf(3, 4)))
+        runCurrent()
+
+        assertTrue(packets.isEmpty())
+    }
+
+    @Test
+    fun GIVEN_invalid_chunk_during_active_message_WHEN_new_valid_message_arrives_THEN_old_payload_is_not_leaked() = runTest {
+        val source = MutableSharedFlow<ByteArray>()
+        val packets = mutableListOf<ByteArray>()
+        val sut = createSut(source, backgroundScope)
+
+        backgroundScope.launch { sut.getPackets().collect { packets.add(it) } }
+        runCurrent()
+
+        source.emit(makeChunk(num = 0, count = 2, payload = byteArrayOf(1, 2)))
+        runCurrent()
+        source.emit(
+            makeChunkWithOverriddenSize(
+                num = 1,
+                count = 2,
+                declaredSize = 10,
+                payload = byteArrayOf(3, 4)
+            )
+        )
+        runCurrent()
+
+        source.emit(makeChunk(num = 0, count = 2, payload = byteArrayOf(10, 20)))
+        runCurrent()
+        source.emit(makeChunk(num = 1, count = 2, payload = byteArrayOf(30, 40)))
+        runCurrent()
+
+        assertEquals(1, packets.size)
+        assertContentEquals(byteArrayOf(10, 20, 30, 40), packets.single())
+    }
+
+    @Test
+    fun GIVEN_zero_length_chunks_WHEN_message_completed_THEN_empty_payload_parts_are_preserved_without_extra_data() = runTest {
+        val source = MutableSharedFlow<ByteArray>()
+        val packets = mutableListOf<ByteArray>()
+        val sut = createSut(source, backgroundScope)
+
+        backgroundScope.launch { sut.getPackets().collect { packets.add(it) } }
+        runCurrent()
+
+        source.emit(makeChunk(num = 0, count = 3, payload = byteArrayOf()))
+        runCurrent()
+        source.emit(makeChunk(num = 1, count = 3, payload = byteArrayOf(1, 2)))
+        runCurrent()
+        source.emit(makeChunk(num = 2, count = 3, payload = byteArrayOf()))
+        runCurrent()
+
+        assertEquals(1, packets.size)
+        assertContentEquals(byteArrayOf(1, 2), packets.single())
+    }
+
     // size field exceeds actual data → ignored
     @Test
     fun GIVEN_chunk_with_size_exceeding_data_WHEN_received_THEN_ignored() = runTest {
@@ -129,6 +305,33 @@ class FBleStatusStreamingApiImplTest {
         runCurrent()
 
         assertTrue(packets.isEmpty())
+    }
+
+    @Test
+    fun GIVEN_short_header_during_active_message_WHEN_next_message_completes_THEN_partial_state_was_not_emitted() = runTest {
+        val source = MutableSharedFlow<ByteArray>()
+        val packets = mutableListOf<ByteArray>()
+        val sut = createSut(source, backgroundScope)
+
+        backgroundScope.launch { sut.getPackets().collect { packets.add(it) } }
+        runCurrent()
+
+        source.emit(makeChunk(num = 0, count = 2, payload = byteArrayOf(1, 2)))
+        runCurrent()
+        source.emit(byteArrayOf(0, 0, 0))
+        runCurrent()
+        source.emit(makeChunk(num = 1, count = 2, payload = byteArrayOf(3, 4)))
+        runCurrent()
+
+        assertTrue(packets.isEmpty())
+
+        source.emit(makeChunk(num = 0, count = 2, payload = byteArrayOf(10, 20)))
+        runCurrent()
+        source.emit(makeChunk(num = 1, count = 2, payload = byteArrayOf(30, 40)))
+        runCurrent()
+
+        assertEquals(1, packets.size)
+        assertContentEquals(byteArrayOf(10, 20, 30, 40), packets.single())
     }
 
     // Empty upstream → no packets

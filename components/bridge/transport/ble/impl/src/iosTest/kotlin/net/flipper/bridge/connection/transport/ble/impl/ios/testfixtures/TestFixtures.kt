@@ -5,7 +5,7 @@ import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.persistentMapOf
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceSerialConfig
-import net.flipper.bridge.connection.transport.ble.api.FBleDeviceStreamingConfig
+import net.flipper.bridge.connection.transport.ble.api.FBleDeviceStatusStreamingConfig
 import net.flipper.bridge.connection.transport.ble.api.GATTCharacteristicAddress
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
 import net.flipper.core.busylib.ktx.common.toByteArray
@@ -215,7 +215,7 @@ internal fun createConfig(
             txServiceCharUuid = Uuid.parse(SERIAL_TX_FULL_UUID),
             resetCharUuid = Uuid.parse(SERIAL_RESET_UUID),
         ),
-        screenStreamingConfig = FBleDeviceStreamingConfig(
+        statusStreamingConfig = FBleDeviceStatusStreamingConfig(
             serviceUuid = Uuid.parse(STREAMING_SERVICE_FULL_UUID),
             notifyCharUuid = Uuid.parse(STREAMING_NOTIFY_FULL_UUID),
             writeCharUuid = Uuid.parse(STREAMING_WRITE_FULL_UUID),

@@ -8,8 +8,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
 import net.flipper.bridge.connection.transport.common.api.serial.FStatusStreamingApi
 import net.flipper.bridge.connection.transport.common.api.serial.StatusStreamingEvent
-
-private const val HEADER_SIZE = 6
+import net.flipper.core.busylib.ktx.common.runSuspendCatching
 
 class FBleStatusStreamingApiImpl(
     subscribeFlow: Flow<ByteArray>,
@@ -27,30 +26,12 @@ class FBleStatusStreamingApiImpl(
 
     override fun getEvents(): Flow<StatusStreamingEvent> = eventsFlow
 
-    @Suppress("MagicNumber")
     private fun Flow<ByteArray>.reassembleByHeader(): Flow<ByteArray> = flow {
-        val chunks = mutableListOf<ByteArray>()
-
-        fun ByteArray.getUShortLE(offset: Int): Int {
-            return (this[offset].toInt() and 0xFF) or ((this[offset + 1].toInt() and 0xFF) shl 8)
-        }
+        val parser = BleStatusStreamingPacketParser()
 
         collect { chunk ->
-            if (chunk.size < HEADER_SIZE) return@collect
-
-            val num = chunk.getUShortLE(0)
-            val count = chunk.getUShortLE(2)
-            val size = chunk.getUShortLE(4)
-
-            if (count == 0 || size > chunk.size - HEADER_SIZE) return@collect
-
-            if (num == 0 && chunks.isNotEmpty()) chunks.clear()
-
-            chunks.add(chunk.copyOfRange(HEADER_SIZE, HEADER_SIZE + size))
-
-            if (num == count - 1) {
-                emit(chunks.fold(ByteArray(0)) { acc, b -> acc + b })
-                chunks.clear()
+            runSuspendCatching {
+                parser.consume(chunk)?.let { emit(it) }
             }
         }
     }

@@ -11,7 +11,7 @@ data class FBleDeviceConnectionConfig(
     val deviceName: String,
     val macAddress: String,
     val serialConfig: FBleDeviceSerialConfig,
-    val screenStreamingConfig: FBleDeviceStreamingConfig,
+    val statusStreamingConfig: FBleDeviceStatusStreamingConfig,
     val metaInfoGattMap: ImmutableMap<TransportMetaInfoKey, GATTCharacteristicAddress>
 ) : FDeviceConnectionConfig<FBleApi>() {
     override fun getTransportTypes() = nonEmptyListOf(FInternalTransportConnectionType.BLE)
@@ -24,7 +24,7 @@ data class FBleDeviceSerialConfig(
     val resetCharUuid: Uuid
 )
 
-data class FBleDeviceStreamingConfig(
+data class FBleDeviceStatusStreamingConfig(
     val serviceUuid: Uuid,
     val notifyCharUuid: Uuid,
     val writeCharUuid: Uuid
