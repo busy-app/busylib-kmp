@@ -28,7 +28,7 @@ jobs:
         run: |
           python .github/workflows/reposilite-cleaner/scan.py \
             --repo ${{ matrix.repo }} \
-            --max-age-days ${{ github.event.inputs.max_age_days || '30' }} \
+            --max-age-days ${{ github.event.inputs.max_age_days || '14' }} \
             --exclude-file .github/workflows/reposilite-cleaner/exclude.txt \
             --output scan_result.csv \
             --cleanup-output cleanup_dirs.csv
