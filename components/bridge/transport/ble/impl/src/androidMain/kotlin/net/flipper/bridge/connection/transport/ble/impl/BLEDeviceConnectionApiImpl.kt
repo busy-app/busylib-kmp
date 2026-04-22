@@ -113,7 +113,7 @@ class BLEDeviceConnectionApiImpl(
         )
         info { "Created serial api" }
         val streamingApi = AndroidStreamApiFactory.buildStreamingApi(
-            config.screenStreamingConfig,
+            config.statusStreamingConfig,
             services,
             scope
         )
