@@ -3,49 +3,27 @@ package net.flipper.bsb.watchers.provisioning
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.job
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
-import net.flipper.bridge.connection.config.api.PersistedStorageTransactionScope
 import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.config.api.model.addTransport
-import net.flipper.bridge.connection.config.internal.FInternalDevicePersistedStorage
-import net.flipper.bridge.connection.config.internal.InternalStorageTransactionScope
-import net.flipper.bridge.connection.config.internal.TransactionHook
-import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
-import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
-import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcAssetsApi
-import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcBleApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
-import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcMatterApi
-import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcSettingsApi
-import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcStreamingApi
-import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcSystemApi
-import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcTimeZoneApi
-import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcUpdaterApi
-import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcWifiApi
-import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarStatus
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarStatusDevice
-import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarStatusPower
-import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarStatusSystem
-import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarVersion
-import net.flipper.bridge.connection.feature.rpc.api.model.StatusFirmware
-import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
 import net.flipper.bridge.connection.orchestrator.api.model.DisconnectStatus
 import net.flipper.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
 import net.flipper.bridge.connection.orchestrator.api.model.FDeviceTransportType
-import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
-import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
-import net.flipper.busylib.core.wrapper.WrappedStateFlow
-import net.flipper.busylib.core.wrapper.wrap
-import net.flipper.core.busylib.ktx.common.asFlow
-import kotlin.reflect.KClass
+import net.flipper.bsb.watchers.provisioning.fakes.FakeConnectedDeviceApi
+import net.flipper.bsb.watchers.provisioning.fakes.FakeFeatureProvider
+import net.flipper.bsb.watchers.provisioning.fakes.FakeOrchestrator
+import net.flipper.bsb.watchers.provisioning.fakes.FakePersistedStorage
+import net.flipper.bsb.watchers.provisioning.fakes.FakeRpcFeatureApi
+import net.flipper.bsb.watchers.provisioning.fakes.FakeRpcSystemApi
+import net.flipper.bsb.watchers.provisioning.fakes.HardwareIdProvisioningTestSetup
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -190,17 +168,12 @@ class HardwareIdProvisioningWatcherTest {
 
     // region Test Setup
 
-    private data class TestSetup(
-        val watcher: HardwareIdProvisioningWatcher,
-        val storage: FakePersistedStorage
-    )
-
     private fun TestScope.createSetup(
         devices: List<BUSYBar>,
         connectedDevice: BUSYBar?,
         deviceStatusResult: Result<BusyBarStatusDevice>,
         featureStatus: FFeatureStatus<FRpcFeatureApi>? = null
-    ): TestSetup {
+    ): HardwareIdProvisioningTestSetup {
         val storage = FakePersistedStorage(MutableStateFlow(devices))
 
         val rpcApi = FakeRpcFeatureApi(
@@ -237,7 +210,7 @@ class HardwareIdProvisioningWatcherTest {
             persistedStorage = storage
         )
 
-        return TestSetup(watcher, storage)
+        return HardwareIdProvisioningTestSetup(watcher, storage)
     }
 
     private fun fakeDeviceStatus(serialNumber: String) = BusyBarStatusDevice(
@@ -292,107 +265,6 @@ class HardwareIdProvisioningWatcherTest {
             }
         }
         return result
-    }
-
-    // endregion
-
-    // region Fakes
-
-    private class FakePersistedStorage(
-        val devices: MutableStateFlow<List<BUSYBar>>
-    ) : FInternalDevicePersistedStorage {
-        private val currentDeviceFlow = MutableStateFlow<BUSYBar?>(null)
-
-        override fun getCurrentDeviceFlow() = currentDeviceFlow.asFlow().wrap()
-        override fun getAllDevicesFlow() = devices.asFlow().wrap()
-
-        override suspend fun addHook(vararg hook: TransactionHook) = Unit
-
-        override suspend fun <T> transactionInternal(block: suspend InternalStorageTransactionScope.() -> T): T {
-            val scope = object : InternalStorageTransactionScope {
-                override fun getCurrentDevice() = this@FakePersistedStorage.currentDeviceFlow.value
-                override fun getAllDevices() = this@FakePersistedStorage.devices.value.toList()
-
-                override fun setCurrentDevice(device: BUSYBar) {
-                    this@FakePersistedStorage.currentDeviceFlow.value = device
-                }
-
-                override fun setCurrentDeviceNullable(device: BUSYBar?) {
-                    this@FakePersistedStorage.currentDeviceFlow.value = device
-                }
-
-                override fun addOrReplace(device: BUSYBar) {
-                    this@FakePersistedStorage.devices.update { list ->
-                        list.filter { it.uniqueId != device.uniqueId } + device
-                    }
-                }
-
-                override fun removeDevice(id: String) {
-                    this@FakePersistedStorage.devices.update { list ->
-                        list.filter { it.uniqueId != id }
-                    }
-                    if (this@FakePersistedStorage.currentDeviceFlow.value?.uniqueId == id) {
-                        this@FakePersistedStorage.currentDeviceFlow.value = null
-                    }
-                }
-            }
-            return scope.block()
-        }
-
-        override suspend fun <T> transaction(block: suspend PersistedStorageTransactionScope.() -> T): T {
-            return transactionInternal { block() }
-        }
-    }
-
-    private class FakeOrchestrator(
-        private val stateFlow: MutableStateFlow<FDeviceConnectStatus>
-    ) : FDeviceOrchestrator {
-        override fun getState(): WrappedStateFlow<FDeviceConnectStatus> = stateFlow.wrap()
-    }
-
-    private class FakeFeatureProvider(
-        private val rpcFlow: Flow<FFeatureStatus<FRpcFeatureApi>>
-    ) : FFeatureProvider {
-        @Suppress("UNCHECKED_CAST")
-        override fun <T : FDeviceFeatureApi> get(clazz: KClass<T>): Flow<FFeatureStatus<T>> {
-            return rpcFlow as Flow<FFeatureStatus<T>>
-        }
-
-        override suspend fun <T : FDeviceFeatureApi> getSync(clazz: KClass<T>): T? = null
-    }
-
-    private class FakeRpcFeatureApi(
-        private val systemApi: FRpcSystemApi
-    ) : FRpcFeatureApi {
-        override val fRpcSystemApi: FRpcSystemApi get() = systemApi
-        override val fRpcWifiApi: FRpcWifiApi get() = error("Not used in test")
-        override val fRpcBleApi: FRpcBleApi get() = error("Not used in test")
-        override val fRpcSettingsApi: FRpcSettingsApi get() = error("Not used in test")
-        override val fRpcStreamingApi: FRpcStreamingApi get() = error("Not used in test")
-        override val fRpcAssetsApi: FRpcAssetsApi get() = error("Not used in test")
-        override val fRpcUpdaterApi: FRpcUpdaterApi get() = error("Not used in test")
-        override val fRpcMatterApi: FRpcMatterApi get() = error("Not used in test")
-        override val fRpcTimeZoneApi: FRpcTimeZoneApi get() = error("Not used in test")
-    }
-
-    private class FakeRpcSystemApi(
-        private val deviceStatusResult: Result<BusyBarStatusDevice>
-    ) : FRpcSystemApi {
-        override suspend fun getVersion(): Result<BusyBarVersion> = error("Not used in test")
-        override suspend fun getStatus(): Result<BusyBarStatus> = error("Not used in test")
-        override suspend fun getDeviceStatus(): Result<BusyBarStatusDevice> = deviceStatusResult
-        override suspend fun getStatusFirmware(): Result<StatusFirmware> = error("Not used in test")
-        override suspend fun getStatusSystem(): Result<BusyBarStatusSystem> = error("Not used in test")
-        override suspend fun getStatusPower(): Result<BusyBarStatusPower> = error("Not used in test")
-    }
-
-    private class FakeConnectedDeviceApi : FConnectedDeviceApi {
-        override val deviceName = "Test Device"
-        override suspend fun tryUpdateConnectionConfig(
-            config: FDeviceConnectionConfig<*>
-        ): Result<Unit> = Result.failure(NotImplementedError())
-
-        override suspend fun disconnect() = Unit
     }
 
     // endregion

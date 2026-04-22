@@ -1,7 +1,6 @@
 package net.flipper.bsb.cloud.barsws.api
 
 import com.flipperdevices.core.network.BUSYLibNetworkStateApi
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -9,12 +8,10 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -32,14 +29,11 @@ import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipalToken
 import net.flipper.bsb.cloud.api.BUSYLibHostApi
-import net.flipper.bsb.cloud.barsws.api.model.InternalWebSocketRequest
-import net.flipper.bsb.cloud.barsws.api.model.WebSocketEventInternal
-import net.flipper.bsb.cloud.barsws.api.utils.BSBWebSocketInternal
+import net.flipper.bsb.cloud.barsws.api.fakes.CloudWebSocketApiTestSetup
+import net.flipper.bsb.cloud.barsws.api.fakes.MockBSBWebSocketFactory
 import net.flipper.bsb.cloud.barsws.api.utils.CloudWebSocketApiImpl
-import net.flipper.bsb.cloud.barsws.api.utils.wrappers.BSBWebSocketFactory
 import net.flipper.busylib.core.wrapper.WrappedStateFlow
 import net.flipper.busylib.core.wrapper.wrap
-import net.flipper.core.busylib.log.LogTagProvider
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -775,14 +769,6 @@ class CloudWebSocketApiImplTest {
 
     // region Test Setup
 
-    private data class TestSetup(
-        val api: CloudWebSocketApiImpl,
-        val networkStateApi: BUSYLibNetworkStateApi,
-        val principalApi: BUSYLibPrincipalApi,
-        val hostApi: BUSYLibHostApi,
-        val webSocketFactory: MockBSBWebSocketFactory
-    )
-
     @Suppress("LongParameterList")
     private fun TestScope.createTestSetup(
         isNetworkAvailable: Boolean = false,
@@ -795,7 +781,7 @@ class CloudWebSocketApiImplTest {
         onWebSocketClosed: () -> Unit = {},
         onWebSocketCreatedForHost: (String) -> Unit = {},
         scopeOverride: CoroutineScope? = null
-    ): TestSetup {
+    ): CloudWebSocketApiTestSetup {
         val actualNetworkFlow = networkFlow ?: MutableStateFlow(isNetworkAvailable)
         val actualPrincipalFlow = principalFlow ?: MutableStateFlow(principal)
         val actualHostFlow = hostFlow ?: MutableStateFlow(host)
@@ -831,7 +817,7 @@ class CloudWebSocketApiImplTest {
             dispatcher = testDispatcher
         )
 
-        return TestSetup(
+        return CloudWebSocketApiTestSetup(
             api = api,
             networkStateApi = networkStateApi,
             principalApi = principalApi,
@@ -847,67 +833,4 @@ class CloudWebSocketApiImplTest {
             userId = Uuid.parse("00000000-0000-0000-0000-000000000001"),
             tokenProvider = { token }
         )
-
-    // region Mock Implementations
-
-    /**
-     * Mock implementation of BSBWebSocketFactory for testing.
-     * This allows us to test CloudWebSocketBarsApiImpl without real network connections.
-     */
-    private class MockBSBWebSocketFactory(
-        private val onWebSocketCreated: () -> Unit = {},
-        private val onWebSocketClosed: () -> Unit = {},
-        private val onWebSocketCreatedForHost: (String) -> Unit = {}
-    ) : BSBWebSocketFactory {
-
-        private var lastCreatedWebSocket: MockBSBWebSocket? = null
-
-        override suspend fun create(
-            logger: LogTagProvider,
-            principal: BUSYLibUserPrincipal.Token,
-            busyHost: String,
-            scope: CoroutineScope,
-            dispatcher: CoroutineDispatcher
-        ): BSBWebSocketInternal {
-            onWebSocketCreated()
-            onWebSocketCreatedForHost(busyHost)
-
-            val webSocket = MockBSBWebSocket(onWebSocketClosed)
-            lastCreatedWebSocket = webSocket
-            // Mirror production behavior: close websocket when scope is cancelled
-            scope.coroutineContext[Job]?.invokeOnCompletion {
-                webSocket.close()
-            }
-            return webSocket
-        }
-
-        fun getLastCreatedWebSocket(): MockBSBWebSocket? = lastCreatedWebSocket
-    }
-
-    /**
-     * Mock implementation of BSBWebSocket for testing.
-     */
-    private class MockBSBWebSocket(
-        private val onClose: () -> Unit = {}
-    ) : BSBWebSocketInternal {
-        private val _eventsFlow = MutableStateFlow<WebSocketEventInternal?>(null)
-
-        override fun getEventsFlow(): Flow<WebSocketEvent> = flowOf()
-
-        override fun getEventsFlowInternal(): Flow<WebSocketEventInternal> = flowOf()
-
-        override suspend fun send(request: InternalWebSocketRequest) {
-            // Mock send - can be extended to track sent requests if needed
-        }
-
-        fun emitEvent(event: WebSocketEventInternal) {
-            _eventsFlow.value = event
-        }
-
-        fun close() {
-            onClose()
-        }
-    }
-
-    // endregion
 }

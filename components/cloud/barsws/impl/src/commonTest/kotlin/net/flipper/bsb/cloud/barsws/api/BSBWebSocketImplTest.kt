@@ -9,7 +9,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,12 +21,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
-import kotlinx.serialization.SerializationException
+import net.flipper.bsb.cloud.barsws.api.fakes.MockBSBWebSocketSession
 import net.flipper.bsb.cloud.barsws.api.model.BUSYBarWebSocketInternal
 import net.flipper.bsb.cloud.barsws.api.model.InternalWebSocketRequest
 import net.flipper.bsb.cloud.barsws.api.model.WebSocketEventInternal
 import net.flipper.bsb.cloud.barsws.api.utils.BSBWebSocketImpl
-import net.flipper.bsb.cloud.barsws.api.utils.wrappers.BSBWebSocketSession
 import net.flipper.core.busylib.log.LogTagProvider
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -704,62 +702,6 @@ class BSBWebSocketImplTest {
         )
 
         webSocketScope.cancel()
-    }
-
-    // endregion
-
-    // region Mock Implementation
-
-    /**
-     * Mock implementation of BSBWebSocketSession for testing.
-     * This allows testing BSBWebSocketImpl without real network connections.
-     */
-    private class MockBSBWebSocketSession(
-        private val failOnSend: Boolean = false
-    ) : BSBWebSocketSession {
-        private val _eventChannel = Channel<WebSocketEventInternal>(Channel.UNLIMITED)
-        private var _shouldThrowSerializationError = false
-        private var _isClosed = false
-
-        val sentRequests = mutableListOf<InternalWebSocketRequest>()
-
-        suspend fun emitEvent(event: WebSocketEventInternal) {
-            if (!_isClosed) {
-                _eventChannel.send(event)
-            }
-        }
-
-        fun emitSerializationError() {
-            _shouldThrowSerializationError = true
-        }
-
-        fun simulateClose() {
-            _isClosed = true
-            _eventChannel.close()
-        }
-
-        override suspend fun receive(): WebSocketEventInternal {
-            if (_shouldThrowSerializationError) {
-                _shouldThrowSerializationError = false
-                throw SerializationException("Mock deserialization error")
-            }
-            if (_isClosed) {
-                throw CancellationException("Session closed")
-            }
-            return _eventChannel.receive()
-        }
-
-        override suspend fun send(request: InternalWebSocketRequest) {
-            if (failOnSend) {
-                error("Mock send failure")
-            }
-            sentRequests.add(request)
-        }
-
-        override suspend fun close() {
-            _isClosed = true
-            _eventChannel.close()
-        }
     }
 
     // endregion

@@ -1,35 +1,25 @@
 package net.flipper.bsb.watchers.provisioning
 
-import com.flipperdevices.core.network.BUSYLibNetworkStateApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.job
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
-import net.flipper.bridge.connection.config.api.PersistedStorageTransactionScope
 import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.config.api.model.addTransport
-import net.flipper.bridge.connection.config.internal.FInternalDevicePersistedStorage
-import net.flipper.bridge.connection.config.internal.InternalStorageTransactionScope
-import net.flipper.bridge.connection.config.internal.TransactionHook
-import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
-import net.flipper.bsb.cloud.barsws.api.BSBWebSocket
-import net.flipper.bsb.cloud.barsws.api.CloudWebSocketApi
-import net.flipper.bsb.cloud.barsws.api.WebSocketEvent
-import net.flipper.bsb.cloud.rest.api.BusyCloudBarsApi
 import net.flipper.bsb.cloud.rest.model.BusyCloudBar
+import net.flipper.bsb.watchers.provisioning.fakes.CloudFetcherTestSetup
+import net.flipper.bsb.watchers.provisioning.fakes.FakeCloudBarsApi
+import net.flipper.bsb.watchers.provisioning.fakes.FakeCloudWebSocketApi
+import net.flipper.bsb.watchers.provisioning.fakes.FakeNetworkStateApi
+import net.flipper.bsb.watchers.provisioning.fakes.FakePersistedStorage
+import net.flipper.bsb.watchers.provisioning.fakes.FakePrincipalApi
 import net.flipper.bsb.watchers.provisioning.utils.CloudFetcher
-import net.flipper.busylib.core.wrapper.wrap
-import net.flipper.core.busylib.ktx.common.asFlow
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -590,12 +580,6 @@ class CloudFetcherWatcherTest {
 
     // region Test Setup
 
-    private data class TestSetup(
-        val watcher: CloudFetcherWatcher,
-        val storage: FakePersistedStorage,
-        val cloudBarsApi: FakeCloudBarsApi
-    )
-
     private fun TestScope.createSetup(
         devices: List<BUSYBar> = emptyList(),
         isNetworkAvailable: Boolean = true,
@@ -603,7 +587,7 @@ class CloudFetcherWatcherTest {
         principal: BUSYLibUserPrincipal = BUSYLibUserPrincipal.Empty,
         principalFlow: MutableStateFlow<BUSYLibUserPrincipal>? = null,
         cloudBarsResult: Result<List<BusyCloudBar>> = Result.success(emptyList())
-    ): TestSetup {
+    ): CloudFetcherTestSetup {
         val storage = FakePersistedStorage(MutableStateFlow(devices))
         val networkApi = FakeNetworkStateApi(networkFlow ?: MutableStateFlow(isNetworkAvailable))
         val principalApi = FakePrincipalApi(principalFlow ?: MutableStateFlow(principal))
@@ -626,7 +610,7 @@ class CloudFetcherWatcherTest {
             cloudFetcher = cloudFetcher
         )
 
-        return TestSetup(watcher, storage, cloudBarsApi)
+        return CloudFetcherTestSetup(watcher, storage, cloudBarsApi)
     }
 
     private fun fakeToken(
@@ -686,103 +670,6 @@ class CloudFetcherWatcherTest {
             }
         }
         return result
-    }
-
-    // endregion
-
-    // region Fakes
-
-    private class FakePersistedStorage(
-        val devices: MutableStateFlow<List<BUSYBar>>
-    ) : FInternalDevicePersistedStorage {
-        private val currentDeviceFlow = MutableStateFlow<BUSYBar?>(null)
-        var transactionCount: Int = 0
-            private set
-
-        override fun getCurrentDeviceFlow() = currentDeviceFlow.asFlow().wrap()
-        override fun getAllDevicesFlow() = devices.asFlow().wrap()
-
-        override suspend fun addHook(vararg hook: TransactionHook) = Unit
-
-        override suspend fun <T> transactionInternal(
-            block: suspend InternalStorageTransactionScope.() -> T
-        ): T {
-            transactionCount++
-            val scope = object : InternalStorageTransactionScope {
-                override fun getCurrentDevice() = currentDeviceFlow.value
-                override fun getAllDevices() = devices.value.toList()
-
-                override fun setCurrentDevice(device: BUSYBar) {
-                    currentDeviceFlow.value = device
-                }
-
-                override fun setCurrentDeviceNullable(device: BUSYBar?) {
-                    currentDeviceFlow.value = device
-                }
-
-                override fun addOrReplace(device: BUSYBar) {
-                    devices.update { list ->
-                        list.filter { it.uniqueId != device.uniqueId } + device
-                    }
-                }
-
-                override fun removeDevice(id: String) {
-                    devices.update { list -> list.filter { it.uniqueId != id } }
-                    if (currentDeviceFlow.value?.uniqueId == id) {
-                        currentDeviceFlow.value = null
-                    }
-                }
-            }
-            return scope.block()
-        }
-
-        override suspend fun <T> transaction(
-            block: suspend PersistedStorageTransactionScope.() -> T
-        ): T = transactionInternal { block() }
-    }
-
-    private class FakeNetworkStateApi(
-        flow: MutableStateFlow<Boolean>
-    ) : BUSYLibNetworkStateApi {
-        override val isNetworkAvailableFlow = flow.wrap()
-    }
-
-    private class FakePrincipalApi(
-        private val flow: MutableStateFlow<BUSYLibUserPrincipal>
-    ) : BUSYLibPrincipalApi {
-        override fun getPrincipalFlow() = flow.wrap()
-    }
-
-    private class FakeCloudBarsApi(
-        private val barsResult: Result<List<BusyCloudBar>>
-    ) : BusyCloudBarsApi {
-        var callCount: Int = 0
-            private set
-
-        override suspend fun getBarsList(
-            principal: BUSYLibUserPrincipal.Token
-        ): Result<List<BusyCloudBar>> {
-            callCount++
-            return barsResult
-        }
-
-        override suspend fun unlinkBusyBar(
-            principal: BUSYLibUserPrincipal.Token,
-            uuid: Uuid
-        ): Result<Unit> = error("Not used in test")
-
-        override suspend fun linkBusyBar(
-            principal: BUSYLibUserPrincipal.Token,
-            pin: String
-        ): Result<Unit> = error("Not used in test")
-    }
-
-    private object FakeCloudWebSocketApi : CloudWebSocketApi {
-        private val fakeBSBWebSocket = object : BSBWebSocket {
-            override fun getEventsFlow(): Flow<WebSocketEvent> = emptyFlow()
-        }
-
-        override fun getWSFlow(): Flow<BSBWebSocket?> = flowOf(fakeBSBWebSocket)
     }
 
     // endregion

@@ -1,25 +1,15 @@
 package net.flipper.bsb.cloud.barsws.api
 
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
-import net.flipper.bsb.cloud.barsws.api.BSBWebSocket
-import net.flipper.bsb.cloud.barsws.api.ProtobufBase64
-import net.flipper.bsb.cloud.barsws.api.WebSocketEvent
+import net.flipper.bsb.cloud.barsws.api.fakes.CloudWebSocketOrchestratorTestEnvironment
+import net.flipper.bsb.cloud.barsws.api.fakes.MockBSBWebSocket
 import net.flipper.bsb.cloud.barsws.api.model.InternalWebSocketRequest
 import net.flipper.bsb.cloud.barsws.api.model.WebSocketEventInternal
-import net.flipper.bsb.cloud.barsws.api.orchestrator.CloudWebSocketOrchestratorApiImpl
-import net.flipper.bsb.cloud.barsws.api.utils.BSBWebSocketInternal
-import net.flipper.bsb.cloud.barsws.api.utils.CloudWebSocketApiInternal
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -43,7 +33,7 @@ class CloudWebSocketOrchestratorApiImplTest {
     @Test
     fun GIVEN_single_subscriber_WHEN_collecting_THEN_sends_subscribe() =
         runTest(UnconfinedTestDispatcher()) {
-            val env = TestEnvironment(backgroundScope)
+            val env = CloudWebSocketOrchestratorTestEnvironment(backgroundScope)
 
             val job = env.orchestrator.getEventsFlow(barId1)
                 .launchIn(backgroundScope)
@@ -60,7 +50,7 @@ class CloudWebSocketOrchestratorApiImplTest {
     @Test
     fun GIVEN_single_subscriber_WHEN_cancelled_THEN_sends_unsubscribe() =
         runTest(UnconfinedTestDispatcher()) {
-            val env = TestEnvironment(backgroundScope)
+            val env = CloudWebSocketOrchestratorTestEnvironment(backgroundScope)
 
             val job = env.orchestrator.getEventsFlow(barId1)
                 .launchIn(backgroundScope)
@@ -81,7 +71,7 @@ class CloudWebSocketOrchestratorApiImplTest {
     @Test
     fun GIVEN_two_subscribers_same_bar_WHEN_both_active_THEN_sends_one_subscribe() =
         runTest(UnconfinedTestDispatcher()) {
-            val env = TestEnvironment(backgroundScope)
+            val env = CloudWebSocketOrchestratorTestEnvironment(backgroundScope)
 
             val job1 = env.orchestrator.getEventsFlow(barId1)
                 .launchIn(backgroundScope)
@@ -100,7 +90,7 @@ class CloudWebSocketOrchestratorApiImplTest {
     @Test
     fun GIVEN_two_subscribers_same_bar_WHEN_first_cancels_THEN_no_unsubscribe() =
         runTest(UnconfinedTestDispatcher()) {
-            val env = TestEnvironment(backgroundScope)
+            val env = CloudWebSocketOrchestratorTestEnvironment(backgroundScope)
 
             val job1 = env.orchestrator.getEventsFlow(barId1)
                 .launchIn(backgroundScope)
@@ -121,7 +111,7 @@ class CloudWebSocketOrchestratorApiImplTest {
     @Test
     fun GIVEN_two_subscribers_same_bar_WHEN_both_cancel_THEN_sends_one_unsubscribe() =
         runTest(UnconfinedTestDispatcher()) {
-            val env = TestEnvironment(backgroundScope)
+            val env = CloudWebSocketOrchestratorTestEnvironment(backgroundScope)
 
             val job1 = env.orchestrator.getEventsFlow(barId1)
                 .launchIn(backgroundScope)
@@ -142,7 +132,7 @@ class CloudWebSocketOrchestratorApiImplTest {
     @Test
     fun GIVEN_subscribers_to_different_bars_WHEN_active_THEN_each_gets_own_subscribe() =
         runTest(UnconfinedTestDispatcher()) {
-            val env = TestEnvironment(backgroundScope)
+            val env = CloudWebSocketOrchestratorTestEnvironment(backgroundScope)
 
             val job1 = env.orchestrator.getEventsFlow(barId1)
                 .launchIn(backgroundScope)
@@ -163,7 +153,7 @@ class CloudWebSocketOrchestratorApiImplTest {
     @Test
     fun GIVEN_subscribers_to_different_bars_WHEN_one_cancels_THEN_only_that_bar_unsubscribes() =
         runTest(UnconfinedTestDispatcher()) {
-            val env = TestEnvironment(backgroundScope)
+            val env = CloudWebSocketOrchestratorTestEnvironment(backgroundScope)
 
             val job1 = env.orchestrator.getEventsFlow(barId1)
                 .launchIn(backgroundScope)
@@ -190,7 +180,7 @@ class CloudWebSocketOrchestratorApiImplTest {
     @Test
     fun GIVEN_all_cancelled_WHEN_resubscribing_THEN_sends_subscribe_again() =
         runTest(UnconfinedTestDispatcher()) {
-            val env = TestEnvironment(backgroundScope)
+            val env = CloudWebSocketOrchestratorTestEnvironment(backgroundScope)
 
             // First cycle
             val job1 = env.orchestrator.getEventsFlow(barId1)
@@ -221,7 +211,7 @@ class CloudWebSocketOrchestratorApiImplTest {
     @Test
     fun GIVEN_event_for_subscribed_bar_WHEN_emitted_THEN_received_by_collector() =
         runTest(UnconfinedTestDispatcher()) {
-            val env = TestEnvironment(backgroundScope)
+            val env = CloudWebSocketOrchestratorTestEnvironment(backgroundScope)
             val received = mutableListOf<ProtobufBase64>()
 
             val job = env.orchestrator.getEventsFlow(barId1)
@@ -240,7 +230,7 @@ class CloudWebSocketOrchestratorApiImplTest {
     @Test
     fun GIVEN_event_for_other_bar_WHEN_emitted_THEN_not_received() =
         runTest(UnconfinedTestDispatcher()) {
-            val env = TestEnvironment(backgroundScope)
+            val env = CloudWebSocketOrchestratorTestEnvironment(backgroundScope)
             val received = mutableListOf<ProtobufBase64>()
 
             val job = env.orchestrator.getEventsFlow(barId1)
@@ -258,7 +248,7 @@ class CloudWebSocketOrchestratorApiImplTest {
     @Test
     fun GIVEN_multiple_events_WHEN_emitted_sequentially_THEN_all_received_in_order() =
         runTest(UnconfinedTestDispatcher()) {
-            val env = TestEnvironment(backgroundScope)
+            val env = CloudWebSocketOrchestratorTestEnvironment(backgroundScope)
             val received = mutableListOf<ProtobufBase64>()
 
             val job = env.orchestrator.getEventsFlow(barId1)
@@ -280,7 +270,7 @@ class CloudWebSocketOrchestratorApiImplTest {
     @Test
     fun GIVEN_two_subscribers_same_bar_WHEN_event_emitted_THEN_both_receive_it() =
         runTest(UnconfinedTestDispatcher()) {
-            val env = TestEnvironment(backgroundScope)
+            val env = CloudWebSocketOrchestratorTestEnvironment(backgroundScope)
             val received1 = mutableListOf<ProtobufBase64>()
             val received2 = mutableListOf<ProtobufBase64>()
 
@@ -304,7 +294,7 @@ class CloudWebSocketOrchestratorApiImplTest {
     @Test
     fun GIVEN_mixed_events_WHEN_emitted_THEN_each_subscriber_gets_only_own_bar() =
         runTest(UnconfinedTestDispatcher()) {
-            val env = TestEnvironment(backgroundScope)
+            val env = CloudWebSocketOrchestratorTestEnvironment(backgroundScope)
             val received1 = mutableListOf<ProtobufBase64>()
             val received2 = mutableListOf<ProtobufBase64>()
 
@@ -340,7 +330,7 @@ class CloudWebSocketOrchestratorApiImplTest {
     @Test
     fun GIVEN_many_concurrent_subscribers_same_bar_WHEN_active_THEN_one_subscribe_one_unsubscribe() =
         runTest(UnconfinedTestDispatcher()) {
-            val env = TestEnvironment(backgroundScope)
+            val env = CloudWebSocketOrchestratorTestEnvironment(backgroundScope)
 
             val jobs = List(20) {
                 env.orchestrator.getEventsFlow(barId1)
@@ -363,7 +353,7 @@ class CloudWebSocketOrchestratorApiImplTest {
     @Test
     fun GIVEN_five_subscribers_WHEN_three_cancel_THEN_no_unsubscribe_yet() =
         runTest(UnconfinedTestDispatcher()) {
-            val env = TestEnvironment(backgroundScope)
+            val env = CloudWebSocketOrchestratorTestEnvironment(backgroundScope)
 
             val jobs = List(5) {
                 env.orchestrator.getEventsFlow(barId1)
@@ -391,7 +381,7 @@ class CloudWebSocketOrchestratorApiImplTest {
     @Test
     fun GIVEN_rapid_subscribe_unsubscribe_cycles_WHEN_same_bar_THEN_balanced_subscribe_unsubscribe() =
         runTest(UnconfinedTestDispatcher()) {
-            val env = TestEnvironment(backgroundScope)
+            val env = CloudWebSocketOrchestratorTestEnvironment(backgroundScope)
 
             repeat(50) {
                 val job = env.orchestrator.getEventsFlow(barId1)
@@ -412,7 +402,7 @@ class CloudWebSocketOrchestratorApiImplTest {
     @Test
     fun GIVEN_interleaved_bars_WHEN_subscribing_unsubscribing_THEN_no_cross_contamination() =
         runTest(UnconfinedTestDispatcher()) {
-            val env = TestEnvironment(backgroundScope)
+            val env = CloudWebSocketOrchestratorTestEnvironment(backgroundScope)
 
             val job1 = env.orchestrator.getEventsFlow(barId1)
                 .launchIn(backgroundScope)
@@ -449,7 +439,7 @@ class CloudWebSocketOrchestratorApiImplTest {
     @Test
     fun GIVEN_active_subscriber_WHEN_websocket_changes_THEN_resubscribes_on_new_websocket() =
         runTest(UnconfinedTestDispatcher()) {
-            val env = TestEnvironment(backgroundScope)
+            val env = CloudWebSocketOrchestratorTestEnvironment(backgroundScope)
 
             val job = env.orchestrator.getEventsFlow(barId1)
                 .launchIn(backgroundScope)
@@ -472,7 +462,7 @@ class CloudWebSocketOrchestratorApiImplTest {
     @Test
     fun GIVEN_multiple_subscribers_same_bar_WHEN_websocket_changes_THEN_only_one_subscribe_on_new_ws() =
         runTest(UnconfinedTestDispatcher()) {
-            val env = TestEnvironment(backgroundScope)
+            val env = CloudWebSocketOrchestratorTestEnvironment(backgroundScope)
 
             val job1 = env.orchestrator.getEventsFlow(barId1)
                 .launchIn(backgroundScope)
@@ -495,7 +485,7 @@ class CloudWebSocketOrchestratorApiImplTest {
     @Test
     fun GIVEN_subscriber_WHEN_websocket_changes_THEN_events_from_new_ws_are_received() =
         runTest(UnconfinedTestDispatcher()) {
-            val env = TestEnvironment(backgroundScope)
+            val env = CloudWebSocketOrchestratorTestEnvironment(backgroundScope)
             val received = mutableListOf<ProtobufBase64>()
 
             val job = env.orchestrator.getEventsFlow(barId1)
@@ -525,7 +515,10 @@ class CloudWebSocketOrchestratorApiImplTest {
     @Test
     fun GIVEN_no_websocket_initially_WHEN_websocket_appears_THEN_subscribes() =
         runTest(UnconfinedTestDispatcher()) {
-            val env = TestEnvironment(backgroundScope, initiallyConnected = false)
+            val env = CloudWebSocketOrchestratorTestEnvironment(
+                scope = backgroundScope,
+                initiallyConnected = false
+            )
 
             val job = env.orchestrator.getEventsFlow(barId1)
                 .launchIn(backgroundScope)
@@ -546,7 +539,7 @@ class CloudWebSocketOrchestratorApiImplTest {
     @Test
     fun GIVEN_websocket_becomes_null_WHEN_last_subscriber_cancels_THEN_no_crash() =
         runTest(UnconfinedTestDispatcher()) {
-            val env = TestEnvironment(backgroundScope)
+            val env = CloudWebSocketOrchestratorTestEnvironment(backgroundScope)
 
             val job = env.orchestrator.getEventsFlow(barId1)
                 .launchIn(backgroundScope)
@@ -568,7 +561,7 @@ class CloudWebSocketOrchestratorApiImplTest {
     @Test
     fun GIVEN_many_bars_subscribed_WHEN_all_cancel_THEN_each_gets_unsubscribe() =
         runTest(UnconfinedTestDispatcher()) {
-            val env = TestEnvironment(backgroundScope)
+            val env = CloudWebSocketOrchestratorTestEnvironment(backgroundScope)
 
             val barIds = List(20) { i ->
                 Uuid.parse(
@@ -601,7 +594,7 @@ class CloudWebSocketOrchestratorApiImplTest {
     @Test
     fun GIVEN_subscriber_WHEN_events_arrive_before_and_after_cancel_THEN_only_before_received() =
         runTest(UnconfinedTestDispatcher()) {
-            val env = TestEnvironment(backgroundScope)
+            val env = CloudWebSocketOrchestratorTestEnvironment(backgroundScope)
             val received = mutableListOf<ProtobufBase64>()
 
             val job = env.orchestrator.getEventsFlow(barId1)
@@ -626,56 +619,6 @@ class CloudWebSocketOrchestratorApiImplTest {
 
     private fun protobufEvent(cloudId: Uuid, state: String) =
         WebSocketEventInternal.Protobuf(cloudId = cloudId, state = state)
-
-    private class MockBSBWebSocket : BSBWebSocketInternal {
-        private val _sentRequests = mutableListOf<InternalWebSocketRequest>()
-        private val requestsMutex = Mutex()
-        val sentRequests: List<InternalWebSocketRequest> get() = _sentRequests.toList()
-
-        private val _eventsFlow = MutableSharedFlow<WebSocketEventInternal>(
-            extraBufferCapacity = 64
-        )
-
-        override fun getEventsFlow(): Flow<WebSocketEvent> =
-            kotlinx.coroutines.flow.emptyFlow()
-
-        override fun getEventsFlowInternal(): Flow<WebSocketEventInternal> = _eventsFlow
-
-        override suspend fun send(request: InternalWebSocketRequest) {
-            requestsMutex.withLock {
-                _sentRequests.add(request)
-            }
-        }
-
-        suspend fun emitEvent(event: WebSocketEventInternal) {
-            _eventsFlow.emit(event)
-        }
-    }
-
-    private class MockCloudWebSocketApi(
-        initialWs: BSBWebSocketInternal? = null
-    ) : CloudWebSocketApiInternal {
-        private val _wsFlow = MutableStateFlow<BSBWebSocketInternal?>(initialWs)
-
-        override fun getWSFlow(): Flow<BSBWebSocket?> = _wsFlow
-
-        override fun getWSInternalFlow(): Flow<BSBWebSocketInternal?> = _wsFlow
-
-        fun setWebSocket(ws: BSBWebSocketInternal?) {
-            _wsFlow.value = ws
-        }
-    }
-
-    private class TestEnvironment(
-        scope: CoroutineScope,
-        initiallyConnected: Boolean = true
-    ) {
-        val mockWs = MockBSBWebSocket()
-        val mockApi = MockCloudWebSocketApi(
-            initialWs = if (initiallyConnected) mockWs else null
-        )
-        val orchestrator = CloudWebSocketOrchestratorApiImpl(mockApi, scope)
-    }
 
     // endregion
 }
