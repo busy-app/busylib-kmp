@@ -7,33 +7,33 @@ import net.flipper.bridge.connection.config.internal.TransactionHook
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
 
-class RemoveDuplicateCloudHook : TransactionHook, LogTagProvider {
-    override val TAG = "RemoveDuplicateCloudHook"
+class RemoveDuplicateHardwareIdHook : TransactionHook, LogTagProvider {
+    override val TAG = "RemoveDuplicateHardwareIdHook"
 
-    override fun getPriority() = HookPriority.LOW
+    override fun getPriority() = HookPriority.NORMAL
 
     @Suppress("NestedBlockDepth")
     override fun InternalStorageTransactionScope.postTransaction() {
         val allDevices = getAllDevices()
         val currentDevice = getCurrentDevice()
-        val cloudDuplicatesDevices = allDevices
-            .filter { it.cloud != null }
-            .groupBy { it.cloud!!.deviceId }
+        val hwIdDuplicatesDevices = allDevices
+            .filter { it.hardwareId != null }
+            .groupBy { it.hardwareId }
             .values
             .filter { it.size > 1 }
 
-        if (cloudDuplicatesDevices.isEmpty()) {
+        if (hwIdDuplicatesDevices.isEmpty()) {
             return
         }
-        info { "Found $cloudDuplicatesDevices duplicate cloud devices" }
+        info { "Found $hwIdDuplicatesDevices duplicate hardware id devices" }
 
-        for (duplicates in cloudDuplicatesDevices) {
+        for (duplicates in hwIdDuplicatesDevices) {
             var best = duplicates.maxBy { it.connectionWays.size }
             duplicates.forEach { device ->
                 if (device.uniqueId != best.uniqueId) {
                     info {
                         "Removing duplicate device ${device.uniqueId} " +
-                            "with cloud id ${device.cloud?.deviceId}, keeping ${best.uniqueId}"
+                            "with hardware id ${device.hardwareId}, keeping ${best.uniqueId}"
                     }
                     removeDevice(device.uniqueId)
                     if (currentDevice?.uniqueId == device.uniqueId) {

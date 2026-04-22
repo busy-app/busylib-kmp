@@ -1,5 +1,6 @@
 package net.flipper.bsb.watchers.desktop.hook
 
+import net.flipper.bridge.connection.config.api.model.mergeBBIfEmpty
 import net.flipper.bridge.connection.config.internal.HookPriority
 import net.flipper.bridge.connection.config.internal.InternalStorageTransactionScope
 import net.flipper.bridge.connection.config.internal.TransactionHook
@@ -24,14 +25,18 @@ class DesktopAutoPurger : TransactionHook, LogTagProvider {
             }
         } else {
             val currentDevice = getCurrentDevice()
-            val deviceToKeep = onlyLansOrEmpty
+
+            var deviceToKeep = onlyLansOrEmpty
                 .firstOrNull { it.uniqueId == currentDevice?.uniqueId }
                 ?: onlyLansOrEmpty.first()
-            onlyLansOrEmpty
+            val list = onlyLansOrEmpty
                 .filter { it.uniqueId != deviceToKeep.uniqueId }
                 .onEach {
+                    deviceToKeep = mergeBBIfEmpty(deviceToKeep, it)
                     info { "Remove device $it because this is lan duplicated" }
                 }
+            addOrReplace(deviceToKeep)
+            list
         }
         listToDelete.forEach {
             removeDevice(it.uniqueId)

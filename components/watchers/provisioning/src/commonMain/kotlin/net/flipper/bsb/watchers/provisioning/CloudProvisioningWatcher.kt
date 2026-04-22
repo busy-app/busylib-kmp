@@ -100,9 +100,10 @@ class CloudProvisioningWatcher(
         if (cloudConnection == null) {
             if (cloudId != null) { // Only local transport, connected to cloud - add cloud transport to current device
                 info { "Found new cloud connection for device $original with id $cloudId" }
-                modifyOrDelete(original) {
-                    it.copy(cloud = BUSYBar.ConnectionWay.Cloud(cloudId))
-                }
+                addOrReplace(
+                    original
+                        .addTransport(cloud = BUSYBar.ConnectionWay.Cloud(cloudId))
+                )
                 return
             }
             // Only local transport, not connected to cloud - skip

@@ -131,7 +131,7 @@ class FConnectionServiceImpl(
                     return@transactionInternal ForgetDeviceResult.COULD_NOT_GET_CLOUD_BARS_LIST
                 }
                 val isBarOnCloud = cloudBarsList
-                    .firstOrNull { busyCloudBar -> busyCloudBar.id == "$cloudDeviceId" } != null
+                    .firstOrNull { busyCloudBar -> busyCloudBar.id == cloudDeviceId } != null
                 if (isBarOnCloud) {
                     val result = barsApi
                         .unlinkBusyBar(principal, cloudDeviceId)

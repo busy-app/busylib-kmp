@@ -2,7 +2,6 @@ package net.flipper.bridge.connection.transport.tcp.lan.impl.metainfo
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.mapNotNull
-import kotlinx.serialization.json.JsonPrimitive
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.transport.common.api.serial.FStatusStreamingApi
@@ -25,16 +24,12 @@ class FCloudStreamingApi(
 
     override fun getEvents(): Flow<StatusStreamingEvent> {
         return orchestrator.getEventsFlow(deviceId)
-            .mapNotNull { (key, value) ->
-                if (key == "state" && value is JsonPrimitive) {
-                    runSuspendCatching {
-                        StatusStreamingEvent.Protobuf(Base64.decode(value.content))
-                    }.onFailure {
-                        error(it) { "Failure decode $value" }
-                    }.getOrNull()
-                } else {
-                    null
-                }
+            .mapNotNull { protobuf ->
+                runSuspendCatching {
+                    StatusStreamingEvent.Protobuf(Base64.decode(protobuf.data))
+                }.onFailure {
+                    error(it) { "Failure decode ${protobuf.data}" }
+                }.getOrNull()
             }
     }
 }
