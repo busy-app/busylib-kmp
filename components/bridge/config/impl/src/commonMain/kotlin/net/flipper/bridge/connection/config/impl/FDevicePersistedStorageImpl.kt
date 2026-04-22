@@ -9,6 +9,7 @@ import net.flipper.bridge.connection.config.api.PersistedStorageTransactionScope
 import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.config.impl.hooks.AlwaysActiveHook
 import net.flipper.bridge.connection.config.impl.hooks.RemoveDuplicateCloudHook
+import net.flipper.bridge.connection.config.impl.hooks.RemoveDuplicateHardwareIdHook
 import net.flipper.bridge.connection.config.internal.FInternalDevicePersistedStorage
 import net.flipper.bridge.connection.config.internal.InternalStorageTransactionScope
 import net.flipper.bridge.connection.config.internal.TransactionHook
@@ -35,7 +36,8 @@ class FDevicePersistedStorageImpl(
     private val bleConfigKrate = BBConfigSettingsKrateImpl(observableSettings)
     private var hooks = listOf<TransactionHook>(
         AlwaysActiveHook(),
-        RemoveDuplicateCloudHook()
+        RemoveDuplicateCloudHook(),
+        RemoveDuplicateHardwareIdHook()
     ).sortedBy { it.getPriority() }
 
     override suspend fun addHook(vararg hook: TransactionHook) {

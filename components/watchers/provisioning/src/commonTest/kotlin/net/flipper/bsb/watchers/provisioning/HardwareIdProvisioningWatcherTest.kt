@@ -47,7 +47,7 @@ import kotlin.test.assertTrue
 import kotlin.uuid.Uuid
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class CloudProvisioningWatcherTest {
+class HardwareIdProvisioningWatcherTest {
 
     // region Test Cases
 
@@ -273,7 +273,7 @@ class CloudProvisioningWatcherTest {
     // region Test Setup
 
     private data class TestSetup(
-        val watcher: CloudProvisioningWatcher,
+        val watcher: HardwareIdProvisioningWatcher,
         val storage: FakePersistedStorage
     )
 
@@ -304,7 +304,7 @@ class CloudProvisioningWatcherTest {
             )
         )
 
-        val watcher = CloudProvisioningWatcher(
+        val watcher = HardwareIdProvisioningWatcher(
             scope = scope,
             featureProvider = FakeFeatureProvider(featureFlow),
             orchestrator = FakeOrchestrator(orchestratorState),
