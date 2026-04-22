@@ -9,6 +9,7 @@ import net.flipper.bridge.connection.config.api.PersistedStorageTransactionScope
 import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.config.impl.hooks.AlwaysActiveHook
 import net.flipper.bridge.connection.config.impl.hooks.RemoveDuplicateCloudHook
+import net.flipper.bridge.connection.config.impl.hooks.RemoveDuplicateHardwareIdHook
 import net.flipper.bridge.connection.config.internal.FInternalDevicePersistedStorage
 import net.flipper.bridge.connection.config.internal.InternalStorageTransactionScope
 import net.flipper.bridge.connection.config.internal.TransactionHook
@@ -35,7 +36,8 @@ class FDevicePersistedStorageImpl(
     private val bleConfigKrate = BBConfigSettingsKrateImpl(observableSettings)
     private var hooks = listOf<TransactionHook>(
         AlwaysActiveHook(),
-        RemoveDuplicateCloudHook()
+        RemoveDuplicateCloudHook(),
+        RemoveDuplicateHardwareIdHook()
     ).sortedBy { it.getPriority() }
 
     override suspend fun addHook(vararg hook: TransactionHook) {
@@ -72,12 +74,14 @@ class FDevicePersistedStorageImpl(
                 scope.postTransaction()
             }
         }
+        val toSave = scope.get()
+        if (original == toSave) {
+            info { "No changes, so skip current object: $original" }
+        } else {
+            info { "Result of transaction: $toSave from $original" }
+            bleConfigKrate.save(toSave)
+        }
 
-        bleConfigKrate.save(
-            scope.get().also {
-                info { "Result of transaction: $it from $original" }
-            }
-        )
         return@withLockResult result
     }
 

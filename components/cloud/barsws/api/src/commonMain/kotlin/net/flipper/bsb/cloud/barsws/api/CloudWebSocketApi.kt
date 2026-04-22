@@ -1,4 +1,4 @@
-package net.flipper.bsb.cloud.barsws.api.utils
+package net.flipper.bsb.cloud.barsws.api
 
 import kotlinx.coroutines.flow.Flow
 

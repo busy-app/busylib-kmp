@@ -6,6 +6,7 @@ import io.ktor.client.request.get
 import kotlinx.coroutines.CoroutineDispatcher
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcSystemApi
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarStatus
+import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarStatusDevice
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarStatusPower
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarStatusSystem
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarVersion
@@ -25,6 +26,12 @@ class FRpcSystemApiImpl(
     override suspend fun getStatus(): Result<BusyBarStatus> {
         return runSuspendCatching(dispatcher) {
             httpClient.get("/api/status").body<BusyBarStatus>()
+        }
+    }
+
+    override suspend fun getDeviceStatus(): Result<BusyBarStatusDevice> {
+        return runSuspendCatching(dispatcher) {
+            httpClient.get("/api/status/device").body<BusyBarStatusDevice>()
         }
     }
 

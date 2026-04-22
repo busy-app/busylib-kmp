@@ -3,7 +3,7 @@ package net.flipper.bsb.cloud.barsws.api.orchestrator
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withTimeout
 import net.flipper.bsb.cloud.barsws.api.model.InternalWebSocketRequest
-import net.flipper.bsb.cloud.barsws.api.utils.BSBWebSocket
+import net.flipper.bsb.cloud.barsws.api.utils.BSBWebSocketInternal
 import net.flipper.core.busylib.ktx.common.withLock
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
@@ -19,11 +19,11 @@ private val SEND_TIMEOUT = 5.seconds
 class ActiveWebSocketHolder(private val logger: LogTagProvider) {
     private val mutex = Mutex()
     private val activeSubscriptionsSet = mutableSetOf<Uuid>()
-    private var currentWebSocket: BSBWebSocket? = null
+    private var currentWebSocket: BSBWebSocketInternal? = null
 
     suspend fun invalidateSubscribers(
         subscriberCounts: Map<Uuid, Int>,
-        webSocketApi: BSBWebSocket
+        webSocketApi: BSBWebSocketInternal
     ) = logger.withLock(mutex, "invalidate") {
         if (currentWebSocket !== webSocketApi) {
             activeSubscriptionsSet.clear()
@@ -73,7 +73,7 @@ class ActiveWebSocketHolder(private val logger: LogTagProvider) {
     }
 
     private suspend fun safeSend(
-        webSocketApi: BSBWebSocket,
+        webSocketApi: BSBWebSocketInternal,
         request: InternalWebSocketRequest
     ): Result<Unit> {
         logger.verbose { "Send $request" }
