@@ -12,11 +12,14 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
-import net.flipper.bsb.cloud.barsws.api.CloudWebSocketApi
+import net.flipper.bsb.cloud.barsws.api.BSBWebSocket
+import net.flipper.bsb.cloud.barsws.api.ProtobufBase64
+import net.flipper.bsb.cloud.barsws.api.WebSocketEvent
 import net.flipper.bsb.cloud.barsws.api.model.InternalWebSocketRequest
-import net.flipper.bsb.cloud.barsws.api.model.WebSocketEvent
+import net.flipper.bsb.cloud.barsws.api.model.WebSocketEventInternal
 import net.flipper.bsb.cloud.barsws.api.orchestrator.CloudWebSocketOrchestratorApiImpl
-import net.flipper.bsb.cloud.barsws.api.utils.BSBWebSocket
+import net.flipper.bsb.cloud.barsws.api.utils.BSBWebSocketInternal
+import net.flipper.bsb.cloud.barsws.api.utils.CloudWebSocketApiInternal
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -219,17 +222,17 @@ class CloudWebSocketOrchestratorApiImplTest {
     fun GIVEN_event_for_subscribed_bar_WHEN_emitted_THEN_received_by_collector() =
         runTest(UnconfinedTestDispatcher()) {
             val env = TestEnvironment(backgroundScope)
-            val received = mutableListOf<Pair<String, Any>>()
+            val received = mutableListOf<ProtobufBase64>()
 
             val job = env.orchestrator.getEventsFlow(barId1)
                 .onEach { received.add(it) }
                 .launchIn(backgroundScope)
             advanceDebounce()
 
-            env.mockWs.emitEvent(WebSocketEvent(barId1, mapOf("key" to "value")))
+            env.mockWs.emitEvent(protobufEvent(barId1, "state1"))
 
             assertEquals(1, received.size)
-            assertEquals("key" to ("value" as Any), received[0])
+            assertEquals(ProtobufBase64("state1"), received[0])
 
             job.cancel()
         }
@@ -238,39 +241,16 @@ class CloudWebSocketOrchestratorApiImplTest {
     fun GIVEN_event_for_other_bar_WHEN_emitted_THEN_not_received() =
         runTest(UnconfinedTestDispatcher()) {
             val env = TestEnvironment(backgroundScope)
-            val received = mutableListOf<Pair<String, Any>>()
+            val received = mutableListOf<ProtobufBase64>()
 
             val job = env.orchestrator.getEventsFlow(barId1)
                 .onEach { received.add(it) }
                 .launchIn(backgroundScope)
             advanceDebounce()
 
-            env.mockWs.emitEvent(WebSocketEvent(barId2, mapOf("key" to "value")))
+            env.mockWs.emitEvent(protobufEvent(barId2, "state1"))
 
             assertTrue(received.isEmpty())
-
-            job.cancel()
-        }
-
-    @Test
-    fun GIVEN_event_with_multiple_values_WHEN_emitted_THEN_flattened_to_pairs() =
-        runTest(UnconfinedTestDispatcher()) {
-            val env = TestEnvironment(backgroundScope)
-            val received = mutableListOf<Pair<String, Any>>()
-
-            val job = env.orchestrator.getEventsFlow(barId1)
-                .onEach { received.add(it) }
-                .launchIn(backgroundScope)
-            advanceDebounce()
-
-            env.mockWs.emitEvent(
-                WebSocketEvent(barId1, mapOf("a" to 1, "b" to "two", "c" to true))
-            )
-
-            assertEquals(3, received.size)
-            assertTrue(received.contains("a" to (1 as Any)))
-            assertTrue(received.contains("b" to ("two" as Any)))
-            assertTrue(received.contains("c" to (true as Any)))
 
             job.cancel()
         }
@@ -279,38 +259,20 @@ class CloudWebSocketOrchestratorApiImplTest {
     fun GIVEN_multiple_events_WHEN_emitted_sequentially_THEN_all_received_in_order() =
         runTest(UnconfinedTestDispatcher()) {
             val env = TestEnvironment(backgroundScope)
-            val received = mutableListOf<Pair<String, Any>>()
+            val received = mutableListOf<ProtobufBase64>()
 
             val job = env.orchestrator.getEventsFlow(barId1)
                 .onEach { received.add(it) }
                 .launchIn(backgroundScope)
             advanceDebounce()
 
-            env.mockWs.emitEvent(WebSocketEvent(barId1, mapOf("first" to 1)))
-            env.mockWs.emitEvent(WebSocketEvent(barId1, mapOf("second" to 2)))
+            env.mockWs.emitEvent(protobufEvent(barId1, "first"))
+            env.mockWs.emitEvent(protobufEvent(barId1, "second"))
 
             assertEquals(
-                listOf("first" to (1 as Any), "second" to (2 as Any)),
+                listOf(ProtobufBase64("first"), ProtobufBase64("second")),
                 received
             )
-
-            job.cancel()
-        }
-
-    @Test
-    fun GIVEN_event_with_empty_values_WHEN_emitted_THEN_no_pairs_emitted() =
-        runTest(UnconfinedTestDispatcher()) {
-            val env = TestEnvironment(backgroundScope)
-            val received = mutableListOf<Pair<String, Any>>()
-
-            val job = env.orchestrator.getEventsFlow(barId1)
-                .onEach { received.add(it) }
-                .launchIn(backgroundScope)
-            advanceDebounce()
-
-            env.mockWs.emitEvent(WebSocketEvent(barId1, emptyMap()))
-
-            assertTrue(received.isEmpty())
 
             job.cancel()
         }
@@ -319,8 +281,8 @@ class CloudWebSocketOrchestratorApiImplTest {
     fun GIVEN_two_subscribers_same_bar_WHEN_event_emitted_THEN_both_receive_it() =
         runTest(UnconfinedTestDispatcher()) {
             val env = TestEnvironment(backgroundScope)
-            val received1 = mutableListOf<Pair<String, Any>>()
-            val received2 = mutableListOf<Pair<String, Any>>()
+            val received1 = mutableListOf<ProtobufBase64>()
+            val received2 = mutableListOf<ProtobufBase64>()
 
             val job1 = env.orchestrator.getEventsFlow(barId1)
                 .onEach { received1.add(it) }
@@ -330,10 +292,10 @@ class CloudWebSocketOrchestratorApiImplTest {
                 .launchIn(backgroundScope)
             advanceDebounce()
 
-            env.mockWs.emitEvent(WebSocketEvent(barId1, mapOf("key" to "value")))
+            env.mockWs.emitEvent(protobufEvent(barId1, "state1"))
 
-            assertEquals(listOf("key" to ("value" as Any)), received1)
-            assertEquals(listOf("key" to ("value" as Any)), received2)
+            assertEquals(listOf(ProtobufBase64("state1")), received1)
+            assertEquals(listOf(ProtobufBase64("state1")), received2)
 
             job1.cancel()
             job2.cancel()
@@ -343,8 +305,8 @@ class CloudWebSocketOrchestratorApiImplTest {
     fun GIVEN_mixed_events_WHEN_emitted_THEN_each_subscriber_gets_only_own_bar() =
         runTest(UnconfinedTestDispatcher()) {
             val env = TestEnvironment(backgroundScope)
-            val received1 = mutableListOf<Pair<String, Any>>()
-            val received2 = mutableListOf<Pair<String, Any>>()
+            val received1 = mutableListOf<ProtobufBase64>()
+            val received2 = mutableListOf<ProtobufBase64>()
 
             val job1 = env.orchestrator.getEventsFlow(barId1)
                 .onEach { received1.add(it) }
@@ -354,16 +316,16 @@ class CloudWebSocketOrchestratorApiImplTest {
                 .launchIn(backgroundScope)
             advanceDebounce()
 
-            env.mockWs.emitEvent(WebSocketEvent(barId1, mapOf("bar1" to "a")))
-            env.mockWs.emitEvent(WebSocketEvent(barId2, mapOf("bar2" to "b")))
-            env.mockWs.emitEvent(WebSocketEvent(barId1, mapOf("bar1again" to "c")))
+            env.mockWs.emitEvent(protobufEvent(barId1, "bar1-a"))
+            env.mockWs.emitEvent(protobufEvent(barId2, "bar2-b"))
+            env.mockWs.emitEvent(protobufEvent(barId1, "bar1-c"))
 
             assertEquals(
-                listOf("bar1" to ("a" as Any), "bar1again" to ("c" as Any)),
+                listOf(ProtobufBase64("bar1-a"), ProtobufBase64("bar1-c")),
                 received1
             )
             assertEquals(
-                listOf("bar2" to ("b" as Any)),
+                listOf(ProtobufBase64("bar2-b")),
                 received2
             )
 
@@ -534,24 +496,24 @@ class CloudWebSocketOrchestratorApiImplTest {
     fun GIVEN_subscriber_WHEN_websocket_changes_THEN_events_from_new_ws_are_received() =
         runTest(UnconfinedTestDispatcher()) {
             val env = TestEnvironment(backgroundScope)
-            val received = mutableListOf<Pair<String, Any>>()
+            val received = mutableListOf<ProtobufBase64>()
 
             val job = env.orchestrator.getEventsFlow(barId1)
                 .onEach { received.add(it) }
                 .launchIn(backgroundScope)
             advanceDebounce()
 
-            env.mockWs.emitEvent(WebSocketEvent(barId1, mapOf("old" to 1)))
+            env.mockWs.emitEvent(protobufEvent(barId1, "old"))
             assertEquals(1, received.size)
 
             val newWs = MockBSBWebSocket()
             env.mockApi.setWebSocket(newWs)
             advanceDebounce()
 
-            newWs.emitEvent(WebSocketEvent(barId1, mapOf("new" to 2)))
+            newWs.emitEvent(protobufEvent(barId1, "new"))
 
             assertEquals(2, received.size)
-            assertEquals("new" to (2 as Any), received[1])
+            assertEquals(ProtobufBase64("new"), received[1])
 
             job.cancel()
         }
@@ -640,38 +602,44 @@ class CloudWebSocketOrchestratorApiImplTest {
     fun GIVEN_subscriber_WHEN_events_arrive_before_and_after_cancel_THEN_only_before_received() =
         runTest(UnconfinedTestDispatcher()) {
             val env = TestEnvironment(backgroundScope)
-            val received = mutableListOf<Pair<String, Any>>()
+            val received = mutableListOf<ProtobufBase64>()
 
             val job = env.orchestrator.getEventsFlow(barId1)
                 .onEach { received.add(it) }
                 .launchIn(backgroundScope)
             advanceDebounce()
 
-            env.mockWs.emitEvent(WebSocketEvent(barId1, mapOf("before" to 1)))
+            env.mockWs.emitEvent(protobufEvent(barId1, "before"))
 
             job.cancel()
             advanceDebounce()
 
-            env.mockWs.emitEvent(WebSocketEvent(barId1, mapOf("after" to 2)))
+            env.mockWs.emitEvent(protobufEvent(barId1, "after"))
 
             assertEquals(1, received.size)
-            assertEquals("before" to (1 as Any), received[0])
+            assertEquals(ProtobufBase64("before"), received[0])
         }
 
     // endregion
 
     // region Test Infrastructure
 
-    private class MockBSBWebSocket : BSBWebSocket {
+    private fun protobufEvent(cloudId: Uuid, state: String) =
+        WebSocketEventInternal.Protobuf(cloudId = cloudId, state = state)
+
+    private class MockBSBWebSocket : BSBWebSocketInternal {
         private val _sentRequests = mutableListOf<InternalWebSocketRequest>()
         private val requestsMutex = Mutex()
         val sentRequests: List<InternalWebSocketRequest> get() = _sentRequests.toList()
 
-        private val _eventsFlow = MutableSharedFlow<WebSocketEvent>(
+        private val _eventsFlow = MutableSharedFlow<WebSocketEventInternal>(
             extraBufferCapacity = 64
         )
 
-        override fun getEventsFlow(): Flow<WebSocketEvent> = _eventsFlow
+        override fun getEventsFlow(): Flow<WebSocketEvent> =
+            kotlinx.coroutines.flow.emptyFlow()
+
+        override fun getEventsFlowInternal(): Flow<WebSocketEventInternal> = _eventsFlow
 
         override suspend fun send(request: InternalWebSocketRequest) {
             requestsMutex.withLock {
@@ -679,19 +647,21 @@ class CloudWebSocketOrchestratorApiImplTest {
             }
         }
 
-        suspend fun emitEvent(event: WebSocketEvent) {
+        suspend fun emitEvent(event: WebSocketEventInternal) {
             _eventsFlow.emit(event)
         }
     }
 
     private class MockCloudWebSocketApi(
-        initialWs: BSBWebSocket? = null
-    ) : CloudWebSocketApi {
-        private val _wsFlow = MutableStateFlow<BSBWebSocket?>(initialWs)
+        initialWs: BSBWebSocketInternal? = null
+    ) : CloudWebSocketApiInternal {
+        private val _wsFlow = MutableStateFlow<BSBWebSocketInternal?>(initialWs)
 
         override fun getWSFlow(): Flow<BSBWebSocket?> = _wsFlow
 
-        fun setWebSocket(ws: BSBWebSocket?) {
+        override fun getWSInternalFlow(): Flow<BSBWebSocketInternal?> = _wsFlow
+
+        fun setWebSocket(ws: BSBWebSocketInternal?) {
             _wsFlow.value = ws
         }
     }

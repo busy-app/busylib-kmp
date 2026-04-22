@@ -33,8 +33,8 @@ import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipalToken
 import net.flipper.bsb.cloud.api.BUSYLibHostApi
 import net.flipper.bsb.cloud.barsws.api.model.InternalWebSocketRequest
-import net.flipper.bsb.cloud.barsws.api.model.WebSocketEvent
-import net.flipper.bsb.cloud.barsws.api.utils.BSBWebSocket
+import net.flipper.bsb.cloud.barsws.api.model.WebSocketEventInternal
+import net.flipper.bsb.cloud.barsws.api.utils.BSBWebSocketInternal
 import net.flipper.bsb.cloud.barsws.api.utils.CloudWebSocketApiImpl
 import net.flipper.bsb.cloud.barsws.api.utils.wrappers.BSBWebSocketFactory
 import net.flipper.busylib.core.wrapper.WrappedStateFlow
@@ -868,7 +868,7 @@ class CloudWebSocketApiImplTest {
             busyHost: String,
             scope: CoroutineScope,
             dispatcher: CoroutineDispatcher
-        ): BSBWebSocket {
+        ): BSBWebSocketInternal {
             onWebSocketCreated()
             onWebSocketCreatedForHost(busyHost)
 
@@ -889,16 +889,18 @@ class CloudWebSocketApiImplTest {
      */
     private class MockBSBWebSocket(
         private val onClose: () -> Unit = {}
-    ) : BSBWebSocket {
-        private val _eventsFlow = MutableStateFlow<WebSocketEvent?>(null)
+    ) : BSBWebSocketInternal {
+        private val _eventsFlow = MutableStateFlow<WebSocketEventInternal?>(null)
 
         override fun getEventsFlow(): Flow<WebSocketEvent> = flowOf()
+
+        override fun getEventsFlowInternal(): Flow<WebSocketEventInternal> = flowOf()
 
         override suspend fun send(request: InternalWebSocketRequest) {
             // Mock send - can be extended to track sent requests if needed
         }
 
-        fun emitEvent(event: WebSocketEvent) {
+        fun emitEvent(event: WebSocketEventInternal) {
             _eventsFlow.value = event
         }
 

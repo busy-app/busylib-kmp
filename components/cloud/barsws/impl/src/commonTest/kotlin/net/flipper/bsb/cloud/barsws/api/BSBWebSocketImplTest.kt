@@ -23,10 +23,9 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.SerializationException
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
+import net.flipper.bsb.cloud.barsws.api.model.BUSYBarWebSocketInternal
 import net.flipper.bsb.cloud.barsws.api.model.InternalWebSocketRequest
-import net.flipper.bsb.cloud.barsws.api.model.WebSocketEvent
+import net.flipper.bsb.cloud.barsws.api.model.WebSocketEventInternal
 import net.flipper.bsb.cloud.barsws.api.utils.BSBWebSocketImpl
 import net.flipper.bsb.cloud.barsws.api.utils.wrappers.BSBWebSocketSession
 import net.flipper.core.busylib.log.LogTagProvider
@@ -718,13 +717,13 @@ class BSBWebSocketImplTest {
     private class MockBSBWebSocketSession(
         private val failOnSend: Boolean = false
     ) : BSBWebSocketSession {
-        private val _eventChannel = Channel<JsonObject>(Channel.UNLIMITED)
+        private val _eventChannel = Channel<WebSocketEventInternal>(Channel.UNLIMITED)
         private var _shouldThrowSerializationError = false
         private var _isClosed = false
 
         val sentRequests = mutableListOf<InternalWebSocketRequest>()
 
-        suspend fun emitEvent(event: JsonObject) {
+        suspend fun emitEvent(event: WebSocketEventInternal) {
             if (!_isClosed) {
                 _eventChannel.send(event)
             }
@@ -739,7 +738,7 @@ class BSBWebSocketImplTest {
             _eventChannel.close()
         }
 
-        override suspend fun receive(): JsonObject {
+        override suspend fun receive(): WebSocketEventInternal {
             if (_shouldThrowSerializationError) {
                 _shouldThrowSerializationError = false
                 throw SerializationException("Mock deserialization error")
@@ -766,13 +765,15 @@ class BSBWebSocketImplTest {
     // endregion
 
     companion object {
-        private const val TEST_BAR_ID = "00000000-0000-0000-0000-000000000001"
         private val TEST_DEVICE_ID = Uuid.parse("00000000-0000-0000-0000-000000000002")
 
-        private fun createMockEvent(
-            barId: String = TEST_BAR_ID
-        ): JsonObject = JsonObject(
-            mapOf("bar_id" to JsonPrimitive(barId))
-        )
+        private fun createMockEvent(): WebSocketEventInternal =
+            WebSocketEventInternal.LinkDevice(
+                device = BUSYBarWebSocketInternal(
+                    id = Uuid.random(),
+                    hardwareId = "hw-test",
+                    name = "Test Device"
+                )
+            )
     }
 }
