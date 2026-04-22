@@ -5,8 +5,8 @@ import io.ktor.client.plugins.websocket.receiveDeserialized
 import io.ktor.client.plugins.websocket.sendSerialized
 import io.ktor.websocket.close
 import kotlinx.coroutines.isActive
-import kotlinx.serialization.json.JsonObject
 import net.flipper.bsb.cloud.barsws.api.model.InternalWebSocketRequest
+import net.flipper.bsb.cloud.barsws.api.model.WebSocketEventInternal
 
 /**
  * Abstraction for WebSocket session operations.
@@ -19,7 +19,7 @@ interface BSBWebSocketSession {
      * @throws kotlinx.serialization.SerializationException if deserialization fails
      * @throws kotlinx.coroutines.channels.ClosedReceiveChannelException if a channel was closed
      */
-    suspend fun receive(): JsonObject
+    suspend fun receive(): WebSocketEventInternal
 
     /**
      * Serializes and sends a request through the WebSocket.
@@ -39,7 +39,7 @@ interface BSBWebSocketSession {
 class KtorBSBWebSocketSession(
     private val session: DefaultClientWebSocketSession
 ) : BSBWebSocketSession {
-    override suspend fun receive(): JsonObject {
+    override suspend fun receive(): WebSocketEventInternal {
         return session.receiveDeserialized()
     }
 

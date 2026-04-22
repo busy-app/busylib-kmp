@@ -4,6 +4,7 @@ import com.flipperdevices.core.network.BUSYLibNetworkStateApi
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.channelFlow
@@ -16,6 +17,7 @@ import me.tatarka.inject.annotations.Inject
 import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
 import net.flipper.bsb.cloud.api.BUSYLibHostApi
+import net.flipper.bsb.cloud.barsws.api.CloudWebSocketApi
 import net.flipper.bsb.cloud.barsws.api.utils.wrappers.BSBWebSocketFactory
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
@@ -29,9 +31,14 @@ import kotlin.time.Duration.Companion.seconds
 
 private val NETWORK_DISPATCHER = FlipperDispatchers.default
 
+interface CloudWebSocketApiInternal : CloudWebSocketApi {
+    fun getWSInternalFlow(): Flow<BSBWebSocketInternal?>
+}
+
 @Inject
 @SingleIn(BusyLibGraph::class)
 @ContributesBinding(BusyLibGraph::class, CloudWebSocketApi::class)
+@ContributesBinding(BusyLibGraph::class, CloudWebSocketApiInternal::class)
 class CloudWebSocketApiImpl(
     networkStateApi: BUSYLibNetworkStateApi,
     principalApi: BUSYLibPrincipalApi,
@@ -39,7 +46,7 @@ class CloudWebSocketApiImpl(
     private val webSocketFactory: BSBWebSocketFactory,
     scope: CoroutineScope,
     dispatcher: CoroutineDispatcher = NETWORK_DISPATCHER
-) : CloudWebSocketApi, LogTagProvider {
+) : CloudWebSocketApiInternal, LogTagProvider {
     override val TAG = "CloudWebSocketApi"
 
     private val wsStateFlow = combine(
@@ -66,7 +73,7 @@ class CloudWebSocketApiImpl(
                     "isNetworkAvailable: $isNetworkAvailable, " +
                     "principal: $principal, host: $host"
             }
-            flowOf<BSBWebSocket?>(null)
+            flowOf<BSBWebSocketInternal?>(null)
         }
     }.flatMapLatest { it }
         .onEach {
@@ -75,4 +82,5 @@ class CloudWebSocketApiImpl(
         .shareIn(scope, SharingStarted.WhileSubscribed(stopTimeout = 30.seconds), replay = 1)
 
     override fun getWSFlow() = wsStateFlow
+    override fun getWSInternalFlow() = wsStateFlow
 }
