@@ -9,11 +9,15 @@ import kotlinx.coroutines.flow.shareIn
 import net.flipper.bridge.connection.transport.common.api.serial.FStatusStreamingApi
 import net.flipper.bridge.connection.transport.common.api.serial.StatusStreamingEvent
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
+import net.flipper.core.busylib.log.LogTagProvider
+import net.flipper.core.busylib.log.error
 
 class FBleStatusStreamingApiImpl(
     subscribeFlow: Flow<ByteArray>,
     scope: CoroutineScope
-) : FStatusStreamingApi {
+) : FStatusStreamingApi, LogTagProvider {
+
+    override val TAG: String = "FBleStatusStreamingApi"
 
     private val eventsFlow: Flow<StatusStreamingEvent> = subscribeFlow
         .reassembleByHeader()
@@ -32,6 +36,8 @@ class FBleStatusStreamingApiImpl(
         collect { chunk ->
             runSuspendCatching {
                 parser.consume(chunk)?.let { emit(it) }
+            }.onFailure { error ->
+                error(error = error) { "Failed to parse packet " }
             }
         }
     }
