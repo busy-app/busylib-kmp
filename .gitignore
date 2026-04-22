@@ -2,7 +2,8 @@
 .gradle
 /local.properties
 .idea
-.claude
+.claude/*
+!.claude/skills
 
 *.apk
 
