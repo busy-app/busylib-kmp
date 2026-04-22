@@ -27,24 +27,6 @@ Common tasks:
 - `./gradlew :entrypoint:assembleBusyLibKMPDebugXCFramework` — build iOS XCFramework.
 - `./gradlew :entrypoint:copyXCFrameworkDebug` — copy XCFramework into the iOS Xcode project (requires `flipper.iosProjectBridgeAbsolutePath` + `flipper.iosProjectAbsolutePath` in `local.properties`).
 
-## Module layout
-
-- `entrypoint/` — public `BUSYLib` + per-platform builders: `BUSYLibAndroid`, `BUSYLibIOS`, `BUSYLibMacOS`, `BUSYLibDesktop`.
-- `components/core/` — infra: `wrapper` (`CResult`, `Wrapped*Flow`, `.wrap()`), `di` (kotlin-inject/Anvil root `BusyLibGraph`), `log` (`TaggedLogger`), `ktx` (`exponentialRetry`), `ktor` (HTTP), `network` (`BUSYLibNetworkStateApi`), `timezone`, `data` (`NonEmptyList`), `buildkonfig`.
-- `components/bridge/` — device protocol:
-  - `config` — `FDevicePersistedStorage`, `BUSYBar` + `ConnectionWay.{BLE,Cloud,Lan,Mock}`.
-  - `device` — `common`, `bsb`, `firmware-update`, `firstpair/connection` (Android-only).
-  - `transport/{ble,tcp:lan,tcp:cloud,combined,mock,common}` — `combined` does LAN → Cloud → BLE fallback; `tcp:lan` default host `10.0.4.20`.
-  - `feature/{info,wifi,ble,settings,timezone,link,battery,screen-streaming,firmware-update,events,oncall,smarthome,finish-setup,about,provider,rpc,common}` — each split `api`/`impl`; resolved via `FFeatureProvider.get<T>()` / `.getSync<T>()`.
-  - `orchestrator` — `FDeviceOrchestrator` state machine (`Disconnected`/`Connecting`/`Connected`/`Offline`).
-  - `service` — `FConnectionService` (`forgetDevice`, `forceRefreshConnection`).
-  - `bsbprotobuf` — Wire-generated protobuf.
-- `components/cloud/` — `rest` (firmware dir, auth) + `barsws` (cloud WebSocket relay).
-- `components/principal/api` — `BUSYLibPrincipalApi` (host app supplies user/auth state).
-- `components/tools/` — `oncall`, `multistream`. `components/watchers/` — `changename`, `provisioning`, `desktop`.
-- `detekt-rules/` — `SerialNameNotProvidedRule`, `ForbiddenApiModuleDependencyRule`, `RunCatchingInSuspendRule`, `FilterIsInstanceWithGenericsRule`, `ApiWrappedTypeRule` (see "Hard rules" below).
-- `sample/android`, `sample/cmp`, `appleApp/` — samples.
-
 ## Hard rules for API modules
 
 - Return `CResult<T>` from `suspend` functions, never Kotlin's inline `Result<T>` (it does not cross the Swift boundary).

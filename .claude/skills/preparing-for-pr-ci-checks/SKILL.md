@@ -29,14 +29,6 @@ From `.github/workflows/pr.yml`:
 
 Only proceed to commit/push once both `detektFormat` (step 1–3) and `allTests` (step 4) are green.
 
-## Verifying local publishing
-
-The CI job `publish_internal` pushes to the Flipper Reposilite; locally you verify the same Gradle publishing pipeline with:
-
-```
-./gradlew publishToMavenLocal
-```
-
 ### Linux-only note
 
 Apple targets cannot be built on Linux. Before running `publishToMavenLocal` on Linux, add this line to `local.properties`:
