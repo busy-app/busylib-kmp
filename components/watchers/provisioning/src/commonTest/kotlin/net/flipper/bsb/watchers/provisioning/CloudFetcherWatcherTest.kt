@@ -650,10 +650,30 @@ class CloudFetcherWatcherTest {
         require(connectionWays.isNotEmpty()) { "At least one connection way is required" }
         val first = connectionWays.first()
         var result = when (first) {
-            is BUSYBar.ConnectionWay.BLE -> BUSYBar(humanReadableName = humanReadableName, hardwareId = hardwareId, uniqueId = id, ble = first)
-            is BUSYBar.ConnectionWay.Cloud -> BUSYBar(humanReadableName = humanReadableName, hardwareId = hardwareId, uniqueId = id, cloud = first)
-            is BUSYBar.ConnectionWay.Lan -> BUSYBar(humanReadableName = humanReadableName, hardwareId = hardwareId, uniqueId = id, lan = first)
-            is BUSYBar.ConnectionWay.Mock -> BUSYBar(humanReadableName = humanReadableName, hardwareId = hardwareId, uniqueId = id, mock = first)
+            is BUSYBar.ConnectionWay.BLE -> BUSYBar(
+                humanReadableName = humanReadableName,
+                hardwareId = hardwareId,
+                uniqueId = id,
+                ble = first
+            )
+            is BUSYBar.ConnectionWay.Cloud -> BUSYBar(
+                humanReadableName = humanReadableName,
+                hardwareId = hardwareId,
+                uniqueId = id,
+                cloud = first
+            )
+            is BUSYBar.ConnectionWay.Lan -> BUSYBar(
+                humanReadableName = humanReadableName,
+                hardwareId = hardwareId,
+                uniqueId = id,
+                lan = first
+            )
+            is BUSYBar.ConnectionWay.Mock -> BUSYBar(
+                humanReadableName = humanReadableName,
+                hardwareId = hardwareId,
+                uniqueId = id,
+                mock = first
+            )
         }
         for (way in connectionWays.drop(1)) {
             result = when (way) {

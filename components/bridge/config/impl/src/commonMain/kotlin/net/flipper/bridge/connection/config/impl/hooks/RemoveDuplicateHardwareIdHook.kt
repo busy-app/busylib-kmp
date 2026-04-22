@@ -34,7 +34,7 @@ class RemoveDuplicateHardwareIdHook : TransactionHook, LogTagProvider {
                 if (device.uniqueId != best.uniqueId) {
                     info {
                         "Removing duplicate device ${device.uniqueId} " +
-                                "with hardware id ${device.hardwareId}, keeping ${best.uniqueId}"
+                            "with hardware id ${device.hardwareId}, keeping ${best.uniqueId}"
                     }
                     removeDevice(device.uniqueId)
                     if (currentDevice?.uniqueId == device.uniqueId) {

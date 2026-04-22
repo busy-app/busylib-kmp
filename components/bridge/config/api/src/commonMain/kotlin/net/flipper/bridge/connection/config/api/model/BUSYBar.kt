@@ -93,8 +93,8 @@ class BUSYBar internal constructor(
         return result
     }
 
+    @Suppress("MaximumLineLength", "MaxLineLength")
     override fun toString(): String {
         return "BUSYBar(humanReadableName='$humanReadableName', hardwareId=$hardwareId, uniqueId='$uniqueId', ble=$ble, cloud=$cloud, lan=$lan, mock=$mock, connectionWays=$connectionWays)"
     }
-
 }

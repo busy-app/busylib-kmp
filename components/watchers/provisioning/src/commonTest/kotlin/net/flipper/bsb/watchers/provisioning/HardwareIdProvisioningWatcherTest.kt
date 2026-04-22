@@ -5,7 +5,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.job
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -52,7 +51,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.time.Instant
-import kotlin.uuid.Uuid
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class HardwareIdProvisioningWatcherTest {
@@ -260,10 +258,30 @@ class HardwareIdProvisioningWatcherTest {
         require(connectionWays.isNotEmpty()) { "At least one connection way is required" }
         val first = connectionWays.first()
         var result = when (first) {
-            is BUSYBar.ConnectionWay.BLE -> BUSYBar(humanReadableName = "Test Bar", hardwareId = hardwareId, uniqueId = id, ble = first)
-            is BUSYBar.ConnectionWay.Cloud -> BUSYBar(humanReadableName = "Test Bar", hardwareId = hardwareId, uniqueId = id, cloud = first)
-            is BUSYBar.ConnectionWay.Lan -> BUSYBar(humanReadableName = "Test Bar", hardwareId = hardwareId, uniqueId = id, lan = first)
-            is BUSYBar.ConnectionWay.Mock -> BUSYBar(humanReadableName = "Test Bar", hardwareId = hardwareId, uniqueId = id, mock = first)
+            is BUSYBar.ConnectionWay.BLE -> BUSYBar(
+                humanReadableName = "Test Bar",
+                hardwareId = hardwareId,
+                uniqueId = id,
+                ble = first
+            )
+            is BUSYBar.ConnectionWay.Cloud -> BUSYBar(
+                humanReadableName = "Test Bar",
+                hardwareId = hardwareId,
+                uniqueId = id,
+                cloud = first
+            )
+            is BUSYBar.ConnectionWay.Lan -> BUSYBar(
+                humanReadableName = "Test Bar",
+                hardwareId = hardwareId,
+                uniqueId = id,
+                lan = first
+            )
+            is BUSYBar.ConnectionWay.Mock -> BUSYBar(
+                humanReadableName = "Test Bar",
+                hardwareId = hardwareId,
+                uniqueId = id,
+                mock = first
+            )
         }
         for (way in connectionWays.drop(1)) {
             result = when (way) {

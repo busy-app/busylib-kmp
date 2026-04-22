@@ -42,7 +42,9 @@ class HardwareIdProvisioningWatcher(
             orchestrator.getState().flatMapLatest { state ->
                 if (state is FDeviceConnectStatus.Connected && state.device.hardwareId == null) {
                     featureProvider.get<FRpcFeatureApi>().map { it to state.device }
-                } else flowOf()
+                } else {
+                    flowOf()
+                }
             }.collectLatest { (rpcApiStatus, device) ->
                 when (rpcApiStatus) {
                     FFeatureStatus.NotFound,
