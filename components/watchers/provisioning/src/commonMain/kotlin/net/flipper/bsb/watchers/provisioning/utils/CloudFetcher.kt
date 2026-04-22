@@ -3,6 +3,7 @@ package net.flipper.bsb.watchers.provisioning.utils
 import com.flipperdevices.core.network.BUSYLibNetworkStateApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
@@ -17,6 +18,7 @@ import net.flipper.bsb.cloud.rest.model.BusyCloudBar
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
+import kotlin.time.Duration.Companion.seconds
 
 @Inject
 class CloudFetcher(
@@ -33,7 +35,15 @@ class CloudFetcher(
             networkStateApi.isNetworkAvailableFlow
         ) { principal, isNetworkAvailable ->
             if (isNetworkAvailable && principal is BUSYLibUserPrincipal.Token) {
-                getBarsFlow(principal)
+                wsApi.getWSFlow()
+                    .debounce(1.seconds)
+                    .flatMapLatest { ws ->
+                        if (ws == null) {
+                            emptyFlow()
+                        } else {
+                            getBarsFlow(principal, ws.getEventsFlow())
+                        }
+                    }
             } else {
                 emptyFlow()
             }
@@ -42,6 +52,7 @@ class CloudFetcher(
 
     private fun getBarsFlow(
         principal: BUSYLibUserPrincipal.Token,
+        webSocketFlow: Flow<WebSocketEvent>
     ): Flow<List<BusyCloudBar>> = flow {
         val bars = busyCloudBarsApi.getBarsList(principal).onFailure {
             error(it) { "Failed to get bars list" }
@@ -51,9 +62,7 @@ class CloudFetcher(
         emit(bars)
         val barsMap = bars.associateBy { it.id }.toMutableMap()
 
-        wsApi.getWSFlow().flatMapLatest {
-            it?.getEventsFlow() ?: emptyFlow()
-        }.collect {
+        webSocketFlow.collect {
             info { "Received event: $it" }
             when (it) {
                 is WebSocketEvent.LinkEvent -> {

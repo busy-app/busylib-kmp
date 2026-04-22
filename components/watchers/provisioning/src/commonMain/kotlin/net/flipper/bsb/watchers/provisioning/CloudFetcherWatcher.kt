@@ -99,8 +99,12 @@ class CloudFetcherWatcher(
     private fun InternalStorageTransactionScope.mergeExisting(
         cloudBars: List<BusyCloudBar>
     ): List<BusyCloudBar> {
-        val localByCloudId = getAllDevices().associateBy { it.cloud?.deviceId }
-        val localByHardwareId = getAllDevices().associateBy { it.hardwareId }
+        val localByCloudId = getAllDevices().filter {
+            it.cloud?.deviceId != null
+        }.associateBy { it.cloud?.deviceId }
+        val localByHardwareId = getAllDevices().filter {
+            it.hardwareId != null
+        }.associateBy { it.hardwareId }
         val toAdd = cloudBars.toMutableSet()
 
         cloudBars.forEach { cloud ->
