@@ -30,8 +30,6 @@ Common tasks:
 - Return `CResult<T>` from `suspend` functions, never Kotlin's inline `Result<T>` (it does not cross the Swift boundary).
 - Expose `WrappedFlow<T>` / `WrappedStateFlow<T>` / `WrappedSharedFlow<T>`, never bare `Flow` / `StateFlow` (SKIE `FlowInterop` is intentionally disabled).
 - `:api` modules must not depend on `:rpc:api` — protobuf/RPC is an implementation detail (enforced by `ForbiddenApiModuleDependencyRule`).
-- `@Serializable` data classes must annotate every field with `@SerialName`, including fields that "look obvious" (enforced by `SerialNameNotProvidedRule`).
-- No `runCatching` inside `suspend` functions — it swallows `CancellationException` (enforced by `RunCatchingInSuspendRule`). Use explicit try/catch that rethrows `CancellationException`.
 - Export new `:api` modules from `entrypoint/build.gradle.kts` inside the `XCFramework("BusyLibKMP")` block, otherwise Swift cannot see them.
 
 ## DI (kotlin-inject + Anvil)
@@ -49,6 +47,8 @@ Common tasks:
 - Logging: implement `LogTagProvider` + use `TaggedLogger(TAG)`, not `println` / `Log.d`.
 - Serialization: `kotlinx.serialization` with JSON (Ktor negotiation); protobuf via Wire 6.1.0 for device protocol.
 - Retries: use `exponentialRetry { ... }` from `core:ktx` rather than hand-rolling loops.
+- `@Serializable` data classes must annotate every field with `@SerialName`, including fields that "look obvious" (enforced by `SerialNameNotProvidedRule`).
+- No `runCatching` inside `suspend` functions — it swallows `CancellationException` (enforced by `RunCatchingInSuspendRule`). Use explicit try/catch that rethrows `CancellationException`.
 
 ## Testing
 
