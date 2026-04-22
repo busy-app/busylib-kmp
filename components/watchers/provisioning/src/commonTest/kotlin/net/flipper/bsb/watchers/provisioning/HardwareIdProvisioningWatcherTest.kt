@@ -5,11 +5,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.job
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -25,12 +21,24 @@ import net.flipper.bridge.connection.config.internal.TransactionHook
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
-import net.flipper.bridge.connection.feature.rpc.api.client.FRpcClientModeApi
-import net.flipper.bridge.connection.feature.rpc.api.critical.FRpcCriticalFeatureApi
-import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarLinkCode
-import net.flipper.bridge.connection.feature.rpc.api.model.RpcLinkedAccountInfo
-import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
+import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcAssetsApi
+import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcBleApi
+import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
+import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcMatterApi
+import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcSettingsApi
+import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcStreamingApi
+import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcSystemApi
+import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcTimeZoneApi
+import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcUpdaterApi
+import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcWifiApi
+import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarStatus
+import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarStatusDevice
+import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarStatusPower
+import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarStatusSystem
+import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarVersion
+import net.flipper.bridge.connection.feature.rpc.api.model.StatusFirmware
 import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
+import net.flipper.bridge.connection.orchestrator.api.model.DisconnectStatus
 import net.flipper.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
 import net.flipper.bridge.connection.orchestrator.api.model.FDeviceTransportType
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
@@ -43,7 +51,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
-import kotlin.test.assertTrue
+import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -52,9 +60,8 @@ class HardwareIdProvisioningWatcherTest {
     // region Test Cases
 
     @Test
-    fun GIVEN_only_local_transport_WHEN_connected_to_cloud_THEN_adds_cloud_transport_to_device() =
+    fun GIVEN_device_with_null_hardwareId_WHEN_connected_and_status_received_THEN_hardwareId_updated() =
         runTest {
-            val cloudId = Uuid.random()
             val device = busyBar(
                 id = "device-1",
                 BUSYBar.ConnectionWay.BLE("AA:BB:CC")
@@ -63,21 +70,41 @@ class HardwareIdProvisioningWatcherTest {
             val setup = createSetup(
                 devices = listOf(device),
                 connectedDevice = device,
-                linkedInfo = RpcLinkedAccountInfo(linked = true, cloudId = cloudId.toString())
+                deviceStatusResult = Result.success(fakeDeviceStatus(serialNumber = "SN-123"))
             )
 
             setup.watcher.onLaunch()
             advanceUntilIdle()
 
-            val updated = setup.storage.findDevice("device-1").first()
-            assertNotNull(updated)
-            assertNotNull(updated.cloud)
-            assertEquals(cloudId, updated.cloud?.deviceId)
-            assertNotNull(updated.ble)
+            val updated = setup.storage.devices.value.single()
+            assertEquals("device-1", updated.uniqueId)
+            assertEquals("SN-123", updated.hardwareId)
+            assertNotNull(updated.ble, "BLE transport must be preserved")
         }
 
     @Test
-    fun GIVEN_only_local_transport_WHEN_not_connected_to_cloud_THEN_no_changes() = runTest {
+    fun GIVEN_device_with_existing_hardwareId_WHEN_connected_THEN_no_changes() = runTest {
+        val device = busyBar(
+            id = "device-1",
+            BUSYBar.ConnectionWay.BLE("AA:BB:CC"),
+            hardwareId = "existing-hw"
+        )
+
+        val setup = createSetup(
+            devices = listOf(device),
+            connectedDevice = device,
+            deviceStatusResult = Result.success(fakeDeviceStatus(serialNumber = "SN-123"))
+        )
+
+        setup.watcher.onLaunch()
+        advanceUntilIdle()
+
+        val updated = setup.storage.devices.value.single()
+        assertEquals("existing-hw", updated.hardwareId, "Existing hardwareId must not be overwritten")
+    }
+
+    @Test
+    fun GIVEN_device_with_null_hardwareId_WHEN_getDeviceStatus_fails_THEN_no_changes() = runTest {
         val device = busyBar(
             id = "device-1",
             BUSYBar.ConnectionWay.BLE("AA:BB:CC")
@@ -86,138 +113,18 @@ class HardwareIdProvisioningWatcherTest {
         val setup = createSetup(
             devices = listOf(device),
             connectedDevice = device,
-            linkedInfo = RpcLinkedAccountInfo(linked = false, cloudId = null)
+            deviceStatusResult = Result.failure(IllegalStateException("RPC error"))
         )
 
         setup.watcher.onLaunch()
         advanceUntilIdle()
 
-        val updated = setup.storage.findDevice("device-1")
-        assertNotNull(updated)
-        assertEquals(device.connectionWays, updated.first()?.connectionWays)
+        val updated = setup.storage.devices.value.single()
+        assertNull(updated.hardwareId, "hardwareId must remain null on failure")
     }
 
     @Test
-    fun GIVEN_local_and_cloud_transport_WHEN_cloud_linked_to_current_device_THEN_no_changes() =
-        runTest {
-            val cloudId = Uuid.random()
-            val device = busyBar(
-                id = "device-1",
-                BUSYBar.ConnectionWay.Cloud(cloudId),
-                BUSYBar.ConnectionWay.BLE("AA:BB:CC")
-            )
-
-            val setup = createSetup(
-                devices = listOf(device),
-                connectedDevice = device,
-                linkedInfo = RpcLinkedAccountInfo(linked = true, cloudId = cloudId.toString())
-            )
-
-            setup.watcher.onLaunch()
-            advanceUntilIdle()
-
-            val updated = setup.storage.findDevice("device-1")
-            assertNotNull(updated)
-            assertEquals(device.connectionWays, updated.first()?.connectionWays)
-        }
-
-    @Test
-    fun GIVEN_local_and_cloud_WHEN_linked_to_different_device_THEN_creates_new_and_switches() =
-        runTest {
-            val originalCloudId = Uuid.random()
-            val newCloudId = Uuid.random()
-            val device = busyBar(
-                id = "device-1",
-                BUSYBar.ConnectionWay.Cloud(originalCloudId),
-                BUSYBar.ConnectionWay.BLE("AA:BB:CC")
-            )
-
-            val setup = createSetup(
-                devices = listOf(device),
-                connectedDevice = device,
-                linkedInfo = RpcLinkedAccountInfo(linked = true, cloudId = newCloudId.toString())
-            )
-
-            setup.watcher.onLaunch()
-            advanceUntilIdle()
-
-            // Original device should still exist unchanged
-            val original = setup.storage.findDevice("device-1")
-            assertNotNull(original)
-            assertEquals(device.connectionWays, original?.first()?.connectionWays)
-
-            // New device should be created with the new cloud connection
-            val newDevice = setup.storage.devices.mapNotNull { list ->
-                list.firstOrNull { it.uniqueId != "device-1" }
-            }.first()
-            assertNotNull(newDevice, "New device should be created")
-            assertNotNull(newDevice.cloud)
-            assertEquals(newCloudId, newDevice.cloud!!.deviceId)
-
-            // Current device should be switched to new device
-            assertEquals(newDevice, setup.storage.getCurrentDeviceFlow().first())
-        }
-
-    @Test
-    fun GIVEN_local_and_cloud_WHEN_cloud_linked_to_different_device_and_existing_found_THEN_switches_to_existing() =
-        runTest {
-            val originalCloudId = Uuid.random()
-            val targetCloudId = Uuid.random()
-            val device = busyBar(
-                id = "device-1",
-                BUSYBar.ConnectionWay.Cloud(originalCloudId),
-                BUSYBar.ConnectionWay.BLE("AA:BB:CC")
-            )
-            val existingDevice = busyBar(
-                id = "device-2",
-                BUSYBar.ConnectionWay.Cloud(targetCloudId)
-            )
-
-            val setup = createSetup(
-                devices = listOf(device, existingDevice),
-                connectedDevice = device,
-                linkedInfo = RpcLinkedAccountInfo(
-                    linked = true,
-                    cloudId = targetCloudId.toString()
-                )
-            )
-
-            setup.watcher.onLaunch()
-            advanceUntilIdle()
-
-            // Should switch to existing device
-            assertEquals(existingDevice, setup.storage.getCurrentDeviceFlow().first())
-            // No new devices created
-            assertEquals(2, setup.storage.devices.first().size)
-        }
-
-    @Test
-    fun GIVEN_local_and_cloud_WHEN_not_connected_to_cloud_THEN_removes_cloud_connection() =
-        runTest {
-            val cloudId = Uuid.random()
-            val device = busyBar(
-                id = "device-1",
-                BUSYBar.ConnectionWay.Cloud(cloudId),
-                BUSYBar.ConnectionWay.BLE("AA:BB:CC")
-            )
-
-            val setup = createSetup(
-                devices = listOf(device),
-                connectedDevice = device,
-                linkedInfo = RpcLinkedAccountInfo(linked = false, cloudId = null)
-            )
-
-            setup.watcher.onLaunch()
-            advanceUntilIdle()
-
-            val updated = setup.storage.findDevice("device-1")
-            assertNotNull(updated)
-            assertNull(updated.first()?.cloud, "Cloud connection should be removed")
-            assertNotNull(updated.first()?.ble, "BLE connection should remain")
-        }
-
-    @Test
-    fun GIVEN_connected_device_WHEN_linked_info_is_null_THEN_no_changes() = runTest {
+    fun GIVEN_device_with_null_hardwareId_WHEN_feature_unsupported_THEN_no_changes() = runTest {
         val device = busyBar(
             id = "device-1",
             BUSYBar.ConnectionWay.BLE("AA:BB:CC")
@@ -226,47 +133,60 @@ class HardwareIdProvisioningWatcherTest {
         val setup = createSetup(
             devices = listOf(device),
             connectedDevice = device,
-            linkedInfo = null
+            deviceStatusResult = Result.success(fakeDeviceStatus(serialNumber = "SN-123")),
+            featureStatus = FFeatureStatus.Unsupported
         )
 
         setup.watcher.onLaunch()
         advanceUntilIdle()
 
-        val updated = setup.storage.findDevice("device-1")
-        assertNotNull(updated)
-        assertEquals(device.connectionWays, updated.first()?.connectionWays)
+        val updated = setup.storage.devices.value.single()
+        assertNull(updated.hardwareId, "hardwareId must remain null when feature is unsupported")
     }
 
     @Test
-    fun GIVEN_only_local_WHEN_connected_to_cloud_THEN_cloud_sorted_by_priority() = runTest {
-        val cloudId = Uuid.random()
+    fun GIVEN_disconnected_WHEN_launched_THEN_no_changes() = runTest {
         val device = busyBar(
             id = "device-1",
-            BUSYBar.ConnectionWay.Lan("10.0.4.20"),
             BUSYBar.ConnectionWay.BLE("AA:BB:CC")
         )
 
         val setup = createSetup(
             devices = listOf(device),
-            connectedDevice = device,
-            linkedInfo = RpcLinkedAccountInfo(linked = true, cloudId = cloudId.toString())
+            connectedDevice = null,
+            deviceStatusResult = Result.success(fakeDeviceStatus(serialNumber = "SN-123"))
         )
 
         setup.watcher.onLaunch()
         advanceUntilIdle()
 
-        val updated = setup.storage.findDevice("device-1")
-        assertNotNull(updated)
-        // All connection ways should be present
-        assertNotNull(updated.filterNotNull().mapNotNull { it.lan }.first())
-        assertNotNull(updated.filterNotNull().mapNotNull { it.cloud }.first())
-        assertNotNull(updated.filterNotNull().mapNotNull { it.ble }.first())
-        // Priority order in connectionWays: Lan(100) > Cloud(10) > BLE(0)
-
-        assertTrue(updated.filterNotNull().mapNotNull { it.connectionWays[0] }.first() is BUSYBar.ConnectionWay.Lan)
-        assertTrue(updated.filterNotNull().mapNotNull { it.connectionWays[1] }.first() is BUSYBar.ConnectionWay.Cloud)
-        assertTrue(updated.filterNotNull().mapNotNull { it.connectionWays[2] }.first() is BUSYBar.ConnectionWay.BLE)
+        val updated = setup.storage.devices.value.single()
+        assertNull(updated.hardwareId, "hardwareId must remain null when disconnected")
     }
+
+    @Test
+    fun GIVEN_multi_transport_device_WHEN_status_received_THEN_all_transports_preserved() =
+        runTest {
+            val device = busyBar(
+                id = "device-1",
+                BUSYBar.ConnectionWay.BLE("AA:BB:CC"),
+                BUSYBar.ConnectionWay.Lan("10.0.4.20")
+            )
+
+            val setup = createSetup(
+                devices = listOf(device),
+                connectedDevice = device,
+                deviceStatusResult = Result.success(fakeDeviceStatus(serialNumber = "SN-456"))
+            )
+
+            setup.watcher.onLaunch()
+            advanceUntilIdle()
+
+            val updated = setup.storage.devices.value.single()
+            assertEquals("SN-456", updated.hardwareId)
+            assertNotNull(updated.ble, "BLE transport must be preserved")
+            assertNotNull(updated.lan, "LAN transport must be preserved")
+        }
 
     // endregion
 
@@ -279,16 +199,17 @@ class HardwareIdProvisioningWatcherTest {
 
     private fun TestScope.createSetup(
         devices: List<BUSYBar>,
-        connectedDevice: BUSYBar,
-        linkedInfo: RpcLinkedAccountInfo?
+        connectedDevice: BUSYBar?,
+        deviceStatusResult: Result<BusyBarStatusDevice>,
+        featureStatus: FFeatureStatus<FRpcFeatureApi>? = null
     ): TestSetup {
         val storage = FakePersistedStorage(MutableStateFlow(devices))
 
-        val rpcApi = FakeRpcCriticalFeatureApi(
-            accountInfoFlow = MutableStateFlow(linkedInfo)
+        val rpcApi = FakeRpcFeatureApi(
+            systemApi = FakeRpcSystemApi(deviceStatusResult)
         )
-        val featureFlow = MutableStateFlow<FFeatureStatus<FRpcCriticalFeatureApi>>(
-            FFeatureStatus.Supported(rpcApi)
+        val featureFlow = MutableStateFlow(
+            featureStatus ?: FFeatureStatus.Supported(rpcApi)
         )
 
         val scope = CoroutineScope(
@@ -296,12 +217,19 @@ class HardwareIdProvisioningWatcherTest {
         )
 
         val orchestratorState = MutableStateFlow<FDeviceConnectStatus>(
-            FDeviceConnectStatus.Connected(
-                scope = scope,
-                device = connectedDevice,
-                deviceApi = FakeConnectedDeviceApi(),
-                transportType = FDeviceTransportType.CLOUD
-            )
+            if (connectedDevice != null) {
+                FDeviceConnectStatus.Connected(
+                    scope = scope,
+                    device = connectedDevice,
+                    deviceApi = FakeConnectedDeviceApi(),
+                    transportType = FDeviceTransportType.BLE
+                )
+            } else {
+                FDeviceConnectStatus.Disconnected(
+                    device = null,
+                    reason = DisconnectStatus.NOT_INITIALIZED
+                )
+            }
         )
 
         val watcher = HardwareIdProvisioningWatcher(
@@ -314,14 +242,28 @@ class HardwareIdProvisioningWatcherTest {
         return TestSetup(watcher, storage)
     }
 
-    private fun busyBar(id: String, vararg connectionWays: BUSYBar.ConnectionWay): BUSYBar {
+    private fun fakeDeviceStatus(serialNumber: String) = BusyBarStatusDevice(
+        serialNumber = serialNumber,
+        usbMac = "00:00:00:00:00:00",
+        wifiMac = "00:00:00:00:00:00",
+        bleMac = "00:00:00:00:00:00",
+        otpValid = true,
+        otpModel = "test-model",
+        otpTimestamp = Instant.fromEpochSeconds(0)
+    )
+
+    private fun busyBar(
+        id: String,
+        vararg connectionWays: BUSYBar.ConnectionWay,
+        hardwareId: String? = null
+    ): BUSYBar {
         require(connectionWays.isNotEmpty()) { "At least one connection way is required" }
         val first = connectionWays.first()
         var result = when (first) {
-            is BUSYBar.ConnectionWay.BLE -> BUSYBar(humanReadableName = "Test Bar", uniqueId = id, ble = first)
-            is BUSYBar.ConnectionWay.Cloud -> BUSYBar(humanReadableName = "Test Bar", uniqueId = id, cloud = first)
-            is BUSYBar.ConnectionWay.Lan -> BUSYBar(humanReadableName = "Test Bar", uniqueId = id, lan = first)
-            is BUSYBar.ConnectionWay.Mock -> BUSYBar(humanReadableName = "Test Bar", uniqueId = id, mock = first)
+            is BUSYBar.ConnectionWay.BLE -> BUSYBar(humanReadableName = "Test Bar", hardwareId = hardwareId, uniqueId = id, ble = first)
+            is BUSYBar.ConnectionWay.Cloud -> BUSYBar(humanReadableName = "Test Bar", hardwareId = hardwareId, uniqueId = id, cloud = first)
+            is BUSYBar.ConnectionWay.Lan -> BUSYBar(humanReadableName = "Test Bar", hardwareId = hardwareId, uniqueId = id, lan = first)
+            is BUSYBar.ConnectionWay.Mock -> BUSYBar(humanReadableName = "Test Bar", hardwareId = hardwareId, uniqueId = id, mock = first)
         }
         for (way in connectionWays.drop(1)) {
             result = when (way) {
@@ -343,14 +285,10 @@ class HardwareIdProvisioningWatcherTest {
     ) : FInternalDevicePersistedStorage {
         private val currentDeviceFlow = MutableStateFlow<BUSYBar?>(null)
 
-        fun findDevice(id: String): Flow<BUSYBar?> = devices.map { list -> list.firstOrNull { it.uniqueId == id } }
-
         override fun getCurrentDeviceFlow() = currentDeviceFlow.asFlow().wrap()
         override fun getAllDevicesFlow() = devices.asFlow().wrap()
 
-        override suspend fun addHook(vararg hook: TransactionHook) {
-            // Not used in test
-        }
+        override suspend fun addHook(vararg hook: TransactionHook) = Unit
 
         override suspend fun <T> transactionInternal(block: suspend InternalStorageTransactionScope.() -> T): T {
             val scope = object : InternalStorageTransactionScope {
@@ -367,8 +305,7 @@ class HardwareIdProvisioningWatcherTest {
 
                 override fun addOrReplace(device: BUSYBar) {
                     this@FakePersistedStorage.devices.update { list ->
-                        list.filter { it.uniqueId != device.uniqueId } +
-                            device
+                        list.filter { it.uniqueId != device.uniqueId } + device
                     }
                 }
 
@@ -396,7 +333,7 @@ class HardwareIdProvisioningWatcherTest {
     }
 
     private class FakeFeatureProvider(
-        private val rpcFlow: Flow<FFeatureStatus<FRpcCriticalFeatureApi>>
+        private val rpcFlow: Flow<FFeatureStatus<FRpcFeatureApi>>
     ) : FFeatureProvider {
         @Suppress("UNCHECKED_CAST")
         override fun <T : FDeviceFeatureApi> get(clazz: KClass<T>): Flow<FFeatureStatus<T>> {
@@ -406,21 +343,29 @@ class HardwareIdProvisioningWatcherTest {
         override suspend fun <T : FDeviceFeatureApi> getSync(clazz: KClass<T>): T? = null
     }
 
-    private class FakeRpcCriticalFeatureApi(
-        accountInfoFlow: StateFlow<RpcLinkedAccountInfo?>
-    ) : FRpcCriticalFeatureApi {
-        override val currentAccountInfo: StateFlow<RpcLinkedAccountInfo?> = accountInfoFlow
-        override val clientModeApi: FRpcClientModeApi
-            get() = error("Not used in test")
+    private class FakeRpcFeatureApi(
+        private val systemApi: FRpcSystemApi
+    ) : FRpcFeatureApi {
+        override val fRpcSystemApi: FRpcSystemApi get() = systemApi
+        override val fRpcWifiApi: FRpcWifiApi get() = error("Not used in test")
+        override val fRpcBleApi: FRpcBleApi get() = error("Not used in test")
+        override val fRpcSettingsApi: FRpcSettingsApi get() = error("Not used in test")
+        override val fRpcStreamingApi: FRpcStreamingApi get() = error("Not used in test")
+        override val fRpcAssetsApi: FRpcAssetsApi get() = error("Not used in test")
+        override val fRpcUpdaterApi: FRpcUpdaterApi get() = error("Not used in test")
+        override val fRpcMatterApi: FRpcMatterApi get() = error("Not used in test")
+        override val fRpcTimeZoneApi: FRpcTimeZoneApi get() = error("Not used in test")
+    }
 
-        override suspend fun invalidateLinkedUser(userId: Uuid?) =
-            error("Not used in test")
-
-        override suspend fun getLinkCode(): Result<BusyBarLinkCode> =
-            error("Not used in test")
-
-        override suspend fun deleteAccount(): Result<SuccessResponse> =
-            error("Not used in test")
+    private class FakeRpcSystemApi(
+        private val deviceStatusResult: Result<BusyBarStatusDevice>
+    ) : FRpcSystemApi {
+        override suspend fun getVersion(): Result<BusyBarVersion> = error("Not used in test")
+        override suspend fun getStatus(): Result<BusyBarStatus> = error("Not used in test")
+        override suspend fun getDeviceStatus(): Result<BusyBarStatusDevice> = deviceStatusResult
+        override suspend fun getStatusFirmware(): Result<StatusFirmware> = error("Not used in test")
+        override suspend fun getStatusSystem(): Result<BusyBarStatusSystem> = error("Not used in test")
+        override suspend fun getStatusPower(): Result<BusyBarStatusPower> = error("Not used in test")
     }
 
     private class FakeConnectedDeviceApi : FConnectedDeviceApi {

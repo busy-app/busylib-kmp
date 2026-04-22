@@ -153,7 +153,7 @@ class CloudFetcherWatcherTest {
         advanceUntilIdle()
 
         assertEquals(listOf(device), setup.storage.devices.value)
-        assertEquals(0, setup.storage.transactionCount)
+        assertEquals(1, setup.storage.transactionCount)
     }
 
     @Test
@@ -189,7 +189,7 @@ class CloudFetcherWatcherTest {
         advanceUntilIdle()
 
         assertEquals(
-            0,
+            1,
             setup.storage.transactionCount,
             "Equal sets differing only in order must not trigger invalidation"
         )
@@ -433,7 +433,7 @@ class CloudFetcherWatcherTest {
         setup.watcher.onLaunch()
         advanceUntilIdle()
 
-        assertEquals(0, setup.storage.transactionCount)
+        assertEquals(1, setup.storage.transactionCount)
         assertEquals(listOf(bleOnly, cloudDevice), setup.storage.devices.value)
     }
 
@@ -518,7 +518,7 @@ class CloudFetcherWatcherTest {
 
         assertEquals(listOf(device), setup.storage.devices.value)
         assertEquals(
-            0,
+            1,
             setup.storage.transactionCount,
             "Differing but non-null local hardwareId must not be overwritten"
         )
@@ -547,7 +547,7 @@ class CloudFetcherWatcherTest {
 
         assertEquals(listOf(device), setup.storage.devices.value)
         assertEquals(
-            0,
+            1,
             setup.storage.transactionCount,
             "Null label must not overwrite the local humanReadableName"
         )

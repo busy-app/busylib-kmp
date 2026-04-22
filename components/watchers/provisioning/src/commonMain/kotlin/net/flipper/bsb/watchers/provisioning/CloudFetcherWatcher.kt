@@ -38,18 +38,13 @@ class CloudFetcherWatcher(
 
     override fun onLaunch() {
         singleJobScope.launch(SingleJobMode.CANCEL_PREVIOUS) {
-            combine(
-                persistedStorage.getAllDevicesFlow()
-                    .distinctUntilChanged(),
-                cloudFetcher.getBarsFlow()
-            ) { allDevices, cloudBars ->
-                allDevices to cloudBars
-            }.collectLatest { (allDevices, cloudBars) ->
-                if (!hasMismatch(allDevices, cloudBars)) {
-                    info { "Cloud devices and local are same, skip invalidation" }
-                } else {
-                    info { "Found difference between cloud and local devices, start invalidation" }
-                    persistedStorage.transactionInternal {
+            cloudFetcher.getBarsFlow().collectLatest { cloudBars ->
+                persistedStorage.transactionInternal {
+                    val allDevices = getAllDevices()
+                    if (!hasMismatch(allDevices, cloudBars)) {
+                        info { "Cloud devices and local are same, skip invalidation" }
+                    } else {
+                        info { "Found difference between cloud and local devices, start invalidation" }
                         invalidateCloudBars(cloudBars)
                     }
                 }
@@ -64,8 +59,8 @@ class CloudFetcherWatcher(
         }
         val localCloudIdsSet = allDevices.associateBy { it.cloud?.deviceId }
         cloudBars.forEach { device ->
-            val local = localCloudIdsSet[device.id]
-            if (device.label != null && local?.humanReadableName == DEFAULT_BUSY_BAR_NAME) {
+            val local = localCloudIdsSet[device.id] ?: return true
+            if (device.label != null) {
                 if (device.label != local.humanReadableName) {
                     return true
                 }
@@ -118,12 +113,9 @@ class CloudFetcherWatcher(
                     warn { "Hardware id mismatch: $local vs $cloud" }
                 }
                 info { "Update existing busy bar $local" }
-                val newName = if (local.humanReadableName == DEFAULT_BUSY_BAR_NAME) {
-                    cloud.label ?: local.humanReadableName // By design doesn't work with renaming
-                } else local.humanReadableName
                 addOrReplace(
                     local.copy(
-                        humanReadableName = newName,
+                        humanReadableName = cloud.label ?: local.humanReadableName,
                         hardwareId = cloud.hardwareId
                     ).addTransport(cloud = BUSYBar.ConnectionWay.Cloud(deviceId = cloud.id))
                 )
