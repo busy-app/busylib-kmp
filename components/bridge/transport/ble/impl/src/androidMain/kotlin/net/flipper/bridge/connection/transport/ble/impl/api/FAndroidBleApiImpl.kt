@@ -21,7 +21,7 @@ import net.flipper.bridge.connection.transport.common.api.FTransportConnectionSt
 import net.flipper.bridge.connection.transport.common.api.meta.FTransportMetaInfoApi
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPDeviceApi
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPTransportCapability
-import net.flipper.bridge.connection.transport.common.api.serial.StatusStreamingEvent
+import net.flipper.bridge.connection.transport.common.api.serial.FStatusStreamingApi
 import net.flipper.busylib.core.wrapper.WrappedStateFlow
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
@@ -37,9 +37,11 @@ class FAndroidBleApiImpl(
     services: WrappedStateFlow<List<RemoteService>?>,
     serialApi: FSerialBleApi,
     private var currentConfig: FBleDeviceConnectionConfig,
+    streamingApi: FStatusStreamingApi
 ) : FBleApi,
     FHTTPDeviceApi,
     FTransportMetaInfoApi by FTransportMetaInfoApiImpl(services, currentConfig.metaInfoGattMap),
+    FStatusStreamingApi by streamingApi,
     LogTagProvider {
     override val TAG = "FBleApi"
     private val bleHttpEngine = FHttpBLEEngine(serialApi)
@@ -112,9 +114,5 @@ class FAndroidBleApiImpl(
     override suspend fun disconnect() {
         peripheral.disconnect()
         bleHttpEngine.close()
-    }
-
-    override fun getEvents(): Flow<StatusStreamingEvent> {
-        return flow { StatusStreamingEvent.Protobuf(data = byteArrayOf()) }
     }
 }

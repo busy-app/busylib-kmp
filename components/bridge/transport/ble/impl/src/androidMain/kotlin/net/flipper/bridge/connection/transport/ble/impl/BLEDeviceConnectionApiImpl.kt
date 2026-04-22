@@ -13,7 +13,8 @@ import net.flipper.bridge.connection.transport.ble.api.BleDeviceConnectionApi
 import net.flipper.bridge.connection.transport.ble.api.FBleApi
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.ble.impl.api.FAndroidBleApiImpl
-import net.flipper.bridge.connection.transport.ble.impl.api.http.serial.SerialApiFactory
+import net.flipper.bridge.connection.transport.ble.impl.api.serial.SerialApiFactory
+import net.flipper.bridge.connection.transport.ble.impl.api.stream.AndroidStreamApiFactory
 import net.flipper.bridge.connection.transport.ble.impl.exception.BLEConnectionPermissionException
 import net.flipper.bridge.connection.transport.ble.impl.exception.FailedConnectToDeviceException
 import net.flipper.bridge.connection.transport.ble.impl.exception.NoFoundDeviceException
@@ -111,13 +112,19 @@ class BLEDeviceConnectionApiImpl(
             scope = scope
         )
         info { "Created serial api" }
+        val streamingApi = AndroidStreamApiFactory.buildStreamingApi(
+            config.screenStreamingConfig,
+            services,
+            scope
+        )
         val bleApi = FAndroidBleApiImpl(
             peripheral = device,
             scope = scope,
             services = services,
             serialApi = serialApi,
             currentConfig = config,
-            listener = listener
+            listener = listener,
+            streamingApi = streamingApi
         )
         info { "Created ble api" }
         return bleApi

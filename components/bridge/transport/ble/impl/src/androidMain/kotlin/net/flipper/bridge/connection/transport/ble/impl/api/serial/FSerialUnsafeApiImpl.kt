@@ -1,4 +1,4 @@
-package net.flipper.bridge.connection.transport.ble.impl.api.http.serial
+package net.flipper.bridge.connection.transport.ble.impl.api.serial
 
 import android.Manifest
 import android.content.Context
@@ -17,13 +17,13 @@ import kotlinx.coroutines.launch
 import me.tatarka.inject.annotations.Assisted
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.transport.ble.api.MAX_ATTRIBUTE_SIZE
+import net.flipper.bridge.connection.transport.ble.impl.api.utils.isNotifyAvailable
 import net.flipper.bridge.connection.transport.ble.impl.exception.BLEConnectionPermissionException
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.debug
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
 import no.nordicsemi.kotlin.ble.client.RemoteCharacteristic
-import no.nordicsemi.kotlin.ble.core.CharacteristicProperty
 import no.nordicsemi.kotlin.ble.core.WriteType
 import no.nordicsemi.kotlin.ble.core.util.chunked
 
@@ -100,12 +100,6 @@ class FSerialUnsafeApiImpl(
             scope: CoroutineScope
         ): FSerialUnsafeApiImpl = factory(rxCharacteristic, txCharacteristic, scope)
     }
-}
-
-private fun RemoteCharacteristic.isNotifyAvailable(): Boolean {
-    return properties
-        .intersect(listOf(CharacteristicProperty.NOTIFY, CharacteristicProperty.INDICATE))
-        .isNotEmpty()
 }
 
 private class Waiter<T>(initial: T) {

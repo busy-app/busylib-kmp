@@ -13,6 +13,7 @@ import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withTimeoutOrNull
 import net.flipper.bridge.connection.transport.ble.impl.BleConstants.POLLING_RESET_INTERVAL
+import net.flipper.bridge.connection.transport.ble.impl.api.serial.FResetSerialBleApiImpl
 import no.nordicsemi.kotlin.ble.client.RemoteCharacteristic
 import kotlin.test.Test
 import kotlin.test.assertEquals
