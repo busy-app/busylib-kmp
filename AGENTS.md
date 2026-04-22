@@ -48,7 +48,7 @@ Common tasks:
 - Serialization: `kotlinx.serialization` with JSON (Ktor negotiation); protobuf via Wire 6.1.0 for device protocol.
 - Retries: use `exponentialRetry { ... }` from `core:ktx` rather than hand-rolling loops.
 - `@Serializable` data classes must annotate every field with `@SerialName`, including fields that "look obvious" (enforced by `SerialNameNotProvidedRule`).
-- No `runCatching` inside `suspend` functions — it swallows `CancellationException` (enforced by `RunCatchingInSuspendRule`). Use explicit try/catch that rethrows `CancellationException`.
+- No `runCatching` inside `suspend` functions — use `net.flipper.core.busylib.ktx.common.runSuspendCatching` instead.
 
 ## Testing
 
