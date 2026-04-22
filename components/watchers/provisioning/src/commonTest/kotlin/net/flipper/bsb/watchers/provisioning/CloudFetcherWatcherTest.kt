@@ -7,6 +7,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.job
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -23,6 +24,7 @@ import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
 import net.flipper.bsb.cloud.barsws.api.BSBWebSocket
 import net.flipper.bsb.cloud.barsws.api.CloudWebSocketApi
+import net.flipper.bsb.cloud.barsws.api.WebSocketEvent
 import net.flipper.bsb.cloud.rest.api.BusyCloudBarsApi
 import net.flipper.bsb.cloud.rest.model.BusyCloudBar
 import net.flipper.bsb.watchers.provisioning.utils.CloudFetcher
@@ -776,7 +778,11 @@ class CloudFetcherWatcherTest {
     }
 
     private object FakeCloudWebSocketApi : CloudWebSocketApi {
-        override fun getWSFlow(): Flow<BSBWebSocket?> = emptyFlow()
+        private val fakeBSBWebSocket = object : BSBWebSocket {
+            override fun getEventsFlow(): Flow<WebSocketEvent> = emptyFlow()
+        }
+
+        override fun getWSFlow(): Flow<BSBWebSocket?> = flowOf(fakeBSBWebSocket)
     }
 
     // endregion
