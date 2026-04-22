@@ -1,24 +1,26 @@
 package net.flipper.bridge.device.firmwareupdate.updater.api
 
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.isActive
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.feature.info.api.FDeviceInfoFeatureApi
+import net.flipper.bridge.connection.feature.info.model.BsbBusyBarVersion
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
 import net.flipper.bridge.connection.feature.provider.api.get
-import net.flipper.bridge.device.firmwareupdate.updater.diff.VersionsModelDiff
 import net.flipper.bridge.device.firmwareupdate.updater.model.BusyBarVersionTransition
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateState
 import net.flipper.core.busylib.ktx.common.orNullable
@@ -29,61 +31,41 @@ class PreviousVersionFlowProvider(
     private val fFeatureProvider: FFeatureProvider,
     private val fDevicePersistedStorage: FDevicePersistedStorage
 ) {
-    private fun getPreviousVersionFlow() = channelFlow(
+
+    private fun getVersionFlow(): Flow<BsbBusyBarVersion?> {
+        return fFeatureProvider.get<FDeviceInfoFeatureApi>()
+            .map { status -> status.tryCast<FFeatureStatus.Supported<FDeviceInfoFeatureApi>>() }
+            .flatMapLatest { status -> status?.featureApi?.deviceVersionFlow.orNullable() }
+    }
+
+    internal fun getPreviousVersionFlow(fwUpdateFlow: Flow<FwUpdateState>) = channelFlow(
         block = {
-            send(null)
-            var busyBarVersionTransitionOrNull: BusyBarVersionTransition? = null
             // Reset versionTransition on BusyBar change
-            fDevicePersistedStorage.getCurrentDeviceFlow()
-                .distinctUntilChanged()
-                .onEach {
-                    send(null)
-                    busyBarVersionTransitionOrNull = null
-                }
-                .flatMapLatest {
-                    fFeatureProvider.get<FDeviceInfoFeatureApi>()
-                        .map { status -> status.tryCast<FFeatureStatus.Supported<FDeviceInfoFeatureApi>>() }
-                        .flatMapLatest { status -> status?.featureApi?.deviceVersionFlow.orNullable() }
-                }
-                .distinctUntilChanged()
-                .onEach { newCurrentVersion ->
-                    val versionModel = VersionsModelDiff.compareAndGet(
-                        localVersionModelOrNull = busyBarVersionTransitionOrNull,
-                        newCurrentVersion = newCurrentVersion
-                    )
-                    busyBarVersionTransitionOrNull = versionModel
-                    send(versionModel)
-                }
-                .collect()
+            while (currentCoroutineContext().isActive) {
+                fDevicePersistedStorage.getCurrentDeviceFlow()
+                    .onStart { send(null) }
+                    .distinctUntilChangedBy { busyBar -> busyBar?.uniqueId }
+                    .onEach { send(null) }
+                    .mapLatest {
+                        val currentVersion = getVersionFlow().filterNotNull().first()
+                        send(
+                            BusyBarVersionTransition(
+                                previousVersion = null,
+                                currentVersion = BsbBusyBarVersion(currentVersion.version)
+                            )
+                        )
+                        fwUpdateFlow.filterIsInstance<FwUpdateState.Updating>().first()
+                        fwUpdateFlow.filter { state -> state !is FwUpdateState.Updating }.first()
+                        val nextVersion = getVersionFlow().filterNotNull().first()
+                        send(
+                            BusyBarVersionTransition(
+                                previousVersion = nextVersion,
+                                currentVersion = BsbBusyBarVersion(currentVersion.version)
+                            )
+                        )
+                    }
+                    .first()
+            }
         }
     )
-
-    /**
-     * After each successful update/upload/download, we need to restart previous version checker
-     */
-    internal fun getAutoRestartedPreviousVersionFlow(
-        fwUpdateStateFlow: Flow<FwUpdateState>
-    ): Flow<BusyBarVersionTransition?> {
-        return channelFlow {
-            var job: Job? = null
-            fwUpdateStateFlow
-                .distinctUntilChangedBy { fwUpdateState ->
-                    when (fwUpdateState) {
-                        is FwUpdateState.Downloading -> 0
-
-                        is FwUpdateState.Uploading,
-                        is FwUpdateState.Updating -> 1
-
-                        else -> 1
-                    }
-                }
-                .collect { _ ->
-                    job?.cancelAndJoin()
-                    job = getPreviousVersionFlow()
-                        .onEach { versionsModel -> send(versionsModel) }
-                        .launchIn(this)
-                }
-            awaitClose()
-        }
-    }
 }
