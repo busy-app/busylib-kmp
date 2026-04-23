@@ -105,7 +105,7 @@ class FWiFiFeatureApiImpl(
                 when (consumable) {
                     is ConsumableUpdateEvent.BusyLib<BusyLibUpdateEvent.Wifi> if wifi != null -> {
                         consumable.busyLibUpdateEvent.let { wifiUpdateEvent ->
-                            BsbWifiStatusResponse(
+                            wifi.copy(
                                 state = wifiUpdateEvent.state,
                                 ssid = wifiUpdateEvent.ssid,
                                 bssid = wifiUpdateEvent.bssid,

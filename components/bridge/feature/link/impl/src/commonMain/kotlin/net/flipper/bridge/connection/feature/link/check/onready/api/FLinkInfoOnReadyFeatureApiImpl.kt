@@ -15,6 +15,8 @@ import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.feature.link.check.ondemand.api.FLinkedInfoOnDemandFeatureApi
 import net.flipper.bridge.connection.feature.link.model.LinkedAccountInfo
 import net.flipper.bridge.connection.feature.rpc.api.critical.FRpcCriticalFeatureApi
+import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarLinkCode
+import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarLinkCodeAlreadyLinked
 import net.flipper.bridge.connection.feature.rpc.api.model.RpcLinkedAccountInfo
 import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
@@ -65,14 +67,23 @@ class FLinkInfoOnReadyFeatureApiImpl(
             // BUSY Bar is linked, but userId is missing
             linkedUuid == null || linkedMail == null -> LinkedAccountInfo.Error
             // BUSY Bar is linked to the current user
-            linkedUuid == currentUserId ->
+            linkedUuid == currentUserId -> {
                 LinkedAccountInfo.Linked.SameUser(linkedUuid, linkedMail)
+            }
             // BUSY Bar is linked to a different user
-            currentUserId != null ->
+            currentUserId != null -> {
                 LinkedAccountInfo.Linked.DifferentUser(linkedUuid, linkedMail)
+            }
             // BUSY Bar is linked, but we don't know the current user
             // Fallback case
             else -> LinkedAccountInfo.Linked.MissingBusyCloud(linkedUuid, linkedMail)
+        }
+    }
+
+    private suspend fun awaitLinkedAccountInfo(principal: BUSYLibUserPrincipal.Token?): LinkedAccountInfo {
+        return exponentialRetry {
+            rpcFeatureApi.invalidateLinkedUser(principal?.userId)
+                .map { result -> result.asSealed(principal?.userId) }
         }
     }
 
@@ -80,22 +91,25 @@ class FLinkInfoOnReadyFeatureApiImpl(
         singleJobScope.launch(SingleJobMode.CANCEL_PREVIOUS) {
             info { "Local principal is ${principal?.userId}" }
 
-            val info = exponentialRetry {
-                rpcFeatureApi.invalidateLinkedUser(principal?.userId)
-                    .map { result -> result.asSealed(principal?.userId) }
-            }
+            val info = awaitLinkedAccountInfo(principal)
+            _status.emit(info)
 
             info { "BUSY Bar info is $info" }
             if (info is LinkedAccountInfo.NotLinked && principal != null) {
                 info { "Start authorization for BUSY Bar..." }
                 exponentialRetry {
-                    authBusyBar(principal)
-                        .onFailure { t ->
-                            error(t) { "Failed authorize for BUSY Bar" }
-                        }
+                    authBusyBar(principal).onFailure { t ->
+                        error(t) { "Failed authorize for BUSY Bar" }
+                    }
                 }
+                exponentialRetry {
+                    rpcFeatureApi.invalidateLinkedUser(principal.userId)
+                        .map { result -> result.asSealed(principal.userId) }
+                        .onSuccess { linkedAccountInfo -> _status.emit(linkedAccountInfo) }
+                        .map { }
+                }
+                _status.emit(awaitLinkedAccountInfo(principal))
             }
-            _status.emit(info)
         }
     }
 
@@ -103,6 +117,10 @@ class FLinkInfoOnReadyFeatureApiImpl(
         principal: BUSYLibUserPrincipal.Token
     ): Result<Unit> = runSuspendCatching {
         val linkCode = rpcFeatureApi.getLinkCode().getOrThrow()
+        when (linkCode) {
+            is BusyBarLinkCode -> Unit
+            BusyBarLinkCodeAlreadyLinked -> return@runSuspendCatching
+        }
 
         info { "Receive link code from BUSY Bar: $linkCode" }
 

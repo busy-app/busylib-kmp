@@ -2,6 +2,7 @@ package net.flipper.bridge.connection.feature.finishsetup.api
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import me.tatarka.inject.annotations.Inject
 import me.tatarka.inject.annotations.IntoMap
 import me.tatarka.inject.annotations.Provides
@@ -128,10 +129,14 @@ class FFinishSetupFeatureApiImpl(
     }
 
     override val taskListResourceFlow: WrappedSharedFlow<FFinishSetupState> = combine(
-        flow = fBleFeatureApi?.getBleStatus().orNullable(),
-        flow2 = fLinkedInfoOnDemandFeatureApi.status,
-        flow3 = fWiFiFeatureApi.getWifiStatusFlow(),
-        flow4 = fFirmwareUpdateFeatureApi.updateStatusFlow,
+        flow = fBleFeatureApi?.getBleStatus().orNullable()
+            .distinctUntilChanged(),
+        flow2 = fLinkedInfoOnDemandFeatureApi.status
+            .distinctUntilChanged(),
+        flow3 = fWiFiFeatureApi.getWifiStatusFlow()
+            .distinctUntilChanged(),
+        flow4 = fFirmwareUpdateFeatureApi.updateStatusFlow
+            .distinctUntilChanged(),
         flow5 = setupFinishedBeforeKrate.cachedStateFlow,
         transform = ::TasksDependencies
     ).transformWhileSubscribed(
