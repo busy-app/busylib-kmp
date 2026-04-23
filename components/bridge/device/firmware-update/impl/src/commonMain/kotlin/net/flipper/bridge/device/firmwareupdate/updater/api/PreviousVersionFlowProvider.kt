@@ -36,6 +36,7 @@ class PreviousVersionFlowProvider(
         return fFeatureProvider.get<FDeviceInfoFeatureApi>()
             .map { status -> status.tryCast<FFeatureStatus.Supported<FDeviceInfoFeatureApi>>() }
             .flatMapLatest { status -> status?.featureApi?.deviceVersionFlow.orNullable() }
+            .map { bsbBusyBarVersion -> bsbBusyBarVersion?.version?.let(::BsbBusyBarVersion) }
     }
 
     internal fun getPreviousVersionFlow(fwUpdateFlow: Flow<FwUpdateState>) = channelFlow(
@@ -47,20 +48,22 @@ class PreviousVersionFlowProvider(
                     .distinctUntilChangedBy { busyBar -> busyBar?.uniqueId }
                     .onEach { send(null) }
                     .mapLatest {
-                        val currentVersion = getVersionFlow().filterNotNull().first()
+                        val beforeUpdateVersion = getVersionFlow()
+                            .filterNotNull()
+                            .first()
                         send(
                             BusyBarVersionTransition(
                                 previousVersion = null,
-                                currentVersion = BsbBusyBarVersion(currentVersion.version)
+                                currentVersion = beforeUpdateVersion
                             )
                         )
                         fwUpdateFlow.filterIsInstance<FwUpdateState.Updating>().first()
                         fwUpdateFlow.filter { state -> state !is FwUpdateState.Updating }.first()
-                        val nextVersion = getVersionFlow().filterNotNull().first()
+                        val afterUpdateVersion = getVersionFlow().filterNotNull().first()
                         send(
                             BusyBarVersionTransition(
-                                previousVersion = nextVersion,
-                                currentVersion = BsbBusyBarVersion(currentVersion.version)
+                                previousVersion = beforeUpdateVersion,
+                                currentVersion = afterUpdateVersion
                             )
                         )
                     }
