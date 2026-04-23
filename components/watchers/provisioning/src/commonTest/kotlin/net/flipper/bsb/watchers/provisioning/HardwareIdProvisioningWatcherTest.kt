@@ -11,6 +11,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.config.api.model.addTransport
+import net.flipper.bridge.connection.config.api.model.copy
 import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarStatusDevice
@@ -233,10 +234,9 @@ class HardwareIdProvisioningWatcherTest {
         var result = when (first) {
             is BUSYBar.ConnectionWay.BLE -> BUSYBar(
                 humanReadableName = "Test Bar",
-                hardwareId = hardwareId,
                 uniqueId = id,
                 ble = first
-            )
+            ).copy(hardwareId = hardwareId)
             is BUSYBar.ConnectionWay.Cloud -> BUSYBar(
                 humanReadableName = "Test Bar",
                 hardwareId = hardwareId,
@@ -245,10 +245,9 @@ class HardwareIdProvisioningWatcherTest {
             )
             is BUSYBar.ConnectionWay.Lan -> BUSYBar(
                 humanReadableName = "Test Bar",
-                hardwareId = hardwareId,
                 uniqueId = id,
                 lan = first
-            )
+            ).copy(hardwareId = hardwareId)
             is BUSYBar.ConnectionWay.Mock -> BUSYBar(
                 humanReadableName = "Test Bar",
                 hardwareId = hardwareId,
