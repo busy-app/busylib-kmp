@@ -4,7 +4,6 @@ import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.filterNotNull
@@ -29,8 +28,8 @@ import net.flipper.bridge.device.firmwareupdate.downloader.api.FirmwareDownloade
 import net.flipper.bridge.device.firmwareupdate.downloader.api.FirmwareDownloaderApiImpl
 import net.flipper.bridge.device.firmwareupdate.status.api.UpdateStatusProvider
 import net.flipper.bridge.device.firmwareupdate.status.api.UpdaterStatusCollector
-import net.flipper.bridge.device.firmwareupdate.updater.diff.FwUpdateStateDiff
 import net.flipper.bridge.device.firmwareupdate.updater.mapper.FwUpdateStatusMapper
+import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateEvent
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateState
 import net.flipper.bridge.device.firmwareupdate.uploader.api.FirmwareUploaderApi
 import net.flipper.bridge.device.firmwareupdate.uploader.api.FirmwareUploaderApiImpl
@@ -106,15 +105,22 @@ class FirmwareUpdaterApiImpl(
         }
     ).stateIn(scope, SharingStarted.Lazily, FwUpdateState.Pending).wrap()
 
+    @Suppress("UseLet")
     override val events = previousVersionFlowProvider
-        .getAutoRestartedPreviousVersionFlow(state)
-        .combine(state) { versionsModel, fwUpdateState ->
-            FwUpdateStateDiff.compareAndGetEvent(
-                fwUpdateState = fwUpdateState,
-                busyBarVersionTransition = versionsModel
-            )
+        .getPreviousVersionFlow(state)
+        .map { versionsModel ->
+            when {
+                versionsModel == null -> null
+                versionsModel.previousVersion == null -> null
+                versionsModel.currentVersion == versionsModel.previousVersion -> {
+                    FwUpdateEvent.UpdateFailed
+                }
+                versionsModel.currentVersion != versionsModel.previousVersion -> {
+                    FwUpdateEvent.UpdateFinished
+                }
+                else -> null
+            }
         }
-        .distinctUntilChanged()
         .filterNotNull()
         .shareIn(scope, SharingStarted.Lazily)
         .asFlow()
