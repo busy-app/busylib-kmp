@@ -5,20 +5,18 @@ import kotlin.uuid.Uuid
 
 fun BUSYBar(
     humanReadableName: String,
-    hardwareId: String? = null,
     uniqueId: String = Uuid.random().toString(),
-    onCallEnabled: Boolean? = null,
     ble: ConnectionWay.BLE
 ): BUSYBar {
     return BUSYBar(
         humanReadableName = humanReadableName,
-        hardwareId = hardwareId,
+        hardwareId = null,
         uniqueId = uniqueId,
         ble = ble,
         cloud = null,
         lan = null,
         mock = null,
-        onCallEnabled = onCallEnabled,
+        onCallEnabled = null,
     )
 }
 
@@ -26,7 +24,6 @@ fun BUSYBar(
     humanReadableName: String,
     hardwareId: String? = null,
     uniqueId: String = Uuid.random().toString(),
-    onCallEnabled: Boolean? = null,
     cloud: ConnectionWay.Cloud
 ): BUSYBar {
     return BUSYBar(
@@ -37,26 +34,24 @@ fun BUSYBar(
         cloud = cloud,
         lan = null,
         mock = null,
-        onCallEnabled = onCallEnabled,
+        onCallEnabled = null,
     )
 }
 
 fun BUSYBar(
     humanReadableName: String,
-    hardwareId: String? = null,
     uniqueId: String = Uuid.random().toString(),
-    onCallEnabled: Boolean? = null,
     lan: ConnectionWay.Lan
 ): BUSYBar {
     return BUSYBar(
         humanReadableName = humanReadableName,
-        hardwareId = hardwareId,
+        hardwareId = null,
         uniqueId = uniqueId,
         ble = null,
         cloud = null,
         lan = lan,
         mock = null,
-        onCallEnabled = onCallEnabled,
+        onCallEnabled = null,
     )
 }
 
