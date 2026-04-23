@@ -9,6 +9,7 @@ import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import net.flipper.bridge.connection.transport.ble.impl.ios.testfixtures.RecordingPeripheral
 import net.flipper.bridge.connection.transport.ble.impl.ios.testfixtures.SERIAL_RX_SHORT_UUID
+import net.flipper.bridge.connection.transport.ble.impl.ios.testfixtures.STREAMING_NOTIFY_SHORT_UUID
 import net.flipper.bridge.connection.transport.ble.impl.ios.testfixtures.createConfig
 import net.flipper.bridge.connection.transport.ble.impl.ios.testfixtures.error
 import net.flipper.bridge.connection.transport.ble.impl.ios.testfixtures.newCharacteristic
@@ -166,4 +167,28 @@ class FPeripheralLifecycleTest {
 
         assertTrue(received.isEmpty())
     }
+
+    @Test
+    fun GIVEN_active_streaming_collector_WHEN_disconnect_called_THEN_streaming_flow_completes_with_buffered_data() =
+        runTest {
+            val connected = createConnectedSut()
+            val payload = byteArrayOf(4, 5, 6)
+
+            val collectJob = async {
+                connected.sut.streamingDataStream.toList()
+            }
+            runCurrent()
+
+            connected.sut.didUpdateValue(
+                newCharacteristic(STREAMING_NOTIFY_SHORT_UUID, payload = payload),
+                error = null,
+            )
+            connected.sut.onDisconnect()
+            runCurrent()
+
+            val received = collectJob.await()
+
+            assertEquals(1, received.size)
+            assertContentEquals(payload, received[0])
+        }
 }

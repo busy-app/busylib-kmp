@@ -120,6 +120,7 @@ private class FakePeripheralApi(
         .asStateFlow()
         .wrap()
     override val rxDataStream: Flow<ByteArray> = emptyFlow()
+    override val streamingDataStream: Flow<ByteArray> = emptyFlow()
     override val metaInfoKeysStream: WrappedStateFlow<Map<TransportMetaInfoKey, ByteArray?>> =
         MutableStateFlow<Map<TransportMetaInfoKey, ByteArray?>>(emptyMap())
             .asStateFlow()

@@ -24,10 +24,12 @@ import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfo
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPDeviceApi
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPTransportCapability
+import net.flipper.bridge.connection.transport.common.api.serial.FStatusStreamingApi
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 
 class FIOSBleApiImpl(
     serialApi: FSerialBleApi,
+    streamingApi: FStatusStreamingApi,
     private var currentConfig: FBleDeviceConnectionConfig,
     private val peripheral: FPeripheralApi,
     private val scope: CoroutineScope,
@@ -35,6 +37,7 @@ class FIOSBleApiImpl(
     private val onDisconnect: suspend () -> Unit,
 ) : FBleApi,
     FHTTPDeviceApi,
+    FStatusStreamingApi by streamingApi,
     FTransportMetaInfoApi {
     private val bleHttpEngine = FHttpBLEEngine(serialApi)
 

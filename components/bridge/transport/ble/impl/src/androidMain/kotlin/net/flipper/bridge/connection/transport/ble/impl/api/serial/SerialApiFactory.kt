@@ -1,4 +1,4 @@
-package net.flipper.bridge.connection.transport.ble.impl.api.http.serial
+package net.flipper.bridge.connection.transport.ble.impl.api.serial
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.map

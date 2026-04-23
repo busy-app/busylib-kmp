@@ -13,6 +13,9 @@ import net.flipper.bridge.connection.transport.ble.impl.ios.testfixtures.Recordi
 import net.flipper.bridge.connection.transport.ble.impl.ios.testfixtures.SERIAL_RX_SHORT_UUID
 import net.flipper.bridge.connection.transport.ble.impl.ios.testfixtures.SERIAL_SERVICE_SHORT_UUID
 import net.flipper.bridge.connection.transport.ble.impl.ios.testfixtures.SERIAL_TX_SHORT_UUID
+import net.flipper.bridge.connection.transport.ble.impl.ios.testfixtures.STREAMING_NOTIFY_SHORT_UUID
+import net.flipper.bridge.connection.transport.ble.impl.ios.testfixtures.STREAMING_SERVICE_SHORT_UUID
+import net.flipper.bridge.connection.transport.ble.impl.ios.testfixtures.STREAMING_WRITE_SHORT_UUID
 import net.flipper.bridge.connection.transport.ble.impl.ios.testfixtures.batteryAndManufacturerMetaMap
 import net.flipper.bridge.connection.transport.ble.impl.ios.testfixtures.createConfig
 import net.flipper.bridge.connection.transport.ble.impl.ios.testfixtures.error
@@ -76,6 +79,25 @@ class FPeripheralDiscoveryTest {
         sut.sut.handleDidWriteValue(tx, error = null)
         advanceUntilIdle()
         writeJob.await()
+    }
+
+    @Test
+    fun GIVEN_streaming_service_WHEN_discovered_THEN_streaming_notify_is_enabled() = runTest {
+        val sut = createSut()
+        val notify = newCharacteristic(STREAMING_NOTIFY_SHORT_UUID)
+        val write = newCharacteristic(STREAMING_WRITE_SHORT_UUID)
+        val streamingService = newService(STREAMING_SERVICE_SHORT_UUID, listOf(notify, write))
+
+        sut.sut.didDiscoverCharacteristics(streamingService, error = null)
+
+        assertTrue(
+            sut.peripheral.notifyRequests.any { (enabled, uuid) ->
+                enabled && uuid.equals(STREAMING_NOTIFY_SHORT_UUID, ignoreCase = true)
+            }
+        )
+        assertFalse(
+            sut.peripheral.readRequests.any { it.equals(STREAMING_NOTIFY_SHORT_UUID, ignoreCase = true) }
+        )
     }
 
     @Test

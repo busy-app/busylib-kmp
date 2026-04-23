@@ -1,4 +1,4 @@
-package net.flipper.bridge.connection.transport.ble.impl.api.http.serial
+package net.flipper.bridge.connection.transport.ble.impl.api.serial
 
 import io.ktor.utils.io.cancel
 import kotlinx.coroutines.CoroutineScope
