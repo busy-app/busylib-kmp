@@ -19,6 +19,7 @@ import net.flipper.busylib.core.wrapper.WrappedStateFlow
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.debug
+import platform.CoreBluetooth.CBATTErrorInsufficientAuthentication
 import platform.CoreBluetooth.CBATTErrorInsufficientEncryption
 import platform.CoreBluetooth.CBCharacteristic
 import platform.CoreBluetooth.CBErrorEncryptionTimedOut
@@ -148,9 +149,10 @@ class FPeripheral(
     }
 
     override fun onError(error: NSError) {
-        debug { "#onError ${error.localizedDescription}" }
         val domain = error.domain
         val code = error.code
+
+        debug { "#onError ${error.localizedDescription} domain $domain code $code" }
 
         when (domain) {
             "CBATTErrorDomain" -> handleCBATTError(code)
@@ -164,10 +166,14 @@ class FPeripheral(
 
         scope.launch {
             when (code) {
-                CBErrorPeerRemovedPairingInformation ->
+                // If user forget pairing on physical device
+                CBErrorPeerRemovedPairingInformation -> {
+                    debug { "Cannot connect to device by peerRemovedPairingInformation" }
                     _stateStream.emit(FPeripheralState.INVALID_PAIRING)
+                }
                 CBErrorEncryptionTimedOut -> {
-                    _stateStream.emit(FPeripheralState.DISCONNECTED)
+                    debug { "Cannot connect to device by encryptionTimedOut" }
+                    _stateStream.emit(FPeripheralState.INVALID_PAIRING)
                 }
             }
         }
@@ -178,8 +184,16 @@ class FPeripheral(
         debug { "Peripheral CBATTError id=${identifier.UUIDString} code=$code" }
         scope.launch {
             when (code) {
-                CBATTErrorInsufficientEncryption ->
+                // If user disallow connect to device
+                CBATTErrorInsufficientEncryption -> {
+                    debug { "Cannot connect to device by encryption timeout" }
                     _stateStream.emit(FPeripheralState.PAIRING_FAILED)
+                }
+                // If user disallow connect to device
+                CBATTErrorInsufficientAuthentication -> {
+                    debug { "CBATTErrorInsufficientAuthentication" }
+                    _stateStream.emit(FPeripheralState.PAIRING_FAILED)
+                }
             }
         }
     }

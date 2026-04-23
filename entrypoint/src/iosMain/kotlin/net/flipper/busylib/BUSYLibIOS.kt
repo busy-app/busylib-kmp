@@ -1,7 +1,6 @@
 package net.flipper.busylib
 
 import com.flipperdevices.core.network.BUSYLibNetworkStateApi
-import com.flipperdevices.core.network.BUSYLibNetworkStateApiNoop
 import com.russhwolf.settings.NSUserDefaultsSettings
 import com.russhwolf.settings.ObservableSettings
 import kotlinx.coroutines.CoroutineScope
@@ -14,11 +13,9 @@ import net.flipper.bridge.connection.transport.ble.impl.ios.central.FCentralMana
 import net.flipper.bridge.device.firmwareupdate.updater.api.FirmwareUpdaterApi
 import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.cloud.api.BUSYLibHostApi
-import net.flipper.bsb.cloud.api.BUSYLibHostApiStub
 import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
 import net.flipper.busylib.di.create
 import net.flipper.tools.multistream.api.MultiStreamApi
-import platform.CoreBluetooth.CBCentralManager
 
 @Inject
 class BUSYLibIOS(
@@ -43,15 +40,13 @@ class BUSYLibIOS(
             scope: CoroutineScope,
             principalApi: BUSYLibPrincipalApi,
             observableSettings: ObservableSettings,
-            manager: CBCentralManager,
-            hostApi: BUSYLibHostApi = BUSYLibHostApiStub("cloud.busy.app"),
-            networkStateApi: BUSYLibNetworkStateApi = BUSYLibNetworkStateApiNoop()
+            hostApi: BUSYLibHostApi,
+            networkStateApi: BUSYLibNetworkStateApi
         ): BUSYLibIOS {
             val graph = create(
                 scope,
                 principalApi,
                 observableSettings,
-                manager,
                 hostApi,
                 networkStateApi,
                 NSUserDefaultsSettings.Factory().create("busylib_settings")

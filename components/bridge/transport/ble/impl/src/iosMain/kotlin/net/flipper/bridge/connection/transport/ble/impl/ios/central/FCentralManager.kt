@@ -35,9 +35,14 @@ import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 @SingleIn(BusyLibGraph::class)
 @ContributesBinding(BusyLibGraph::class, FCentralManagerApi::class)
 class FCentralManager(
-    private val manager: CBCentralManager,
     scope: CoroutineScope,
 ) : FCentralManagerApi, LogTagProvider {
+
+    private val manager by lazy {
+        val manager = CBCentralManager()
+        manager.delegate = delegate
+        return@lazy manager
+    }
 
     override val TAG: String
         get() = "FCentralManager"
@@ -62,7 +67,6 @@ class FCentralManager(
     )
 
     init {
-        manager.delegate = delegate
         scope.launch {
             for (event in delegate.events) {
                 processEvent(event)
@@ -255,7 +259,7 @@ class FCentralManager(
             val device = DiscoveredBluetoothDevice(id = uuid, name = name)
             current + device
         }
-        info { "Emitted to discovered stream, total devices: ${devices.size + 1}" }
+        info { "Emitted to discovered stream, total devices: ${devices.size}" }
     }
 }
 
