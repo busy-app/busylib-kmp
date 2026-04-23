@@ -11,6 +11,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.config.api.model.addTransport
+import net.flipper.bridge.connection.config.api.model.copy
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
 import net.flipper.bsb.cloud.rest.model.BusyCloudBar
 import net.flipper.bsb.watchers.provisioning.fakes.CloudFetcherTestSetup
@@ -638,10 +639,9 @@ class CloudFetcherWatcherTest {
         var result = when (first) {
             is BUSYBar.ConnectionWay.BLE -> BUSYBar(
                 humanReadableName = humanReadableName,
-                hardwareId = hardwareId,
                 uniqueId = id,
                 ble = first
-            )
+            ).copy(hardwareId = hardwareId)
             is BUSYBar.ConnectionWay.Cloud -> BUSYBar(
                 humanReadableName = humanReadableName,
                 hardwareId = hardwareId,
@@ -650,10 +650,9 @@ class CloudFetcherWatcherTest {
             )
             is BUSYBar.ConnectionWay.Lan -> BUSYBar(
                 humanReadableName = humanReadableName,
-                hardwareId = hardwareId,
                 uniqueId = id,
                 lan = first
-            )
+            ).copy(hardwareId = hardwareId)
             is BUSYBar.ConnectionWay.Mock -> BUSYBar(
                 humanReadableName = humanReadableName,
                 hardwareId = hardwareId,
