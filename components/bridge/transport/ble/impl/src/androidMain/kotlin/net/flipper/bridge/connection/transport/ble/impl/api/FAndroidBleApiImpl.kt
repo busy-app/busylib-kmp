@@ -4,6 +4,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -20,6 +21,7 @@ import net.flipper.bridge.connection.transport.common.api.FTransportConnectionSt
 import net.flipper.bridge.connection.transport.common.api.meta.FTransportMetaInfoApi
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPDeviceApi
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPTransportCapability
+import net.flipper.bridge.connection.transport.common.api.serial.FStatusStreamingApi
 import net.flipper.busylib.core.wrapper.WrappedStateFlow
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
@@ -35,9 +37,11 @@ class FAndroidBleApiImpl(
     services: WrappedStateFlow<List<RemoteService>?>,
     serialApi: FSerialBleApi,
     private var currentConfig: FBleDeviceConnectionConfig,
+    streamingApi: FStatusStreamingApi
 ) : FBleApi,
     FHTTPDeviceApi,
     FTransportMetaInfoApi by FTransportMetaInfoApiImpl(services, currentConfig.metaInfoGattMap),
+    FStatusStreamingApi by streamingApi,
     LogTagProvider {
     override val TAG = "FBleApi"
     private val bleHttpEngine = FHttpBLEEngine(serialApi)

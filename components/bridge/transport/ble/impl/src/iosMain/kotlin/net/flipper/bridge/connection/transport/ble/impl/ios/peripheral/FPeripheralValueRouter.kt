@@ -19,6 +19,7 @@ internal class FPeripheralValueRouter(
     private val config: FBleDeviceConnectionConfig,
     private val stateStream: MutableStateFlow<FPeripheralState>,
     private val rxDataChannel: Channel<ByteArray>,
+    private val streamingDataChannel: Channel<ByteArray>,
     private val metaInfoKeysStream: MutableStateFlow<Map<TransportMetaInfoKey, ByteArray?>>,
     private val characteristicValueState: MutableStateFlow<Map<Uuid, ByteArray?>>,
     private val gattIO: FPeripheralGattIO,
@@ -58,6 +59,16 @@ internal class FPeripheralValueRouter(
                 return@runBlocking
             }
 
+            if (characteristicUUID == config.statusStreamingConfig.notifyCharUuid) {
+                if (data != null && payload != null) {
+                    streamingDataChannel.send(payload)
+                    debug { "Streaming data chunk bytes=${data.length} id=${identifierProvider()}" }
+                } else {
+                    warn { "Streaming data is null id=${identifierProvider()}" }
+                }
+                return@runBlocking
+            }
+
             characteristicValueState.update { state ->
                 val newMap = state.toMutableMap()
                 newMap[characteristicUUID] = payload
@@ -78,9 +89,7 @@ internal class FPeripheralValueRouter(
                 address.characteristicAddress == characteristicUUID
             }?.key
 
-            if (metaKey == null) {
-                warn { "Unknown meta characteristic updated: $characteristicUUID" }
-            } else {
+            if (metaKey != null) {
                 stateStream.emit(FPeripheralState.CONNECTED)
                 updateMetaInfo(key = metaKey, data = payload)
             }
