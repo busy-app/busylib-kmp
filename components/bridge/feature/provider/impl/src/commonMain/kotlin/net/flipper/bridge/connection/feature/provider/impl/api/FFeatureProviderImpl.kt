@@ -1,12 +1,10 @@
 package net.flipper.bridge.connection.feature.provider.impl.api
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.awaitCancellation
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
@@ -14,11 +12,9 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.stateIn
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.device.bsb.api.FBSBDeviceApi
-import net.flipper.bridge.connection.device.common.api.FDeviceApi
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
@@ -26,6 +22,7 @@ import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
 import net.flipper.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.ktx.common.createLinkedScope
+import net.flipper.core.busylib.ktx.common.launchOnCompletion
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 import kotlin.reflect.KClass
@@ -38,40 +35,34 @@ class FFeatureProviderImpl(
     private val fBSBDeviceApiFactory: FBSBDeviceApi.Factory,
     globalScope: CoroutineScope
 ) : FFeatureProvider {
-    private val deviceStateFlow = MutableStateFlow<FDeviceApi?>(null)
-
-    init {
-        globalScope.launch {
-            orchestrator
-                .getState()
-                .map { status ->
-                    when (status) {
-                        is FDeviceConnectStatus.Connected -> status.scope to status.deviceApi
-                        is FDeviceConnectStatus.Connecting,
-                        is FDeviceConnectStatus.Disconnecting,
-                        is FDeviceConnectStatus.Disconnected -> null
-                    }
-                }
-                .distinctUntilChanged()
-                .collectLatest { statusPair ->
-                    statusPair?.let {
-                        coroutineScope {
-                            val (scope, deviceApi) = statusPair
-                            val childScope =
-                                createLinkedScope(scopeFirst = scope, scopeSecond = this)
-                            deviceStateFlow.emit(fBSBDeviceApiFactory(childScope, deviceApi))
-                            try {
-                                awaitCancellation()
-                            } finally {
-                                withContext(NonCancellable) {
-                                    deviceStateFlow.emit(null)
-                                }
-                            }
-                        }
-                    }
-                }
+    private val deviceStateFlow = orchestrator
+        .getState()
+        .map { status ->
+            when (status) {
+                is FDeviceConnectStatus.Connected -> status.scope to status.deviceApi
+                is FDeviceConnectStatus.Connecting,
+                is FDeviceConnectStatus.Disconnecting,
+                is FDeviceConnectStatus.Disconnected -> null
+            }
         }
-    }
+        .distinctUntilChanged()
+        .flatMapLatest { statusPair ->
+            if (statusPair == null) return@flatMapLatest flowOf(null)
+            channelFlow<FBSBDeviceApi?> {
+                val (scope, deviceApi) = statusPair
+                val childScope = createLinkedScope(this, scope)
+                val fBSBDeviceApi: FBSBDeviceApi = fBSBDeviceApiFactory(
+                    scope = childScope,
+                    connectedDevice = deviceApi
+                )
+                send(fBSBDeviceApi)
+                childScope.launchOnCompletion {
+                    send(null)
+                }
+                awaitCancellation()
+            }
+        }
+        .stateIn(globalScope, SharingStarted.Eagerly, null)
 
     override fun <T : FDeviceFeatureApi> get(clazz: KClass<T>): Flow<FFeatureStatus<T>> {
         return deviceStateFlow.flatMapLatest { deviceApi ->

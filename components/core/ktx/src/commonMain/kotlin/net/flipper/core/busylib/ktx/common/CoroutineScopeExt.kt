@@ -56,12 +56,13 @@ fun createLinkedScope(
         "scopeSecond must contain a Job to link cancellation"
     }
 
-    firstJob.invokeOnCompletion {
+    val firstListener = firstJob.invokeOnCompletion { childJob.cancel() }
+    val secondListener = secondJob.invokeOnCompletion {
         childJob.cancel()
     }
-
-    secondJob.invokeOnCompletion {
-        childJob.cancel()
+    childJob.invokeOnCompletion {
+        firstListener.dispose()
+        secondListener.dispose()
     }
 
     return CoroutineScope(childJob + dispatcher)
