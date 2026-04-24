@@ -49,12 +49,18 @@ fun createLinkedScope(
     dispatcher: CoroutineDispatcher = FlipperDispatchers.default
 ): CoroutineScope {
     val childJob = SupervisorJob()
+    val firstJob = requireNotNull(scopeFirst.coroutineContext[Job]) {
+        "scopeFirst must contain a Job to link cancellation"
+    }
+    val secondJob = requireNotNull(scopeSecond.coroutineContext[Job]) {
+        "scopeSecond must contain a Job to link cancellation"
+    }
 
-    scopeFirst.coroutineContext[Job]?.invokeOnCompletion {
+    firstJob.invokeOnCompletion {
         childJob.cancel()
     }
 
-    scopeSecond.coroutineContext[Job]?.invokeOnCompletion {
+    secondJob.invokeOnCompletion {
         childJob.cancel()
     }
 
