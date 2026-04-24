@@ -1,6 +1,7 @@
 package net.flipper.bridge.connection.feature.provider.impl.api
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -14,6 +15,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.device.bsb.api.FBSBDeviceApi
 import net.flipper.bridge.connection.device.common.api.FDeviceApi
@@ -61,7 +63,9 @@ class FFeatureProviderImpl(
                             try {
                                 awaitCancellation()
                             } finally {
-                                deviceStateFlow.emit(null)
+                                withContext(NonCancellable) {
+                                    deviceStateFlow.emit(null)
+                                }
                             }
                         }
                     }
