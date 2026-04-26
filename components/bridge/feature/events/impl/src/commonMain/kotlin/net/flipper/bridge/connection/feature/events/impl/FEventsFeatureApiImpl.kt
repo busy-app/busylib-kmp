@@ -1,6 +1,7 @@
 package net.flipper.bridge.connection.feature.events.impl
 
 import BSB_State.State
+import com.squareup.wire.internal.ProtocolException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -26,6 +27,7 @@ import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.verbose
+import net.flipper.core.busylib.log.warn
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
 
 class FEventsFeatureApiImpl(
@@ -51,7 +53,17 @@ class FEventsFeatureApiImpl(
                 when (event) {
                     is StatusStreamingEvent.Protobuf -> {
                         onProtobufStatesUpdate(data = event)
-                            .onFailure { t -> error(t) { "Failed to process $event" } }
+                            .onFailure { t ->
+                                if (t is ProtocolException) {
+                                    val size = event.data.size
+                                    val preview = event.data.hexPreview()
+                                    warn {
+                                        "Skipping malformed protobuf frame (${size}B): $preview | ${t.message}"
+                                    }
+                                } else {
+                                    error(t) { "Failed to process $event" }
+                                }
+                            }
                     }
                 }
             }
@@ -61,6 +73,10 @@ class FEventsFeatureApiImpl(
     private suspend fun onProtobufStatesUpdate(
         data: StatusStreamingEvent.Protobuf
     ) = runSuspendCatching {
+        if (data.data.isEmpty() || data.data.isAllZero()) {
+            verbose { "Skipping ${data.data.size}B no-op protobuf frame" }
+            return@runSuspendCatching
+        }
         val state = State.ADAPTER.decode(data.data)
         verbose { "Process ${state.updates.size} updates: $state" }
         val updates = state.updates.mapNotNull { update ->
@@ -70,6 +86,12 @@ class FEventsFeatureApiImpl(
             busyLibUpdateEventFlow.emit(update)
         }
     }
+
+    private fun ByteArray.isAllZero(): Boolean = all { byte -> byte == 0.toByte() }
+
+    private fun ByteArray.hexPreview(maxBytes: Int = HEX_PREVIEW_MAX_BYTES): String =
+        take(maxBytes).joinToString(" ") { byte -> byte.toUByte().toString(HEX_RADIX).padStart(2, '0') }
+            .let { if (size > maxBytes) "$it..." else it }
 
     init {
         if (streamingApi != null) {
@@ -89,6 +111,11 @@ class FEventsFeatureApiImpl(
                 streamingApi = connectedDevice as? FStatusStreamingApi
             )
         }
+    }
+
+    private companion object {
+        private const val HEX_PREVIEW_MAX_BYTES = 16
+        private const val HEX_RADIX = 16
     }
 
     @ContributesTo(BusyLibGraph::class)
