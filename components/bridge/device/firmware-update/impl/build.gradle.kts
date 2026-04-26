@@ -33,4 +33,8 @@ kotlin {
         implementation(libs.kotlinx.crypto)
         implementation(libs.kotlinx.crypto.provider)
     }
+    sourceSets.commonTest.dependencies {
+        implementation(libs.kotlin.test)
+        implementation(libs.kotlin.coroutines.test)
+    }
 }

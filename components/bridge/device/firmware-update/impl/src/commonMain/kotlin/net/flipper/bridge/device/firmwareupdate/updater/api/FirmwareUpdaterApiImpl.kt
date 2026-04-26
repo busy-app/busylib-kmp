@@ -10,11 +10,14 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.job
+import kotlinx.coroutines.withTimeoutOrNull
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.feature.firmwareupdate.api.FFirmwareUpdateFeatureApi
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateVersion
@@ -28,6 +31,7 @@ import net.flipper.bridge.device.firmwareupdate.downloader.api.FirmwareDownloade
 import net.flipper.bridge.device.firmwareupdate.downloader.api.FirmwareDownloaderApiImpl
 import net.flipper.bridge.device.firmwareupdate.status.api.UpdateStatusProvider
 import net.flipper.bridge.device.firmwareupdate.status.api.UpdaterStatusCollector
+import net.flipper.bridge.device.firmwareupdate.updater.detector.InstallCompletionDetector
 import net.flipper.bridge.device.firmwareupdate.updater.mapper.FwUpdateStatusMapper
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateEvent
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateState
@@ -53,6 +57,8 @@ import net.flipper.core.busylib.log.info
 import net.flipper.core.ktor.di.qualifier.KtorNetworkClientQualifier
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 
 @Inject
 @ContributesBinding(BusyLibGraph::class, FirmwareUpdaterApi::class)
@@ -157,15 +163,40 @@ class FirmwareUpdaterApiImpl(
         }
     }
 
-    private suspend fun awaitDeviceReconnected() {
-        info { "#startUpdateInstall upload finished! Awaiting null device uptime" }
+    /**
+     * Waits for update completion via a race between two signals:
+     *  1. Device-side install FSM returns to idle (works over any live
+     *     transport — survives a LAN→cloud handoff after reboot).
+     *  2. Legacy uptime probe: getDeviceInfo() goes null then comes back.
+     *
+     * A hard timeout caps the wait so the UI can't stick in "Updating" forever
+     * if both signals are starved (e.g. all transports dead).
+     */
+    private suspend fun awaitUpdateCompleted() {
+        info { "#startUpdateInstall upload finished! Awaiting completion (install-idle OR device-reconnect)" }
+        val winner = withTimeoutOrNull(UPDATE_COMPLETION_TIMEOUT) {
+            merge(
+                InstallCompletionDetector
+                    .detect(updateStatusProvider.getUpdateStatus())
+                    .map { CompletionVia.InstallIdle },
+                flow {
+                    awaitDeviceReconnectedViaUptime()
+                    emit(CompletionVia.DeviceReconnected)
+                }
+            ).first()
+        }
+        updaterStatusCollector.stop(graceful = true)
+        info { "#startUpdateInstall completed via ${winner ?: "TIMEOUT"}" }
+    }
+
+    private suspend fun awaitDeviceReconnectedViaUptime() {
+        info { "#startUpdateInstall awaiting null device uptime" }
         fFeatureProvider.get<FDeviceInfoFeatureApi>()
             .map { status -> status.tryCast<FFeatureStatus.Supported<FDeviceInfoFeatureApi>>() }
             .map { status -> status?.featureApi }
             .map { feature -> feature?.getDeviceInfo()?.toKotlinResult()?.getOrNull() }
             .filter { response -> response == null }
             .first()
-        updaterStatusCollector.stop(graceful = true)
         info { "#startUpdateInstall awaiting for new uptime!" }
         fFeatureProvider.get<FDeviceInfoFeatureApi>()
             .map { status -> status.tryCast<FFeatureStatus.Supported<FDeviceInfoFeatureApi>>() }
@@ -174,8 +205,9 @@ class FirmwareUpdaterApiImpl(
             .map { feature -> exponentialRetry { feature.getDeviceInfo().toKotlinResult() } }
             .map { busyBarStatusSystem -> busyBarStatusSystem.uptime }
             .first()
-        info { "#startUpdateInstall device connected!" }
     }
+
+    private enum class CompletionVia { InstallIdle, DeviceReconnected }
 
     /**
      * Starts an update install depending on current [BsbUpdateVersion]
@@ -232,11 +264,15 @@ class FirmwareUpdaterApiImpl(
                     when (bsbUpdateVersion) {
                         is BsbUpdateVersion.Default -> Unit
                         is BsbUpdateVersion.Url -> {
-                            awaitDeviceReconnected()
+                            awaitUpdateCompleted()
                         }
                     }
                 }
         }.await()
+    }
+
+    private companion object {
+        private val UPDATE_COMPLETION_TIMEOUT: Duration = 10.minutes
     }
 
     override suspend fun checkForUpdates(): CResult<Unit> {
