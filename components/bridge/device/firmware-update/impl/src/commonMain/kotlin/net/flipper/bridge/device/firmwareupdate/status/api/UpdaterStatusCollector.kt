@@ -55,7 +55,8 @@ class UpdaterStatusCollector(
                 }.toBsbUpdateStatus()
                 val event = BusyLibUpdateEvent.Update.UpdateState(
                     action = updateStatus.install.action,
-                    status = updateStatus.install.status
+                    status = updateStatus.install.status,
+                    download = updateStatus.install.download,
                 )
                 eventsFeatureApi.onBusyLibEvent(event)
             }

@@ -32,7 +32,8 @@ sealed interface BusyLibUpdateEvent {
     sealed interface Update : BusyLibUpdateEvent {
         data class UpdateState(
             val action: BsbUpdateStatus.BsbInstall.BsbAction,
-            val status: BsbUpdateStatus.BsbInstall.BsbStatus
+            val status: BsbUpdateStatus.BsbInstall.BsbStatus,
+            val download: BsbUpdateStatus.BsbInstall.BsbDownload? = null,
         ) : Update
 
         data class UpdateCheck(
