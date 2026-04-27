@@ -133,8 +133,8 @@ class FCentralManager(
         withTimeoutOrNull(BleConstants.DISCONNECT_TIME) {
             peripheral.stateStream.first {
                 it == FPeripheralState.DISCONNECTED ||
-                        it == FPeripheralState.PAIRING_FAILED ||
-                        it == FPeripheralState.INVALID_PAIRING
+                    it == FPeripheralState.PAIRING_FAILED ||
+                    it == FPeripheralState.INVALID_PAIRING
             }
         } ?: run {
             warn { "Disconnect timeout for peripheral id=$id, forcing cleanup" }
