@@ -38,10 +38,17 @@ class FCentralManager(
     scope: CoroutineScope,
 ) : FCentralManagerApi, LogTagProvider {
 
+    internal var centralManagerProvider: () -> CBCentralManager = { CBCentralManager() }
+
+    internal constructor(
+        scope: CoroutineScope,
+        centralManagerProvider: () -> CBCentralManager,
+    ) : this(scope) {
+        this.centralManagerProvider = centralManagerProvider
+    }
+
     private val manager by lazy {
-        val manager = CBCentralManager()
-        manager.delegate = delegate
-        return@lazy manager
+        centralManagerProvider().also { it.delegate = delegate }
     }
 
     override val TAG: String
