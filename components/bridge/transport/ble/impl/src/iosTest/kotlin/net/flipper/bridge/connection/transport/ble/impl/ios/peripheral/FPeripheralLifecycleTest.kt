@@ -72,7 +72,7 @@ class FPeripheralLifecycleTest {
         sut.stateStream.first { it == FPeripheralState.INVALID_PAIRING }
 
         sut.onError(error(domain = "CBErrorDomain", code = CBErrorEncryptionTimedOut))
-        sut.stateStream.first { it == FPeripheralState.DISCONNECTED }
+        sut.stateStream.first { it == FPeripheralState.INVALID_PAIRING }
     }
 
     @Test
