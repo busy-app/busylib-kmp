@@ -186,7 +186,7 @@ class FPeripheral(
             when (code) {
                 // If user disallow connect to device
                 CBATTErrorInsufficientEncryption -> {
-                    debug { "Cannot connect to device by encryption timeout" }
+                    debug { "Cannot connect to device by insufficient encryption" }
                     _stateStream.emit(FPeripheralState.PAIRING_FAILED)
                 }
                 // If user disallow connect to device
