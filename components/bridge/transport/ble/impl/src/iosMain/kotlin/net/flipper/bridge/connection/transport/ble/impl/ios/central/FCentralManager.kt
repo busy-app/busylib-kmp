@@ -36,17 +36,8 @@ import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 @ContributesBinding(BusyLibGraph::class, FCentralManagerApi::class)
 class FCentralManager(
     scope: CoroutineScope,
+    centralManagerProvider: () -> CBCentralManager = { CBCentralManager() },
 ) : FCentralManagerApi, LogTagProvider {
-
-    internal var centralManagerProvider: () -> CBCentralManager = { CBCentralManager() }
-
-    internal constructor(
-        scope: CoroutineScope,
-        centralManagerProvider: () -> CBCentralManager,
-    ) : this(scope) {
-        this.centralManagerProvider = centralManagerProvider
-    }
-
     private val manager by lazy {
         centralManagerProvider().also { it.delegate = delegate }
     }
@@ -142,8 +133,8 @@ class FCentralManager(
         withTimeoutOrNull(BleConstants.DISCONNECT_TIME) {
             peripheral.stateStream.first {
                 it == FPeripheralState.DISCONNECTED ||
-                    it == FPeripheralState.PAIRING_FAILED ||
-                    it == FPeripheralState.INVALID_PAIRING
+                        it == FPeripheralState.PAIRING_FAILED ||
+                        it == FPeripheralState.INVALID_PAIRING
             }
         } ?: run {
             warn { "Disconnect timeout for peripheral id=$id, forcing cleanup" }
