@@ -20,6 +20,7 @@ import net.flipper.bridge.connection.config.api.model.BUSYBar.ConnectionWay
 import net.flipper.bridge.connection.device.bsb.api.FBSBDeviceApi
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
+import net.flipper.bridge.connection.orchestrator.api.model.DisconnectStatus
 import net.flipper.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
 import net.flipper.bridge.connection.orchestrator.api.model.FDeviceTransportType
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
@@ -31,6 +32,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
+import kotlin.test.assertNotSame
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -262,6 +264,102 @@ class FFeatureProviderImplDeviceStateFlowTest {
             assertTrue(
                 globalScope.coroutineContext.job.isActive,
                 "Cancelling the factory's child scope must NOT cancel globalScope either"
+            )
+        }
+
+    @Test
+    fun GIVEN_statusPairScope_died_WHEN_new_connected_status_arrives_THEN_deviceStateFlow_resumes() =
+        runTest {
+            val statusScope1 = scopeWith()
+            val globalScope = scopeWith()
+            val factory = CapturingFactory()
+            val orchestrator = FakeOrchestrator(connectedStatus(statusScope1))
+
+            val sut = FFeatureProviderImpl(
+                orchestrator = orchestrator,
+                fBSBDeviceApiFactory = factory,
+                globalScope = globalScope,
+            )
+            advanceUntilIdle()
+            val first = sut.deviceStateFlow.value
+            assertNotNull(first, "Precondition: first connection produced an fBSBDeviceApi")
+
+            statusScope1.cancel()
+            advanceUntilIdle()
+            assertNull(
+                sut.deviceStateFlow.value,
+                "Precondition: deviceStateFlow drops to null after the first status.scope dies"
+            )
+
+            val statusScope2 = scopeWith()
+            orchestrator.state.value = connectedStatus(statusScope2)
+            advanceUntilIdle()
+
+            val second = sut.deviceStateFlow.value
+            assertNotNull(
+                second,
+                "After a new Connected status, deviceStateFlow must resume and emit a fresh " +
+                    "fBSBDeviceApi — got null. inner-flow completion must not tear down stateIn. " +
+                    "Captured scopes so far: ${factory.capturedScopes.size}"
+            )
+            assertNotSame(
+                first,
+                second,
+                "Recovery must produce a NEW fBSBDeviceApi via a second factory invocation"
+            )
+            assertEquals(
+                2,
+                factory.capturedScopes.size,
+                "Factory must run exactly twice — once per Connected status"
+            )
+        }
+
+    @Test
+    fun GIVEN_orchestrator_cycles_Connected_Disconnected_Connected_THEN_deviceStateFlow_resumes() =
+        runTest {
+            val statusScope1 = scopeWith()
+            val globalScope = scopeWith()
+            val factory = CapturingFactory()
+            val orchestrator = FakeOrchestrator(connectedStatus(statusScope1))
+
+            val sut = FFeatureProviderImpl(
+                orchestrator = orchestrator,
+                fBSBDeviceApiFactory = factory,
+                globalScope = globalScope,
+            )
+            advanceUntilIdle()
+            val first = sut.deviceStateFlow.value
+            assertNotNull(first, "Precondition: first connection produced an fBSBDeviceApi")
+
+            orchestrator.state.value = FDeviceConnectStatus.Disconnected(
+                device = device(),
+                reason = DisconnectStatus.REPORTED_BY_TRANSPORT,
+            )
+            advanceUntilIdle()
+            assertNull(
+                sut.deviceStateFlow.value,
+                "Precondition: deviceStateFlow is null while orchestrator is Disconnected"
+            )
+
+            val statusScope2 = scopeWith()
+            orchestrator.state.value = connectedStatus(statusScope2)
+            advanceUntilIdle()
+
+            val second = sut.deviceStateFlow.value
+            assertNotNull(
+                second,
+                "After Disconnected → Connected transition, deviceStateFlow must produce a new " +
+                    "fBSBDeviceApi. Captured scopes so far: ${factory.capturedScopes.size}"
+            )
+            assertNotSame(
+                first,
+                second,
+                "The post-recovery fBSBDeviceApi must be a fresh instance"
+            )
+            assertEquals(
+                2,
+                factory.capturedScopes.size,
+                "Factory must run twice — once per Connected status"
             )
         }
 }
