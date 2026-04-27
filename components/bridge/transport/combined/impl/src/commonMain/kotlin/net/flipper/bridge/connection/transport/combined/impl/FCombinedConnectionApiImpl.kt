@@ -88,8 +88,6 @@ class FCombinedConnectionApiImpl(
                 } else {
                     listener.onStatusUpdate(transportConnectionStatus)
                 }
-
-                listener.onStatusUpdate(transportConnectionStatus)
             }
             .launchIn(scope)
     }
