@@ -30,7 +30,7 @@ fun <T : HttpClientEngineConfig> getHttpClient(
     engineFactory: HttpClientEngineFactory<T>
 ) = getHttpClient(engineFactory.create())
 
-val WS_PING_INTERVAL = 2.seconds
+val WS_PING_INTERVAL = 20.seconds
 
 fun getHttpClient(
     engine: HttpClientEngine
