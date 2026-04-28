@@ -10,6 +10,7 @@ import kotlinx.coroutines.isActive
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
+import net.flipper.core.busylib.log.verbose
 
 fun <T> LogTagProvider.wrapWebsocket(
     block: suspend () -> Flow<T>
@@ -28,7 +29,7 @@ fun <T> LogTagProvider.wrapWebsocket(
                     error(it) { "Failed request websocket" }
                 }.collect {
                     retryCount = 0
-                    info { "Receive changes by websocket: $it" }
+                    verbose { "Receive changes by websocket: $it" }
                     emit(it)
                 }
             }

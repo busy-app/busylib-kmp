@@ -15,6 +15,7 @@ import net.flipper.bridge.connection.screens.dashboard.screenstreaming.ScreenStr
 import net.flipper.bridge.connection.screens.dashboard.settings.SettingsDashboardViewModel
 import net.flipper.bridge.connection.screens.dashboard.smarthome.SmartHomeDashboardViewModel
 import net.flipper.bridge.connection.screens.dashboard.timezone.TimezoneDashboardViewModel
+import net.flipper.bridge.connection.screens.dashboard.wifi.WiFiDashboardViewModel
 import net.flipper.bridge.connection.screens.device.ConnectionDeviceScreenDecomposeComponent
 import net.flipper.bridge.connection.screens.device.viewmodel.FCurrentDeviceViewModel
 import net.flipper.bridge.connection.screens.device.viewmodel.FDevicesViewModel
@@ -128,6 +129,7 @@ private fun getDashboardDecomposeComponentFactory(
         assetsViewModelFactory = { AssetsDashboardViewModel(fFeatureProvider) },
         displayViewModelFactory = { DisplayDashboardViewModel(fFeatureProvider) },
         screenStreamingViewModelFactory = { ScreenStreamingDashboardViewModel(fFeatureProvider) },
+        wifiViewModelFactory = { WiFiDashboardViewModel(fFeatureProvider) },
         firmwareUpdateViewModelFactory = { FirmwareUpdateViewModel(firmwareUpdaterApi) }
     )
 }

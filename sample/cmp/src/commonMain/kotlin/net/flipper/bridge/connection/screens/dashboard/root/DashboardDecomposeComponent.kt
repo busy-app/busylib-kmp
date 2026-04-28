@@ -28,6 +28,8 @@ import net.flipper.bridge.connection.screens.dashboard.smarthome.SmartHomeDashbo
 import net.flipper.bridge.connection.screens.dashboard.smarthome.SmartHomeDashboardViewModel
 import net.flipper.bridge.connection.screens.dashboard.timezone.TimezoneDashboardDecomposeComponent
 import net.flipper.bridge.connection.screens.dashboard.timezone.TimezoneDashboardViewModel
+import net.flipper.bridge.connection.screens.dashboard.wifi.WiFiDashboardDecomposeComponent
+import net.flipper.bridge.connection.screens.dashboard.wifi.WiFiDashboardViewModel
 import net.flipper.bridge.connection.screens.decompose.CompositeDecomposeComponent
 import net.flipper.bridge.connection.screens.decompose.DecomposeComponent
 import net.flipper.bridge.connection.screens.decompose.DecomposeOnBackParameter
@@ -47,6 +49,7 @@ class DashboardDecomposeComponent(
     private val assetsViewModelFactory: () -> AssetsDashboardViewModel,
     private val displayViewModelFactory: () -> DisplayDashboardViewModel,
     private val screenStreamingViewModelFactory: () -> ScreenStreamingDashboardViewModel,
+    private val wifiViewModelFactory: () -> WiFiDashboardViewModel,
     private val firmwareUpdateViewModelFactory: () -> FirmwareUpdateViewModel,
 ) : CompositeDecomposeComponent<DashboardConfig>(), ComponentContext by componentContext {
     override val stack: Value<ChildStack<DashboardConfig, DecomposeComponent>> = childStack(
@@ -57,6 +60,7 @@ class DashboardDecomposeComponent(
         handleBackButton = true
     )
 
+    @Suppress("LongMethod")
     private fun child(
         config: DashboardConfig,
         componentContext: ComponentContext
@@ -123,6 +127,12 @@ class DashboardDecomposeComponent(
             viewModelFactory = screenStreamingViewModelFactory
         )
 
+        DashboardConfig.WiFi -> WiFiDashboardDecomposeComponent(
+            componentContext = componentContext,
+            onBack = navigation::pop,
+            viewModelFactory = wifiViewModelFactory
+        )
+
         DashboardConfig.FirmwareUpdate -> FirmwareUpdateDecomposeComponent(
             componentContext = componentContext,
             onBack = navigation::pop,
@@ -143,6 +153,7 @@ class DashboardDecomposeComponent(
         onOpenAssets = { navigation.pushNew(DashboardConfig.Assets) },
         onOpenDisplay = { navigation.pushNew(DashboardConfig.Display) },
         onOpenScreenStreaming = { navigation.pushNew(DashboardConfig.ScreenStreaming) },
+        onOpenWiFi = { navigation.pushNew(DashboardConfig.WiFi) },
         onOpenFwUpdate = { navigation.pushNew(DashboardConfig.FirmwareUpdate) }
     )
 
@@ -157,6 +168,7 @@ class DashboardDecomposeComponent(
         private val assetsViewModelFactory: () -> AssetsDashboardViewModel,
         private val displayViewModelFactory: () -> DisplayDashboardViewModel,
         private val screenStreamingViewModelFactory: () -> ScreenStreamingDashboardViewModel,
+        private val wifiViewModelFactory: () -> WiFiDashboardViewModel,
         private val firmwareUpdateViewModelFactory: () -> FirmwareUpdateViewModel,
     ) {
         operator fun invoke(
@@ -176,6 +188,7 @@ class DashboardDecomposeComponent(
                 assetsViewModelFactory = assetsViewModelFactory,
                 displayViewModelFactory = displayViewModelFactory,
                 screenStreamingViewModelFactory = screenStreamingViewModelFactory,
+                wifiViewModelFactory = wifiViewModelFactory,
                 firmwareUpdateViewModelFactory = firmwareUpdateViewModelFactory
             )
         }

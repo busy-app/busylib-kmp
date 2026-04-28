@@ -38,5 +38,8 @@ sealed class DashboardConfig {
     data object ScreenStreaming : DashboardConfig()
 
     @Serializable
+    data object WiFi : DashboardConfig()
+
+    @Serializable
     data object FirmwareUpdate : DashboardConfig()
 }

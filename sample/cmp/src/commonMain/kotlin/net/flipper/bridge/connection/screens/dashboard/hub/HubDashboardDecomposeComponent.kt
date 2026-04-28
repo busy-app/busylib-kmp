@@ -19,6 +19,7 @@ class HubDashboardDecomposeComponent(
     private val onOpenAssets: () -> Unit,
     private val onOpenDisplay: () -> Unit,
     private val onOpenScreenStreaming: () -> Unit,
+    private val onOpenWiFi: () -> Unit,
     private val onOpenFwUpdate: () -> Unit
 ) : ScreenDecomposeComponent(componentContext) {
     @Composable
@@ -36,6 +37,7 @@ class HubDashboardDecomposeComponent(
             onOpenAssets = onOpenAssets,
             onOpenDisplay = onOpenDisplay,
             onOpenScreenStreaming = onOpenScreenStreaming,
+            onOpenWiFi = onOpenWiFi,
             onOpenFwUpdate = onOpenFwUpdate
         )
     }

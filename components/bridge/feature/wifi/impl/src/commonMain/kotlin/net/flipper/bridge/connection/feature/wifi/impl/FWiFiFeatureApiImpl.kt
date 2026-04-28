@@ -71,22 +71,20 @@ class FWiFiFeatureApiImpl(
                         .getWifiNetworks()
                         .onFailure { error(it) { "Failed to get WiFi networks" } }
                 }
-                val mutableNetworkList = networksResponse.networks
+                val newNetworkList = networksResponse.networks
                     .map { it.toWiFiNetwork() }
                     .groupBy { it.ssid }
                     .map { (_, networks) -> networks.maxWith(WiFiNetworkReplaceComparator()) }
                     .toMutableList()
                 networks = networks.map { storedNetwork ->
-                    val updatedNetwork = mutableNetworkList.find { storedNetwork.ssid == it.ssid }
+                    val updatedNetwork = newNetworkList.find { storedNetwork.ssid == it.ssid }
                     if (updatedNetwork != null) {
-                        mutableNetworkList.remove(updatedNetwork)
+                        newNetworkList.remove(updatedNetwork)
                         updatedNetwork
                     } else {
                         storedNetwork
                     }
-                } + mutableNetworkList
-
-                networks = networks.sortedWith(WiFiNetworkSortComparator())
+                } + newNetworkList
 
                 send(networks.toPersistentList())
 

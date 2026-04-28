@@ -2,6 +2,7 @@ package net.flipper.bridge.connection.transport.tcp.common.monitor
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.transformLatest
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
@@ -45,7 +46,7 @@ class WSEventsDeviceMonitor(
                 )
                 delay(INACTIVITY_TIMEOUT) // Should be interrupted by any event from websocket
                 emit(FInternalTransportConnectionStatus.Connecting(config.getTransportTypes()))
-            }
+            }.distinctUntilChanged()
 
             connectingState.onEach { info { "Change connecting state for $config to $it" } }
                 .collect(listener::onStatusUpdate)
