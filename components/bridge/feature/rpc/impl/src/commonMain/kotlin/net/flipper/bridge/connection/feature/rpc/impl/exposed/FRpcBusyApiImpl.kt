@@ -19,7 +19,7 @@ class FRpcBusyApiImpl(
     private val dispatcher: CoroutineDispatcher
 ) : FRpcBusyApi {
 
-    override suspend fun getBusySnapshot(ignoreCache: Boolean): Result<String> {
+    override suspend fun getBusySnapshot(): Result<String> {
         return runSuspendCatching(dispatcher) {
             httpClient.get("/api/busy/snapshot").bodyAsText()
         }
@@ -31,6 +31,16 @@ class FRpcBusyApiImpl(
                 setBody(TextContent(rawJson, ContentType.Application.Json))
             }.body<SuccessResponse>()
         }.map { }
+    }
+
+    override suspend fun getBusyProfile(slot: String): Result<String> {
+        return runSuspendCatching(dispatcher) {
+            httpClient.get {
+                url {
+                    appendPathSegments("api", "busy", "profiles", slot, encodeSlash = true)
+                }
+            }.bodyAsText()
+        }
     }
 
     override suspend fun setBusyProfile(slot: String, rawJson: String): Result<Unit> {

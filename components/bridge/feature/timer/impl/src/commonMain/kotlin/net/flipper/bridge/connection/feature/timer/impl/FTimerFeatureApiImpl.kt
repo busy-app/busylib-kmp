@@ -1,8 +1,8 @@
 package net.flipper.bridge.connection.feature.timer.impl
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import me.tatarka.inject.annotations.Inject
 import me.tatarka.inject.annotations.IntoMap
 import me.tatarka.inject.annotations.Provides
@@ -34,19 +34,22 @@ class FTimerFeatureApiImpl(
     private val snapshotsFlow = fEventsFeatureApi
         .get<BusyLibUpdateEvent.Timer, String>(
             scope = scope,
-            initial = { couldConsume ->
+            initial = { _ ->
                 rpcFeatureApi.fRpcBusyApi
-                    .getBusySnapshot(couldConsume)
+                    .getBusySnapshot()
                     .map(BusyLibUpdateEvent::Timer)
             },
             mapper = { flow -> flow.map { event -> event.json } }
         )
         .wrap()
 
+    private val profileFlows: Map<BusyProfileSlot, WrappedSharedFlow<String>> =
+        BusyProfileSlot.entries.associateWith { slot -> createProfileFlow(slot) }
+
     override fun getSnapshotsFlow(): WrappedSharedFlow<String> = snapshotsFlow
 
     override fun getProfilesFlow(slot: BusyProfileSlot): WrappedSharedFlow<String> {
-        return MutableSharedFlow<String>().wrap()
+        return profileFlows.getValue(slot)
     }
 
     override suspend fun setSnapshot(rawJson: String): CResult<Unit> {
@@ -55,6 +58,20 @@ class FTimerFeatureApiImpl(
 
     override suspend fun setProfile(slot: BusyProfileSlot, rawJson: String): CResult<Unit> {
         return rpcFeatureApi.fRpcBusyApi.setBusyProfile(slot.slug, rawJson).toCResult()
+    }
+
+    private fun createProfileFlow(slot: BusyProfileSlot): WrappedSharedFlow<String> {
+        return fEventsFeatureApi
+            .get<BusyLibUpdateEvent.Profiles, String>(
+                scope = scope,
+                initial = { _ ->
+                    rpcFeatureApi.fRpcBusyApi
+                        .getBusyProfile(slot.slug)
+                        .map { json -> BusyLibUpdateEvent.Profiles(mapOf(slot.slug to json)) }
+                },
+                mapper = { flow -> flow.mapNotNull { event -> event.byName[slot.slug] } }
+            )
+            .wrap()
     }
 
     @Inject

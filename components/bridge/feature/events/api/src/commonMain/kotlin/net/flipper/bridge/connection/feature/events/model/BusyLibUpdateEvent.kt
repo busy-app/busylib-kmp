@@ -127,4 +127,8 @@ sealed interface BusyLibUpdateEvent {
     data class Timer(
         val json: String,
     ) : BusyLibUpdateEvent
+
+    data class Profiles(
+        val byName: Map<String, String>,
+    ) : BusyLibUpdateEvent
 }
