@@ -1,6 +1,7 @@
 package net.flipper.bridge.connection.feature.timer.impl
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.map
 import me.tatarka.inject.annotations.Inject
 import me.tatarka.inject.annotations.IntoMap
@@ -17,10 +18,9 @@ import net.flipper.bridge.connection.feature.timer.api.model.BusyProfileSlot
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.core.wrapper.CResult
-import net.flipper.busylib.core.wrapper.WrappedFlow
+import net.flipper.busylib.core.wrapper.WrappedSharedFlow
 import net.flipper.busylib.core.wrapper.toCResult
 import net.flipper.busylib.core.wrapper.wrap
-import net.flipper.core.busylib.ktx.common.asFlow
 import net.flipper.core.busylib.log.LogTagProvider
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
 
@@ -41,10 +41,13 @@ class FTimerFeatureApiImpl(
             },
             mapper = { flow -> flow.map { event -> event.json } }
         )
-        .asFlow()
         .wrap()
 
-    override fun getSnapshotsFlow(): WrappedFlow<String> = snapshotsFlow
+    override fun getSnapshotsFlow(): WrappedSharedFlow<String> = snapshotsFlow
+
+    override fun getProfilesFlow(slot: BusyProfileSlot): WrappedSharedFlow<String> {
+        return MutableSharedFlow<String>().wrap()
+    }
 
     override suspend fun setSnapshot(rawJson: String): CResult<Unit> {
         return rpcFeatureApi.fRpcBusyApi.setBusySnapshot(rawJson).toCResult()
