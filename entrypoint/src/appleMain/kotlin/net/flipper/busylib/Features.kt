@@ -14,6 +14,7 @@ import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
 import net.flipper.bridge.connection.feature.screenstreaming.api.FScreenStreamingFeatureApi
 import net.flipper.bridge.connection.feature.settings.api.FSettingsFeatureApi
 import net.flipper.bridge.connection.feature.smarthome.api.FSmartHomeFeatureApi
+import net.flipper.bridge.connection.feature.timer.api.FTimerFeatureApi
 import net.flipper.bridge.connection.feature.timezone.api.FTimeZoneFeatureApi
 import net.flipper.bridge.connection.feature.wifi.api.FWiFiFeatureApi
 import net.flipper.busylib.core.wrapper.WrappedFlow
@@ -125,4 +126,13 @@ fun FFeatureProvider.getAboutFeature(): WrappedFlow<FFeatureStatus<FAboutFeature
 
 suspend fun FFeatureProvider.getAboutFeatureSync(): FAboutFeatureApi? {
     return this.getSync(FAboutFeatureApi::class)
+}
+
+// Timer Feature
+fun FFeatureProvider.getTimerFeature(): WrappedFlow<FFeatureStatus<FTimerFeatureApi>> {
+    return get(FTimerFeatureApi::class).wrap()
+}
+
+suspend fun FFeatureProvider.getTimerFeatureSync(): FTimerFeatureApi? {
+    return this.getSync(FTimerFeatureApi::class)
 }

@@ -16,5 +16,6 @@ enum class FDeviceFeature {
     SMART_HOME,
     TIME_ZONE,
     FINISH_SETUP,
-    ABOUT
+    ABOUT,
+    TIMER
 }
