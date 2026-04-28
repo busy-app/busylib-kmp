@@ -9,6 +9,7 @@ import kotlinx.coroutines.SupervisorJob
 import net.flipper.bridge.connection.screens.di.getRootDecomposeComponent
 import net.flipper.bridge.connection.screens.root.ConnectionRootDecomposeComponent
 import net.flipper.bridge.connection.screens.search.LanSearchViewModel
+import net.flipper.bridge.connection.utils.BUSYLibNetworkStateApple
 import net.flipper.bridge.connection.utils.PermissionCheckerNoop
 import net.flipper.bridge.connection.utils.principal.impl.UserPrincipalApiSampleImpl
 import net.flipper.bsb.cloud.api.BUSYLibHostApiStub
@@ -38,7 +39,7 @@ val busyLib: BUSYLibMacOS by lazy {
         principalApi = principalApi,
         observableSettings = settings,
         hostApi = hostApi,
-        networkStateApi = BUSYLibNetworkStateMacOSApi(),
+        networkStateApi = BUSYLibNetworkStateApple(),
     )
 }
 

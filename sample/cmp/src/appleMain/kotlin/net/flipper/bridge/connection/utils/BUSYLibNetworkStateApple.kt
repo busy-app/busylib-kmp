@@ -1,4 +1,4 @@
-package net.flipper.bridge.connection.di
+package net.flipper.bridge.connection.utils
 
 import com.flipperdevices.core.network.BUSYLibNetworkStateApi
 import kotlinx.cinterop.ExperimentalForeignApi
@@ -14,7 +14,7 @@ import platform.Network.nw_path_status_satisfied
 import platform.darwin.dispatch_queue_create
 
 @OptIn(ExperimentalForeignApi::class)
-class BUSYLibNetworkStateMacOSApi : BUSYLibNetworkStateApi {
+class BUSYLibNetworkStateApple : BUSYLibNetworkStateApi {
     private val isNetworkAvailableMutableFlow = MutableStateFlow(false)
 
     override val isNetworkAvailableFlow: WrappedStateFlow<Boolean> = isNetworkAvailableMutableFlow.wrap()

@@ -16,6 +16,7 @@ import net.flipper.bridge.connection.transport.ble.impl.ios.testfixtures.SERIAL_
 import net.flipper.bridge.connection.transport.ble.impl.ios.testfixtures.createConfig
 import net.flipper.bridge.connection.transport.ble.impl.ios.testfixtures.error
 import platform.CoreBluetooth.CBErrorPeerRemovedPairingInformation
+import platform.Foundation.NSUUID
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -133,7 +134,7 @@ class FCentralManagerTest {
     }
 
     @Test
-    fun GIVEN_manager_already_has_powered_on_state_WHEN_sut_created_THEN_ble_status_stream_is_synchronized() =
+    fun GIVEN_manager_powered_on_WHEN_first_sut_call_THEN_ble_status_stream_is_synchronized() =
         runTest {
             val manager = RecordingCentralManager().apply {
                 setStateRaw(5L)
@@ -142,7 +143,11 @@ class FCentralManagerTest {
             val childJob = Job()
             val childScope = CoroutineScope(coroutineContext + childJob)
             backgroundScope.coroutineContext[Job]!!.invokeOnCompletion { childJob.cancel() }
-            val sut = FCentralManager(manager = manager, scope = childScope)
+            val sut = FCentralManager(scope = childScope, centralManagerProvider = { manager })
+
+            // Lazy CBCentralManager is created on the first SUT call; only then
+            // does its delegate get wired so synthetic state-updates can flow.
+            sut.disconnect(NSUUID())
             manager.emitStateUpdate()
             advanceUntilIdle()
 
@@ -225,15 +230,18 @@ class FCentralManagerTest {
     /**
      * Creates an FCentralManager with a child scope that shares the test dispatcher
      * but uses an independent Job so the event loop coroutine doesn't cause
-     * [UncompletedCoroutinesError] at the end of runTest.
+     * [UncompletedCoroutinesError] at the end of runTest. The first SUT call
+     * (`disconnect` for an unknown UUID) forces the lazy CBCentralManager to be
+     * built, which in turn wires our recording manager's `delegate` so synthetic
+     * `emitDid*` callbacks have somewhere to go.
      */
-    private fun TestScope.createSut(): Sut {
+    private suspend fun TestScope.createSut(): Sut {
         val manager = RecordingCentralManager()
         val childJob = Job()
         val childScope = CoroutineScope(coroutineContext + childJob)
-        // Auto-cancel when test finishes to avoid leaked coroutines
         backgroundScope.coroutineContext[Job]!!.invokeOnCompletion { childJob.cancel() }
-        val sut = FCentralManager(manager = manager, scope = childScope)
+        val sut = FCentralManager(scope = childScope, centralManagerProvider = { manager })
+        sut.disconnect(NSUUID())
         return Sut(manager = manager, sut = sut)
     }
 }
