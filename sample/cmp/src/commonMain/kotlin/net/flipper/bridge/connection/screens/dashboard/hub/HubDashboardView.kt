@@ -21,6 +21,7 @@ fun HubDashboardContent(
     onOpenAssets: () -> Unit,
     onOpenDisplay: () -> Unit,
     onOpenScreenStreaming: () -> Unit,
+    onOpenWiFi: () -> Unit,
     onOpenFwUpdate: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -43,6 +44,7 @@ fun HubDashboardContent(
             DashboardFeatureButton(title = "Assets", onClick = onOpenAssets)
             DashboardFeatureButton(title = "Display", onClick = onOpenDisplay)
             DashboardFeatureButton(title = "Screen Streaming", onClick = onOpenScreenStreaming)
+            DashboardFeatureButton(title = "WiFi", onClick = onOpenWiFi)
             DashboardFeatureButton(title = "Firmware Update", onClick = onOpenFwUpdate)
         }
     }
