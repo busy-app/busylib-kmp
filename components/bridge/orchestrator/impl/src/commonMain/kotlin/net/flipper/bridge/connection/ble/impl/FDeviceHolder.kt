@@ -104,7 +104,7 @@ class FDeviceHolder<API : FConnectedDeviceApi>(
                 null, is CancellationException -> {
                     listener.invoke(
                         this,
-                        FInternalTransportConnectionStatus.Disconnected
+                        FInternalTransportConnectionStatus.Disconnected()
                     )
                 }
 

@@ -53,7 +53,10 @@ class WrappedConnectionInternal(
                     error(t) { "Scope for connection $config was cancelled due to an error" }
                 }
             }
-            stateFlow.update { FInternalTransportConnectionStatus.Disconnected }
+            stateFlow.update { current ->
+                current as? FInternalTransportConnectionStatus.Disconnected
+                    ?: FInternalTransportConnectionStatus.Disconnected()
+            }
         }
     )
 

@@ -309,7 +309,7 @@ class CombinedMetaInfoApiImplTest {
             assertTrue(resultBefore.isSuccess, "Should initially succeed")
 
             // Disconnect
-            listener.onStatusUpdate(FInternalTransportConnectionStatus.Disconnected)
+            listener.onStatusUpdate(FInternalTransportConnectionStatus.Disconnected())
             advanceUntilIdle()
 
             // After disconnect, should emit failure

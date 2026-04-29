@@ -371,7 +371,7 @@ class WrappedConnectionInternalTest {
 
         // Then
         assertEquals(
-            FInternalTransportConnectionStatus.Disconnected,
+            FInternalTransportConnectionStatus.Disconnected(),
             connection.stateFlow.value,
             "State should be Disconnected after disconnect"
         )
@@ -400,7 +400,7 @@ class WrappedConnectionInternalTest {
 
             // Then - should not crash and state should be disconnected
             assertEquals(
-                FInternalTransportConnectionStatus.Disconnected,
+                FInternalTransportConnectionStatus.Disconnected(),
                 connection.stateFlow.value
             )
         }
@@ -428,7 +428,7 @@ class WrappedConnectionInternalTest {
 
         // Then - should not crash
         assertEquals(
-            FInternalTransportConnectionStatus.Disconnected,
+            FInternalTransportConnectionStatus.Disconnected(),
             connection.stateFlow.value
         )
     }
@@ -483,7 +483,7 @@ class WrappedConnectionInternalTest {
 
         // Then - should not crash and state should be disconnected
         assertEquals(
-            FInternalTransportConnectionStatus.Disconnected,
+            FInternalTransportConnectionStatus.Disconnected(),
             connection.stateFlow.value
         )
     }
@@ -517,7 +517,7 @@ class WrappedConnectionInternalTest {
 
             // Then - state should be disconnected
             assertEquals(
-                FInternalTransportConnectionStatus.Disconnected,
+                FInternalTransportConnectionStatus.Disconnected(),
                 connection.stateFlow.value
             )
         }
@@ -577,7 +577,7 @@ class WrappedConnectionInternalTest {
 
             // Then
             assertEquals(
-                FInternalTransportConnectionStatus.Disconnected,
+                FInternalTransportConnectionStatus.Disconnected(),
                 connection.stateFlow.value
             )
         }

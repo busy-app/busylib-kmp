@@ -46,7 +46,7 @@ class MockDeviceConnectionApiImpl : MockDeviceConnectionApi {
             }
 
             override suspend fun disconnect() {
-                listener.onStatusUpdate(FInternalTransportConnectionStatus.Disconnected)
+                listener.onStatusUpdate(FInternalTransportConnectionStatus.Disconnected())
             }
 
             override fun getDeviceHttpEngine() = bsbMockEngine

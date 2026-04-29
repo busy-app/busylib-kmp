@@ -154,7 +154,7 @@ class AutoReconnectConnectionTest {
         val attemptDeferred = connectionBuilder.waitForAttempt(2)
 
         // When - simulate disconnection
-        listener1.onStatusUpdate(FInternalTransportConnectionStatus.Disconnected)
+        listener1.onStatusUpdate(FInternalTransportConnectionStatus.Disconnected())
         advanceUntilIdle()
 
         // Wait for second connection attempt
@@ -168,6 +168,98 @@ class AutoReconnectConnectionTest {
             "Should have made reconnection attempt. Attempts: ${connectionBuilder.connectAttempts}"
         )
     }
+
+    @Test
+    fun GIVEN_connected_WHEN_disconnected_with_recoverable_true_THEN_reconnects() = runTest {
+        // Given
+        val testDispatcher = StandardTestDispatcher(testScheduler)
+        val connectionBuilder = MockConnectionBuilder()
+        AutoReconnectConnection(
+            scope = backgroundScope,
+            initialConfig = TestConfig(),
+            connectionBuilder = connectionBuilder,
+            dispatcher = testDispatcher
+        )
+
+        connectionBuilder.connectCalledDeferred.await()
+        advanceUntilIdle()
+
+        val listener1 = connectionBuilder.latestListener()!!
+        listener1.onStatusUpdate(
+            FInternalTransportConnectionStatus.Connected(
+                scope = backgroundScope,
+                deviceApi = connectionBuilder.deviceApis.last(),
+                connectionType = FInternalTransportConnectionType.MOCK
+            )
+        )
+        advanceUntilIdle()
+
+        val attemptDeferred = connectionBuilder.waitForAttempt(2)
+
+        // When - explicit recoverable=true disconnect
+        listener1.onStatusUpdate(
+            FInternalTransportConnectionStatus.Disconnected(isRecoverable = true)
+        )
+        advanceUntilIdle()
+
+        withTimeout(10.seconds) { attemptDeferred.await() }
+
+        // Then
+        assertTrue(
+            connectionBuilder.connectAttempts >= 2,
+            "Should reconnect when disconnect is recoverable"
+        )
+    }
+
+    @Test
+    fun GIVEN_connected_WHEN_disconnected_with_recoverable_false_THEN_does_not_reconnect() =
+        runTest {
+            // Given
+            val testDispatcher = StandardTestDispatcher(testScheduler)
+            val connectionBuilder = MockConnectionBuilder()
+            val autoReconnect = AutoReconnectConnection(
+                scope = backgroundScope,
+                initialConfig = TestConfig(),
+                connectionBuilder = connectionBuilder,
+                dispatcher = testDispatcher
+            )
+
+            connectionBuilder.connectCalledDeferred.await()
+            advanceUntilIdle()
+
+            val listener = connectionBuilder.latestListener()!!
+            listener.onStatusUpdate(
+                FInternalTransportConnectionStatus.Connected(
+                    scope = backgroundScope,
+                    deviceApi = connectionBuilder.deviceApis.last(),
+                    connectionType = FInternalTransportConnectionType.MOCK
+                )
+            )
+            advanceUntilIdle()
+
+            val attemptsBeforeDisconnect = connectionBuilder.connectAttempts
+
+            // When - non-recoverable disconnect
+            listener.onStatusUpdate(
+                FInternalTransportConnectionStatus.Disconnected(isRecoverable = false)
+            )
+            advanceUntilIdle()
+
+            // Advance well past any potential exponential delay
+            advanceTimeBy(60.seconds)
+            advanceUntilIdle()
+
+            // Then - no further reconnect attempts and stateFlow stays Disconnected(false)
+            assertEquals(
+                attemptsBeforeDisconnect,
+                connectionBuilder.connectAttempts,
+                "AutoReconnect must stop reconnection loop on isRecoverable=false"
+            )
+            val finalStatus = assertIs<FInternalTransportConnectionStatus.Disconnected>(
+                autoReconnect.stateFlow.value
+            )
+            assertEquals(false, finalStatus.isRecoverable)
+        }
 
     @Test
     fun GIVEN_connection_fails_WHEN_first_attempt_THEN_retry_with_delay() = runTest {
@@ -291,7 +383,7 @@ class AutoReconnectConnectionTest {
         val attemptDeferred4 = connectionBuilder.waitForAttempt(4)
 
         // When - disconnect and check next retry delay (should be reset to ~100ms)
-        listener.onStatusUpdate(FInternalTransportConnectionStatus.Disconnected)
+        listener.onStatusUpdate(FInternalTransportConnectionStatus.Disconnected())
 
         // The retry delay should be back to initial ~100ms, not exponentially large
         advanceTimeBy(200.milliseconds)
@@ -796,7 +888,7 @@ class AutoReconnectConnectionTest {
                 advanceUntilIdle()
 
                 // Immediately disconnect
-                listener.onStatusUpdate(FInternalTransportConnectionStatus.Disconnected)
+                listener.onStatusUpdate(FInternalTransportConnectionStatus.Disconnected())
                 advanceTimeBy(1.seconds)
                 advanceUntilIdle()
             }
@@ -866,7 +958,7 @@ class AutoReconnectConnectionTest {
             )
             advanceUntilIdle()
 
-            listener1.onStatusUpdate(FInternalTransportConnectionStatus.Disconnected)
+            listener1.onStatusUpdate(FInternalTransportConnectionStatus.Disconnected())
             advanceTimeBy(500.milliseconds)
             advanceUntilIdle()
 
@@ -921,7 +1013,7 @@ class AutoReconnectConnectionTest {
         advanceUntilIdle()
 
         // 2. Disconnect
-        listener1.onStatusUpdate(FInternalTransportConnectionStatus.Disconnected)
+        listener1.onStatusUpdate(FInternalTransportConnectionStatus.Disconnected())
         advanceTimeBy(500.milliseconds)
         advanceUntilIdle()
 
@@ -1084,7 +1176,7 @@ class AutoReconnectConnectionTest {
 
             // While deviceApi1 is suspended, disconnect the connection.
             // Per the 1:1 contract, deviceApi1 fails when its connection drops.
-            storedListener!!.onStatusUpdate(FInternalTransportConnectionStatus.Disconnected)
+            storedListener!!.onStatusUpdate(FInternalTransportConnectionStatus.Disconnected())
             api1UpdateResult.complete(
                 Result.failure(IllegalStateException("Connection lost"))
             )

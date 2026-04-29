@@ -7,7 +7,7 @@ import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.isActive
@@ -60,7 +60,7 @@ class AutoReconnectConnection(
                 }
                 info { "Created connection $connection" }
 
-                connection.stateFlow
+                val disconnectedStatus = connection.stateFlow
                     .onEach { connectionStatus ->
                         info { "Got connection status $connectionStatus" }
                         stateFlow.emit(connectionStatus)
@@ -68,10 +68,14 @@ class AutoReconnectConnection(
                             retryCount = 0
                         }
                     }
-                    .filter { status -> status == FInternalTransportConnectionStatus.Disconnected }
+                    .filterIsInstance<FInternalTransportConnectionStatus.Disconnected>()
                     .first()
-                info { "Got disconnected event" }
+                info { "Got disconnected event $disconnectedStatus" }
                 connection.disconnect()
+                if (!disconnectedStatus.isRecoverable) {
+                    info { "Disconnected is not recoverable, stop reconnection loop" }
+                    break
+                }
                 delay(getExponentialDelay(retryCount))
                 retryCount++
             }

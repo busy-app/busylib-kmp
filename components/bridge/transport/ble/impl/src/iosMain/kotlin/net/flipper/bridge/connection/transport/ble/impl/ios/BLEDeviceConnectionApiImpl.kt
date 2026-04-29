@@ -59,10 +59,10 @@ class BLEDeviceConnectionApiImpl(
         val peripheral = waitForPeripheralConnect(
             scope = scope,
             config = config,
-            timeout = BleConstants.CONNECT_TIME
+            timeout = BleConstants.CONNECT_TIME,
+            listener = listener
         )
 
-        centralManager.stopScan()
         if (peripheral == null) {
             info { "Connection timeout - disconnecting" }
             throw NoFoundDeviceException()
@@ -102,7 +102,8 @@ class BLEDeviceConnectionApiImpl(
     private suspend fun waitForPeripheralConnect(
         scope: CoroutineScope,
         config: FBleDeviceConnectionConfig,
-        timeout: Duration
+        timeout: Duration,
+        listener: FTransportConnectionStatusListener
     ): FPeripheralApi? = withTimeoutOrNull(timeout) {
         val deviceIdentifier = NSUUID(config.macAddress)
         info { "Waiting for peripheral in connected stream (timeout: ${timeout.inWholeSeconds}s)..." }
@@ -144,7 +145,15 @@ class BLEDeviceConnectionApiImpl(
                     }
 
                     FPeripheralState.PAIRING_FAILED,
-                    FPeripheralState.INVALID_PAIRING,
+                    FPeripheralState.INVALID_PAIRING -> {
+                        info { "Peripheral connection failed with state: $state" }
+                        listener.onStatusUpdate(
+                            FInternalTransportConnectionStatus.Disconnected(
+                                isRecoverable = false
+                            )
+                        )
+                        throw FailedConnectToDeviceException()
+                    }
                     FPeripheralState.DISCONNECTED -> {
                         info { "Peripheral connection failed with state: $state" }
                         throw FailedConnectToDeviceException()

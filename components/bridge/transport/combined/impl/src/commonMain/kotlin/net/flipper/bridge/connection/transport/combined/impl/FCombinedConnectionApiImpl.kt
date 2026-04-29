@@ -75,7 +75,7 @@ class FCombinedConnectionApiImpl(
             .onEach { connectionSnapshot ->
                 val transportConnectionStatus = connectionSnapshot
                     ?.status
-                    ?: FInternalTransportConnectionStatus.Disconnected
+                    ?: FInternalTransportConnectionStatus.Disconnected()
 
                 if (transportConnectionStatus is FInternalTransportConnectionStatus.Connected) {
                     listener.onStatusUpdate(

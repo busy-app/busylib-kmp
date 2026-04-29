@@ -53,9 +53,11 @@ class FIOSBleApiImpl(
                     )
 
                     FPeripheralState.DISCONNECTING -> FInternalTransportConnectionStatus.Disconnecting
-                    FPeripheralState.DISCONNECTED,
+                    FPeripheralState.DISCONNECTED -> FInternalTransportConnectionStatus.Disconnected()
                     FPeripheralState.PAIRING_FAILED,
-                    FPeripheralState.INVALID_PAIRING -> FInternalTransportConnectionStatus.Disconnected
+                    FPeripheralState.INVALID_PAIRING -> FInternalTransportConnectionStatus.Disconnected(
+                        isRecoverable = false
+                    )
 
                     FPeripheralState.CONNECTED -> FInternalTransportConnectionStatus.Connected(
                         scope = scope,
