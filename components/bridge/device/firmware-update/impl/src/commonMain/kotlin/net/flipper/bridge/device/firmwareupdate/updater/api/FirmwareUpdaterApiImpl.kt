@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.job
@@ -47,7 +46,6 @@ import net.flipper.core.busylib.ktx.common.cancelPrevious
 import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.mapSuspendCatching
 import net.flipper.core.busylib.ktx.common.orNullable
-import net.flipper.core.busylib.ktx.common.throttleLatest
 import net.flipper.core.busylib.ktx.common.tryCast
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.TaggedLogger
@@ -78,11 +76,9 @@ class FirmwareUpdaterApiImpl(
 
     private val lanUpdaterScope = scope.asSingleJobScope()
 
-    private val updateStatusSourceFlow = updateStatusProvider.getUpdateStatus()
-        .shareIn(scope, SharingStarted.WhileSubscribed(), 1)
-
     override val state: WrappedStateFlow<FwUpdateState> = combine(
-        flow = updateStatusSourceFlow,
+        flow = updateStatusProvider.getUpdateStatus()
+            .shareIn(scope, SharingStarted.WhileSubscribed(), 1),
         flow2 = fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
             .map { status -> status.tryCast<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>() }
             .map { status -> status?.featureApi }
@@ -256,11 +252,11 @@ class FirmwareUpdaterApiImpl(
     // We need to observe /update/status so we can receive current status
     // with long-polling
     init {
-        updateStatusSourceFlow
-            .map { updateStatusSource -> FwUpdateStatusMapper.toFwUpdateState(updateStatusSource) }
-            .onEach { info { "#init state: $it" } }
-            .map { state ->
-                when (state) {
+        combine(
+            flow = state,
+            flow2 = updaterStatusCollector.isActiveFlow,
+            transform = { state, isActive ->
+                val shouldStartUpdateStatusCollector = when (state) {
                     is FwUpdateState.CheckingVersion,
                     FwUpdateState.Updating,
                     is FwUpdateState.Downloading -> true
@@ -268,9 +264,6 @@ class FirmwareUpdaterApiImpl(
                     is FwUpdateState.Uploading -> false
                     else -> false
                 }
-            }
-            .throttleLatest { shouldStartUpdateStatusCollector ->
-                val isActive = updaterStatusCollector.isActiveFlow.first()
                 info {
                     "#init shouldStartUpdateStatusCollector: $shouldStartUpdateStatusCollector;" +
                         " isActive: $isActive"
@@ -281,6 +274,6 @@ class FirmwareUpdaterApiImpl(
                     updaterStatusCollector.stop()
                 }
             }
-            .launchIn(scope)
+        ).launchIn(scope)
     }
 }
