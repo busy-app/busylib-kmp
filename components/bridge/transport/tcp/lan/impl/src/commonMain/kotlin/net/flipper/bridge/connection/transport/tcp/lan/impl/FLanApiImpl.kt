@@ -75,7 +75,7 @@ class FLanApiImpl(
         httpEngine.close()
         httpEngineOriginal.close()
         httpClient.close()
-        listener.onStatusUpdate(FInternalTransportConnectionStatus.Disconnected())
+        listener.onStatusUpdate(FInternalTransportConnectionStatus.Disconnected(isRecoverable = true))
     }
 
     override fun getDeviceHttpEngine() = httpEngine

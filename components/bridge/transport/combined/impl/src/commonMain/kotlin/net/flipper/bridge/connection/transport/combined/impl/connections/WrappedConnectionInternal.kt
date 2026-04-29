@@ -55,7 +55,7 @@ class WrappedConnectionInternal(
             }
             stateFlow.update { current ->
                 current as? FInternalTransportConnectionStatus.Disconnected
-                    ?: FInternalTransportConnectionStatus.Disconnected()
+                    ?: FInternalTransportConnectionStatus.Disconnected(isRecoverable = true)
             }
         }
     )

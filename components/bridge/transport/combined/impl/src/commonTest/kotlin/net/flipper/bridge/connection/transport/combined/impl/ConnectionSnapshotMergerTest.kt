@@ -28,7 +28,7 @@ class ConnectionSnapshotMergerTest {
     fun `mergeSnapshots with single snapshot returns it unchanged`() {
         val snapshot = ConnectionSnapshot(
             capabilities = listOf(FHTTPTransportCapability.BB_WEBSOCKET_SUPPORTED),
-            status = Disconnected()
+            status = Disconnected(isRecoverable = true)
         )
 
         val result = mergeSnapshots(listOf(snapshot))
@@ -241,13 +241,13 @@ class ConnectionSnapshotMergerTest {
     @Test
     fun `mergeSnapshots with multiple Disconnected returns Disconnected`() {
         val snapshots = listOf(
-            ConnectionSnapshot(status = Disconnected()),
-            ConnectionSnapshot(status = Disconnected())
+            ConnectionSnapshot(status = Disconnected(isRecoverable = true)),
+            ConnectionSnapshot(status = Disconnected(isRecoverable = true))
         )
 
         val result = mergeSnapshots(snapshots)
 
-        assertEquals(Disconnected(), result.status)
+        assertEquals(Disconnected(isRecoverable = true), result.status)
     }
 
     @Test
@@ -271,11 +271,11 @@ class ConnectionSnapshotMergerTest {
         val snapshots = listOf(
             ConnectionSnapshot(
                 capabilities = listOf(FHTTPTransportCapability.BB_WEBSOCKET_SUPPORTED),
-                status = Disconnected()
+                status = Disconnected(isRecoverable = true)
             ),
             ConnectionSnapshot(
                 capabilities = listOf(FHTTPTransportCapability.BB_LOCAL_CONNECTION),
-                status = Disconnected()
+                status = Disconnected(isRecoverable = true)
             )
         )
 
@@ -298,14 +298,14 @@ class ConnectionSnapshotMergerTest {
                     FHTTPTransportCapability.BB_WEBSOCKET_SUPPORTED,
                     FHTTPTransportCapability.BB_LOCAL_CONNECTION
                 ),
-                status = Disconnected()
+                status = Disconnected(isRecoverable = true)
             ),
             ConnectionSnapshot(
                 capabilities = listOf(
                     FHTTPTransportCapability.BB_WEBSOCKET_SUPPORTED,
                     FHTTPTransportCapability.BB_DOWNLOAD_UPDATE_SUPPORTED
                 ),
-                status = Disconnected()
+                status = Disconnected(isRecoverable = true)
             )
         )
 
@@ -324,8 +324,8 @@ class ConnectionSnapshotMergerTest {
     @Test
     fun `mergeSnapshots returns null capabilities when all snapshots have null capabilities`() {
         val snapshots = listOf(
-            ConnectionSnapshot(capabilities = null, status = Disconnected()),
-            ConnectionSnapshot(capabilities = null, status = Disconnected())
+            ConnectionSnapshot(capabilities = null, status = Disconnected(isRecoverable = true)),
+            ConnectionSnapshot(capabilities = null, status = Disconnected(isRecoverable = true))
         )
 
         val result = mergeSnapshots(snapshots)
@@ -338,11 +338,11 @@ class ConnectionSnapshotMergerTest {
         val snapshots = listOf(
             ConnectionSnapshot(
                 capabilities = listOf(FHTTPTransportCapability.BB_WEBSOCKET_SUPPORTED),
-                status = Disconnected()
+                status = Disconnected(isRecoverable = true)
             ),
             ConnectionSnapshot(
                 capabilities = null,
-                status = Disconnected()
+                status = Disconnected(isRecoverable = true)
             )
         )
 
@@ -397,7 +397,7 @@ class ConnectionSnapshotMergerTest {
         val scope = testScope()
         val deviceApi = TestConnectedDeviceApi()
 
-        val disconnected = getPriority(Disconnected())
+        val disconnected = getPriority(Disconnected(isRecoverable = true))
         val connecting = getPriority(Connecting(FInternalTransportConnectionType.BLE))
         val disconnecting = getPriority(Disconnecting)
         val connected = getPriority(Connected(scope, deviceApi, FInternalTransportConnectionType.LAN))

@@ -6,7 +6,7 @@ import net.flipper.core.busylib.data.nonEmptyListOf
 
 sealed class FInternalTransportConnectionStatus {
     data class Disconnected(
-        val isRecoverable: Boolean = true
+        val isRecoverable: Boolean
     ) : FInternalTransportConnectionStatus()
 
     data class Connecting(

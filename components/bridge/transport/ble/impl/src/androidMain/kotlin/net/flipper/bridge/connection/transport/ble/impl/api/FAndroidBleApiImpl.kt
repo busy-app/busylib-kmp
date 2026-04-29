@@ -69,7 +69,9 @@ class FAndroidBleApiImpl(
                         FInternalTransportConnectionType.BLE
                     )
 
-                    is ConnectionState.Disconnected -> FInternalTransportConnectionStatus.Disconnected()
+                    is ConnectionState.Disconnected -> FInternalTransportConnectionStatus.Disconnected(
+                        isRecoverable = true
+                    )
                     ConnectionState.Disconnecting -> FInternalTransportConnectionStatus.Disconnecting
                 }
             }

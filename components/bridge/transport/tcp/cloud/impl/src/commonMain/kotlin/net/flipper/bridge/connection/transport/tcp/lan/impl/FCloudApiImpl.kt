@@ -68,7 +68,7 @@ class FCloudApiImpl(
     override suspend fun disconnect() {
         httpEngine.close()
         httpEngineOriginal.close()
-        listener.onStatusUpdate(FInternalTransportConnectionStatus.Disconnected())
+        listener.onStatusUpdate(FInternalTransportConnectionStatus.Disconnected(isRecoverable = true))
     }
 
     override fun getDeviceHttpEngine() = httpEngine
