@@ -277,7 +277,7 @@ class FirmwareUpdaterApiImpl(
                 }
                 if (shouldStartUpdateStatusCollector && !isActive) {
                     updaterStatusCollector.start()
-                } else if (isActive) {
+                } else if (!shouldStartUpdateStatusCollector && isActive) {
                     updaterStatusCollector.stop()
                 }
             }
