@@ -258,6 +258,7 @@ class FirmwareUpdaterApiImpl(
     init {
         updateStatusSourceFlow
             .map { updateStatusSource -> FwUpdateStatusMapper.toFwUpdateState(updateStatusSource) }
+            .onEach { info { "#init state: $it" } }
             .map { state ->
                 when (state) {
                     is FwUpdateState.CheckingVersion,
@@ -268,6 +269,7 @@ class FirmwareUpdaterApiImpl(
                     else -> false
                 }
             }
+            .onEach { shouldStartUpdateStatusCollector-> info { "#init shouldStartUpdateStatusCollector: $shouldStartUpdateStatusCollector" } }
             .distinctUntilChanged()
             .combine(
                 flow = updaterStatusCollector.isActiveFlow.filter { isActive -> isActive },
