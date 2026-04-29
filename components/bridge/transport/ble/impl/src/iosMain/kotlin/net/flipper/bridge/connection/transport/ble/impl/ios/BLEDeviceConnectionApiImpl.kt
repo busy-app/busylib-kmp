@@ -62,7 +62,6 @@ class BLEDeviceConnectionApiImpl(
             timeout = BleConstants.CONNECT_TIME
         )
 
-        centralManager.stopScan()
         if (peripheral == null) {
             info { "Connection timeout - disconnecting" }
             throw NoFoundDeviceException()
