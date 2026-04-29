@@ -1,13 +1,9 @@
 package net.flipper.bridge.device.firmwareupdate.status.api
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
 import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
@@ -17,7 +13,6 @@ import net.flipper.bridge.connection.feature.provider.api.get
 import net.flipper.bridge.connection.feature.provider.api.getSync
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.device.firmwareupdate.status.mapper.toBsbUpdateStatus
-import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateState
 import net.flipper.core.busylib.ktx.common.SingleJobMode
 import net.flipper.core.busylib.ktx.common.TickFlow
 import net.flipper.core.busylib.ktx.common.asSingleJobScope
@@ -69,23 +64,9 @@ class UpdaterStatusCollector(
             .launchIn(singleJobScope, SingleJobMode.CANCEL_PREVIOUS)
     }
 
-    /**
-     * Stop and wait when we get next available update status
-     */
-    fun stop(fwUpdateStateFlow: Flow<FwUpdateState>) {
+    suspend fun stop() {
         info { "#stop" }
-        scope.launch {
-            fwUpdateStateFlow.filter { state ->
-                when (state) {
-                    FwUpdateState.Updating,
-                    is FwUpdateState.Uploading,
-                    is FwUpdateState.Downloading -> false
-
-                    else -> true
-                }
-            }.first()
-            singleJobScope.cancelPrevious()
-        }
+        singleJobScope.cancelPrevious().join()
     }
 
     companion object {

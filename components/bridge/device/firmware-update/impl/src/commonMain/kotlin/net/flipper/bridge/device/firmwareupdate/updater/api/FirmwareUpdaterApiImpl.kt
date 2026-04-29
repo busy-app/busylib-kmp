@@ -4,14 +4,17 @@ import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.job
@@ -145,7 +148,6 @@ class FirmwareUpdaterApiImpl(
                     .featureApi
                     .fRpcUpdaterApi
                     .startUpdateAbortDownload()
-                    .onSuccess { updaterStatusCollector.stop(state) }
                     .map { }
                     .toCResult()
             }
@@ -167,7 +169,6 @@ class FirmwareUpdaterApiImpl(
             .map { feature -> feature?.getDeviceInfo()?.toKotlinResult()?.getOrNull() }
             .filter { response -> response == null }
             .first()
-        updaterStatusCollector.stop(state)
         info { "#startUpdateInstall awaiting for new uptime!" }
         fFeatureProvider.get<FDeviceInfoFeatureApi>()
             .map { status -> status.tryCast<FFeatureStatus.Supported<FDeviceInfoFeatureApi>>() }
@@ -248,5 +249,27 @@ class FirmwareUpdaterApiImpl(
             ?.map { }
             ?.toCResult()
             ?: CResult.failure(IllegalStateException("RPC feature is null"))
+    }
+
+    init {
+        state.asFlow()
+            .distinctUntilChanged()
+            .map { state ->
+                when (state) {
+                    FwUpdateState.Updating,
+                    is FwUpdateState.Downloading -> true
+                    // Only desktop case
+                    is FwUpdateState.Uploading -> false
+                    else -> false
+                }
+            }
+            .onEach { shouldStartUpdateStatusCollector ->
+                if (shouldStartUpdateStatusCollector) {
+                    updaterStatusCollector.start()
+                } else {
+                    updaterStatusCollector.stop()
+                }
+            }
+            .launchIn(scope)
     }
 }
