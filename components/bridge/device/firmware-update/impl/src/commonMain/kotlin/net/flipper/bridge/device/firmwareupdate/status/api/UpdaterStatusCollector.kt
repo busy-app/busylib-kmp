@@ -53,11 +53,15 @@ class UpdaterStatusCollector(
                         .getUpdateStatus(true)
                         .onFailure { throwable -> error(throwable) { "Failed to get update status" } }
                 }.toBsbUpdateStatus()
-                val event = BusyLibUpdateEvent.Update.UpdateState(
+                val updateStateEvent = BusyLibUpdateEvent.Update.UpdateState(
                     action = updateStatus.install.action,
-                    status = updateStatus.install.status
+                    status = updateStatus.install.status,
                 )
-                eventsFeatureApi.onBusyLibEvent(event)
+                eventsFeatureApi.onBusyLibEvent(updateStateEvent)
+                val downloadStateEvent = BusyLibUpdateEvent.Update.UpdateDownload(
+                    download = updateStatus.install.download,
+                )
+                eventsFeatureApi.onBusyLibEvent(downloadStateEvent)
             }
             .launchIn(singleJobScope, SingleJobMode.CANCEL_PREVIOUS)
     }
