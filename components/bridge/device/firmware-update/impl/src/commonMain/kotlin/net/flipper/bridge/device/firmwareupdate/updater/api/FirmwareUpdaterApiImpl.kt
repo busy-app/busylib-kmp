@@ -4,7 +4,6 @@ import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.filterNotNull
@@ -269,12 +268,9 @@ class FirmwareUpdaterApiImpl(
                     else -> false
                 }
             }
-            .onEach { shouldStartUpdateStatusCollector-> info { "#init shouldStartUpdateStatusCollector: $shouldStartUpdateStatusCollector" } }
-            .distinctUntilChanged()
-            .combine(
-                flow = updaterStatusCollector.isActiveFlow.filter { isActive -> isActive },
-                transform = { shouldStartUpdateStatusCollector, _ -> shouldStartUpdateStatusCollector }
-            )
+            .onEach { shouldStartUpdateStatusCollector ->
+                info { "#init shouldStartUpdateStatusCollector: $shouldStartUpdateStatusCollector" }
+            }
             .onEach { shouldStartUpdateStatusCollector ->
                 if (shouldStartUpdateStatusCollector) {
                     updaterStatusCollector.start()
