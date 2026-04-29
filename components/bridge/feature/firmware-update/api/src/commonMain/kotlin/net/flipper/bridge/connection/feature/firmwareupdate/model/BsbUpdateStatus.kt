@@ -40,7 +40,12 @@ data class BsbUpdateStatus(
             val speedBytesPerSec: Int,
             val receivedBytes: Int,
             val totalBytes: Int
-        )
+        ) {
+            companion object {
+                val ZERO: BsbDownload
+                    get() = BsbDownload(0, 0, 0)
+            }
+        }
     }
 
     data class BsbCheck(
