@@ -1,9 +1,12 @@
 package net.flipper.bridge.device.firmwareupdate.status.api
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.flow.onStart
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
 import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
@@ -33,10 +36,13 @@ class UpdaterStatusCollector(
     private val scope: CoroutineScope
 ) : LogTagProvider by TaggedLogger("UpdaterStatusCollector") {
     private val singleJobScope = scope.asSingleJobScope()
+    private val _isActiveFlow = MutableStateFlow(false)
+    val isActiveFlow = _isActiveFlow
 
     fun start() {
         info { "#start" }
         TickFlow(UPDATE_DELAY)
+            .onStart { _isActiveFlow.emit(true) }
             .flatMapLatest { fFeatureProvider.get<FEventsFeatureApi>() }
             .map { status -> status.tryCast<FFeatureStatus.Supported<FEventsFeatureApi>>() }
             .filterNotNull()
@@ -44,7 +50,8 @@ class UpdaterStatusCollector(
             .throttleLatest { eventsFeatureApi ->
                 info { "#start sent UPDATER_UPDATE_STATUS" }
                 val updateStatus = exponentialRetry {
-                    val fRpcFeatureApi = fFeatureProvider.getSync<FRpcFeatureApi>()
+                    val fRpcFeatureApi = fFeatureProvider
+                        .getSync<FRpcFeatureApi>()
                         ?: error("Could not get RPC feature api")
                     fRpcFeatureApi
                         .fRpcUpdaterApi
@@ -61,6 +68,7 @@ class UpdaterStatusCollector(
                 )
                 eventsFeatureApi.onBusyLibEvent(downloadStateEvent)
             }
+            .onCompletion { _isActiveFlow.emit(false) }
             .launchIn(singleJobScope, SingleJobMode.CANCEL_PREVIOUS)
     }
 

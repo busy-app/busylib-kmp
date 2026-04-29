@@ -1,6 +1,7 @@
 package net.flipper.bridge.device.firmwareupdate.updater.service
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flatMapLatest
@@ -52,6 +53,7 @@ class CheckUpdateService(
                     BsbUpdateStatus.BsbCheck.BsbCheckResult.NOT_AVAILABLE -> false
                 }
             }
+            .distinctUntilChanged()
             .flatMapLatest { fFeatureProvider.get<FRpcFeatureApi>() }
             .filterIsInstance<FFeatureStatus.Supported<*>>()
             .filter { fFeatureStatus -> fFeatureStatus.featureApi is FRpcFeatureApi }

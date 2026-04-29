@@ -78,20 +78,21 @@ class FirmwareUpdaterApiImpl(
 
     private val lanUpdaterScope = scope.asSingleJobScope()
 
+    private val updateStatusSourceFlow = updateStatusProvider.getUpdateStatus()
+        .shareIn(scope, SharingStarted.WhileSubscribed(), 1)
+
     override val state: WrappedStateFlow<FwUpdateState> = combine(
-        flow = updateStatusProvider.getUpdateStatus()
-            .shareIn(scope, SharingStarted.WhileSubscribed(), 1),
+        flow = updateStatusSourceFlow,
         flow2 = fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
             .map { status -> status.tryCast<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>() }
             .map { status -> status?.featureApi }
             .flatMapLatest { feature -> feature?.updateVersionFlow.orNullable() }
-            .filterNotNull()
             .shareIn(scope, SharingStarted.WhileSubscribed(), 1),
         flow3 = firmwareDownloaderApi.state,
         flow4 = firmwareUploaderApi.state,
         transform = { updateStatusSource, bsbUpdateVersion, downloaderState, uploaderState ->
             when (bsbUpdateVersion) {
-                is BsbUpdateVersion.Default -> {
+                null, is BsbUpdateVersion.Default -> {
                     FwUpdateStatusMapper.toFwUpdateState(
                         updateStatusSource = updateStatusSource,
                     )
@@ -248,14 +249,18 @@ class FirmwareUpdaterApiImpl(
             ?.startUpdateCheck()
             ?.map { }
             ?.toCResult()
+            ?.also { updaterStatusCollector.start() }
             ?: CResult.failure(IllegalStateException("RPC feature is null"))
     }
 
+    // We need to observe /update/status so we can receive current status
+    // with long-polling
     init {
-        state.asFlow()
-            .distinctUntilChanged()
+        updateStatusSourceFlow
+            .map { updateStatusSource -> FwUpdateStatusMapper.toFwUpdateState(updateStatusSource) }
             .map { state ->
                 when (state) {
+                    is FwUpdateState.CheckingVersion,
                     FwUpdateState.Updating,
                     is FwUpdateState.Downloading -> true
                     // Only desktop case
@@ -263,6 +268,11 @@ class FirmwareUpdaterApiImpl(
                     else -> false
                 }
             }
+            .distinctUntilChanged()
+            .combine(
+                flow = updaterStatusCollector.isActiveFlow.filter { isActive -> isActive },
+                transform = { shouldStartUpdateStatusCollector, _ -> shouldStartUpdateStatusCollector }
+            )
             .onEach { shouldStartUpdateStatusCollector ->
                 if (shouldStartUpdateStatusCollector) {
                     updaterStatusCollector.start()
