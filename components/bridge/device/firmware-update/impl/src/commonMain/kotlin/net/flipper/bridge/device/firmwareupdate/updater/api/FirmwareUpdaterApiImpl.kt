@@ -47,6 +47,7 @@ import net.flipper.core.busylib.ktx.common.cancelPrevious
 import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.mapSuspendCatching
 import net.flipper.core.busylib.ktx.common.orNullable
+import net.flipper.core.busylib.ktx.common.throttleLatest
 import net.flipper.core.busylib.ktx.common.tryCast
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.TaggedLogger
@@ -268,13 +269,15 @@ class FirmwareUpdaterApiImpl(
                     else -> false
                 }
             }
-            .onEach { shouldStartUpdateStatusCollector ->
-                info { "#init shouldStartUpdateStatusCollector: $shouldStartUpdateStatusCollector" }
-            }
-            .onEach { shouldStartUpdateStatusCollector ->
-                if (shouldStartUpdateStatusCollector) {
+            .throttleLatest { shouldStartUpdateStatusCollector ->
+                val isActive = updaterStatusCollector.isActiveFlow.first()
+                info {
+                    "#init shouldStartUpdateStatusCollector: $shouldStartUpdateStatusCollector;" +
+                        " isActive: $isActive"
+                }
+                if (shouldStartUpdateStatusCollector && !isActive) {
                     updaterStatusCollector.start()
-                } else {
+                } else if (isActive) {
                     updaterStatusCollector.stop()
                 }
             }
