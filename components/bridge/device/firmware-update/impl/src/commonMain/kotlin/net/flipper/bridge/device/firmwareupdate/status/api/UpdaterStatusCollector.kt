@@ -9,6 +9,7 @@ import kotlinx.coroutines.launch
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
 import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
+import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateStatus
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
 import net.flipper.bridge.connection.feature.provider.api.get
@@ -18,7 +19,6 @@ import net.flipper.bridge.device.firmwareupdate.status.mapper.toBsbUpdateStatus
 import net.flipper.core.busylib.ktx.common.SingleJobMode
 import net.flipper.core.busylib.ktx.common.TickFlow
 import net.flipper.core.busylib.ktx.common.asSingleJobScope
-import net.flipper.core.busylib.ktx.common.cancelPrevious
 import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.launchIn
 import net.flipper.core.busylib.ktx.common.throttleLatest
@@ -70,7 +70,12 @@ class UpdaterStatusCollector(
         info { "#stop graceful: $graceful" }
         scope.launch {
             if (graceful) delay(UPDATE_DELAY)
-            singleJobScope.cancelPrevious()
+            singleJobScope.launch(SingleJobMode.CANCEL_PREVIOUS) {
+                val downloadStateEvent = BusyLibUpdateEvent.Update.UpdateDownload(
+                    download = BsbUpdateStatus.BsbInstall.BsbDownload.ZERO,
+                )
+                fFeatureProvider.getSync<FEventsFeatureApi>()?.onBusyLibEvent(downloadStateEvent)
+            }
         }
     }
 
