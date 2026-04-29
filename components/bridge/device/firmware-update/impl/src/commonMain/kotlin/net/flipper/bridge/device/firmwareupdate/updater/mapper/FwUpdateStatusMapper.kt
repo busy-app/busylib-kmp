@@ -63,13 +63,13 @@ internal object FwUpdateStatusMapper {
         updateStatus: BsbUpdateStatus,
     ): FwUpdateState {
         return when (updateStatus.install.status) {
-            BsbUpdateStatus.BsbInstall.BsbStatus.DOWNLOAD_FAILURE,
+            BsbUpdateStatus.BsbInstall.BsbStatus.DOWNLOAD_ABORT,
             BsbUpdateStatus.BsbInstall.BsbStatus.BUSY,
             BsbUpdateStatus.BsbInstall.BsbStatus.OK -> {
                 fromInstallAction(updateStatus = updateStatus)
             }
 
-            BsbUpdateStatus.BsbInstall.BsbStatus.DOWNLOAD_ABORT -> FwUpdateState.DownloadFailure
+            BsbUpdateStatus.BsbInstall.BsbStatus.DOWNLOAD_FAILURE -> FwUpdateState.DownloadFailure
             BsbUpdateStatus.BsbInstall.BsbStatus.BATTERY_LOW -> FwUpdateState.LowBattery
             BsbUpdateStatus.BsbInstall.BsbStatus.SHA_MISMATCH,
             BsbUpdateStatus.BsbInstall.BsbStatus.UNPACK_STAGING_DIR_FAILURE,

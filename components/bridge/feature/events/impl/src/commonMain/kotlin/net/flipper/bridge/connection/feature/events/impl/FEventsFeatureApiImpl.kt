@@ -61,6 +61,10 @@ class FEventsFeatureApiImpl(
     private suspend fun onProtobufStatesUpdate(
         data: StatusStreamingEvent.Protobuf
     ) = runSuspendCatching {
+        if (data.data.isEmpty() || data.data.isAllZero()) {
+            verbose { "Skipping ${data.data.size}B no-op protobuf frame" }
+            return@runSuspendCatching
+        }
         val state = State.ADAPTER.decode(data.data)
         verbose { "Process ${state.updates.size} updates: $state" }
         val updates = state.updates.mapNotNull { update ->
@@ -70,6 +74,8 @@ class FEventsFeatureApiImpl(
             busyLibUpdateEventFlow.emit(update)
         }
     }
+
+    private fun ByteArray.isAllZero(): Boolean = all { byte -> byte == 0.toByte() }
 
     init {
         if (streamingApi != null) {
