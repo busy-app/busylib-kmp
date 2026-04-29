@@ -115,9 +115,11 @@ class FirmwareUpdaterApiImpl(
                 versionsModel.currentVersion == versionsModel.previousVersion -> {
                     FwUpdateEvent.UpdateFailed
                 }
+
                 versionsModel.currentVersion != versionsModel.previousVersion -> {
                     FwUpdateEvent.UpdateFinished
                 }
+
                 else -> null
             }
         }
@@ -143,7 +145,7 @@ class FirmwareUpdaterApiImpl(
                     .featureApi
                     .fRpcUpdaterApi
                     .startUpdateAbortDownload()
-                    .onSuccess { updaterStatusCollector.stop(graceful = true) }
+                    .onSuccess { updaterStatusCollector.stop(state) }
                     .map { }
                     .toCResult()
             }
@@ -165,7 +167,7 @@ class FirmwareUpdaterApiImpl(
             .map { feature -> feature?.getDeviceInfo()?.toKotlinResult()?.getOrNull() }
             .filter { response -> response == null }
             .first()
-        updaterStatusCollector.stop(graceful = true)
+        updaterStatusCollector.stop(state)
         info { "#startUpdateInstall awaiting for new uptime!" }
         fFeatureProvider.get<FDeviceInfoFeatureApi>()
             .map { status -> status.tryCast<FFeatureStatus.Supported<FDeviceInfoFeatureApi>>() }
