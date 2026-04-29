@@ -63,7 +63,10 @@ internal object FwUpdateStatusMapper {
         updateStatus: BsbUpdateStatus,
     ): FwUpdateState {
         return when (updateStatus.install.status) {
-            BsbUpdateStatus.BsbInstall.BsbStatus.DOWNLOAD_ABORT,
+            BsbUpdateStatus.BsbInstall.BsbStatus.DOWNLOAD_ABORT -> {
+                fromCheckStatus(updateStatus = updateStatus)
+            }
+
             BsbUpdateStatus.BsbInstall.BsbStatus.BUSY,
             BsbUpdateStatus.BsbInstall.BsbStatus.OK -> {
                 fromInstallAction(updateStatus = updateStatus)
