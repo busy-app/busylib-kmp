@@ -90,6 +90,7 @@ class FFirmwareUpdateFeatureApiImpl(
                                     ?: value
                             }
 
+                            is BusyLibUpdateEvent.Update.UpdateDownload,
                             is BusyLibUpdateEvent.Update.UpdateState -> {
                                 value.merge(updateEvent)
                             }

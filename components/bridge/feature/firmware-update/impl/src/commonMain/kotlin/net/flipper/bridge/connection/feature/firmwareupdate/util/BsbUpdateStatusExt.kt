@@ -17,7 +17,15 @@ internal fun BsbUpdateStatus.merge(event: BusyLibUpdateEvent.Update): BsbUpdateS
             this.copy(
                 install = this.install.copy(
                     action = event.action,
-                    status = event.status
+                    status = event.status,
+                )
+            )
+        }
+
+        is BusyLibUpdateEvent.Update.UpdateDownload -> {
+            this.copy(
+                install = this.install.copy(
+                    download = event.download
                 )
             )
         }
