@@ -15,15 +15,19 @@ import net.flipper.bridge.connection.config.api.model.BUSYBar.ConnectionWay
 import net.flipper.bridge.connection.service.api.FConnectionService
 import net.flipper.bridge.connection.transport.ble.impl.ios.central.DiscoveredBluetoothDevice
 import net.flipper.bridge.connection.transport.ble.impl.ios.central.FCentralManagerApi
+import net.flipper.busylib.core.di.Provider
+import net.flipper.busylib.core.di.provideDelegate
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.log.LogTagProvider
 
 class IOSSearchViewModel(
     persistedStorage: FDevicePersistedStorage,
     deviceService: FConnectionService,
-    private val fCentralManagerApi: FCentralManagerApi,
+    fCentralManagerProvider: Provider<FCentralManagerApi>,
 ) : ConnectionSearchViewModel(persistedStorage, deviceService), LogTagProvider {
     override val TAG = "iOSSearchViewModel"
+
+    private val fCentralManagerApi by fCentralManagerProvider
 
     private val mockDevice = ConnectionSearchItem(
         address = "busy_bar_mock",
