@@ -1,15 +1,15 @@
 package net.flipper.bridge.device.firmwareupdate.status.api
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.flow.onStart
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
 import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
-import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateStatus
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
 import net.flipper.bridge.connection.feature.provider.api.get
@@ -19,6 +19,7 @@ import net.flipper.bridge.device.firmwareupdate.status.mapper.toBsbUpdateStatus
 import net.flipper.core.busylib.ktx.common.SingleJobMode
 import net.flipper.core.busylib.ktx.common.TickFlow
 import net.flipper.core.busylib.ktx.common.asSingleJobScope
+import net.flipper.core.busylib.ktx.common.cancelPrevious
 import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.launchIn
 import net.flipper.core.busylib.ktx.common.throttleLatest
@@ -26,7 +27,7 @@ import net.flipper.core.busylib.ktx.common.tryCast
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.TaggedLogger
 import net.flipper.core.busylib.log.error
-import net.flipper.core.busylib.log.info
+import net.flipper.core.busylib.log.verbose
 import kotlin.time.Duration.Companion.seconds
 
 @Inject
@@ -35,18 +36,21 @@ class UpdaterStatusCollector(
     private val scope: CoroutineScope
 ) : LogTagProvider by TaggedLogger("UpdaterStatusCollector") {
     private val singleJobScope = scope.asSingleJobScope()
+    private val _isActiveFlow = MutableStateFlow(false)
+    val isActiveFlow = _isActiveFlow
 
     fun start() {
-        info { "#start" }
+        verbose { "#start" }
         TickFlow(UPDATE_DELAY)
+            .onStart { _isActiveFlow.emit(true) }
             .flatMapLatest { fFeatureProvider.get<FEventsFeatureApi>() }
             .map { status -> status.tryCast<FFeatureStatus.Supported<FEventsFeatureApi>>() }
             .filterNotNull()
             .map { status -> status.featureApi }
             .throttleLatest { eventsFeatureApi ->
-                info { "#start sent UPDATER_UPDATE_STATUS" }
                 val updateStatus = exponentialRetry {
-                    val fRpcFeatureApi = fFeatureProvider.getSync<FRpcFeatureApi>()
+                    val fRpcFeatureApi = fFeatureProvider
+                        .getSync<FRpcFeatureApi>()
                         ?: error("Could not get RPC feature api")
                     fRpcFeatureApi
                         .fRpcUpdaterApi
@@ -63,20 +67,13 @@ class UpdaterStatusCollector(
                 )
                 eventsFeatureApi.onBusyLibEvent(downloadStateEvent)
             }
+            .onCompletion { _isActiveFlow.emit(false) }
             .launchIn(singleJobScope, SingleJobMode.CANCEL_PREVIOUS)
     }
 
-    fun stop(graceful: Boolean = false) {
-        info { "#stop graceful: $graceful" }
-        scope.launch {
-            if (graceful) delay(UPDATE_DELAY)
-            singleJobScope.launch(SingleJobMode.CANCEL_PREVIOUS) {
-                val downloadStateEvent = BusyLibUpdateEvent.Update.UpdateDownload(
-                    download = BsbUpdateStatus.BsbInstall.BsbDownload.ZERO,
-                )
-                fFeatureProvider.getSync<FEventsFeatureApi>()?.onBusyLibEvent(downloadStateEvent)
-            }
-        }
+    suspend fun stop() {
+        verbose { "#stop" }
+        singleJobScope.cancelPrevious().join()
     }
 
     companion object {

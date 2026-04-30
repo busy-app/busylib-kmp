@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.shareIn
@@ -115,9 +116,11 @@ class FirmwareUpdaterApiImpl(
                 versionsModel.currentVersion == versionsModel.previousVersion -> {
                     FwUpdateEvent.UpdateFailed
                 }
+
                 versionsModel.currentVersion != versionsModel.previousVersion -> {
                     FwUpdateEvent.UpdateFinished
                 }
+
                 else -> null
             }
         }
@@ -143,7 +146,6 @@ class FirmwareUpdaterApiImpl(
                     .featureApi
                     .fRpcUpdaterApi
                     .startUpdateAbortDownload()
-                    .onSuccess { updaterStatusCollector.stop(graceful = true) }
                     .map { }
                     .toCResult()
             }
@@ -165,7 +167,6 @@ class FirmwareUpdaterApiImpl(
             .map { feature -> feature?.getDeviceInfo()?.toKotlinResult()?.getOrNull() }
             .filter { response -> response == null }
             .first()
-        updaterStatusCollector.stop(graceful = true)
         info { "#startUpdateInstall awaiting for new uptime!" }
         fFeatureProvider.get<FDeviceInfoFeatureApi>()
             .map { status -> status.tryCast<FFeatureStatus.Supported<FDeviceInfoFeatureApi>>() }
@@ -245,6 +246,35 @@ class FirmwareUpdaterApiImpl(
             ?.startUpdateCheck()
             ?.map { }
             ?.toCResult()
+            ?.also { updaterStatusCollector.start() }
             ?: CResult.failure(IllegalStateException("RPC feature is null"))
+    }
+
+    // We need to observe /update/status so we can receive current status
+    // with long-polling
+    init {
+        combine(
+            flow = state,
+            flow2 = updaterStatusCollector.isActiveFlow,
+            transform = { state, isActive ->
+                val shouldStartUpdateStatusCollector = when (state) {
+                    is FwUpdateState.CheckingVersion,
+                    FwUpdateState.Updating,
+                    is FwUpdateState.Downloading -> true
+                    // Only desktop case
+                    is FwUpdateState.Uploading -> false
+                    else -> false
+                }
+                info {
+                    "#init shouldStartUpdateStatusCollector: $shouldStartUpdateStatusCollector;" +
+                        " isActive: $isActive; state: $state"
+                }
+                if (shouldStartUpdateStatusCollector && !isActive) {
+                    updaterStatusCollector.start()
+                } else if (!shouldStartUpdateStatusCollector && isActive) {
+                    updaterStatusCollector.stop()
+                }
+            }
+        ).launchIn(scope)
     }
 }

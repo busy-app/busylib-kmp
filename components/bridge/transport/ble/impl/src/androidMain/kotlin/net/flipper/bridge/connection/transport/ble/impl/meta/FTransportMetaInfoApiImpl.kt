@@ -73,8 +73,11 @@ class FTransportMetaInfoApiImpl(
         info { "Subscribe on $address characteristic" }
         // Don't block one flow by another
         return listOf(
-            flow { emit(characteristic.read()) }
-                .catch { t -> error(t) { "Could not read characteristic for $address" } },
+            flow {
+                runSuspendCatching { emit(characteristic.read()) }
+                    .onFailure { t -> error(t) { "Could not read characteristic for $address" } }
+                    .getOrNull()
+            },
             characteristic.subscribe()
                 .catch { t -> error(t) { "Could not subscribe to characteristic $address" } }
         ).merge().map { TransportMetaInfoData.RawBytes(it) }
