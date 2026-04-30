@@ -83,12 +83,13 @@ class FirmwareUpdaterApiImpl(
             .map { status -> status.tryCast<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>() }
             .map { status -> status?.featureApi }
             .flatMapLatest { feature -> feature?.updateVersionFlow.orNullable() }
+            .filterNotNull()
             .shareIn(scope, SharingStarted.WhileSubscribed(), 1),
         flow3 = firmwareDownloaderApi.state,
         flow4 = firmwareUploaderApi.state,
         transform = { updateStatusSource, bsbUpdateVersion, downloaderState, uploaderState ->
             when (bsbUpdateVersion) {
-                null, is BsbUpdateVersion.Default -> {
+                is BsbUpdateVersion.Default -> {
                     FwUpdateStatusMapper.toFwUpdateState(
                         updateStatusSource = updateStatusSource,
                     )
@@ -266,7 +267,7 @@ class FirmwareUpdaterApiImpl(
                 }
                 info {
                     "#init shouldStartUpdateStatusCollector: $shouldStartUpdateStatusCollector;" +
-                        " isActive: $isActive"
+                        " isActive: $isActive; state: $state"
                 }
                 if (shouldStartUpdateStatusCollector && !isActive) {
                     updaterStatusCollector.start()

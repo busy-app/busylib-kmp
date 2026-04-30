@@ -27,7 +27,7 @@ import net.flipper.core.busylib.ktx.common.tryCast
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.TaggedLogger
 import net.flipper.core.busylib.log.error
-import net.flipper.core.busylib.log.info
+import net.flipper.core.busylib.log.verbose
 import kotlin.time.Duration.Companion.seconds
 
 @Inject
@@ -40,7 +40,7 @@ class UpdaterStatusCollector(
     val isActiveFlow = _isActiveFlow
 
     fun start() {
-        info { "#start" }
+        verbose { "#start" }
         TickFlow(UPDATE_DELAY)
             .onStart { _isActiveFlow.emit(true) }
             .flatMapLatest { fFeatureProvider.get<FEventsFeatureApi>() }
@@ -48,7 +48,6 @@ class UpdaterStatusCollector(
             .filterNotNull()
             .map { status -> status.featureApi }
             .throttleLatest { eventsFeatureApi ->
-                info { "#start sent UPDATER_UPDATE_STATUS" }
                 val updateStatus = exponentialRetry {
                     val fRpcFeatureApi = fFeatureProvider
                         .getSync<FRpcFeatureApi>()
@@ -73,7 +72,7 @@ class UpdaterStatusCollector(
     }
 
     suspend fun stop() {
-        info { "#stop" }
+        verbose { "#stop" }
         singleJobScope.cancelPrevious().join()
     }
 

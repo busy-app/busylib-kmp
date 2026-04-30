@@ -16,6 +16,7 @@ import net.flipper.bridge.connection.transport.ble.impl.BleConstants.POLLING_RES
 import net.flipper.bridge.connection.transport.ble.impl.serial.FResetSerialBleApi
 import net.flipper.bridge.connection.transport.ble.impl.toRequestCounter
 import net.flipper.bridge.connection.transport.ble.impl.toUInt32ByteArray
+import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.debug
 import net.flipper.core.busylib.log.error
@@ -37,13 +38,16 @@ class FResetSerialBleApiImpl(
         .flatMapLatest { characteristic ->
             flow {
                 while (currentCoroutineContext().isActive) {
-                    val counter = characteristic.read().toRequestCounter()
+                    val counter = runSuspendCatching { characteristic.read() }
+                        .getOrNull()
+                        ?.toRequestCounter()
                     debug { "Receive request counter $counter" }
                     emit(counter)
                     delay(POLLING_RESET_INTERVAL)
                 }
             }
         }
+        .filterNotNull()
         .shareIn(scope, SharingStarted.Eagerly, 1)
 
     override fun getRequestCounterFlow(): Flow<Int> {
