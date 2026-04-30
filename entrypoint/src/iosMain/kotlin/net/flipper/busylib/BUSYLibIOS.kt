@@ -14,6 +14,7 @@ import net.flipper.bridge.device.firmwareupdate.updater.api.FirmwareUpdaterApi
 import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.cloud.api.BUSYLibHostApi
 import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
+import net.flipper.busylib.core.di.Provider
 import net.flipper.busylib.di.create
 import net.flipper.tools.multistream.api.MultiStreamApi
 
@@ -25,7 +26,7 @@ class BUSYLibIOS(
     override val firmwareUpdaterApi: FirmwareUpdaterApi,
     override val persistedStorage: FDevicePersistedStorage,
     override val multiStreamApi: MultiStreamApi,
-    val fCentralManagerApi: FCentralManagerApi,
+    val fCentralManagerApi: Provider<FCentralManagerApi>,
     private val startUpListeners: Set<InternalBUSYLibStartupListener>
 ) : BUSYLibApple {
     override fun launch() {
@@ -54,4 +55,8 @@ class BUSYLibIOS(
             return graph.busyLib
         }
     }
+}
+
+fun Provider<FCentralManagerApi>.get(): FCentralManagerApi {
+    return this.invoke()
 }

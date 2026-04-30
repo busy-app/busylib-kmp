@@ -38,9 +38,7 @@ class FCentralManager(
     scope: CoroutineScope,
     centralManagerProvider: () -> CBCentralManager = { CBCentralManager() },
 ) : FCentralManagerApi, LogTagProvider {
-    private val manager by lazy {
-        centralManagerProvider().also { it.delegate = delegate }
-    }
+    private val manager: CBCentralManager
 
     override val TAG: String
         get() = "FCentralManager"
@@ -65,6 +63,10 @@ class FCentralManager(
     )
 
     init {
+        manager = centralManagerProvider().also {
+            it.delegate = delegate
+        }
+
         scope.launch {
             for (event in delegate.events) {
                 processEvent(event)
