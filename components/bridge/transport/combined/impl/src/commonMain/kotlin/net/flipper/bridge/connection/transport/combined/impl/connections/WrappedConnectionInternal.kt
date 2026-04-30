@@ -14,8 +14,10 @@ import net.flipper.bridge.connection.transport.combined.impl.connections.utils.C
 import net.flipper.bridge.connection.transport.combined.impl.connections.utils.WrappedConnectionException
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
+import net.flipper.bridge.connection.transport.common.api.FInternalDisconnectionRecovery
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
+import net.flipper.bridge.connection.transport.common.api.NotRecoverableConnectException
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 import net.flipper.core.busylib.ktx.common.launchOnCompletion
 import net.flipper.core.busylib.log.LogTagProvider
@@ -49,11 +51,30 @@ class WrappedConnectionInternal(
                     info { "Wrapped connection $config scope was cancelled" }
                 }
 
+                is NotRecoverableConnectException -> {
+                    info { "Wrapped connection $config failed with a not recoverable error" }
+                }
+
                 else -> {
                     error(t) { "Scope for connection $config was cancelled due to an error" }
                 }
             }
-            stateFlow.update { FInternalTransportConnectionStatus.Disconnected }
+            val recovery = when (t) {
+                null, is CancellationException, is NotRecoverableConnectException -> {
+                    FInternalDisconnectionRecovery.NON_RECOVERABLE
+                }
+                else -> FInternalDisconnectionRecovery.RECOVERABLE
+            }
+            stateFlow.update { currentStatus ->
+                if (
+                    currentStatus is FInternalTransportConnectionStatus.Disconnected &&
+                    currentStatus.recovery == FInternalDisconnectionRecovery.RECOVERABLE
+                ) {
+                    currentStatus
+                } else {
+                    FInternalTransportConnectionStatus.Disconnected(recovery)
+                }
+            }
         }
     )
 

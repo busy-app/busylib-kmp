@@ -54,7 +54,7 @@ class FTransportListenerImpl(config: BUSYBar) : LogTagProvider {
                         transportTypes = status.connectionTypes.map { it.toPublic() }.wrap()
                     )
 
-                FInternalTransportConnectionStatus.Disconnected ->
+                is FInternalTransportConnectionStatus.Disconnected ->
                     if (currentStatus is FDeviceConnectStatus.Disconnected) {
                         currentStatus
                     } else {

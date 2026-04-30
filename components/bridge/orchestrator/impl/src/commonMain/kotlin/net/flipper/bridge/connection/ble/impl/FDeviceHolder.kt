@@ -11,6 +11,7 @@ import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.connectionbuilder.api.FDeviceConfigToConnection
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
+import net.flipper.bridge.connection.transport.common.api.FInternalDisconnectionRecovery
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
@@ -104,7 +105,9 @@ class FDeviceHolder<API : FConnectedDeviceApi>(
                 null, is CancellationException -> {
                     listener.invoke(
                         this,
-                        FInternalTransportConnectionStatus.Disconnected
+                        FInternalTransportConnectionStatus.Disconnected(
+                            FInternalDisconnectionRecovery.NON_RECOVERABLE
+                        )
                     )
                 }
 

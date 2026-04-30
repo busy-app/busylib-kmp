@@ -23,6 +23,7 @@ import net.flipper.bridge.connection.transport.ble.impl.ios.serial.FIOSSerialBle
 import net.flipper.bridge.connection.transport.ble.impl.streaming.FBleStatusStreamingApiImpl
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
+import net.flipper.bridge.connection.transport.common.api.NotRecoverableConnectException
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.busylib.log.LogTagProvider
@@ -143,7 +144,10 @@ class BLEDeviceConnectionApiImpl(
                     }
 
                     FPeripheralState.PAIRING_FAILED,
-                    FPeripheralState.INVALID_PAIRING,
+                    FPeripheralState.INVALID_PAIRING -> {
+                        info { "Peripheral pairing failed with state: $state" }
+                        throw NotRecoverableConnectException()
+                    }
                     FPeripheralState.DISCONNECTED -> {
                         info { "Peripheral connection failed with state: $state" }
                         throw FailedConnectToDeviceException()

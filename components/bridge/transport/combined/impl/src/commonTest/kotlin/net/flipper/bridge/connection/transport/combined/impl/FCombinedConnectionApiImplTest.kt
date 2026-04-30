@@ -22,7 +22,6 @@ import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfi
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus.Connected
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus.Connecting
-import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus.Disconnected
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionType
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.core.busylib.data.nonEmptyListOf
@@ -1000,7 +999,7 @@ class FCombinedConnectionApiImplTest {
 
         // Should still see Connected in status (connA is still connected)
         // Max priority should still be Connected (priority 4 > Connecting priority 1)
-        val hasDisconnected = statusHistory.any { it == Disconnected }
+        val hasDisconnected = statusHistory.any { it is FInternalTransportConnectionStatus.Disconnected }
         // We should NOT see a disconnected state since connA stays connected
         assertTrue(
             !hasDisconnected || statusHistory.last() is Connected || statusHistory.last() is Connecting,
@@ -1575,7 +1574,7 @@ class FCombinedConnectionApiImplTest {
             advanceUntilIdle()
 
             assertTrue(
-                statusHistory.any { it == Disconnected },
+                statusHistory.any { it is FInternalTransportConnectionStatus.Disconnected },
                 "Should start as Disconnected with no connections"
             )
 

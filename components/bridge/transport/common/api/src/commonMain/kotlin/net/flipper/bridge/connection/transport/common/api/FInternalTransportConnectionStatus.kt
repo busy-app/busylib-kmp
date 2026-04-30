@@ -5,7 +5,9 @@ import net.flipper.core.busylib.data.NonEmptyList
 import net.flipper.core.busylib.data.nonEmptyListOf
 
 sealed class FInternalTransportConnectionStatus {
-    data object Disconnected : FInternalTransportConnectionStatus()
+    data class Disconnected(
+        val recovery: FInternalDisconnectionRecovery
+    ) : FInternalTransportConnectionStatus()
 
     data class Connecting(
         val connectionTypes: NonEmptyList<FInternalTransportConnectionType>

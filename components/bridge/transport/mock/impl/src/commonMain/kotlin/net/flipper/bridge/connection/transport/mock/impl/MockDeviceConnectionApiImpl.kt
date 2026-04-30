@@ -4,6 +4,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
+import net.flipper.bridge.connection.transport.common.api.FInternalDisconnectionRecovery
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionType
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
@@ -46,7 +47,11 @@ class MockDeviceConnectionApiImpl : MockDeviceConnectionApi {
             }
 
             override suspend fun disconnect() {
-                listener.onStatusUpdate(FInternalTransportConnectionStatus.Disconnected)
+                listener.onStatusUpdate(
+                    FInternalTransportConnectionStatus.Disconnected(
+                        FInternalDisconnectionRecovery.NON_RECOVERABLE
+                    )
+                )
             }
 
             override fun getDeviceHttpEngine() = bsbMockEngine

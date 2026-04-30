@@ -18,6 +18,7 @@ import net.flipper.bridge.connection.transport.combined.impl.connections.helpers
 import net.flipper.bridge.connection.transport.combined.impl.connections.helpers.TestConnectedDeviceApi
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
+import net.flipper.bridge.connection.transport.common.api.FInternalDisconnectionRecovery
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionType
 import net.flipper.bridge.connection.transport.common.api.meta.FTransportMetaInfoApi
@@ -309,7 +310,11 @@ class CombinedMetaInfoApiImplTest {
             assertTrue(resultBefore.isSuccess, "Should initially succeed")
 
             // Disconnect
-            listener.onStatusUpdate(FInternalTransportConnectionStatus.Disconnected)
+            listener.onStatusUpdate(
+                FInternalTransportConnectionStatus.Disconnected(
+                    FInternalDisconnectionRecovery.RECOVERABLE
+                )
+            )
             advanceUntilIdle()
 
             // After disconnect, should emit failure

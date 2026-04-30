@@ -22,6 +22,7 @@ import net.flipper.bridge.connection.transport.combined.impl.metakey.CombinedMet
 import net.flipper.bridge.connection.transport.combined.impl.streaming.FCombinedStreamingApiImpl
 import net.flipper.bridge.connection.transport.combined.impl.utils.UpdateConfigDelegate
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
+import net.flipper.bridge.connection.transport.common.api.FInternalDisconnectionRecovery
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoData
@@ -75,7 +76,9 @@ class FCombinedConnectionApiImpl(
             .onEach { connectionSnapshot ->
                 val transportConnectionStatus = connectionSnapshot
                     ?.status
-                    ?: FInternalTransportConnectionStatus.Disconnected
+                    ?: FInternalTransportConnectionStatus.Disconnected(
+                        FInternalDisconnectionRecovery.NON_RECOVERABLE
+                    )
 
                 if (transportConnectionStatus is FInternalTransportConnectionStatus.Connected) {
                     listener.onStatusUpdate(
