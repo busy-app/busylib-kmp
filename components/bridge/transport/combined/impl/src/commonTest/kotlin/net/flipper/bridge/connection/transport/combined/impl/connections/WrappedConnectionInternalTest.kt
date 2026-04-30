@@ -7,7 +7,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -20,6 +19,7 @@ import net.flipper.bridge.connection.transport.combined.impl.connections.helpers
 import net.flipper.bridge.connection.transport.combined.impl.connections.helpers.TestConnectedDeviceApi
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
+import net.flipper.bridge.connection.transport.common.api.FInternalDisconnectedReason
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionType
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
@@ -371,7 +371,9 @@ class WrappedConnectionInternalTest {
 
         // Then
         assertEquals(
-            FInternalTransportConnectionStatus.Disconnected,
+            FInternalTransportConnectionStatus.Disconnected(
+                FInternalDisconnectedReason.OTHER
+            ),
             connection.stateFlow.value,
             "State should be Disconnected after disconnect"
         )
@@ -400,7 +402,9 @@ class WrappedConnectionInternalTest {
 
             // Then - should not crash and state should be disconnected
             assertEquals(
-                FInternalTransportConnectionStatus.Disconnected,
+                FInternalTransportConnectionStatus.Disconnected(
+                    FInternalDisconnectedReason.OTHER
+                ),
                 connection.stateFlow.value
             )
         }
@@ -428,7 +432,9 @@ class WrappedConnectionInternalTest {
 
         // Then - should not crash
         assertEquals(
-            FInternalTransportConnectionStatus.Disconnected,
+            FInternalTransportConnectionStatus.Disconnected(
+                FInternalDisconnectedReason.OTHER
+            ),
             connection.stateFlow.value
         )
     }
@@ -483,7 +489,9 @@ class WrappedConnectionInternalTest {
 
         // Then - should not crash and state should be disconnected
         assertEquals(
-            FInternalTransportConnectionStatus.Disconnected,
+            FInternalTransportConnectionStatus.Disconnected(
+                FInternalDisconnectedReason.OTHER
+            ),
             connection.stateFlow.value
         )
     }
@@ -517,7 +525,9 @@ class WrappedConnectionInternalTest {
 
             // Then - state should be disconnected
             assertEquals(
-                FInternalTransportConnectionStatus.Disconnected,
+                FInternalTransportConnectionStatus.Disconnected(
+                    FInternalDisconnectedReason.OTHER
+                ),
                 connection.stateFlow.value
             )
         }
@@ -577,7 +587,9 @@ class WrappedConnectionInternalTest {
 
             // Then
             assertEquals(
-                FInternalTransportConnectionStatus.Disconnected,
+                FInternalTransportConnectionStatus.Disconnected(
+                    FInternalDisconnectedReason.OTHER
+                ),
                 connection.stateFlow.value
             )
         }

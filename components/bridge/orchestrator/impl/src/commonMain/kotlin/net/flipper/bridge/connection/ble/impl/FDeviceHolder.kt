@@ -11,8 +11,10 @@ import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.connectionbuilder.api.FDeviceConfigToConnection
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
+import net.flipper.bridge.connection.transport.common.api.FInternalDisconnectedReason
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
+import net.flipper.bridge.connection.transport.common.api.FailedPairingConnectException
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.busylib.ktx.common.transform
@@ -104,7 +106,18 @@ class FDeviceHolder<API : FConnectedDeviceApi>(
                 null, is CancellationException -> {
                     listener.invoke(
                         this,
-                        FInternalTransportConnectionStatus.Disconnected
+                        FInternalTransportConnectionStatus.Disconnected(
+                            FInternalDisconnectedReason.OTHER
+                        )
+                    )
+                }
+
+                is FailedPairingConnectException -> {
+                    listener.invoke(
+                        this,
+                        FInternalTransportConnectionStatus.Disconnected(
+                            FInternalDisconnectedReason.PAIRING_FAILED
+                        )
                     )
                 }
 

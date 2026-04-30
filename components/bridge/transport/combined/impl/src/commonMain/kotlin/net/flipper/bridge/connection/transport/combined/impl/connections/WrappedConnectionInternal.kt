@@ -14,8 +14,10 @@ import net.flipper.bridge.connection.transport.combined.impl.connections.utils.C
 import net.flipper.bridge.connection.transport.combined.impl.connections.utils.WrappedConnectionException
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
+import net.flipper.bridge.connection.transport.common.api.FInternalDisconnectedReason
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
+import net.flipper.bridge.connection.transport.common.api.FailedPairingConnectException
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 import net.flipper.core.busylib.ktx.common.launchOnCompletion
 import net.flipper.core.busylib.log.LogTagProvider
@@ -40,20 +42,28 @@ class WrappedConnectionInternal(
         parentScope = parentScope,
         dispatcher = dispatcher,
         onCompletion = { t ->
-            when (t) {
+            val recovery = when (t) {
                 null -> {
                     info { "Wrapped connection $config scope is being cancelled" }
+                    FInternalDisconnectedReason.OTHER
                 }
 
                 is CancellationException -> {
                     info { "Wrapped connection $config scope was cancelled" }
+                    FInternalDisconnectedReason.OTHER
+                }
+
+                is FailedPairingConnectException -> {
+                    info { "Wrapped connection $config failed with a not recoverable error" }
+                    FInternalDisconnectedReason.PAIRING_FAILED
                 }
 
                 else -> {
                     error(t) { "Scope for connection $config was cancelled due to an error" }
+                    FInternalDisconnectedReason.OTHER
                 }
             }
-            stateFlow.update { FInternalTransportConnectionStatus.Disconnected }
+            stateFlow.update { FInternalTransportConnectionStatus.Disconnected(recovery) }
         }
     )
 

@@ -16,6 +16,7 @@ import net.flipper.bridge.connection.transport.ble.impl.ios.peripheral.FPeripher
 import net.flipper.bridge.connection.transport.ble.impl.ios.peripheral.FPeripheralState
 import net.flipper.bridge.connection.transport.ble.impl.serial.FSerialBleApi
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
+import net.flipper.bridge.connection.transport.common.api.FInternalDisconnectedReason
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionType
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
@@ -53,9 +54,15 @@ class FIOSBleApiImpl(
                     )
 
                     FPeripheralState.DISCONNECTING -> FInternalTransportConnectionStatus.Disconnecting
-                    FPeripheralState.DISCONNECTED,
+                    FPeripheralState.DISCONNECTED -> {
+                        FInternalTransportConnectionStatus.Disconnected(
+                            FInternalDisconnectedReason.OTHER
+                        )
+                    }
                     FPeripheralState.PAIRING_FAILED,
-                    FPeripheralState.INVALID_PAIRING -> FInternalTransportConnectionStatus.Disconnected
+                    FPeripheralState.INVALID_PAIRING -> FInternalTransportConnectionStatus.Disconnected(
+                        FInternalDisconnectedReason.PAIRING_FAILED
+                    )
 
                     FPeripheralState.CONNECTED -> FInternalTransportConnectionStatus.Connected(
                         scope = scope,
