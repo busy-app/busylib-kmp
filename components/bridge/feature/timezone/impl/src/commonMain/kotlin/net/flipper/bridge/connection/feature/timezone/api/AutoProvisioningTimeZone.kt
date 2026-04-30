@@ -1,6 +1,7 @@
 package net.flipper.bridge.connection.feature.timezone.api
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.UtcOffset
@@ -19,6 +20,9 @@ import net.flipper.core.busylib.timezone.currentTimeZoneAbbreviation
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 import kotlin.math.abs
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.seconds
+
+private val DELAY = 10.seconds
 
 class AutoProvisioningTimeZone(
     private val timeZoneFeature: FTimeZoneFeatureApi
@@ -26,6 +30,8 @@ class AutoProvisioningTimeZone(
     override val TAG = "AutoProvisioningTimeZone"
 
     override suspend fun onReady() {
+        info { "Started, but delayed for $DELAY..." }
+        delay(DELAY)
         val activeTimeZone = timeZoneFeature.getTimeZoneInfoFlow()
             .first()
         debug { "Receive timezone $activeTimeZone" }
