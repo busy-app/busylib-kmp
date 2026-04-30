@@ -24,6 +24,8 @@ import net.flipper.bridge.connection.transport.ble.impl.streaming.FBleStatusStre
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.busylib.core.di.BusyLibGraph
+import net.flipper.busylib.core.di.Provider
+import net.flipper.busylib.core.di.provideDelegate
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
@@ -34,9 +36,11 @@ import kotlin.time.Duration
 @Inject
 @ContributesBinding(BusyLibGraph::class, BleDeviceConnectionApi::class)
 class BLEDeviceConnectionApiImpl(
-    private val centralManager: FCentralManagerApi
+    centralManagerProvider: Provider<FCentralManagerApi>
 ) : BleDeviceConnectionApi, LogTagProvider {
     override val TAG = "BleDeviceConnectionApi"
+
+    private val centralManager by centralManagerProvider
 
     override suspend fun connect(
         scope: CoroutineScope,
