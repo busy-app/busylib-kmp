@@ -1,0 +1,36 @@
+name: 'Setup Java'
+description: |
+  Wraps actions/setup-java with a workaround for
+  https://github.com/actions/setup-java/issues/530.
+
+  On self-hosted runners ~/.m2/toolchains.xml is not wiped between jobs.
+  setup-java appends a new <toolchain> element on every invocation, so the
+  file grows unboundedly until the XML parser breaks. Removing the file
+  before setup-java runs forces a fresh write each time.
+
+  Parallel safety: rm -f is atomic and idempotent; if two parallel jobs on
+  the same machine both reset and re-run setup-java, the worst case is a
+  handful of identical <toolchain> entries (bounded by the number of
+  concurrent jobs) and the next job clears them again.
+
+inputs:
+  java-version:
+    description: 'Java version to install'
+    required: false
+    default: '17'
+  distribution:
+    description: 'Java distribution'
+    required: false
+    default: 'temurin'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Reset Maven toolchains.xml (workaround for setup-java#530)
+      shell: bash
+      run: rm -f "$HOME/.m2/toolchains.xml"
+    - name: Set up JDK ${{ inputs.java-version }}
+      uses: actions/setup-java@v5
+      with:
+        distribution: ${{ inputs.distribution }}
+        java-version: ${{ inputs.java-version }}
