@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
@@ -34,18 +35,22 @@ class CloudFetcher(
             principalApi.getPrincipalFlow(),
             networkStateApi.isNetworkAvailableFlow
         ) { principal, isNetworkAvailable ->
-            if (isNetworkAvailable && principal is BUSYLibUserPrincipal.Token) {
-                wsApi.getWSFlow()
-                    .debounce(1.seconds)
-                    .flatMapLatest { ws ->
-                        if (ws == null) {
-                            emptyFlow()
-                        } else {
-                            getBarsFlow(principal, ws.getEventsFlow())
+            when (principal) {
+                BUSYLibUserPrincipal.Empty -> flowOf(emptyList())
+                BUSYLibUserPrincipal.Loading -> emptyFlow()
+                is BUSYLibUserPrincipal.Token -> if (isNetworkAvailable) {
+                    wsApi.getWSFlow()
+                        .debounce(1.seconds)
+                        .flatMapLatest { ws ->
+                            if (ws == null) {
+                                emptyFlow()
+                            } else {
+                                getBarsFlow(principal, ws.getEventsFlow())
+                            }
                         }
-                    }
-            } else {
-                emptyFlow()
+                } else {
+                    emptyFlow()
+                }
             }
         }.flatMapLatest { it }
     }
