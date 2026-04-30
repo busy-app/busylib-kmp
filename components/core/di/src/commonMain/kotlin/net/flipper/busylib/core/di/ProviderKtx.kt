@@ -6,3 +6,5 @@ operator fun <T> (() -> T).provideDelegate(
     receiver: Any?,
     property: KProperty<*>
 ): Lazy<T> = lazy { invoke() }
+
+typealias Provider<T> = () -> T
