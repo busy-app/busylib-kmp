@@ -19,6 +19,7 @@ import net.flipper.bridge.connection.feature.events.proto.protomapper.delegates.
 import net.flipper.bridge.connection.feature.events.proto.protomapper.delegates.WifiProtobufMapper
 
 object BSBProtobufEventMapper {
+    @Suppress("CyclomaticComplexMethod")
     fun map(state: StateUpdate): BusyLibUpdateEvent? {
         state.device_name?.let { return DeviceNameProtobufMapper.map(it) }
         state.power?.let { return PowerProtobufMapper.map(it) }
