@@ -1,0 +1,204 @@
+# BUSY Lib KMP — bug audit index
+
+**Total reports:** 186
+
+Each report is a standalone Markdown file under `bugs/`. The 3-digit prefix encodes priority (000 = highest). Severity (`critical` / `high` / `medium` / `low`) and bug Type (`broken-feature` / `infrastructure` / `lack-of-feature`) are noted on the file's first lines.
+
+## Counts by severity × type
+
+| | broken-feature | infrastructure | lack-of-feature | total |
+|---|---|---|---|---|
+| **critical** | 11 | 12 | 1 | 24 |
+| **high** | 21 | 49 | 1 | 71 |
+| **medium** | 21 | 43 | 2 | 66 |
+| **low** | 3 | 19 | 3 | 25 |
+| **total** | 56 | 123 | 7 | 186 |
+
+## All reports, in priority order
+
+- `000_critical_changename-watcher-overwrites-local-rename.md` — **critical** / *broken-feature* — BUSYLibNameWatcher unconditionally overwrites local device name on every reconnect / rename round-trip
+- `001_critical_cloud-provisioning-watcher-data-loss-on-transient-unlinked.md` — **critical** / *broken-feature* — Cloud transport silently destroyed on transient `linked=false`
+- `002_critical_krate_putstring_args_swapped_persists_garbage.md` — **critical** / *broken-feature* — Krate `putString` arguments swapped — firmware channel preference is corrupted
+- `003_critical_raw-http-decodes-binary-body-as-utf8.md` — **critical** / *infrastructure* — critical — `toRawHttpRequestString` corrupts binary request bodies via `decodeToString()`
+- `004_critical_silent-config-wipe-on-deserialization-failure.md` — **critical** / *broken-feature* — All paired devices silently wiped when persisted config fails to deserialize
+- `005_critical_socket-timeout-treated-as-upload-success.md` — **critical** / *broken-feature* — Socket timeout during firmware upload is silently treated as successful upload
+- `006_critical_http-client-logs-all-headers-tokens.md` — **critical** / *broken-feature* — `getHttpClient` enables `LogLevel.ALL` which logs Authorization headers and request bodies
+- `007_critical_ws_auth_ticket_logged_in_plaintext.md` — **critical** / *broken-feature* — WebSocket auth ticket and bearer tokens logged in plaintext at info/verbose
+- `008_critical_disconnect_does_not_propagate_disconnected_status.md` — **critical** / *broken-feature* — `disconnect()` leaves combined transport reporting `Connected` forever
+- `009_critical_disconnect_holder_scope_never_cancelled_on_async_failure.md` — **critical** / *infrastructure* — `FDeviceHolder` scope is leaked when `deviceApi` `async` fails before `disconnect()` is called
+- `010_critical_disconnect_throws_cancellation_when_called_during_connecting.md` — **critical** / *infrastructure* — `FDeviceHolder.disconnect()` throws `CancellationException` when called while `deviceApi` is still connecting
+- `011_critical_stale_currentdevice_after_disconnect_cancellation.md` — **critical** / *infrastructure* — `currentDevice` is left in a stale state when `disconnectInternalUnsafe` throws
+- `012_critical_wrapped_connection_state_after_scope_completion.md` — **critical** / *infrastructure* — `WrappedConnectionInternal` can flip back from `Disconnected` to `Connecting`/`Connected` after scope completion, blocking auto-reconnect
+- `013_critical_ios-cancel-pending-races-with-channel-close.md` — **critical** / *infrastructure* — Pending iOS GATT writes/reads can hang on disconnect because `cancelPending` is asynchronous
+- `014_critical_ios-runblocking-on-cb-delegate.md` — **critical** / *infrastructure* — `runBlocking` inside `CBPeripheral` delegate callback can deadlock the BLE thread
+- `015_critical_ios-state-machine-never-reaches-connected-without-meta.md` — **critical** / *infrastructure* — iOS peripheral never reaches `CONNECTED` if the device has no meta-info characteristics
+- `016_critical_ios-state-resurrection-from-meta-update.md` — **critical** / *infrastructure* — iOS peripheral state can resurrect to `CONNECTED` after disconnect via late meta-info update
+- `017_critical_no-reconnect-on-websocket-monitor-failure.md` — **critical** / *lack-of-feature* — critical — Cloud / non-Apple LAN monitor never recovers if WebSocket flow terminates
+- `018_critical_runblocking-in-engine-close-blocks-caller.md` — **critical** / *infrastructure* — critical — `runBlocking` inside `HttpClientEngine.close()` can deadlock & violates project rules
+- `019_critical_runblocking-on-network-queue-deadlocks-cancellation.md` — **critical** / *infrastructure* — critical — `runBlocking` inside `nw_connection` state-changed handler can deadlock cancellation
+- `020_critical_singlejob-runblocking-on-completion.md` — **critical** / *infrastructure* — `SingleJobCoroutineScope.listenForOnDestroy` calls `runBlocking` from `invokeOnCompletion`
+- `021_critical_battery-flow-emits-only-once-on-rpc-fallback.md` — **critical** / *broken-feature* — Battery flow emits only once and dies on RPC fallback path
+- `022_critical_fraction-init-only-logs-instead-of-throwing.md` — **critical** / *broken-feature* — `Fraction.init` only logs and continues on out-of-range values, allowing invalid `Fraction` instances
+- `023_critical_timer-getProfilesFlow-returns-empty-shared-flow.md` — **critical** / *broken-feature* — `FTimerFeatureApi.getProfilesFlow(slot)` always returns an empty flow that never emits
+- `024_high_busybar-connectionways-throws-on-deserialization.md` — **high** / *broken-feature* — `BUSYBar.connectionWays` initializer throws on deserialization of legitimate-but-empty data
+- `025_high_post-update-http-status-not-checked.md` — **high** / *broken-feature* — `postUpdate` does not check HTTP response status, declares success on any response
+- `026_high_rle-decompress-uses-boxed-bytes-and-no-bounds-check.md` — **high** / *broken-feature* — `rleDecompress` is unbounded in memory and crashes on malformed device frames
+- `027_high_setupfinishedbeforekrate-singleton-leaks-across-devices.md` — **high** / *broken-feature* — `SetupFinishedBeforeKrate` is a global singleton — leaks completion state across devices
+- `028_high_uploading-state-overwritten-by-onlatest-reset.md` — **high** / *broken-feature* — `Uploading` state is briefly reset to `Pending` when device feature flips, racing with progress emissions
+- `029_high_concurrent_401_triggers_double_token_refresh.md` — **high** / *infrastructure* — Two concurrent 401s call `getToken(failedToken)` twice — no de-dup on refresh
+- `030_high_loggingwebsocketconverter-isapplicable-always-true.md` — **high** / *broken-feature* — `LoggingWebsocketConverter.isApplicable` returns `true` for every frame, then silently returns `null`
+- `031_high_no_session_close_on_logout.md` — **high** / *broken-feature* — Authenticated WebSocket can be reused across user-switch within the 30-second `WhileSubscribed` grace window
+- `032_high_token-cache-not-invalidated-on-401.md` — **high** / *infrastructure* — high — `BUSYCloudHttpEngine` only refreshes token on 403, never on 401, and `ProxyTokenProvider` keeps cached token
+- `033_high_connecting_timeout_lost_on_listener_swap.md` — **high** / *infrastructure* — 10s "Connecting → Offline" timeout is silently dropped when transport listener swaps
+- `034_high_currentdevice_unsynchronized_reads_in_callbacks.md` — **high** / *infrastructure* — `currentDevice` is read/written without synchronization across coroutines
+- `035_high_double_connect_call_creates_duplicate_connectionconfig.md` — **high** / *infrastructure* — `connectIfNot` builds the connection config twice and may use stale config for the holder
+- `036_high_duplicate_disconnect_callback_from_invokeoncompletion.md` — **high** / *infrastructure* — `FDeviceHolder` emits duplicate Disconnected callbacks (transport listener + invokeOnCompletion)
+- `037_high_force-refresh-connection-overlap.md` — **high** / *infrastructure* — `forceRefreshConnection` may run two `connectionLoop`s concurrently
+- `038_high_globalscope_launch_leaks_on_persistent_failure.md` — **high** / *infrastructure* — `onInternalDisconnect` `globalScope.launch` can pile up on rapid disconnect/reconnect
+- `039_high_late_connect_after_offline_emits_connected_status.md` — **high** / *infrastructure* — A connection that succeeds *just after* the 10s timeout still emits `Connected`, contradicting the previously emitted `Offline`
+- `040_high_postaction_runs_after_listener_swap.md` — **high** / *infrastructure* — `onInternalDisconnect.postAction` writes Disconnected to the *old* listener after a new listener has been installed
+- `041_high_trytoupdateconnectionconfig_getcompleted_on_pending_deferred.md` — **high** / *infrastructure* — `tryToUpdateConnectionConfig` calls `getCompleted()` on a possibly non-completed Deferred
+- `042_high_android-waiter-not-thread-safe.md` — **high** / *infrastructure* — Android serial subscription `Waiter` has a non-atomic field + buffer-less channel race
+- `043_high_apple-monitor-restart-races-with-stop.md` — **high** / *infrastructure* — high — `restartMonitoring` race: pending restart still emits `Connecting` after `stopMonitoring`
+- `044_high_cloud-engine-mutex-serializes-all-requests.md` — **high** / *infrastructure* — high — Cloud engine serializes ALL requests behind a global `Mutex` — head-of-line blocking + cancellation hazard
+- `045_high_default-getcapabilities-completes-immediately.md` — **high** / *broken-feature* — high — `FHTTPDeviceApi.getCapabilities()` default returns a single-shot terminating flow
+- `046_high_default-http-throttler-holds-mutex-during-delay.md` — **high** / *infrastructure* — `DefaultHttpRequestThrottler` holds the mutex during `delay()`, fully serialising RPC
+- `047_high_discovered-device-equals-hashcode-violation.md` — **high** / *infrastructure* — `DiscoveredBluetoothDeviceImpl.equals` and `hashCode` violate the Java contract
+- `048_high_failed_subscribe_send_never_retried.md` — **high** / *lack-of-feature* — Failed `SubscribeState`/`UnsubscribeState` send is never retried
+- `049_high_http-engine-request-counter-not-mutex-guarded.md` — **high** / *infrastructure* — `FHttpBLEEngine.requestCount` is mutated outside the engine mutex on the parser-error path
+- `050_high_init-launches-monitor-coroutine-leaks-on-failure.md` — **high** / *infrastructure* — high — `FCloudApiImpl.init { }` launches monitoring coroutine that leaks if construction throws / connect fails
+- `051_high_ios-bleapi-disconnect-leaks-http-engine.md` — **high** / *infrastructure* — `FIOSBleApiImpl.disconnect()` does not close the embedded `FHttpBLEEngine`
+- `052_high_ios-disconnect-timeout-leaks-stale-peripheral.md` — **high** / *infrastructure* — Disconnect timeout in `FCentralManager.disconnect` leaves the stale peripheral entry in `_connectedStream`
+- `053_high_ios-fblestatus-rawvalue-comparison-broken.md` — **high** / *infrastructure* — `FBLEStatus.from(state: CBManagerState)` compares a `Long` to a `CBManagerState` and always falls through to `UNKNOWN` on Apple
+- `054_high_ios-uuid-normaliser-corrupts-32bit-uuids.md` — **high** / *infrastructure* — `normalizeBluetoothUuid` produces an invalid UUID for 32-bit short forms (8 hex chars)
+- `055_high_listener-throws-cancels-connection-scope.md` — **high** / *infrastructure* — high — A listener that throws (or is cancelled) tears down the entire connection scope
+- `056_high_raw-http-duplicates-headers-and-misses-content-length.md` — **high** / *infrastructure* — high — `toRawHttpRequestString` duplicates headers and emits stale `Content-Length` when `includeBody = false`
+- `057_high_runcatching_in_active_websocket_holder.md` — **high** / *infrastructure* — `runCatching` in suspend function violates project rule and swallows cancellation
+- `058_high_skip-if-running-drops-state-changes.md` — **high** / *infrastructure* — high — `SKIP_IF_RUNNING` causes Apple monitor to silently drop legitimate state changes
+- `059_high_websocket-session-not-closed-on-flow-error.md` — **high** / *infrastructure* — high — `FLanStreamingApiImpl.getWebSocket()` leaks session if `webSocketSession()` succeeds but downstream collector throws before subscribing
+- `060_high_consumable-extension-holds-mutex-across-callback.md` — **high** / *infrastructure* — `Consumable.tryConsume()` Flow extension holds the consumable's mutex across `awaitClose()`
+- `061_high_default-object-cache-pending-leak.md` — **high** / *infrastructure* — `DefaultObjectCache` leaks `CacheEntry.Pending` entries forever
+- `062_high_exponential-retry-not-cancellation-aware-on-result-failure.md` — **high** / *infrastructure* — `exponentialRetry` retries indefinitely when `block` returns `Result.failure(CancellationException)`
+- `063_high_mutex-consumable-race-on-isconsumed.md` — **high** / *infrastructure* — `MutexConsumable` reads `isConsumed` outside the mutex causing a race on Kotlin/Native and a benign one on JVM
+- `064_high_retry-pow-overflow.md` — **high** / *infrastructure* — `getExponentialDelay` uses `factor.pow(retryCount)` which overflows for large counts and is not robust to `Long.MAX_VALUE` retries
+- `065_high_singlejob-active-jobs-leak.md` — **high** / *infrastructure* — `MutexSingleJobCoroutineScope.activeJobs` grows unboundedly
+- `066_high_singlejob-cancel-previous-no-await.md` — **high** / *infrastructure* — `cancelPreviousUnsafe` does not wait for previous job to actually finish before launching the new one
+- `067_high_wrapped-flow-uses-main-dispatcher.md` — **high** / *infrastructure* — `WrappedFlow.watch` always launches its callback scope on `Dispatchers.Main`
+- `068_high_wrapwebsocket-double-counts-retries.md` — **high** / *infrastructure* — `wrapWebsocket` increments `retryCount` twice on every failure → exponential delay grows too fast
+- `069_high_child_supervisor_scope_leaks_completion_callbacks_on_parent.md` — **high** / *infrastructure* — `ChildSupervisorScope` leaks `invokeOnCompletion` registrations on the parent scope and double-fires `onCompletion`
+- `070_high_combined_meta_info_uses_undefined_transport_order.md` — **high** / *broken-feature* — `CombinedMetaInfoApiImpl` and `FCombinedStreamingApiImpl` resolve queries against an undefined transport order
+- `071_high_combined_status_update_uses_self_scope_not_transport_scope.md` — **high** / *infrastructure* — Combined `Connected` status is emitted with the outer caller scope, hiding per-transport scope from consumers
+- `072_high_priority_grouping_non_deterministic_failover.md` — **high** / *broken-feature* — Failover priority is non-deterministic when multiple transports share the same status priority
+- `073_high_shared_connection_pool_started_eagerly_leaks_in_caller_scope.md` — **high** / *infrastructure* — `SharedConnectionPool` keeps collecting forever in caller-supplied scope (`SharingStarted.Eagerly`)
+- `074_high_cloud-fetcher-debounce-on-websocket-handle.md` — **high** / *broken-feature* — `CloudFetcher` applies a 1-second `debounce` to the WebSocket handle flow
+- `075_high_cloud-fetcher-ws-events-lost-on-bars-list-failure.md` — **high** / *broken-feature* — `CloudFetcher.getBarsFlow` silently drops all WebSocket events when initial REST list fetch fails
+- `076_high_hardware-id-watcher-skips-status-on-reconnect.md` — **high** / *broken-feature* — `HardwareIdProvisioningWatcher` re-fetches hardware ID on every reconnect, but never on user-initiated state refresh
+- `077_high_disconnectWifi-wrong-error-string-success-mapping.md` — **high** / *broken-feature* — `disconnectWifi()` treats "Already connected" as disconnect-success
+- `078_high_finish-setup-firmware-task-completes-when-wifi-not-available.md` — **high** / *broken-feature* — Firmware-update setup task is reported COMPLETED when WiFi status is unknown
+- `079_high_info-deviceVersionFlow-shareIn-replay-fails-on-error.md` — **high** / *broken-feature* — `deviceVersionFlow` swallows errors and silently completes; replay caches no value
+- `080_high_lifecycles-flatmaplatest-cancels-in-flight-on-add-remove.md` — **high** / *infrastructure* — `LifecyclesHolderFlow.isAnyLifecycleOnStartFlow` restarts entire combine on every add/remove → loses transient lifecycle events
+- `081_high_link-deleteAndLinkAccount-returns-success-before-completion.md` — **high** / *broken-feature* — `deleteAndLinkAccount()` returns success before re-link completes
+- `082_high_link-double-emit-and-redundant-rpc-after-auth.md` — **high** / *broken-feature* — `tryCheckLinkedInfo` issues a redundant RPC and emits the linked status twice on success
+- `083_high_link-status-not-replayed-leaves-late-collectors-empty.md` — **high** / *broken-feature* — `FLinkedInfoOnDemandFeatureApi.status` drops the latest value after collection ends
+- `084_high_oncall-start-leaks-on-feature-change.md` — **high** / *broken-feature* — `OnCallSingletonApiImpl.start()` leaks "started" on-call state across feature swaps
+- `085_high_settings-deviceName-stateflow-cached-from-deviceapi-staleness.md` — **high** / *broken-feature* — `FSettingsFeatureApi.getDeviceName()` initial value is the connection-time name, not live
+- `086_high_wifi-state-flow-no-cancellation-during-fetch-leaks.md` — **high** / *infrastructure* — `getWifiStateFlow` keeps stale-network entries forever and lacks cancellation between iterations
+- `087_high_api-modules-expose-bare-flow-types.md` — **high** / *infrastructure* — high — Public APIs expose bare `Flow` / `Result` instead of `WrappedFlow` / `CResult`
+- `088_high_api-result-violation.md` — **high** / *infrastructure* — Public BLE-transport `connect` returns Kotlin `Result<T>` instead of `CResult<T>`
+- `089_high_api_returns_kotlin_result_instead_of_cresult.md` — **high** / *infrastructure* — Public API `tryUpdateConnectionConfig` returns `Result<Unit>` instead of `CResult<Unit>` (AGENTS.md violation)
+- `090_high_one-class-per-file-violation.md` — **high** / *infrastructure* — `FBleDeviceConnectionConfig.kt` declares three top-level classes (one-class-per-file rule)
+- `091_high_public-flow-not-wrapped-for-swift.md` — **high** / *infrastructure* — high — Public flows exposed as bare `Flow` / not as `WrappedFlow`
+- `092_high_public-suspend-returns-kotlin-result-not-cresult.md` — **high** / *infrastructure* — high — Public `suspend fun connect/tryUpdateConnectionConfig` returns `kotlin.Result` instead of `CResult`
+- `093_high_public_apis_use_kotlin_result_not_cresult.md` — **high** / *infrastructure* — Cloud REST `:api` interfaces return `Result<T>`, not `CResult<T>` (Swift interop break)
+- `094_high_public_flows_not_wrapped_for_swift.md` — **high** / *infrastructure* — Public flows in cloud `:api` modules are bare `Flow`/`StateFlow`, breaking SKIE interop
+- `095_medium_check-update-service-availableversion-filter-inverted.md` — **medium** / *broken-feature* — `CheckUpdateService` only re-issues update checks when the previous check has already produced a version
+- `096_medium_firmware-downloader-state-resets-to-pending-after-failure.md` — **medium** / *broken-feature* — `FirmwareDownloaderApiImpl` resets state to `Pending` on failure, hiding error from public state
+- `097_medium_install-action-mapped-as-downloading.md` — **medium** / *broken-feature* — All post-download install actions (UNPACK/SHA_VERIFICATION/PREPARE/APPLY) report as "Downloading"
+- `098_medium_temp-firmware-file-collision-and-leak.md` — **medium** / *broken-feature* — Temp firmware file uses fixed name; concurrent or aborted downloads collide and leak the file on disk
+- `099_medium_principal-token-leaks-via-tostring.md` — **medium** / *broken-feature* — `BUSYLibUserPrincipalToken` and friends do not redact secrets in `toString` / logs
+- `100_medium_connected_class_not_data_class_breaks_distinct_emission.md` — **medium** / *infrastructure* — `FDeviceConnectStatus.Connected` is `class` not `data class`; breaks distinct-emission semantics
+- `101_medium_disconnect_redundant_cancel_after_join.md` — **medium** / *infrastructure* — `FDeviceHolder.disconnect()` redundantly cancels scope after `cancelAndJoin`
+- `102_medium_flatmaplatest_resubscribes_emit_default_status.md` — **medium** / *infrastructure* — `flatMapLatest` over `transportListenerFlow` re-emits `DEFAULT_STATUS` on every listener swap
+- `103_medium_initial_connecting_emitted_twice_to_listener.md` — **medium** / *infrastructure* — Listener receives `Connecting` twice on `connect()`
+- `104_medium_invokeoncompletion_misclassifies_errors.md` — **medium** / *infrastructure* — `FDeviceHolder.init.invokeOnCompletion` short-circuits errors and never updates the listener for non-cancellation throwables
+- `105_medium_onerrorduringconnect_does_not_handle_cancellationexception.md` — **medium** / *infrastructure* — `onErrorDuringConnect` reports `Disconnected(ERROR_UNKNOWN)` for `CancellationException`
+- `106_medium_onerrorduringconnect_throwable_dispatch_dead_code.md` — **medium** / *infrastructure* — `FTransportListenerImpl.onErrorDuringConnect` has dead `when (throwable)` dispatch
+- `107_medium_orchestrator_connectifnot_returns_unit_no_error_signal.md` — **medium** / *infrastructure* — `connectIfNot` returns `Unit` and silently swallows mapper failures
+- `108_medium_stale_connected_after_disconnect_not_filtered.md` — **medium** / *infrastructure* — `FTransportListenerImpl.onStatusUpdate` does not guard against stale Connected after Disconnected
+- `109_medium_transportlistenerflow_emit_inside_mutex_can_block.md` — **medium** / *infrastructure* — `transportListenerFlow.emit(...)` inside the orchestrator mutex can introduce blocking on slow downstream collectors
+- `110_medium_android-bond-creation-not-awaited.md` — **medium** / *infrastructure* — Android `connectUnsafe` calls `device.createBond()` without awaiting completion
+- `111_medium_android-currentconfig-mutable-shared.md` — **medium** / *infrastructure* — `FAndroidBleApiImpl.currentConfig` is mutated without synchronisation while observed by a coroutine collector
+- `112_medium_android-services-stateflow-runs-eagerly-on-caller-scope.md` — **medium** / *infrastructure* — `services` `StateFlow` is eagerly started on the caller's scope and emits before any observer is attached
+- `113_medium_apple-monitor-error-classification-incomplete.md` — **medium** / *infrastructure* — medium — Apple `KotlinNwError` classification triggers reconnect on too few cases
+- `114_medium_apple-monitor-old-handlers-fire-after-replacement.md` — **medium** / *infrastructure* — medium — Apple monitor: old `nw_connection` handlers may still fire after replacement
+- `115_medium_capabilities-shareIn-restarts-on-resubscribe.md` — **medium** / *infrastructure* — medium — `getCapabilities()` `shareIn(WhileSubscribed())` re-emits stale list and may dispose between subscribers
+- `116_medium_central-manager-startscan-disconnect-all-on-power-cycle.md` — **medium** / *infrastructure* — `FCentralManager.updateBLEStatus` blanket-disconnects on every non-`POWERED_ON` state, even transient ones
+- `117_medium_cloud-disconnect-no-disconnecting-status.md` — **medium** / *broken-feature* — medium — `disconnect()` skips `Disconnecting` status; no monitor cancellation on cloud
+- `118_medium_connected-status-leaks-internal-coroutinescope.md` — **medium** / *infrastructure* — medium — `FInternalTransportConnectionStatus.Connected` leaks the SDK's internal `CoroutineScope` to listeners
+- `119_medium_get-http-client-creates-new-engine-per-call.md` — **medium** / *infrastructure* — `getHttpClient()` (parameterless) creates a fresh OkHttp/Darwin engine on every invocation
+- `120_medium_inactivity-timeout-flips-to-connecting-without-cause.md` — **medium** / *broken-feature* — medium — `WSEventsDeviceMonitor` inactivity timeout downgrades `Connected` → `Connecting` even on healthy idle link
+- `121_medium_ios-onerror-races-state-machine.md` — **medium** / *infrastructure* — `FPeripheral.onError` launches state transitions on `scope` that race with `onDisconnect`
+- `122_medium_ios-reset-flow-throws-on-read-failure.md` — **medium** / *infrastructure* — iOS `FIOSResetSerialBleApiImpl` polling flow crashes on transient read failure
+- `123_medium_lan-tryupdate-uses-non-name-field-comparison.md` — **medium** / *broken-feature* — medium — `tryUpdateConnectionConfig` host-change check is fragile
+- `124_medium_ws-ping-interval-conflict-okhttp-vs-ktor.md` — **medium** / *infrastructure* — `WS_PING_INTERVAL` is configured twice: in OkHttp engine and in Ktor `WebSockets` plugin
+- `125_medium_busylib-component-holder-not-thread-safe.md` — **medium** / *infrastructure* — `BusyLibComponentHolder.components` is a non-synchronised `mutableSetOf` mutated from any thread
+- `126_medium_cresult-failure-can-wrap-cancellation-exception.md` — **medium** / *infrastructure* — `CResult` and `Result.toCResult()` accept `CancellationException` as a normal failure, breaking cancellation propagation
+- `127_medium_cresult-map-unchecked-cast.md` — **medium** / *infrastructure* — `CResult.map` performs an unchecked cast through a star-projected `Success<*>`
+- `128_medium_duration-serializer-toduration-naive-tokenizer.md` — **medium** / *infrastructure* — `DurationSerializer.toDuration` tokenises by lower-case `m` and double-counts `s` inside other tokens
+- `129_medium_launch-on-completion-misses-normal-completion.md` — **medium** / *infrastructure* — `launchOnCompletion` runs the cleanup block only on cancellation, not on normal scope completion
+- `130_medium_object-cache-getentry-puts-pending-on-read.md` — **medium** / *infrastructure* — `DefaultObjectCache.getEntry` writes `Pending` into the cache as a side-effect of any read
+- `131_medium_runcatching_via_recovercatching_in_principal_run.md` — **medium** / *infrastructure* — `recoverCatching` swallows `CancellationException` in suspend retry path
+- `132_medium_transformwhilesubscribed-replay-cache-not-cleared-on-scope-cancel.md` — **medium** / *infrastructure* — `TransformWhileSubscribedSharedFlow` leaks `replayCache` and a stale `replayCacheResetJob` if the scope is cancelled mid-grace-period
+- `133_medium_with-lock-helper-isLocked-toctou.md` — **medium** / *infrastructure* — `LogTagProvider.withLock(...)`'s `mutex.isLocked` check is racy & misleading
+- `134_medium_combined_metainfo_combine_blocks_until_all_flows_emit.md` — **medium** / *broken-feature* — `CombinedMetaInfoApiImpl.get` blocks emission until **all** transports have emitted at least once
+- `135_medium_first_reconnect_attempts_immediately_no_delay.md` — **medium** / *lack-of-feature* — Reconnect loop introduces a 1 s delay on the very first attempt and on every successful reconnect cycle, briefly flapping combined status to a lower priority
+- `136_medium_http_engine_snapshot_taken_once_then_executes_against_stale_set.md` — **medium** / *infrastructure* — `FCombinedHttpEngine.execute` fails over only against a stale snapshot
+- `137_medium_state_flow_emit_conflation_drops_intermediate_states.md` — **medium** / *infrastructure* — `StateFlow` conflation can hide an intermediate `Disconnected`, suppressing auto-reconnect
+- `138_medium_cloud-fetcher-watcher-no-error-isolation.md` — **medium** / *infrastructure* — `CloudFetcherWatcher.onLaunch` does not wrap transaction in `runSuspendCatching`
+- `139_medium_cloud-provisioning-mismatched-device.md` — **medium** / *broken-feature* — `CloudProvisioningWatcher.onNewLinkedInfo` writes cloud info to a device that may no longer be the connected one
+- `140_medium_connection-loop-suspends-combine-loses-states.md` — **medium** / *infrastructure* — `connectionLoop` performs suspending side-effects inside `combine`, may drop intermediate states
+- `141_medium_desktop-lan-bars-watcher-skip-if-running.md` — **medium** / *infrastructure* — `DesktopLanBarsWatcher.onLaunch` uses `SKIP_IF_RUNNING` and adds hooks idempotently — but the activating transaction may run before hook addition is observed
+- `142_medium_forget-device-suspends-without-singletonScope.md` — **medium** / *infrastructure* — `forgetDevice` runs concurrently with the `connectionLoop`, can race the disconnect
+- `143_medium_blefeature-ignores-could-consume-flag.md` — **medium** / *broken-feature* — `FBleFeatureApiImpl` always passes `ignoreCache=false` to `getBleStatus`, ignoring the `couldConsume` hint from the events feature
+- `144_medium_double_subscribe_to_subscriber_counts_debounce.md` — **medium** / *broken-feature* — Orchestrator subscribes to `subscriberCountsFlowWithDebounce` twice — duplicate `invalidateSubscribers`
+- `145_medium_events-onBusyLibEvent-fire-and-forget-may-be-lost.md` — **medium** / *broken-feature* — `FEventsFeatureApi.onBusyLibEvent` is fire-and-forget; emissions may be lost
+- `146_medium_host_api_stub_creates_new_flow_per_call.md` — **medium** / *broken-feature* — `BUSYLibHostApiStub.getHost()` creates a new `MutableStateFlow` on every call
+- `147_medium_link_unlink_dead_status_check.md` — **medium** / *broken-feature* — `linkBusyBar` / `unlinkBusyBar` status checks are dead code under `expectSuccess = true`
+- `148_medium_multistream-channelflow-creates-fresh-cloud-streamer-per-subscriber.md` — **medium** / *broken-feature* — `MultiStreamApiImpl.createCloudStreamFlow` instantiates a new `FEventsFeatureApiImpl` per subscriber
+- `149_medium_power-event-loses-charged-state.md` — **medium** / *broken-feature* — `BusyLibUpdateEvent.Power` collapses CHARGED into "not charging"
+- `150_medium_previous-version-flow-loses-events-on-fast-update.md` — **medium** / *broken-feature* — `PreviousVersionFlowProvider` can hang or miss `UpdateFinished`/`UpdateFailed` events on fast updates
+- `151_medium_remove-duplicate-hooks-may-orphan-currentdevice.md` — **medium** / *broken-feature* — Duplicate-removal hooks can leave `currentSelectedDeviceId` pointing at a removed device
+- `152_medium_screen-streaming-no-backpressure.md` — **medium** / *lack-of-feature* — Screen streaming has no backpressure or frame-drop policy
+- `153_medium_smarthome-getPairCodeWithTimeLeft-resets-state-on-restart.md` — **medium** / *broken-feature* — `getPairCodeWithTimeLeft()` emits `null`, ignores Smart Home pairing failures, and silently consumes throttler tokens
+- `154_medium_smarthome-mapper-drops-commissioning-timestamp.md` — **medium** / *broken-feature* — Smart Home mapper drops the `timestamp` field of the commissioning status
+- `155_medium_api_module_returns_kotlin_result_not_cresult.md` — **medium** / *infrastructure* — Public API in `combined/api` returns Kotlin `Result<T>` instead of `CResult<T>`
+- `156_medium_config-lookup-uses-isinstance-and-first-match.md` — **medium** / *infrastructure* — medium — `FDeviceConfigToConnectionImpl` config-to-connection lookup uses `isInstance` + first-match (non-deterministic with sub-typing)
+- `157_medium_fdeviceconnectionconfig-no-equality-contract.md` — **medium** / *infrastructure* — medium — `FDeviceConnectionConfig` has no equality contract; consumers rely on it being a data class
+- `158_medium_public_api_exposes_bare_flow_not_wrapped_flow.md` — **medium** / *infrastructure* — `FCombinedConnectionApi` exposes bare `Flow<T>` instead of `WrappedFlow<T>`
+- `159_medium_runcatching-in-suspend-violates-agents-md.md` — **medium** / *infrastructure* — `runCatching` inside `suspend` paths violates project rules and swallows cancellation
+- `160_medium_tryupdateconnectionconfig-untyped-config.md` — **medium** / *infrastructure* — medium — `tryUpdateConnectionConfig` accepts untyped `FDeviceConnectionConfig<*>` and forces brittle runtime type checks
+- `161_low_apple-logger-formatter-injection.md` — **low** / *infrastructure* — `DefaultAppleLogger` only escapes `%` once — does not protect against tag-side format-string injection
+- `162_low_central-manager-startscan-disconnects-late-emit-clears-discovered.md` — **low** / *infrastructure* — `FCentralManager.stopScan` clears `_discoveredStream` but `startScan` keeps stale state from previous session if the BLE stack flickers
+- `163_low_meta-info-flow-each-call-fresh-flow-of-result.md` — **low** / *infrastructure* — `FTransportMetaInfoApiImpl.get` returns `flowOf(Result.success(innerFlow))` — each subscriber spawns a fresh `flatMapLatest`
+- `164_low_addhook-rebinds-shared-mutable-list-without-volatile.md` — **low** / *infrastructure* — `FDevicePersistedStorageImpl.hooks` is a non-volatile `var` mutated under a Mutex but read without lock
+- `165_low_byte-endless-read-channel-cancellation-not-volatile.md` — **low** / *infrastructure* — `ByteEndlessReadChannel.cancel` uses CAS on `AtomicReference<Throwable?>` but discards subsequent causes
+- `166_low_findflipperdevices-mutex-correctness.md` — **low** / *infrastructure* — `FlipperScannerImpl.findFlipperDevices` allocates a fresh state per subscriber but uses a shared identity
+- `167_low_mutable-currentConfig-not-volatile.md` — **low** / *infrastructure* — low — Mutable `currentConfig` field is not `@Volatile` / not under lock
+- `168_low_nonemptylist-list-delegation-overhead.md` — **low** / *infrastructure* — `NonEmptyList` delegates to `listOf(head) + tail`, allocating a fresh list on every method call via `: List<T> by …`
+- `169_low_throttle-latest-cached-races-on-previous.md` — **low** / *infrastructure* — `Flow.throttleLatestCached` reads-then-writes `previous` from a `launch` coroutine — race on rapid emissions
+- `170_low_tickflow-no-initial-emission-control.md` — **low** / *infrastructure* — `TickFlow` may emit immediately if `initialDelay` is zero — undocumented, surprising for time-based subscribers
+- `171_low_disconnecting_priority_higher_than_connecting.md` — **low** / *broken-feature* — `getPriority` ranks `Disconnecting` (2) above `Connecting` (1), making the combined status report `Disconnecting` while another transport is actively `Connecting`
+- `172_low_changename-watcher-flowOf-empty-on-non-supported.md` — **low** / *lack-of-feature* — `BUSYLibNameWatcher` and `CloudProvisioningWatcher` use bare `flowOf()` for "skip" branches — easy to misread, surprises in tests
+- `173_low_forget-device-cancellation-exception-from-runCatching.md` — **low** / *infrastructure* — `forgetDevice` uses `Result.onFailure` (Kotlin std `Result`) on cloud REST helpers, but the chain still violates SKIE export contract
+- `174_low_no-restart-on-watcher-failure.md` — **low** / *lack-of-feature* — Watchers do not auto-restart on flow termination — a single uncaught exception silently disables them
+- `175_low_fraction-int-whole-serializer-truncation.md` — **low** / *broken-feature* — `FractionIntWholeSerializer` truncates values, losing 0.99 vs 0.999 distinction across round-trips
+- `176_low_streaming-parser-rejects-out-of-order-and-resets-state.md` — **low** / *broken-feature* — `BleStatusStreamingPacketParser` resets the assembly buffer on every out-of-order packet, including ones that follow a duplicate
+- `177_low_internal-api-uses-kotlin-result.md` — **low** / *infrastructure* — Internal firmware APIs use `kotlin.Result<T>` rather than `runSuspendCatching`-friendly types
+- `178_low_package-mismatch-cloud-impl-files.md` — **low** / *infrastructure* — low — Cloud impl files live under `tcp.lan.impl` package — copy/paste leftover from LAN
+- `179_low_runcatching_in_implementation_should_be_runsuspendcatching.md` — **low** / *infrastructure* — Test code uses `runCatching` to wrap a `suspend` call
+- `180_low_no-exponentialretry-anywhere.md` — **low** / *lack-of-feature* — low — No retry primitive used anywhere in this transport — violates project guideline
+- `181_low_jvm-log-platform-no-tag-prefix.md` — **low** / *infrastructure* — `LogPlatform.desktop.kt` writes JVM logs to `System.out` / `System.err` without timestamps and uses fragile printing
+- `182_low_log_tag_per_holder_uses_config_tostring.md` — **low** / *infrastructure* — `FDeviceHolder.TAG = "FDeviceHolder-$config"` uses verbose `toString` of config
+- `183_low_runSuspendCatching-mapNotNull-onFailure-discards-error.md` — **low** / *infrastructure* — low — `FCloudStreamingApi.getEvents()` silently swallows decoding failures
+- `184_low_state_emit_logging_misnamed.md` — **low** / *infrastructure* — `FTransportListenerImpl.onErrorDuringConnect` uses `state.update` (no `info` log) while `onStatusUpdate` logs
+- `185_low_taglogger-no-validation.md` — **low** / *infrastructure* — `TaggedLogger(TAG)` accepts any string as tag without validation; Android tag length and char restrictions are not enforced
