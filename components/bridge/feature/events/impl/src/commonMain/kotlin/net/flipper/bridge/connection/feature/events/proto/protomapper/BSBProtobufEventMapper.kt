@@ -11,6 +11,7 @@ import net.flipper.bridge.connection.feature.events.proto.protomapper.delegates.
 import net.flipper.bridge.connection.feature.events.proto.protomapper.delegates.InputProtobufMapper
 import net.flipper.bridge.connection.feature.events.proto.protomapper.delegates.MatterProtobufMapper
 import net.flipper.bridge.connection.feature.events.proto.protomapper.delegates.PowerProtobufMapper
+import net.flipper.bridge.connection.feature.events.proto.protomapper.delegates.ProfilesProtobufMapper
 import net.flipper.bridge.connection.feature.events.proto.protomapper.delegates.TimerProtobufMapper
 import net.flipper.bridge.connection.feature.events.proto.protomapper.delegates.TimezoneProtobufMapper
 import net.flipper.bridge.connection.feature.events.proto.protomapper.delegates.UpdateCheckProtobufMapper
@@ -18,6 +19,7 @@ import net.flipper.bridge.connection.feature.events.proto.protomapper.delegates.
 import net.flipper.bridge.connection.feature.events.proto.protomapper.delegates.WifiProtobufMapper
 
 object BSBProtobufEventMapper {
+    @Suppress("CyclomaticComplexMethod")
     fun map(state: StateUpdate): BusyLibUpdateEvent? {
         state.device_name?.let { return DeviceNameProtobufMapper.map(it) }
         state.power?.let { return PowerProtobufMapper.map(it) }
@@ -31,6 +33,7 @@ object BSBProtobufEventMapper {
         state.frame?.let { return FrameProtobufMapper.map(it) }
         state.input?.let { return InputProtobufMapper.map(it) }
         state.timer?.let { return TimerProtobufMapper.map(it) }
+        state.timer_profiles?.let { return ProfilesProtobufMapper.map(it) }
         state.ble?.let { return BleProtobufMapper.map(it) }
         state.auto_update_state?.let { return AutoUpdateStateProtobufMapper.map(it) }
         return null
