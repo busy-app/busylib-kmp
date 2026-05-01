@@ -32,9 +32,14 @@ class FRpcWifiApiImpl(
 
     override suspend fun connectWifi(config: ConnectRequestConfig): Result<SuccessResponse> {
         return runSuspendCatching(dispatcher) {
-            httpClient.post("/api/wifi/connect") {
+            val response = httpClient.post("/api/wifi/connect") {
                 setBody(config)
-            }.body<SuccessResponse>()
+            }.body<ApiResponse>()
+
+            return@runSuspendCatching when (response) {
+                is ErrorResponse -> error(response.error)
+                is SuccessResponse -> response
+            }
         }
     }
 
