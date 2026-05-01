@@ -126,6 +126,12 @@ class FDeviceHolder<API : FConnectedDeviceApi>(
                         "#init catch error during invokeOnCompletion. " +
                             "Status update will be handled inside exception handler"
                     }
+                    listener.invoke(
+                        this,
+                        FInternalTransportConnectionStatus.Disconnected(
+                            FInternalDisconnectedReason.OTHER
+                        )
+                    )
                 }
             }
         }
