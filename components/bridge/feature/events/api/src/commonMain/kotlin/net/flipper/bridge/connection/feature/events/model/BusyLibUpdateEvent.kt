@@ -16,10 +16,19 @@ sealed interface BusyLibUpdateEvent {
     data class DeviceName(val deviceName: String) : BusyLibUpdateEvent
     data class AutoUpdateChanged(val isEnabled: Boolean) : BusyLibUpdateEvent
 
-    data class Power(
-        val batteryChargePercent: Fraction,
-        val isCharging: Boolean,
-    ) : BusyLibUpdateEvent
+    sealed interface Power : BusyLibUpdateEvent {
+        data class Provided(
+            val status: Status?,
+            val chargePercent: Fraction,
+        ) : Power {
+            enum class Status {
+                DISCHARGING,
+                CHARGING,
+                CHARGED
+            }
+        }
+        data object Unknown : Power
+    }
 
     data class Wifi(
         val state: BsbWifiStatusResponse.BsbWifiState,

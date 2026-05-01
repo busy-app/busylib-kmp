@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import net.flipper.bridge.connection.feature.about.model.BusyBarAboutDevice
+import net.flipper.bridge.connection.feature.battery.model.BSBDeviceBatteryInfo
 import net.flipper.bridge.connection.screens.dashboard.common.DashboardInfoRow
 import net.flipper.bridge.connection.screens.dashboard.common.DashboardScreenLayout
 import net.flipper.bridge.connection.screens.dashboard.common.DashboardSectionCard
@@ -14,6 +15,7 @@ import net.flipper.bridge.connection.screens.dashboard.common.orUnavailable
 fun HardwareDashboardContent(
     onBack: () -> Unit,
     aboutDevice: BusyBarAboutDevice?,
+    batteryInfo: BSBDeviceBatteryInfo?,
     modifier: Modifier = Modifier
 ) {
     DashboardScreenLayout(
@@ -42,6 +44,12 @@ fun HardwareDashboardContent(
             DashboardInfoRow(label = "Back display", value = aboutDevice?.backDisplayResolution.orUnavailable())
             DashboardInfoRow(label = "Central MCU", value = aboutDevice?.centralMcu.orUnavailable())
             DashboardInfoRow(label = "RAM size", value = aboutDevice?.ramSize.orUnavailable())
+        }
+        DashboardSectionCard(
+            title = "Other",
+            modifier = Modifier.padding(horizontal = 16.dp)
+        ) {
+            DashboardInfoRow(label = "Battery", value = batteryInfo.orUnavailable())
         }
     }
 }
