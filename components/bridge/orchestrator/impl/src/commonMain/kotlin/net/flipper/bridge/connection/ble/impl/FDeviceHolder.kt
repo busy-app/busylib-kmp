@@ -21,7 +21,7 @@ import net.flipper.core.busylib.ktx.common.transform
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
-import kotlin.coroutines.cancellation.CancellationException
+import kotlinx.coroutines.CancellationException
 
 typealias DeviceHolderListener<API, T> = (FDeviceHolder<API>, T) -> Unit
 
@@ -70,13 +70,17 @@ class FDeviceHolder<API : FConnectedDeviceApi>(
     )
 
     private val deviceApi: Deferred<API> = scope.async {
-        deviceConnectionHelper.connect(
-            scope = scope,
-            config = config,
-            listener = transportConnectionListener
-        ).onFailure { t ->
-            onConnectError(this@FDeviceHolder, t)
-        }.getOrThrow()
+        runSuspendCatching {
+            deviceConnectionHelper.connect(
+                scope = scope,
+                config = config,
+                listener = transportConnectionListener
+            )
+        }.transform { it }
+            .onFailure { t ->
+                onConnectError(this@FDeviceHolder, t)
+                scope.cancel(CancellationException("Connect failed", t))
+            }.getOrThrow()
     }
 
     suspend fun tryToUpdateConnectionConfig(
@@ -124,7 +128,7 @@ class FDeviceHolder<API : FConnectedDeviceApi>(
                 else -> {
                     error(t) {
                         "#init catch error during invokeOnCompletion. " +
-                            "Status update will be handled inside exception handler"
+                                "Status update will be handled inside exception handler"
                     }
                     listener.invoke(
                         this,
