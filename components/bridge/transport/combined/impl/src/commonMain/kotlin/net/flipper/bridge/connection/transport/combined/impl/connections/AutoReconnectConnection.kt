@@ -7,7 +7,7 @@ import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.isActive
@@ -15,6 +15,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import net.flipper.bridge.connection.connectionbuilder.api.FDeviceConfigToConnection
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
+import net.flipper.bridge.connection.transport.common.api.FInternalDisconnectedReason
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 import net.flipper.core.busylib.ktx.common.getExponentialDelay
@@ -60,7 +61,7 @@ class AutoReconnectConnection(
                 }
                 info { "Created connection $connection" }
 
-                connection.stateFlow
+                val disconnectedStatus = connection.stateFlow
                     .onEach { connectionStatus ->
                         info { "Got connection status $connectionStatus" }
                         stateFlow.emit(connectionStatus)
@@ -68,10 +69,16 @@ class AutoReconnectConnection(
                             retryCount = 0
                         }
                     }
-                    .filter { status -> status == FInternalTransportConnectionStatus.Disconnected }
+                    .filterIsInstance<FInternalTransportConnectionStatus.Disconnected>()
                     .first()
-                info { "Got disconnected event" }
+                info { "Got disconnected event ${disconnectedStatus.reason}" }
                 connection.disconnect()
+
+                when (disconnectedStatus.reason) {
+                    FInternalDisconnectedReason.PAIRING_FAILED -> return@launch
+                    FInternalDisconnectedReason.OTHER -> {}
+                }
+
                 delay(getExponentialDelay(retryCount))
                 retryCount++
             }

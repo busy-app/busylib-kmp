@@ -8,7 +8,10 @@ import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.orchestrator.api.model.ConnectingStatus
 import net.flipper.bridge.connection.orchestrator.api.model.DisconnectStatus
 import net.flipper.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
+import net.flipper.bridge.connection.transport.common.api.FInternalDisconnectedReason.OTHER
+import net.flipper.bridge.connection.transport.common.api.FInternalDisconnectedReason.PAIRING_FAILED
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
+import net.flipper.bridge.connection.transport.common.api.FailedPairingConnectException
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.data.map
 import net.flipper.core.busylib.log.LogTagProvider
@@ -25,6 +28,15 @@ class FTransportListenerImpl(config: BUSYBar) : LogTagProvider {
     fun onErrorDuringConnect(device: BUSYBar, throwable: Throwable) {
         @Suppress("UNUSED_EXPRESSION")
         when (throwable) {
+            is FailedPairingConnectException -> {
+                error(throwable) { "Not recoverable error from transport layer" }
+                state.update {
+                    FDeviceConnectStatus.Disconnected(
+                        device = device,
+                        reason = DisconnectStatus.PAIRING_FAILED
+                    )
+                }
+            }
             else -> {
                 error(throwable) { "Unknown error from transport layer" }
                 state.update {
@@ -54,16 +66,16 @@ class FTransportListenerImpl(config: BUSYBar) : LogTagProvider {
                         transportTypes = status.connectionTypes.map { it.toPublic() }.wrap()
                     )
 
-                FInternalTransportConnectionStatus.Disconnected ->
-                    if (currentStatus is FDeviceConnectStatus.Disconnected) {
-                        currentStatus
-                    } else {
-                        FDeviceConnectStatus.Disconnected(
+                is FInternalTransportConnectionStatus.Disconnected -> {
+                    currentStatus as? FDeviceConnectStatus.Disconnected
+                        ?: FDeviceConnectStatus.Disconnected(
                             device = device,
-                            reason = DisconnectStatus.REPORTED_BY_TRANSPORT
+                            reason = when (status.reason) {
+                                PAIRING_FAILED -> DisconnectStatus.PAIRING_FAILED
+                                OTHER -> DisconnectStatus.REPORTED_BY_TRANSPORT
+                            }
                         )
-                    }
-
+                }
                 FInternalTransportConnectionStatus.Disconnecting -> FDeviceConnectStatus.Disconnecting(
                     device
                 )

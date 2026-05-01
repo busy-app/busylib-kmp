@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
+import net.flipper.bridge.connection.transport.common.api.FInternalDisconnectedReason
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPTransportCapability
@@ -68,7 +69,11 @@ class FCloudApiImpl(
     override suspend fun disconnect() {
         httpEngine.close()
         httpEngineOriginal.close()
-        listener.onStatusUpdate(FInternalTransportConnectionStatus.Disconnected)
+        listener.onStatusUpdate(
+            FInternalTransportConnectionStatus.Disconnected(
+                FInternalDisconnectedReason.OTHER
+            )
+        )
     }
 
     override fun getDeviceHttpEngine() = httpEngine
