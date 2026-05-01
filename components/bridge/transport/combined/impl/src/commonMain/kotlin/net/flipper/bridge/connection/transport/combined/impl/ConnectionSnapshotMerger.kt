@@ -46,12 +46,12 @@ internal fun getPriority(status: FInternalTransportConnectionStatus): Int {
         // Not sure
         is FInternalTransportConnectionStatus.Disconnected -> {
             when (status.reason) {
-                FInternalDisconnectedReason.OTHER -> -1
-                FInternalDisconnectedReason.PAIRING_FAILED -> 0
+                FInternalDisconnectedReason.OTHER -> 0
+                FInternalDisconnectedReason.PAIRING_FAILED -> 1
             }
         }
-        is FInternalTransportConnectionStatus.Connecting -> 1
-        FInternalTransportConnectionStatus.Disconnecting -> 2
-        is FInternalTransportConnectionStatus.Connected -> 3
+        is FInternalTransportConnectionStatus.Connecting -> 2
+        FInternalTransportConnectionStatus.Disconnecting -> 3
+        is FInternalTransportConnectionStatus.Connected -> 4
     }
 }
