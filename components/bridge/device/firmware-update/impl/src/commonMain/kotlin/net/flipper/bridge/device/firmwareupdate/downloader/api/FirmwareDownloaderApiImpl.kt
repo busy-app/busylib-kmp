@@ -50,6 +50,8 @@ internal class FirmwareDownloaderApiImpl(
                 buffer.clear()
                 buffer.write(chunk)
                 sink.write(buffer, buffer.size)
+                sink.flush()
+                buffer.flush()
                 _state.emit(
                     value = FirmwareDownloaderState.Downloading(
                         bytesReceived = downloadedBytes,
