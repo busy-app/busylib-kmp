@@ -25,12 +25,15 @@ import net.flipper.bridge.device.firmwareupdate.updater.model.BusyBarVersionTran
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateState
 import net.flipper.core.busylib.ktx.common.orNullable
 import net.flipper.core.busylib.ktx.common.tryCast
+import net.flipper.core.busylib.log.LogTagProvider
+import net.flipper.core.busylib.log.TaggedLogger
+import net.flipper.core.busylib.log.verbose
 
 @Inject
 class PreviousVersionFlowProvider(
     private val fFeatureProvider: FFeatureProvider,
-    private val fDevicePersistedStorage: FDevicePersistedStorage
-) {
+    private val fDevicePersistedStorage: FDevicePersistedStorage,
+) : LogTagProvider by TaggedLogger("PreviousVersionFlowProvider") {
 
     private fun getVersionFlow(): Flow<BsbBusyBarVersion?> {
         return fFeatureProvider.get<FDeviceInfoFeatureApi>()
@@ -51,6 +54,7 @@ class PreviousVersionFlowProvider(
                         val beforeUpdateVersion = getVersionFlow()
                             .filterNotNull()
                             .first()
+                        verbose { "#getPreviousVersionFlow beforeUpdateVersion: $beforeUpdateVersion" }
                         send(
                             BusyBarVersionTransition(
                                 previousVersion = null,
@@ -60,6 +64,7 @@ class PreviousVersionFlowProvider(
                         fwUpdateFlow.filterIsInstance<FwUpdateState.Updating>().first()
                         fwUpdateFlow.filter { state -> state !is FwUpdateState.Updating }.first()
                         val afterUpdateVersion = getVersionFlow().filterNotNull().first()
+                        verbose { "#getPreviousVersionFlow afterUpdateVersion: $afterUpdateVersion" }
                         send(
                             BusyBarVersionTransition(
                                 previousVersion = beforeUpdateVersion,

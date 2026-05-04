@@ -2,6 +2,10 @@ package net.flipper.bridge.device.firmwareupdate.updater.api
 
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
@@ -13,6 +17,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.job
@@ -54,6 +59,7 @@ import net.flipper.core.busylib.log.info
 import net.flipper.core.ktor.di.qualifier.KtorNetworkClientQualifier
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
+import kotlin.time.Instant
 
 @Inject
 @ContributesBinding(BusyLibGraph::class, FirmwareUpdaterApi::class)
@@ -106,7 +112,6 @@ class FirmwareUpdaterApiImpl(
         }
     ).stateIn(scope, SharingStarted.Lazily, FwUpdateState.Pending).wrap()
 
-    @Suppress("UseLet")
     override val events = previousVersionFlowProvider
         .getPreviousVersionFlow(state)
         .map { versionsModel ->
@@ -159,23 +164,57 @@ class FirmwareUpdaterApiImpl(
         }
     }
 
-    private suspend fun awaitDeviceReconnected() {
-        info { "#startUpdateInstall upload finished! Awaiting null device uptime" }
-        fFeatureProvider.get<FDeviceInfoFeatureApi>()
+    /**
+     * With different FWUpdates, we have different behavior
+     * of how BSB reacts to our requests
+     * The most stable solution is to see the difference between it's boot times
+     */
+    private suspend fun getBootTimeFlow(): Flow<Instant> {
+        return fFeatureProvider.get<FDeviceInfoFeatureApi>()
             .map { status -> status.tryCast<FFeatureStatus.Supported<FDeviceInfoFeatureApi>>() }
-            .map { status -> status?.featureApi }
-            .map { feature -> feature?.getDeviceInfo()?.toKotlinResult()?.getOrNull() }
-            .filter { response -> response == null }
-            .first()
-        info { "#startUpdateInstall awaiting for new uptime!" }
-        fFeatureProvider.get<FDeviceInfoFeatureApi>()
-            .map { status -> status.tryCast<FFeatureStatus.Supported<FDeviceInfoFeatureApi>>() }
-            .map { status -> status?.featureApi }
+            .mapNotNull { status -> status?.featureApi }
+            .map { featureApi ->
+                exponentialRetry { featureApi.getDeviceInfo().toKotlinResult() }
+            }
+            .map { statusSystem -> statusSystem.bootTime }
             .filterNotNull()
-            .map { feature -> exponentialRetry { feature.getDeviceInfo().toKotlinResult() } }
-            .map { busyBarStatusSystem -> busyBarStatusSystem.uptime }
-            .first()
+    }
+
+    private suspend fun awaitDeviceReconnected(previousBootTime: Instant) {
+        info { "#startUpdateInstall upload finished! Awaiting new boot time" }
+        getBootTimeFlow().filter { instant -> instant > previousBootTime }.first()
         info { "#startUpdateInstall device connected!" }
+    }
+
+    private suspend fun getBsbUpdateVersion(bsbUpdateVersion: BsbUpdateVersion): Result<BsbUpdateVersion> {
+        return when (bsbUpdateVersion) {
+            is BsbUpdateVersion.Default -> {
+                fFeatureProvider.get<FRpcFeatureApi>()
+                    .filterIsInstance<FFeatureStatus.Supported<*>>()
+                    .filter { fFeatureStatus -> fFeatureStatus.featureApi is FRpcFeatureApi }
+                    .filterIsInstance<FFeatureStatus.Supported<FRpcFeatureApi>>()
+                    .first()
+                    .featureApi
+                    .fRpcUpdaterApi
+                    .startUpdateInstall(bsbUpdateVersion.version)
+                    .onSuccess { updaterStatusCollector.start() }
+                    .map { bsbUpdateVersion }
+            }
+
+            is BsbUpdateVersion.Url -> {
+                firmwareDownloaderApi.download(bsbUpdateVersion)
+                    .onSuccess { info { "#startUpdateInstall download finished" } }
+                    .onFailure { t -> error(t) { "#startUpdateInstall could not download" } }
+                    .mapSuspendCatching { path ->
+                        info { "#startUpdateInstall start uploading" }
+                        firmwareUploaderApi
+                            .uploadAndInstall(path) { firmwareDownloaderApi.reset() }
+                            .onFailure { t -> error(t) { "#startUpdateInstall could not upload" } }
+                            .getOrThrow()
+                    }
+                    .map { bsbUpdateVersion }
+            }
+        }
     }
 
     /**
@@ -190,6 +229,11 @@ class FirmwareUpdaterApiImpl(
                 firmwareDownloaderApi.reset()
                 firmwareUploaderApi.reset()
             }
+            val bootTimeScope = coroutineContext.minusKey(Job)
+                .plus(SupervisorJob(coroutineContext.job))
+                .let(::CoroutineScope)
+            val bootTimeFlow = getBootTimeFlow().shareIn(bootTimeScope, SharingStarted.Eagerly, 1)
+
             fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
                 .map { status -> status.tryCast<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>() }
                 .flatMapLatest { status -> status?.featureApi?.updateVersionFlow.orNullable() }
@@ -198,34 +242,7 @@ class FirmwareUpdaterApiImpl(
                     firmwareDownloaderApi.reset()
                     firmwareUploaderApi.reset()
                     info { "#startUpdateInstall bsbUpdateVersion: $bsbUpdateVersion" }
-                    when (bsbUpdateVersion) {
-                        is BsbUpdateVersion.Default -> {
-                            fFeatureProvider.get<FRpcFeatureApi>()
-                                .filterIsInstance<FFeatureStatus.Supported<*>>()
-                                .filter { fFeatureStatus -> fFeatureStatus.featureApi is FRpcFeatureApi }
-                                .filterIsInstance<FFeatureStatus.Supported<FRpcFeatureApi>>()
-                                .first()
-                                .featureApi
-                                .fRpcUpdaterApi
-                                .startUpdateInstall(bsbUpdateVersion.version)
-                                .onSuccess { updaterStatusCollector.start() }
-                                .map { bsbUpdateVersion }
-                        }
-
-                        is BsbUpdateVersion.Url -> {
-                            firmwareDownloaderApi.download(bsbUpdateVersion)
-                                .onSuccess { info { "#startUpdateInstall download finished" } }
-                                .onFailure { t -> error(t) { "#startUpdateInstall could not download" } }
-                                .mapSuspendCatching { path ->
-                                    info { "#startUpdateInstall start uploading" }
-                                    firmwareUploaderApi
-                                        .uploadAndInstall(path) { firmwareDownloaderApi.reset() }
-                                        .onFailure { t -> error(t) { "#startUpdateInstall could not upload" } }
-                                        .getOrThrow()
-                                }
-                                .map { bsbUpdateVersion }
-                        }
-                    }
+                    getBsbUpdateVersion(bsbUpdateVersion)
                 }
                 .map { result -> result.toCResult() }
                 .first()
@@ -233,7 +250,9 @@ class FirmwareUpdaterApiImpl(
                     when (bsbUpdateVersion) {
                         is BsbUpdateVersion.Default -> Unit
                         is BsbUpdateVersion.Url -> {
-                            awaitDeviceReconnected()
+                            val bootTime = bootTimeFlow.first()
+                            bootTimeScope.cancel()
+                            awaitDeviceReconnected(bootTime)
                         }
                     }
                 }
@@ -267,7 +286,7 @@ class FirmwareUpdaterApiImpl(
                 }
                 info {
                     "#init shouldStartUpdateStatusCollector: $shouldStartUpdateStatusCollector;" +
-                        " isActive: $isActive; state: $state"
+                            " isActive: $isActive; state: $state"
                 }
                 if (shouldStartUpdateStatusCollector && !isActive) {
                     updaterStatusCollector.start()
