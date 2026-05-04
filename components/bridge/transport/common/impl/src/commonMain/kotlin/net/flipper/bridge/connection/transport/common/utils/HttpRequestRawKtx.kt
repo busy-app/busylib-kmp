@@ -7,15 +7,19 @@ import io.ktor.http.HeadersBuilder
 import io.ktor.http.HttpHeaders
 import io.ktor.http.content.OutgoingContent
 import io.ktor.utils.io.ByteChannel
+import io.ktor.utils.io.core.BytePacketBuilder
+import io.ktor.utils.io.core.append
+import io.ktor.utils.io.core.build
 import io.ktor.utils.io.core.readBytes
 import io.ktor.utils.io.readRemaining
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.io.readByteArray
 
-suspend fun HttpRequestData.toRawHttpRequestString(
+suspend fun HttpRequestData.toRawHttpRequest(
     includeBody: Boolean = true,
     httpVersion: String = "HTTP/1.1"
-): String {
+): ByteArray {
     val (bodyBytes, normalizedContent) = captureBodyBytes()
 
     // Merge user headers + content headers
@@ -45,17 +49,17 @@ suspend fun HttpRequestData.toRawHttpRequestString(
     val requestTarget = url.encodedPath.ifEmpty { "/" } +
         (if (url.encodedQuery.isEmpty()) "" else "?${url.encodedQuery}")
 
-    val sb = StringBuilder()
-    sb.append("${method.value} $requestTarget $httpVersion\r\n")
+    val bb = BytePacketBuilder()
+    bb.append("${method.value} $requestTarget $httpVersion\r\n")
     val all = hb.build()
     for (name in all.names()) {
-        all.getAll(name)?.forEach { value -> sb.append("$name: $value\r\n") }
+        all.getAll(name)?.forEach { value -> bb.append("$name: $value\r\n") }
     }
-    sb.append("\r\n")
+    bb.append("\r\n")
     if (includeBody && bytes.isNotEmpty()) {
-        sb.append(bytes.decodeToString())
+        bb.write(bytes)
     }
-    return sb.toString()
+    return bb.build().use { it.readByteArray() }
 }
 
 /** Read request body to bytes *without* sending anything; returns bytes + a normalized OutgoingContent. */

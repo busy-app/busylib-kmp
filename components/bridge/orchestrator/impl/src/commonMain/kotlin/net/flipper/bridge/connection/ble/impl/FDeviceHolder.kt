@@ -1,5 +1,6 @@
 package net.flipper.bridge.connection.ble.impl
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -21,7 +22,6 @@ import net.flipper.core.busylib.ktx.common.transform
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
-import kotlin.coroutines.cancellation.CancellationException
 
 typealias DeviceHolderListener<API, T> = (FDeviceHolder<API>, T) -> Unit
 
@@ -70,29 +70,35 @@ class FDeviceHolder<API : FConnectedDeviceApi>(
     )
 
     private val deviceApi: Deferred<API> = scope.async {
-        deviceConnectionHelper.connect(
-            scope = scope,
-            config = config,
-            listener = transportConnectionListener
-        ).onFailure { t ->
-            onConnectError(this@FDeviceHolder, t)
-        }.getOrThrow()
+        runSuspendCatching {
+            deviceConnectionHelper.connect(
+                scope = scope,
+                config = config,
+                listener = transportConnectionListener
+            )
+        }.transform { it }
+            .onFailure { t ->
+                onConnectError(this@FDeviceHolder, t)
+                scope.cancel(CancellationException("Connect failed", t))
+            }.getOrThrow()
     }
 
+    @Suppress("RunCatchingInSuspendRule")
     suspend fun tryToUpdateConnectionConfig(
         config: FDeviceConnectionConfig<*>
     ): Result<Unit> {
-        return runSuspendCatching {
+        return runCatching { // By design to handle cancellation exception
             deviceApi.getCompleted()
         }.transform { deviceApi ->
             deviceApi.tryUpdateConnectionConfig(config)
         }
     }
 
+    @Suppress("RunCatchingInSuspendRule")
     suspend fun disconnect() {
         info { "Find active device api, start disconnect" }
         deviceApi.cancelAndJoin()
-        runSuspendCatching { deviceApi.getCompleted() }
+        runCatching { deviceApi.getCompleted() } // By design to handle cancellation exception
             .getOrNull()
             ?.disconnect()
         info { "Cancel scope" }
@@ -126,6 +132,12 @@ class FDeviceHolder<API : FConnectedDeviceApi>(
                         "#init catch error during invokeOnCompletion. " +
                             "Status update will be handled inside exception handler"
                     }
+                    listener.invoke(
+                        this,
+                        FInternalTransportConnectionStatus.Disconnected(
+                            FInternalDisconnectedReason.OTHER
+                        )
+                    )
                 }
             }
         }
