@@ -7,6 +7,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
 import net.flipper.bridge.connection.connectionbuilder.api.FDeviceConfigToConnection
@@ -23,8 +24,9 @@ import net.flipper.core.busylib.ktx.common.launchOnCompletion
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
+import net.flipper.core.busylib.log.warn
 
-class WrappedConnectionInternal(
+internal class WrappedConnectionInternal(
     private val config: FDeviceConnectionConfig<*>,
     parentScope: CoroutineScope,
     private val connectionBuilder: FDeviceConfigToConnection,
@@ -99,7 +101,16 @@ class WrappedConnectionInternal(
 
     override suspend fun onStatusUpdate(status: FInternalTransportConnectionStatus) {
         info { "#onStatusUpdate $status" }
-        stateFlow.emit(status)
+        if (!scope.isActive) {
+            warn { "Call #onStatusUpdate after scope is dead" }
+            return
+        }
+        stateFlow.update { current ->
+            if (current is FInternalTransportConnectionStatus.Disconnected) {
+                warn { "Status updates are not permitted after the 'Disconnected' status" }
+                current
+            } else status
+        }
         yield() // Allow collectors to process the state before returning
     }
 
