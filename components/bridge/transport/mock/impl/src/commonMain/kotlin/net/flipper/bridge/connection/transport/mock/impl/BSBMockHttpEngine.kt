@@ -17,7 +17,7 @@ import net.flipper.bridge.connection.transport.mock.impl.model.ApiWifiDisconnect
 import net.flipper.bridge.connection.transport.mock.impl.model.ApiWifiNetworksResponse
 import net.flipper.bridge.connection.transport.mock.impl.model.ApiWifiStatusResponse
 import net.flipper.core.busylib.log.TaggedLogger
-import net.flipper.core.busylib.log.info
+import net.flipper.core.busylib.log.verbose
 
 private val logger = TaggedLogger("BSBMockHttpEngine")
 
@@ -25,12 +25,11 @@ const val SMALL_DELAY = 500L
 const val DEFAULT_DELAY = 1000L
 
 fun getBSBMockHttpEngine() = MockEngine { request ->
-    logger.info {
+    logger.verbose {
         request.toRawHttpRequest().decodeToString()
     }
 
     val response = when (request.url.encodedPath) {
-        ApiWifiStatusResponse.PATH -> ApiWifiStatusResponse.getJsonPlainTextResponse()
         ApiStatusPowerResponse.PATH -> {
             delay(DEFAULT_DELAY)
             ApiStatusPowerResponse.getJsonPlainTextResponse()

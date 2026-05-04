@@ -33,7 +33,7 @@ class BBConfigSettingsKrateImpl(
                     } else {
                         runCatching { json.decodeFromString(Serializer, stringValue) }
                             .onFailure {
-                                logger.error { "Failed to parse stored busy bars, so use default" }
+                                logger.error(it) { "Failed to parse stored busy bars, so use default" }
                             }
                             .getOrNull()
                             ?: Factory.create()
