@@ -96,7 +96,7 @@ internal class FPeripheralGattIO(
 
         verbose {
             "#readValue uuid=$characteristicUuid " +
-                    "id=${peripheral.identifier.UUIDString}"
+                "id=${peripheral.identifier.UUIDString}"
         }
 
         peripheral.readValueForCharacteristic(characteristic)
@@ -128,8 +128,8 @@ internal class FPeripheralGattIO(
 
         verbose {
             "#writeValue bytes=${data.size} uuid=$characteristicUuid " +
-                    "id=${peripheral.identifier.UUIDString}" +
-                    "data=${data.decodeToString()}"
+                "id=${peripheral.identifier.UUIDString}" +
+                "data=${data.decodeToString()}"
         }
 
         peripheral.writeValue(
@@ -156,7 +156,7 @@ internal class FPeripheralGattIO(
             val waiter = readDeferreds.remove(characteristicUuid)
             verbose {
                 "Completing read uuid=$characteristicUuid bytes=${payload.size} " +
-                        "waiterFound=${waiter != null}"
+                    "waiterFound=${waiter != null}"
             }
             waiter?.complete(payload)
         }

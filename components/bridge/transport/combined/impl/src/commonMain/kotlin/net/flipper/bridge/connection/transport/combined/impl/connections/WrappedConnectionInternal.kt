@@ -109,7 +109,9 @@ internal class WrappedConnectionInternal(
             if (current is FInternalTransportConnectionStatus.Disconnected) {
                 warn { "Status updates are not permitted after the 'Disconnected' status" }
                 current
-            } else status
+            } else {
+                status
+            }
         }
         yield() // Allow collectors to process the state before returning
     }
