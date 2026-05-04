@@ -286,7 +286,7 @@ class FirmwareUpdaterApiImpl(
                 }
                 info {
                     "#init shouldStartUpdateStatusCollector: $shouldStartUpdateStatusCollector;" +
-                            " isActive: $isActive; state: $state"
+                        " isActive: $isActive; state: $state"
                 }
                 if (shouldStartUpdateStatusCollector && !isActive) {
                     updaterStatusCollector.start()

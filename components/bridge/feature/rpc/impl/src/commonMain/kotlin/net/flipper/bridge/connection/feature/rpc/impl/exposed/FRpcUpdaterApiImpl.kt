@@ -14,6 +14,7 @@ import io.ktor.utils.io.ByteWriteChannel
 import io.ktor.utils.io.writeFully
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.yield
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcUpdaterApi
 import net.flipper.bridge.connection.feature.rpc.api.model.ApiResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.AutoUpdate
@@ -23,6 +24,7 @@ import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.UpdateStatus
 import net.flipper.core.busylib.ktx.common.cache.ObjectCache
 import net.flipper.core.busylib.ktx.common.cache.getOrElse
+import net.flipper.core.busylib.ktx.common.chunked
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
 
 class FRpcUpdaterApiImpl(
@@ -108,8 +110,12 @@ class FRpcUpdaterApiImpl(
                             var transferred = 0L
 
                             bytesFlow.collect { byteArray ->
-                                channel.writeFully(byteArray)
-                                transferred += byteArray.size
+                                byteArray.chunked(64).forEach { chunk ->
+                                    channel.writeFully(chunk)
+                                    channel.flush()
+                                    transferred += chunk.size
+                                }
+                                yield()
                                 onTransferred(transferred)
                             }
                         }
