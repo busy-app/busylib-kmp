@@ -110,7 +110,7 @@ class FRpcUpdaterApiImpl(
                             var transferred = 0L
 
                             bytesFlow.collect { byteArray ->
-                                byteArray.chunked(64).forEach { chunk ->
+                                byteArray.chunked(count = 64).forEach { chunk ->
                                     channel.writeFully(chunk)
                                     channel.flush()
                                     transferred += chunk.size
