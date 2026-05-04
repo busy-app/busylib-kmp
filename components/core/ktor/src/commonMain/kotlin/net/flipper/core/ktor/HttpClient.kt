@@ -17,6 +17,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
+import net.flipper.busylib.kmp.components.core.buildkonfig.BuildKonfig
 import net.flipper.core.busylib.log.TaggedLogger
 import net.flipper.core.busylib.log.info
 import net.flipper.core.ktor.util.minimizeBodyLogMessage
@@ -63,7 +64,7 @@ fun getHttpClient(
                 ktorTimber.info { mappedMessage }
             }
         }
-        level = LogLevel.ALL
+        level = if (BuildKonfig.IS_VERBOSE_LOG_ENABLED) LogLevel.ALL else LogLevel.INFO
     }
     install(HttpTimeout) {
         connectTimeoutMillis = 30.seconds.inWholeMilliseconds

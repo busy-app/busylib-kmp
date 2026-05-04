@@ -31,12 +31,13 @@ import kotlinx.io.Source
 import kotlinx.io.readByteArray
 import net.flipper.bridge.connection.transport.ble.impl.exception.BadHttpResponseException
 import net.flipper.bridge.connection.transport.ble.impl.serial.FSerialBleApi
-import net.flipper.bridge.connection.transport.common.utils.toRawHttpRequestString
+import net.flipper.bridge.connection.transport.common.utils.toRawHttpRequest
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.busylib.ktx.common.withLockResult
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
+import net.flipper.core.busylib.log.verbose
 import kotlin.coroutines.CoroutineContext
 
 class FHttpBLEEngine(
@@ -60,20 +61,23 @@ class FHttpBLEEngine(
         val requestTime = GMTDate()
         info { "Want to request: ${processedRequest.url}" }
         val result = withLockResult(mutex, "execute") {
+            info { "Execute request: ${processedRequest.url}" }
             checkRequestCountUnsafe()
-            info { "Send request: $processedRequest" }
-            val rawText = processedRequest.toRawHttpRequestString()
-            info { "Raw data is: $rawText" }
+            verbose { "Send request: $processedRequest" }
+            val rawBytes = processedRequest.toRawHttpRequest()
+            verbose { "Raw data is: ${rawBytes.decodeToString()}" }
             val channel = serialApi.getReceiveByteChannel()
 
             withContext(NonCancellable) {
-                serialApi.send(rawText.encodeToByteArray())
+                serialApi.send(rawBytes)
                 info { "Waiting for response" }
-                parseRawHttpResponse(
+                val response = parseRawHttpResponse(
                     channel = channel,
                     requestTime = requestTime,
                     callContext = callContext()
                 )
+                info { "Receive response" }
+                return@withContext response
             }
         }
 

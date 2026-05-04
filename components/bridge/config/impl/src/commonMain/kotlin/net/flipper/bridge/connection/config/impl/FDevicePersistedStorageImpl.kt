@@ -33,7 +33,7 @@ class FDevicePersistedStorageImpl(
     override val TAG = "FDevicePersistedStorage"
     private val mutex = Mutex()
 
-    private val bleConfigKrate = BBConfigSettingsKrateImpl(observableSettings)
+    private val bleConfigKrate = BBConfigSettingsKrateImpl(observableSettings, logger = this)
     private var hooks = listOf<TransactionHook>(
         AlwaysActiveHook(),
         RemoveDuplicateCloudHook(),

@@ -21,6 +21,6 @@ class BsbFirmwareChannelIdKrate(
             ?: BsbFirmwareChannelId.DEVELOPMENT
     },
     saver = { bsbFirmwareChannelId ->
-        settings.putString(bsbFirmwareChannelId.id, BSB_FIRMWARE_CHANGELOG_ID_KEY)
+        settings.putString(key = BSB_FIRMWARE_CHANGELOG_ID_KEY, value = bsbFirmwareChannelId.id)
     }
 ).asStateFlowMutableKrate()
