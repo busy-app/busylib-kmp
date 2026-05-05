@@ -24,6 +24,7 @@ import net.flipper.busylib.core.wrapper.CResult
 import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.toCResult
 import net.flipper.busylib.core.wrapper.wrapFlow
+import net.flipper.core.busylib.data.Fraction
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -469,7 +470,7 @@ class FBSBDeviceApiImplRaceConditionTest {
                 flowOf(
                     BSBDeviceBatteryInfo(
                         state = BSBDeviceBatteryInfo.BSBBatteryState.CHARGING,
-                        percentage = 80
+                        percentage = Fraction.fromWholePercent(80)
                     )
                 )
             )

@@ -21,11 +21,13 @@ class HardwareDashboardDecomposeComponent(
     @Composable
     override fun Render(modifier: Modifier) {
         val aboutDevice by viewModel.aboutDeviceFlow.collectAsState()
+        val batteryInfo by viewModel.batteryInfo.collectAsState()
 
         HardwareDashboardContent(
             modifier = modifier,
             onBack = onBack::invoke,
-            aboutDevice = aboutDevice
+            aboutDevice = aboutDevice,
+            batteryInfo = batteryInfo
         )
     }
 }
