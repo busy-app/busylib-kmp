@@ -56,6 +56,7 @@ import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.TaggedLogger
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
+import net.flipper.core.busylib.log.verbose
 import net.flipper.core.ktor.di.qualifier.KtorNetworkClientQualifier
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
@@ -83,18 +84,16 @@ class FirmwareUpdaterApiImpl(
     private val lanUpdaterScope = scope.asSingleJobScope()
 
     override val state: WrappedStateFlow<FwUpdateState> = combine(
-        flow = updateStatusProvider.getUpdateStatus()
-            .shareIn(scope, SharingStarted.WhileSubscribed(), 1),
+        flow = updateStatusProvider.getUpdateStatus(),
         flow2 = fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
             .map { status -> status.tryCast<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>() }
             .map { status -> status?.featureApi }
             .flatMapLatest { feature -> feature?.updateVersionFlow.orNullable() }
-            .filterNotNull()
-            .shareIn(scope, SharingStarted.WhileSubscribed(), 1),
+            .filterNotNull(),
         flow3 = firmwareDownloaderApi.state,
         flow4 = firmwareUploaderApi.state,
         transform = { updateStatusSource, bsbUpdateVersion, downloaderState, uploaderState ->
-            when (bsbUpdateVersion) {
+            val result = when (bsbUpdateVersion) {
                 is BsbUpdateVersion.Default -> {
                     FwUpdateStatusMapper.toFwUpdateState(
                         updateStatusSource = updateStatusSource,
@@ -109,6 +108,14 @@ class FirmwareUpdaterApiImpl(
                     )
                 }
             }
+            verbose {
+                "Result is: ${result}. " +
+                        "Receive updateStatusSource: $updateStatusSource, " +
+                        "bsbUpdateVersion: $bsbUpdateVersion, " +
+                        "downloaderState: $downloaderState, " +
+                        "uploaderState: $uploaderState"
+            }
+            return@combine result
         }
     ).stateIn(scope, SharingStarted.Lazily, FwUpdateState.Pending).wrap()
 
@@ -286,7 +293,7 @@ class FirmwareUpdaterApiImpl(
                 }
                 info {
                     "#init shouldStartUpdateStatusCollector: $shouldStartUpdateStatusCollector;" +
-                        " isActive: $isActive; state: $state"
+                            " isActive: $isActive; state: $state"
                 }
                 if (shouldStartUpdateStatusCollector && !isActive) {
                     updaterStatusCollector.start()
