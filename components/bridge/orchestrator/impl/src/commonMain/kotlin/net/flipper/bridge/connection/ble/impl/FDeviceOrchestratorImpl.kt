@@ -137,10 +137,10 @@ class FDeviceOrchestratorImpl(
             info { "Tried to disconnect not current device, skip" }
             return
         }
+        currentDevice = null
         if (currentDeviceLocal != null) {
             info { "Found current device, wait until disconnect" }
             currentDeviceLocal.disconnect()
         }
-        currentDevice = null
     }
 }

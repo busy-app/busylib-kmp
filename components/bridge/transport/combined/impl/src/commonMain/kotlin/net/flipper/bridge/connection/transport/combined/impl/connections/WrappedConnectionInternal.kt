@@ -7,6 +7,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
 import net.flipper.bridge.connection.connectionbuilder.api.FDeviceConfigToConnection
@@ -14,15 +15,18 @@ import net.flipper.bridge.connection.transport.combined.impl.connections.utils.C
 import net.flipper.bridge.connection.transport.combined.impl.connections.utils.WrappedConnectionException
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
+import net.flipper.bridge.connection.transport.common.api.FInternalDisconnectedReason
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
+import net.flipper.bridge.connection.transport.common.api.FailedPairingConnectException
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 import net.flipper.core.busylib.ktx.common.launchOnCompletion
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
+import net.flipper.core.busylib.log.warn
 
-class WrappedConnectionInternal(
+internal class WrappedConnectionInternal(
     private val config: FDeviceConnectionConfig<*>,
     parentScope: CoroutineScope,
     private val connectionBuilder: FDeviceConfigToConnection,
@@ -40,20 +44,28 @@ class WrappedConnectionInternal(
         parentScope = parentScope,
         dispatcher = dispatcher,
         onCompletion = { t ->
-            when (t) {
+            val recovery = when (t) {
                 null -> {
                     info { "Wrapped connection $config scope is being cancelled" }
+                    FInternalDisconnectedReason.OTHER
                 }
 
                 is CancellationException -> {
                     info { "Wrapped connection $config scope was cancelled" }
+                    FInternalDisconnectedReason.OTHER
+                }
+
+                is FailedPairingConnectException -> {
+                    info { "Wrapped connection $config failed with a not recoverable error" }
+                    FInternalDisconnectedReason.PAIRING_FAILED
                 }
 
                 else -> {
                     error(t) { "Scope for connection $config was cancelled due to an error" }
+                    FInternalDisconnectedReason.OTHER
                 }
             }
-            stateFlow.update { FInternalTransportConnectionStatus.Disconnected }
+            stateFlow.update { FInternalTransportConnectionStatus.Disconnected(recovery) }
         }
     )
 
@@ -89,7 +101,18 @@ class WrappedConnectionInternal(
 
     override suspend fun onStatusUpdate(status: FInternalTransportConnectionStatus) {
         info { "#onStatusUpdate $status" }
-        stateFlow.emit(status)
+        if (!scope.isActive) {
+            warn { "Call #onStatusUpdate after scope is dead" }
+            return
+        }
+        stateFlow.update { current ->
+            if (current is FInternalTransportConnectionStatus.Disconnected) {
+                warn { "Status updates are not permitted after the 'Disconnected' status" }
+                current
+            } else {
+                status
+            }
+        }
         yield() // Allow collectors to process the state before returning
     }
 

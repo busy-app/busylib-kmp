@@ -4,6 +4,8 @@ import com.russhwolf.settings.ObservableSettings
 import com.russhwolf.settings.coroutines.toFlowSettings
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.Json
+import net.flipper.core.busylib.log.LogTagProvider
+import net.flipper.core.busylib.log.error
 import ru.astrainteractive.klibs.kstorage.api.value.ValueFactory
 import ru.astrainteractive.klibs.kstorage.suspend.FlowMutableKrate
 import ru.astrainteractive.klibs.kstorage.suspend.impl.DefaultFlowMutableKrate
@@ -16,7 +18,8 @@ class BBConfigSettingsKrateImpl(
         isLenient = true
         ignoreUnknownKeys = true
         prettyPrint = false
-    }
+    },
+    logger: LogTagProvider
 ) : BBConfigSettingsKrate,
     FlowMutableKrate<BBConfigSettings> by DefaultFlowMutableKrate(
         factory = { Factory.create() },
@@ -29,6 +32,9 @@ class BBConfigSettingsKrateImpl(
                         Factory.create()
                     } else {
                         runCatching { json.decodeFromString(Serializer, stringValue) }
+                            .onFailure {
+                                logger.error(it) { "Failed to parse stored busy bars, so use default" }
+                            }
                             .getOrNull()
                             ?: Factory.create()
                     }

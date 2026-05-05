@@ -128,7 +128,7 @@ internal class FPeripheralGattIO(
 
         verbose {
             "#writeValue bytes=${data.size} uuid=$characteristicUuid " +
-                "id=${peripheral.identifier.UUIDString }" +
+                "id=${peripheral.identifier.UUIDString}" +
                 "data=${data.decodeToString()}"
         }
 
@@ -187,14 +187,14 @@ internal class FPeripheralGattIO(
         }
     }
 
-    fun cancelPending(disconnectException: CancellationException) {
-        launchWithLock(writeDeferredMutex, scope, "cancel_pending_write") {
+    suspend fun cancelPending(disconnectException: CancellationException) {
+        withLock(writeDeferredMutex, "cancel_pending_write") {
             writeDeferreds.values.forEach { deferred ->
                 deferred.completeExceptionally(disconnectException)
             }
             writeDeferreds.clear()
         }
-        launchWithLock(readDeferredMutex, scope, "cancel_pending_read") {
+        withLock(readDeferredMutex, "cancel_pending_read") {
             readDeferreds.values.forEach { deferred ->
                 deferred.completeExceptionally(disconnectException)
             }

@@ -6,7 +6,7 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 import kotlinx.coroutines.delay
-import net.flipper.bridge.connection.transport.common.utils.toRawHttpRequestString
+import net.flipper.bridge.connection.transport.common.utils.toRawHttpRequest
 import net.flipper.bridge.connection.transport.mock.impl.model.ApiAccountResponse
 import net.flipper.bridge.connection.transport.mock.impl.model.ApiBleStatusResponse
 import net.flipper.bridge.connection.transport.mock.impl.model.ApiDeviceNameResponse
@@ -17,7 +17,7 @@ import net.flipper.bridge.connection.transport.mock.impl.model.ApiWifiDisconnect
 import net.flipper.bridge.connection.transport.mock.impl.model.ApiWifiNetworksResponse
 import net.flipper.bridge.connection.transport.mock.impl.model.ApiWifiStatusResponse
 import net.flipper.core.busylib.log.TaggedLogger
-import net.flipper.core.busylib.log.info
+import net.flipper.core.busylib.log.verbose
 
 private val logger = TaggedLogger("BSBMockHttpEngine")
 
@@ -25,12 +25,11 @@ const val SMALL_DELAY = 500L
 const val DEFAULT_DELAY = 1000L
 
 fun getBSBMockHttpEngine() = MockEngine { request ->
-    logger.info {
-        request.toRawHttpRequestString()
+    logger.verbose {
+        request.toRawHttpRequest().decodeToString()
     }
 
     val response = when (request.url.encodedPath) {
-        ApiWifiStatusResponse.PATH -> ApiWifiStatusResponse.getJsonPlainTextResponse()
         ApiStatusPowerResponse.PATH -> {
             delay(DEFAULT_DELAY)
             ApiStatusPowerResponse.getJsonPlainTextResponse()
@@ -70,6 +69,7 @@ fun getBSBMockHttpEngine() = MockEngine { request ->
             delay(DEFAULT_DELAY)
             ApiAccountResponse.getJsonPlainTextResponse()
         }
+
         ApiDeviceNameResponse.PATH -> {
             delay(DEFAULT_DELAY)
             ApiDeviceNameResponse.getJsonPlainTextResponse()

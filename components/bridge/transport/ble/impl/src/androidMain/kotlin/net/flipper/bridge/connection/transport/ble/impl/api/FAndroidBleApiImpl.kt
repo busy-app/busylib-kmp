@@ -4,7 +4,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -15,6 +14,7 @@ import net.flipper.bridge.connection.transport.ble.impl.FHttpBLEEngine
 import net.flipper.bridge.connection.transport.ble.impl.meta.FTransportMetaInfoApiImpl
 import net.flipper.bridge.connection.transport.ble.impl.serial.FSerialBleApi
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
+import net.flipper.bridge.connection.transport.common.api.FInternalDisconnectedReason
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionType
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
@@ -69,7 +69,9 @@ class FAndroidBleApiImpl(
                         FInternalTransportConnectionType.BLE
                     )
 
-                    is ConnectionState.Disconnected -> FInternalTransportConnectionStatus.Disconnected
+                    is ConnectionState.Disconnected -> FInternalTransportConnectionStatus.Disconnected(
+                        FInternalDisconnectedReason.OTHER
+                    )
                     ConnectionState.Disconnecting -> FInternalTransportConnectionStatus.Disconnecting
                 }
             }
