@@ -14,6 +14,16 @@ internal object WiFiSecurityPasswordSerializer : KSerializer<WiFiSecurity.Suppor
         kind = PrimitiveKind.STRING
     )
 
+    private val WiFiSecurity.Supported.Password.serialName: String
+        get() = when (this) {
+            WiFiSecurity.Supported.Password.WEP -> "WEP"
+            WiFiSecurity.Supported.Password.WPA -> "WPA"
+            WiFiSecurity.Supported.Password.WPA2 -> "WPA2"
+            WiFiSecurity.Supported.Password.WPA_WPA2 -> "WPA_WPA2"
+            WiFiSecurity.Supported.Password.WPA3 -> "WPA3"
+            WiFiSecurity.Supported.Password.WPA2_WPA3 -> "WPA2_WPA3"
+        }
+
     override fun serialize(encoder: Encoder, value: WiFiSecurity.Supported.Password) {
         encoder.encodeString(value.serialName)
     }

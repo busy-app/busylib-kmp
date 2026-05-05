@@ -14,15 +14,14 @@ sealed interface WiFiSecurity {
         @Serializable(with = WiFiSecurityPasswordSerializer::class)
         @Suppress("SerialNameNotProvidedRule")
         enum class Password(
-            val serialName: String,
             val internalWifiSecurity: BsbWifiSecurityMethod
         ) : Supported {
-            WEP("WEP", BsbWifiSecurityMethod.WEP),
-            WPA("WPA", BsbWifiSecurityMethod.WPA),
-            WPA2("WPA2", BsbWifiSecurityMethod.WPA2),
-            WPA_WPA2("WPA_WPA2", BsbWifiSecurityMethod.WPA_WPA2),
-            WPA3("WPA3", BsbWifiSecurityMethod.WPA3),
-            WPA2_WPA3("WPA2_WPA3", BsbWifiSecurityMethod.WPA2_WPA3)
+            WEP(BsbWifiSecurityMethod.WEP),
+            WPA(BsbWifiSecurityMethod.WPA),
+            WPA2(BsbWifiSecurityMethod.WPA2),
+            WPA_WPA2(BsbWifiSecurityMethod.WPA_WPA2),
+            WPA3(BsbWifiSecurityMethod.WPA3),
+            WPA2_WPA3(BsbWifiSecurityMethod.WPA2_WPA3)
         }
     }
 
