@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.mapLatest
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
 import net.flipper.bridge.connection.feature.events.model.ConsumableUpdateEvent
@@ -40,7 +41,7 @@ inline fun <reified T : BusyLibUpdateEvent, R> FEventsFeatureApi?.get(
         .orEmpty()
         .merge(flowOf(ConsumableUpdateEvent.Empty))
         .transformWhileSubscribed(scope = scope) { flow ->
-            flow.throttleLatest { consumable ->
+            flow.mapLatest { consumable ->
                 val couldConsume = consumable.tryConsume()
                 when (consumable) {
                     ConsumableUpdateEvent.Empty -> {
