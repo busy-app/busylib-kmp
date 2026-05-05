@@ -15,14 +15,14 @@ internal object WiFiSecurityPasswordSerializer : KSerializer<WiFiSecurity.Suppor
     )
 
     override fun serialize(encoder: Encoder, value: WiFiSecurity.Supported.Password) {
-        encoder.encodeString(value.name)
+        encoder.encodeString(value.serialName)
     }
 
     override fun deserialize(decoder: Decoder): WiFiSecurity.Supported.Password {
-        val name = decoder.decodeString()
+        val serialName = decoder.decodeString()
         return WiFiSecurity.Supported.Password
             .entries
-            .firstOrNull { entry -> entry.name == name }
-            ?: error("Could not find $name password type")
+            .firstOrNull { entry -> entry.serialName == serialName }
+            ?: error("Could not find $serialName password type")
     }
 }
