@@ -2,14 +2,17 @@ package net.flipper.bridge.connection.feature.firmwareupdate.impl
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.flow.stateIn
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
 import net.flipper.bridge.connection.feature.events.api.get
 import net.flipper.bridge.connection.feature.events.api.getMapped
 import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
+import net.flipper.bridge.connection.feature.firmwareupdate.model.AvailableVersion
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateStatus
 import net.flipper.bridge.connection.feature.firmwareupdate.util.toBsbUpdateStatus
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
@@ -50,7 +53,16 @@ class UpdateFlowCombinerDelegate(
                 )
             }
         }
-    }, mapper = { flow -> flow.map { it.availableVersion } }).wrap()
+    }, mapper = { flow ->
+        flow.map { event ->
+            val version = event.availableVersion
+            if (version.isNullOrBlank()) {
+                AvailableVersion.NotAvailable
+            } else {
+                AvailableVersion.Available(version)
+            }
+        }
+    }).stateIn(scope, SharingStarted.WhileSubscribed(), AvailableVersion.Loading)
 
     private val updateDownloadEventsFlow = fEventsFeatureApi
         .get<BusyLibUpdateEvent.Update.UpdateDownload>()
@@ -63,8 +75,8 @@ class UpdateFlowCombinerDelegate(
             }
         }, mapper = { it.toBsbUpdateStatus() })
 
-    val updateStatusFlow: WrappedSharedFlow<BsbUpdateStatus> = updateStateEventsFlow
+    val updateStatusFlow: StateFlow<BsbUpdateStatus> = updateStateEventsFlow
         .merge(updateDownloadEventsFlow)
-        .shareIn(scope, SharingStarted.WhileSubscribed(), replay = 1)
-        .wrap()
+        .stateIn(scope, SharingStarted.WhileSubscribed(), BsbUpdateStatus.Loading)
+
 }

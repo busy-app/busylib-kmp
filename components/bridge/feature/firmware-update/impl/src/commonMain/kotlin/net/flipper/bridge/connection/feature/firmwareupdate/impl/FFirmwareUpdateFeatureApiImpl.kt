@@ -2,8 +2,10 @@ package net.flipper.bridge.connection.feature.firmwareupdate.impl
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -11,6 +13,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.flow.stateIn
 import me.tatarka.inject.annotations.Inject
 import me.tatarka.inject.annotations.IntoMap
 import me.tatarka.inject.annotations.Provides
@@ -19,8 +22,10 @@ import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
 import net.flipper.bridge.connection.feature.events.api.get
+import net.flipper.bridge.connection.feature.events.api.getMapped
 import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent.AutoUpdateChanged
 import net.flipper.bridge.connection.feature.firmwareupdate.api.FFirmwareUpdateFeatureApi
+import net.flipper.bridge.connection.feature.firmwareupdate.model.AvailableVersion
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateVersion
 import net.flipper.bridge.connection.feature.info.api.FDeviceInfoFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
@@ -62,8 +67,8 @@ class FFirmwareUpdateFeatureApiImpl(
         scope = scope
     )
 
-    override val availableVersionFlow = combinedFlows.availableVersionFlow
-    override val updateStatusFlow = combinedFlows.updateStatusFlow
+    private val availableVersionFlow = combinedFlows.availableVersionFlow
+    override val updateStatusFlow = combinedFlows.updateStatusFlow.wrap()
 
     override suspend fun setAutoUpdate(isEnabled: Boolean): CResult<Unit> {
         val request = AutoUpdate(
@@ -81,16 +86,15 @@ class FFirmwareUpdateFeatureApiImpl(
     }
 
     override val isAutoUpdateEnabledFlow = fEventsFeatureApi
-        .get(scope = scope, initial = { couldConsume ->
+        .getMapped<AutoUpdateChanged, Boolean>(scope = scope, initial = { couldConsume ->
             rpcFeatureApi
                 .fRpcUpdaterApi
                 .getAutoUpdate(couldConsume)
                 .map(AutoUpdate::isEnabled)
-                .map(::AutoUpdateChanged)
-        }, mapper = { flow -> flow.map { it.isEnabled } })
+        }, mapper = { it.isEnabled })
         .wrap()
 
-    override val updateVersionFlow: WrappedFlow<BsbUpdateVersion?> = deviceApi
+    override val updateVersionFlow = deviceApi
         .tryCast<FHTTPDeviceApi>()
         ?.hasCapability(FHTTPTransportCapability.BB_DOWNLOAD_UPDATE_SUPPORTED)
         .orElse { false }
@@ -101,23 +105,26 @@ class FFirmwareUpdateFeatureApiImpl(
                 lanUpdateVersionProvider.get()
             } else {
                 availableVersionFlow
-                    .filterNotNull()
-                    .filter { versionString -> versionString.isNotBlank() }
-                    .filter { versionString -> versionString.isNotEmpty() }
-                    .map(BsbUpdateVersion::Default)
+                    .map { version ->
+                        when (version) {
+                            is AvailableVersion.Available -> BsbUpdateVersion.ReadyToUpdate.Default(
+                                version.version
+                            )
+
+                            AvailableVersion.NotAvailable -> BsbUpdateVersion.NoUpdateAvailable
+                            AvailableVersion.Loading -> BsbUpdateVersion.Loading
+                        }
+                    }
             }
         }
         .onEach { info { "#updateVersionFlow: $it" } }
-        .shareIn(scope, SharingStarted.Lazily, 1)
-        .asFlow()
+        .stateIn(scope, SharingStarted.Lazily, BsbUpdateVersion.Loading)
         .wrap()
 
-    override val updateVersionChangelog: WrappedFlow<String> = updateVersionFlow
-        .filterNotNull()
-        .distinctUntilChanged()
+    override val updateVersionChangelog: WrappedFlow<String?> = updateVersionFlow
         .mapLatest { busyBarVersion ->
-            when (busyBarVersion) {
-                is BsbUpdateVersion.Default -> {
+            return@mapLatest when (busyBarVersion) {
+                is BsbUpdateVersion.ReadyToUpdate.Default -> {
                     exponentialRetry {
                         rpcFeatureApi.fRpcUpdaterApi
                             .getUpdateChangelog(busyBarVersion.version)
@@ -125,9 +132,11 @@ class FFirmwareUpdateFeatureApiImpl(
                     }
                 }
 
-                is BsbUpdateVersion.Url -> {
+                is BsbUpdateVersion.ReadyToUpdate.Url -> {
                     busyBarVersion.changelog
                 }
+                BsbUpdateVersion.Loading,
+                BsbUpdateVersion.NoUpdateAvailable -> null
             }
         }
         .onEach { info { "#updateVersionChangelog: $it" } }

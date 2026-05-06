@@ -26,7 +26,7 @@ class LanUpdateVersionProvider(
     private val busyFirmwareDirectoryChannelApi: BusyFirmwareDirectoryChannelApi,
     private val fDeviceInfoFeatureApi: FDeviceInfoFeatureApi
 ) : LogTagProvider by TaggedLogger("LanUpdateVersionProvider") {
-    private suspend fun requireVersionFromRestApi(bsbFirmwareChannelId: BsbFirmwareChannelId): BsbUpdateVersion.Url {
+    private suspend fun requireVersionFromRestApi(bsbFirmwareChannelId: BsbFirmwareChannelId): BsbUpdateVersion.ReadyToUpdate.Url {
         val channelId = bsbFirmwareChannelId.id
         return exponentialRetry {
             runSuspendCatching {
@@ -43,7 +43,7 @@ class LanUpdateVersionProvider(
                     .filter { it.target == BsbFirmwareUpdateTarget.F21 }
                     .firstOrNull { it.type == BsbFirmwareUpdateFileType.UPDATE_TGZ }
                     ?: error("No update file found")
-                BsbUpdateVersion.Url(
+                BsbUpdateVersion.ReadyToUpdate.Url(
                     version = bsbFirmwareUpdateVersion.version,
                     url = updateFile.url,
                     sha256 = updateFile.sha256,
@@ -58,7 +58,7 @@ class LanUpdateVersionProvider(
         }
     }
 
-    private fun getBsbUpdateVersionUrl(): Flow<BsbUpdateVersion.Url> {
+    private fun getBsbUpdateVersionUrl(): Flow<BsbUpdateVersion.ReadyToUpdate.Url> {
         return busyFirmwareDirectoryChannelApi
             .getChannelIdFlow()
             .map { bsbFirmwareChannelId ->
@@ -67,7 +67,7 @@ class LanUpdateVersionProvider(
             }
     }
 
-    fun get(): Flow<BsbUpdateVersion.Url?> {
+    fun get(): Flow<BsbUpdateVersion> {
         return fDeviceInfoFeatureApi.deviceVersionFlow
             .flatMapLatest { bsbBusyBarVersion ->
                 getBsbUpdateVersionUrl().map { urlVersion -> bsbBusyBarVersion to urlVersion }
@@ -96,7 +96,7 @@ class LanUpdateVersionProvider(
                             return@map urlVersion
                         } else {
                             info { "#get The new version $urlSemVer smaller than $bsbSemVer" }
-                            return@map null
+                            return@map BsbUpdateVersion.NoUpdateAvailable
                         }
                     }
                 }

@@ -40,4 +40,6 @@ sealed interface BsbUpdateStatus {
             UNKNOWN_FAILURE
         }
     }
+
+    data object Loading : BsbUpdateStatus
 }
