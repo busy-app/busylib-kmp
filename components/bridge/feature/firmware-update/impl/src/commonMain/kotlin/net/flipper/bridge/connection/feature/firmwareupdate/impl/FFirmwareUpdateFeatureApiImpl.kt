@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.shareIn
 import me.tatarka.inject.annotations.Inject
@@ -99,8 +100,8 @@ class FFirmwareUpdateFeatureApiImpl(
             if (useRestApiVersion) {
                 lanUpdateVersionProvider.get()
             } else {
-                updateStatusFlow
-                    .map { status -> status.check.availableVersion }
+                availableVersionFlow
+                    .filterNotNull()
                     .filter { versionString -> versionString.isNotBlank() }
                     .filter { versionString -> versionString.isNotEmpty() }
                     .map(BsbUpdateVersion::Default)
@@ -114,7 +115,7 @@ class FFirmwareUpdateFeatureApiImpl(
     override val updateVersionChangelog: WrappedFlow<String> = updateVersionFlow
         .filterNotNull()
         .distinctUntilChanged()
-        .map { busyBarVersion ->
+        .mapLatest { busyBarVersion ->
             when (busyBarVersion) {
                 is BsbUpdateVersion.Default -> {
                     exponentialRetry {
