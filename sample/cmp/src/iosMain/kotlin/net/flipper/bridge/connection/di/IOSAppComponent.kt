@@ -58,6 +58,7 @@ fun getRootDecomposeComponent(): ConnectionRootDecomposeComponent {
                 fCentralManagerProvider = busyLib.fCentralManagerApi
             )
         },
-        principalApi = principalApi
+        principalApi = principalApi,
+        busyFirmwareDirectoryChannelApi = busyLib.busyFirmwareDirectoryChannelApi
     )
 }
