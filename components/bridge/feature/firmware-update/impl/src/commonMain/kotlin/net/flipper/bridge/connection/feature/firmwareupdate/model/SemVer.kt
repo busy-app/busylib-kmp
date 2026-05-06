@@ -44,7 +44,6 @@ internal data class SemVer(
     }
 
     companion object {
-        @SuppressWarnings("MagicNumber")
         fun fromString(version: String): SemVer? {
             val versionParts = version.split(".")
             if (versionParts.size < 2 || versionParts.size > 4) {
