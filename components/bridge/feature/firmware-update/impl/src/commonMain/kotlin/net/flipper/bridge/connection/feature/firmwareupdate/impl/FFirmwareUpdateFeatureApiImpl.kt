@@ -6,7 +6,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
@@ -20,20 +19,13 @@ import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
 import net.flipper.bridge.connection.feature.events.api.get
-import net.flipper.bridge.connection.feature.events.api.getMapped
-import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
-import net.flipper.bridge.connection.feature.events.model.ConsumableUpdateEvent
+import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent.AutoUpdateChanged
 import net.flipper.bridge.connection.feature.firmwareupdate.api.FFirmwareUpdateFeatureApi
-import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateStatus
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateVersion
-import net.flipper.bridge.connection.feature.firmwareupdate.model.toBsbUpdateStatus
-import net.flipper.bridge.connection.feature.firmwareupdate.util.merge
-import net.flipper.bridge.connection.feature.firmwareupdate.util.toBsbUpdateStatus
 import net.flipper.bridge.connection.feature.info.api.FDeviceInfoFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.AutoUpdate
 import net.flipper.bridge.connection.feature.rpc.api.model.GetUpdateChangelogResponse
-import net.flipper.bridge.connection.feature.rpc.api.model.UpdateStatus
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPDeviceApi
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPTransportCapability
@@ -45,20 +37,13 @@ import net.flipper.bsb.cloud.rest.model.BsbFirmwareUpdateTarget
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.core.wrapper.CResult
 import net.flipper.busylib.core.wrapper.WrappedFlow
-import net.flipper.busylib.core.wrapper.WrappedSharedFlow
 import net.flipper.busylib.core.wrapper.toCResult
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.ktx.common.asFlow
 import net.flipper.core.busylib.ktx.common.exponentialRetry
-import net.flipper.core.busylib.ktx.common.merge
 import net.flipper.core.busylib.ktx.common.orElse
-import net.flipper.core.busylib.ktx.common.orEmpty
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
-import net.flipper.core.busylib.ktx.common.throttleLatest
-import net.flipper.core.busylib.ktx.common.throttleLatestCached
-import net.flipper.core.busylib.ktx.common.transformWhileSubscribed
 import net.flipper.core.busylib.ktx.common.tryCast
-import net.flipper.core.busylib.ktx.common.tryConsume
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
@@ -93,35 +78,20 @@ class FFirmwareUpdateFeatureApiImpl(
         return rpcFeatureApi.fRpcUpdaterApi.setAutoUpdate(request)
             .map { }
             .onSuccess {
-                val event = BusyLibUpdateEvent.AutoUpdateChanged(isEnabled)
-                fEventsFeatureApi?.onBusyLibEvent(event)
+                val event = AutoUpdateChanged(isEnabled)
+                fEventsFeatureApi.onBusyLibEvent(event)
             }
             .toCResult()
     }
 
     override val isAutoUpdateEnabledFlow = fEventsFeatureApi
-        ?.get<BusyLibUpdateEvent.AutoUpdateChanged>()
-        .orEmpty()
-        .merge(flowOf(ConsumableUpdateEvent.Empty))
-        .transformWhileSubscribed(scope = scope) { flow ->
-            flow.throttleLatest { consumable ->
-                val couldConsume = consumable.tryConsume()
-                when (consumable) {
-                    ConsumableUpdateEvent.Empty -> {
-                        exponentialRetry {
-                            rpcFeatureApi
-                                .fRpcUpdaterApi
-                                .getAutoUpdate(couldConsume)
-                                .map(AutoUpdate::isEnabled)
-                        }
-                    }
-
-                    is ConsumableUpdateEvent.BusyLib<BusyLibUpdateEvent.AutoUpdateChanged> -> {
-                        consumable.busyLibUpdateEvent.isEnabled
-                    }
-                }
-            }
-        }
+        .get(scope = scope, initial = { couldConsume ->
+            rpcFeatureApi
+                .fRpcUpdaterApi
+                .getAutoUpdate(couldConsume)
+                .map(AutoUpdate::isEnabled)
+                .map(::AutoUpdateChanged)
+        }, mapper = { flow -> flow.map { it.isEnabled } })
         .wrap()
 
     private suspend fun requireVersionFromRestApi(): BsbUpdateVersion.Url {
