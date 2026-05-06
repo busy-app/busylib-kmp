@@ -27,6 +27,7 @@ sealed interface BusyLibUpdateEvent {
                 CHARGED
             }
         }
+
         data object Unknown : Power
     }
 
@@ -40,16 +41,44 @@ sealed interface BusyLibUpdateEvent {
 
     sealed interface Update : BusyLibUpdateEvent {
         data class UpdateState(
-            val action: BsbUpdateStatus.BsbInstall.BsbAction,
-            val status: BsbUpdateStatus.BsbInstall.BsbStatus,
-        ) : Update
+            val action: BsbAction,
+            val status: BsbStatus,
+        ) : Update {
+            enum class BsbAction {
+                DOWNLOAD,
+                SHA_VERIFICATION,
+                UNPACK,
+                PREPARE,
+                APPLY,
+                NONE
+            }
+
+            enum class BsbStatus {
+                OK,
+                BATTERY_LOW,
+                BUSY,
+                DOWNLOAD_FAILURE,
+                DOWNLOAD_ABORT,
+                SHA_MISMATCH,
+                UNPACK_STAGING_DIR_FAILURE,
+                UNPACK_ARCHIVE_OPEN_FAILURE,
+                UNPACK_ARCHIVE_UNPACK_FAILURE,
+                INSTALL_MANIFEST_NOT_FOUND,
+                INSTALL_MANIFEST_INVALID,
+                INSTALL_SESSION_CONFIG_FAILURE,
+                INSTALL_POINTER_SETUP_FAILURE,
+                UNKNOWN_FAILURE
+            }
+        }
 
         data class UpdateCheck(
             val availableVersion: String?,
         ) : Update
 
         data class UpdateDownload(
-            val download: BsbUpdateStatus.BsbInstall.BsbDownload
+            val speedBytesPerSec: Int,
+            val receivedBytes: Int,
+            val totalBytes: Int
         ) : Update
     }
 

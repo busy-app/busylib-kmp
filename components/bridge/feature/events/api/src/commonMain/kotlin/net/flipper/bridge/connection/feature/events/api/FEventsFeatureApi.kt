@@ -59,6 +59,34 @@ inline fun <reified T : BusyLibUpdateEvent, R> FEventsFeatureApi?.get(
         }
 }
 
+inline fun <reified T : BusyLibUpdateEvent, R> FEventsFeatureApi?.getMapped(
+    scope: CoroutineScope,
+    crossinline initial: suspend (couldConsume: Boolean) -> Result<R>,
+    crossinline mapper: (T) -> R
+): SharedFlow<R> {
+    return this
+        ?.get<T>()
+        .orEmpty()
+        .merge(flowOf(ConsumableUpdateEvent.Empty))
+        .transformWhileSubscribed(scope = scope) { flow ->
+            flow.mapLatest { consumable ->
+                val couldConsume = consumable.tryConsume()
+                when (consumable) {
+                    ConsumableUpdateEvent.Empty -> {
+                        exponentialRetry {
+                            initial(couldConsume)
+                        }
+                    }
+
+                    is ConsumableUpdateEvent.BusyLib<*> -> {
+                        @Suppress("UNCHECKED_CAST")
+                        (consumable.busyLibUpdateEvent as? T)?.let(mapper)
+                    }
+                }
+            }.filterNotNull()
+        }
+}
+
 inline fun <reified T : BusyLibUpdateEvent> FEventsFeatureApi?.get(
     scope: CoroutineScope,
     crossinline initial: suspend (couldConsume: Boolean) -> Result<T>
