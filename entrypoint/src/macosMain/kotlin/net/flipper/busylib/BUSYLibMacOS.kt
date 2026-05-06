@@ -12,6 +12,7 @@ import net.flipper.bridge.connection.service.api.FConnectionService
 import net.flipper.bridge.device.firmwareupdate.updater.api.FirmwareUpdaterApi
 import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.cloud.api.BUSYLibHostApi
+import net.flipper.bsb.cloud.rest.channel.api.BusyFirmwareDirectoryChannelApi
 import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
 import net.flipper.busylib.di.create
 import net.flipper.tools.multistream.api.MultiStreamApi
@@ -26,7 +27,8 @@ class BUSYLibMacOS(
     override val persistedStorage: FDevicePersistedStorage,
     override val multiStreamApi: MultiStreamApi,
     private val startUpListeners: Set<InternalBUSYLibStartupListener>,
-    val onCallSingletonApi: OnCallSingletonApi
+    val onCallSingletonApi: OnCallSingletonApi,
+    override val busyFirmwareDirectoryChannelApi: BusyFirmwareDirectoryChannelApi
 ) : BUSYLibApple {
     override fun launch() {
         startUpListeners.forEach {

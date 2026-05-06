@@ -19,6 +19,7 @@ sealed interface BsbUpdateVersion {
         override val version: String,
         val url: String,
         val sha256: String,
-        val changelog: String
+        val changelog: String,
+        val firmwareChannel: FirmwareChannel
     ) : BsbUpdateVersion
 }

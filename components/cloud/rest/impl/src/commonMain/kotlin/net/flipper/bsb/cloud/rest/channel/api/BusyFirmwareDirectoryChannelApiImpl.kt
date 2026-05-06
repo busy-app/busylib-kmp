@@ -14,7 +14,11 @@ import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 class BusyFirmwareDirectoryChannelApiImpl(
     private val bsbFirmwareChannelIdKrate: BsbFirmwareChannelIdKrate
 ) : BusyFirmwareDirectoryChannelApi {
-    override suspend fun getChannelIdFlow(): StateFlow<BsbFirmwareChannelId> {
+    override fun getChannelIdFlow(): StateFlow<BsbFirmwareChannelId> {
         return bsbFirmwareChannelIdKrate.cachedStateFlow
+    }
+
+    override suspend fun setChannel(channel: BsbFirmwareChannelId) {
+        bsbFirmwareChannelIdKrate.save(channel)
     }
 }
