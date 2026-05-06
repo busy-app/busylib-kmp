@@ -28,6 +28,7 @@ import net.flipper.bridge.connection.screens.utils.PermissionChecker
 import net.flipper.bridge.connection.service.api.FConnectionService
 import net.flipper.bridge.connection.utils.principal.impl.UserPrincipalApiSampleImpl
 import net.flipper.bridge.device.firmwareupdate.updater.api.FirmwareUpdaterApi
+import net.flipper.bsb.cloud.rest.channel.api.BusyFirmwareDirectoryChannelApi
 import net.flipper.busylib.BUSYLib
 import net.flipper.tools.multistream.api.MultiStreamApi
 
@@ -37,7 +38,8 @@ fun getRootDecomposeComponent(
     persistedStorage: FDevicePersistedStorage,
     busyLib: BUSYLib,
     searchViewModelProvider: () -> ConnectionSearchViewModel,
-    principalApi: UserPrincipalApiSampleImpl
+    principalApi: UserPrincipalApiSampleImpl,
+    busyFirmwareDirectoryChannelApi: BusyFirmwareDirectoryChannelApi,
 ): ConnectionRootDecomposeComponent {
     return getRootDecomposeComponentFactory(
         permissionChecker = permissionChecker,
@@ -48,7 +50,8 @@ fun getRootDecomposeComponent(
         fConnectionService = busyLib.connectionService,
         firmwareUpdaterApi = busyLib.firmwareUpdaterApi,
         principalApi = principalApi,
-        multiStreamApi = busyLib.multiStreamApi
+        multiStreamApi = busyLib.multiStreamApi,
+        busyFirmwareDirectoryChannelApi = busyFirmwareDirectoryChannelApi
     ).invoke(componentContext)
 }
 
@@ -62,7 +65,8 @@ private fun getRootDecomposeComponentFactory(
     searchViewModelProvider: () -> ConnectionSearchViewModel,
     firmwareUpdaterApi: FirmwareUpdaterApi,
     principalApi: UserPrincipalApiSampleImpl,
-    multiStreamApi: MultiStreamApi
+    multiStreamApi: MultiStreamApi,
+    busyFirmwareDirectoryChannelApi: BusyFirmwareDirectoryChannelApi,
 ): ConnectionRootDecomposeComponent.Factory {
     return ConnectionRootDecomposeComponent.Factory(
         permissionChecker = permissionChecker,
@@ -79,7 +83,8 @@ private fun getRootDecomposeComponentFactory(
         dashboardDecomposeComponentFactory = getDashboardDecomposeComponentFactory(
             fFeatureProvider = featureProvider,
             principalApi = principalApi,
-            firmwareUpdaterApi = firmwareUpdaterApi
+            firmwareUpdaterApi = firmwareUpdaterApi,
+            busyFirmwareDirectoryChannelApi = busyFirmwareDirectoryChannelApi
         ),
     )
 }
@@ -116,7 +121,8 @@ private fun getConnectionDeviceScreenDecomposeComponentFactory(
 private fun getDashboardDecomposeComponentFactory(
     fFeatureProvider: FFeatureProvider,
     principalApi: UserPrincipalApiSampleImpl,
-    firmwareUpdaterApi: FirmwareUpdaterApi
+    firmwareUpdaterApi: FirmwareUpdaterApi,
+    busyFirmwareDirectoryChannelApi: BusyFirmwareDirectoryChannelApi,
 ): DashboardDecomposeComponent.Factory {
     return DashboardDecomposeComponent.Factory(
         settingsViewModelFactory = { SettingsDashboardViewModel(fFeatureProvider) },
@@ -130,6 +136,7 @@ private fun getDashboardDecomposeComponentFactory(
         displayViewModelFactory = { DisplayDashboardViewModel(fFeatureProvider) },
         screenStreamingViewModelFactory = { ScreenStreamingDashboardViewModel(fFeatureProvider) },
         wifiViewModelFactory = { WiFiDashboardViewModel(fFeatureProvider) },
-        firmwareUpdateViewModelFactory = { FirmwareUpdateViewModel(firmwareUpdaterApi) }
+        firmwareUpdateViewModelFactory = { FirmwareUpdateViewModel(firmwareUpdaterApi) },
+        busyFirmwareDirectoryChannelApi = busyFirmwareDirectoryChannelApi
     )
 }

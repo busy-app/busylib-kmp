@@ -35,10 +35,12 @@ import net.flipper.bridge.connection.screens.decompose.DecomposeComponent
 import net.flipper.bridge.connection.screens.decompose.DecomposeOnBackParameter
 import net.flipper.bridge.connection.screens.fwupdate.FirmwareUpdateDecomposeComponent
 import net.flipper.bridge.connection.screens.fwupdate.FirmwareUpdateViewModel
+import net.flipper.bsb.cloud.rest.channel.api.BusyFirmwareDirectoryChannelApi
 
 class DashboardDecomposeComponent(
     componentContext: ComponentContext,
     private val onBack: DecomposeOnBackParameter,
+    private val busyFirmwareDirectoryChannelApi: BusyFirmwareDirectoryChannelApi,
     private val settingsViewModelFactory: () -> SettingsDashboardViewModel,
     private val deviceInfoViewModelFactory: () -> DeviceInfoDashboardViewModel,
     private val accountViewModelFactory: () -> AccountDashboardViewModel,
@@ -136,7 +138,8 @@ class DashboardDecomposeComponent(
         DashboardConfig.FirmwareUpdate -> FirmwareUpdateDecomposeComponent(
             componentContext = componentContext,
             onBack = navigation::pop,
-            firmwareUpdateViewModelFactory = firmwareUpdateViewModelFactory
+            firmwareUpdateViewModelFactory = firmwareUpdateViewModelFactory,
+            busyFirmwareDirectoryChannelApi = busyFirmwareDirectoryChannelApi
         )
     }
 
@@ -170,6 +173,7 @@ class DashboardDecomposeComponent(
         private val screenStreamingViewModelFactory: () -> ScreenStreamingDashboardViewModel,
         private val wifiViewModelFactory: () -> WiFiDashboardViewModel,
         private val firmwareUpdateViewModelFactory: () -> FirmwareUpdateViewModel,
+        private val busyFirmwareDirectoryChannelApi: BusyFirmwareDirectoryChannelApi,
     ) {
         operator fun invoke(
             componentContext: ComponentContext,
@@ -189,7 +193,8 @@ class DashboardDecomposeComponent(
                 displayViewModelFactory = displayViewModelFactory,
                 screenStreamingViewModelFactory = screenStreamingViewModelFactory,
                 wifiViewModelFactory = wifiViewModelFactory,
-                firmwareUpdateViewModelFactory = firmwareUpdateViewModelFactory
+                firmwareUpdateViewModelFactory = firmwareUpdateViewModelFactory,
+                busyFirmwareDirectoryChannelApi = busyFirmwareDirectoryChannelApi
             )
         }
     }

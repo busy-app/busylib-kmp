@@ -14,6 +14,7 @@ import net.flipper.bridge.device.firmwareupdate.updater.api.FirmwareUpdaterApi
 import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.cloud.api.BUSYLibHostApi
 import net.flipper.bsb.cloud.api.BUSYLibHostApiStub
+import net.flipper.bsb.cloud.rest.channel.api.BusyFirmwareDirectoryChannelApi
 import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
 import net.flipper.busylib.di.BUSYLibGraphDesktop
 import net.flipper.busylib.di.create
@@ -28,7 +29,8 @@ class BUSYLibDesktop(
     override val firmwareUpdaterApi: FirmwareUpdaterApi,
     override val persistedStorage: FDevicePersistedStorage,
     override val multiStreamApi: MultiStreamApi,
-    private val startUpListeners: Set<InternalBUSYLibStartupListener>
+    private val startUpListeners: Set<InternalBUSYLibStartupListener>,
+    override val busyFirmwareDirectoryChannelApi: BusyFirmwareDirectoryChannelApi
 ) : BUSYLib {
     override fun launch() {
         startUpListeners.forEach {

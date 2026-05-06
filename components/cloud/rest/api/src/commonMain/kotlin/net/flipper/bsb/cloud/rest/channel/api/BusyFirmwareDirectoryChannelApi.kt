@@ -4,5 +4,6 @@ import kotlinx.coroutines.flow.StateFlow
 import net.flipper.bsb.cloud.rest.model.BsbFirmwareChannelId
 
 interface BusyFirmwareDirectoryChannelApi {
-    suspend fun getChannelIdFlow(): StateFlow<BsbFirmwareChannelId>
+    fun getChannelIdFlow(): StateFlow<BsbFirmwareChannelId>
+    suspend fun setChannel(channel: BsbFirmwareChannelId)
 }

@@ -13,6 +13,7 @@ import net.flipper.bridge.connection.transport.ble.impl.ios.central.FCentralMana
 import net.flipper.bridge.device.firmwareupdate.updater.api.FirmwareUpdaterApi
 import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.cloud.api.BUSYLibHostApi
+import net.flipper.bsb.cloud.rest.channel.api.BusyFirmwareDirectoryChannelApi
 import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
 import net.flipper.busylib.core.di.Provider
 import net.flipper.busylib.di.create
@@ -27,7 +28,8 @@ class BUSYLibIOS(
     override val persistedStorage: FDevicePersistedStorage,
     override val multiStreamApi: MultiStreamApi,
     val fCentralManagerApi: Provider<FCentralManagerApi>,
-    private val startUpListeners: Set<InternalBUSYLibStartupListener>
+    private val startUpListeners: Set<InternalBUSYLibStartupListener>,
+    override val busyFirmwareDirectoryChannelApi: BusyFirmwareDirectoryChannelApi
 ) : BUSYLibApple {
     override fun launch() {
         startUpListeners.forEach {
