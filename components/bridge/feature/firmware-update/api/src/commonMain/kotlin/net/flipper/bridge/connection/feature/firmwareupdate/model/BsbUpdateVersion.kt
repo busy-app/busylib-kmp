@@ -5,6 +5,8 @@ package net.flipper.bridge.connection.feature.firmwareupdate.model
  */
 sealed interface BsbUpdateVersion {
     data object NoUpdateAvailable : BsbUpdateVersion
+    data object FailedToCheck : BsbUpdateVersion
+    data object CheckingOnBBInProgress : BsbUpdateVersion
 
     sealed interface ReadyToUpdate : BsbUpdateVersion {
         val version: String

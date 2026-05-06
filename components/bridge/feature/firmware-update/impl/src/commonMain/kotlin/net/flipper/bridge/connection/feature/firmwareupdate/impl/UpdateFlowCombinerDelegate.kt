@@ -14,11 +14,9 @@ import net.flipper.bridge.connection.feature.events.api.getMapped
 import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
 import net.flipper.bridge.connection.feature.firmwareupdate.model.AvailableVersion
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateStatus
+import net.flipper.bridge.connection.feature.firmwareupdate.util.toAvailableVersion
 import net.flipper.bridge.connection.feature.firmwareupdate.util.toBsbUpdateStatus
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
-import net.flipper.bridge.connection.feature.rpc.api.model.UpdateStatus
-import net.flipper.busylib.core.wrapper.WrappedSharedFlow
-import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.merge
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
@@ -40,33 +38,22 @@ class UpdateFlowCombinerDelegate(
         emit(updateStatus)
     }.shareIn(scope = scope, SharingStarted.WhileSubscribed(), replay = 1)
 
-    val availableVersionFlow = fEventsFeatureApi.get(scope, initial = {
-        runSuspendCatching {
-            rpcUpdaterFlow.first().let { response ->
-                BusyLibUpdateEvent.Update.UpdateCheck(
-                    availableVersion = when (response.check.status) {
-                        UpdateStatus.Check.CheckResult.AVAILABLE -> response.check.availableVersion.ifBlank { null }
-                        UpdateStatus.Check.CheckResult.NOT_AVAILABLE,
-                        UpdateStatus.Check.CheckResult.FAILURE,
-                        UpdateStatus.Check.CheckResult.NONE -> null
-                    }
-                )
+    val availableVersionFlow = fEventsFeatureApi
+        .getMapped<BusyLibUpdateEvent.Update.UpdateCheck, AvailableVersion>(
+            scope = scope,
+            initial = {
+                runSuspendCatching {
+                    rpcUpdaterFlow.first().toAvailableVersion()
+                }
+            }, mapper = {
+                it.toAvailableVersion()
             }
-        }
-    }, mapper = { flow ->
-        flow.map { event ->
-            val version = event.availableVersion
-            if (version.isNullOrBlank()) {
-                AvailableVersion.NotAvailable
-            } else {
-                AvailableVersion.Available(version)
-            }
-        }
-    }).stateIn(scope, SharingStarted.WhileSubscribed(), AvailableVersion.Loading)
+        ).stateIn(scope, SharingStarted.WhileSubscribed(), AvailableVersion.Loading)
 
     private val updateDownloadEventsFlow = fEventsFeatureApi
         .get<BusyLibUpdateEvent.Update.UpdateDownload>()
         .map { it.busyLibUpdateEvent.toBsbUpdateStatus() }
+
 
     private val updateStateEventsFlow = fEventsFeatureApi
         .getMapped<BusyLibUpdateEvent.Update.UpdateState, BsbUpdateStatus>(scope, initial = {

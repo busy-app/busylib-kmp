@@ -13,12 +13,14 @@ internal object FwUpdateStatusMapper {
         availableVersion: String?
     ): FwUpdateState {
         return when(updateStatus) {
-            is BsbUpdateStatus.FailedUpdate -> TODO()
+            is BsbUpdateStatus.FailedUpdate -> FwUpdateState.Failure
             BsbUpdateStatus.InProgress.Downloading.NotSpecified -> TODO()
             is BsbUpdateStatus.InProgress.Downloading.Specified -> TODO()
             is BsbUpdateStatus.InProgress.Other -> TODO()
-            BsbUpdateStatus.ReadyToInstall.BatteryLow -> TODO()
+            BsbUpdateStatus.ReadyToInstall.BatteryLow -> FwUpdateState.LowBattery
             BsbUpdateStatus.ReadyToInstall.Ready -> TODO()
+            BsbUpdateStatus.InProgress.CheckingInProgress -> FwUpdateState.CheckingVersion
+            BsbUpdateStatus.Loading -> TODO()
         }
     }
 }

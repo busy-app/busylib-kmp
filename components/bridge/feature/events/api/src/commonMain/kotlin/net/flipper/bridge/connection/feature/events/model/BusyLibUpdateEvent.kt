@@ -72,8 +72,24 @@ sealed interface BusyLibUpdateEvent {
         }
 
         data class UpdateCheck(
-            val availableVersion: String?,
-        ) : Update
+            val result: CheckResult
+        ) : Update {
+            sealed interface CheckResult {
+                data class Available(
+                    val availableVersion: String
+                ) : CheckResult
+
+                data class Unavailable(
+                    val reason: CheckError
+                ) : CheckResult {
+                    enum class CheckError {
+                        NOT_AVAILABLE,
+                        FAILURE,
+                        IDLE
+                    }
+                }
+            }
+        }
 
         data class UpdateDownload(
             val speedBytesPerSec: Int,

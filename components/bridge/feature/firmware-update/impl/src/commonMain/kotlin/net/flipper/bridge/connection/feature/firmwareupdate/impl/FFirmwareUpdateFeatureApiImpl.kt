@@ -27,6 +27,7 @@ import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent.Aut
 import net.flipper.bridge.connection.feature.firmwareupdate.api.FFirmwareUpdateFeatureApi
 import net.flipper.bridge.connection.feature.firmwareupdate.model.AvailableVersion
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateVersion
+import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateVersion.ReadyToUpdate.*
 import net.flipper.bridge.connection.feature.info.api.FDeviceInfoFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.AutoUpdate
@@ -107,12 +108,16 @@ class FFirmwareUpdateFeatureApiImpl(
                 availableVersionFlow
                     .map { version ->
                         when (version) {
-                            is AvailableVersion.Available -> BsbUpdateVersion.ReadyToUpdate.Default(
+                            is AvailableVersion.Available -> Default(
                                 version.version
                             )
 
                             AvailableVersion.NotAvailable -> BsbUpdateVersion.NoUpdateAvailable
                             AvailableVersion.Loading -> BsbUpdateVersion.Loading
+                            AvailableVersion.FailedToCheck -> BsbUpdateVersion.FailedToCheck
+                            AvailableVersion.CheckingOnBBInProgress -> {
+                                BsbUpdateVersion.CheckingOnBBInProgress
+                            }
                         }
                     }
             }
@@ -135,6 +140,7 @@ class FFirmwareUpdateFeatureApiImpl(
                 is BsbUpdateVersion.ReadyToUpdate.Url -> {
                     busyBarVersion.changelog
                 }
+
                 BsbUpdateVersion.Loading,
                 BsbUpdateVersion.NoUpdateAvailable -> null
             }
