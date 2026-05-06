@@ -1,5 +1,6 @@
 package net.flipper.bridge.connection.transport.tcp.lan.impl.monitor.fixture
 
+import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.CoroutineScope
 import net.flipper.bridge.connection.transport.tcp.lan.FLanDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.tcp.lan.impl.monitor.FAppleLanConnectionMonitor
@@ -7,7 +8,9 @@ import net.flipper.bridge.connection.transport.tcp.lan.impl.monitor.fixture.api.
 import net.flipper.bridge.connection.transport.tcp.lan.impl.monitor.fixture.api.RecordingStatusListener
 import net.flipper.bridge.connection.transport.tcp.lan.impl.monitor.fixture.tcp.PosixTcpServer
 import platform.Foundation.NSThread
+import platform.Network.nw_interface_type_loopback
 
+@OptIn(ExperimentalForeignApi::class)
 class FAppleLanConnectionMonitorTestFixture {
     val server: PosixTcpServer = PosixTcpServer()
     val listener: RecordingStatusListener = RecordingStatusListener()
@@ -28,7 +31,8 @@ class FAppleLanConnectionMonitorTestFixture {
             config = config,
             scope = scope,
             deviceApi = deviceApi,
-            port = port
+            port = port,
+            requiredInterfaceType = nw_interface_type_loopback
         )
         monitors.add(monitor)
         return monitor
