@@ -1,7 +1,10 @@
 package net.flipper.bridge.connection.screens.fwupdate
 
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -10,25 +13,41 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
+import androidx.compose.material.DropdownMenuItem
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.ExposedDropdownMenuBox
+import androidx.compose.material.Icon
 import androidx.compose.material.LinearProgressIndicator
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import busylibkmp.sample.cmp.generated.resources.Res
+import busylibkmp.sample.cmp.generated.resources.ic_more
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.instancekeeper.getOrCreate
+import kotlinx.coroutines.launch
 import net.flipper.bridge.connection.screens.decompose.DecomposeOnBackParameter
 import net.flipper.bridge.connection.screens.decompose.ScreenDecomposeComponent
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateEvent
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateState
+import net.flipper.bsb.cloud.rest.channel.api.BusyFirmwareDirectoryChannelApi
+import net.flipper.bsb.cloud.rest.model.BsbFirmwareChannelId
+import org.jetbrains.compose.resources.painterResource
 
 class FirmwareUpdateDecomposeComponent(
     componentContext: ComponentContext,
     private val onBack: DecomposeOnBackParameter,
+    private val busyFirmwareDirectoryChannelApi: BusyFirmwareDirectoryChannelApi,
     private val firmwareUpdateViewModelFactory: () -> FirmwareUpdateViewModel
 ) : ScreenDecomposeComponent(componentContext) {
     private val viewModel = instanceKeeper.getOrCreate {
@@ -52,7 +71,7 @@ class FirmwareUpdateDecomposeComponent(
                 style = MaterialTheme.typography.h5,
                 color = MaterialTheme.colors.onBackground
             )
-
+            FirmwareChannelDropdown()
             Spacer(Modifier.height(8.dp))
 
             StateSection(state)
@@ -196,6 +215,63 @@ class FirmwareUpdateDecomposeComponent(
         )
     }
 
+    @OptIn(ExperimentalMaterialApi::class)
+    @Composable
+    private fun FirmwareChannelDropdown() {
+        val scope = rememberCoroutineScope()
+        val currentChannel by busyFirmwareDirectoryChannelApi.getChannelIdFlow().collectAsState()
+        var isExpanded by remember { mutableStateOf(false) }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { isExpanded = true }
+                .border(1.dp, Color.Gray),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            ExposedDropdownMenuBox(
+                expanded = isExpanded,
+                onExpandedChange = { isExpanded = !isExpanded },
+                modifier = Modifier
+                    .padding(16.dp)
+                    .weight(1f),
+            ) {
+                Text(
+                    text = currentChannel.id,
+                    color = MaterialTheme.colors.onBackground
+                )
+                ExposedDropdownMenu(
+                    expanded = isExpanded,
+                    onDismissRequest = { isExpanded = false }
+                ) {
+                    BsbFirmwareChannelId.entries.forEach { channel ->
+                        DropdownMenuItem(
+                            modifier = Modifier.fillMaxWidth(),
+                            onClick = {
+                                isExpanded = false
+                                scope.launch {
+                                    busyFirmwareDirectoryChannelApi.setChannel(channel)
+                                }
+                            }
+                        ) {
+                            Text(
+                                text = channel.id,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+                }
+            }
+            Icon(
+                modifier = Modifier.padding(end = 16.dp),
+                painter = painterResource(Res.drawable.ic_more),
+                contentDescription = null,
+                tint = MaterialTheme.colors.onBackground
+            )
+        }
+    }
+
     @Composable
     private fun ActionButtons(state: FwUpdateState) {
         val canStart = state is FwUpdateState.UpdateAvailable ||
@@ -244,16 +320,18 @@ class FirmwareUpdateDecomposeComponent(
     }
 
     class Factory(
-        private val firmwareUpdateViewModelFactory: () -> FirmwareUpdateViewModel
+        private val firmwareUpdateViewModelFactory: () -> FirmwareUpdateViewModel,
+        private val busyFirmwareDirectoryChannelApi: BusyFirmwareDirectoryChannelApi
     ) {
         fun invoke(
             componentContext: ComponentContext,
-            onBack: DecomposeOnBackParameter
+            onBack: DecomposeOnBackParameter,
         ): FirmwareUpdateDecomposeComponent {
             return FirmwareUpdateDecomposeComponent(
                 componentContext = componentContext,
                 onBack = onBack,
-                firmwareUpdateViewModelFactory = firmwareUpdateViewModelFactory
+                firmwareUpdateViewModelFactory = firmwareUpdateViewModelFactory,
+                busyFirmwareDirectoryChannelApi = busyFirmwareDirectoryChannelApi
             )
         }
     }

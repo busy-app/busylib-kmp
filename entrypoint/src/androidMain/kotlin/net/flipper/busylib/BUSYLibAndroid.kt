@@ -16,6 +16,7 @@ import net.flipper.bridge.device.firmwareupdate.updater.api.FirmwareUpdaterApi
 import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.cloud.api.BUSYLibHostApi
 import net.flipper.bsb.cloud.api.BUSYLibHostApiStub
+import net.flipper.bsb.cloud.rest.channel.api.BusyFirmwareDirectoryChannelApi
 import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
 import net.flipper.busylib.di.BUSYLibGraphAndroid
 import net.flipper.busylib.di.create
@@ -31,6 +32,7 @@ class BUSYLibAndroid(
     override val firmwareUpdaterApi: FirmwareUpdaterApi,
     override val persistedStorage: FDevicePersistedStorage,
     override val multiStreamApi: MultiStreamApi,
+    override val busyFirmwareDirectoryChannelApi: BusyFirmwareDirectoryChannelApi,
     val flipperScanner: FlipperScanner,
     val centralManager: CentralManager,
     private val startUpListeners: Set<InternalBUSYLibStartupListener>

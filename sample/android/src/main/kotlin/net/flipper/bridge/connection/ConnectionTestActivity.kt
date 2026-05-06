@@ -37,7 +37,8 @@ class ConnectionTestActivity : AppCompatActivity() {
                     busyLib.flipperScanner
                 )
             },
-            principalApi = app.principalApi
+            principalApi = app.principalApi,
+            busyFirmwareDirectoryChannelApi = busyLib.busyFirmwareDirectoryChannelApi
         )
 
         setContent {

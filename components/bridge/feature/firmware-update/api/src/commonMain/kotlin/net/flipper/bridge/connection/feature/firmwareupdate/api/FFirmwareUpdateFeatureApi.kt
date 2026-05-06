@@ -13,6 +13,6 @@ interface FFirmwareUpdateFeatureApi : FDeviceFeatureApi {
     val isAutoUpdateEnabledFlow: WrappedSharedFlow<Boolean>
     suspend fun setAutoUpdate(isEnabled: Boolean): CResult<Unit>
 
-    val updateVersionFlow: WrappedFlow<BsbUpdateVersion>
+    val updateVersionFlow: WrappedFlow<BsbUpdateVersion?>
     val updateVersionChangelog: WrappedFlow<String>
 }

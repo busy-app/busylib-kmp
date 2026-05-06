@@ -8,6 +8,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.filterNotNull
@@ -89,7 +90,7 @@ class FirmwareUpdaterApiImpl(
             .map { status -> status.tryCast<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>() }
             .map { status -> status?.featureApi }
             .flatMapLatest { feature -> feature?.updateVersionFlow.orNullable() }
-            .filterNotNull(),
+            .distinctUntilChanged(),
         flow3 = firmwareDownloaderApi.state,
         flow4 = firmwareUploaderApi.state,
         transform = { updateStatusSource, bsbUpdateVersion, downloaderState, uploaderState ->
@@ -100,7 +101,7 @@ class FirmwareUpdaterApiImpl(
                     )
                 }
 
-                is BsbUpdateVersion.Url -> {
+                null, is BsbUpdateVersion.Url -> {
                     FwUpdateStatusMapper.toFwUpdateState(
                         downloaderState = downloaderState,
                         uploaderState = uploaderState,

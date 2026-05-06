@@ -54,9 +54,11 @@ kotlin {
         implementation(projects.components.core.ktx)
         implementation(projects.components.core.wrapper)
         implementation(projects.components.core.ktor)
+        implementation(projects.components.core.ktor)
 
         api(projects.entrypoint)
         implementation(projects.components.bridge.config.impl)
+        implementation(projects.components.cloud.rest.api)
 
         implementation(libs.settings)
         implementation(libs.settings.observable)

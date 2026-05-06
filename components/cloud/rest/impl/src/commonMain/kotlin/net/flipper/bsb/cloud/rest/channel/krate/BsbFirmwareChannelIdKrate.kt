@@ -7,18 +7,18 @@ import ru.astrainteractive.klibs.kstorage.api.StateFlowMutableKrate
 import ru.astrainteractive.klibs.kstorage.api.asStateFlowMutableKrate
 import ru.astrainteractive.klibs.kstorage.api.impl.DefaultMutableKrate
 
-private const val BSB_FIRMWARE_CHANGELOG_ID_KEY = "bsb_firmware_channel_id_key"
+private const val BSB_FIRMWARE_CHANGELOG_ID_KEY = "bsb_firmware_channel_id_key_v2"
 
 @Inject
 class BsbFirmwareChannelIdKrate(
     private val settings: Settings
 ) : StateFlowMutableKrate<BsbFirmwareChannelId> by DefaultMutableKrate(
-    factory = { BsbFirmwareChannelId.DEVELOPMENT },
+    factory = { BsbFirmwareChannelId.RELEASE },
     loader = {
         val string = settings.getStringOrNull(BSB_FIRMWARE_CHANGELOG_ID_KEY)
         BsbFirmwareChannelId.entries
             .firstOrNull { entry -> entry.id == string }
-            ?: BsbFirmwareChannelId.DEVELOPMENT
+            ?: BsbFirmwareChannelId.RELEASE
     },
     saver = { bsbFirmwareChannelId ->
         settings.putString(key = BSB_FIRMWARE_CHANGELOG_ID_KEY, value = bsbFirmwareChannelId.id)

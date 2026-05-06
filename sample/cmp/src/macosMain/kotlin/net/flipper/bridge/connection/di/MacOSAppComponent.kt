@@ -59,6 +59,7 @@ fun getRootDecomposeComponent(): ConnectionRootDecomposeComponent {
                 busyLib.connectionService,
             )
         },
-        principalApi = principalApi
+        principalApi = principalApi,
+        busyFirmwareDirectoryChannelApi = busyLib.busyFirmwareDirectoryChannelApi
     )
 }

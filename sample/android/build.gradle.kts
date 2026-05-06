@@ -33,6 +33,7 @@ dependencies {
     implementation(projects.components.core.log)
     implementation(projects.components.core.ktx)
     implementation(projects.components.core.wrapper)
+    implementation(projects.components.cloud.rest.api)
 
     api(projects.entrypoint)
     implementation(projects.components.bridge.config.impl)
