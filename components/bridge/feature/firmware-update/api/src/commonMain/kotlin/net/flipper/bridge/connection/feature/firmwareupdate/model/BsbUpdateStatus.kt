@@ -1,7 +1,11 @@
 package net.flipper.bridge.connection.feature.firmwareupdate.model
 
 sealed interface BsbUpdateStatus {
-    data class ReadyToInstall(val isAllowed: Boolean) : BsbUpdateStatus
+    sealed interface ReadyToInstall : BsbUpdateStatus {
+        data object BatteryLow : ReadyToInstall
+        data object Ready : ReadyToInstall
+    }
+
     sealed interface InProgress : BsbUpdateStatus {
         sealed interface Downloading : InProgress {
             data object NotSpecified : Downloading
@@ -11,6 +15,7 @@ sealed interface BsbUpdateStatus {
                 val totalBytes: Int
             ) : Downloading
         }
+
         data class Other(val stage: ProgressStage) : InProgress {
             enum class ProgressStage {
                 SHA_VERIFICATION,
@@ -23,9 +28,7 @@ sealed interface BsbUpdateStatus {
 
     data class FailedUpdate(val reason: Reason) : BsbUpdateStatus {
         enum class Reason {
-            BATTERY_LOW,
             DOWNLOAD_FAILURE,
-            DOWNLOAD_ABORT,
             SHA_MISMATCH,
             UNPACK_STAGING_DIR_FAILURE,
             UNPACK_ARCHIVE_OPEN_FAILURE,

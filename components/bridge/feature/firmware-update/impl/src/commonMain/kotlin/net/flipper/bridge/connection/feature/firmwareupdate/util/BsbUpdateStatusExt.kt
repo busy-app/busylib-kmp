@@ -16,14 +16,14 @@ internal fun BusyLibUpdateEvent.Update.UpdateDownload.toBsbUpdateStatus(): BsbUp
     )
 }
 
-internal fun BusyLibUpdateEvent.Update.UpdateState.toBsbUpdateStatus(): BsbUpdateStatus {
+internal fun UpdateState.toBsbUpdateStatus(): BsbUpdateStatus {
     val failReason = when (status) {
         UpdateState.BsbStatus.OK,
-        UpdateState.BsbStatus.BUSY -> null
+        UpdateState.BsbStatus.BUSY,
+        UpdateState.BsbStatus.BATTERY_LOW,
+        UpdateState.BsbStatus.DOWNLOAD_ABORT -> null
 
-        UpdateState.BsbStatus.BATTERY_LOW -> FailedUpdate.Reason.BATTERY_LOW
         UpdateState.BsbStatus.DOWNLOAD_FAILURE -> FailedUpdate.Reason.DOWNLOAD_FAILURE
-        UpdateState.BsbStatus.DOWNLOAD_ABORT -> FailedUpdate.Reason.DOWNLOAD_ABORT
         UpdateState.BsbStatus.SHA_MISMATCH -> FailedUpdate.Reason.SHA_MISMATCH
         UpdateState.BsbStatus.UNPACK_STAGING_DIR_FAILURE -> FailedUpdate.Reason.UNPACK_STAGING_DIR_FAILURE
         UpdateState.BsbStatus.UNPACK_ARCHIVE_OPEN_FAILURE -> FailedUpdate.Reason.UNPACK_ARCHIVE_OPEN_FAILURE
@@ -43,18 +43,22 @@ internal fun BusyLibUpdateEvent.Update.UpdateState.toBsbUpdateStatus(): BsbUpdat
         UpdateState.BsbAction.UNPACK -> BsbUpdateStatus.InProgress.Other(BsbUpdateStatus.InProgress.Other.ProgressStage.UNPACK)
         UpdateState.BsbAction.PREPARE -> BsbUpdateStatus.InProgress.Other(BsbUpdateStatus.InProgress.Other.ProgressStage.PREPARE)
         UpdateState.BsbAction.APPLY -> BsbUpdateStatus.InProgress.Other(BsbUpdateStatus.InProgress.Other.ProgressStage.APPLY)
-        UpdateState.BsbAction.NONE -> BsbUpdateStatus.ReadyToInstall(isAllowed = true)
+        UpdateState.BsbAction.NONE -> if (status == UpdateState.BsbStatus.BATTERY_LOW) {
+            BsbUpdateStatus.ReadyToInstall.BatteryLow
+        } else {
+            BsbUpdateStatus.ReadyToInstall.Ready
+        }
     }
 }
 
 internal fun UpdateStatus.toBsbUpdateStatus(): BsbUpdateStatus {
     val failReason = when (install.status) {
         Status.OK,
-        Status.BUSY -> null
+        Status.BUSY,
+        Status.BATTERY_LOW,
+        Status.DOWNLOAD_ABORT -> null
 
-        Status.BATTERY_LOW -> FailedUpdate.Reason.BATTERY_LOW
         Status.DOWNLOAD_FAILURE -> FailedUpdate.Reason.DOWNLOAD_FAILURE
-        Status.DOWNLOAD_ABORT -> FailedUpdate.Reason.DOWNLOAD_ABORT
         Status.SHA_MISMATCH -> FailedUpdate.Reason.SHA_MISMATCH
         Status.UNPACK_STAGING_DIR_FAILURE -> FailedUpdate.Reason.UNPACK_STAGING_DIR_FAILURE
         Status.UNPACK_ARCHIVE_OPEN_FAILURE -> FailedUpdate.Reason.UNPACK_ARCHIVE_OPEN_FAILURE
@@ -82,8 +86,10 @@ internal fun UpdateStatus.toBsbUpdateStatus(): BsbUpdateStatus {
         UpdateStatus.Install.Action.UNPACK -> BsbUpdateStatus.InProgress.Other(BsbUpdateStatus.InProgress.Other.ProgressStage.UNPACK)
         UpdateStatus.Install.Action.PREPARE -> BsbUpdateStatus.InProgress.Other(BsbUpdateStatus.InProgress.Other.ProgressStage.PREPARE)
         UpdateStatus.Install.Action.APPLY -> BsbUpdateStatus.InProgress.Other(BsbUpdateStatus.InProgress.Other.ProgressStage.APPLY)
-        UpdateStatus.Install.Action.NONE -> BsbUpdateStatus.ReadyToInstall(
-            isAllowed = install.isAllowed
-        )
+        UpdateStatus.Install.Action.NONE -> if (install.status == Status.BATTERY_LOW || !install.isAllowed) {
+            BsbUpdateStatus.ReadyToInstall.BatteryLow
+        } else {
+            BsbUpdateStatus.ReadyToInstall.Ready
+        }
     }
 }
