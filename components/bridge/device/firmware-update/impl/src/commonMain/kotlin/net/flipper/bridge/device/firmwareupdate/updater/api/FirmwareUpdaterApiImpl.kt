@@ -102,15 +102,13 @@ class FirmwareUpdaterApiImpl(
                     )
                 }
 
-                is BsbUpdateVersion.Url -> {
+                null, is BsbUpdateVersion.Url -> {
                     FwUpdateStatusMapper.toFwUpdateState(
                         downloaderState = downloaderState,
                         uploaderState = uploaderState,
                         bsbUrlUpdateVersion = bsbUpdateVersion,
                     )
                 }
-
-                null -> FwUpdateState.NoUpdateAvailable
             }
         }
     ).stateIn(scope, SharingStarted.Lazily, FwUpdateState.Pending).wrap()
