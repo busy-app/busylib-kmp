@@ -35,13 +35,10 @@ import platform.Network.nw_connection_state_ready
 import platform.Network.nw_connection_state_waiting
 import platform.Network.nw_connection_t
 import platform.Network.nw_endpoint_create_host
-import platform.Network.nw_interface_type_t
-import platform.Network.nw_interface_type_wired
 import platform.Network.nw_parameters_copy_default_protocol_stack
 import platform.Network.nw_parameters_create
 import platform.Network.nw_parameters_set_prohibit_constrained
 import platform.Network.nw_parameters_set_prohibit_expensive
-import platform.Network.nw_parameters_set_required_interface_type
 import platform.Network.nw_path_get_status
 import platform.Network.nw_path_status_satisfied
 import platform.Network.nw_protocol_stack_set_transport_protocol
@@ -58,8 +55,7 @@ class FAppleLanConnectionMonitor(
     private val config: FLanDeviceConnectionConfig,
     private val scope: CoroutineScope,
     private val deviceApi: FConnectedDeviceApi,
-    private val port: String = DEFAULT_PORT,
-    private val requiredInterfaceType: nw_interface_type_t = nw_interface_type_wired
+    private val port: String = DEFAULT_PORT
 ) : FConnectionMonitorApi, LogTagProvider {
     override val TAG: String = "FAppleLanConnectionMonitor"
     private val queue = dispatch_queue_create("net.flipper.lan.connection", null)
@@ -91,7 +87,6 @@ class FAppleLanConnectionMonitor(
 
             nw_protocol_stack_set_transport_protocol(protocolStack, tcpOptions)
 
-            nw_parameters_set_required_interface_type(parameters, requiredInterfaceType)
             nw_parameters_set_prohibit_expensive(parameters, true)
             nw_parameters_set_prohibit_constrained(parameters, true)
 
