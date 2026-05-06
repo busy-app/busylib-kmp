@@ -1,7 +1,14 @@
 package net.flipper.bridge.connection.transport.tcp.lan.impl.monitor
 
 import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.alloc
+import kotlinx.cinterop.convert
+import kotlinx.cinterop.memScoped
+import kotlinx.cinterop.ptr
+import kotlinx.cinterop.reinterpret
+import kotlinx.cinterop.sizeOf
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
@@ -34,7 +41,9 @@ import platform.Network.nw_connection_state_preparing
 import platform.Network.nw_connection_state_ready
 import platform.Network.nw_connection_state_waiting
 import platform.Network.nw_connection_t
+import platform.Network.nw_endpoint_create_address
 import platform.Network.nw_endpoint_create_host
+import platform.Network.nw_endpoint_t
 import platform.Network.nw_parameters_copy_default_protocol_stack
 import platform.Network.nw_parameters_create
 import platform.Network.nw_parameters_set_prohibit_constrained
@@ -48,6 +57,8 @@ import platform.Network.nw_tcp_options_set_keepalive_count
 import platform.Network.nw_tcp_options_set_keepalive_idle_time
 import platform.Network.nw_tcp_options_set_keepalive_interval
 import platform.darwin.dispatch_queue_create
+import platform.posix.AF_INET
+import platform.posix.sockaddr_in
 
 @OptIn(ExperimentalForeignApi::class)
 class FAppleLanConnectionMonitor(
@@ -71,11 +82,76 @@ class FAppleLanConnectionMonitor(
         }
     }
 
+    /**
+     * Parses [host] as a dotted-decimal IPv4 literal (e.g. `10.0.4.20`).
+     *
+     * Returns the address packed in **network byte order** (big-endian) ready
+     * to be assigned to [sockaddr_in.sin_addr.s_addr], or `null` if [host] is
+     * not a well-formed IPv4 literal.
+     *
+     * We deliberately do not use `inet_pton` here: on Apple targets it is
+     * exposed as an `<arpa/inet.h>` symbol that is not always linkable from
+     * Kotlin/Native cinterop, while the parsing logic is trivial.
+     */
+    private fun parseIpv4(host: String): UInt? {
+        val parts = host.split('.')
+        if (parts.size != IPV4_OCTET_COUNT) return null
+        var network = 0u
+        for (index in 0 until IPV4_OCTET_COUNT) {
+            val octet = parts[index].toIntOrNull() ?: return null
+            if (octet !in 0..IPV4_OCTET_MAX) return null
+            // Network byte order = big-endian. The leftmost octet ("10" in
+            // "10.0.4.20") goes into the **lowest** memory byte, which on
+            // little-endian hosts means it lives in the **lowest** bits of the
+            // resulting `UInt` because `s_addr` is interpreted byte-by-byte.
+            network = network or (octet.toUInt() shl (BITS_PER_BYTE * index))
+        }
+        return network
+    }
+
+    /**
+     * Swaps a [UShort] from host byte order to network byte order.
+     *
+     * Equivalent to libc's `htons`. Apple platforms are little-endian, so we
+     * always swap; we don't bother detecting the host endianness because all
+     * Kotlin/Native Apple targets are LE.
+     */
+    private fun hostToNetworkShort(value: UShort): UShort {
+        val v = value.toInt() and 0xFFFF
+        return ((v shl BITS_PER_BYTE) or (v ushr BITS_PER_BYTE) and 0xFFFF).toUShort()
+    }
+
+    /**
+     * Builds an [nw_endpoint_t] that points at `config.host:port`.
+     *
+     * If `config.host` is a literal IPv4 address (the BUSY Bar's static
+     * `10.0.4.20` by default) we build the endpoint from a raw [sockaddr_in]
+     * via [nw_endpoint_create_address]. This skips Network.framework's host
+     * resolution / DNS / proxy-auto-config pipeline, which would otherwise
+     * route the connection over Wi-Fi through the system HTTP proxy / iCloud
+     * Private Relay (MASQUE) and return `502 unreachable through proxy`.
+     *
+     * For non-IPv4 inputs we fall back to [nw_endpoint_create_host] (hostname
+     * or IPv6 literal).
+     */
+    private fun createEndpoint(): nw_endpoint_t {
+        val portNumber = port.toUShortOrNull() ?: return nw_endpoint_create_host(config.host, port)
+        val ipv4 = parseIpv4(config.host) ?: return nw_endpoint_create_host(config.host, port)
+        return memScoped {
+            val addr = alloc<sockaddr_in>()
+            addr.sin_len = sizeOf<sockaddr_in>().convert()
+            addr.sin_family = AF_INET.convert()
+            addr.sin_port = hostToNetworkShort(portNumber)
+            addr.sin_addr.s_addr = ipv4
+            nw_endpoint_create_address(addr.ptr.reinterpret())
+        }
+    }
+
     private fun createConnection(): nw_connection_t {
         return connectionLock.withLock {
             connection?.let { nw_connection_cancel(it) }
 
-            val endpoint = nw_endpoint_create_host(config.host, port)
+            val endpoint = createEndpoint()
             val parameters = nw_parameters_create()
             val protocolStack = nw_parameters_copy_default_protocol_stack(parameters)
 
@@ -224,6 +300,15 @@ class FAppleLanConnectionMonitor(
 
     companion object {
         private const val DEFAULT_PORT = "80"
+
+        /** Number of octets in an IPv4 address ("a.b.c.d"). */
+        private const val IPV4_OCTET_COUNT = 4
+
+        /** Maximum value of a single IPv4 octet. */
+        private const val IPV4_OCTET_MAX = 255
+
+        /** Number of bits in a single byte. */
+        private const val BITS_PER_BYTE = 8
 
         /**
          * Amount of seconds before sending keep-alive requests
