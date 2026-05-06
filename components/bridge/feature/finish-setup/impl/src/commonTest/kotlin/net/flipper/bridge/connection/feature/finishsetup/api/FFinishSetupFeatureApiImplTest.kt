@@ -98,7 +98,7 @@ class FFinishSetupFeatureApiImplTest {
 
         override val isAutoUpdateEnabledFlow = MutableSharedFlow<Boolean>().wrap()
 
-        override val updateVersionFlow: WrappedFlow<BsbUpdateVersion> =
+        override val updateVersionFlow: WrappedFlow<BsbUpdateVersion?> =
             MutableStateFlow<BsbUpdateVersion>(BsbUpdateVersion.Default("1.0.0")).asFlow().wrap()
 
         override val updateVersionChangelog: WrappedFlow<String> =

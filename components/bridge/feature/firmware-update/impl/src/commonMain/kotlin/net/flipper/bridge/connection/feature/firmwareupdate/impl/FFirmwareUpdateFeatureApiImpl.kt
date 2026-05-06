@@ -4,11 +4,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.shareIn
 import me.tatarka.inject.annotations.Inject
@@ -36,8 +35,6 @@ import net.flipper.bridge.connection.transport.common.api.serial.FHTTPTransportC
 import net.flipper.bridge.connection.transport.common.api.serial.hasCapability
 import net.flipper.bsb.cloud.rest.api.BusyFirmwareDirectoryApi
 import net.flipper.bsb.cloud.rest.channel.api.BusyFirmwareDirectoryChannelApi
-import net.flipper.bsb.cloud.rest.model.BsbFirmwareUpdateFileType
-import net.flipper.bsb.cloud.rest.model.BsbFirmwareUpdateTarget
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.core.wrapper.CResult
 import net.flipper.busylib.core.wrapper.WrappedFlow
@@ -49,7 +46,6 @@ import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.merge
 import net.flipper.core.busylib.ktx.common.orElse
 import net.flipper.core.busylib.ktx.common.orEmpty
-import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.busylib.ktx.common.throttleLatest
 import net.flipper.core.busylib.ktx.common.throttleLatestCached
 import net.flipper.core.busylib.ktx.common.transformWhileSubscribed
@@ -66,9 +62,7 @@ class FFirmwareUpdateFeatureApiImpl(
     private val rpcFeatureApi: FRpcFeatureApi,
     private val fEventsFeatureApi: FEventsFeatureApi?,
     private val deviceApi: FConnectedDeviceApi,
-    private val busyFirmwareDirectoryApi: BusyFirmwareDirectoryApi,
-    private val fDeviceInfoFeatureApi: FDeviceInfoFeatureApi,
-    private val busyFirmwareDirectoryChannelApi: BusyFirmwareDirectoryChannelApi
+    private val lanUpdateVersionProvider: LanUpdateVersionProvider,
 ) : FFirmwareUpdateFeatureApi, LogTagProvider {
     override val TAG: String = "FFirmwareUpdateFeatureApi"
 
@@ -150,59 +144,22 @@ class FFirmwareUpdateFeatureApiImpl(
         }
         .wrap()
 
-    private suspend fun requireVersionFromRestApi(): BsbUpdateVersion.Url {
-        return busyFirmwareDirectoryChannelApi
-            .getChannelIdFlow()
-            .map { channelId -> channelId.id }
-            .mapLatest { channelId ->
-                exponentialRetry {
-                    runSuspendCatching {
-                        val bsbFirmwareUpdateVersion = busyFirmwareDirectoryApi
-                            .getFirmwareDirectory()
-                            .getOrThrow()
-                            .channels
-                            .firstOrNull { channel -> channel.id == channelId }
-                            ?.versions
-                            ?.maxByOrNull { version -> version.timestamp }
-                            ?: error("No $channelId version found")
-                        val updateFile = bsbFirmwareUpdateVersion
-                            .files
-                            .filter { it.target == BsbFirmwareUpdateTarget.F21 }
-                            .firstOrNull { it.type == BsbFirmwareUpdateFileType.UPDATE_TGZ }
-                            ?: error("No update file found")
-                        BsbUpdateVersion.Url(
-                            version = bsbFirmwareUpdateVersion.version,
-                            url = updateFile.url,
-                            sha256 = updateFile.sha256,
-                            changelog = bsbFirmwareUpdateVersion.changelog
-                        )
-                    }.onFailure { t -> error(t) { "#requireVersionFromRestApi could not find version from REST api " } }
-                }
+    override val updateVersionFlow: WrappedFlow<BsbUpdateVersion?> = deviceApi
+        .tryCast<FHTTPDeviceApi>()
+        ?.hasCapability(FHTTPTransportCapability.BB_DOWNLOAD_UPDATE_SUPPORTED)
+        .orElse { false }
+        .distinctUntilChanged()
+        .flatMapLatest { useRestApiVersion ->
+            info { "#updateVersionFlow useRestApiVersion: $useRestApiVersion" }
+            if (useRestApiVersion) {
+                lanUpdateVersionProvider.get()
+            } else {
+                updateStatusFlow
+                    .map { status -> status.check.availableVersion }
+                    .filter { versionString -> versionString.isNotBlank() }
+                    .filter { versionString -> versionString.isNotEmpty() }
+                    .map(BsbUpdateVersion::Default)
             }
-            .first()
-    }
-
-    override val updateVersionFlow: WrappedFlow<BsbUpdateVersion> = fDeviceInfoFeatureApi
-        .deviceVersionFlow
-        .flatMapLatest { currentVersion ->
-            deviceApi
-                .tryCast<FHTTPDeviceApi>()
-                ?.hasCapability(FHTTPTransportCapability.BB_DOWNLOAD_UPDATE_SUPPORTED)
-                .orElse { false }
-                .distinctUntilChanged()
-                .flatMapLatest { useRestApiVersion ->
-                    info { "#updateVersionFlow useRestApiVersion: $useRestApiVersion" }
-                    if (useRestApiVersion) {
-                        flowOf(requireVersionFromRestApi())
-                    } else {
-                        updateStatusFlow
-                            .map { status -> status.check.availableVersion }
-                            .filter { versionString -> versionString.isNotBlank() }
-                            .filter { versionString -> versionString.isNotEmpty() }
-                            .map(BsbUpdateVersion::Default)
-                    }
-                }
-                .filter { updateVersion -> updateVersion.version != currentVersion.version }
         }
         .onEach { info { "#updateVersionFlow: $it" } }
         .shareIn(scope, SharingStarted.Lazily, 1)
@@ -210,6 +167,7 @@ class FFirmwareUpdateFeatureApiImpl(
         .wrap()
 
     override val updateVersionChangelog: WrappedFlow<String> = updateVersionFlow
+        .filterNotNull()
         .distinctUntilChanged()
         .map { busyBarVersion ->
             when (busyBarVersion) {
@@ -234,7 +192,7 @@ class FFirmwareUpdateFeatureApiImpl(
     @Inject
     class FDeviceFeatureApiFactory(
         private val busyFirmwareDirectoryApi: BusyFirmwareDirectoryApi,
-        private val busyFirmwareDirectoryChannelApi: BusyFirmwareDirectoryChannelApi
+        private val busyFirmwareDirectoryChannelApi: BusyFirmwareDirectoryChannelApi,
     ) : FDeviceFeatureApi.Factory {
         override suspend fun invoke(
             unsafeFeatureDeviceApi: FUnsafeDeviceFeatureApi,
@@ -245,21 +203,23 @@ class FFirmwareUpdateFeatureApiImpl(
                 .get(FRpcFeatureApi::class)
                 ?.await()
                 ?: return null
-            val fEventsFeatureApi = unsafeFeatureDeviceApi
-                .get(FEventsFeatureApi::class)
-                ?.await()
             val fDeviceInfoFeatureApi = unsafeFeatureDeviceApi
                 .get(FDeviceInfoFeatureApi::class)
                 ?.await()
                 ?: return null
+            val fEventsFeatureApi = unsafeFeatureDeviceApi
+                .get(FEventsFeatureApi::class)
+                ?.await()
             return FFirmwareUpdateFeatureApiImpl(
                 rpcFeatureApi = rpcApi,
                 fEventsFeatureApi = fEventsFeatureApi,
                 scope = scope,
-                busyFirmwareDirectoryApi = busyFirmwareDirectoryApi,
                 deviceApi = connectedDevice,
-                fDeviceInfoFeatureApi = fDeviceInfoFeatureApi,
-                busyFirmwareDirectoryChannelApi = busyFirmwareDirectoryChannelApi
+                lanUpdateVersionProvider = LanUpdateVersionProvider(
+                    busyFirmwareDirectoryApi = busyFirmwareDirectoryApi,
+                    busyFirmwareDirectoryChannelApi = busyFirmwareDirectoryChannelApi,
+                    fDeviceInfoFeatureApi = fDeviceInfoFeatureApi
+                )
             )
         }
     }
