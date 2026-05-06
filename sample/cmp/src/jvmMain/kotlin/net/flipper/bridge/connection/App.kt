@@ -60,7 +60,8 @@ suspend fun main() {
             searchViewModelProvider = {
                 LanSearchViewModel(busyLib.persistedStorage, busyLib.connectionService)
             },
-            principalApi = principalApi
+            principalApi = principalApi,
+            busyFirmwareDirectoryChannelApi = busyLib.busyFirmwareDirectoryChannelApi
         )
     }
 
