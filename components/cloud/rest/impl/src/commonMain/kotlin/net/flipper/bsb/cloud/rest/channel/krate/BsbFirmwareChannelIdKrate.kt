@@ -13,12 +13,12 @@ private const val BSB_FIRMWARE_CHANGELOG_ID_KEY = "bsb_firmware_channel_id_key_v
 class BsbFirmwareChannelIdKrate(
     private val settings: Settings
 ) : StateFlowMutableKrate<BsbFirmwareChannelId> by DefaultMutableKrate(
-    factory = { BsbFirmwareChannelId.RELEASE_CANDIDATE },
+    factory = { BsbFirmwareChannelId.RELEASE },
     loader = {
         val string = settings.getStringOrNull(BSB_FIRMWARE_CHANGELOG_ID_KEY)
         BsbFirmwareChannelId.entries
             .firstOrNull { entry -> entry.id == string }
-            ?: BsbFirmwareChannelId.RELEASE_CANDIDATE
+            ?: BsbFirmwareChannelId.RELEASE
     },
     saver = { bsbFirmwareChannelId ->
         settings.putString(key = BSB_FIRMWARE_CHANGELOG_ID_KEY, value = bsbFirmwareChannelId.id)
