@@ -8,7 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableList
-import net.flipper.bridge.connection.feature.wifi.api.model.BsbWifiStatusResponse
+import net.flipper.bridge.connection.feature.wifi.api.model.BsbWifiStatus
 import net.flipper.bridge.connection.feature.wifi.api.model.WiFiNetwork
 import net.flipper.bridge.connection.feature.wifi.api.model.WiFiSecurity
 import net.flipper.bridge.connection.screens.dashboard.common.DashboardActionState
@@ -22,7 +22,7 @@ import net.flipper.bridge.connection.screens.dashboard.common.orUnavailable
 @Composable
 fun WiFiDashboardContent(
     onBack: () -> Unit,
-    status: BsbWifiStatusResponse?,
+    status: BsbWifiStatus?,
     networks: ImmutableList<WiFiNetwork>?,
     editingAllowed: Boolean?,
     state: WiFiDashboardState,
