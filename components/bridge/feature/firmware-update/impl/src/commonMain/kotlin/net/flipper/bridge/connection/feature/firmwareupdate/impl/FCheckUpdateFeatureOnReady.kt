@@ -55,7 +55,7 @@ class FCheckUpdateFeatureOnReady(
         FOnDeviceReadyFeatureApi.Factory::class,
         multibinding = true
     )
-    interface Factory : FOnDeviceReadyFeatureApi.Factory {
+    class Factory : FOnDeviceReadyFeatureApi.Factory {
         override suspend fun invoke(
             unsafeFeatureDeviceApi: FUnsafeDeviceFeatureApi,
             scope: CoroutineScope,
