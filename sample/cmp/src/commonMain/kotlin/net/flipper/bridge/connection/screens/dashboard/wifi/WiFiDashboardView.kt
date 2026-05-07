@@ -40,11 +40,12 @@ fun WiFiDashboardContent(
             title = "Status",
             modifier = Modifier.padding(horizontal = 16.dp)
         ) {
-            DashboardInfoRow(label = "State", value = status?.state?.name.orUnavailable())
-            DashboardInfoRow(label = "SSID", value = status?.ssid.orUnavailable())
-            DashboardInfoRow(label = "RSSI", value = status?.rssi?.toString().orUnavailable())
-            DashboardInfoRow(label = "Channel", value = status?.channel?.toString().orUnavailable())
-            DashboardInfoRow(label = "IP", value = status?.ipConfig?.address.orUnavailable())
+            val connected = status as? BsbWifiStatus.Connected
+            DashboardInfoRow(label = "State", value = status?.stateLabel().orUnavailable())
+            DashboardInfoRow(label = "SSID", value = connected?.ssid.orUnavailable())
+            DashboardInfoRow(label = "RSSI", value = connected?.rssi?.toString().orUnavailable())
+            DashboardInfoRow(label = "Channel", value = connected?.channel?.toString().orUnavailable())
+            DashboardInfoRow(label = "IP", value = connected?.ipConfig?.address.orUnavailable())
             DashboardInfoRow(label = "Editing allowed", value = editingAllowed?.toString().orUnavailable())
         }
 
@@ -91,4 +92,13 @@ private fun WiFiSecurity.label(): String = when (this) {
     WiFiSecurity.Supported.None -> "Open"
     is WiFiSecurity.Supported.Password -> name
     is WiFiSecurity.Other -> "Other(${internalWifiSecurity.name})"
+}
+
+private fun BsbWifiStatus.stateLabel(): String = when (this) {
+    is BsbWifiStatus.Connected -> "CONNECTED"
+    BsbWifiStatus.Connecting -> "CONNECTING"
+    BsbWifiStatus.Disconnected -> "DISCONNECTED"
+    BsbWifiStatus.Disconnecting -> "DISCONNECTING"
+    BsbWifiStatus.Reconnecting -> "RECONNECTING"
+    BsbWifiStatus.Unknown -> "UNKNOWN"
 }

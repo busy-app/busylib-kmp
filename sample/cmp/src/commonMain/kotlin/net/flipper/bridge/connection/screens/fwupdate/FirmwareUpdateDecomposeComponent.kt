@@ -165,13 +165,6 @@ class FirmwareUpdateDecomposeComponent(
                 )
             }
 
-            FwUpdateState.Busy -> {
-                Text(
-                    text = "Device is busy. Try again later.",
-                    color = MaterialTheme.colors.onBackground
-                )
-            }
-
             FwUpdateState.Pending -> {
                 Text(
                     text = "Waiting...",
@@ -308,7 +301,6 @@ class FirmwareUpdateDecomposeComponent(
         FwUpdateState.Failure -> "Failure"
         FwUpdateState.CheckingVersion -> "Checking Version"
         FwUpdateState.LowBattery -> "Low Battery"
-        FwUpdateState.Busy -> "Busy"
         FwUpdateState.Pending -> "Pending"
         FwUpdateState.CouldNotCheckUpdate -> "Could Not Check"
         FwUpdateState.NoUpdateAvailable -> "No Update"
