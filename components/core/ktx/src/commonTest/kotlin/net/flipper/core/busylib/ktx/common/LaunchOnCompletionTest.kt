@@ -209,6 +209,11 @@ class LaunchOnCompletionTest {
         }
     }
 
+    @Test
+    fun test() {
+
+    }
+
     companion object {
         private val TIMEOUT = 2.seconds
     }
