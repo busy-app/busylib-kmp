@@ -33,7 +33,6 @@ import net.flipper.bridge.connection.feature.provider.api.getSync
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.device.firmwareupdate.downloader.api.FirmwareDownloaderApi
 import net.flipper.bridge.device.firmwareupdate.downloader.api.FirmwareDownloaderApiImpl
-import net.flipper.bridge.device.firmwareupdate.status.api.UpdateStatusProvider
 import net.flipper.bridge.device.firmwareupdate.status.api.UpdaterStatusCollector
 import net.flipper.bridge.device.firmwareupdate.updater.mapper.FwUpdateStatusMapper
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateEvent
@@ -72,7 +71,6 @@ class FirmwareUpdaterApiImpl(
     private val httpClient: HttpClient,
     private val updaterStatusCollector: UpdaterStatusCollector,
     private val previousVersionFlowProvider: PreviousVersionFlowProvider,
-    private val updateStatusProvider: UpdateStatusProvider,
     private val scope: CoroutineScope,
 ) : FirmwareUpdaterApi, LogTagProvider by TaggedLogger("UpdaterApi") {
     private val firmwareDownloaderApi: FirmwareDownloaderApi = FirmwareDownloaderApiImpl(
@@ -85,7 +83,11 @@ class FirmwareUpdaterApiImpl(
     private val lanUpdaterScope = scope.asSingleJobScope()
 
     override val state: WrappedStateFlow<FwUpdateState> = combine(
-        flow = updateStatusProvider.getUpdateStatus(),
+        flow = fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
+            .map { status -> status.tryCast<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>() }
+            .map { status -> status?.featureApi }
+            .flatMapLatest { feature -> feature?.updateStatusFlow.orNullable() }
+            .filterNotNull(),
         flow2 = fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
             .map { status -> status.tryCast<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>() }
             .map { status -> status?.featureApi }
@@ -93,14 +95,19 @@ class FirmwareUpdaterApiImpl(
             .distinctUntilChanged(),
         flow3 = firmwareDownloaderApi.state,
         flow4 = firmwareUploaderApi.state,
-        transform = { updateStatusSource, bsbUpdateVersion, downloaderState, uploaderState ->
-            val result = TODO()
+        transform = { bsbUpdateStatus, bsbUpdateVersion, downloaderState, uploaderState ->
+            val result = FwUpdateStatusMapper.map(
+                bsbUpdateStatus,
+                bsbUpdateVersion,
+                downloaderState,
+                uploaderState
+            )
             verbose {
-                "Result is: ${result}. " +
-                        "Receive updateStatusSource: $updateStatusSource, " +
-                        "bsbUpdateVersion: $bsbUpdateVersion, " +
-                        "downloaderState: $downloaderState, " +
-                        "uploaderState: $uploaderState"
+                "Result is: $result. " +
+                    "Receive bsbUpdateStatus: $bsbUpdateStatus, " +
+                    "bsbUpdateVersion: $bsbUpdateVersion, " +
+                    "downloaderState: $downloaderState, " +
+                    "uploaderState: $uploaderState"
             }
             return@combine result
         }
@@ -282,7 +289,7 @@ class FirmwareUpdaterApiImpl(
                 }
                 info {
                     "#init shouldStartUpdateStatusCollector: $shouldStartUpdateStatusCollector;" +
-                            " isActive: $isActive; state: $state"
+                        " isActive: $isActive; state: $state"
                 }
                 if (shouldStartUpdateStatusCollector && !isActive) {
                     updaterStatusCollector.start()
