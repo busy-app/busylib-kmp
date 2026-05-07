@@ -6,9 +6,9 @@ import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateStatu
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateStatus.FailedUpdate
 import net.flipper.bridge.connection.feature.rpc.api.model.UpdateStatus
 import net.flipper.bridge.connection.feature.rpc.api.model.UpdateStatus.Install.Status
-import kotlin.Int
 
-internal fun BusyLibUpdateEvent.Update.UpdateDownload.toBsbUpdateStatus(): BsbUpdateStatus.InProgress.Downloading.Specified {
+internal fun BusyLibUpdateEvent.Update.UpdateDownload.toBsbUpdateStatus():
+    BsbUpdateStatus.InProgress.Downloading.Specified {
     return BsbUpdateStatus.InProgress.Downloading.Specified(
         speedBytesPerSec = speedBytesPerSec,
         receivedBytes = receivedBytes,
@@ -16,6 +16,7 @@ internal fun BusyLibUpdateEvent.Update.UpdateDownload.toBsbUpdateStatus(): BsbUp
     )
 }
 
+@Suppress("CyclomaticComplexMethod")
 internal fun UpdateState.toBsbUpdateStatus(): BsbUpdateStatus {
     val failReason = when (status) {
         UpdateState.BsbStatus.OK,
@@ -39,10 +40,22 @@ internal fun UpdateState.toBsbUpdateStatus(): BsbUpdateStatus {
     }
     return when (action) {
         UpdateState.BsbAction.DOWNLOAD -> BsbUpdateStatus.InProgress.Downloading.NotSpecified
-        UpdateState.BsbAction.SHA_VERIFICATION -> BsbUpdateStatus.InProgress.Other(BsbUpdateStatus.InProgress.Other.ProgressStage.SHA_VERIFICATION)
-        UpdateState.BsbAction.UNPACK -> BsbUpdateStatus.InProgress.Other(BsbUpdateStatus.InProgress.Other.ProgressStage.UNPACK)
-        UpdateState.BsbAction.PREPARE -> BsbUpdateStatus.InProgress.Other(BsbUpdateStatus.InProgress.Other.ProgressStage.PREPARE)
-        UpdateState.BsbAction.APPLY -> BsbUpdateStatus.InProgress.Other(BsbUpdateStatus.InProgress.Other.ProgressStage.APPLY)
+        UpdateState.BsbAction.SHA_VERIFICATION -> BsbUpdateStatus.InProgress.Other(
+            BsbUpdateStatus.InProgress.Other.ProgressStage.SHA_VERIFICATION
+        )
+
+        UpdateState.BsbAction.UNPACK -> BsbUpdateStatus.InProgress.Other(
+            BsbUpdateStatus.InProgress.Other.ProgressStage.UNPACK
+        )
+
+        UpdateState.BsbAction.PREPARE -> BsbUpdateStatus.InProgress.Other(
+            BsbUpdateStatus.InProgress.Other.ProgressStage.PREPARE
+        )
+
+        UpdateState.BsbAction.APPLY -> BsbUpdateStatus.InProgress.Other(
+            BsbUpdateStatus.InProgress.Other.ProgressStage.APPLY
+        )
+
         UpdateState.BsbAction.NONE -> if (status == UpdateState.BsbStatus.BATTERY_LOW) {
             BsbUpdateStatus.ReadyToInstall.BatteryLow
         } else {
@@ -51,6 +64,7 @@ internal fun UpdateState.toBsbUpdateStatus(): BsbUpdateStatus {
     }
 }
 
+@Suppress("CyclomaticComplexMethod")
 internal fun UpdateStatus.toBsbUpdateStatus(): BsbUpdateStatus {
     val failReason = when (install.status) {
         Status.OK,
@@ -83,9 +97,18 @@ internal fun UpdateStatus.toBsbUpdateStatus(): BsbUpdateStatus {
             BsbUpdateStatus.InProgress.Other.ProgressStage.SHA_VERIFICATION
         )
 
-        UpdateStatus.Install.Action.UNPACK -> BsbUpdateStatus.InProgress.Other(BsbUpdateStatus.InProgress.Other.ProgressStage.UNPACK)
-        UpdateStatus.Install.Action.PREPARE -> BsbUpdateStatus.InProgress.Other(BsbUpdateStatus.InProgress.Other.ProgressStage.PREPARE)
-        UpdateStatus.Install.Action.APPLY -> BsbUpdateStatus.InProgress.Other(BsbUpdateStatus.InProgress.Other.ProgressStage.APPLY)
+        UpdateStatus.Install.Action.UNPACK -> BsbUpdateStatus.InProgress.Other(
+            BsbUpdateStatus.InProgress.Other.ProgressStage.UNPACK
+        )
+
+        UpdateStatus.Install.Action.PREPARE -> BsbUpdateStatus.InProgress.Other(
+            BsbUpdateStatus.InProgress.Other.ProgressStage.PREPARE
+        )
+
+        UpdateStatus.Install.Action.APPLY -> BsbUpdateStatus.InProgress.Other(
+            BsbUpdateStatus.InProgress.Other.ProgressStage.APPLY
+        )
+
         UpdateStatus.Install.Action.NONE -> if (install.status == Status.BATTERY_LOW || !install.isAllowed) {
             BsbUpdateStatus.ReadyToInstall.BatteryLow
         } else {

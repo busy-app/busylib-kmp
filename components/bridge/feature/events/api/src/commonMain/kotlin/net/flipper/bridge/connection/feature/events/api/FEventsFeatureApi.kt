@@ -14,7 +14,6 @@ import net.flipper.bridge.connection.feature.events.model.ConsumableUpdateEvent
 import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.merge
 import net.flipper.core.busylib.ktx.common.orEmpty
-import net.flipper.core.busylib.ktx.common.throttleLatest
 import net.flipper.core.busylib.ktx.common.transformWhileSubscribed
 import net.flipper.core.busylib.ktx.common.tryConsume
 

@@ -1,6 +1,5 @@
 package net.flipper.bridge.connection.feature.firmwareupdate.api
 
-import kotlinx.coroutines.flow.StateFlow
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateStatus
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateVersion

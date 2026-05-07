@@ -17,7 +17,6 @@ import net.flipper.bridge.connection.feature.finishsetup.model.DeviceSetupTaskSt
 import net.flipper.bridge.connection.feature.finishsetup.model.DeviceSetupTaskType
 import net.flipper.bridge.connection.feature.finishsetup.model.FFinishSetupState
 import net.flipper.bridge.connection.feature.firmwareupdate.api.FFirmwareUpdateFeatureApi
-import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateStatus
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateVersion
 import net.flipper.bridge.connection.feature.link.check.ondemand.api.FLinkedInfoOnDemandFeatureApi
 import net.flipper.bridge.connection.feature.link.model.LinkedAccountInfo
@@ -111,8 +110,8 @@ class FFinishSetupFeatureApiImpl(
             type = DeviceSetupTaskType.UPDATE_FIRMWARE,
             status = when (connectWifiTaskStatus) {
                 DeviceSetupTaskStatus.COMPLETED -> {
-                    when(updateVersion) {
-                        BsbUpdateVersion.FailedToCheck ->DeviceSetupTaskStatus.NOT_AVAILABLE
+                    when (updateVersion) {
+                        BsbUpdateVersion.FailedToCheck -> DeviceSetupTaskStatus.NOT_AVAILABLE
                         BsbUpdateVersion.CheckingOnBBInProgress,
                         BsbUpdateVersion.Loading -> DeviceSetupTaskStatus.LOADING
                         BsbUpdateVersion.NoUpdateAvailable -> DeviceSetupTaskStatus.COMPLETED

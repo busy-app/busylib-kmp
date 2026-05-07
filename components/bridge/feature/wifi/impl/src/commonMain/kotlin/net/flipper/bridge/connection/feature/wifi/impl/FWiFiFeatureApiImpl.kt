@@ -5,7 +5,6 @@ import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.isActive
 import me.tatarka.inject.annotations.Inject
 import me.tatarka.inject.annotations.IntoMap
@@ -17,7 +16,6 @@ import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
 import net.flipper.bridge.connection.feature.events.api.get
 import net.flipper.bridge.connection.feature.events.api.getMapped
 import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
-import net.flipper.bridge.connection.feature.events.model.ConsumableUpdateEvent
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.ConnectRequestConfig
 import net.flipper.bridge.connection.feature.rpc.api.model.WifiIpMethod
@@ -40,12 +38,7 @@ import net.flipper.busylib.core.wrapper.toCResult
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.ktx.common.asFlow
 import net.flipper.core.busylib.ktx.common.exponentialRetry
-import net.flipper.core.busylib.ktx.common.merge
 import net.flipper.core.busylib.ktx.common.orElse
-import net.flipper.core.busylib.ktx.common.orEmpty
-import net.flipper.core.busylib.ktx.common.throttleLatestCached
-import net.flipper.core.busylib.ktx.common.transformWhileSubscribed
-import net.flipper.core.busylib.ktx.common.tryConsume
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo

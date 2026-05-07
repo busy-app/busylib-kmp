@@ -45,7 +45,8 @@ class UpdateFlowCombinerDelegate(
                 runSuspendCatching {
                     rpcUpdaterFlow.first().toAvailableVersion()
                 }
-            }, mapper = {
+            },
+            mapper = {
                 it.toAvailableVersion()
             }
         ).stateIn(scope, SharingStarted.WhileSubscribed(), AvailableVersion.Loading)
@@ -53,7 +54,6 @@ class UpdateFlowCombinerDelegate(
     private val updateDownloadEventsFlow = fEventsFeatureApi
         .get<BusyLibUpdateEvent.Update.UpdateDownload>()
         .map { it.busyLibUpdateEvent.toBsbUpdateStatus() }
-
 
     private val updateStateEventsFlow = fEventsFeatureApi
         .getMapped<BusyLibUpdateEvent.Update.UpdateState, BsbUpdateStatus>(scope, initial = {
@@ -65,5 +65,4 @@ class UpdateFlowCombinerDelegate(
     val updateStatusFlow: StateFlow<BsbUpdateStatus> = updateStateEventsFlow
         .merge(updateDownloadEventsFlow)
         .stateIn(scope, SharingStarted.WhileSubscribed(), BsbUpdateStatus.Loading)
-
 }

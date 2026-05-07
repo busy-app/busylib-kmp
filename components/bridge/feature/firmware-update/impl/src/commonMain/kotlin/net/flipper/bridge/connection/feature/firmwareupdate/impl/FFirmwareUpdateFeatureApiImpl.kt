@@ -2,13 +2,8 @@ package net.flipper.bridge.connection.feature.firmwareupdate.impl
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.filterIsInstance
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
@@ -27,7 +22,8 @@ import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent.Aut
 import net.flipper.bridge.connection.feature.firmwareupdate.api.FFirmwareUpdateFeatureApi
 import net.flipper.bridge.connection.feature.firmwareupdate.model.AvailableVersion
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateVersion
-import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateVersion.ReadyToUpdate.*
+import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateVersion.ReadyToUpdate.Default
+import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateVersion.ReadyToUpdate.Url
 import net.flipper.bridge.connection.feature.info.api.FDeviceInfoFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.AutoUpdate
@@ -46,10 +42,8 @@ import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.ktx.common.asFlow
 import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.orElse
-import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.busylib.ktx.common.tryCast
 import net.flipper.core.busylib.log.LogTagProvider
-import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
 

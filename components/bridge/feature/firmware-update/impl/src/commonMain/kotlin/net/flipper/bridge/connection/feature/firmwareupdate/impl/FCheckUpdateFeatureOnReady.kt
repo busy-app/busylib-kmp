@@ -48,7 +48,6 @@ class FCheckUpdateFeatureOnReady(
             }
     }
 
-
     @Inject
     @ContributesBinding(
         BusyLibGraph::class,

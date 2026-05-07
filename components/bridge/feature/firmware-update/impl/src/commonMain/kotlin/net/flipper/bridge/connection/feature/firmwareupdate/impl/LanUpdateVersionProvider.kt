@@ -26,7 +26,9 @@ class LanUpdateVersionProvider(
     private val busyFirmwareDirectoryChannelApi: BusyFirmwareDirectoryChannelApi,
     private val fDeviceInfoFeatureApi: FDeviceInfoFeatureApi
 ) : LogTagProvider by TaggedLogger("LanUpdateVersionProvider") {
-    private suspend fun requireVersionFromRestApi(bsbFirmwareChannelId: BsbFirmwareChannelId): BsbUpdateVersion.ReadyToUpdate.Url {
+    private suspend fun requireVersionFromRestApi(
+        bsbFirmwareChannelId: BsbFirmwareChannelId
+    ): BsbUpdateVersion.ReadyToUpdate.Url {
         val channelId = bsbFirmwareChannelId.id
         return exponentialRetry {
             runSuspendCatching {

@@ -13,14 +13,16 @@ object UpdateCheckProtobufMapper {
             CheckResult.Available(available.version)
         } else if (unavailable != null) {
             CheckResult.Unavailable(
-                reason = when(unavailable.reason) {
+                reason = when (unavailable.reason) {
                     CheckError.FAILURE -> CheckResult.Unavailable.CheckError.FAILURE
                     is CheckError.Unrecognized,
-                    CheckError.IDLE ->  CheckResult.Unavailable.CheckError.IDLE
-                    CheckError.NOT_AVAILABLE ->  CheckResult.Unavailable.CheckError.NOT_AVAILABLE
+                    CheckError.IDLE -> CheckResult.Unavailable.CheckError.IDLE
+                    CheckError.NOT_AVAILABLE -> CheckResult.Unavailable.CheckError.NOT_AVAILABLE
                 }
             )
-        } else return null
+        } else {
+            return null
+        }
 
         return BusyLibUpdateEvent.Update.UpdateCheck(
             result = result
