@@ -129,7 +129,7 @@ class FFirmwareUpdateFeatureApiImpl(
     override val updateVersionChangelog: WrappedFlow<String?> = updateVersionFlow
         .mapLatest { busyBarVersion ->
             return@mapLatest when (busyBarVersion) {
-                is BsbUpdateVersion.ReadyToUpdate.Default -> {
+                is Default -> {
                     exponentialRetry {
                         rpcFeatureApi.fRpcUpdaterApi
                             .getUpdateChangelog(busyBarVersion.version)
@@ -137,11 +137,13 @@ class FFirmwareUpdateFeatureApiImpl(
                     }
                 }
 
-                is BsbUpdateVersion.ReadyToUpdate.Url -> {
+                is Url -> {
                     busyBarVersion.changelog
                 }
 
                 BsbUpdateVersion.Loading,
+                BsbUpdateVersion.CheckingOnBBInProgress,
+                BsbUpdateVersion.FailedToCheck,
                 BsbUpdateVersion.NoUpdateAvailable -> null
             }
         }

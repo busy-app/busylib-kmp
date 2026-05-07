@@ -72,8 +72,14 @@ sealed interface BusyLibUpdateEvent {
         }
 
         data class UpdateCheck(
-            val result: CheckResult
+            val result: CheckResult,
+            val event: CheckEvent = CheckEvent.NONE
         ) : Update {
+            enum class CheckEvent {
+                START,
+                STOP,
+                NONE
+            }
             sealed interface CheckResult {
                 data class Available(
                     val availableVersion: String
