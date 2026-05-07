@@ -94,21 +94,7 @@ class FirmwareUpdaterApiImpl(
         flow3 = firmwareDownloaderApi.state,
         flow4 = firmwareUploaderApi.state,
         transform = { updateStatusSource, bsbUpdateVersion, downloaderState, uploaderState ->
-            val result = when (bsbUpdateVersion) {
-                is BsbUpdateVersion.Default -> {
-                    FwUpdateStatusMapper.toFwUpdateState(
-                        updateStatusSource = updateStatusSource,
-                    )
-                }
-
-                null, is BsbUpdateVersion.Url -> {
-                    FwUpdateStatusMapper.toFwUpdateState(
-                        downloaderState = downloaderState,
-                        uploaderState = uploaderState,
-                        bsbUrlUpdateVersion = bsbUpdateVersion,
-                    )
-                }
-            }
+            val result = TODO()
             verbose {
                 "Result is: ${result}. " +
                         "Receive updateStatusSource: $updateStatusSource, " +
@@ -150,7 +136,7 @@ class FirmwareUpdaterApiImpl(
             .filterNotNull()
             .firstOrNull()
         return when (currentUpdateVersion) {
-            is BsbUpdateVersion.Default -> {
+            is BsbUpdateVersion.ReadyToUpdate.Default -> {
                 fFeatureProvider.get<FRpcFeatureApi>()
                     .filterIsInstance<FFeatureStatus.Supported<*>>()
                     .filter { fFeatureStatus -> fFeatureStatus.featureApi is FRpcFeatureApi }
@@ -163,12 +149,12 @@ class FirmwareUpdaterApiImpl(
                     .toCResult()
             }
 
-            is BsbUpdateVersion.Url -> {
+            is BsbUpdateVersion.ReadyToUpdate.Url -> {
                 lanUpdaterScope.cancelPrevious().join()
                 CResult.success(Unit)
             }
 
-            null -> CResult.success(Unit)
+            else -> CResult.success(Unit)
         }
     }
 
@@ -194,9 +180,11 @@ class FirmwareUpdaterApiImpl(
         info { "#startUpdateInstall device connected!" }
     }
 
-    private suspend fun getBsbUpdateVersion(bsbUpdateVersion: BsbUpdateVersion): Result<BsbUpdateVersion> {
+    private suspend fun getBsbUpdateVersion(
+        bsbUpdateVersion: BsbUpdateVersion.ReadyToUpdate
+    ): Result<BsbUpdateVersion.ReadyToUpdate> {
         return when (bsbUpdateVersion) {
-            is BsbUpdateVersion.Default -> {
+            is BsbUpdateVersion.ReadyToUpdate.Default -> {
                 fFeatureProvider.get<FRpcFeatureApi>()
                     .filterIsInstance<FFeatureStatus.Supported<*>>()
                     .filter { fFeatureStatus -> fFeatureStatus.featureApi is FRpcFeatureApi }
@@ -209,7 +197,7 @@ class FirmwareUpdaterApiImpl(
                     .map { bsbUpdateVersion }
             }
 
-            is BsbUpdateVersion.Url -> {
+            is BsbUpdateVersion.ReadyToUpdate.Url -> {
                 firmwareDownloaderApi.download(bsbUpdateVersion)
                     .onSuccess { info { "#startUpdateInstall download finished" } }
                     .onFailure { t -> error(t) { "#startUpdateInstall could not download" } }
@@ -245,7 +233,7 @@ class FirmwareUpdaterApiImpl(
             fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
                 .map { status -> status.tryCast<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>() }
                 .flatMapLatest { status -> status?.featureApi?.updateVersionFlow.orNullable() }
-                .filterNotNull()
+                .filterIsInstance<BsbUpdateVersion.ReadyToUpdate>()
                 .mapLatest { bsbUpdateVersion ->
                     firmwareDownloaderApi.reset()
                     firmwareUploaderApi.reset()
@@ -256,8 +244,8 @@ class FirmwareUpdaterApiImpl(
                 .first()
                 .map { bsbUpdateVersion ->
                     when (bsbUpdateVersion) {
-                        is BsbUpdateVersion.Default -> Unit
-                        is BsbUpdateVersion.Url -> {
+                        is BsbUpdateVersion.ReadyToUpdate.Default -> Unit
+                        is BsbUpdateVersion.ReadyToUpdate.Url -> {
                             val bootTime = bootTimeFlow.first()
                             bootTimeScope.cancel()
                             awaitDeviceReconnected(bootTime)
