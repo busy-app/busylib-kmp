@@ -69,14 +69,13 @@ class FFinishSetupFeatureApiImpl(
     private fun createConnectWifiTask(wifiStatus: BsbWifiStatus): DeviceSetupTask {
         val deviceSetupTask = DeviceSetupTask(
             type = DeviceSetupTaskType.CONNECT_WIFI,
-            status = when (wifiStatus.state) {
-                BsbWifiStatus.BsbWifiState.CONNECTED -> DeviceSetupTaskStatus.COMPLETED
-                BsbWifiStatus.BsbWifiState.DISCONNECTED -> DeviceSetupTaskStatus.NOT_COMPLETED
-
-                BsbWifiStatus.BsbWifiState.CONNECTING,
-                BsbWifiStatus.BsbWifiState.RECONNECTING,
-                BsbWifiStatus.BsbWifiState.DISCONNECTING,
-                BsbWifiStatus.BsbWifiState.UNKNOWN -> DeviceSetupTaskStatus.NOT_AVAILABLE
+            status = when (wifiStatus) {
+                is BsbWifiStatus.Connected -> DeviceSetupTaskStatus.COMPLETED
+                BsbWifiStatus.Disconnected -> DeviceSetupTaskStatus.NOT_COMPLETED
+                BsbWifiStatus.Connecting,
+                BsbWifiStatus.Disconnecting,
+                BsbWifiStatus.Reconnecting,
+                BsbWifiStatus.Unknown -> DeviceSetupTaskStatus.NOT_AVAILABLE
             },
         )
         verbose { "#createConnectWifiTask $wifiStatus -> $deviceSetupTask" }

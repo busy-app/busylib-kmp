@@ -4,8 +4,8 @@ import BSB_Update.UpdateAction
 import BSB_Update.UpdateState
 import BSB_Update.UpdateStatus
 import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
-import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateStatus.BsbInstall.BsbAction
-import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateStatus.BsbInstall.BsbStatus
+import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent.Update.UpdateState.BsbAction
+import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent.Update.UpdateState.BsbStatus
 
 object UpdateStateProtobufMapper {
     fun map(updateState: UpdateState): BusyLibUpdateEvent.Update.UpdateState {
