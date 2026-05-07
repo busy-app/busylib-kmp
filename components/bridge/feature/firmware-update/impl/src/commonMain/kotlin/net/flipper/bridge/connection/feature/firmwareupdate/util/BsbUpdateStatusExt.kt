@@ -19,7 +19,7 @@ internal fun BusyLibUpdateEvent.Update.UpdateDownload.toBsbUpdateStatus(): BsbUp
 internal fun UpdateState.toBsbUpdateStatus(): BsbUpdateStatus {
     val failReason = when (status) {
         UpdateState.BsbStatus.OK,
-        UpdateState.BsbStatus.BUSY,
+        UpdateState.BsbStatus.BUSY, // Update in progress
         UpdateState.BsbStatus.BATTERY_LOW,
         UpdateState.BsbStatus.DOWNLOAD_ABORT -> null
 

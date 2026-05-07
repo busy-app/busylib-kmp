@@ -28,7 +28,7 @@ import kotlin.time.Duration.Companion.seconds
 class DownloadStatusCollector(
     private val fFeatureProvider: FFeatureProvider,
     scope: CoroutineScope
-) : LogTagProvider by TaggedLogger("UpdaterStatusCollector") {
+) : LogTagProvider by TaggedLogger("DownloadStatusCollector") {
     private val singleJobScope = scope.asSingleJobScope()
     private val _isActiveFlow = MutableStateFlow(false)
     val isActiveFlow = _isActiveFlow

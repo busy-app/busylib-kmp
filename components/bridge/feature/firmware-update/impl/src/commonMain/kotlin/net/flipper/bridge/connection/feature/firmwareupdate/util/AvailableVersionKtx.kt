@@ -10,7 +10,7 @@ fun UpdateStatus.toAvailableVersion(): AvailableVersion {
         UpdateStatus.Check.CheckEvent.STOP,
         UpdateStatus.Check.CheckEvent.NONE -> when (check.status) {
             UpdateStatus.Check.CheckResult.AVAILABLE,
-            UpdateStatus.Check.CheckResult.NONE -> if (check.availableVersion.isBlank()) {
+            UpdateStatus.Check.CheckResult.NONE -> if (check.availableVersion.isNotBlank()) {
                 AvailableVersion.Available(check.availableVersion)
             } else {
                 AvailableVersion.NotAvailable
