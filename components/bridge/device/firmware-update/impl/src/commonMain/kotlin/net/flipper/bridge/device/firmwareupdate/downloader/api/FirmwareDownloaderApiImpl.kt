@@ -66,7 +66,7 @@ internal class FirmwareDownloaderApiImpl(
         _state.update { FirmwareDownloaderState.Pending }
     }
 
-    override suspend fun download(bsbUpdateVersion: BsbUpdateVersion.Url): Result<Path> {
+    override suspend fun download(bsbUpdateVersion: BsbUpdateVersion.ReadyToUpdate.Url): Result<Path> {
         _state.emit(FirmwareDownloaderState.Pending)
         return runSuspendCatching {
             _state.emit(

@@ -33,7 +33,7 @@ import net.flipper.bridge.connection.feature.provider.api.getSync
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.device.firmwareupdate.downloader.api.FirmwareDownloaderApi
 import net.flipper.bridge.device.firmwareupdate.downloader.api.FirmwareDownloaderApiImpl
-import net.flipper.bridge.device.firmwareupdate.status.api.UpdaterStatusCollector
+import net.flipper.bridge.device.firmwareupdate.status.api.DownloadStatusCollector
 import net.flipper.bridge.device.firmwareupdate.updater.mapper.FwUpdateStatusMapper
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateEvent
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateState
@@ -69,7 +69,7 @@ class FirmwareUpdaterApiImpl(
     private val fFeatureProvider: FFeatureProvider,
     @KtorNetworkClientQualifier
     private val httpClient: HttpClient,
-    private val updaterStatusCollector: UpdaterStatusCollector,
+    private val downloadStatusCollector: DownloadStatusCollector,
     private val previousVersionFlowProvider: PreviousVersionFlowProvider,
     private val scope: CoroutineScope,
 ) : FirmwareUpdaterApi, LogTagProvider by TaggedLogger("UpdaterApi") {
@@ -200,7 +200,6 @@ class FirmwareUpdaterApiImpl(
                     .featureApi
                     .fRpcUpdaterApi
                     .startUpdateInstall(bsbUpdateVersion.version)
-                    .onSuccess { updaterStatusCollector.start() }
                     .map { bsbUpdateVersion }
             }
 
@@ -268,7 +267,6 @@ class FirmwareUpdaterApiImpl(
             ?.startUpdateCheck()
             ?.map { }
             ?.toCResult()
-            ?.also { updaterStatusCollector.start() }
             ?: CResult.failure(IllegalStateException("RPC feature is null"))
     }
 
@@ -277,11 +275,9 @@ class FirmwareUpdaterApiImpl(
     init {
         combine(
             flow = state,
-            flow2 = updaterStatusCollector.isActiveFlow,
+            flow2 = downloadStatusCollector.isActiveFlow,
             transform = { state, isActive ->
                 val shouldStartUpdateStatusCollector = when (state) {
-                    is FwUpdateState.CheckingVersion,
-                    FwUpdateState.Updating,
                     is FwUpdateState.Downloading -> true
                     // Only desktop case
                     is FwUpdateState.Uploading -> false
@@ -292,9 +288,9 @@ class FirmwareUpdaterApiImpl(
                         " isActive: $isActive; state: $state"
                 }
                 if (shouldStartUpdateStatusCollector && !isActive) {
-                    updaterStatusCollector.start()
+                    downloadStatusCollector.start()
                 } else if (!shouldStartUpdateStatusCollector && isActive) {
-                    updaterStatusCollector.stop()
+                    downloadStatusCollector.stop()
                 }
             }
         ).launchIn(scope)
