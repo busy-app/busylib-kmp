@@ -77,7 +77,6 @@ private fun asWaitingStatus(
 
 internal fun nw_connection_t.asKotlinNwStatus(state: UInt, error: nw_error_t): KotlinNwStatus {
     val posixError = error?.asPosixError()
-    posixError?.let(KotlinNwStatus::Failed)
     return when (state) {
         nw_connection_state_failed -> KotlinNwStatus.Failed(posixError)
         nw_connection_state_waiting -> asWaitingStatus(this, posixError)
