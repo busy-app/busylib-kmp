@@ -16,5 +16,7 @@ data class StatusFirmware(
     @SerialName("commit_hash")
     val commitHash: String,
     @SerialName("nwp_version")
-    val nwpVersion: String? = null
+    val nwpVersion: String? = null,
+    @SerialName("matter_version"),
+    val matterVersion: String
 )
