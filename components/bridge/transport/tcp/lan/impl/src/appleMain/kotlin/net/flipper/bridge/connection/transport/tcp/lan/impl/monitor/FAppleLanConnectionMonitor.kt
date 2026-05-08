@@ -70,7 +70,7 @@ class FAppleLanConnectionMonitor(
         restartMonitoringScope.launch(SingleJobMode.SKIP_IF_RUNNING) {
             info { "#restartMonitoringUnsafe" }
             listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting(config.getTransportTypes()))
-            stopMonitoring()
+            cancelConnection()
             delay(RESTART_TIMEOUT)
             startMonitoring()
         }
@@ -146,25 +146,21 @@ class FAppleLanConnectionMonitor(
 
             nw_connection_state_failed -> {
                 error { "#handleStateUpdate Connection failed: $error" }
-                timeoutScope.cancelPrevious()
                 restartMonitoringUnsafe()
             }
 
             nw_connection_state_invalid -> {
                 error { "#handleStateUpdate Connection invalid: $error" }
-                timeoutScope.cancelPrevious()
                 restartMonitoringUnsafe()
             }
 
             nw_connection_state_cancelled -> {
                 error { "#handleStateUpdate Connection cancelled" }
-                timeoutScope.cancelPrevious()
                 restartMonitoringUnsafe()
             }
 
             else -> {
                 debug { "#handleStateUpdate Connection unknown state: $state; error: $error" }
-                timeoutScope.cancelPrevious()
                 restartMonitoringUnsafe()
             }
         }
@@ -231,19 +227,24 @@ class FAppleLanConnectionMonitor(
         }
     }
 
-    override fun stopMonitoring() {
+    private fun cancelConnection() {
         connectionLock.withLock {
+            timeoutScope.cancelPrevious()
             connection?.let { localConnection ->
                 nw_connection_set_path_changed_handler(localConnection, null)
                 nw_connection_set_viability_changed_handler(localConnection, null)
                 nw_connection_set_state_changed_handler(localConnection, null)
-                nw_connection_set_queue(localConnection, null)
 
                 nw_connection_force_cancel(localConnection)
             }
             connection = null
             info { "#stopMonitoring Stopped monitoring connection to ${config.host}" }
         }
+    }
+
+    override fun stopMonitoring() {
+        restartMonitoringScope.cancelPrevious()
+        cancelConnection()
     }
 
     companion object {
