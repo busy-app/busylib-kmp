@@ -149,9 +149,6 @@ class FAppleLanConnectionMonitor(
 
     private fun collectConnectionEventsUnsafe(connection: nw_connection_t) {
         nw_connection_set_state_changed_handler(connection) { state, error ->
-            // Fuse the raw `(state, error)` callback args together with the path's
-            // `unsatisfied_reason` into a single domain status so the handler below can branch
-            // on one sealed type instead of three loose primitives.
             val status = connection.asKotlinNwStatus(state, error)
             debug { "#collectConnectionEvents status=$status (rawState=$state)" }
             runBlocking { handleStateUpdateUnsafe(status) }
