@@ -91,7 +91,6 @@ class FAppleLanConnectionMonitor(
         nw_tcp_options_set_keepalive_count(tcpOptions, KEEPALIVE_COUNT)
 
         nw_protocol_stack_set_transport_protocol(protocolStack, tcpOptions)
-        nw_parameters_set_include_peer_to_peer(parameters, true)
 
         nw_parameters_prohibit_interface_type(parameters, nw_interface_type_other)
 
