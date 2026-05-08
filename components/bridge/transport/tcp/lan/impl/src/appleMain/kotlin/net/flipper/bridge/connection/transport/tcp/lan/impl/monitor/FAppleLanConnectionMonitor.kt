@@ -62,7 +62,6 @@ class FAppleLanConnectionMonitor(
     override val TAG: String = "FAppleLanConnectionMonitor"
     private val queue = dispatch_queue_create("net.flipper.lan.connection", null)
     private val restartMonitoringScope = scope.asSingleJobScope()
-    private val timeoutScope = scope.asSingleJobScope()
     private val connectionLock = NSLock()
     private var connection: nw_connection_t = null
 
@@ -97,15 +96,6 @@ class FAppleLanConnectionMonitor(
         return createdConnection
     }
 
-    private fun startTimeoutJob() {
-        timeoutScope.launch(SingleJobMode.CANCEL_PREVIOUS) {
-            info { "#startTimeoutJob" }
-            delay(NO_CONNECTION_STATUS_TIMEOUT)
-            info { "#startTimeoutJob -> restarting" }
-            restartMonitoringUnsafe()
-        }
-    }
-
     private suspend fun handleStateUpdateUnsafe(
         state: UInt,
         error: KotlinNwError?
@@ -130,7 +120,6 @@ class FAppleLanConnectionMonitor(
                     deviceApi = deviceApi,
                     connectionType = FInternalTransportConnectionType.LAN
                 )
-                timeoutScope.cancelPrevious()
                 listener.onStatusUpdate(status)
             }
 
@@ -222,14 +211,12 @@ class FAppleLanConnectionMonitor(
             nw_connection_set_queue(currentConnection, queue)
             nw_connection_start(currentConnection)
 
-            startTimeoutJob()
             info { "#startMonitoring Started monitoring connection to ${config.host}" }
         }
     }
 
     private fun cancelConnection() {
         connectionLock.withLock {
-            timeoutScope.cancelPrevious()
             connection?.let { localConnection ->
                 nw_connection_set_path_changed_handler(localConnection, null)
                 nw_connection_set_viability_changed_handler(localConnection, null)
@@ -269,7 +256,5 @@ class FAppleLanConnectionMonitor(
         private const val KEEPALIVE_COUNT = 3u
 
         private val RESTART_TIMEOUT = 5.seconds
-
-        private val NO_CONNECTION_STATUS_TIMEOUT = 20.seconds
     }
 }
