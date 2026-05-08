@@ -37,8 +37,10 @@ import platform.Network.nw_connection_state_ready
 import platform.Network.nw_connection_state_waiting
 import platform.Network.nw_connection_t
 import platform.Network.nw_endpoint_create_host
+import platform.Network.nw_interface_type_other
 import platform.Network.nw_parameters_copy_default_protocol_stack
 import platform.Network.nw_parameters_create
+import platform.Network.nw_parameters_prohibit_interface_type
 import platform.Network.nw_parameters_set_include_peer_to_peer
 import platform.Network.nw_path_get_status
 import platform.Network.nw_path_status_satisfied
@@ -90,6 +92,8 @@ class FAppleLanConnectionMonitor(
 
         nw_protocol_stack_set_transport_protocol(protocolStack, tcpOptions)
         nw_parameters_set_include_peer_to_peer(parameters, true)
+
+        nw_parameters_prohibit_interface_type(parameters, nw_interface_type_other)
 
         val createdConnection = nw_connection_create(endpoint, parameters)
         connection = createdConnection
