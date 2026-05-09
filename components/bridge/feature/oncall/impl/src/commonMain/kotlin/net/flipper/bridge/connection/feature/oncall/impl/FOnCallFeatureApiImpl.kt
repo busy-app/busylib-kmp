@@ -16,7 +16,8 @@ import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.feature.oncall.api.FOnCallFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
-import net.flipper.bridge.connection.feature.rpc.api.model.DrawRequest
+import net.flipper.bridge.connection.feature.rpc.generated.model.DisplayElements
+import net.flipper.bridge.connection.feature.rpc.generated.model.DisplayElementsElementsInner
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.ktx.common.SingleJobMode
@@ -43,7 +44,7 @@ class FOnCallFeatureApiImpl(
                 while (currentCoroutineContext().isActive) {
                     rpcFeatureApi
                         .fRpcAssetsApi
-                        .displayDraw(createDrawRequest())
+                        .drawOnDisplay(createDrawRequest())
                         .onFailure { error(it) { "Failed to display draw" } }
                     delay(UPDATE_DELAY)
                 }
@@ -62,18 +63,18 @@ class FOnCallFeatureApiImpl(
     }
 
     private suspend fun performStopAttempt(): Result<Unit> {
-        return rpcFeatureApi.fRpcAssetsApi.removeDraw(appId = APP_ID).map { }
+        return rpcFeatureApi.fRpcAssetsApi.deleteAppAssets(applicationName = APP_ID).map { }
     }
 
-    private fun createDrawRequest(): DrawRequest {
-        return DrawRequest(
-            appId = APP_ID,
+    private fun createDrawRequest(): DisplayElements {
+        return DisplayElements(
+            applicationName = APP_ID,
             priority = DRAW_PRIORITY,
             elements = listOf(
-                DrawRequest.Element(
+                DisplayElementsElementsInner(
                     id = ANIM_ID,
-                    display = DrawRequest.Display.FRONT,
-                    type = DrawRequest.Element.ElementType.ANIMATION,
+                    display = DisplayElementsElementsInner.Display.FRONT,
+                    type = DisplayElementsElementsInner.Type.ANIMATION,
                     stockPath = ANIM_PATH,
                     loop = true
                 )

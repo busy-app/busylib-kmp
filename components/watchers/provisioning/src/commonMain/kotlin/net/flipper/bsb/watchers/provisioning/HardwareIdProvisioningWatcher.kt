@@ -14,7 +14,7 @@ import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
 import net.flipper.bridge.connection.feature.provider.api.get
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
-import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarStatusDevice
+import net.flipper.bridge.connection.feature.rpc.generated.model.StatusDevice
 import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
 import net.flipper.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
 import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
@@ -53,7 +53,7 @@ class HardwareIdProvisioningWatcher(
                     } // Nothing
 
                     is FFeatureStatus.Supported<FRpcFeatureApi> -> {
-                        rpcApiStatus.featureApi.fRpcSystemApi.getDeviceStatus()
+                        rpcApiStatus.featureApi.fRpcSystemApi.getStatusDevice()
                             .onFailure {
                                 error(it) { "Failed to get system info" }
                             }.onSuccess { deviceStatus ->
@@ -68,7 +68,7 @@ class HardwareIdProvisioningWatcher(
         }
     }
 
-    private suspend fun onNewDeviceStatus(deviceStatus: BusyBarStatusDevice, device: BUSYBar) {
+    private suspend fun onNewDeviceStatus(deviceStatus: StatusDevice, device: BUSYBar) {
         persistedStorage.transactionInternal {
             getDevice(device.uniqueId)?.let { original ->
                 addOrReplace(

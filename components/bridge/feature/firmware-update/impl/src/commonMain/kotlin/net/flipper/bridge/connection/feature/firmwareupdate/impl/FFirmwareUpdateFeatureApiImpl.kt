@@ -27,8 +27,8 @@ import net.flipper.bridge.connection.feature.firmwareupdate.model.toBsbUpdateSta
 import net.flipper.bridge.connection.feature.firmwareupdate.util.merge
 import net.flipper.bridge.connection.feature.info.api.FDeviceInfoFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
-import net.flipper.bridge.connection.feature.rpc.api.model.AutoUpdate
-import net.flipper.bridge.connection.feature.rpc.api.model.GetUpdateChangelogResponse
+import net.flipper.bridge.connection.feature.rpc.generated.model.AutoupdateSettings
+import net.flipper.bridge.connection.feature.rpc.generated.model.GetUpdateChangelog200Response
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPDeviceApi
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPTransportCapability
@@ -72,7 +72,6 @@ class FFirmwareUpdateFeatureApiImpl(
         .merge(flowOf(ConsumableUpdateEvent.Empty))
         .transformWhileSubscribed(scope = scope) { flow ->
             flow.throttleLatestCached { event, value: BsbUpdateStatus? ->
-                val couldConsume = event.tryConsume()
                 when (event) {
                     is ConsumableUpdateEvent.BusyLib<BusyLibUpdateEvent.Update> if value != null -> {
                         when (val updateEvent = event.busyLibUpdateEvent) {
@@ -94,7 +93,7 @@ class FFirmwareUpdateFeatureApiImpl(
                     else -> {
                         exponentialRetry {
                             rpcFeatureApi.fRpcUpdaterApi
-                                .getUpdateStatus(couldConsume)
+                                .getFirmwareUpdateStatus()
                                 .map { updateStatus -> updateStatus.toBsbUpdateStatus() }
                                 .onFailure { throwable -> error(throwable) { "Failed to get update status" } }
                         }
@@ -105,12 +104,12 @@ class FFirmwareUpdateFeatureApiImpl(
         .wrap()
 
     override suspend fun setAutoUpdate(isEnabled: Boolean): CResult<Unit> {
-        val request = AutoUpdate(
+        val request = AutoupdateSettings(
             isEnabled = isEnabled,
             intervalStart = DEFAULT_AUTO_UPDATE_INTERVAL_START,
             intervalEnd = DEFAULT_AUTO_UPDATE_INTERVAL_END
         )
-        return rpcFeatureApi.fRpcUpdaterApi.setAutoUpdate(request)
+        return rpcFeatureApi.fRpcUpdaterApi.setAutoupdateSettings(request)
             .map { }
             .onSuccess {
                 val event = BusyLibUpdateEvent.AutoUpdateChanged(isEnabled)
@@ -131,8 +130,8 @@ class FFirmwareUpdateFeatureApiImpl(
                         exponentialRetry {
                             rpcFeatureApi
                                 .fRpcUpdaterApi
-                                .getAutoUpdate(couldConsume)
-                                .map(AutoUpdate::isEnabled)
+                                .getAutoupdateSettings()
+                                .map(AutoupdateSettings::isEnabled)
                         }
                     }
 
@@ -175,7 +174,7 @@ class FFirmwareUpdateFeatureApiImpl(
                     exponentialRetry {
                         rpcFeatureApi.fRpcUpdaterApi
                             .getUpdateChangelog(busyBarVersion.version)
-                            .map(GetUpdateChangelogResponse::changelog)
+                            .map(GetUpdateChangelog200Response::changelog)
                     }
                 }
 

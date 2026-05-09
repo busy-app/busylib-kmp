@@ -53,11 +53,11 @@ class FTimerFeatureApiImpl(
     }
 
     override suspend fun setSnapshot(rawJson: String): CResult<Unit> {
-        return rpcFeatureApi.fRpcBusyApi.setBusySnapshot(rawJson).toCResult()
+        return rpcFeatureApi.fRpcBusyApi.setBusySnapshot(rawJson).map { }.toCResult()
     }
 
     override suspend fun setProfile(slot: BusyProfileSlot, rawJson: String): CResult<Unit> {
-        return rpcFeatureApi.fRpcBusyApi.setBusyProfile(slot.slug, rawJson).toCResult()
+        return rpcFeatureApi.fRpcBusyApi.setBusyProfile(slot.slug, rawJson).map { }.toCResult()
     }
 
     private fun createProfileFlow(slot: BusyProfileSlot): WrappedSharedFlow<String> {

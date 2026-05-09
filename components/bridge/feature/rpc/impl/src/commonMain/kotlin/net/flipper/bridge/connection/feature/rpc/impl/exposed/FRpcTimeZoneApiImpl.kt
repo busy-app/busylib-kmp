@@ -6,39 +6,43 @@ import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import kotlinx.coroutines.CoroutineDispatcher
-import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcTimeZoneApi
-import net.flipper.bridge.connection.feature.rpc.api.model.RpcTimezoneInfo
-import net.flipper.bridge.connection.feature.rpc.api.model.RpcTimezoneListResponse
-import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
-import net.flipper.core.busylib.ktx.common.cache.ObjectCache
-import net.flipper.core.busylib.ktx.common.cache.getOrElse
+import net.flipper.bridge.connection.feature.rpc.generated.api.TimeApi
+import net.flipper.bridge.connection.feature.rpc.generated.model.SuccessResponse
+import net.flipper.bridge.connection.feature.rpc.generated.model.TimestampInfo
+import net.flipper.bridge.connection.feature.rpc.generated.model.TimezoneInfo
+import net.flipper.bridge.connection.feature.rpc.generated.model.TimezoneListResponse
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
 
 class FRpcTimeZoneApiImpl(
     private val httpClient: HttpClient,
     private val dispatcher: CoroutineDispatcher,
-    private val objectCache: ObjectCache
-) : FRpcTimeZoneApi {
+) : TimeApi {
 
-    override suspend fun getTimeTimezone(ignoreCache: Boolean): Result<RpcTimezoneInfo> {
+    override suspend fun getTime(): Result<TimestampInfo> {
         return runSuspendCatching(dispatcher) {
-            objectCache.getOrElse(ignoreCache) {
-                httpClient.get("/api/time/timezone").body<RpcTimezoneInfo>()
-            }
+            httpClient.get("/api/time/timezone").body<TimestampInfo>()
         }
     }
 
-    override suspend fun postTimeTimezone(timezoneInfo: RpcTimezoneInfo): Result<Unit> {
+    override suspend fun getTimeTimezone(): Result<TimezoneInfo> {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun setTimeTimezone(timezone: kotlin.String): Result<SuccessResponse> {
         return runSuspendCatching(dispatcher) {
             httpClient.post("/api/time/timezone") {
-                this.parameter("timezone", timezoneInfo.name)
+                this.parameter("timezone", timezone)
             }.body<SuccessResponse>()
-        }.map { }
+        }
     }
 
-    override suspend fun getTimeTzList(): Result<RpcTimezoneListResponse> {
+    override suspend fun getTimeTzlist(): Result<TimezoneListResponse> {
         return runSuspendCatching(dispatcher) {
-            httpClient.get("/api/time/tzlist").body<RpcTimezoneListResponse>()
+            httpClient.get("/api/time/tzlist").body<TimezoneListResponse>()
         }
+    }
+
+    override suspend fun setTimeTimestamp(timestamp: String): Result<SuccessResponse> {
+        TODO("Not yet implemented")
     }
 }

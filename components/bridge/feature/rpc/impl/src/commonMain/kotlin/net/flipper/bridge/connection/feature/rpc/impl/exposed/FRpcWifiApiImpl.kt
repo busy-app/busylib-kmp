@@ -6,23 +6,20 @@ import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import kotlinx.coroutines.CoroutineDispatcher
-import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcWifiApi
 import net.flipper.bridge.connection.feature.rpc.api.model.ApiResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.BsbRpcError
-import net.flipper.bridge.connection.feature.rpc.api.model.ConnectRequestConfig
 import net.flipper.bridge.connection.feature.rpc.api.model.ErrorResponse
-import net.flipper.bridge.connection.feature.rpc.api.model.NetworkResponse
-import net.flipper.bridge.connection.feature.rpc.api.model.StatusResponse
-import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
-import net.flipper.core.busylib.ktx.common.cache.ObjectCache
-import net.flipper.core.busylib.ktx.common.cache.getOrElse
+import net.flipper.bridge.connection.feature.rpc.generated.api.WiFiApi
+import net.flipper.bridge.connection.feature.rpc.generated.model.ConnectRequestConfig
+import net.flipper.bridge.connection.feature.rpc.generated.model.NetworkResponse
+import net.flipper.bridge.connection.feature.rpc.generated.model.StatusResponse
+import net.flipper.bridge.connection.feature.rpc.generated.model.SuccessResponse
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
 
 class FRpcWifiApiImpl(
     private val httpClient: HttpClient,
     private val dispatcher: CoroutineDispatcher,
-    private val objectCache: ObjectCache
-) : FRpcWifiApi {
+) : WiFiApi {
 
     override suspend fun getWifiNetworks(): Result<NetworkResponse> {
         return runSuspendCatching(dispatcher) {
@@ -30,20 +27,15 @@ class FRpcWifiApiImpl(
         }
     }
 
-    override suspend fun connectWifi(config: ConnectRequestConfig): Result<SuccessResponse> {
+    override suspend fun apiWifiConnectPost(config: ConnectRequestConfig): Result<SuccessResponse> {
         return runSuspendCatching(dispatcher) {
-            val response = httpClient.post("/api/wifi/connect") {
+            httpClient.post("/api/wifi/connect") {
                 setBody(config)
-            }.body<ApiResponse>()
-
-            return@runSuspendCatching when (response) {
-                is ErrorResponse -> error(response.error)
-                is SuccessResponse -> response
-            }
+            }.body<SuccessResponse>()
         }
     }
 
-    override suspend fun disconnectWifi(): Result<SuccessResponse> {
+    override suspend fun apiWifiDisconnectPost(): Result<SuccessResponse> {
         return runSuspendCatching(dispatcher) {
             val response = httpClient.post("/api/wifi/disconnect").body<ApiResponse>()
             return@runSuspendCatching when (response) {
@@ -52,16 +44,16 @@ class FRpcWifiApiImpl(
                 }
 
                 is ErrorResponse -> error(response.error)
-                is SuccessResponse -> response
+                is net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse -> {
+                    SuccessResponse(response.result)
+                }
             }
         }
     }
 
-    override suspend fun getWifiStatus(ignoreCache: Boolean): Result<StatusResponse> {
+    override suspend fun apiWifiStatusGet(): Result<StatusResponse> {
         return runSuspendCatching(dispatcher) {
-            objectCache.getOrElse(ignoreCache) {
-                httpClient.get("/api/wifi/status").body<StatusResponse>()
-            }
+            httpClient.get("/api/wifi/status").body<StatusResponse>()
         }
     }
 }

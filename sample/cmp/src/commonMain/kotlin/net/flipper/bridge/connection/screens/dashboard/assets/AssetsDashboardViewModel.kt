@@ -21,11 +21,11 @@ class AssetsDashboardViewModel(
             append("rpc-contract sample\n")
             append("timestamp=")
             append(Clock.System.now())
-        }.encodeToByteArray()
-        rpcFeatureApi.fRpcAssetsApi.uploadAsset(
-            appId = SAMPLE_APP_ID,
+        } // .encodeToByteArray()
+        rpcFeatureApi.fRpcAssetsApi.uploadAssetWithAppId(
+            applicationName = SAMPLE_APP_ID,
             file = SAMPLE_ASSET_PATH,
-            content = payload
+            body = payload
         ).getOrThrow()
         mutableState.value = mutableState.value.copy(lastUploadedAssetPath = SAMPLE_ASSET_PATH)
         appendLog("Asset uploaded to $SAMPLE_ASSET_PATH")

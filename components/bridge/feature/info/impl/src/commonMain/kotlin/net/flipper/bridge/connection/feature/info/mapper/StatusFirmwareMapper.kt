@@ -1,7 +1,7 @@
 package net.flipper.bridge.connection.feature.info.mapper
 
 import net.flipper.bridge.connection.feature.info.model.BsbStatusFirmware
-import net.flipper.bridge.connection.feature.rpc.api.model.StatusFirmware
+import net.flipper.bridge.connection.feature.rpc.generated.model.StatusFirmware
 
 internal fun StatusFirmware.toBsbStatusFirmware(): BsbStatusFirmware {
     return BsbStatusFirmware(

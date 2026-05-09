@@ -17,7 +17,7 @@ import net.flipper.bridge.connection.feature.link.model.LinkedAccountInfo
 import net.flipper.bridge.connection.feature.rpc.api.critical.FRpcCriticalFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarLinkCode
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarLinkCodeAlreadyLinked
-import net.flipper.bridge.connection.feature.rpc.api.model.RpcLinkedAccountInfo
+import net.flipper.bridge.connection.feature.rpc.generated.model.AccountInfo
 import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
 import net.flipper.bsb.cloud.rest.api.BusyCloudBarsApi
@@ -56,7 +56,7 @@ class FLinkInfoOnReadyFeatureApiImpl(
             .launchIn(scope)
     }
 
-    private fun RpcLinkedAccountInfo.asSealed(currentUserId: Uuid?): LinkedAccountInfo {
+    private fun AccountInfo.asSealed(currentUserId: Uuid?): LinkedAccountInfo {
         info { "Calculate state from $this and current user $currentUserId" }
         val linkedUuid = this.userId
         val linkedMail = this.email
@@ -128,7 +128,7 @@ class FLinkInfoOnReadyFeatureApiImpl(
 
         info { "BUSY Bar registered, waiting user registration from BUSY Bar" }
 
-        var busyBarUser: RpcLinkedAccountInfo
+        var busyBarUser: AccountInfo
 
         withTimeout(ACCOUNT_PROVIDING_TIMEOUT) {
             do {

@@ -1,9 +1,9 @@
 package net.flipper.bridge.connection.feature.smarthome.mapper
 
-import net.flipper.bridge.connection.feature.rpc.api.model.MatterCommissioningPayload
+import net.flipper.bridge.connection.feature.rpc.generated.model.SmartHomePairingPayload
 import net.flipper.bridge.connection.feature.smarthome.model.BsbMatterCommissioningPayload
 
-internal fun MatterCommissioningPayload.toBsbMatterCommissioningPayload(): BsbMatterCommissioningPayload {
+internal fun SmartHomePairingPayload.toBsbMatterCommissioningPayload(): BsbMatterCommissioningPayload {
     return BsbMatterCommissioningPayload(
         availableUntil = availableUntil,
         qrCode = qrCode,
@@ -11,8 +11,8 @@ internal fun MatterCommissioningPayload.toBsbMatterCommissioningPayload(): BsbMa
     )
 }
 
-internal fun BsbMatterCommissioningPayload.toMatterCommissioningPayload(): MatterCommissioningPayload {
-    return MatterCommissioningPayload(
+internal fun BsbMatterCommissioningPayload.toMatterCommissioningPayload(): SmartHomePairingPayload {
+    return SmartHomePairingPayload(
         availableUntil = availableUntil,
         qrCode = qrCode,
         manualCode = manualCode

@@ -1,27 +1,27 @@
 package net.flipper.bridge.connection.feature.rpc.impl.exposed
 
-import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcAssetsApi
-import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcBleApi
-import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcBusyApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
-import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcMatterApi
-import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcSettingsApi
-import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcStreamingApi
-import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcSystemApi
-import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcTimeZoneApi
-import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcUpdaterApi
-import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcWifiApi
+import net.flipper.bridge.connection.feature.rpc.generated.api.AssetsApi
+import net.flipper.bridge.connection.feature.rpc.generated.api.BLEApi
+import net.flipper.bridge.connection.feature.rpc.generated.api.BusyApi
+import net.flipper.bridge.connection.feature.rpc.generated.api.SettingsApi
+import net.flipper.bridge.connection.feature.rpc.generated.api.SmartHomeApi
+import net.flipper.bridge.connection.feature.rpc.generated.api.StreamingApi
+import net.flipper.bridge.connection.feature.rpc.generated.api.SystemApi
+import net.flipper.bridge.connection.feature.rpc.generated.api.TimeApi
+import net.flipper.bridge.connection.feature.rpc.generated.api.UpdaterApi
+import net.flipper.bridge.connection.feature.rpc.generated.api.WiFiApi
 
 @Suppress("LongParameterList")
 class FRpcFeatureApiImpl(
-    override val fRpcSystemApi: FRpcSystemApi,
-    override val fRpcWifiApi: FRpcWifiApi,
-    override val fRpcBleApi: FRpcBleApi,
-    override val fRpcSettingsApi: FRpcSettingsApi,
-    override val fRpcStreamingApi: FRpcStreamingApi,
-    override val fRpcAssetsApi: FRpcAssetsApi,
-    override val fRpcUpdaterApi: FRpcUpdaterApi,
-    override val fRpcMatterApi: FRpcMatterApi,
-    override val fRpcTimeZoneApi: FRpcTimeZoneApi,
-    override val fRpcBusyApi: FRpcBusyApi,
+    override val fRpcSystemApi: SystemApi,
+    override val fRpcWifiApi: WiFiApi,
+    override val fRpcBleApi: BLEApi,
+    override val fRpcSettingsApi: SettingsApi,
+    override val fRpcStreamingApi: StreamingApi,
+    override val fRpcAssetsApi: AssetsApi,
+    override val fRpcUpdaterApi: UpdaterApi,
+    override val fRpcMatterApi: SmartHomeApi,
+    override val fRpcTimeZoneApi: TimeApi,
+    override val fRpcBusyApi: BusyApi,
 ) : FRpcFeatureApi

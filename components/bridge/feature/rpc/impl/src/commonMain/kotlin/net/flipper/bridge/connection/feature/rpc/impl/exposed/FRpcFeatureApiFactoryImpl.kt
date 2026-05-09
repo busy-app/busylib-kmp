@@ -16,7 +16,6 @@ import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPDeviceApi
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
-import net.flipper.core.busylib.ktx.common.cache.DefaultObjectCache
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
@@ -48,7 +47,6 @@ class FRpcFeatureApiFactoryImpl : FDeviceFeatureApi.Factory, LogTagProvider {
         val httpClient = getHttpClient(fHttpDeviceApi.getDeviceHttpEngine())
         val dispatcher = FlipperDispatchers.default
 
-        val objectCache = DefaultObjectCache(scope = scope)
         return FRpcFeatureApiImpl(
             fRpcSystemApi = FRpcSystemApiImpl(
                 httpClient = httpClient,
@@ -57,17 +55,14 @@ class FRpcFeatureApiFactoryImpl : FDeviceFeatureApi.Factory, LogTagProvider {
             fRpcWifiApi = FRpcWifiApiImpl(
                 httpClient = httpClient,
                 dispatcher = dispatcher,
-                objectCache = objectCache
             ),
             fRpcBleApi = FRpcBleApiImpl(
                 httpClient = httpClient,
                 dispatcher = dispatcher,
-                objectCache = objectCache
             ),
             fRpcSettingsApi = FRpcSettingsApiImpl(
                 httpClient = httpClient,
                 dispatcher = dispatcher,
-                objectCache = objectCache
             ),
             fRpcStreamingApi = FRpcStreamingApiImpl(
                 httpClient = httpClient,
@@ -80,17 +75,14 @@ class FRpcFeatureApiFactoryImpl : FDeviceFeatureApi.Factory, LogTagProvider {
             fRpcUpdaterApi = FRpcUpdaterApiImpl(
                 httpClient = httpClient,
                 dispatcher = dispatcher,
-                objectCache = objectCache
             ),
             fRpcMatterApi = FRpcMatterApiImpl(
                 httpClient = httpClient,
                 dispatcher = dispatcher,
-                objectCache = objectCache
             ),
             fRpcTimeZoneApi = FRpcTimeZoneApiImpl(
                 httpClient = httpClient,
                 dispatcher = dispatcher,
-                objectCache = objectCache
             ),
             fRpcBusyApi = FRpcBusyApiImpl(
                 httpClient = httpClient,

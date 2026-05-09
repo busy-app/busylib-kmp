@@ -18,8 +18,9 @@ import net.flipper.bridge.connection.feature.events.api.get
 import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
 import net.flipper.bridge.connection.feature.events.model.ConsumableUpdateEvent
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
-import net.flipper.bridge.connection.feature.rpc.api.model.ConnectRequestConfig
-import net.flipper.bridge.connection.feature.rpc.api.model.WifiIpMethod
+import net.flipper.bridge.connection.feature.rpc.generated.model.ConnectRequestConfig
+import net.flipper.bridge.connection.feature.rpc.generated.model.ConnectRequestConfigIpConfig
+import net.flipper.bridge.connection.feature.rpc.generated.model.WifiIpMethod
 import net.flipper.bridge.connection.feature.wifi.api.FWiFiFeatureApi
 import net.flipper.bridge.connection.feature.wifi.api.model.BsbWifiStatusResponse
 import net.flipper.bridge.connection.feature.wifi.api.model.WiFiNetwork
@@ -72,6 +73,7 @@ class FWiFiFeatureApiImpl(
                         .onFailure { error(it) { "Failed to get WiFi networks" } }
                 }
                 val newNetworkList = networksResponse.networks
+                    .orEmpty()
                     .map { it.toWiFiNetwork() }
                     .groupBy { it.ssid }
                     .map { (_, networks) -> networks.maxWith(WiFiNetworkReplaceComparator()) }
@@ -117,7 +119,7 @@ class FWiFiFeatureApiImpl(
                         exponentialRetry {
                             rpcFeatureApi
                                 .fRpcWifiApi
-                                .getWifiStatus(couldConsume)
+                                .apiWifiStatusGet()
                                 .map { it.toBsbWifiStatusResponse() }
                                 .onFailure { error(it) { "Failed to get WiFi networks" } }
                         }
@@ -137,14 +139,14 @@ class FWiFiFeatureApiImpl(
         password: String,
         security: WiFiSecurity.Supported
     ): CResult<Unit> {
-        return rpcFeatureApi.fRpcWifiApi.connectWifi(
+        return rpcFeatureApi.fRpcWifiApi.apiWifiConnectPost(
             ConnectRequestConfig(
                 ssid = ssid,
                 password = password,
                 security = security
                     .toBsbWifiSecurityMethod()
                     .toWifiSecurityMethod(),
-                ipConfig = ConnectRequestConfig.IpConfig(
+                ipConfig = ConnectRequestConfigIpConfig(
                     ipMethod = WifiIpMethod.DHCP
                 )
             )
@@ -152,7 +154,7 @@ class FWiFiFeatureApiImpl(
     }
 
     override suspend fun disconnect(): CResult<Unit> {
-        return rpcFeatureApi.fRpcWifiApi.disconnectWifi().map { }.toCResult()
+        return rpcFeatureApi.fRpcWifiApi.apiWifiDisconnectPost().map { }.toCResult()
     }
 
     override val isWifiEditingAllowed = fHTTPDeviceApi

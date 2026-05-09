@@ -151,7 +151,7 @@ class FirmwareUpdaterApiImpl(
                     .first()
                     .featureApi
                     .fRpcUpdaterApi
-                    .startUpdateAbortDownload()
+                    .abortFirmwareDownload()
                     .map { }
                     .toCResult()
             }
@@ -197,7 +197,7 @@ class FirmwareUpdaterApiImpl(
                     .first()
                     .featureApi
                     .fRpcUpdaterApi
-                    .startUpdateInstall(bsbUpdateVersion.version)
+                    .installFirmwareUpdate(bsbUpdateVersion.version)
                     .onSuccess { updaterStatusCollector.start() }
                     .map { bsbUpdateVersion }
             }
@@ -263,7 +263,7 @@ class FirmwareUpdaterApiImpl(
     override suspend fun checkForUpdates(): CResult<Unit> {
         return fFeatureProvider.getSync<FRpcFeatureApi>()
             ?.fRpcUpdaterApi
-            ?.startUpdateCheck()
+            ?.checkFirmwareUpdate()
             ?.map { }
             ?.toCResult()
             ?.also { updaterStatusCollector.start() }

@@ -15,8 +15,8 @@ import net.flipper.bridge.connection.feature.events.api.get
 import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
 import net.flipper.bridge.connection.feature.events.model.ConsumableUpdateEvent
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
-import net.flipper.bridge.connection.feature.rpc.api.model.AudioVolumeInfo
-import net.flipper.bridge.connection.feature.rpc.api.model.NameInfo
+import net.flipper.bridge.connection.feature.rpc.generated.model.AudioVolumeInfo
+import net.flipper.bridge.connection.feature.rpc.generated.model.NameInfo
 import net.flipper.bridge.connection.feature.settings.mapper.toBsbBrightnessInfo
 import net.flipper.bridge.connection.feature.settings.mapper.toBsbVolume
 import net.flipper.bridge.connection.feature.settings.mapper.toDisplayBrightnessInfo
@@ -62,7 +62,7 @@ class FSettingsFeatureApiImpl(
                         exponentialRetry {
                             rpcFeatureApi
                                 .fRpcSettingsApi
-                                .getName(couldConsume)
+                                .apiNameGet()
                                 .map { nameInfo -> nameInfo.name }
                         }
                     }
@@ -86,7 +86,7 @@ class FSettingsFeatureApiImpl(
                         exponentialRetry {
                             rpcFeatureApi
                                 .fRpcSettingsApi
-                                .getDisplayBrightness(couldConsume)
+                                .getDisplayBrightness()
                                 .map { displayBrightnessInfo -> displayBrightnessInfo.toBsbBrightnessInfo() }
                                 .onFailure { error(it) { "Failed to get Settings status" } }
                         }
@@ -120,7 +120,7 @@ class FSettingsFeatureApiImpl(
                     else -> {
                         exponentialRetry {
                             rpcFeatureApi.fRpcSettingsApi
-                                .getAudioVolume(couldConsume)
+                                .getAudioVolume()
                                 .map { audioVolumeInfo -> audioVolumeInfo.toBsbVolume() }
                         }
                     }
@@ -136,7 +136,7 @@ class FSettingsFeatureApiImpl(
 
     override suspend fun setVolume(volume: Fraction): CResult<Unit> {
         return rpcFeatureApi.fRpcSettingsApi
-            .setAudioVolume(volume.toWholePercent().toInt())
+            .setAudioVolume(volume.toWholePercent())
             .map { }
             .onSuccess {
                 val model = AudioVolumeInfo(volume)
@@ -152,7 +152,7 @@ class FSettingsFeatureApiImpl(
 
     override suspend fun setDeviceName(name: String): CResult<Unit> {
         return rpcFeatureApi.fRpcSettingsApi
-            .setName(NameInfo(name))
+            .apiNamePost(NameInfo(name))
             .map { }
             .onSuccess {
                 val model = name
@@ -166,7 +166,7 @@ class FSettingsFeatureApiImpl(
         value: BsbBrightness,
     ): CResult<Unit> {
         return rpcFeatureApi.fRpcSettingsApi
-            .setDisplayBrightness(value.toDisplayBrightnessInfo())
+            .setDisplayBrightness(value.toDisplayBrightnessInfo().value)
             .map { }
             .onSuccess {
                 val model = BsbBrightnessInfo(value)

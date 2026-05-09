@@ -2,18 +2,18 @@ package net.flipper.bridge.connection.feature.ble.api
 
 import net.flipper.bridge.connection.feature.ble.api.model.FBleStatus
 import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
-import net.flipper.bridge.connection.feature.rpc.api.model.BleStatusResponse
+import net.flipper.bridge.connection.feature.rpc.generated.model.BleStatusResponse
 
 fun BleStatusResponse.toEvent(): BusyLibUpdateEvent.Ble {
     return BusyLibUpdateEvent.Ble(
-        status = when (state) {
-            BleStatusResponse.State.RESET -> BusyLibUpdateEvent.Ble.BleServiceStatus.RESET
-            BleStatusResponse.State.INITIALIZATION -> BusyLibUpdateEvent.Ble.BleServiceStatus.INITIALIZATION
-            BleStatusResponse.State.DISABLED -> BusyLibUpdateEvent.Ble.BleServiceStatus.READY
-            BleStatusResponse.State.ENABLED -> BusyLibUpdateEvent.Ble.BleServiceStatus.ADVERTISING
-            BleStatusResponse.State.CONNECTABLE -> BusyLibUpdateEvent.Ble.BleServiceStatus.CONNECTABLE
-            BleStatusResponse.State.CONNECTED -> BusyLibUpdateEvent.Ble.BleServiceStatus.CONNECTED
-            BleStatusResponse.State.INTERNAL_ERROR -> BusyLibUpdateEvent.Ble.BleServiceStatus.ERROR
+        status = when (status) {
+            BleStatusResponse.Status.RESET -> BusyLibUpdateEvent.Ble.BleServiceStatus.RESET
+            BleStatusResponse.Status.INITIALIZATION -> BusyLibUpdateEvent.Ble.BleServiceStatus.INITIALIZATION
+            BleStatusResponse.Status.DISABLED -> BusyLibUpdateEvent.Ble.BleServiceStatus.READY
+            BleStatusResponse.Status.ENABLED -> BusyLibUpdateEvent.Ble.BleServiceStatus.ADVERTISING
+            BleStatusResponse.Status.CONNECTABLE -> BusyLibUpdateEvent.Ble.BleServiceStatus.CONNECTABLE
+            BleStatusResponse.Status.CONNECTED -> BusyLibUpdateEvent.Ble.BleServiceStatus.CONNECTED
+            BleStatusResponse.Status.INTERNAL_ERROR -> BusyLibUpdateEvent.Ble.BleServiceStatus.ERROR
         },
         remoteAddress = address,
     )

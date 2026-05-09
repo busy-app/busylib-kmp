@@ -38,7 +38,7 @@ class FTimeZoneFeatureApiImpl(
             initial = { couldConsume ->
                 rpcFeatureApi
                     .fRpcTimeZoneApi
-                    .getTimeTimezone(couldConsume)
+                    .getTimeTimezone()
                     .mapCatching { response ->
                         response.toEvent()
                     }
@@ -62,12 +62,13 @@ class FTimeZoneFeatureApiImpl(
 
     override suspend fun setTimezone(timezoneInfo: TimezoneInfo): CResult<Unit> {
         return rpcFeatureApi.fRpcTimeZoneApi
-            .postTimeTimezone(timezoneInfo.toInternal())
+            .setTimeTimezone(timezoneInfo.toInternal().abbr)
+            .map { }
             .toCResult()
     }
 
     override suspend fun getTimezones(): CResult<List<TimezoneInfo>> {
-        return rpcFeatureApi.fRpcTimeZoneApi.getTimeTzList().map { it.toPublic() }.toCResult()
+        return rpcFeatureApi.fRpcTimeZoneApi.getTimeTzlist().map { it.toPublic() }.toCResult()
     }
 
     @Inject

@@ -15,71 +15,70 @@ import io.ktor.utils.io.writeFully
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.yield
-import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcUpdaterApi
 import net.flipper.bridge.connection.feature.rpc.api.model.ApiResponse
-import net.flipper.bridge.connection.feature.rpc.api.model.AutoUpdate
 import net.flipper.bridge.connection.feature.rpc.api.model.ErrorResponse
-import net.flipper.bridge.connection.feature.rpc.api.model.GetUpdateChangelogResponse
-import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
-import net.flipper.bridge.connection.feature.rpc.api.model.UpdateStatus
-import net.flipper.core.busylib.ktx.common.cache.ObjectCache
-import net.flipper.core.busylib.ktx.common.cache.getOrElse
+import net.flipper.bridge.connection.feature.rpc.generated.api.UpdaterApi
+import net.flipper.bridge.connection.feature.rpc.generated.model.AutoupdateSettings
+import net.flipper.bridge.connection.feature.rpc.generated.model.GetUpdateChangelog200Response
+import net.flipper.bridge.connection.feature.rpc.generated.model.SuccessResponse
+import net.flipper.bridge.connection.feature.rpc.generated.model.UpdateStatus
 import net.flipper.core.busylib.ktx.common.chunked
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
 
 class FRpcUpdaterApiImpl(
     private val httpClient: HttpClient,
     private val dispatcher: CoroutineDispatcher,
-    private val objectCache: ObjectCache
-) : FRpcUpdaterApi {
-    override suspend fun startUpdateCheck(): Result<Unit> {
+) : UpdaterApi {
+    override suspend fun checkFirmwareUpdate(): Result<SuccessResponse> {
         return runSuspendCatching(dispatcher) {
             val httpResponse = httpClient.post("/api/update/check")
             val response = httpResponse.body<ApiResponse>()
-            if (response is ErrorResponse) {
-                if (httpResponse.status == HttpStatusCode.Conflict) {
-                    return@runSuspendCatching // Operation already in progress
-                } else {
-                    @Suppress("TooGenericExceptionThrown")
-                    throw RuntimeException("Received error response: $response")
+            when (response) {
+                is ErrorResponse -> {
+                    if (httpResponse.status == HttpStatusCode.Conflict) {
+                        SuccessResponse(response.error) // Operation already in progress
+                    } else {
+                        @Suppress("TooGenericExceptionThrown")
+                        throw RuntimeException("Received error response: $response")
+                    }
+                }
+
+                is net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse -> {
+                    SuccessResponse(response.result)
                 }
             }
         }
     }
 
-    override suspend fun setAutoUpdate(request: AutoUpdate): Result<SuccessResponse> {
+    override suspend fun setAutoupdateSettings(autoupdateSettings: AutoupdateSettings): Result<SuccessResponse> {
         return runSuspendCatching(dispatcher) {
             httpClient.post("/api/update/autoupdate") {
-                setBody(request)
+                setBody(autoupdateSettings)
             }.body<SuccessResponse>()
         }
     }
 
-    override suspend fun getAutoUpdate(ignoreCache: Boolean): Result<AutoUpdate> {
+    override suspend fun getAutoupdateSettings(): Result<AutoupdateSettings> {
         return runSuspendCatching(dispatcher) {
-            objectCache.getOrElse(ignoreCache) {
-                httpClient.get("/api/update/autoupdate").body<AutoUpdate>()
-            }
+            httpClient.get("/api/update/autoupdate").body<AutoupdateSettings>()
         }
     }
 
-    override suspend fun getUpdateStatus(ignoreCache: Boolean): Result<UpdateStatus> {
+    override suspend fun getFirmwareUpdateStatus(): Result<UpdateStatus> {
         return runSuspendCatching(dispatcher) {
-            objectCache.getOrElse(ignoreCache) {
-                httpClient.get("/api/update/status").body<UpdateStatus>()
-            }
+            httpClient.get("/api/update/status").body<UpdateStatus>()
         }
     }
 
-    override suspend fun getUpdateChangelog(version: String): Result<GetUpdateChangelogResponse> {
+    override suspend fun getUpdateChangelog(version: String): Result<GetUpdateChangelog200Response> {
         return runSuspendCatching(dispatcher) {
             httpClient.get("/api/update/changelog") {
                 parameter("version", version)
-            }.body<GetUpdateChangelogResponse>()
+            }.body<GetUpdateChangelog200Response>()
         }
     }
 
-    override suspend fun startUpdateInstall(version: String): Result<SuccessResponse> {
+    override suspend fun installFirmwareUpdate(version: String): Result<SuccessResponse> {
         return runSuspendCatching(dispatcher) {
             httpClient.post("/api/update/install") {
                 parameter("version", version)
@@ -87,13 +86,13 @@ class FRpcUpdaterApiImpl(
         }
     }
 
-    override suspend fun startUpdateAbortDownload(): Result<SuccessResponse> {
+    override suspend fun abortFirmwareDownload(): Result<SuccessResponse> {
         return runSuspendCatching(dispatcher) {
             httpClient.post("/api/update/abort_download").body<SuccessResponse>()
         }
     }
 
-    override suspend fun postUpdate(
+    override suspend fun updateFirmware(
         bytesFlow: Flow<ByteArray>,
         totalBytes: Long,
         onTransferred: (Long) -> Unit

@@ -54,7 +54,7 @@ internal class FirmwareUploaderApiImpl(
                 }
                 _state.emit(FirmwareUploaderState.Uploading(0, size))
                 try {
-                    fFeatureApi.postUpdate(
+                    fFeatureApi.updateFirmware(
                         totalBytes = size,
                         bytesFlow = SystemFileSystem.source(clientFilePath).asFlow(),
                         onTransferred = { bytesUploaded ->

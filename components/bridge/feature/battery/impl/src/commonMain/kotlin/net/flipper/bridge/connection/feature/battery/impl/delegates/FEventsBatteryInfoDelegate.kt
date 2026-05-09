@@ -7,7 +7,7 @@ import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
 import net.flipper.bridge.connection.feature.events.api.get
 import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
-import net.flipper.bridge.connection.feature.rpc.api.model.PowerState
+import net.flipper.bridge.connection.feature.rpc.generated.model.StatusPower
 import net.flipper.core.busylib.data.Fraction
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
@@ -27,9 +27,9 @@ class FEventsBatteryInfoDelegate(
                 }.mapCatching { response ->
                     BusyLibUpdateEvent.Power.Provided(
                         status = when (response.state) {
-                            PowerState.DISCHARGING -> BusyLibUpdateEvent.Power.Provided.Status.DISCHARGING
-                            PowerState.CHARGING -> BusyLibUpdateEvent.Power.Provided.Status.CHARGING
-                            PowerState.CHARGED -> BusyLibUpdateEvent.Power.Provided.Status.CHARGED
+                            StatusPower.State.DISCHARGING -> BusyLibUpdateEvent.Power.Provided.Status.DISCHARGING
+                            StatusPower.State.CHARGING -> BusyLibUpdateEvent.Power.Provided.Status.CHARGING
+                            StatusPower.State.CHARGED -> BusyLibUpdateEvent.Power.Provided.Status.CHARGED
                         },
                         chargePercent = Fraction.fromWholePercent(response.batteryCharge)
                     )
