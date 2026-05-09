@@ -35,7 +35,7 @@ class FBleFeatureApiImpl(
         scope = scope,
         initial = {
             rpcFeatureApi.fRpcBleApi
-                .getBleStatus(false)
+                .apiBleStatusGet()
                 .onFailure { error(it) { "Failed to get Ble status" } }
                 .map { response -> response.toEvent() }
         },

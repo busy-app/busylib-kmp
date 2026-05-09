@@ -54,7 +54,7 @@ class UpdaterStatusCollector(
                         ?: error("Could not get RPC feature api")
                     fRpcFeatureApi
                         .fRpcUpdaterApi
-                        .getUpdateStatus(true)
+                        .getFirmwareUpdateStatus()
                         .onFailure { throwable -> error(throwable) { "Failed to get update status" } }
                 }.toBsbUpdateStatus()
                 val updateStateEvent = BusyLibUpdateEvent.Update.UpdateState(

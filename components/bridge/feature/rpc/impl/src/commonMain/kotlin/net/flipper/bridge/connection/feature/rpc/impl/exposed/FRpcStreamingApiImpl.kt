@@ -8,14 +8,14 @@ import io.ktor.client.request.url
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpHeaders
 import kotlinx.coroutines.CoroutineDispatcher
-import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcStreamingApi
+import net.flipper.bridge.connection.feature.rpc.generated.api.StreamingApi
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
 
 class FRpcStreamingApiImpl(
     private val httpClient: HttpClient,
     private val dispatcher: CoroutineDispatcher
-) : FRpcStreamingApi {
-    override suspend fun getScreen(display: Int): Result<String> {
+) : StreamingApi {
+    override suspend fun apiScreenGet(display: Int): Result<String> {
         return runSuspendCatching(dispatcher) {
             httpClient.get {
                 url("/api/screen")
@@ -23,5 +23,9 @@ class FRpcStreamingApiImpl(
                 parameter("display", display)
             }.bodyAsText()
         }
+    }
+
+    override suspend fun connectWebSocket(): Result<Unit> {
+        TODO("Not yet implemented")
     }
 }

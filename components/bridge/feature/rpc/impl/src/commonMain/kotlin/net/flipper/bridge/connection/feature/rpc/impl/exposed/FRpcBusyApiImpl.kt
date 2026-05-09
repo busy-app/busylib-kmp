@@ -10,14 +10,14 @@ import io.ktor.http.ContentType
 import io.ktor.http.appendPathSegments
 import io.ktor.http.content.TextContent
 import kotlinx.coroutines.CoroutineDispatcher
-import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcBusyApi
-import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
+import net.flipper.bridge.connection.feature.rpc.generated.api.BusyApi
+import net.flipper.bridge.connection.feature.rpc.generated.model.SuccessResponse
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
 
 class FRpcBusyApiImpl(
     private val httpClient: HttpClient,
     private val dispatcher: CoroutineDispatcher
-) : FRpcBusyApi {
+) : BusyApi {
 
     override suspend fun getBusySnapshot(): Result<String> {
         return runSuspendCatching(dispatcher) {
@@ -25,12 +25,12 @@ class FRpcBusyApiImpl(
         }
     }
 
-    override suspend fun setBusySnapshot(rawJson: String): Result<Unit> {
+    override suspend fun setBusySnapshot(rawJson: String): Result<SuccessResponse> {
         return runSuspendCatching(dispatcher) {
             httpClient.put("/api/busy/snapshot") {
                 setBody(TextContent(rawJson, ContentType.Application.Json))
             }.body<SuccessResponse>()
-        }.map { }
+        }
     }
 
     override suspend fun getBusyProfile(slot: String): Result<String> {
@@ -43,7 +43,7 @@ class FRpcBusyApiImpl(
         }
     }
 
-    override suspend fun setBusyProfile(slot: String, rawJson: String): Result<Unit> {
+    override suspend fun setBusyProfile(slot: String, rawJson: String): Result<SuccessResponse> {
         return runSuspendCatching(dispatcher) {
             httpClient.put {
                 url {
@@ -51,6 +51,6 @@ class FRpcBusyApiImpl(
                 }
                 setBody(TextContent(rawJson, ContentType.Application.Json))
             }.body<SuccessResponse>()
-        }.map { }
+        }
     }
 }

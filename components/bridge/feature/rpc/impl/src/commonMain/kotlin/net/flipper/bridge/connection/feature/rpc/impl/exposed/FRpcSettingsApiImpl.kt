@@ -7,61 +7,67 @@ import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import kotlinx.coroutines.CoroutineDispatcher
-import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcSettingsApi
-import net.flipper.bridge.connection.feature.rpc.api.model.AudioVolumeInfo
-import net.flipper.bridge.connection.feature.rpc.api.model.DisplayBrightnessInfo
-import net.flipper.bridge.connection.feature.rpc.api.model.NameInfo
-import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
-import net.flipper.core.busylib.ktx.common.cache.ObjectCache
-import net.flipper.core.busylib.ktx.common.cache.getOrElse
+import net.flipper.bridge.connection.feature.rpc.generated.api.SettingsApi
+import net.flipper.bridge.connection.feature.rpc.generated.model.AudioVolumeInfo
+import net.flipper.bridge.connection.feature.rpc.generated.model.DisplayBrightnessInfo
+import net.flipper.bridge.connection.feature.rpc.generated.model.HttpAccessInfo
+import net.flipper.bridge.connection.feature.rpc.generated.model.NameInfo
+import net.flipper.bridge.connection.feature.rpc.generated.model.SuccessResponse
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
 
 class FRpcSettingsApiImpl(
     private val httpClient: HttpClient,
     private val dispatcher: CoroutineDispatcher,
-    private val objectCache: ObjectCache
-) : FRpcSettingsApi {
-    override suspend fun getName(ignoreCache: Boolean): Result<NameInfo> {
+) : SettingsApi {
+    override suspend fun apiNameGet(): Result<NameInfo> {
         return runSuspendCatching(dispatcher) {
-            objectCache.getOrElse(ignoreCache) {
-                httpClient.get("/api/name").body<NameInfo>()
-            }
+            httpClient.get("/api/name").body<NameInfo>()
         }
     }
 
-    override suspend fun setName(body: NameInfo): Result<SuccessResponse> {
+    override suspend fun apiNamePost(nameInfo: NameInfo): Result<SuccessResponse> {
         return runSuspendCatching(dispatcher) {
             httpClient.post("/api/name") {
-                setBody(body)
+                setBody(nameInfo)
             }.body<SuccessResponse>()
         }
     }
 
-    override suspend fun getDisplayBrightness(ignoreCache: Boolean): Result<DisplayBrightnessInfo> {
+    override suspend fun getDisplayBrightness(): Result<DisplayBrightnessInfo> {
         return runSuspendCatching(dispatcher) {
-            objectCache.getOrElse(ignoreCache) {
-                httpClient.get("/api/display/brightness").body<DisplayBrightnessInfo>()
-            }
+            httpClient.get("/api/display/brightness").body<DisplayBrightnessInfo>()
         }
     }
 
-    override suspend fun setDisplayBrightness(brightnessInfo: DisplayBrightnessInfo): Result<SuccessResponse> {
+    override suspend fun getHttpAccess(): Result<HttpAccessInfo> {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun setDisplayBrightness(`value`: String): Result<SuccessResponse> {
         return runSuspendCatching(dispatcher) {
             httpClient.post("/api/display/brightness") {
-                parameter("value", brightnessInfo.value)
+                parameter("value", `value`)
             }.body<SuccessResponse>()
         }
     }
 
-    override suspend fun getAudioVolume(ignoreCache: Boolean): Result<AudioVolumeInfo> {
+    override suspend fun setHttpAccess(
+        mode: String,
+        key: String?
+    ): Result<SuccessResponse> {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun getAudioVolume(): Result<AudioVolumeInfo> {
         return runSuspendCatching(dispatcher) {
-            objectCache.getOrElse(ignoreCache) {
-                httpClient.get("/api/audio/volume").body<AudioVolumeInfo>()
-            }
+            httpClient.get("/api/audio/volume").body<AudioVolumeInfo>()
         }
     }
 
-    override suspend fun setAudioVolume(volume: Int): Result<SuccessResponse> {
+    override suspend fun setAudioVolume(
+        volume: kotlin.Double,
+        silent: kotlin.Int?
+    ): Result<SuccessResponse> {
         return runSuspendCatching(dispatcher) {
             httpClient.post("/api/audio/volume") {
                 parameter("volume", volume)

@@ -17,7 +17,7 @@ import net.flipper.bridge.connection.feature.events.api.get
 import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
 import net.flipper.bridge.connection.feature.events.model.ConsumableUpdateEvent
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
-import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcMatterApi
+import net.flipper.bridge.connection.feature.rpc.generated.api.SmartHomeApi
 import net.flipper.bridge.connection.feature.smarthome.api.FSmartHomeFeatureApi
 import net.flipper.bridge.connection.feature.smarthome.mapper.toBsbMatterCommissionedFabrics
 import net.flipper.bridge.connection.feature.smarthome.mapper.toBsbMatterCommissioningPayload
@@ -44,7 +44,7 @@ import kotlin.time.Duration.Companion.seconds
 
 class FSmartHomeFeatureApiImpl(
     private val scope: CoroutineScope,
-    private val fRpcMatterApi1: FRpcMatterApi,
+    private val fRpcMatterApi1: SmartHomeApi,
     private val fEventsFeatureApi: FEventsFeatureApi?,
 ) : FSmartHomeFeatureApi,
     LogTagProvider {
@@ -64,7 +64,7 @@ class FSmartHomeFeatureApiImpl(
 
                     else -> {
                         exponentialRetry {
-                            fRpcMatterApi1.getMatterCommissioning(couldConsume)
+                            fRpcMatterApi1.getSmartHomeCommissioningStatus()
                                 .map { matterCommissionedFabrics ->
                                     matterCommissionedFabrics
                                         .toBsbMatterCommissionedFabrics()
@@ -82,7 +82,7 @@ class FSmartHomeFeatureApiImpl(
     }
 
     override suspend fun getPairCode(): CResult<BsbMatterCommissioningPayload> {
-        return fRpcMatterApi1.postMatterCommissioning()
+        return fRpcMatterApi1.startSmartHomePairing()
             .map { matterCommissioningPayload -> matterCommissioningPayload.toBsbMatterCommissioningPayload() }
             .toCResult()
     }
@@ -109,7 +109,7 @@ class FSmartHomeFeatureApiImpl(
     }
 
     override suspend fun forgetAllPairings(): CResult<Unit> {
-        return fRpcMatterApi1.deleteMatterCommissioning().toCResult()
+        return fRpcMatterApi1.apiSmartHomePairingDelete().map { }.toCResult()
     }
 
     @ContributesTo(BusyLibGraph::class)

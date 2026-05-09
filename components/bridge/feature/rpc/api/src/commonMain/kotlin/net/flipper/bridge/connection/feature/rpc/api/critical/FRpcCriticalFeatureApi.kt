@@ -4,15 +4,15 @@ import kotlinx.coroutines.flow.StateFlow
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.client.FRpcClientModeApi
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarLinkCodeResponse
-import net.flipper.bridge.connection.feature.rpc.api.model.RpcLinkedAccountInfo
-import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
+import net.flipper.bridge.connection.feature.rpc.generated.model.AccountInfo
+import net.flipper.bridge.connection.feature.rpc.generated.model.SuccessResponse
 import kotlin.uuid.Uuid
 
 interface FRpcCriticalFeatureApi : FDeviceFeatureApi {
     val clientModeApi: FRpcClientModeApi
-    val currentAccountInfo: StateFlow<RpcLinkedAccountInfo?>
+    val currentAccountInfo: StateFlow<AccountInfo?>
 
-    suspend fun invalidateLinkedUser(userId: Uuid?): Result<RpcLinkedAccountInfo>
+    suspend fun invalidateLinkedUser(userId: Uuid?): Result<AccountInfo>
 
     suspend fun getLinkCode(): Result<BusyBarLinkCodeResponse>
 

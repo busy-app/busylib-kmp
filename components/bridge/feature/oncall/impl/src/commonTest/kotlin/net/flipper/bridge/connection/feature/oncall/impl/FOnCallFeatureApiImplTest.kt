@@ -8,13 +8,13 @@ import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcBusyApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcMatterApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcSettingsApi
-import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcStreamingApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcSystemApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcTimeZoneApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcUpdaterApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcWifiApi
-import net.flipper.bridge.connection.feature.rpc.api.model.DrawRequest
-import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
+import net.flipper.bridge.connection.feature.rpc.api.exposed.StreamingApi
+import net.flipper.bridge.connection.feature.rpc.generated.model.DrawRequest
+import net.flipper.bridge.connection.feature.rpc.generated.model.SuccessResponse
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.time.Duration.Companion.seconds
@@ -133,7 +133,7 @@ private class FakeRpcFeatureApi(
     override val fRpcWifiApi: FRpcWifiApi get() = error("Not used")
     override val fRpcBleApi: FRpcBleApi get() = error("Not used")
     override val fRpcSettingsApi: FRpcSettingsApi get() = error("Not used")
-    override val fRpcStreamingApi: FRpcStreamingApi get() = error("Not used")
+    override val fRpcStreamingApi: StreamingApi get() = error("Not used")
     override val fRpcUpdaterApi: FRpcUpdaterApi get() = error("Not used")
     override val fRpcMatterApi: FRpcMatterApi get() = error("Not used")
     override val fRpcTimeZoneApi: FRpcTimeZoneApi get() = error("Not used")

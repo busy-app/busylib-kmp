@@ -1,6 +1,6 @@
 package net.flipper.bridge.connection.feature.wifi.mapper
 
-import net.flipper.bridge.connection.feature.rpc.api.model.WifiSecurityMethod
+import net.flipper.bridge.connection.feature.rpc.generated.model.WifiSecurityMethod
 import net.flipper.bridge.connection.feature.wifi.api.model.BsbWifiSecurityMethod
 import net.flipper.bridge.connection.feature.wifi.api.model.WiFiSecurity
 

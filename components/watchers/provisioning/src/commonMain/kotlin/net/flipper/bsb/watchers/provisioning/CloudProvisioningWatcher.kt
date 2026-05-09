@@ -18,7 +18,7 @@ import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
 import net.flipper.bridge.connection.feature.provider.api.get
 import net.flipper.bridge.connection.feature.rpc.api.critical.FRpcCriticalFeatureApi
-import net.flipper.bridge.connection.feature.rpc.api.model.RpcLinkedAccountInfo
+import net.flipper.bridge.connection.feature.rpc.generated.model.AccountInfo
 import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
 import net.flipper.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
 import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
@@ -74,11 +74,11 @@ class CloudProvisioningWatcher(
         }
     }
 
-    private suspend fun onNewLinkedInfo(linkedInfo: RpcLinkedAccountInfo?, deviceId: String) {
+    private suspend fun onNewLinkedInfo(linkedInfo: AccountInfo?, deviceId: String) {
         if (linkedInfo == null) {
             return
         }
-        val cloudId = linkedInfo.cloudId?.let(Uuid::parseOrNull)
+        val cloudId = linkedInfo.id?.let(Uuid::parseOrNull)
         persistedStorage.transactionInternal {
             getDevice(deviceId)?.let {
                 updateBUSYBar(cloudId, it)

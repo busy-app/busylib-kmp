@@ -4,34 +4,35 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
 import kotlinx.coroutines.CoroutineDispatcher
-import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcSystemApi
-import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarStatus
-import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarStatusDevice
-import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarStatusPower
-import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarStatusSystem
-import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarVersion
-import net.flipper.bridge.connection.feature.rpc.api.model.StatusFirmware
+import net.flipper.bridge.connection.feature.rpc.generated.api.SystemApi
+import net.flipper.bridge.connection.feature.rpc.generated.model.NetworkInterfaceInfo
+import net.flipper.bridge.connection.feature.rpc.generated.model.Status
+import net.flipper.bridge.connection.feature.rpc.generated.model.StatusDevice
+import net.flipper.bridge.connection.feature.rpc.generated.model.StatusFirmware
+import net.flipper.bridge.connection.feature.rpc.generated.model.StatusPower
+import net.flipper.bridge.connection.feature.rpc.generated.model.StatusSystem
+import net.flipper.bridge.connection.feature.rpc.generated.model.VersionInfo
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
 
 class FRpcSystemApiImpl(
     private val httpClient: HttpClient,
     private val dispatcher: CoroutineDispatcher
-) : FRpcSystemApi {
-    override suspend fun getVersion(): Result<BusyBarVersion> {
+) : SystemApi {
+    override suspend fun getVersion(): Result<VersionInfo> {
         return runSuspendCatching(dispatcher) {
-            httpClient.get("/api/version").body<BusyBarVersion>()
+            httpClient.get("/api/version").body<VersionInfo>()
         }
     }
 
-    override suspend fun getStatus(): Result<BusyBarStatus> {
+    override suspend fun getStatus(): Result<Status> {
         return runSuspendCatching(dispatcher) {
-            httpClient.get("/api/status").body<BusyBarStatus>()
+            httpClient.get("/api/status").body<Status>()
         }
     }
 
-    override suspend fun getDeviceStatus(): Result<BusyBarStatusDevice> {
+    override suspend fun getStatusDevice(): Result<StatusDevice> {
         return runSuspendCatching(dispatcher) {
-            httpClient.get("/api/status/device").body<BusyBarStatusDevice>()
+            httpClient.get("/api/status/device").body<StatusDevice>()
         }
     }
 
@@ -41,15 +42,19 @@ class FRpcSystemApiImpl(
         }
     }
 
-    override suspend fun getStatusSystem(): Result<BusyBarStatusSystem> {
+    override suspend fun getStatusSystem(): Result<StatusSystem> {
         return runSuspendCatching(dispatcher) {
-            httpClient.get("/api/status/system").body<BusyBarStatusSystem>()
+            httpClient.get("/api/status/system").body<StatusSystem>()
         }
     }
 
-    override suspend fun getStatusPower(): Result<BusyBarStatusPower> {
+    override suspend fun getTransport(): Result<NetworkInterfaceInfo> {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun getStatusPower(): Result<StatusPower> {
         return runSuspendCatching(dispatcher) {
-            httpClient.get("/api/status/power").body<BusyBarStatusPower>()
+            httpClient.get("/api/status/power").body<StatusPower>()
         }
     }
 }

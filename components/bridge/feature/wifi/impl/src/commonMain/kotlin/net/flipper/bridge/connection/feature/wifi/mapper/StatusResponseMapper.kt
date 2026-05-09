@@ -1,8 +1,8 @@
 package net.flipper.bridge.connection.feature.wifi.mapper
 
-import net.flipper.bridge.connection.feature.rpc.api.model.StatusResponse
-import net.flipper.bridge.connection.feature.rpc.api.model.WifiIpMethod
-import net.flipper.bridge.connection.feature.rpc.api.model.WifiIpType
+import net.flipper.bridge.connection.feature.rpc.generated.model.StatusResponse
+import net.flipper.bridge.connection.feature.rpc.generated.model.WifiIpMethod
+import net.flipper.bridge.connection.feature.rpc.generated.model.WifiIpType
 import net.flipper.bridge.connection.feature.wifi.api.model.BsbWifiIpMethod
 import net.flipper.bridge.connection.feature.wifi.api.model.BsbWifiIpType
 import net.flipper.bridge.connection.feature.wifi.api.model.BsbWifiStatusResponse

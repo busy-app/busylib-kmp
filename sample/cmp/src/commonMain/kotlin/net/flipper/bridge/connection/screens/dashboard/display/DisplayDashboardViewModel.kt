@@ -4,7 +4,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
-import net.flipper.bridge.connection.feature.rpc.api.model.DrawRequest
+import net.flipper.bridge.connection.feature.rpc.generated.model.DisplayElements
+import net.flipper.bridge.connection.feature.rpc.generated.model.DisplayElementsElementsInner
 import net.flipper.bridge.connection.screens.dashboard.common.DISPLAY_UNTIL_OFFSET_SECONDS
 import net.flipper.bridge.connection.screens.dashboard.common.DashboardFeatureViewModel
 import net.flipper.bridge.connection.screens.dashboard.common.MILLIS_PER_SECOND
@@ -23,14 +24,14 @@ class DisplayDashboardViewModel(
 
     fun drawSampleText() = runAction("display draw text") {
         val rpcFeatureApi = requireFeature<FRpcFeatureApi>(featureProvider, "RPC")
-        rpcFeatureApi.fRpcAssetsApi.displayDraw(createTextDrawRequest()).getOrThrow()
+        rpcFeatureApi.fRpcAssetsApi.drawOnDisplay(createTextDrawRequest()).getOrThrow()
         mutableState.value = mutableState.value.copy(lastDrawSummary = "Text draw posted")
         appendLog("Text draw posted")
     }
 
     fun drawSampleAnimation() = runAction("display draw animation") {
         val rpcFeatureApi = requireFeature<FRpcFeatureApi>(featureProvider, "RPC")
-        rpcFeatureApi.fRpcAssetsApi.displayDraw(createAnimationDrawRequest()).getOrThrow()
+        rpcFeatureApi.fRpcAssetsApi.drawOnDisplay(createAnimationDrawRequest()).getOrThrow()
         mutableState.value = mutableState.value.copy(
             lastDrawSummary = "Animation draw posted: $SAMPLE_STOCK_ANIMATION_PATH"
         )
@@ -39,27 +40,27 @@ class DisplayDashboardViewModel(
 
     fun clearSampleDraw() = runAction("display draw delete") {
         val rpcFeatureApi = requireFeature<FRpcFeatureApi>(featureProvider, "RPC")
-        rpcFeatureApi.fRpcAssetsApi.removeDraw(SAMPLE_APP_ID).getOrThrow()
+        rpcFeatureApi.fRpcAssetsApi.clearDisplay(SAMPLE_APP_ID).getOrThrow()
         mutableState.value = mutableState.value.copy(lastDrawSummary = "Draw cleared")
         appendLog("Draw cleared")
     }
 
-    private fun createTextDrawRequest(): DrawRequest {
+    private fun createTextDrawRequest(): DisplayElements {
         val displayUntil = (
             (Clock.System.now().toEpochMilliseconds() / MILLIS_PER_SECOND) +
                 DISPLAY_UNTIL_OFFSET_SECONDS
             ).toString()
-        return DrawRequest(
-            appId = SAMPLE_APP_ID,
+        return DisplayElements(
+            applicationName = SAMPLE_APP_ID,
             priority = SAMPLE_DRAW_PRIORITY,
             elements = listOf(
-                DrawRequest.Element(
+                DisplayElementsElementsInner(
                     id = SAMPLE_DRAW_ID,
-                    type = DrawRequest.Element.ElementType.TEXT,
+                    type = DisplayElementsElementsInner.Type.TEXT,
                     text = "RPC contract ok",
                     x = 8,
                     y = 4,
-                    font = DrawRequest.Element.Font.MEDIUM,
+                    font = DisplayElementsElementsInner.Font.MEDIUM,
                     color = "#FFFFFFFF",
                     displayUntil = displayUntil
                 )
@@ -67,14 +68,14 @@ class DisplayDashboardViewModel(
         )
     }
 
-    private fun createAnimationDrawRequest(): DrawRequest {
-        return DrawRequest(
-            appId = SAMPLE_APP_ID,
+    private fun createAnimationDrawRequest(): DisplayElements {
+        return DisplayElements(
+            applicationName = SAMPLE_APP_ID,
             priority = SAMPLE_DRAW_PRIORITY,
             elements = listOf(
-                DrawRequest.Element(
+                DisplayElementsElementsInner(
                     id = SAMPLE_ANIMATION_ID,
-                    type = DrawRequest.Element.ElementType.ANIMATION,
+                    type = DisplayElementsElementsInner.Type.ANIMATION,
                     stockPath = SAMPLE_STOCK_ANIMATION_PATH,
                     loop = true,
                     awaitPreviousEnd = false

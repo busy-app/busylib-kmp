@@ -1,6 +1,6 @@
 package net.flipper.bridge.connection.feature.wifi.mapper
 
-import net.flipper.bridge.connection.feature.rpc.api.model.WifiSecurityMethod
+import net.flipper.bridge.connection.feature.rpc.generated.model.WifiSecurityMethod
 import net.flipper.bridge.connection.feature.wifi.api.model.BsbWifiSecurityMethod
 
 internal fun WifiSecurityMethod.toBsbWifiSecurityMethod(): BsbWifiSecurityMethod {
@@ -9,9 +9,9 @@ internal fun WifiSecurityMethod.toBsbWifiSecurityMethod(): BsbWifiSecurityMethod
         WifiSecurityMethod.WPA -> BsbWifiSecurityMethod.WPA
         WifiSecurityMethod.WPA2 -> BsbWifiSecurityMethod.WPA2
         WifiSecurityMethod.WEP -> BsbWifiSecurityMethod.WEP
-        WifiSecurityMethod.WPA_WPA2 -> BsbWifiSecurityMethod.WPA_WPA2
+        WifiSecurityMethod.WPA_SLASH_WPA2 -> BsbWifiSecurityMethod.WPA_WPA2
         WifiSecurityMethod.WPA3 -> BsbWifiSecurityMethod.WPA3
-        WifiSecurityMethod.WPA2_WPA3 -> BsbWifiSecurityMethod.WPA2_WPA3
+        WifiSecurityMethod.WPA2_SLASH_WPA3 -> BsbWifiSecurityMethod.WPA2_WPA3
         WifiSecurityMethod.UNSUPPORTED -> BsbWifiSecurityMethod.UNSUPPORTED
     }
 }
@@ -22,9 +22,9 @@ internal fun BsbWifiSecurityMethod.toWifiSecurityMethod(): WifiSecurityMethod {
         BsbWifiSecurityMethod.WPA -> WifiSecurityMethod.WPA
         BsbWifiSecurityMethod.WPA2 -> WifiSecurityMethod.WPA2
         BsbWifiSecurityMethod.WEP -> WifiSecurityMethod.WEP
-        BsbWifiSecurityMethod.WPA_WPA2 -> WifiSecurityMethod.WPA_WPA2
+        BsbWifiSecurityMethod.WPA_WPA2 -> WifiSecurityMethod.WPA_SLASH_WPA2
         BsbWifiSecurityMethod.WPA3 -> WifiSecurityMethod.WPA3
-        BsbWifiSecurityMethod.WPA2_WPA3 -> WifiSecurityMethod.WPA2_WPA3
+        BsbWifiSecurityMethod.WPA2_WPA3 -> WifiSecurityMethod.WPA2_SLASH_WPA3
         BsbWifiSecurityMethod.UNSUPPORTED -> WifiSecurityMethod.UNSUPPORTED
     }
 }

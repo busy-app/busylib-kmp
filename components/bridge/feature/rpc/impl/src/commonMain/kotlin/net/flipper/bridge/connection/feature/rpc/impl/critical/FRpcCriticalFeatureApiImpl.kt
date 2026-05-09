@@ -17,9 +17,9 @@ import net.flipper.bridge.connection.feature.rpc.api.model.BsbRpcError
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarLinkCode
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarLinkCodeAlreadyLinked
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarLinkCodeResponse
-import net.flipper.bridge.connection.feature.rpc.api.model.ErrorResponse
-import net.flipper.bridge.connection.feature.rpc.api.model.RpcLinkedAccountInfo
-import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
+import net.flipper.bridge.connection.feature.rpc.generated.model.AccountInfo
+import net.flipper.bridge.connection.feature.rpc.generated.model.Error
+import net.flipper.bridge.connection.feature.rpc.generated.model.SuccessResponse
 import net.flipper.bridge.connection.feature.rpc.impl.client.FRpcClientModeApiImpl
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 import net.flipper.core.busylib.ktx.common.mapSuspendCatching
@@ -35,15 +35,15 @@ class FRpcCriticalFeatureApiImpl(
 ) : FRpcCriticalFeatureApi, LogTagProvider {
     override val TAG = "FRpcCriticalFeatureApi"
     override val clientModeApi: FRpcClientModeApi = FRpcClientModeApiImpl()
-    private val _currentAccountInfo = MutableStateFlow<RpcLinkedAccountInfo?>(null)
+    private val _currentAccountInfo = MutableStateFlow<AccountInfo?>(null)
     override val currentAccountInfo = _currentAccountInfo.asStateFlow()
 
     private val dispatcher = FlipperDispatchers.default
 
-    override suspend fun invalidateLinkedUser(userId: Uuid?): Result<RpcLinkedAccountInfo> {
+    override suspend fun invalidateLinkedUser(userId: Uuid?): Result<AccountInfo> {
         return withContext(dispatcher) {
             return@withContext runSuspendCatching {
-                client.get("/api/account/info").body<RpcLinkedAccountInfo>()
+                client.get("/api/account/info").body<AccountInfo>()
             }.onSuccess {
                 _currentAccountInfo.emit(it)
             }.onSuccess { response -> clientModeApi.updateClientMode(response, userId) }
@@ -58,7 +58,7 @@ class FRpcCriticalFeatureApiImpl(
                 try {
                     call.body<BusyBarLinkCode>()
                 } catch (e: JsonConvertException) {
-                    val error = call.body<ErrorResponse>().error
+                    val error = call.body<Error>().error
                     if (error == BsbRpcError.ALREADY_LINKED.error) {
                         BusyBarLinkCodeAlreadyLinked
                     } else {

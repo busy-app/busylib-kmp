@@ -6,7 +6,7 @@ import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
 import net.flipper.bridge.connection.feature.events.api.get
 import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
-import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcStreamingApi
+import net.flipper.bridge.connection.feature.rpc.generated.api.StreamingApi
 import net.flipper.bridge.connection.feature.screenstreaming.api.FScreenStreamingFeatureApi
 import net.flipper.bridge.connection.feature.screenstreaming.impl.delegates.ScreenFramesProvider
 import net.flipper.bridge.connection.feature.screenstreaming.model.BusyImageFormat
@@ -39,12 +39,12 @@ class FScreenStreamingFeatureApiImpl(
 
     private fun getFramesFlow(
         eventsApi: FEventsFeatureApi,
-        streamingApi: FRpcStreamingApi
+        streamingApi: StreamingApi
     ): Flow<BusyLibUpdateEvent.Frame> {
         return eventsApi.get(
             scope = scope,
             initial = { _ ->
-                streamingApi.getScreen(display = 0).mapCatching { rawData ->
+                streamingApi.apiScreenGet(display = 0).mapCatching { rawData ->
                     BusyLibUpdateEvent.Frame(
                         screen = BusyLibUpdateEvent.Frame.Screen.FRONT,
                         data = Base64.decode(rawData.replace("\\s".toRegex(), "")),

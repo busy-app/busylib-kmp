@@ -27,9 +27,9 @@ import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
 import net.flipper.bridge.connection.feature.rpc.api.client.FRpcClientModeApi
 import net.flipper.bridge.connection.feature.rpc.api.critical.FRpcCriticalFeatureApi
-import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarLinkCode
-import net.flipper.bridge.connection.feature.rpc.api.model.RpcLinkedAccountInfo
-import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
+import net.flipper.bridge.connection.feature.rpc.generated.model.BusyBarLinkCode
+import net.flipper.bridge.connection.feature.rpc.generated.model.RpcLinkedAccountInfo
+import net.flipper.bridge.connection.feature.rpc.generated.model.SuccessResponse
 import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
 import net.flipper.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
 import net.flipper.bridge.connection.orchestrator.api.model.FDeviceTransportType

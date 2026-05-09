@@ -62,7 +62,7 @@ class CheckUpdateService(
             .onLatest { featureApi ->
                 featureApi
                     .fRpcUpdaterApi
-                    .startUpdateCheck()
+                    .checkFirmwareUpdate()
                     .onFailure { throwable ->
                         error(throwable) {
                             "#startUpdateCheck could not start update check"

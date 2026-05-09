@@ -1,7 +1,7 @@
 package net.flipper.bridge.connection.feature.rpc.api.client
 
 import kotlinx.coroutines.flow.StateFlow
-import net.flipper.bridge.connection.feature.rpc.api.model.RpcLinkedAccountInfo
+import net.flipper.bridge.connection.feature.rpc.generated.model.AccountInfo
 import kotlin.uuid.Uuid
 
 interface FRpcClientModeApi {
@@ -11,5 +11,5 @@ interface FRpcClientModeApi {
 
     val httpClientModeFlow: StateFlow<HttpClientMode>
 
-    fun updateClientMode(info: RpcLinkedAccountInfo, userId: Uuid?)
+    fun updateClientMode(info: AccountInfo, userId: Uuid?)
 }

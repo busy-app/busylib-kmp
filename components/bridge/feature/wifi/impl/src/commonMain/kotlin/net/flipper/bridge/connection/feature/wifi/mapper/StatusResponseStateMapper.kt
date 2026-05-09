@@ -1,6 +1,6 @@
 package net.flipper.bridge.connection.feature.wifi.mapper
 
-import net.flipper.bridge.connection.feature.rpc.api.model.StatusResponse
+import net.flipper.bridge.connection.feature.rpc.generated.model.StatusResponse
 import net.flipper.bridge.connection.feature.wifi.api.model.BsbWifiStatusResponse
 
 internal fun StatusResponse.State.toBsbWifiState(): BsbWifiStatusResponse.BsbWifiState {

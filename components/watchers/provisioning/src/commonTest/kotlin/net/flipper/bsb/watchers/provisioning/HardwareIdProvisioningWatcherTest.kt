@@ -14,7 +14,7 @@ import net.flipper.bridge.connection.config.api.model.addTransport
 import net.flipper.bridge.connection.config.api.model.copy
 import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
-import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarStatusDevice
+import net.flipper.bridge.connection.feature.rpc.generated.model.BusyBarStatusDevice
 import net.flipper.bridge.connection.orchestrator.api.model.DisconnectStatus
 import net.flipper.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
 import net.flipper.bridge.connection.orchestrator.api.model.FDeviceTransportType
