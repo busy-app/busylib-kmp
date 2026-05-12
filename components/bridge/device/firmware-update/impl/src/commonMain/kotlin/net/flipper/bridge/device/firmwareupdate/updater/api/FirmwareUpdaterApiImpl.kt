@@ -33,7 +33,6 @@ import net.flipper.bridge.connection.feature.provider.api.getSync
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.device.firmwareupdate.downloader.api.FirmwareDownloaderApi
 import net.flipper.bridge.device.firmwareupdate.downloader.api.FirmwareDownloaderApiImpl
-import net.flipper.bridge.device.firmwareupdate.status.api.DownloadStatusCollector
 import net.flipper.bridge.device.firmwareupdate.updater.mapper.FwUpdateStatusMapper
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateEvent
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateState
@@ -69,7 +68,6 @@ class FirmwareUpdaterApiImpl(
     private val fFeatureProvider: FFeatureProvider,
     @KtorNetworkClientQualifier
     private val httpClient: HttpClient,
-    private val downloadStatusCollector: DownloadStatusCollector,
     private val previousVersionFlowProvider: PreviousVersionFlowProvider,
     private val scope: CoroutineScope,
 ) : FirmwareUpdaterApi, LogTagProvider by TaggedLogger("UpdaterApi") {
@@ -268,31 +266,5 @@ class FirmwareUpdaterApiImpl(
             ?.map { }
             ?.toCResult()
             ?: CResult.failure(IllegalStateException("RPC feature is null"))
-    }
-
-    // We need to observe /update/status so we can receive current status
-    // with long-polling
-    init {
-        combine(
-            flow = state,
-            flow2 = downloadStatusCollector.isActiveFlow,
-            transform = { state, isActive ->
-                val shouldStartUpdateStatusCollector = when (state) {
-                    is FwUpdateState.Downloading -> true
-                    // Only desktop case
-                    is FwUpdateState.Uploading -> false
-                    else -> false
-                }
-                info {
-                    "#init shouldStartUpdateStatusCollector: $shouldStartUpdateStatusCollector;" +
-                        " isActive: $isActive; state: $state"
-                }
-                if (shouldStartUpdateStatusCollector && !isActive) {
-                    downloadStatusCollector.start()
-                } else if (!shouldStartUpdateStatusCollector && isActive) {
-                    downloadStatusCollector.stop()
-                }
-            }
-        ).launchIn(scope)
     }
 }

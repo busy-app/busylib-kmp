@@ -7,15 +7,6 @@ import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateStatu
 import net.flipper.bridge.connection.feature.rpc.api.model.UpdateStatus
 import net.flipper.bridge.connection.feature.rpc.api.model.UpdateStatus.Install.Status
 
-internal fun BusyLibUpdateEvent.Update.UpdateDownload.toBsbUpdateStatus():
-    BsbUpdateStatus.InProgress.Downloading.Specified {
-    return BsbUpdateStatus.InProgress.Downloading.Specified(
-        speedBytesPerSec = speedBytesPerSec,
-        receivedBytes = receivedBytes,
-        totalBytes = totalBytes
-    )
-}
-
 @Suppress("CyclomaticComplexMethod")
 internal fun UpdateState.toBsbUpdateStatus(): BsbUpdateStatus {
     val failReason = when (status) {

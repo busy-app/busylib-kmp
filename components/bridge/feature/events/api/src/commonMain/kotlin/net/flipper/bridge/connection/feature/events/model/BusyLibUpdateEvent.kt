@@ -141,12 +141,6 @@ sealed interface BusyLibUpdateEvent {
                 }
             }
         }
-
-        data class UpdateDownload(
-            val speedBytesPerSec: Int,
-            val receivedBytes: Int,
-            val totalBytes: Int
-        ) : Update
     }
 
     data class Timezone(

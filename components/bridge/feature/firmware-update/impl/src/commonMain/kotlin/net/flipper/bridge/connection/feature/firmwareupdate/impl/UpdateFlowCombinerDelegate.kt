@@ -21,6 +21,7 @@ import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.merge
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
+import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.debug
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
@@ -29,7 +30,8 @@ class UpdateFlowCombinerDelegate(
     private val rpcFeatureApi: FRpcFeatureApi,
     fEventsFeatureApi: FEventsFeatureApi,
     private val scope: CoroutineScope
-) {
+): LogTagProvider {
+    override val TAG = "UpdateFlowCombinerDelegate"
     private val rpcUpdaterFlow = flow {
         val updateStatus = exponentialRetry {
             rpcFeatureApi.fRpcUpdaterApi
@@ -55,13 +57,6 @@ class UpdateFlowCombinerDelegate(
             debug { "Available version: $it" }
         }.stateIn(scope, SharingStarted.WhileSubscribed(), AvailableVersion.Loading)
 
-    private val updateDownloadEventsFlow = fEventsFeatureApi
-        .get<BusyLibUpdateEvent.Update.UpdateDownload>()
-        .map { it.busyLibUpdateEvent.toBsbUpdateStatus() }
-        .onEach {
-            debug { "Download flow: $it" }
-        }
-
     private val updateStateEventsFlow = fEventsFeatureApi
         .getMapped<BusyLibUpdateEvent.Update.UpdateState, BsbUpdateStatus>(scope, initial = {
             runSuspendCatching {
@@ -73,7 +68,6 @@ class UpdateFlowCombinerDelegate(
         }
 
     val updateStatusFlow: StateFlow<BsbUpdateStatus> = updateStateEventsFlow
-        .merge(updateDownloadEventsFlow)
         .onEach {
             debug { "Update status publish: $it" }
         }
