@@ -81,8 +81,8 @@ internal object FwUpdateStatusMapper {
             }
 
             BsbUpdateStatus.ReadyToInstall.BatteryLow -> FwUpdateState.LowBattery
-            BsbUpdateStatus.ReadyToInstall.Ready -> FwUpdateState.UpdateAvailable
-            BsbUpdateStatus.Loading -> null
+            BsbUpdateStatus.ReadyToInstall.Ready -> null // Continue to map(bsbUpdateVersion)
+            BsbUpdateStatus.Loading -> FwUpdateState.Pending
         }
     }
 

@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
@@ -20,6 +21,7 @@ import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.merge
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
+import net.flipper.core.busylib.log.debug
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
 
@@ -49,11 +51,16 @@ class UpdateFlowCombinerDelegate(
             mapper = {
                 it.toAvailableVersion()
             }
-        ).stateIn(scope, SharingStarted.WhileSubscribed(), AvailableVersion.Loading)
+        ).onEach {
+            debug { "Available version: $it" }
+        }.stateIn(scope, SharingStarted.WhileSubscribed(), AvailableVersion.Loading)
 
     private val updateDownloadEventsFlow = fEventsFeatureApi
         .get<BusyLibUpdateEvent.Update.UpdateDownload>()
         .map { it.busyLibUpdateEvent.toBsbUpdateStatus() }
+        .onEach {
+            debug { "Download flow: $it" }
+        }
 
     private val updateStateEventsFlow = fEventsFeatureApi
         .getMapped<BusyLibUpdateEvent.Update.UpdateState, BsbUpdateStatus>(scope, initial = {
@@ -61,8 +68,14 @@ class UpdateFlowCombinerDelegate(
                 rpcUpdaterFlow.first().toBsbUpdateStatus()
             }
         }, mapper = { it.toBsbUpdateStatus() })
+        .onEach {
+            debug { "Update status: $it" }
+        }
 
     val updateStatusFlow: StateFlow<BsbUpdateStatus> = updateStateEventsFlow
         .merge(updateDownloadEventsFlow)
+        .onEach {
+            debug { "Update status publish: $it" }
+        }
         .stateIn(scope, SharingStarted.WhileSubscribed(), BsbUpdateStatus.Loading)
 }
