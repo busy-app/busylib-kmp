@@ -79,6 +79,8 @@ class FHttpBLEEngine(
                         " try to make this request again after reset"
                 }
                 serialApi.reset()
+                requestCount = 0
+                checkRequestCountUnsafe()
                 sendBytesWithTimeout(rawBytes, channel, requestTime)
                     ?: error("Timeout on request ${processedRequest.url}")
             } else {
