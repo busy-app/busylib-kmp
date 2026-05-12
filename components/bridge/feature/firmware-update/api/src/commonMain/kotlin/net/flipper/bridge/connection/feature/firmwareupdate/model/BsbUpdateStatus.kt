@@ -26,20 +26,5 @@ sealed interface BsbUpdateStatus {
         }
     }
 
-    data class FailedUpdate(val reason: Reason) : BsbUpdateStatus {
-        enum class Reason {
-            DOWNLOAD_FAILURE,
-            SHA_MISMATCH,
-            UNPACK_STAGING_DIR_FAILURE,
-            UNPACK_ARCHIVE_OPEN_FAILURE,
-            UNPACK_ARCHIVE_UNPACK_FAILURE,
-            INSTALL_MANIFEST_NOT_FOUND,
-            INSTALL_MANIFEST_INVALID,
-            INSTALL_SESSION_CONFIG_FAILURE,
-            INSTALL_POINTER_SETUP_FAILURE,
-            UNKNOWN_FAILURE
-        }
-    }
-
     data object Loading : BsbUpdateStatus
 }

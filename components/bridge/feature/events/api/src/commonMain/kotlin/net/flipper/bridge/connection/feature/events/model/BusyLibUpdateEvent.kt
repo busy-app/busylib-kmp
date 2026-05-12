@@ -85,9 +85,20 @@ sealed interface BusyLibUpdateEvent {
 
     sealed interface Update : BusyLibUpdateEvent {
         data class UpdateState(
+            val event: BsbEvent,
             val action: BsbAction,
             val status: BsbStatus,
         ) : Update {
+            enum class BsbEvent {
+                SESSION_START,
+                SESSION_STOP,
+                ACTION_BEGIN,
+                ACTION_DONE,
+                DETAIL_CHANGE,
+                ACTION_PROGRESS,
+                NONE
+            }
+
             enum class BsbAction {
                 DOWNLOAD,
                 SHA_VERIFICATION,

@@ -61,21 +61,6 @@ internal object FwUpdateStatusMapper {
 
     private fun map(bsbUpdateStatus: BsbUpdateStatus): FwUpdateState? {
         return when (bsbUpdateStatus) {
-            is BsbUpdateStatus.FailedUpdate -> {
-                when (bsbUpdateStatus.reason) {
-                    BsbUpdateStatus.FailedUpdate.Reason.DOWNLOAD_FAILURE -> FwUpdateState.DownloadFailure
-                    BsbUpdateStatus.FailedUpdate.Reason.UNPACK_STAGING_DIR_FAILURE,
-                    BsbUpdateStatus.FailedUpdate.Reason.UNPACK_ARCHIVE_OPEN_FAILURE,
-                    BsbUpdateStatus.FailedUpdate.Reason.UNPACK_ARCHIVE_UNPACK_FAILURE,
-                    BsbUpdateStatus.FailedUpdate.Reason.INSTALL_MANIFEST_NOT_FOUND,
-                    BsbUpdateStatus.FailedUpdate.Reason.INSTALL_MANIFEST_INVALID,
-                    BsbUpdateStatus.FailedUpdate.Reason.INSTALL_SESSION_CONFIG_FAILURE,
-                    BsbUpdateStatus.FailedUpdate.Reason.INSTALL_POINTER_SETUP_FAILURE,
-                    BsbUpdateStatus.FailedUpdate.Reason.UNKNOWN_FAILURE,
-                    BsbUpdateStatus.FailedUpdate.Reason.SHA_MISMATCH -> FwUpdateState.Failure
-                }
-            }
-
             BsbUpdateStatus.InProgress.Downloading.NotSpecified -> FwUpdateState.Downloading(0f)
             is BsbUpdateStatus.InProgress.Other -> FwUpdateState.Downloading(1f)
             is BsbUpdateStatus.InProgress.Downloading.Specified -> {

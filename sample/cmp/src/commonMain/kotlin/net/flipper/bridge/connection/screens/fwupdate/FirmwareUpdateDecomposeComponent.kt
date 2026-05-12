@@ -144,13 +144,6 @@ class FirmwareUpdateDecomposeComponent(
                 LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
             }
 
-            FwUpdateState.Failure -> {
-                Text(
-                    text = "Update failed. Try again.",
-                    color = Color.Red
-                )
-            }
-
             FwUpdateState.LowBattery -> {
                 Text(
                     text = "Battery too low to update. Please charge the device.",
@@ -268,7 +261,6 @@ class FirmwareUpdateDecomposeComponent(
     @Composable
     private fun ActionButtons(state: FwUpdateState) {
         val canStart = state is FwUpdateState.UpdateAvailable ||
-            state is FwUpdateState.Failure ||
             state is FwUpdateState.CouldNotCheckUpdate
 
         val canStop = state is FwUpdateState.Downloading ||
@@ -298,7 +290,6 @@ class FirmwareUpdateDecomposeComponent(
     }
 
     private fun stateLabel(state: FwUpdateState): String = when (state) {
-        FwUpdateState.Failure -> "Failure"
         FwUpdateState.CheckingVersion -> "Checking Version"
         FwUpdateState.LowBattery -> "Low Battery"
         FwUpdateState.Pending -> "Pending"
