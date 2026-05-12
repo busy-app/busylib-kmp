@@ -30,14 +30,20 @@ class UpdateStatusProvider(
             }
 
             is UpdateStatusSource.Cached -> {
-                if (latestUpdateStatus == null) this
-                else UpdateStatusSource.Fresh(latestUpdateStatus)
+                if (latestUpdateStatus == null) {
+                    this
+                } else {
+                    UpdateStatusSource.Fresh(latestUpdateStatus)
+                }
             }
 
             is UpdateStatusSource.Fresh -> {
                 if (latestUpdateStatus == null) {
-                    if (freshUpdateStatus == null) this
-                    else UpdateStatusSource.Cached(freshUpdateStatus)
+                    if (freshUpdateStatus == null) {
+                        this
+                    } else {
+                        UpdateStatusSource.Cached(freshUpdateStatus)
+                    }
                 } else {
                     UpdateStatusSource.Fresh(latestUpdateStatus)
                 }

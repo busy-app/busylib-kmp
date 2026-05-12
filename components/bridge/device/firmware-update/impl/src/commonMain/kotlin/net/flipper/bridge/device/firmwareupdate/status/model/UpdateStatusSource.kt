@@ -4,7 +4,6 @@ import net.flipper.bridge.connection.feature.firmwareupdate.api.FFirmwareUpdateF
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateStatus
 import net.flipper.bridge.device.firmwareupdate.status.api.UpdateStatusProvider
 
-
 /**
  * When receiving a status via [FFirmwareUpdateFeatureApi.updateStatusFlow] we keep both the current and previous state.
  * Initially we have [UpdateStatusSource.Fresh] with a current status that is null.

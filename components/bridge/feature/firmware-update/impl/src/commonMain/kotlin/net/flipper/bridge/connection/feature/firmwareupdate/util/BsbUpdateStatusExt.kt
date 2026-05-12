@@ -37,7 +37,9 @@ internal fun UpdateState.toBsbUpdateStatus(): BsbUpdateStatus {
 
             UpdateState.BsbAction.NONE -> BsbUpdateStatus.ReadyToInstall.Ready
         }
-    } else BsbUpdateStatus.ReadyToInstall.Ready
+    } else {
+        BsbUpdateStatus.ReadyToInstall.Ready
+    }
 }
 
 @Suppress("CyclomaticComplexMethod")
@@ -83,5 +85,7 @@ internal fun UpdateStatus.toBsbUpdateStatus(): BsbUpdateStatus {
 
             UpdateStatus.Install.Action.NONE -> readyStatus
         }
-    } else readyStatus
+    } else {
+        readyStatus
+    }
 }

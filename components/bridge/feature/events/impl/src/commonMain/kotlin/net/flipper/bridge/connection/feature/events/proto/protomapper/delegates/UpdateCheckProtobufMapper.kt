@@ -25,7 +25,7 @@ object UpdateCheckProtobufMapper {
         } else {
             return null
         }
-        val event = when(checkState.event) {
+        val event = when (checkState.event) {
             CheckEvent.START -> UpdateCheck.CheckEvent.START
             CheckEvent.STOP -> UpdateCheck.CheckEvent.STOP
             CheckEvent.NONE,

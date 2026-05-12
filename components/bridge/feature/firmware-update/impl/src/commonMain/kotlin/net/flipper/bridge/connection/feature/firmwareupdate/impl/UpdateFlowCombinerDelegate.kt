@@ -5,7 +5,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
@@ -19,7 +18,6 @@ import net.flipper.bridge.connection.feature.firmwareupdate.util.toAvailableVers
 import net.flipper.bridge.connection.feature.firmwareupdate.util.toBsbUpdateStatus
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.core.busylib.ktx.common.exponentialRetry
-import net.flipper.core.busylib.ktx.common.merge
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.debug
@@ -30,7 +28,7 @@ class UpdateFlowCombinerDelegate(
     private val rpcFeatureApi: FRpcFeatureApi,
     fEventsFeatureApi: FEventsFeatureApi,
     private val scope: CoroutineScope
-): LogTagProvider {
+) : LogTagProvider {
     override val TAG = "UpdateFlowCombinerDelegate"
     private val rpcUpdaterFlow = flow {
         val updateStatus = exponentialRetry {

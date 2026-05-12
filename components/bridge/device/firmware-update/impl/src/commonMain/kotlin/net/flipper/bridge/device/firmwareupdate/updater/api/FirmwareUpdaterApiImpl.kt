@@ -99,10 +99,10 @@ class FirmwareUpdaterApiImpl(
             )
             verbose {
                 "Result is: $result. " +
-                        "Receive updateStatusSource: $updateStatusSource, " +
-                        "bsbUpdateVersion: $bsbUpdateVersion, " +
-                        "downloaderState: $downloaderState, " +
-                        "uploaderState: $uploaderState"
+                    "Receive updateStatusSource: $updateStatusSource, " +
+                    "bsbUpdateVersion: $bsbUpdateVersion, " +
+                    "downloaderState: $downloaderState, " +
+                    "uploaderState: $uploaderState"
             }
             return@combine result
         }
