@@ -37,15 +37,17 @@ internal object FwUpdateStatusMapper {
         }
     }
 
-    private fun map(bsbUpdateVersion: BsbUpdateVersion?): FwUpdateState {
+    private fun map(bsbUpdateVersion: BsbUpdateVersion?): FwUpdateState? {
         return when (bsbUpdateVersion) {
             BsbUpdateVersion.CheckingOnBBInProgress -> FwUpdateState.CheckingVersion
             BsbUpdateVersion.FailedToCheck -> FwUpdateState.CouldNotCheckUpdate
             BsbUpdateVersion.Loading -> FwUpdateState.Pending
             BsbUpdateVersion.NoUpdateAvailable -> FwUpdateState.NoUpdateAvailable
-            is BsbUpdateVersion.ReadyToUpdate.Default -> FwUpdateState.UpdateAvailable
+            // Download by application
             is BsbUpdateVersion.ReadyToUpdate.Url -> FwUpdateState.UpdateAvailable
-            null -> FwUpdateState.Pending
+            // Download by device itself
+            is BsbUpdateVersion.ReadyToUpdate.Default,
+            null -> null
         }
     }
 
@@ -81,8 +83,8 @@ internal object FwUpdateStatusMapper {
             }
 
             BsbUpdateStatus.ReadyToInstall.BatteryLow -> FwUpdateState.LowBattery
-            BsbUpdateStatus.ReadyToInstall.Ready -> null // Continue to map(bsbUpdateVersion)
-            BsbUpdateStatus.Loading -> FwUpdateState.Pending
+            BsbUpdateStatus.ReadyToInstall.Ready -> FwUpdateState.UpdateAvailable
+            BsbUpdateStatus.Loading -> null
         }
     }
 
@@ -94,7 +96,8 @@ internal object FwUpdateStatusMapper {
     ): FwUpdateState {
         return map(uploaderState)
             ?: map(downloaderState)
-            ?: map(bsbUpdateStatus)
             ?: map(bsbUpdateVersion)
+            ?: map(bsbUpdateStatus)
+            ?: FwUpdateState.Pending
     }
 }
