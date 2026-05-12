@@ -123,13 +123,13 @@ class FAppleLanConnectionMonitor(
             is KotlinNwStatus.Waiting.Other -> {
                 debug { "#handleStateUpdate Waiting for connection: ${status.error}" }
                 when (status.error) {
+                    is KotlinNwStatus.PosixError.HostIsDown,
+                    is KotlinNwStatus.PosixError.NoRouteToHost,
+                    is KotlinNwStatus.PosixError.Unknown,
                     is KotlinNwStatus.PosixError.TimedOut,
                     is KotlinNwStatus.PosixError.ResetByPeer -> restartMonitoringUnsafe()
 
-                    null,
-                    is KotlinNwStatus.PosixError.HostIsDown,
-                    is KotlinNwStatus.PosixError.NoRouteToHost,
-                    is KotlinNwStatus.PosixError.Unknown -> {
+                    null -> {
                         val status = FInternalTransportConnectionStatus
                             .Connecting(config.getTransportTypes())
                         listener.onStatusUpdate(status)
