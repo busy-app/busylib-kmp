@@ -28,6 +28,7 @@ kotlin {
 
     sourceSets.androidMain.dependencies {
         implementation(libs.ble.client)
+        implementation(libs.slf4j.android)
     }
 
     androidLibrary {
