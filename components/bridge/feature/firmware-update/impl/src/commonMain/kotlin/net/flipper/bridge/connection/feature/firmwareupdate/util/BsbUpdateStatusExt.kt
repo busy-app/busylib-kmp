@@ -109,7 +109,7 @@ internal fun UpdateStatus.toBsbUpdateStatus(): BsbUpdateStatus {
             BsbUpdateStatus.InProgress.Other.ProgressStage.APPLY
         )
 
-        UpdateStatus.Install.Action.NONE -> if (install.status == Status.BATTERY_LOW || !install.isAllowed) {
+        UpdateStatus.Install.Action.NONE -> if (install.status == Status.BATTERY_LOW && !install.isAllowed) {
             BsbUpdateStatus.ReadyToInstall.BatteryLow
         } else {
             BsbUpdateStatus.ReadyToInstall.Ready
