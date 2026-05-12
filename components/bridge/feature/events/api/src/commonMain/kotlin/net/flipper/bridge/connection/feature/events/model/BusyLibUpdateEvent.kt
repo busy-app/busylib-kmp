@@ -117,7 +117,7 @@ sealed interface BusyLibUpdateEvent {
 
         data class UpdateCheck(
             val result: CheckResult,
-            val event: CheckEvent = CheckEvent.NONE
+            val event: CheckEvent
         ) : Update {
             enum class CheckEvent {
                 START,
