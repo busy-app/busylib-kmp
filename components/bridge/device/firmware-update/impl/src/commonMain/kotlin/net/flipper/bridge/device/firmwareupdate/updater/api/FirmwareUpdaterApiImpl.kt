@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.mapNotNull
@@ -33,6 +32,7 @@ import net.flipper.bridge.connection.feature.provider.api.getSync
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.device.firmwareupdate.downloader.api.FirmwareDownloaderApi
 import net.flipper.bridge.device.firmwareupdate.downloader.api.FirmwareDownloaderApiImpl
+import net.flipper.bridge.device.firmwareupdate.status.api.UpdateStatusProvider
 import net.flipper.bridge.device.firmwareupdate.updater.mapper.FwUpdateStatusMapper
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateEvent
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateState
@@ -70,6 +70,7 @@ class FirmwareUpdaterApiImpl(
     private val httpClient: HttpClient,
     private val previousVersionFlowProvider: PreviousVersionFlowProvider,
     private val scope: CoroutineScope,
+    private val updateStatusProvider: UpdateStatusProvider
 ) : FirmwareUpdaterApi, LogTagProvider by TaggedLogger("UpdaterApi") {
     private val firmwareDownloaderApi: FirmwareDownloaderApi = FirmwareDownloaderApiImpl(
         httpClient = httpClient
@@ -81,11 +82,7 @@ class FirmwareUpdaterApiImpl(
     private val lanUpdaterScope = scope.asSingleJobScope()
 
     override val state: WrappedStateFlow<FwUpdateState> = combine(
-        flow = fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
-            .map { status -> status.tryCast<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>() }
-            .map { status -> status?.featureApi }
-            .flatMapLatest { feature -> feature?.updateStatusFlow.orNullable() }
-            .filterNotNull(),
+        flow = updateStatusProvider.getUpdateStatus(),
         flow2 = fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
             .map { status -> status.tryCast<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>() }
             .map { status -> status?.featureApi }
@@ -93,19 +90,19 @@ class FirmwareUpdaterApiImpl(
             .distinctUntilChanged(),
         flow3 = firmwareDownloaderApi.state,
         flow4 = firmwareUploaderApi.state,
-        transform = { bsbUpdateStatus, bsbUpdateVersion, downloaderState, uploaderState ->
+        transform = { updateStatusSource, bsbUpdateVersion, downloaderState, uploaderState ->
             val result = FwUpdateStatusMapper.map(
-                bsbUpdateStatus,
+                updateStatusSource,
                 bsbUpdateVersion,
                 downloaderState,
                 uploaderState
             )
             verbose {
                 "Result is: $result. " +
-                    "Receive bsbUpdateStatus: $bsbUpdateStatus, " +
-                    "bsbUpdateVersion: $bsbUpdateVersion, " +
-                    "downloaderState: $downloaderState, " +
-                    "uploaderState: $uploaderState"
+                        "Receive updateStatusSource: $updateStatusSource, " +
+                        "bsbUpdateVersion: $bsbUpdateVersion, " +
+                        "downloaderState: $downloaderState, " +
+                        "uploaderState: $uploaderState"
             }
             return@combine result
         }
