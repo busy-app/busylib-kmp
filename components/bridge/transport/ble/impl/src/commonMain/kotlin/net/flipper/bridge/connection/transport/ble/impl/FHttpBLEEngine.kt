@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.io.InternalIoApi
 import kotlinx.io.Source
 import kotlinx.io.readByteArray
@@ -39,6 +40,9 @@ import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
 import net.flipper.core.busylib.log.verbose
 import kotlin.coroutines.CoroutineContext
+import kotlin.time.Duration.Companion.seconds
+
+private val REQUEST_TIMEOUT = 10.seconds
 
 class FHttpBLEEngine(
     private val serialApi: FSerialBleApi,
@@ -68,8 +72,32 @@ class FHttpBLEEngine(
             verbose { "Raw data is: ${rawBytes.decodeToString()}" }
             val channel = serialApi.getReceiveByteChannel()
 
-            withContext(NonCancellable) {
-                serialApi.send(rawBytes)
+            val result = sendBytesWithTimeout(rawBytes, channel, requestTime)
+            return@withLockResult if (result == null) {
+                error {
+                    "Failed to wait ${REQUEST_TIMEOUT.inWholeSeconds} seconds for response," +
+                        " try to make this request again after reset"
+                }
+                serialApi.reset()
+                sendBytesWithTimeout(rawBytes, channel, requestTime)
+                    ?: error("Timeout on request ${processedRequest.url}")
+            } else {
+                result
+            }
+        }
+
+        return result
+    }
+
+    @InternalAPI
+    private suspend fun sendBytesWithTimeout(
+        bytes: ByteArray,
+        channel: ByteReadChannel,
+        requestTime: GMTDate
+    ): HttpResponseData? {
+        return withContext(NonCancellable) {
+            withTimeoutOrNull(REQUEST_TIMEOUT) {
+                serialApi.send(bytes)
                 info { "Waiting for response" }
                 val response = parseRawHttpResponse(
                     channel = channel,
@@ -77,11 +105,9 @@ class FHttpBLEEngine(
                     callContext = callContext()
                 )
                 info { "Receive response" }
-                return@withContext response
+                return@withTimeoutOrNull response
             }
         }
-
-        return result
     }
 
     private suspend fun checkRequestCountUnsafe() {
