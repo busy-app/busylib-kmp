@@ -6,12 +6,13 @@ import net.flipper.bridge.device.firmwareupdate.status.api.UpdateStatusProvider
 
 
 /**
- * При получении статуса через [FFirmwareUpdateFeatureApi.updateStatusFlow] мы храним текущее и предыдущее состояние
- * Изначально у нас имеется [UpdateStatusSource.Fresh] только с текущим статусом, который null
+ * When receiving a status via [FFirmwareUpdateFeatureApi.updateStatusFlow] we keep both the current and previous state.
+ * Initially we have [UpdateStatusSource.Fresh] with a current status that is null.
  *
- * После ребута устройства последний полученный статус кешируем в [UpdateStatusSource.Cached.cachedUpdateStatus], а [UpdateStatusSource.Cached.freshUpdateStatus] соответственно становится null
+ * After the device reboots, the last received status is cached in [UpdateStatusSource.Cached.cachedUpdateStatus],
+ * and the fresh status is reset (no longer available).
  *
- * Мо понимае, что деввайс апдейтитс, если у нас есть закешированный статус и отсутствует текущий статус
+ * We know that the device is updating when we have a cached status but no fresh status.
  * @see UpdateStatusProvider
  */
 sealed interface UpdateStatusSource {
