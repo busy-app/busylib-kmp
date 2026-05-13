@@ -11,6 +11,7 @@ kotlin {
         implementation(projects.components.core.di)
         implementation(projects.components.core.ktx)
         implementation(projects.components.core.ktor)
+        implementation(projects.components.core.buildkonfig)
         implementation(projects.components.core.wrapper)
 
         implementation(projects.components.principal.api)
