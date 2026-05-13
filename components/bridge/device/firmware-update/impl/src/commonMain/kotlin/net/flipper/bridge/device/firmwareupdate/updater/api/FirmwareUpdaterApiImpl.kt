@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.mapNotNull
@@ -34,7 +33,6 @@ import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.device.firmwareupdate.downloader.api.FirmwareDownloaderApi
 import net.flipper.bridge.device.firmwareupdate.downloader.api.FirmwareDownloaderApiImpl
 import net.flipper.bridge.device.firmwareupdate.status.api.UpdateStatusProvider
-import net.flipper.bridge.device.firmwareupdate.status.api.UpdaterStatusCollector
 import net.flipper.bridge.device.firmwareupdate.updater.mapper.FwUpdateStatusMapper
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateEvent
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateState
@@ -57,6 +55,7 @@ import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.TaggedLogger
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
+import net.flipper.core.busylib.log.verbose
 import net.flipper.core.ktor.di.qualifier.KtorNetworkClientQualifier
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
@@ -69,10 +68,9 @@ class FirmwareUpdaterApiImpl(
     private val fFeatureProvider: FFeatureProvider,
     @KtorNetworkClientQualifier
     private val httpClient: HttpClient,
-    private val updaterStatusCollector: UpdaterStatusCollector,
     private val previousVersionFlowProvider: PreviousVersionFlowProvider,
-    private val updateStatusProvider: UpdateStatusProvider,
     private val scope: CoroutineScope,
+    private val updateStatusProvider: UpdateStatusProvider
 ) : FirmwareUpdaterApi, LogTagProvider by TaggedLogger("UpdaterApi") {
     private val firmwareDownloaderApi: FirmwareDownloaderApi = FirmwareDownloaderApiImpl(
         httpClient = httpClient
@@ -84,32 +82,29 @@ class FirmwareUpdaterApiImpl(
     private val lanUpdaterScope = scope.asSingleJobScope()
 
     override val state: WrappedStateFlow<FwUpdateState> = combine(
-        flow = updateStatusProvider.getUpdateStatus()
-            .shareIn(scope, SharingStarted.WhileSubscribed(), 1),
+        flow = updateStatusProvider.getUpdateStatus(),
         flow2 = fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
             .map { status -> status.tryCast<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>() }
             .map { status -> status?.featureApi }
             .flatMapLatest { feature -> feature?.updateVersionFlow.orNullable() }
-            .distinctUntilChanged()
-            .shareIn(scope, SharingStarted.WhileSubscribed(), 1),
+            .distinctUntilChanged(),
         flow3 = firmwareDownloaderApi.state,
         flow4 = firmwareUploaderApi.state,
         transform = { updateStatusSource, bsbUpdateVersion, downloaderState, uploaderState ->
-            when (bsbUpdateVersion) {
-                is BsbUpdateVersion.Default -> {
-                    FwUpdateStatusMapper.toFwUpdateState(
-                        updateStatusSource = updateStatusSource,
-                    )
-                }
-
-                null, is BsbUpdateVersion.Url -> {
-                    FwUpdateStatusMapper.toFwUpdateState(
-                        downloaderState = downloaderState,
-                        uploaderState = uploaderState,
-                        bsbUrlUpdateVersion = bsbUpdateVersion,
-                    )
-                }
+            val result = FwUpdateStatusMapper.map(
+                updateStatusSource,
+                bsbUpdateVersion,
+                downloaderState,
+                uploaderState
+            )
+            verbose {
+                "Result is: $result. " +
+                    "Receive updateStatusSource: $updateStatusSource, " +
+                    "bsbUpdateVersion: $bsbUpdateVersion, " +
+                    "downloaderState: $downloaderState, " +
+                    "uploaderState: $uploaderState"
             }
+            return@combine result
         }
     ).stateIn(scope, SharingStarted.Lazily, FwUpdateState.Pending).wrap()
 
@@ -143,7 +138,7 @@ class FirmwareUpdaterApiImpl(
             .filterNotNull()
             .firstOrNull()
         return when (currentUpdateVersion) {
-            is BsbUpdateVersion.Default -> {
+            is BsbUpdateVersion.ReadyToUpdate.Default -> {
                 fFeatureProvider.get<FRpcFeatureApi>()
                     .filterIsInstance<FFeatureStatus.Supported<*>>()
                     .filter { fFeatureStatus -> fFeatureStatus.featureApi is FRpcFeatureApi }
@@ -156,12 +151,12 @@ class FirmwareUpdaterApiImpl(
                     .toCResult()
             }
 
-            is BsbUpdateVersion.Url -> {
+            is BsbUpdateVersion.ReadyToUpdate.Url -> {
                 lanUpdaterScope.cancelPrevious().join()
                 CResult.success(Unit)
             }
 
-            null -> CResult.success(Unit)
+            else -> CResult.success(Unit)
         }
     }
 
@@ -187,9 +182,11 @@ class FirmwareUpdaterApiImpl(
         info { "#startUpdateInstall device connected!" }
     }
 
-    private suspend fun getBsbUpdateVersion(bsbUpdateVersion: BsbUpdateVersion): Result<BsbUpdateVersion> {
+    private suspend fun getBsbUpdateVersion(
+        bsbUpdateVersion: BsbUpdateVersion.ReadyToUpdate
+    ): Result<BsbUpdateVersion.ReadyToUpdate> {
         return when (bsbUpdateVersion) {
-            is BsbUpdateVersion.Default -> {
+            is BsbUpdateVersion.ReadyToUpdate.Default -> {
                 fFeatureProvider.get<FRpcFeatureApi>()
                     .filterIsInstance<FFeatureStatus.Supported<*>>()
                     .filter { fFeatureStatus -> fFeatureStatus.featureApi is FRpcFeatureApi }
@@ -198,11 +195,10 @@ class FirmwareUpdaterApiImpl(
                     .featureApi
                     .fRpcUpdaterApi
                     .startUpdateInstall(bsbUpdateVersion.version)
-                    .onSuccess { updaterStatusCollector.start() }
                     .map { bsbUpdateVersion }
             }
 
-            is BsbUpdateVersion.Url -> {
+            is BsbUpdateVersion.ReadyToUpdate.Url -> {
                 firmwareDownloaderApi.download(bsbUpdateVersion)
                     .onSuccess { info { "#startUpdateInstall download finished" } }
                     .onFailure { t -> error(t) { "#startUpdateInstall could not download" } }
@@ -238,7 +234,7 @@ class FirmwareUpdaterApiImpl(
             fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
                 .map { status -> status.tryCast<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>() }
                 .flatMapLatest { status -> status?.featureApi?.updateVersionFlow.orNullable() }
-                .filterNotNull()
+                .filterIsInstance<BsbUpdateVersion.ReadyToUpdate>()
                 .mapLatest { bsbUpdateVersion ->
                     firmwareDownloaderApi.reset()
                     firmwareUploaderApi.reset()
@@ -249,8 +245,8 @@ class FirmwareUpdaterApiImpl(
                 .first()
                 .map { bsbUpdateVersion ->
                     when (bsbUpdateVersion) {
-                        is BsbUpdateVersion.Default -> Unit
-                        is BsbUpdateVersion.Url -> {
+                        is BsbUpdateVersion.ReadyToUpdate.Default -> Unit
+                        is BsbUpdateVersion.ReadyToUpdate.Url -> {
                             val bootTime = bootTimeFlow.first()
                             bootTimeScope.cancel()
                             awaitDeviceReconnected(bootTime)
@@ -266,35 +262,6 @@ class FirmwareUpdaterApiImpl(
             ?.startUpdateCheck()
             ?.map { }
             ?.toCResult()
-            ?.also { updaterStatusCollector.start() }
             ?: CResult.failure(IllegalStateException("RPC feature is null"))
-    }
-
-    // We need to observe /update/status so we can receive current status
-    // with long-polling
-    init {
-        combine(
-            flow = state,
-            flow2 = updaterStatusCollector.isActiveFlow,
-            transform = { state, isActive ->
-                val shouldStartUpdateStatusCollector = when (state) {
-                    is FwUpdateState.CheckingVersion,
-                    FwUpdateState.Updating,
-                    is FwUpdateState.Downloading -> true
-                    // Only desktop case
-                    is FwUpdateState.Uploading -> false
-                    else -> false
-                }
-                info {
-                    "#init shouldStartUpdateStatusCollector: $shouldStartUpdateStatusCollector;" +
-                        " isActive: $isActive; state: $state"
-                }
-                if (shouldStartUpdateStatusCollector && !isActive) {
-                    updaterStatusCollector.start()
-                } else if (!shouldStartUpdateStatusCollector && isActive) {
-                    updaterStatusCollector.stop()
-                }
-            }
-        ).launchIn(scope)
     }
 }

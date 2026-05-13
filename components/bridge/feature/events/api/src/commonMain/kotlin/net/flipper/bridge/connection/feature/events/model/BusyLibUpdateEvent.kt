@@ -1,9 +1,7 @@
 package net.flipper.bridge.connection.feature.events.model
 
 import kotlinx.datetime.UtcOffset
-import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateStatus
 import net.flipper.bridge.connection.feature.settings.model.BsbBrightnessInfo
-import net.flipper.bridge.connection.feature.wifi.api.model.BsbWifiStatusResponse
 import net.flipper.core.busylib.data.Fraction
 
 /**
@@ -27,30 +25,133 @@ sealed interface BusyLibUpdateEvent {
                 CHARGED
             }
         }
+
         data object Unknown : Power
     }
 
     data class Wifi(
-        val state: BsbWifiStatusResponse.BsbWifiState,
-        val ssid: String?,
-        val bssid: String?,
-        val channel: Int?,
-        val rssi: Int?,
-    ) : BusyLibUpdateEvent
+        val ips: List<IpAddress>,
+        val state: State
+    ) : BusyLibUpdateEvent {
+        sealed interface State {
+            data object Unknown : State
+            data object Disconnected : State
+            data class Connected(
+                val ssid: String,
+                val bssid: String,
+                val channel: Int,
+                val rssi: Int,
+                val security: Security,
+                val status: Status
+            ) : State {
+                enum class Status {
+                    CONNECTED,
+                    CONNECTING,
+                    DISCONNECTING,
+                    RECONNECTING
+                }
+
+                enum class Security {
+                    UNKNOWN,
+                    OPEN,
+                    WPA,
+                    WPA2,
+                    WEP,
+                    WPA_WPA2,
+                    WPA3,
+                    WPA2_WPA3
+                }
+            }
+        }
+
+        data class IpAddress(
+            val protocol: IpProtocol,
+            val method: IpConfigurationMethod,
+            val address: String,
+            val gateway: String,
+            val netmask: String
+        ) {
+            enum class IpProtocol {
+                IPV4,
+                IPV6
+            }
+
+            enum class IpConfigurationMethod {
+                DHCP,
+                STATIC
+            }
+        }
+    }
 
     sealed interface Update : BusyLibUpdateEvent {
         data class UpdateState(
-            val action: BsbUpdateStatus.BsbInstall.BsbAction,
-            val status: BsbUpdateStatus.BsbInstall.BsbStatus,
-        ) : Update
+            val event: BsbEvent,
+            val action: BsbAction,
+            val status: BsbStatus,
+        ) : Update {
+            enum class BsbEvent {
+                SESSION_START,
+                SESSION_STOP,
+                ACTION_BEGIN,
+                ACTION_DONE,
+                DETAIL_CHANGE,
+                ACTION_PROGRESS,
+                NONE
+            }
+
+            enum class BsbAction {
+                DOWNLOAD,
+                SHA_VERIFICATION,
+                UNPACK,
+                PREPARE,
+                APPLY,
+                NONE
+            }
+
+            enum class BsbStatus {
+                OK,
+                BATTERY_LOW,
+                BUSY,
+                DOWNLOAD_FAILURE,
+                DOWNLOAD_ABORT,
+                SHA_MISMATCH,
+                UNPACK_STAGING_DIR_FAILURE,
+                UNPACK_ARCHIVE_OPEN_FAILURE,
+                UNPACK_ARCHIVE_UNPACK_FAILURE,
+                INSTALL_MANIFEST_NOT_FOUND,
+                INSTALL_MANIFEST_INVALID,
+                INSTALL_SESSION_CONFIG_FAILURE,
+                INSTALL_POINTER_SETUP_FAILURE,
+                UNKNOWN_FAILURE
+            }
+        }
 
         data class UpdateCheck(
-            val availableVersion: String?,
-        ) : Update
+            val result: CheckResult,
+            val event: CheckEvent
+        ) : Update {
+            enum class CheckEvent {
+                START,
+                STOP,
+                NONE
+            }
 
-        data class UpdateDownload(
-            val download: BsbUpdateStatus.BsbInstall.BsbDownload
-        ) : Update
+            sealed interface CheckResult {
+                data class Available(
+                    val availableVersion: String
+                ) : CheckResult
+
+                data class Unavailable(
+                    val reason: CheckError
+                ) : CheckResult {
+                    enum class CheckError {
+                        NOT_AVAILABLE,
+                        FAILURE,
+                        IDLE
+                    }
+                }
+            }
+        }
     }
 
     data class Timezone(

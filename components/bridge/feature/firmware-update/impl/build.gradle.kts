@@ -21,6 +21,7 @@ kotlin {
         implementation(projects.components.bridge.feature.rpc.api)
         implementation(projects.components.bridge.feature.events.api)
         implementation(projects.components.bridge.feature.provider.api)
+        implementation(projects.components.bridge.feature.wifi.api)
 
         implementation(libs.kotlin.coroutines)
         implementation(libs.kotlin.immutable)

@@ -1,62 +1,30 @@
 package net.flipper.bridge.connection.feature.firmwareupdate.model
 
-data class BsbUpdateStatus(
-    val install: BsbInstall,
-    val check: BsbCheck
-) {
-    data class BsbInstall(
-        val isAllowed: Boolean,
-        val action: BsbAction,
-        val status: BsbStatus,
-        val download: BsbDownload
-    ) {
-        enum class BsbAction {
-            DOWNLOAD,
-            SHA_VERIFICATION,
-            UNPACK,
-            PREPARE,
-            APPLY,
-            NONE
+sealed interface BsbUpdateStatus {
+    sealed interface ReadyToInstall : BsbUpdateStatus {
+        data object BatteryLow : ReadyToInstall
+        data object Ready : ReadyToInstall
+    }
+
+    sealed interface InProgress : BsbUpdateStatus {
+        sealed interface Downloading : InProgress {
+            data object NotSpecified : Downloading
+            data class Specified(
+                val speedBytesPerSec: Int,
+                val receivedBytes: Int,
+                val totalBytes: Int
+            ) : Downloading
         }
 
-        enum class BsbStatus {
-            OK,
-            BATTERY_LOW,
-            BUSY,
-            DOWNLOAD_FAILURE,
-            DOWNLOAD_ABORT,
-            SHA_MISMATCH,
-            UNPACK_STAGING_DIR_FAILURE,
-            UNPACK_ARCHIVE_OPEN_FAILURE,
-            UNPACK_ARCHIVE_UNPACK_FAILURE,
-            INSTALL_MANIFEST_NOT_FOUND,
-            INSTALL_MANIFEST_INVALID,
-            INSTALL_SESSION_CONFIG_FAILURE,
-            INSTALL_POINTER_SETUP_FAILURE,
-            UNKNOWN_FAILURE
-        }
-
-        data class BsbDownload(
-            val speedBytesPerSec: Int,
-            val receivedBytes: Int,
-            val totalBytes: Int
-        ) {
-            companion object {
-                val ZERO: BsbDownload
-                    get() = BsbDownload(0, 0, 0)
+        data class Other(val stage: ProgressStage) : InProgress {
+            enum class ProgressStage {
+                SHA_VERIFICATION,
+                UNPACK,
+                PREPARE,
+                APPLY,
             }
         }
     }
 
-    data class BsbCheck(
-        val availableVersion: String,
-        val status: BsbCheckResult
-    ) {
-        enum class BsbCheckResult {
-            AVAILABLE,
-            NOT_AVAILABLE,
-            FAILURE,
-            NONE
-        }
-    }
+    data object Loading : BsbUpdateStatus
 }

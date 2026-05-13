@@ -5,7 +5,6 @@ import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.isActive
 import me.tatarka.inject.annotations.Inject
 import me.tatarka.inject.annotations.IntoMap
@@ -15,13 +14,13 @@ import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
 import net.flipper.bridge.connection.feature.events.api.get
+import net.flipper.bridge.connection.feature.events.api.getMapped
 import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
-import net.flipper.bridge.connection.feature.events.model.ConsumableUpdateEvent
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.ConnectRequestConfig
 import net.flipper.bridge.connection.feature.rpc.api.model.WifiIpMethod
 import net.flipper.bridge.connection.feature.wifi.api.FWiFiFeatureApi
-import net.flipper.bridge.connection.feature.wifi.api.model.BsbWifiStatusResponse
+import net.flipper.bridge.connection.feature.wifi.api.model.BsbWifiStatus
 import net.flipper.bridge.connection.feature.wifi.api.model.WiFiNetwork
 import net.flipper.bridge.connection.feature.wifi.api.model.WiFiSecurity
 import net.flipper.bridge.connection.feature.wifi.mapper.toBsbWifiSecurityMethod
@@ -39,12 +38,7 @@ import net.flipper.busylib.core.wrapper.toCResult
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.ktx.common.asFlow
 import net.flipper.core.busylib.ktx.common.exponentialRetry
-import net.flipper.core.busylib.ktx.common.merge
 import net.flipper.core.busylib.ktx.common.orElse
-import net.flipper.core.busylib.ktx.common.orEmpty
-import net.flipper.core.busylib.ktx.common.throttleLatestCached
-import net.flipper.core.busylib.ktx.common.transformWhileSubscribed
-import net.flipper.core.busylib.ktx.common.tryConsume
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
@@ -94,41 +88,22 @@ class FWiFiFeatureApiImpl(
     }
 
     private val wifiStatusSharedFlow = fEventsFeatureApi
-        ?.get<BusyLibUpdateEvent.Wifi>()
-        .orEmpty()
-        .merge(flowOf(ConsumableUpdateEvent.Empty))
-        .transformWhileSubscribed(scope = scope) { flow ->
-            flow.throttleLatestCached { consumable, wifi: BsbWifiStatusResponse? ->
-                val couldConsume = consumable.tryConsume()
-                when (consumable) {
-                    is ConsumableUpdateEvent.BusyLib<BusyLibUpdateEvent.Wifi> if wifi != null -> {
-                        consumable.busyLibUpdateEvent.let { wifiUpdateEvent ->
-                            wifi.copy(
-                                state = wifiUpdateEvent.state,
-                                ssid = wifiUpdateEvent.ssid,
-                                bssid = wifiUpdateEvent.bssid,
-                                channel = wifiUpdateEvent.channel,
-                                rssi = wifiUpdateEvent.rssi,
-                            )
-                        }
-                    }
-
-                    else -> {
-                        exponentialRetry {
-                            rpcFeatureApi
-                                .fRpcWifiApi
-                                .getWifiStatus(couldConsume)
-                                .map { it.toBsbWifiStatusResponse() }
-                                .onFailure { error(it) { "Failed to get WiFi networks" } }
-                        }
-                    }
-                }
+        .getMapped<BusyLibUpdateEvent.Wifi, BsbWifiStatus>(
+            scope = scope,
+            initial = { couldConsume ->
+                rpcFeatureApi
+                    .fRpcWifiApi
+                    .getWifiStatus(couldConsume)
+                    .map { it.toBsbWifiStatusResponse() }
+            },
+            mapper = {
+                it.toBsbWifiStatusResponse()
             }
-        }
+        )
         .asFlow()
         .wrap()
 
-    override fun getWifiStatusFlow(): WrappedFlow<BsbWifiStatusResponse> {
+    override fun getWifiStatusFlow(): WrappedFlow<BsbWifiStatus> {
         return wifiStatusSharedFlow
     }
 

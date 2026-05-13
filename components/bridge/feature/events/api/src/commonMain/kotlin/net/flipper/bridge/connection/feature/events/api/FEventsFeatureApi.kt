@@ -7,13 +7,13 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.mapLatest
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
 import net.flipper.bridge.connection.feature.events.model.ConsumableUpdateEvent
 import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.merge
 import net.flipper.core.busylib.ktx.common.orEmpty
-import net.flipper.core.busylib.ktx.common.throttleLatest
 import net.flipper.core.busylib.ktx.common.transformWhileSubscribed
 import net.flipper.core.busylib.ktx.common.tryConsume
 
@@ -40,7 +40,7 @@ inline fun <reified T : BusyLibUpdateEvent, R> FEventsFeatureApi?.get(
         .orEmpty()
         .merge(flowOf(ConsumableUpdateEvent.Empty))
         .transformWhileSubscribed(scope = scope) { flow ->
-            flow.throttleLatest { consumable ->
+            flow.mapLatest { consumable ->
                 val couldConsume = consumable.tryConsume()
                 when (consumable) {
                     ConsumableUpdateEvent.Empty -> {
@@ -55,6 +55,34 @@ inline fun <reified T : BusyLibUpdateEvent, R> FEventsFeatureApi?.get(
                     }
                 }
             }.filterNotNull().run(mapper)
+        }
+}
+
+inline fun <reified T : BusyLibUpdateEvent, R> FEventsFeatureApi?.getMapped(
+    scope: CoroutineScope,
+    crossinline initial: suspend (couldConsume: Boolean) -> Result<R>,
+    crossinline mapper: (T) -> R
+): SharedFlow<R> {
+    return this
+        ?.get<T>()
+        .orEmpty()
+        .merge(flowOf(ConsumableUpdateEvent.Empty))
+        .transformWhileSubscribed(scope = scope) { flow ->
+            flow.mapLatest { consumable ->
+                val couldConsume = consumable.tryConsume()
+                when (consumable) {
+                    ConsumableUpdateEvent.Empty -> {
+                        exponentialRetry {
+                            initial(couldConsume)
+                        }
+                    }
+
+                    is ConsumableUpdateEvent.BusyLib<*> -> {
+                        @Suppress("UNCHECKED_CAST")
+                        (consumable.busyLibUpdateEvent as? T)?.let(mapper)
+                    }
+                }
+            }.filterNotNull()
         }
 }
 

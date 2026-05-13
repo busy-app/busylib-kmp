@@ -17,11 +17,11 @@ import net.flipper.bridge.connection.feature.finishsetup.model.DeviceSetupTaskSt
 import net.flipper.bridge.connection.feature.finishsetup.model.DeviceSetupTaskType
 import net.flipper.bridge.connection.feature.finishsetup.model.FFinishSetupState
 import net.flipper.bridge.connection.feature.firmwareupdate.api.FFirmwareUpdateFeatureApi
-import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateStatus
+import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateVersion
 import net.flipper.bridge.connection.feature.link.check.ondemand.api.FLinkedInfoOnDemandFeatureApi
 import net.flipper.bridge.connection.feature.link.model.LinkedAccountInfo
 import net.flipper.bridge.connection.feature.wifi.api.FWiFiFeatureApi
-import net.flipper.bridge.connection.feature.wifi.api.model.BsbWifiStatusResponse
+import net.flipper.bridge.connection.feature.wifi.api.model.BsbWifiStatus
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.core.wrapper.WrappedSharedFlow
@@ -49,8 +49,8 @@ class FFinishSetupFeatureApiImpl(
     private data class TasksDependencies(
         val bleStatus: FBleStatus?,
         val linkedAccountInfo: LinkedAccountInfo,
-        val wifiStatus: BsbWifiStatusResponse,
-        val updateStatus: BsbUpdateStatus,
+        val wifiStatus: BsbWifiStatus,
+        val updateVersion: BsbUpdateVersion,
         val isSetupFinishedBefore: Boolean
     )
 
@@ -66,17 +66,16 @@ class FFinishSetupFeatureApiImpl(
         return deviceSetupTask
     }
 
-    private fun createConnectWifiTask(wifiStatus: BsbWifiStatusResponse): DeviceSetupTask {
+    private fun createConnectWifiTask(wifiStatus: BsbWifiStatus): DeviceSetupTask {
         val deviceSetupTask = DeviceSetupTask(
             type = DeviceSetupTaskType.CONNECT_WIFI,
-            status = when (wifiStatus.state) {
-                BsbWifiStatusResponse.BsbWifiState.CONNECTED -> DeviceSetupTaskStatus.COMPLETED
-                BsbWifiStatusResponse.BsbWifiState.DISCONNECTED -> DeviceSetupTaskStatus.NOT_COMPLETED
-
-                BsbWifiStatusResponse.BsbWifiState.CONNECTING,
-                BsbWifiStatusResponse.BsbWifiState.RECONNECTING,
-                BsbWifiStatusResponse.BsbWifiState.DISCONNECTING,
-                BsbWifiStatusResponse.BsbWifiState.UNKNOWN -> DeviceSetupTaskStatus.NOT_AVAILABLE
+            status = when (wifiStatus) {
+                is BsbWifiStatus.Connected -> DeviceSetupTaskStatus.COMPLETED
+                BsbWifiStatus.Disconnected -> DeviceSetupTaskStatus.NOT_COMPLETED
+                BsbWifiStatus.Connecting,
+                BsbWifiStatus.Disconnecting,
+                BsbWifiStatus.Reconnecting,
+                BsbWifiStatus.Unknown -> DeviceSetupTaskStatus.NOT_AVAILABLE
             },
         )
         verbose { "#createConnectWifiTask $wifiStatus -> $deviceSetupTask" }
@@ -104,18 +103,19 @@ class FFinishSetupFeatureApiImpl(
     }
 
     private fun createUpdateFirmwareTask(
-        updateStatus: BsbUpdateStatus,
+        updateVersion: BsbUpdateVersion,
         connectWifiTaskStatus: DeviceSetupTaskStatus
     ): DeviceSetupTask {
         val deviceSetupTask = DeviceSetupTask(
             type = DeviceSetupTaskType.UPDATE_FIRMWARE,
             status = when (connectWifiTaskStatus) {
                 DeviceSetupTaskStatus.COMPLETED -> {
-                    when (updateStatus.check.status) {
-                        BsbUpdateStatus.BsbCheck.BsbCheckResult.AVAILABLE -> DeviceSetupTaskStatus.NOT_COMPLETED
-                        BsbUpdateStatus.BsbCheck.BsbCheckResult.NOT_AVAILABLE -> DeviceSetupTaskStatus.COMPLETED
-                        BsbUpdateStatus.BsbCheck.BsbCheckResult.FAILURE -> DeviceSetupTaskStatus.NOT_AVAILABLE
-                        BsbUpdateStatus.BsbCheck.BsbCheckResult.NONE -> DeviceSetupTaskStatus.LOADING
+                    when (updateVersion) {
+                        BsbUpdateVersion.FailedToCheck -> DeviceSetupTaskStatus.NOT_AVAILABLE
+                        BsbUpdateVersion.CheckingOnBBInProgress,
+                        BsbUpdateVersion.Loading -> DeviceSetupTaskStatus.LOADING
+                        BsbUpdateVersion.NoUpdateAvailable -> DeviceSetupTaskStatus.COMPLETED
+                        is BsbUpdateVersion.ReadyToUpdate -> DeviceSetupTaskStatus.NOT_COMPLETED
                     }
                 }
 
@@ -124,7 +124,7 @@ class FFinishSetupFeatureApiImpl(
                 DeviceSetupTaskStatus.NOT_AVAILABLE -> DeviceSetupTaskStatus.COMPLETED
             },
         )
-        verbose { "#createUpdateFirmwareTask $updateStatus; $connectWifiTaskStatus -> $deviceSetupTask" }
+        verbose { "#createUpdateFirmwareTask $updateVersion; $connectWifiTaskStatus -> $deviceSetupTask" }
         return deviceSetupTask
     }
 
@@ -135,8 +135,7 @@ class FFinishSetupFeatureApiImpl(
             .distinctUntilChanged(),
         flow3 = fWiFiFeatureApi.getWifiStatusFlow()
             .distinctUntilChanged(),
-        flow4 = fFirmwareUpdateFeatureApi.updateStatusFlow
-            .distinctUntilChanged(),
+        flow4 = fFirmwareUpdateFeatureApi.updateVersionFlow,
         flow5 = setupFinishedBeforeKrate.cachedStateFlow,
         transform = ::TasksDependencies
     ).transformWhileSubscribed(
@@ -148,7 +147,7 @@ class FFinishSetupFeatureApiImpl(
                 val bleStatus = tasksDependencies.bleStatus
                 val linkedAccountInfo = tasksDependencies.linkedAccountInfo
                 val wifiStatus = tasksDependencies.wifiStatus
-                val updateStatus = tasksDependencies.updateStatus
+                val updateVersion = tasksDependencies.updateVersion
                 val isSetupFinishedBefore = tasksDependencies.isSetupFinishedBefore
 
                 if (isSetupFinishedBefore) {
@@ -162,17 +161,16 @@ class FFinishSetupFeatureApiImpl(
                     verbose { "#taskListResourceFlow BLE is not initialized" }
                     return@throttleLatest FFinishSetupState.Loading
                 }
-                when (wifiStatus.state) {
-                    BsbWifiStatusResponse.BsbWifiState.RECONNECTING,
-                    BsbWifiStatusResponse.BsbWifiState.CONNECTING -> {
+                when (wifiStatus) {
+                    BsbWifiStatus.Connecting,
+                    BsbWifiStatus.Reconnecting -> {
                         verbose { "#taskListResourceFlow WIFI not initialized yet" }
                         return@throttleLatest FFinishSetupState.Loading
                     }
-
-                    BsbWifiStatusResponse.BsbWifiState.DISCONNECTED,
-                    BsbWifiStatusResponse.BsbWifiState.CONNECTED,
-                    BsbWifiStatusResponse.BsbWifiState.DISCONNECTING,
-                    BsbWifiStatusResponse.BsbWifiState.UNKNOWN -> Unit
+                    is BsbWifiStatus.Connected,
+                    BsbWifiStatus.Disconnected,
+                    BsbWifiStatus.Disconnecting,
+                    BsbWifiStatus.Unknown -> Unit
                 }
 
                 val pairBleTask = bleStatus?.let(::createPairBleTask)
@@ -182,7 +180,7 @@ class FFinishSetupFeatureApiImpl(
                     connectWifiTaskStatus = connectWifiTask.status
                 )
                 val updateFirmwareTask = createUpdateFirmwareTask(
-                    updateStatus = updateStatus,
+                    updateVersion = updateVersion,
                     connectWifiTaskStatus = connectWifiTask.status
                 )
                 val tasks = listOfNotNull(

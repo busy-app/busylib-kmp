@@ -24,39 +24,36 @@ class UpdateStatusProvider(
     private fun UpdateStatusSource?.withLatestStatus(
         latestUpdateStatus: BsbUpdateStatus?
     ): UpdateStatusSource {
-        return when (val localSource = this) {
+        return when (this) {
             null -> {
                 UpdateStatusSource.Fresh(latestUpdateStatus)
             }
 
             is UpdateStatusSource.Cached -> {
-                val freshUpdateStatus = localSource.freshUpdateStatus
-                if (freshUpdateStatus == null) {
-                    localSource.copy(freshUpdateStatus = latestUpdateStatus)
+                if (latestUpdateStatus == null) {
+                    this
                 } else {
-                    localSource.copy(
-                        cachedUpdateStatus = freshUpdateStatus,
-                        freshUpdateStatus = latestUpdateStatus
-                    )
+                    UpdateStatusSource.Fresh(latestUpdateStatus)
                 }
             }
 
             is UpdateStatusSource.Fresh -> {
-                val freshUpdateStatus = localSource.freshUpdateStatus
-                if (freshUpdateStatus == null) {
-                    localSource.copy(freshUpdateStatus = latestUpdateStatus)
+                if (latestUpdateStatus == null) {
+                    if (freshUpdateStatus == null) {
+                        this
+                    } else {
+                        UpdateStatusSource.Cached(freshUpdateStatus)
+                    }
                 } else {
-                    UpdateStatusSource.Cached(
-                        cachedUpdateStatus = freshUpdateStatus,
-                        freshUpdateStatus = latestUpdateStatus
-                    )
+                    UpdateStatusSource.Fresh(latestUpdateStatus)
                 }
             }
         }
     }
 
     fun getUpdateStatus(): Flow<UpdateStatusSource> = flow {
-        var source: UpdateStatusSource? = null
+        var source: UpdateStatusSource = UpdateStatusSource.Fresh(null)
+        emit(source)
 
         fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
             .map { status -> status.tryCast<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>() }

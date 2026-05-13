@@ -7,6 +7,6 @@ import net.flipper.bridge.device.firmwareupdate.downloader.model.FirmwareDownloa
 
 internal interface FirmwareDownloaderApi {
     val state: StateFlow<FirmwareDownloaderState>
-    suspend fun download(bsbUpdateVersion: BsbUpdateVersion.Url): Result<Path>
+    suspend fun download(bsbUpdateVersion: BsbUpdateVersion.ReadyToUpdate.Url): Result<Path>
     fun reset()
 }
