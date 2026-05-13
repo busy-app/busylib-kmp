@@ -37,6 +37,12 @@ interface BSBWebSocketInternal : BSBWebSocket {
     fun getEventsFlowInternal(): Flow<WebSocketEventInternal>
 
     suspend fun send(request: InternalWebSocketRequest)
+
+    /**
+     * Suspends until the underlying WebSocket transport terminates. Used by the
+     * upstream [wrapWebsocket] retry loop to detect transport death and reconnect.
+     */
+    suspend fun awaitClosed()
 }
 
 class BSBWebSocketImpl(
@@ -73,6 +79,10 @@ class BSBWebSocketImpl(
     override suspend fun send(request: InternalWebSocketRequest) {
         info { "Send $request" }
         session.send(request)
+    }
+
+    override suspend fun awaitClosed() {
+        session.awaitClosed()
     }
 }
 

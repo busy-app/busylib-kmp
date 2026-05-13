@@ -1,5 +1,6 @@
 package net.flipper.bsb.cloud.barsws.api.fakes
 
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.emptyFlow
@@ -20,6 +21,7 @@ internal class MockBSBWebSocket(
     private val _eventsFlow = MutableSharedFlow<WebSocketEventInternal>(
         extraBufferCapacity = 64
     )
+    private val closedSignal = CompletableDeferred<Unit>()
 
     override fun getEventsFlow(): Flow<WebSocketEvent> = emptyFlow()
 
@@ -31,11 +33,16 @@ internal class MockBSBWebSocket(
         }
     }
 
+    override suspend fun awaitClosed() {
+        closedSignal.await()
+    }
+
     suspend fun emitEvent(event: WebSocketEventInternal) {
         _eventsFlow.emit(event)
     }
 
     fun close() {
+        closedSignal.complete(Unit)
         onClose()
     }
 }

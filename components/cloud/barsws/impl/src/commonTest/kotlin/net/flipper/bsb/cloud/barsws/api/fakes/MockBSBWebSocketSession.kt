@@ -1,6 +1,7 @@
 package net.flipper.bsb.cloud.barsws.api.fakes
 
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.channels.Channel
 import kotlinx.serialization.SerializationException
 import net.flipper.bsb.cloud.barsws.api.model.InternalWebSocketRequest
@@ -13,6 +14,7 @@ internal class MockBSBWebSocketSession(
     private val _eventChannel = Channel<WebSocketEventInternal>(Channel.UNLIMITED)
     private var _shouldThrowSerializationError = false
     private var _isClosed = false
+    private val closedSignal = CompletableDeferred<Unit>()
 
     val sentRequests = mutableListOf<InternalWebSocketRequest>()
 
@@ -29,6 +31,7 @@ internal class MockBSBWebSocketSession(
     fun simulateClose() {
         _isClosed = true
         _eventChannel.close()
+        closedSignal.complete(Unit)
     }
 
     override suspend fun receive(): WebSocketEventInternal {
@@ -49,8 +52,13 @@ internal class MockBSBWebSocketSession(
         sentRequests.add(request)
     }
 
+    override suspend fun awaitClosed() {
+        closedSignal.await()
+    }
+
     override suspend fun close() {
         _isClosed = true
         _eventChannel.close()
+        closedSignal.complete(Unit)
     }
 }
