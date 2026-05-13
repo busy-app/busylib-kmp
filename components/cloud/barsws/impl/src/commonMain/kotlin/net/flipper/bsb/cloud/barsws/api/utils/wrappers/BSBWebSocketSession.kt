@@ -5,6 +5,7 @@ import io.ktor.client.plugins.websocket.receiveDeserialized
 import io.ktor.client.plugins.websocket.sendSerialized
 import io.ktor.websocket.close
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.job
 import net.flipper.bsb.cloud.barsws.api.model.InternalWebSocketRequest
 import net.flipper.bsb.cloud.barsws.api.model.WebSocketEventInternal
 
@@ -28,6 +29,12 @@ interface BSBWebSocketSession {
     suspend fun send(request: InternalWebSocketRequest)
 
     /**
+     * Suspends until the underlying WebSocket session terminates (either normally
+     * or due to a transport failure). Returns immediately if it is already closed.
+     */
+    suspend fun awaitClosed()
+
+    /**
      * Closes the WebSocket session.
      */
     suspend fun close()
@@ -48,6 +55,10 @@ class KtorBSBWebSocketSession(
             throw IllegalStateException("WebSocket is closed")
         }
         session.sendSerialized(request)
+    }
+
+    override suspend fun awaitClosed() {
+        session.coroutineContext.job.join()
     }
 
     override suspend fun close() {

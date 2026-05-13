@@ -3,7 +3,6 @@ package net.flipper.bsb.cloud.barsws.api.utils
 import com.flipperdevices.core.network.BUSYLibNetworkStateApi
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.WhileSubscribed
@@ -57,14 +56,19 @@ class CloudWebSocketApiImpl(
         if (isNetworkAvailable && principal is BUSYLibUserPrincipal.Token) {
             wrapWebsocket {
                 channelFlow {
-                    webSocketFactory.create(
+                    val ws = webSocketFactory.create(
                         logger = this@CloudWebSocketApiImpl,
                         principal = principal,
                         busyHost = host,
                         scope = this,
                         dispatcher = dispatcher
-                    ).let { send(it) }
-                    awaitClose()
+                    )
+                    send(ws)
+                    // Suspend until the underlying transport dies; then the channelFlow
+                    // completes, wrapWebsocket's collect returns, and the outer retry
+                    // loop reconnects with exponential backoff.
+                    ws.awaitClosed()
+                    close()
                 }
             }
         } else {
