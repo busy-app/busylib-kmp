@@ -33,4 +33,9 @@ buildConfig {
         "CRASH_APP_ON_FAILED_CHECKS",
         CURRENT_FLAVOR_TYPE.crashAppOnFailedChecks
     )
+    buildConfigField(
+        Boolean::class.java,
+        "IS_DEVELOP_FIRMWARE_CHANNEL",
+        CURRENT_FLAVOR_TYPE.isDevelopFirmwareChannel
+    )
 }
