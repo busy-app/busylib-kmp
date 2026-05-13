@@ -27,11 +27,11 @@ internal object FwUpdateStatusMapper {
     private fun map(downloaderState: FirmwareDownloaderState): FwUpdateState.Downloading? {
         return when (downloaderState) {
             FirmwareDownloaderState.Downloaded -> {
-                FwUpdateState.Downloading(1f)
+                FwUpdateState.Downloading(1f, true)
             }
 
             is FirmwareDownloaderState.Downloading -> {
-                FwUpdateState.Downloading(downloaderState.progress)
+                FwUpdateState.Downloading(downloaderState.progress, true)
             }
 
             FirmwareDownloaderState.Pending -> null
@@ -60,18 +60,24 @@ internal object FwUpdateStatusMapper {
                 .coerceIn(0f, 1f)
         }
 
-    private fun mapFreshUpdateStatusSource(updateStatusSource: UpdateStatusSource.Fresh): FwUpdateState? {
+    private fun mapFreshUpdateStatusSource(
+        updateStatusSource: UpdateStatusSource.Fresh,
+        isLanUpdate: Boolean
+    ): FwUpdateState? {
         return if (updateStatusSource.freshUpdateStatus == null) {
             FwUpdateState.Pending
         } else {
             when (updateStatusSource.freshUpdateStatus) {
                 BsbUpdateStatus.InProgress.Downloading.NotSpecified -> {
-                    FwUpdateState.Downloading(0f)
+                    FwUpdateState.Downloading(0f, isLanUpdate)
                 }
 
-                is BsbUpdateStatus.InProgress.Other -> FwUpdateState.Downloading(1f)
+                is BsbUpdateStatus.InProgress.Other -> FwUpdateState.Downloading(1f, isLanUpdate)
                 is BsbUpdateStatus.InProgress.Downloading.Specified -> {
-                    FwUpdateState.Downloading(updateStatusSource.freshUpdateStatus.progress)
+                    FwUpdateState.Downloading(
+                        updateStatusSource.freshUpdateStatus.progress,
+                        isLanUpdate
+                    )
                 }
 
                 BsbUpdateStatus.ReadyToInstall.BatteryLow -> FwUpdateState.LowBattery
@@ -81,15 +87,21 @@ internal object FwUpdateStatusMapper {
         }
     }
 
-    private fun mapCachedUpdateStatusSource(updateStatusSource: UpdateStatusSource.Cached): FwUpdateState? {
+    private fun mapCachedUpdateStatusSource(
+        updateStatusSource: UpdateStatusSource.Cached,
+        isLanUpdate: Boolean
+    ): FwUpdateState? {
         return when (updateStatusSource.cachedUpdateStatus) {
             BsbUpdateStatus.InProgress.Downloading.NotSpecified -> {
-                FwUpdateState.Downloading(0f)
+                FwUpdateState.Downloading(0f, isLanUpdate)
             }
 
             is BsbUpdateStatus.InProgress.Other -> FwUpdateState.Updating
             is BsbUpdateStatus.InProgress.Downloading.Specified -> {
-                FwUpdateState.Downloading(updateStatusSource.cachedUpdateStatus.progress)
+                FwUpdateState.Downloading(
+                    updateStatusSource.cachedUpdateStatus.progress,
+                    isLanUpdate
+                )
             }
 
             BsbUpdateStatus.ReadyToInstall.BatteryLow -> FwUpdateState.LowBattery
@@ -98,14 +110,17 @@ internal object FwUpdateStatusMapper {
         }
     }
 
-    private fun map(updateStatusSource: UpdateStatusSource): FwUpdateState? {
+    private fun map(
+        updateStatusSource: UpdateStatusSource,
+        isLanUpdate: Boolean
+    ): FwUpdateState? {
         return when (updateStatusSource) {
             is UpdateStatusSource.Cached -> {
-                mapCachedUpdateStatusSource(updateStatusSource)
+                mapCachedUpdateStatusSource(updateStatusSource, isLanUpdate)
             }
 
             is UpdateStatusSource.Fresh -> {
-                mapFreshUpdateStatusSource(updateStatusSource)
+                mapFreshUpdateStatusSource(updateStatusSource, isLanUpdate)
             }
         }
     }
@@ -119,7 +134,19 @@ internal object FwUpdateStatusMapper {
         return map(uploaderState)
             ?: map(downloaderState)
             ?: map(bsbUpdateVersion)
-            ?: map(updateStatusSource)
+            ?: map(updateStatusSource, isLanUpdate(bsbUpdateVersion))
             ?: FwUpdateState.Pending
+    }
+
+    private fun isLanUpdate(bsbUpdateVersion: BsbUpdateVersion?): Boolean {
+        return when (bsbUpdateVersion) {
+            is BsbUpdateVersion.ReadyToUpdate.Url -> true
+            BsbUpdateVersion.CheckingOnBBInProgress,
+            BsbUpdateVersion.FailedToCheck,
+            BsbUpdateVersion.Loading,
+            BsbUpdateVersion.NoUpdateAvailable,
+            is BsbUpdateVersion.ReadyToUpdate.Default,
+            null -> false
+        }
     }
 }

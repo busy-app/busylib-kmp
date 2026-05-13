@@ -17,7 +17,8 @@ sealed interface FwUpdateState {
     ) : FwUpdateState
 
     data class Downloading(
-        val progress: Float
+        val progress: Float,
+        val isLanUpdate: Boolean
     ) : FwUpdateState
 
     data object DownloadFailure : FwUpdateState
