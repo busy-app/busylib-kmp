@@ -18,5 +18,5 @@ data class StatusFirmware(
     @SerialName("nwp_version")
     val nwpVersion: String? = null,
     @SerialName("matter_version")
-    val matterVersion: String
+    val matterVersion: String? = null
 )
