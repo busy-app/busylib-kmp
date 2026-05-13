@@ -2,6 +2,7 @@ package net.flipper.bridge.connection.transport.tcp.lan.impl.monitor
 
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
@@ -9,11 +10,12 @@ import net.flipper.bridge.connection.transport.common.api.FInternalTransportConn
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.bridge.connection.transport.tcp.common.monitor.FConnectionMonitorApi
 import net.flipper.bridge.connection.transport.tcp.lan.FLanDeviceConnectionConfig
-import net.flipper.bridge.connection.transport.tcp.lan.impl.model.KotlinNwError
-import net.flipper.bridge.connection.transport.tcp.lan.impl.model.asKotlinNwError
+import net.flipper.bridge.connection.transport.tcp.lan.impl.model.KotlinNwStatus
+import net.flipper.bridge.connection.transport.tcp.lan.impl.model.asKotlinNwStatus
 import net.flipper.bridge.connection.transport.tcp.lan.impl.util.withLock
 import net.flipper.core.busylib.ktx.common.SingleJobMode
 import net.flipper.core.busylib.ktx.common.asSingleJobScope
+import net.flipper.core.busylib.ktx.common.cancelPrevious
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.debug
 import net.flipper.core.busylib.log.error
@@ -27,17 +29,12 @@ import platform.Network.nw_connection_set_queue
 import platform.Network.nw_connection_set_state_changed_handler
 import platform.Network.nw_connection_set_viability_changed_handler
 import platform.Network.nw_connection_start
-import platform.Network.nw_connection_state_cancelled
-import platform.Network.nw_connection_state_failed
-import platform.Network.nw_connection_state_invalid
-import platform.Network.nw_connection_state_preparing
-import platform.Network.nw_connection_state_ready
-import platform.Network.nw_connection_state_waiting
 import platform.Network.nw_connection_t
 import platform.Network.nw_endpoint_create_host
+import platform.Network.nw_interface_type_other
 import platform.Network.nw_parameters_copy_default_protocol_stack
 import platform.Network.nw_parameters_create
-import platform.Network.nw_parameters_set_include_peer_to_peer
+import platform.Network.nw_parameters_prohibit_interface_type
 import platform.Network.nw_path_get_status
 import platform.Network.nw_path_status_satisfied
 import platform.Network.nw_protocol_stack_set_transport_protocol
@@ -47,6 +44,7 @@ import platform.Network.nw_tcp_options_set_keepalive_count
 import platform.Network.nw_tcp_options_set_keepalive_idle_time
 import platform.Network.nw_tcp_options_set_keepalive_interval
 import platform.darwin.dispatch_queue_create
+import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalForeignApi::class)
 class FAppleLanConnectionMonitor(
@@ -62,55 +60,41 @@ class FAppleLanConnectionMonitor(
     private val connectionLock = NSLock()
     private var connection: nw_connection_t = null
 
-    private fun restartMonitoring() {
+    private fun restartMonitoringUnsafe() {
         restartMonitoringScope.launch(SingleJobMode.SKIP_IF_RUNNING) {
+            info { "#restartMonitoringUnsafe" }
             listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting(config.getTransportTypes()))
-            stopMonitoring()
+            cancelConnection()
+            delay(RESTART_TIMEOUT)
             startMonitoring()
         }
     }
 
-    private fun createConnection(): nw_connection_t {
-        return connectionLock.withLock {
-            connection?.let { nw_connection_cancel(it) }
+    private fun createConnectionUnsafe(): nw_connection_t {
+        connection?.let { nw_connection_cancel(it) }
 
-            val endpoint = nw_endpoint_create_host(config.host, port)
-            val parameters = nw_parameters_create()
-            val protocolStack = nw_parameters_copy_default_protocol_stack(parameters)
+        val endpoint = nw_endpoint_create_host(config.host, port)
+        val parameters = nw_parameters_create()
+        val protocolStack = nw_parameters_copy_default_protocol_stack(parameters)
 
-            val tcpOptions = nw_tcp_create_options()
-            nw_tcp_options_set_enable_keepalive(tcpOptions, true)
-            nw_tcp_options_set_keepalive_idle_time(tcpOptions, KEEPALIVE_IDLE_TIME_SEC)
-            nw_tcp_options_set_keepalive_interval(tcpOptions, KEEPALIVE_INTERVAL_SEC)
-            nw_tcp_options_set_keepalive_count(tcpOptions, KEEPALIVE_COUNT)
+        val tcpOptions = nw_tcp_create_options()
+        nw_tcp_options_set_enable_keepalive(tcpOptions, true)
+        nw_tcp_options_set_keepalive_idle_time(tcpOptions, KEEPALIVE_IDLE_TIME_SEC)
+        nw_tcp_options_set_keepalive_interval(tcpOptions, KEEPALIVE_INTERVAL_SEC)
+        nw_tcp_options_set_keepalive_count(tcpOptions, KEEPALIVE_COUNT)
 
-            nw_protocol_stack_set_transport_protocol(protocolStack, tcpOptions)
-            nw_parameters_set_include_peer_to_peer(parameters, true)
+        nw_protocol_stack_set_transport_protocol(protocolStack, tcpOptions)
 
-            val createdConnection = nw_connection_create(endpoint, parameters)
-            connection = createdConnection
-            createdConnection
-        }
+        nw_parameters_prohibit_interface_type(parameters, nw_interface_type_other)
+
+        val createdConnection = nw_connection_create(endpoint, parameters)
+        connection = createdConnection
+        return createdConnection
     }
 
-    private suspend fun handleStateUpdate(
-        state: UInt,
-        error: KotlinNwError?
-    ) {
-        when (error) {
-            null,
-            is KotlinNwError.HostIsDown,
-            is KotlinNwError.Unknown,
-            is KotlinNwError.NoRouteToHost -> Unit
-
-            is KotlinNwError.TimedOut,
-            is KotlinNwError.ResetByPeer -> {
-                restartMonitoring()
-                return
-            }
-        }
-        when (state) {
-            nw_connection_state_ready -> {
+    private suspend fun handleStateUpdateUnsafe(status: KotlinNwStatus) {
+        when (status) {
+            KotlinNwStatus.Ready -> {
                 debug { "#handleStateUpdate Connected to ${config.host}" }
                 val status = FInternalTransportConnectionStatus.Connected(
                     scope = scope,
@@ -120,48 +104,54 @@ class FAppleLanConnectionMonitor(
                 listener.onStatusUpdate(status)
             }
 
-            nw_connection_state_waiting -> {
-                debug { "#handleStateUpdate Waiting for connection: $error" }
-                listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting(config.getTransportTypes()))
-            }
-
-            nw_connection_state_preparing -> {
+            KotlinNwStatus.Preparing -> {
                 debug { "#handleStateUpdate Connection preparing" }
-                listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting(config.getTransportTypes()))
+                val status = FInternalTransportConnectionStatus
+                    .Connecting(config.getTransportTypes())
+                listener.onStatusUpdate(status)
             }
 
-            nw_connection_state_failed -> {
-                error { "#handleStateUpdate Connection failed: $error" }
-                restartMonitoring()
+            is KotlinNwStatus.Waiting.LocalNetworkDenied,
+            is KotlinNwStatus.Waiting.CellularDenied,
+            is KotlinNwStatus.Waiting.WifiDenied -> {
+                error { "#handleStateUpdate $status" }
+                val status = FInternalTransportConnectionStatus
+                    .Connecting(config.getTransportTypes())
+                listener.onStatusUpdate(status)
             }
 
-            nw_connection_state_invalid -> {
-                error { "#handleStateUpdate Connection invalid: $error" }
-                restartMonitoring()
+            is KotlinNwStatus.Waiting.Other -> {
+                debug { "#handleStateUpdate Waiting for connection: ${status.error}" }
+                when (status.error) {
+                    is KotlinNwStatus.PosixError.HostIsDown,
+                    is KotlinNwStatus.PosixError.NoRouteToHost,
+                    is KotlinNwStatus.PosixError.Unknown,
+                    is KotlinNwStatus.PosixError.TimedOut,
+                    is KotlinNwStatus.PosixError.ResetByPeer -> restartMonitoringUnsafe()
+
+                    null -> {
+                        val status = FInternalTransportConnectionStatus
+                            .Connecting(config.getTransportTypes())
+                        listener.onStatusUpdate(status)
+                    }
+                }
             }
 
-            nw_connection_state_cancelled -> {
-                error { "#handleStateUpdate Connection cancelled" }
-                restartMonitoring()
-            }
-
-            else -> {
-                debug { "#handleStateUpdate Connection unknown state: $state; error: $error" }
-                restartMonitoring()
+            is KotlinNwStatus.UnknownState,
+            is KotlinNwStatus.Cancelled,
+            is KotlinNwStatus.Invalid,
+            is KotlinNwStatus.Failed -> {
+                error { "#handleStateUpdate $status" }
+                restartMonitoringUnsafe()
             }
         }
     }
 
-    private fun collectConnectionEvents(connection: nw_connection_t) {
+    private fun collectConnectionEventsUnsafe(connection: nw_connection_t) {
         nw_connection_set_state_changed_handler(connection) { state, error ->
-            val kError = error?.asKotlinNwError()
-            debug { "#collectConnectionEvents state=$state error=$kError" }
-            runBlocking {
-                handleStateUpdate(
-                    state = state,
-                    error = kError
-                )
-            }
+            val status = connection.asKotlinNwStatus(state, error)
+            debug { "#collectConnectionEvents status=$status (rawState=$state)" }
+            runBlocking { handleStateUpdateUnsafe(status) }
         }
     }
 
@@ -170,11 +160,11 @@ class FAppleLanConnectionMonitor(
      * A connection becomes non-viable when it can no longer carry data
      * (e.g. USB cable disconnected or the device stopped responding)
      */
-    private fun collectConnectionViability(connection: nw_connection_t) {
+    private fun collectConnectionViabilityUnsafe(connection: nw_connection_t) {
         nw_connection_set_viability_changed_handler(connection) { isViable ->
             if (isViable) return@nw_connection_set_viability_changed_handler
             error { "#collectConnectionViability Connection became non-viable" }
-            restartMonitoring()
+            restartMonitoringUnsafe()
         }
     }
 
@@ -183,29 +173,36 @@ class FAppleLanConnectionMonitor(
      * The path describes which local interface and route is used for this TCP connection
      * (e.g. the USB-LAN interface went down)
      */
-    private fun collectConnectionPathChange(connection: nw_connection_t) {
+    private fun collectConnectionPathChangeUnsafe(connection: nw_connection_t) {
         nw_connection_set_path_changed_handler(connection) { path ->
             val status = nw_path_get_status(path)
             if (status == nw_path_status_satisfied) return@nw_connection_set_path_changed_handler
             error { "#collectConnectionPathChange Path no longer satisfied (status=$status)" }
-            restartMonitoring()
+            restartMonitoringUnsafe()
         }
     }
 
     override suspend fun startMonitoring() {
-        val currentConnection = createConnection()
+        connectionLock.withLock {
+            if (connection != null) {
+                info { "#startMonitoring connection already exists" }
+                return@withLock
+            }
 
-        collectConnectionEvents(currentConnection)
-        collectConnectionViability(currentConnection)
-        collectConnectionPathChange(currentConnection)
+            val currentConnection = createConnectionUnsafe()
 
-        nw_connection_set_queue(currentConnection, queue)
-        nw_connection_start(currentConnection)
+            collectConnectionEventsUnsafe(currentConnection)
+            collectConnectionViabilityUnsafe(currentConnection)
+            collectConnectionPathChangeUnsafe(currentConnection)
 
-        info { "#startMonitoring Started monitoring connection to ${config.host}" }
+            nw_connection_set_queue(currentConnection, queue)
+            nw_connection_start(currentConnection)
+
+            info { "#startMonitoring Started monitoring connection to ${config.host}" }
+        }
     }
 
-    override fun stopMonitoring() {
+    private fun cancelConnection() {
         connectionLock.withLock {
             connection?.let { localConnection ->
                 nw_connection_set_path_changed_handler(localConnection, null)
@@ -215,8 +212,13 @@ class FAppleLanConnectionMonitor(
                 nw_connection_force_cancel(localConnection)
             }
             connection = null
+            info { "#stopMonitoring Stopped monitoring connection to ${config.host}" }
         }
-        info { "#stopMonitoring Stopped monitoring connection to ${config.host}" }
+    }
+
+    override fun stopMonitoring() {
+        restartMonitoringScope.cancelPrevious()
+        cancelConnection()
     }
 
     companion object {
@@ -224,20 +226,22 @@ class FAppleLanConnectionMonitor(
 
         /**
          * Amount of seconds before sending keep-alive requests
-         * @see KotlinNwError.TimedOut
+         * @see KotlinNwStatus.PosixError.TimedOut
          */
         private const val KEEPALIVE_IDLE_TIME_SEC = 5u
 
         /**
          * Amount of seconds between keep-alive requests
-         * @see KotlinNwError.TimedOut
+         * @see KotlinNwStatus.PosixError.TimedOut
          */
         private const val KEEPALIVE_INTERVAL_SEC = 3u
 
         /**
          * Maximum numbers of unanswered keep-alive requests
-         * @see KotlinNwError.TimedOut
+         * @see KotlinNwStatus.PosixError.TimedOut
          */
         private const val KEEPALIVE_COUNT = 3u
+
+        private val RESTART_TIMEOUT = 5.seconds
     }
 }

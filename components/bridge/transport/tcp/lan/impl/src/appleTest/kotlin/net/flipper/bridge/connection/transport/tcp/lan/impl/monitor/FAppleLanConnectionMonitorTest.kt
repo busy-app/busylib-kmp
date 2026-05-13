@@ -53,7 +53,10 @@ class FAppleLanConnectionMonitorTest {
                 .awaitStatusWithType<FInternalTransportConnectionStatus.Connected>()
 
             val connectedStatus = assertIs<FInternalTransportConnectionStatus.Connected>(connected)
-            assertEquals(nonEmptyListOf(FInternalTransportConnectionType.LAN), connectedStatus.connectionTypes)
+            assertEquals(
+                nonEmptyListOf(FInternalTransportConnectionType.LAN),
+                connectedStatus.connectionTypes
+            )
         }
     }
 
@@ -70,7 +73,10 @@ class FAppleLanConnectionMonitorTest {
                 .awaitStatusWithType<FInternalTransportConnectionStatus.Connected>()
 
             val connectedStatus = assertIs<FInternalTransportConnectionStatus.Connected>(connected)
-            assertEquals(nonEmptyListOf(FInternalTransportConnectionType.LAN), connectedStatus.connectionTypes)
+            assertEquals(
+                nonEmptyListOf(FInternalTransportConnectionType.LAN),
+                connectedStatus.connectionTypes
+            )
             assertEquals(this, connectedStatus.scope)
         }
     }
@@ -106,7 +112,9 @@ class FAppleLanConnectionMonitorTest {
             // Await no other statuses appear
             testFixture.listener.awaitStatusCount(
                 count = 0,
-                predicate = { connectionStatus -> connectionStatus !is FInternalTransportConnectionStatus.Connecting }
+                predicate = { connectionStatus ->
+                    connectionStatus !is FInternalTransportConnectionStatus.Connecting
+                }
             )
 
             // waiting state should now emit Connecting
@@ -114,6 +122,7 @@ class FAppleLanConnectionMonitorTest {
                 .listener
                 .awaitStatusWithType<FInternalTransportConnectionStatus.Connecting>(timeout = 10.seconds)
             assertIs<FInternalTransportConnectionStatus.Connecting>(status)
+            monitor.stopMonitoring()
         }
     }
 
@@ -142,8 +151,8 @@ class FAppleLanConnectionMonitorTest {
                             testFixture.listener.statuses.size > statusCountBefore
                     }
                 )
-
             assertIs<FInternalTransportConnectionStatus.Connecting>(reconnectStatus)
+            monitor.stopMonitoring()
         }
     }
 
@@ -187,6 +196,7 @@ class FAppleLanConnectionMonitorTest {
                 message = "Expected exactly 1 Connecting after server close (SKIP_IF_RUNNING), " +
                     "but got $connectingAfterConnected. Full statuses: ${testFixture.listener.statuses}"
             )
+            monitor.stopMonitoring()
         }
     }
 
@@ -214,6 +224,7 @@ class FAppleLanConnectionMonitorTest {
                         connectionStatus is FInternalTransportConnectionStatus.Connecting
                 }
             )
+            monitor.stopMonitoring()
         }
     }
 
@@ -287,6 +298,7 @@ class FAppleLanConnectionMonitorTest {
                     }
                 )
             }
+            monitor.stopMonitoring()
         }
     }
 
@@ -297,6 +309,7 @@ class FAppleLanConnectionMonitorTest {
             monitor.stopMonitoring()
 
             assertTrue(testFixture.listener.statuses.isEmpty())
+            monitor.stopMonitoring()
         }
     }
 }
