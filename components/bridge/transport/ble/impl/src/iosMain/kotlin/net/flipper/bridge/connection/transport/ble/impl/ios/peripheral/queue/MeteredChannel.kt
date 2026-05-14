@@ -5,6 +5,8 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 
+private const val OVERFLOW_RATIO = 0.75
+
 class MeteredChannel<T>(
     private val capacity: Int
 ) {
@@ -15,7 +17,7 @@ class MeteredChannel<T>(
         get() = size.value.toDouble() / capacity
 
     val is75PercentFull: Boolean
-        get() = size.value >= capacity * 0.75
+        get() = size.value >= capacity * OVERFLOW_RATIO
 
     suspend fun send(value: T) {
         channel.send(value)

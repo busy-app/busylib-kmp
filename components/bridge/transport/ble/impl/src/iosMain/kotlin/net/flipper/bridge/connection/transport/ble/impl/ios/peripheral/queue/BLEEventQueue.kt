@@ -16,6 +16,7 @@ import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.debug
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.warn
+import net.flipper.core.busylib.systrace.trace
 import platform.Foundation.NSData
 import kotlin.uuid.Uuid
 
@@ -49,7 +50,10 @@ internal class BLEEventQueue(
     ) {
         if (characteristicUUID == config.statusStreamingConfig.notifyCharUuid) {
             if (queue.is75PercentFull) {
-                error { "!!! Failed to write streaming ble event because buffer overflow. Current fill ratio: ${queue.fillRatio} !!!" }
+                error {
+                    "!!! Failed to write streaming ble event because buffer overflow. " +
+                    "Current fill ratio: ${queue.fillRatio} !!!"
+                }
             } else {
                 val isSuccess = queue.trySend(BLEEvent(characteristicUUID, data))
                 if (isSuccess.not()) {
@@ -70,7 +74,9 @@ internal class BLEEventQueue(
         scope.launch {
             while (isActive) {
                 val event = queue.receive()
-                processEvent(event)
+                trace("ble_event") {
+                    processEvent(event)
+                }
             }
         }
     }
@@ -79,6 +85,7 @@ internal class BLEEventQueue(
         val characteristicUUID = bleEvent.characteristicUUID
         val data = bleEvent.data
         val payload = data?.toByteArray()
+
         if (characteristicUUID == config.serialConfig.rxServiceCharUuid) {
             if (data != null && payload != null) {
                 rxDataChannel.send(payload)
@@ -106,7 +113,7 @@ internal class BLEEventQueue(
         }
         debug {
             "Routing characteristic update uuid=$characteristicUUID bytes=${payload?.size ?: 0} " +
-                    "id=${identifierProvider()}"
+                "id=${identifierProvider()}"
         }
         if (payload != null) {
             gattIO.completeRead(characteristicUUID, payload)

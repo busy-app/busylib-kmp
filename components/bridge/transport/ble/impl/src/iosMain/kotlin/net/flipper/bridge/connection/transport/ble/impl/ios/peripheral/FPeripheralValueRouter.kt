@@ -27,7 +27,7 @@ internal class FPeripheralValueRouter(
 
         debug {
             "didUpdateValue uuid=$characteristicUUID bytes=${payload?.size ?: 0} " +
-                    "hasData=${data != null} error=${error?.localizedDescription} id=${identifierProvider()}"
+                "hasData=${data != null} error=${error?.localizedDescription} id=${identifierProvider()}"
         }
         if (error != null) {
             gattIO.failRead(characteristicUUID, error)
