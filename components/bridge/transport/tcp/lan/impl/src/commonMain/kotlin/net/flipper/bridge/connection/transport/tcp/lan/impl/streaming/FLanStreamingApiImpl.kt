@@ -21,6 +21,7 @@ import net.flipper.bridge.connection.transport.common.api.serial.FHTTPTransportC
 import net.flipper.bridge.connection.transport.common.api.serial.FStatusStreamingApi
 import net.flipper.bridge.connection.transport.common.api.serial.HEADER_NAME_REQUEST_CAPABILITY
 import net.flipper.bridge.connection.transport.common.api.serial.StatusStreamingEvent
+import net.flipper.busylib.kmp.components.core.buildkonfig.BuildKonfig
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 import net.flipper.core.busylib.ktx.common.wrapWebsocket
 import net.flipper.core.busylib.log.LogTagProvider
@@ -36,7 +37,9 @@ class FLanStreamingApiImpl(
     private val eventsFlow = wrapWebsocket {
         getWebSocket()
     }.onEach {
-        verbose { "Received frame $it" }
+        if (BuildKonfig.IS_EVENT_SPAM_LOG_ENABLED) {
+            verbose { "Received frame $it" }
+        }
     }.filterIsInstance<Frame.Binary>()
         .flowOn(FlipperDispatchers.default)
         .map { StatusStreamingEvent.Protobuf(it.data) }

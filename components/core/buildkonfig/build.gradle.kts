@@ -30,6 +30,11 @@ buildConfig {
     )
     buildConfigField(
         Boolean::class.java,
+        "IS_EVENT_SPAM_LOG_ENABLED",
+        CURRENT_FLAVOR_TYPE.isLogSpamEventsEnabled
+    )
+    buildConfigField(
+        Boolean::class.java,
         "CRASH_APP_ON_FAILED_CHECKS",
         CURRENT_FLAVOR_TYPE.crashAppOnFailedChecks
     )
