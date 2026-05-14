@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceConnectionConfig
+import net.flipper.bridge.connection.transport.ble.impl.ios.peripheral.queue.BLEEventQueue
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
 import net.flipper.busylib.core.wrapper.WrappedStateFlow
 import net.flipper.busylib.core.wrapper.wrap
@@ -49,11 +50,11 @@ class FPeripheral(
     override val stateStream: WrappedStateFlow<FPeripheralState> = _stateStream.asStateFlow().wrap()
 
     @Suppress("MagicNumber")
-    private val _rxDataChannel = Channel<ByteArray>(2048)
+    private val _rxDataChannel = Channel<ByteArray>()
     override val rxDataStream: Flow<ByteArray> = _rxDataChannel.receiveAsFlow()
 
     @Suppress("MagicNumber")
-    private val _streamingDataChannel = Channel<ByteArray>(2048)
+    private val _streamingDataChannel = Channel<ByteArray>()
     override val streamingDataStream: Flow<ByteArray> = _streamingDataChannel.receiveAsFlow()
 
     private val _metaInfoKeysStream =
@@ -80,12 +81,17 @@ class FPeripheral(
         identifierProvider = { identifier.UUIDString },
     )
     private val valueRouter = FPeripheralValueRouter(
-        config = config,
-        stateStream = _stateStream,
-        rxDataChannel = _rxDataChannel,
-        streamingDataChannel = _streamingDataChannel,
-        metaInfoKeysStream = _metaInfoKeysStream,
-        characteristicValueState = characteristicValueState,
+        bleEventQueue = BLEEventQueue(
+            config = config,
+            stateStream = _stateStream,
+            rxDataChannel = _rxDataChannel,
+            streamingDataChannel = _streamingDataChannel,
+            metaInfoKeysStream = _metaInfoKeysStream,
+            characteristicValueState = characteristicValueState,
+            gattIO = gattIO,
+            scope = scope,
+            identifierProvider = { identifier.UUIDString },
+        ),
         gattIO = gattIO,
         onError = { callbackError -> onError(callbackError) },
         identifierProvider = { identifier.UUIDString },
@@ -171,6 +177,7 @@ class FPeripheral(
                     debug { "Cannot connect to device by peerRemovedPairingInformation" }
                     _stateStream.emit(FPeripheralState.INVALID_PAIRING)
                 }
+
                 CBErrorEncryptionTimedOut -> {
                     debug { "Cannot connect to device by encryptionTimedOut" }
                     _stateStream.emit(FPeripheralState.INVALID_PAIRING)
