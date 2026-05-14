@@ -78,7 +78,7 @@ class FCombinedHttpEngine(
         var lastException: Throwable? = null
         for (delegate in filteredDelegates) {
             runSuspendCatching {
-                verbose { "Dispatch request $data to $delegate" }
+                verbose { "Dispatch request ${data.url} to $delegate" }
                 delegate.getDeviceHttpEngine().execute(data)
             }.onSuccess {
                 return it
