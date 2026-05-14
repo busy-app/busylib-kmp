@@ -52,7 +52,7 @@ internal class BLEEventQueue(
             if (queue.is75PercentFull) {
                 error {
                     "!!! Failed to write streaming ble event because buffer overflow. " +
-                    "Current fill ratio: ${queue.fillRatio} !!!"
+                        "Current fill ratio: ${queue.fillRatio} !!!"
                 }
             } else {
                 val isSuccess = queue.trySend(BLEEvent(characteristicUUID, data))
