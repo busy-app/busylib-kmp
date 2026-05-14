@@ -24,6 +24,7 @@ import net.flipper.core.busylib.log.debug
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
 import no.nordicsemi.kotlin.ble.client.RemoteCharacteristic
+import no.nordicsemi.kotlin.ble.core.CharacteristicProperty
 import no.nordicsemi.kotlin.ble.core.WriteType
 import no.nordicsemi.kotlin.ble.core.util.chunked
 
@@ -52,11 +53,16 @@ class FSerialUnsafeApiImpl(
                 .filter {
                     it.isNotifyAvailable()
                 }
-                .flatMapLatest {
+                .flatMapLatest { remoteChar ->
                     info { "Start subscribe on rx char" }
-                    val flow = it.subscribe()
-                    isSubscribed.set(true)
-                    return@flatMapLatest flow
+                    // onSubscription fires after setNotifying(true) (the CCCD write)
+                    // returns. Only then is it safe to issue writes via sendBytes.
+                    remoteChar.subscribe(
+                        onSubscription = {
+                            info { "RX char subscribed" }
+                            isSubscribed.set(true)
+                        }
+                    )
                 }.collect {
                     info { "Receive data: ${it.decodeToString()}" }
                     receiverByteFlow.emit(it)
@@ -76,7 +82,9 @@ class FSerialUnsafeApiImpl(
         }
         val writeCharacteristic = txCharacteristic
             .filterNotNull()
+            .filter { it.properties.contains(CharacteristicProperty.WRITE) }
             .first()
+        debug { "TX char properties: ${writeCharacteristic.properties}" }
 
         data.chunked(MAX_ATTRIBUTE_SIZE).forEach {
             debug { "Write chunk with ${it.size} with max size $MAX_ATTRIBUTE_SIZE" }
