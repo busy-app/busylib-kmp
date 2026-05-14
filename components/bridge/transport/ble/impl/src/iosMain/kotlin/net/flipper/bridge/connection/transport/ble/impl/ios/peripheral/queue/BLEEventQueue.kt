@@ -16,6 +16,7 @@ import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.debug
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.warn
+import net.flipper.core.busylib.systrace.NativeTracer
 import net.flipper.core.busylib.systrace.trace
 import platform.Foundation.NSData
 import kotlin.uuid.Uuid
@@ -74,7 +75,7 @@ internal class BLEEventQueue(
         scope.launch {
             while (isActive) {
                 val event = queue.receive()
-                trace("ble_event") {
+                NativeTracer.trace("ble_event") {
                     processEvent(event)
                 }
             }
