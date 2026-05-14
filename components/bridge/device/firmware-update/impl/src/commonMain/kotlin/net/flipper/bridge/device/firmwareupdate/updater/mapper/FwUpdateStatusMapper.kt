@@ -9,10 +9,10 @@ import net.flipper.bridge.device.firmwareupdate.uploader.model.FirmwareUploaderS
 
 internal object FwUpdateStatusMapper {
 
-    private fun map(uploaderState: FirmwareUploaderState): FwUpdateState.Uploading? {
+    private fun map(uploaderState: FirmwareUploaderState): FwUpdateState? {
         return when (uploaderState) {
             FirmwareUploaderState.Uploaded -> {
-                FwUpdateState.Uploading(1f)
+                FwUpdateState.Updating
             }
 
             is FirmwareUploaderState.Uploading -> {

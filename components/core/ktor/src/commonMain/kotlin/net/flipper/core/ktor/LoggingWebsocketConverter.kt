@@ -7,6 +7,7 @@ import io.ktor.utils.io.charsets.Charset
 import io.ktor.websocket.Frame
 import io.ktor.websocket.readText
 import kotlinx.serialization.json.Json
+import net.flipper.busylib.kmp.components.core.buildkonfig.BuildKonfig
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.verbose
 
@@ -41,7 +42,9 @@ internal class LoggingWebsocketConverter(
 
             else -> content.toString()
         }
-        verbose { "<<<<<<< $text" }
+        if (BuildKonfig.IS_EVENT_SPAM_LOG_ENABLED) {
+            verbose { "<<<<<<< $text" }
+        }
         if (delegate.isApplicable(content)) {
             val result = delegate.deserialize(charset, typeInfo, content)
             return result
