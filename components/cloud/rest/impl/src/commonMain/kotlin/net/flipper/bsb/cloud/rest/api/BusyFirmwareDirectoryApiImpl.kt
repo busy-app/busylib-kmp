@@ -29,6 +29,6 @@ class BusyFirmwareDirectoryApiImpl(
     }
 
     companion object {
-        internal const val HOST = "https://update.flipperzero.one/busybar-firmware/directory.json"
+        internal const val HOST = "https://update.busy.app/busybar-firmware/directory.json"
     }
 }

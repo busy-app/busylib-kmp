@@ -71,10 +71,19 @@ internal class FirmwareUploaderApiImpl(
                     _state.emit(FirmwareUploaderState.Uploaded)
                 }
             }
+            .map { }
             .catch { t ->
                 // don't reset state without throwable!
                 error(t) { "#uploadAndInstall could not post update" }
-                _state.emit(FirmwareUploaderState.Failed)
+                _state.update { state ->
+                    when (state) {
+                        FirmwareUploaderState.Failed,
+                        FirmwareUploaderState.Uploaded -> state
+                        FirmwareUploaderState.Pending,
+                        is FirmwareUploaderState.Uploading -> FirmwareUploaderState.Failed
+                    }
+                }
+                emit(Unit)
             }
             .first()
         if (_state.first() is FirmwareUploaderState.Failed) {

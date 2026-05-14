@@ -16,7 +16,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
@@ -33,6 +32,7 @@ import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.device.firmwareupdate.downloader.api.FirmwareDownloaderApi
 import net.flipper.bridge.device.firmwareupdate.downloader.api.FirmwareDownloaderApiImpl
 import net.flipper.bridge.device.firmwareupdate.status.api.UpdateStatusProvider
+import net.flipper.bridge.device.firmwareupdate.updater.log.FwUpdateStateLogger
 import net.flipper.bridge.device.firmwareupdate.updater.mapper.FwUpdateStatusMapper
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateEvent
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateState
@@ -44,6 +44,7 @@ import net.flipper.busylib.core.wrapper.WrappedStateFlow
 import net.flipper.busylib.core.wrapper.map
 import net.flipper.busylib.core.wrapper.toCResult
 import net.flipper.busylib.core.wrapper.wrap
+import net.flipper.busylib.kmp.components.core.buildkonfig.BuildKonfig
 import net.flipper.core.busylib.ktx.common.asFlow
 import net.flipper.core.busylib.ktx.common.asSingleJobScope
 import net.flipper.core.busylib.ktx.common.cancelPrevious
@@ -55,7 +56,6 @@ import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.TaggedLogger
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
-import net.flipper.core.busylib.log.verbose
 import net.flipper.core.ktor.di.qualifier.KtorNetworkClientQualifier
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
@@ -81,6 +81,8 @@ class FirmwareUpdaterApiImpl(
 
     private val lanUpdaterScope = scope.asSingleJobScope()
 
+    private val stateLogger by lazy { FwUpdateStateLogger() }
+
     override val state: WrappedStateFlow<FwUpdateState> = combine(
         flow = updateStatusProvider.getUpdateStatus(),
         flow2 = fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
@@ -97,12 +99,14 @@ class FirmwareUpdaterApiImpl(
                 downloaderState,
                 uploaderState
             )
-            verbose {
-                "Result is: $result. " +
-                    "Receive updateStatusSource: $updateStatusSource, " +
-                    "bsbUpdateVersion: $bsbUpdateVersion, " +
-                    "downloaderState: $downloaderState, " +
-                    "uploaderState: $uploaderState"
+            if (BuildKonfig.IS_VERBOSE_LOG_ENABLED && BuildKonfig.IS_LOG_ENABLED) {
+                stateLogger.logIfChanged(
+                    result = result,
+                    updateStatusSource = updateStatusSource,
+                    bsbUpdateVersion = bsbUpdateVersion,
+                    downloaderState = downloaderState,
+                    uploaderState = uploaderState
+                )
             }
             return@combine result
         }
@@ -206,6 +210,7 @@ class FirmwareUpdaterApiImpl(
                         info { "#startUpdateInstall start uploading" }
                         firmwareUploaderApi
                             .uploadAndInstall(path) { firmwareDownloaderApi.reset() }
+                            .onSuccess { info { "#startUpdateInstall finish upload" } }
                             .onFailure { t -> error(t) { "#startUpdateInstall could not upload" } }
                             .getOrThrow()
                     }
@@ -231,28 +236,29 @@ class FirmwareUpdaterApiImpl(
                 .let(::CoroutineScope)
             val bootTimeFlow = getBootTimeFlow().shareIn(bootTimeScope, SharingStarted.Eagerly, 1)
 
-            fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
+            val bsbUpdateVersion = fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
                 .map { status -> status.tryCast<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>() }
                 .flatMapLatest { status -> status?.featureApi?.updateVersionFlow.orNullable() }
                 .filterIsInstance<BsbUpdateVersion.ReadyToUpdate>()
-                .mapLatest { bsbUpdateVersion ->
-                    firmwareDownloaderApi.reset()
-                    firmwareUploaderApi.reset()
-                    info { "#startUpdateInstall bsbUpdateVersion: $bsbUpdateVersion" }
-                    getBsbUpdateVersion(bsbUpdateVersion)
-                }
-                .map { result -> result.toCResult() }
                 .first()
-                .map { bsbUpdateVersion ->
-                    when (bsbUpdateVersion) {
-                        is BsbUpdateVersion.ReadyToUpdate.Default -> Unit
-                        is BsbUpdateVersion.ReadyToUpdate.Url -> {
-                            val bootTime = bootTimeFlow.first()
-                            bootTimeScope.cancel()
-                            awaitDeviceReconnected(bootTime)
-                        }
+
+            info { "#startUpdateInstall bsbUpdateVersion: $bsbUpdateVersion" }
+            firmwareDownloaderApi.reset()
+            firmwareUploaderApi.reset()
+            val updateResult = getBsbUpdateVersion(bsbUpdateVersion).toCResult()
+            info { "#startUpdateInstall update result is $updateResult" }
+            updateResult.map { bsbUpdateVersion ->
+                when (bsbUpdateVersion) {
+                    is BsbUpdateVersion.ReadyToUpdate.Default -> Unit
+                    is BsbUpdateVersion.ReadyToUpdate.Url -> {
+                        info { "#startUpdateInstall bootTimeFlow wait" }
+                        val bootTime = bootTimeFlow.first()
+                        info { "#startUpdateInstall bootTimeFlow cancel" }
+                        bootTimeScope.cancel()
+                        awaitDeviceReconnected(bootTime)
                     }
                 }
+            }
         }.await()
     }
 
