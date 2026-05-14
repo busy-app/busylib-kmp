@@ -14,7 +14,8 @@ enum class FlavorType(
     val crashAppOnFailedChecks: Boolean = false,
     val isSensitiveLogEnabled: Boolean = false,
     val isMockEnabled: Boolean = false,
-    val isDevelopFirmwareChannel: Boolean = false
+    val isDevelopFirmwareChannel: Boolean = false,
+    val isLogSpamEventsEnabled: Boolean = false
 ) {
     DEVELOP(
         isLogEnabled = true,

@@ -22,6 +22,7 @@ import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.bridge.connection.transport.common.api.serial.FStatusStreamingApi
 import net.flipper.bridge.connection.transport.common.api.serial.StatusStreamingEvent
 import net.flipper.busylib.core.di.BusyLibGraph
+import net.flipper.busylib.kmp.components.core.buildkonfig.BuildKonfig
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
@@ -66,7 +67,9 @@ class FEventsFeatureApiImpl(
             return@runSuspendCatching
         }
         val state = State.ADAPTER.decode(data.data)
-        verbose { "Process ${state.updates.size} updates: $state" }
+        if (BuildKonfig.IS_EVENT_SPAM_LOG_ENABLED) {
+            verbose { "Process ${state.updates.size} updates: $state" }
+        }
         val updates = state.updates.mapNotNull { update ->
             BSBProtobufEventMapper.map(update)
         }

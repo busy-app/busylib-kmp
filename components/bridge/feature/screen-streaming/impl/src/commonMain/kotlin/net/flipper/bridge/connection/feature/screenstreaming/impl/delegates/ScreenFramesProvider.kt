@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onEach
 import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
 import net.flipper.bridge.connection.feature.screenstreaming.model.BusyImageFormat
+import net.flipper.busylib.kmp.components.core.buildkonfig.BuildKonfig
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.verbose
 
@@ -16,7 +17,11 @@ class ScreenFramesProvider(
     override val TAG = "ScreenFramesProvider"
     fun getScreens(): Flow<BusyImageFormat> {
         return screenFlow
-            .onEach { verbose { "Receive event: $it" } }
+            .onEach {
+                if (BuildKonfig.IS_EVENT_SPAM_LOG_ENABLED) {
+                    verbose { "Receive event: $it" }
+                }
+            }
             .mapNotNull { runCatching { mapFrame(it) }.getOrNull() }
     }
 

@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.isActive
+import net.flipper.busylib.kmp.components.core.buildkonfig.BuildKonfig
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
@@ -29,7 +30,9 @@ fun <T> LogTagProvider.wrapWebsocket(
                     error(it) { "Failed request websocket" }
                 }.collect {
                     retryCount = 0
-                    verbose { "Receive changes by websocket: $it" }
+                    if (BuildKonfig.IS_EVENT_SPAM_LOG_ENABLED) {
+                        verbose { "Receive changes by websocket: $it" }
+                    }
                     emit(it)
                 }
             }
