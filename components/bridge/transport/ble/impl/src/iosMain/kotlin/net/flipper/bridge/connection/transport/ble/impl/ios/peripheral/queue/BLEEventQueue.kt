@@ -11,6 +11,7 @@ import net.flipper.bridge.connection.transport.ble.api.FBleDeviceConnectionConfi
 import net.flipper.bridge.connection.transport.ble.impl.ios.peripheral.FPeripheralGattIO
 import net.flipper.bridge.connection.transport.ble.impl.ios.peripheral.FPeripheralState
 import net.flipper.bridge.connection.transport.common.api.meta.TransportMetaInfoKey
+import net.flipper.busylib.kmp.components.core.buildkonfig.BuildKonfig
 import net.flipper.core.busylib.ktx.common.toByteArray
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.debug
@@ -49,6 +50,9 @@ internal class BLEEventQueue(
         characteristicUUID: Uuid,
         data: NSData?,
     ) {
+        if (BuildKonfig.CRASH_APP_ON_FAILED_CHECKS && queue.is75PercentFull) {
+            error("BLEEventQueue is 75% full")
+        }
         if (characteristicUUID == config.statusStreamingConfig.notifyCharUuid) {
             if (queue.is75PercentFull) {
                 error {
