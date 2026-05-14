@@ -6,5 +6,6 @@ data class BsbStatusFirmware(
     val branch: String,
     val buildDate: String,
     val commitHash: String,
-    val nwpVersion: String? = null
+    val nwpVersion: String?,
+    val matterVersion: String?
 )
