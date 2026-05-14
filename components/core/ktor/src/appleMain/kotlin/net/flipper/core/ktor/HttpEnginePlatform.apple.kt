@@ -6,9 +6,9 @@ import io.ktor.client.engine.darwin.Darwin
 import io.ktor.client.engine.darwin.DarwinClientEngineConfig
 
 /**
- * Cap NSURLSession's HTTP/1.1 keep-alive pool per host. Combined with the
- * dedicated [FAppleLanConnectionMonitor] probe and the WebSocket task, this
- * bounds total TCP sockets per BUSY Bar to roughly 4.
+ * Cap NSURLSession's per-host connection count. Combined with the dedicated
+ * [FAppleLanConnectionMonitor] probe and the WebSocket task, this bounds
+ * total TCP sockets per BUSY Bar to roughly 4.
  */
 private const val MAX_CONNECTIONS_PER_HOST: Long = 3
 
