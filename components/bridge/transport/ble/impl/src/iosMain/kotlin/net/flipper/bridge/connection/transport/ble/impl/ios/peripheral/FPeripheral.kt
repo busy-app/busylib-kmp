@@ -3,6 +3,7 @@ package net.flipper.bridge.connection.transport.ble.impl.ios.peripheral
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,6 +32,8 @@ import platform.Foundation.NSError
 import platform.Foundation.NSUUID
 import kotlin.uuid.Uuid
 
+private const val STREAMING_BUFFER_SIZE = 32
+
 @OptIn(ExperimentalForeignApi::class)
 @Suppress("TooManyFunctions")
 class FPeripheral(
@@ -49,12 +52,13 @@ class FPeripheral(
     private val _stateStream = MutableStateFlow(FPeripheralState.from(peripheral.state))
     override val stateStream: WrappedStateFlow<FPeripheralState> = _stateStream.asStateFlow().wrap()
 
-    @Suppress("MagicNumber")
     private val _rxDataChannel = Channel<ByteArray>()
     override val rxDataStream: Flow<ByteArray> = _rxDataChannel.receiveAsFlow()
 
-    @Suppress("MagicNumber")
-    private val _streamingDataChannel = Channel<ByteArray>()
+    private val _streamingDataChannel = Channel<ByteArray>(
+        capacity = STREAMING_BUFFER_SIZE,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
     override val streamingDataStream: Flow<ByteArray> = _streamingDataChannel.receiveAsFlow()
 
     private val _metaInfoKeysStream =
