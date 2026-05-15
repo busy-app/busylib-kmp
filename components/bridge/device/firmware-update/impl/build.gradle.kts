@@ -15,6 +15,7 @@ kotlin {
         implementation(projects.components.core.log)
         implementation(projects.components.core.ktor)
         implementation(projects.components.core.wrapper)
+        implementation(projects.components.core.buildkonfig)
         implementation(projects.components.watchers.api)
 
         implementation(projects.components.bridge.feature.common.api)
