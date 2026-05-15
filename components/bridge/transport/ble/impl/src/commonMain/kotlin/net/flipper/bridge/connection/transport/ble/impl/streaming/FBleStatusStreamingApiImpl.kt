@@ -24,7 +24,7 @@ class FBleStatusStreamingApiImpl(
         .map { StatusStreamingEvent.Protobuf(it) }
         .shareIn(
             scope = scope,
-            started = SharingStarted.WhileSubscribed(),
+            started = SharingStarted.Eagerly, // To drop events even if no subscriber
             replay = 0
         )
 
