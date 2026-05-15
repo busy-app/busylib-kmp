@@ -49,22 +49,22 @@ class UpdateFlowCombinerDelegate(
                 }
             },
             mapper = {
-                it.toAvailableVersion()
+                val result = it.toAvailableVersion()
+                debug { "From version $it map to $result" }
+                return@getMapped result
             }
-        ).onEach {
-            debug { "Available version: $it" }
-        }.stateIn(scope, SharingStarted.WhileSubscribed(), AvailableVersion.Loading)
+        ).stateIn(scope, SharingStarted.WhileSubscribed(), AvailableVersion.Loading)
 
     private val updateStateEventsFlow = fEventsFeatureApi
         .getMapped<BusyLibUpdateEvent.Update.UpdateState, BsbUpdateStatus>(scope, initial = {
             runSuspendCatching {
                 rpcUpdaterFlow.first().toBsbUpdateStatus()
             }
-        }, mapper = { it.toBsbUpdateStatus() })
-        .onEach {
-            debug { "Update status: $it" }
-        }
-
+        }, mapper = {
+            val result = it.toBsbUpdateStatus()
+            debug { "From update $it map to $result" }
+            return@getMapped result
+        })
     val updateStatusFlow: StateFlow<BsbUpdateStatus> = updateStateEventsFlow
         .onEach {
             debug { "Update status publish: $it" }

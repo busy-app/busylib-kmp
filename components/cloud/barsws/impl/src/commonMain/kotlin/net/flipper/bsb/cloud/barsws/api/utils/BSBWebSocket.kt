@@ -26,6 +26,7 @@ import net.flipper.bsb.cloud.barsws.api.model.toPublic
 import net.flipper.bsb.cloud.barsws.api.utils.wrappers.BSBWebSocketSession
 import net.flipper.bsb.cloud.barsws.api.utils.wrappers.KtorBSBWebSocketSession
 import net.flipper.bsb.cloud.rest.api.BusyCloudWebSocketTicketApi
+import net.flipper.busylib.kmp.components.core.buildkonfig.BuildKonfig
 import net.flipper.core.busylib.ktx.common.launchOnCompletion
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
@@ -63,7 +64,9 @@ class BSBWebSocketImpl(
                 null
             }
 
-            verbose { "Received message: $message" }
+            if (BuildKonfig.IS_EVENT_SPAM_LOG_ENABLED) {
+                verbose { "Received message: $message" }
+            }
             message?.let { send(it) }
         }
     }.flowOn(dispatcher).shareIn(scope, SharingStarted.WhileSubscribed(), 1)

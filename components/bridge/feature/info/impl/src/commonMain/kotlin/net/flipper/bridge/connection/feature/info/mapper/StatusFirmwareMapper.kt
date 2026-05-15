@@ -10,6 +10,7 @@ internal fun StatusFirmware.toBsbStatusFirmware(): BsbStatusFirmware {
         branch = branch,
         buildDate = buildDate,
         commitHash = commitHash,
-        nwpVersion = nwpVersion
+        nwpVersion = nwpVersion,
+        matterVersion = matterVersion
     )
 }
