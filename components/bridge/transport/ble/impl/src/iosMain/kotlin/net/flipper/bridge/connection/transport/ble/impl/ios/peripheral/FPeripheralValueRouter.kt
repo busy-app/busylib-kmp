@@ -1,7 +1,6 @@
 package net.flipper.bridge.connection.transport.ble.impl.ios.peripheral
 
 import net.flipper.bridge.connection.transport.ble.impl.ios.peripheral.queue.BLEEventQueue
-import net.flipper.core.busylib.ktx.common.toByteArray
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.debug
 import net.flipper.core.busylib.log.error
@@ -23,10 +22,9 @@ internal class FPeripheralValueRouter(
     ) {
         val characteristicUUID = characteristic.UUID.toKotlinUUID()
         val data = characteristic.value
-        val payload = data?.toByteArray()
 
         debug {
-            "didUpdateValue uuid=$characteristicUUID bytes=${payload?.size ?: 0} " +
+            "didUpdateValue uuid=$characteristicUUID" +
                 "hasData=${data != null} error=${error?.localizedDescription} id=${identifierProvider()}"
         }
         if (error != null) {
