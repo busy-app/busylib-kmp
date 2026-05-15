@@ -4,7 +4,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
@@ -16,7 +15,6 @@ import net.flipper.bridge.connection.transport.ble.impl.ios.testfixtures.SERIAL_
 import net.flipper.bridge.connection.transport.ble.impl.ios.testfixtures.createConfig
 import net.flipper.bridge.connection.transport.ble.impl.ios.testfixtures.error
 import platform.CoreBluetooth.CBErrorPeerRemovedPairingInformation
-import platform.Foundation.NSUUID
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -143,11 +141,11 @@ class FCentralManagerTest {
             val childJob = Job()
             val childScope = CoroutineScope(coroutineContext + childJob)
             backgroundScope.coroutineContext[Job]!!.invokeOnCompletion { childJob.cancel() }
-            val sut = FCentralManager(scope = childScope, centralManagerProvider = { manager })
+            val sut = FCentralManager(
+                scope = childScope,
+                centralManagerProvider = { delegate -> manager.also { it.delegate = delegate } }
+            )
 
-            // Lazy CBCentralManager is created on the first SUT call; only then
-            // does its delegate get wired so synthetic state-updates can flow.
-            sut.disconnect(NSUUID())
             manager.emitStateUpdate()
             advanceUntilIdle()
 
@@ -158,6 +156,8 @@ class FCentralManagerTest {
     fun GIVEN_ble_powered_on_WHEN_startScan_called_THEN_scan_is_started_for_expected_service() = runTest {
         val sut = createSut()
         sut.manager.setStateRaw(5L)
+        sut.manager.emitStateUpdate()
+        advanceUntilIdle()
 
         sut.sut.startScan()
 
@@ -176,6 +176,8 @@ class FCentralManagerTest {
         val peripheral = RecordingPeripheral()
 
         sut.manager.setStateRaw(5L)
+        sut.manager.emitStateUpdate()
+        advanceUntilIdle()
         sut.sut.startScan()
         sut.manager.emitDidDiscover(peripheral)
         advanceUntilIdle()
@@ -227,21 +229,15 @@ class FCentralManagerTest {
         val sut: FCentralManager,
     )
 
-    /**
-     * Creates an FCentralManager with a child scope that shares the test dispatcher
-     * but uses an independent Job so the event loop coroutine doesn't cause
-     * [UncompletedCoroutinesError] at the end of runTest. The first SUT call
-     * (`disconnect` for an unknown UUID) forces the lazy CBCentralManager to be
-     * built, which in turn wires our recording manager's `delegate` so synthetic
-     * `emitDid*` callbacks have somewhere to go.
-     */
     private suspend fun TestScope.createSut(): Sut {
         val manager = RecordingCentralManager()
         val childJob = Job()
         val childScope = CoroutineScope(coroutineContext + childJob)
         backgroundScope.coroutineContext[Job]!!.invokeOnCompletion { childJob.cancel() }
-        val sut = FCentralManager(scope = childScope, centralManagerProvider = { manager })
-        sut.disconnect(NSUUID())
+        val sut = FCentralManager(
+            scope = childScope,
+            centralManagerProvider = { delegate -> manager.also { it.delegate = delegate } }
+        )
         return Sut(manager = manager, sut = sut)
     }
 }

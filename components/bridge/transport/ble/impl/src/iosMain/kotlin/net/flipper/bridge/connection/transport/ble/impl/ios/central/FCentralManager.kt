@@ -1,5 +1,6 @@
 package net.flipper.bridge.connection.transport.ble.impl.ios.central
 
+import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -28,17 +29,25 @@ import platform.CoreBluetooth.CBUUID
 import platform.Foundation.NSError
 import platform.Foundation.NSNumber
 import platform.Foundation.NSUUID
+import platform.darwin.dispatch_queue_attr_make_with_qos_class
+import platform.darwin.dispatch_queue_create
+import platform.posix.QOS_CLASS_USER_INITIATED
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 
-@Inject
 @SingleIn(BusyLibGraph::class)
 @ContributesBinding(BusyLibGraph::class, FCentralManagerApi::class)
-class FCentralManager(
+class FCentralManager internal constructor(
     scope: CoroutineScope,
-    centralManagerProvider: () -> CBCentralManager = { CBCentralManager() },
+    centralManagerProvider: (FCentralManagerDelegate) -> CBCentralManager
 ) : FCentralManagerApi, LogTagProvider {
     private val manager: CBCentralManager
+
+    @Inject
+    constructor(scope: CoroutineScope) : this(
+        scope = scope,
+        centralManagerProvider = ::createCentralManager
+    )
 
     override val TAG: String
         get() = "FCentralManager"
@@ -63,9 +72,7 @@ class FCentralManager(
     )
 
     init {
-        manager = centralManagerProvider().also {
-            it.delegate = delegate
-        }
+        manager = centralManagerProvider(delegate)
 
         scope.launch {
             for (event in delegate.events) {
@@ -267,4 +274,22 @@ private fun CBCentralManager.retrievePeripheral(id: NSUUID): CBPeripheral? {
     val list: List<NSUUID> = listOf(id)
     val peripherals = this.retrievePeripheralsWithIdentifiers(list)
     return peripherals.firstOrNull() as? CBPeripheral
+}
+
+@OptIn(ExperimentalForeignApi::class)
+private fun createCentralManager(delegate: FCentralManagerDelegate): CBCentralManager {
+    val attr = dispatch_queue_attr_make_with_qos_class(
+        null, // DISPATCH_QUEUE_SERIAL = NULL in Darwin headers
+        QOS_CLASS_USER_INITIATED,
+        0
+    )
+    val bluetoothQueue = dispatch_queue_create(
+        "net.flipper.bridge.connection.transport.ble.impl.ios.central",
+        attr
+    )
+
+    return CBCentralManager(
+        delegate = delegate,
+        queue = bluetoothQueue
+    )
 }
