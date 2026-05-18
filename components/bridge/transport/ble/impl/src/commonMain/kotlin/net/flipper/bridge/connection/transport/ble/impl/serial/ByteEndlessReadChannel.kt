@@ -46,6 +46,14 @@ class ByteEndlessReadChannel : ByteReadChannel, LogTagProvider {
         channel.send(byteArray)
     }
 
+    fun clear() {
+        info { "Clear buffer (remaining=${buffer.size})" }
+        while (channel.tryReceive().isSuccess) {
+            // drain queued packets
+        }
+        buffer.clear()
+    }
+
     override suspend fun awaitContent(min: Int): Boolean {
         while (currentCoroutineContext().isActive && buffer.remaining < min) {
             verbose { "Buffer is ${buffer.remaining}, waiting for min bytes: $min" }

@@ -78,8 +78,7 @@ class FHttpBLEEngine(
                     "Failed to wait ${REQUEST_TIMEOUT.inWholeSeconds} seconds for response," +
                         " try to make this request again after reset"
                 }
-                serialApi.reset()
-                requestCount = 0
+                resetSerialApi()
                 checkRequestCountUnsafe()
                 sendBytesWithTimeout(rawBytes, channel, requestTime)
                     ?: error("Timeout on request ${processedRequest.url}")
@@ -112,12 +111,16 @@ class FHttpBLEEngine(
         }
     }
 
+    private suspend fun resetSerialApi() {
+        serialApi.reset()
+        requestCount = 0
+    }
+
     private suspend fun checkRequestCountUnsafe() {
         val deviceRequestCount = serialApi.getRequestCounterFlow().first()
         if (requestCount < deviceRequestCount) {
             error { "Received request count: $deviceRequestCount, but current request count is $requestCount" }
-            serialApi.reset()
-            requestCount = 0
+            resetSerialApi()
         }
         requestCount++
     }
@@ -139,8 +142,7 @@ class FHttpBLEEngine(
         }.onFailure { t ->
             if (t is ParserException) {
                 error(t) { "Parser exception, make reset" }
-                serialApi.reset()
-                requestCount = 0
+                resetSerialApi()
             }
         }.getOrThrow() ?: throw BadHttpResponseException()
         val headers: Headers = CIOHeaders(response.headers)
