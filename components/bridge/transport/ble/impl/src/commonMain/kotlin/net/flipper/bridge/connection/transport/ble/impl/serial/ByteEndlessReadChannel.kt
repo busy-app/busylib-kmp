@@ -23,9 +23,7 @@ import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.coroutines.CoroutineContext
 
 @OptIn(ExperimentalAtomicApi::class)
-class ByteEndlessReadChannel(
-    parent: CoroutineContext = FlipperDispatchers.default
-) : ByteReadChannel, LogTagProvider {
+class ByteEndlessReadChannel : ByteReadChannel, LogTagProvider {
     override val TAG = "ByteEndlessReadChannel"
     private val channel = Channel<ByteArray>(Int.MAX_VALUE)
     private val buffer = Buffer()
@@ -38,8 +36,6 @@ class ByteEndlessReadChannel(
     override val isClosedForRead: Boolean
         get() = _isClosedForRead.load()
 
-    val job = Job(parent[Job.Key])
-    val coroutineContext = parent + job + CoroutineName("RawSourceChannel")
 
     @InternalAPI
     override val readBuffer: Source
@@ -51,15 +47,13 @@ class ByteEndlessReadChannel(
     }
 
     override suspend fun awaitContent(min: Int): Boolean {
-        withContext(coroutineContext) {
-            while (currentCoroutineContext().isActive && buffer.remaining < min) {
-                verbose { "Buffer is ${buffer.remaining}, waiting for min bytes: $min" }
-                val data = channel.receive()
-                buffer.write(data)
-                verbose {
-                    "Read ${data.size} bytes with min request $min, " +
+        while (currentCoroutineContext().isActive && buffer.remaining < min) {
+            verbose { "Buffer is ${buffer.remaining}, waiting for min bytes: $min" }
+            val data = channel.receive()
+            buffer.write(data)
+            verbose {
+                "Read ${data.size} bytes with min request $min, " +
                         "so current buffer size is ${buffer.remaining}"
-                }
             }
         }
 
@@ -69,7 +63,6 @@ class ByteEndlessReadChannel(
     override fun cancel(cause: Throwable?) {
         info { "Cancel channel with cause: $cause" }
         channel.close(cause)
-        coroutineContext.cancel(cause as? CancellationException)
         _isClosedForRead.compareAndSet(expectedValue = false, newValue = true)
         _closedCause.compareAndSet(expectedValue = null, newValue = cause)
     }
