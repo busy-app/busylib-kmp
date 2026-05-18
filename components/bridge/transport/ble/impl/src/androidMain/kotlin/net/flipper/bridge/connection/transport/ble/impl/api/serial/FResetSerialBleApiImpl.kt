@@ -2,8 +2,8 @@ package net.flipper.bridge.connection.transport.ble.impl.api.serial
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.withTimeoutOrNull
 import net.flipper.bridge.connection.transport.ble.impl.BleConstants.POLLING_RESET_INTERVAL
 import net.flipper.bridge.connection.transport.ble.impl.serial.FResetSerialBleApi
 import net.flipper.bridge.connection.transport.ble.impl.toRequestCounter
@@ -30,6 +31,8 @@ class FResetSerialBleApiImpl(
 ) : FResetSerialBleApi, LogTagProvider {
     override val TAG = "FResetSerialBleApi"
 
+    private val forceRecheckSignal = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
     private val characteristicSharedFlow = resetCharacteristicFlow
         .filterNotNull()
         .shareIn(scope, SharingStarted.Eagerly, replay = 1)
@@ -43,7 +46,9 @@ class FResetSerialBleApiImpl(
                         ?.toRequestCounter()
                     debug { "Receive request counter $counter" }
                     emit(counter)
-                    delay(POLLING_RESET_INTERVAL)
+                    withTimeoutOrNull(POLLING_RESET_INTERVAL) {
+                        forceRecheckSignal.first()
+                    }
                 }
             }
         }
@@ -59,6 +64,7 @@ class FResetSerialBleApiImpl(
         val characteristic = characteristicSharedFlow.first()
         characteristic.write(0.toUInt32ByteArray(), WriteType.WITH_RESPONSE)
         info { "Characteristic written, waiting for reset..." }
+        forceRecheckSignal.tryEmit(Unit)
         requestCounterFlow.filter { it == 0 }.first()
     }
 }
