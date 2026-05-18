@@ -82,7 +82,13 @@ class BLEDeviceConnectionApiImpl(
         }
         listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting(config.getTransportTypes()))
 
-        if (!device.hasBondInformation) {
+        if (device.hasBondInformation) {
+            runSuspendCatching {
+                info { "Refreshing GATT cache after post-bond reconnect" }
+                device.refreshCache()
+            }.onSuccess { info { "GATT cache refreshed" } }
+                .onFailure { error(it) { "Failed to refresh GATT cache, continuing" } }
+        } else {
             device.createBond()
             info { "Create bond with device" }
         }

@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -24,9 +25,12 @@ import net.flipper.core.busylib.log.debug
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
 import no.nordicsemi.kotlin.ble.client.RemoteCharacteristic
+import no.nordicsemi.kotlin.ble.client.exception.OperationFailedException
 import no.nordicsemi.kotlin.ble.core.CharacteristicProperty
+import no.nordicsemi.kotlin.ble.core.OperationStatus
 import no.nordicsemi.kotlin.ble.core.WriteType
 import no.nordicsemi.kotlin.ble.core.util.chunked
+import kotlin.time.Duration.Companion.milliseconds
 
 @Inject
 @OptIn(ExperimentalStdlibApi::class)
@@ -59,8 +63,16 @@ class FSerialUnsafeApiImpl(
                     // returns. Only then is it safe to issue writes via sendBytes.
                     remoteChar.subscribe(
                         onSubscription = {
-                            info { "RX char subscribed" }
-                            isSubscribed.set(true)
+                            info { "RX char subscribed, waiting $POST_SUBSCRIBE_SETTLE_DELAY ms delay..." }
+                            // Android's bond-triggered service rediscovery can still be
+                            // in flight when subscribe() returns. Sit out a short settle
+                            // window before allowing the first write so internal stack
+                            // ops don't poison our write callback.
+                            scope.launch {
+                                delay(POST_SUBSCRIBE_SETTLE_DELAY)
+                                info { "Post-subscribe settle window elapsed" }
+                                isSubscribed.set(true)
+                            }
                         }
                     )
                 }.collect {
@@ -86,12 +98,47 @@ class FSerialUnsafeApiImpl(
             .first()
         debug { "TX char properties: ${writeCharacteristic.properties}" }
 
-        data.chunked(MAX_ATTRIBUTE_SIZE).forEach {
-            debug { "Write chunk with ${it.size} with max size $MAX_ATTRIBUTE_SIZE" }
+        data.chunked(MAX_ATTRIBUTE_SIZE).forEach { chunk ->
+            debug { "Write chunk with ${chunk.size} with max size $MAX_ATTRIBUTE_SIZE" }
             debug { "Write ${data.decodeToString()}" }
-            writeCharacteristic.write(it, WriteType.WITH_RESPONSE)
+            writeChunkWithRetry(writeCharacteristic, chunk)
             debug { "Return back from write" }
         }
+    }
+
+    private suspend fun writeChunkWithRetry(
+        writeCharacteristic: RemoteCharacteristic,
+        chunk: ByteArray
+    ) {
+        repeat(MAX_WRITE_ATTEMPTS - 1) { attempt ->
+            try {
+                writeCharacteristic.write(chunk, WriteType.WITH_RESPONSE)
+                return
+            } catch (e: OperationFailedException) {
+                // Android's BluetoothGatt has no per-request handle in the ATT error
+                // response, so an "Attribute Not Found" from a parallel stack-internal
+                // discovery (post-bond service rediscovery, Service Changed handling)
+                // can land on our write callback even though the write itself reached
+                // the device. The retry succeeds because the rediscovery completes
+                // within the first attempt's window.
+                if (e.reason == OperationStatus.AttributeNotFound) {
+                    error(e) {
+                        "Write failed with AttributeNotFound on attempt ${attempt + 1}/" +
+                            "$MAX_WRITE_ATTEMPTS, retrying after $RETRY_DELAY"
+                    }
+                    delay(RETRY_DELAY)
+                } else {
+                    throw e
+                }
+            }
+        }
+        writeCharacteristic.write(chunk, WriteType.WITH_RESPONSE)
+    }
+
+    private companion object {
+        const val MAX_WRITE_ATTEMPTS = 3
+        val RETRY_DELAY = 200.milliseconds
+        val POST_SUBSCRIBE_SETTLE_DELAY = 500.milliseconds
     }
 
     @Inject
