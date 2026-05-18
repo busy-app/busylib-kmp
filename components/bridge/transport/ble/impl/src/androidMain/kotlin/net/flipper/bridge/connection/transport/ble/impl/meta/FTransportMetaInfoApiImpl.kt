@@ -24,7 +24,7 @@ import no.nordicsemi.kotlin.ble.client.RemoteService
 import no.nordicsemi.kotlin.ble.core.CharacteristicProperty
 
 class FTransportMetaInfoApiImpl(
-    private val services: WrappedStateFlow<List<RemoteService>?>,
+    private val services: Flow<List<RemoteService>?>,
     private val metaInfoGattMap: ImmutableMap<TransportMetaInfoKey, GATTCharacteristicAddress>
 ) : FTransportMetaInfoApi, LogTagProvider {
     override val TAG = "FTransportMetaInfoApi"

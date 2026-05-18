@@ -1,6 +1,7 @@
 package net.flipper.bridge.connection.transport.ble.impl.api.serial
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceSerialConfig
@@ -17,11 +18,11 @@ class SerialApiFactory(
 
     fun build(
         config: FBleDeviceSerialConfig,
-        services: WrappedStateFlow<List<RemoteService>?>,
+        services: StateFlow<List<RemoteService>>,
         scope: CoroutineScope
     ): FSerialBleApi {
         val serialService = services.map { services ->
-            services?.find { it.uuid == config.serialServiceUuid }
+            services.find { it.uuid == config.serialServiceUuid }
         }
         val rxCharacteristic = serialService.map { service ->
             service?.characteristics?.find { it.uuid == config.rxServiceCharUuid }

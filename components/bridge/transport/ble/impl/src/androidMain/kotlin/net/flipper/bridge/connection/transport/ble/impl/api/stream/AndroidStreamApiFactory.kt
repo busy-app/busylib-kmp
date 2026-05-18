@@ -1,6 +1,7 @@
 package net.flipper.bridge.connection.transport.ble.impl.api.stream
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
@@ -19,11 +20,11 @@ import no.nordicsemi.kotlin.ble.client.RemoteService
 object AndroidStreamApiFactory {
     fun buildStreamingApi(
         config: FBleDeviceStatusStreamingConfig,
-        services: WrappedStateFlow<List<RemoteService>?>,
+        services: StateFlow<List<RemoteService>>,
         scope: CoroutineScope
     ): FStatusStreamingApi {
         val serialService = services.map { services ->
-            services?.find { it.uuid == config.serviceUuid }
+            services.find { it.uuid == config.serviceUuid }
         }
         val streamingChar = serialService.map { service ->
             service?.characteristics?.find { it.uuid == config.notifyCharUuid }

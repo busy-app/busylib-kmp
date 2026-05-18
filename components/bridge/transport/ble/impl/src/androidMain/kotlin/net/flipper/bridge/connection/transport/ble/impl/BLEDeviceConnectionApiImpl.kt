@@ -5,6 +5,8 @@ import android.content.Context
 import android.content.pm.PackageManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withTimeout
@@ -12,6 +14,7 @@ import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.transport.ble.api.BleDeviceConnectionApi
 import net.flipper.bridge.connection.transport.ble.api.FBleApi
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceConnectionConfig
+import net.flipper.bridge.connection.transport.ble.impl.BleConstants.CONNECT_TIME
 import net.flipper.bridge.connection.transport.ble.impl.api.FAndroidBleApiImpl
 import net.flipper.bridge.connection.transport.ble.impl.api.serial.SerialApiFactory
 import net.flipper.bridge.connection.transport.ble.impl.api.stream.AndroidStreamApiFactory
@@ -96,7 +99,8 @@ class BLEDeviceConnectionApiImpl(
         info { "Request the highest mtu" }
         device.requestHighestValueLength()
 
-        val services = device.services()
+        info { "Wait for service discovered" }
+        val servicesFlow = device.services()
             .map { state ->
                 when (state) {
                     is RemoteServices.Discovered -> state.services
@@ -109,8 +113,12 @@ class BLEDeviceConnectionApiImpl(
                     RemoteServices.Unknown -> null
                 }
             }
-            .stateIn(scope, SharingStarted.Eagerly, null)
-            .wrap()
+        val services = withTimeout(CONNECT_TIME) {
+            servicesFlow
+                .filterNotNull()
+                .stateIn(scope)
+        }
+        info { "Services discovered: ${services.value.map { it.uuid }}" }
 
         val serialApi = serialApiFactory.build(
             config = config.serialConfig,

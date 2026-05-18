@@ -3,6 +3,7 @@ package net.flipper.bridge.connection.transport.ble.impl.api
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
@@ -34,7 +35,7 @@ class FAndroidBleApiImpl(
     private val peripheral: Peripheral,
     private val scope: CoroutineScope,
     private val listener: FTransportConnectionStatusListener,
-    services: WrappedStateFlow<List<RemoteService>?>,
+    services: StateFlow<List<RemoteService>>,
     serialApi: FSerialBleApi,
     private var currentConfig: FBleDeviceConnectionConfig,
     streamingApi: FStatusStreamingApi
