@@ -4,8 +4,15 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withTimeout
 import me.tatarka.inject.annotations.Inject
@@ -22,12 +29,16 @@ import net.flipper.bridge.connection.transport.ble.impl.exception.NoFoundDeviceE
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.busylib.core.di.BusyLibGraph
+import net.flipper.core.busylib.ktx.common.mapSuspendCatching
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.busylib.log.LogTagProvider
+import net.flipper.core.busylib.log.debug
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
+import no.nordicsemi.kotlin.ble.client.RemoteService
 import no.nordicsemi.kotlin.ble.client.RemoteServices
 import no.nordicsemi.kotlin.ble.client.android.CentralManager
+import no.nordicsemi.kotlin.ble.client.android.Peripheral
 import no.nordicsemi.kotlin.ble.core.Phy
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 
@@ -45,7 +56,9 @@ class BLEDeviceConnectionApiImpl(
         config: FBleDeviceConnectionConfig,
         listener: FTransportConnectionStatusListener
     ): Result<FBleApi> = runSuspendCatching {
-        connectUnsafe(scope, config, listener)
+        withTimeout(CONNECT_TIME) {
+            connectUnsafe(scope, config, listener)
+        }
     }
 
     @Suppress("ThrowsCount", "LongMethod")
@@ -60,21 +73,18 @@ class BLEDeviceConnectionApiImpl(
             throw BLEConnectionPermissionException()
         }
         listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting(config.getTransportTypes()))
-        info { "Finding device with ${BleConstants.CONNECT_TIME.inWholeMilliseconds} timeout..." }
-        val device = withTimeout(BleConstants.CONNECT_TIME) {
-            centralManager.getPeripheralById(config.macAddress)
-        } ?: throw NoFoundDeviceException()
+        info { "Finding device with ${CONNECT_TIME.inWholeMilliseconds} timeout..." }
+        val device = centralManager.getPeripheralById(config.macAddress)
+            ?: throw NoFoundDeviceException()
         info { "Device found (${device.address}/$device), try to connect..." }
-        withTimeout(BleConstants.CONNECT_TIME) {
-            centralManager.connect(
-                device,
-                CentralManager.ConnectionOptions.Direct(
-                    timeout = BleConstants.CONNECT_TIME,
-                    preferredPhy = listOf(Phy.PHY_LE_2M),
-                    automaticallyRequestHighestValueLength = false
-                )
+        centralManager.connect(
+            device,
+            CentralManager.ConnectionOptions.Direct(
+                timeout = CONNECT_TIME,
+                preferredPhy = listOf(Phy.PHY_LE_2M),
+                automaticallyRequestHighestValueLength = false
             )
-        }
+        )
         info { "Device connected!" }
         if (!device.isConnected) {
             info { "Device failed to connect, so throw exception" }
@@ -82,13 +92,7 @@ class BLEDeviceConnectionApiImpl(
         }
         listener.onStatusUpdate(FInternalTransportConnectionStatus.Connecting(config.getTransportTypes()))
 
-        if (device.hasBondInformation) {
-            runSuspendCatching {
-                info { "Refreshing GATT cache after post-bond reconnect" }
-                device.refreshCache()
-            }.onSuccess { info { "GATT cache refreshed" } }
-                .onFailure { error(it) { "Failed to refresh GATT cache, continuing" } }
-        } else {
+        if (!device.hasBondInformation) {
             device.createBond()
             info { "Create bond with device" }
         }
@@ -97,30 +101,14 @@ class BLEDeviceConnectionApiImpl(
         device.requestHighestValueLength()
 
         info { "Wait for service discovered" }
-        val servicesFlow = device.services()
-            .map { state ->
-                when (state) {
-                    is RemoteServices.Discovered -> state.services
-                    is RemoteServices.Failed -> {
-                        error { "Service discovery failed: ${state.reason}" }
-                        null
-                    }
-
-                    RemoteServices.Discovering,
-                    RemoteServices.Unknown -> null
-                }
-            }
-        val services = withTimeout(CONNECT_TIME) {
-            servicesFlow
-                .filterNotNull()
-                .stateIn(scope)
-        }
+        val services = discoverServices(scope, device)
         info { "Services discovered: ${services.value.map { it.uuid }}" }
 
         val serialApi = serialApiFactory.build(
             config = config.serialConfig,
             services = services,
-            scope = scope
+            scope = scope,
+            onResetServices = device::refreshCache
         )
         info { "Created serial api" }
         val streamingApi = AndroidStreamApiFactory.buildStreamingApi(
@@ -139,5 +127,43 @@ class BLEDeviceConnectionApiImpl(
         )
         info { "Created ble api" }
         return bleApi
+    }
+
+    private suspend fun discoverServices(
+        scope: CoroutineScope,
+        device: Peripheral
+    ): StateFlow<List<RemoteService>> {
+        info { "Wait for service discovered" }
+        val servicesFlow = device.services()
+            .onEach {
+                debug { "Services state is $it" }
+            }
+
+        val discoveredServices = servicesFlow.mapNotNull { state ->
+            when (state) {
+                is RemoteServices.Failed -> Result.failure(RuntimeException())
+                is RemoteServices.Discovered -> Result.success(state.services)
+
+                RemoteServices.Discovering,
+                RemoteServices.Unknown -> null
+            }
+        }.first()
+            .getOrNull()
+
+        return if (discoveredServices == null) {
+            runSuspendCatching {
+                info { "Refreshing GATT cache" }
+                device.refreshCache()
+            }.mapSuspendCatching {
+                info { "GATT cache refreshed" }
+                discoverServices(scope, device)
+            }.onFailure { error(it) { "Failed to refresh GATT cache, continuing" } }
+                .getOrThrow()
+        } else {
+            servicesFlow
+                .filterIsInstance<RemoteServices.Discovered>()
+                .map { it.services }
+                .stateIn(scope, SharingStarted.Eagerly, discoveredServices)
+        }
     }
 }

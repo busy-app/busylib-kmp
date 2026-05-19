@@ -18,7 +18,8 @@ class SerialApiFactory(
     fun build(
         config: FBleDeviceSerialConfig,
         services: StateFlow<List<RemoteService>>,
-        scope: CoroutineScope
+        scope: CoroutineScope,
+        onResetServices: suspend () -> Unit
     ): FSerialBleApi {
         val serialService = services.map { services ->
             services.find { it.uuid == config.serialServiceUuid }
@@ -32,7 +33,8 @@ class SerialApiFactory(
         val unsafeApi = unsafeApiImplFactory(
             rxCharacteristic = rxCharacteristic,
             txCharacteristic = txCharacteristic,
-            scope = scope
+            scope = scope,
+            onResetServices = onResetServices
         )
         val resetApi = FResetSerialBleApiImpl(
             resetCharacteristicFlow = serialService.map { service ->

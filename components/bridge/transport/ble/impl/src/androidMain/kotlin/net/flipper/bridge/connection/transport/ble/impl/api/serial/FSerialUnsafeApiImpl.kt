@@ -38,6 +38,7 @@ class FSerialUnsafeApiImpl(
     @Assisted private val rxCharacteristic: Flow<RemoteCharacteristic?>,
     @Assisted private val txCharacteristic: Flow<RemoteCharacteristic?>,
     @Assisted scope: CoroutineScope,
+    @Assisted private val onResetServices: suspend () -> Unit,
     private val context: Context,
 ) : LogTagProvider {
     override val TAG = "FSerialUnsafeApiImpl"
@@ -92,46 +93,42 @@ class FSerialUnsafeApiImpl(
         if (context.checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
             throw BLEConnectionPermissionException()
         }
-        val writeCharacteristic = txCharacteristic
-            .filterNotNull()
-            .filter { it.properties.contains(CharacteristicProperty.WRITE) }
-            .first()
-        debug { "TX char properties: ${writeCharacteristic.properties}" }
-
         data.chunked(MAX_ATTRIBUTE_SIZE).forEach { chunk ->
             debug { "Write chunk with ${chunk.size} with max size $MAX_ATTRIBUTE_SIZE" }
             debug { "Write ${data.decodeToString()}" }
-            writeChunkWithRetry(writeCharacteristic, chunk)
+            writeChunkWithRetry(chunk)
             debug { "Return back from write" }
         }
     }
 
-    private suspend fun writeChunkWithRetry(
-        writeCharacteristic: RemoteCharacteristic,
-        chunk: ByteArray
-    ) {
+    private suspend fun writeChunkWithRetry(chunk: ByteArray) {
         repeat(MAX_WRITE_ATTEMPTS - 1) { attempt ->
             try {
+                val writeCharacteristic = txCharacteristic
+                    .filterNotNull()
+                    .filter { it.properties.contains(CharacteristicProperty.WRITE) }
+                    .first()
+                debug { "TX char properties: ${writeCharacteristic.properties}" }
                 writeCharacteristic.write(chunk, WriteType.WITH_RESPONSE)
                 return
             } catch (e: OperationFailedException) {
-                // Android's BluetoothGatt has no per-request handle in the ATT error
-                // response, so an "Attribute Not Found" from a parallel stack-internal
-                // discovery (post-bond service rediscovery, Service Changed handling)
-                // can land on our write callback even though the write itself reached
-                // the device. The retry succeeds because the rediscovery completes
-                // within the first attempt's window.
-                if (e.reason == OperationStatus.AttributeNotFound) {
+                if (e.reason == OperationStatus.AttributeNotFound || e.reason == OperationStatus.GattError) {
                     error(e) {
-                        "Write failed with AttributeNotFound on attempt ${attempt + 1}/" +
-                            "$MAX_WRITE_ATTEMPTS, retrying after $RETRY_DELAY"
+                        "Write failed on attempt ${attempt + 1}/" +
+                                "$MAX_WRITE_ATTEMPTS, retrying after $RETRY_DELAY"
                     }
+                    onResetServices()
                     delay(RETRY_DELAY)
                 } else {
                     throw e
                 }
             }
         }
+        val writeCharacteristic = txCharacteristic
+            .filterNotNull()
+            .filter { it.properties.contains(CharacteristicProperty.WRITE) }
+            .first()
+        debug { "TX char properties: ${writeCharacteristic.properties}" }
         writeCharacteristic.write(chunk, WriteType.WITH_RESPONSE)
     }
 
@@ -146,14 +143,16 @@ class FSerialUnsafeApiImpl(
         private val factory: (
             Flow<RemoteCharacteristic?>,
             Flow<RemoteCharacteristic?>,
-            CoroutineScope
+            CoroutineScope,
+            onResetServices: suspend () -> Unit
         ) -> FSerialUnsafeApiImpl
     ) {
         operator fun invoke(
             rxCharacteristic: Flow<RemoteCharacteristic?>,
             txCharacteristic: Flow<RemoteCharacteristic?>,
-            scope: CoroutineScope
-        ): FSerialUnsafeApiImpl = factory(rxCharacteristic, txCharacteristic, scope)
+            scope: CoroutineScope,
+            onResetServices: suspend () -> Unit
+        ): FSerialUnsafeApiImpl = factory(rxCharacteristic, txCharacteristic, scope, onResetServices)
     }
 }
 
