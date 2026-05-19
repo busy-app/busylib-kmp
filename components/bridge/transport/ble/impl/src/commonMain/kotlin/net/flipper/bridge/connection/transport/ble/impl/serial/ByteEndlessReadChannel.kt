@@ -3,24 +3,17 @@ package net.flipper.bridge.connection.transport.ble.impl.serial
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.InternalAPI
 import io.ktor.utils.io.core.remaining
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.isActive
-import kotlinx.coroutines.withContext
 import kotlinx.io.Buffer
 import kotlinx.io.Source
-import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
 import net.flipper.core.busylib.log.verbose
 import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
-import kotlin.coroutines.CoroutineContext
 
 @OptIn(ExperimentalAtomicApi::class)
 class ByteEndlessReadChannel : ByteReadChannel, LogTagProvider {
@@ -35,7 +28,6 @@ class ByteEndlessReadChannel : ByteReadChannel, LogTagProvider {
     private val _isClosedForRead = AtomicBoolean(false)
     override val isClosedForRead: Boolean
         get() = _isClosedForRead.load()
-
 
     @InternalAPI
     override val readBuffer: Source
@@ -61,7 +53,7 @@ class ByteEndlessReadChannel : ByteReadChannel, LogTagProvider {
             buffer.write(data)
             verbose {
                 "Read ${data.size} bytes with min request $min, " +
-                        "so current buffer size is ${buffer.remaining}"
+                    "so current buffer size is ${buffer.remaining}"
             }
         }
 

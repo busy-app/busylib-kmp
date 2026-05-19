@@ -1,6 +1,5 @@
 package net.flipper.bridge.connection.transport.ble.impl.api.serial
 
-import io.ktor.utils.io.ByteReadChannel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow

@@ -11,7 +11,6 @@ import net.flipper.bridge.connection.transport.ble.api.FBleDeviceStatusStreaming
 import net.flipper.bridge.connection.transport.ble.impl.api.utils.isNotifyAvailable
 import net.flipper.bridge.connection.transport.ble.impl.streaming.FBleStatusStreamingApiImpl
 import net.flipper.bridge.connection.transport.common.api.serial.FStatusStreamingApi
-import net.flipper.busylib.core.wrapper.WrappedStateFlow
 import net.flipper.core.busylib.log.TaggedLogger
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
