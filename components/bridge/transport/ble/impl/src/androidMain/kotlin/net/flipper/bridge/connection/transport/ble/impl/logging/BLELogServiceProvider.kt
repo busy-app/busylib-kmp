@@ -7,8 +7,8 @@ import org.slf4j.helpers.BasicMarkerFactory
 import org.slf4j.spi.MDCAdapter
 import org.slf4j.spi.SLF4JServiceProvider
 
-class CoreLogServiceProvider : SLF4JServiceProvider {
-    private val loggerFactory: ILoggerFactory = CoreLogLoggerFactory()
+class BLELogServiceProvider : SLF4JServiceProvider {
+    private val loggerFactory: ILoggerFactory = BLELogLoggerFactory()
     private val markerFactory: IMarkerFactory = BasicMarkerFactory()
     private val mdcAdapter: MDCAdapter = BasicMDCAdapter()
 

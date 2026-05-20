@@ -11,7 +11,7 @@ import org.slf4j.event.Level
 import org.slf4j.helpers.LegacyAbstractLogger
 import org.slf4j.helpers.MessageFormatter
 
-internal class CoreLogLogger(loggerName: String) : LegacyAbstractLogger() {
+internal class BLELogLogger(loggerName: String) : LegacyAbstractLogger() {
     init {
         name = loggerName
     }
@@ -20,6 +20,7 @@ internal class CoreLogLogger(loggerName: String) : LegacyAbstractLogger() {
 
     override fun getFullyQualifiedCallerName(): String? = null
 
+    // Allow all to filter in :core:log module
     override fun isTraceEnabled(): Boolean = true
     override fun isDebugEnabled(): Boolean = true
     override fun isInfoEnabled(): Boolean = true
