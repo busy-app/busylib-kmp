@@ -6,9 +6,7 @@ import android.content.pm.PackageManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
@@ -110,7 +108,8 @@ class BLEDeviceConnectionApiImpl(
             scope = scope,
             onResetServices = {
                 info { "Requested refresh cache" }
-                device.refreshCache() }
+                device.refreshCache()
+            }
         )
         info { "Created serial api" }
         val streamingApi = AndroidStreamApiFactory.buildStreamingApi(
@@ -143,7 +142,7 @@ class BLEDeviceConnectionApiImpl(
 
         val discoveredServices = servicesFlow.mapNotNull { state ->
             when (state) {
-                is RemoteServices.Failed -> Result.failure(RuntimeException())
+                is RemoteServices.Failed -> Result.failure(RuntimeException("Failed get service: ${state.reason}"))
                 is RemoteServices.Discovered -> Result.success(state.services)
 
                 RemoteServices.Discovering,

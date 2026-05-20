@@ -115,7 +115,7 @@ class FSerialUnsafeApiImpl(
                 if (e.reason == OperationStatus.AttributeNotFound || e.reason == OperationStatus.GattError) {
                     error(e) {
                         "Write failed on attempt ${attempt + 1}/" +
-                                "$MAX_WRITE_ATTEMPTS, retrying after $RETRY_DELAY"
+                            "$MAX_WRITE_ATTEMPTS, retrying after $RETRY_DELAY"
                     }
                     onResetServices()
                     delay(RETRY_DELAY)
