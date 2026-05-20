@@ -34,7 +34,7 @@ class FPeripheralLifecycleTest {
             val sut = FPeripheral(
                 recordingPeripheral,
                 createConfig(recordingPeripheral.identifier.UUIDString),
-                this,
+                backgroundScope,
             )
 
             assertEquals(FPeripheralState.CONNECTED, sut.stateStream.value)
@@ -142,6 +142,9 @@ class FPeripheralLifecycleTest {
             newCharacteristic(SERIAL_RX_SHORT_UUID, payload = payload),
             error = null,
         )
+        // BLEEventQueue forwards the chunk asynchronously — drain it before
+        // closing the channel, otherwise the send races with onDisconnect.
+        runCurrent()
         connected.sut.onDisconnect()
         runCurrent()
 
@@ -183,6 +186,9 @@ class FPeripheralLifecycleTest {
                 newCharacteristic(STREAMING_NOTIFY_SHORT_UUID, payload = payload),
                 error = null,
             )
+            // BLEEventQueue forwards the chunk asynchronously — drain it before
+            // closing the channel, otherwise the send races with onDisconnect.
+            runCurrent()
             connected.sut.onDisconnect()
             runCurrent()
 

@@ -5,6 +5,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -30,7 +31,7 @@ class FCentralManagerTest {
         val sut = createSut()
         val config = createConfig(macAddress = "00000000-0000-0000-0000-000000000001")
 
-        sut.sut.connect(this, config)
+        sut.sut.connect(backgroundScope, config)
 
         assertTrue(sut.manager.connectRequests.isEmpty())
         assertTrue(sut.sut.connectedStream.value.isEmpty())
@@ -42,7 +43,7 @@ class FCentralManagerTest {
         val peripheral = RecordingPeripheral()
         sut.manager.registerPeripheral(peripheral)
 
-        sut.sut.connect(this, createConfig(macAddress = peripheral.identifier.UUIDString))
+        sut.sut.connect(backgroundScope, createConfig(macAddress = peripheral.identifier.UUIDString))
 
         assertEquals(1, sut.manager.connectRequests.size)
         assertSame(sut.manager.connectRequests.first(), peripheral)
@@ -56,7 +57,7 @@ class FCentralManagerTest {
         val sut = createSut()
         val peripheral = RecordingPeripheral()
         sut.manager.registerPeripheral(peripheral)
-        sut.sut.connect(this, createConfig(macAddress = peripheral.identifier.UUIDString))
+        sut.sut.connect(backgroundScope, createConfig(macAddress = peripheral.identifier.UUIDString))
 
         sut.manager.emitDidConnect(peripheral)
         advanceUntilIdle()
@@ -69,7 +70,7 @@ class FCentralManagerTest {
         val sut = createSut()
         val peripheral = RecordingPeripheral()
         sut.manager.registerPeripheral(peripheral)
-        sut.sut.connect(this, createConfig(macAddress = peripheral.identifier.UUIDString))
+        sut.sut.connect(backgroundScope, createConfig(macAddress = peripheral.identifier.UUIDString))
         val device = checkNotNull(sut.sut.connectedStream.value[peripheral.identifier])
 
         val disconnectJob = async { sut.sut.disconnect(peripheral.identifier) }
@@ -92,14 +93,16 @@ class FCentralManagerTest {
         val sut = createSut()
         val peripheral = RecordingPeripheral()
         sut.manager.registerPeripheral(peripheral)
-        sut.sut.connect(this, createConfig(macAddress = peripheral.identifier.UUIDString))
+        sut.sut.connect(backgroundScope, createConfig(macAddress = peripheral.identifier.UUIDString))
         val device = checkNotNull(sut.sut.connectedStream.value[peripheral.identifier])
 
         sut.manager.emitDidFailToConnect(
             peripheral,
             error = error(domain = "CBErrorDomain", code = CBErrorPeerRemovedPairingInformation)
         )
-        advanceUntilIdle()
+        // onError schedules state via scope.launch on backgroundScope — wait for the transition.
+        device.stateStream.first { it == FPeripheralState.INVALID_PAIRING }
+        sut.sut.connectedStream.first { !it.containsKey(peripheral.identifier) }
 
         assertEquals(FPeripheralState.INVALID_PAIRING, device.stateStream.value)
         assertFalse(sut.sut.connectedStream.value.containsKey(peripheral.identifier))
@@ -110,7 +113,7 @@ class FCentralManagerTest {
         val sut = createSut()
         val peripheral = RecordingPeripheral()
         sut.manager.registerPeripheral(peripheral)
-        sut.sut.connect(this, createConfig(macAddress = peripheral.identifier.UUIDString))
+        sut.sut.connect(backgroundScope, createConfig(macAddress = peripheral.identifier.UUIDString))
 
         sut.manager.emitDidFailToConnect(peripheral, error = null)
         advanceUntilIdle()
@@ -207,7 +210,7 @@ class FCentralManagerTest {
             val sut = createSut()
             val peripheral = RecordingPeripheral()
             sut.manager.registerPeripheral(peripheral)
-            sut.sut.connect(this, createConfig(macAddress = peripheral.identifier.UUIDString))
+            sut.sut.connect(backgroundScope, createConfig(macAddress = peripheral.identifier.UUIDString))
             val device = checkNotNull(sut.sut.connectedStream.value[peripheral.identifier])
 
             sut.manager.emitDidDiscover(peripheral)

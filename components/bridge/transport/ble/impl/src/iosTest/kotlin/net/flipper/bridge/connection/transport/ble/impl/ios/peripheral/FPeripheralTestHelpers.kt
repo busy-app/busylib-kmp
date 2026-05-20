@@ -1,5 +1,6 @@
 package net.flipper.bridge.connection.transport.ble.impl.ios.peripheral
 
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.ble.impl.ios.testfixtures.DEVICE_NAME_SHORT_UUID
@@ -51,6 +52,10 @@ internal suspend fun TestScope.createConnectedSut(
 
     val metaChar = newCharacteristic(DEVICE_NAME_SHORT_UUID, payload = metaPayload)
     base.sut.didUpdateValue(metaChar, error = null)
+    // BLEEventQueue processes events asynchronously — wait until the meta update
+    // is observable so callers can assert against a fully-connected SUT.
+    base.sut.stateStream.first { it == FPeripheralState.CONNECTED }
+    base.sut.metaInfoKeysStream.first { it.isNotEmpty() }
 
     return ConnectedSut(
         peripheral = base.peripheral,

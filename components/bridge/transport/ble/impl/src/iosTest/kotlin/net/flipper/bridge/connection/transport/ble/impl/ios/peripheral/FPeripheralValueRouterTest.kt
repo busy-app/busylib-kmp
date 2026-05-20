@@ -114,6 +114,9 @@ class FPeripheralValueRouterTest {
             newCharacteristic(SERIAL_RX_SHORT_UUID, payload = payload),
             error = null,
         )
+        // BLEEventQueue forwards the chunk asynchronously — drain it before
+        // closing the channel, otherwise the send races with onDisconnect.
+        runCurrent()
         sut.sut.onDisconnect()
         runCurrent()
 
@@ -142,6 +145,9 @@ class FPeripheralValueRouterTest {
         val metaCharacteristic = newCharacteristic(DEVICE_NAME_SHORT_UUID, payload = payload)
 
         sut.didUpdateValue(metaCharacteristic, error = null)
+        // BLEEventQueue processes the update asynchronously — wait for it.
+        sut.stateStream.first { it == FPeripheralState.CONNECTED }
+        sut.metaInfoKeysStream.first { it.isNotEmpty() }
 
         assertEquals(FPeripheralState.CONNECTED, sut.stateStream.value)
         assertContentEquals(payload, sut.metaInfoKeysStream.value.getValue(TransportMetaInfoKey.DEVICE_NAME))
@@ -157,7 +163,7 @@ class FPeripheralValueRouterTest {
             error = error(domain = "CBATTErrorDomain", code = 15L),
         )
 
-        // onError dispatches state update on Dispatchers.Default, await the transition
+        // onError schedules state updates via scope.launch, so await the transition
         sut.stateStream.first { it == FPeripheralState.PAIRING_FAILED }
     }
 
