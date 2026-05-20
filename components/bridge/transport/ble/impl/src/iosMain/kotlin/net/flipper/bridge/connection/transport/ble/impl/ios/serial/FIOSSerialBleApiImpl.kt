@@ -16,8 +16,8 @@ import net.flipper.core.busylib.log.LogTagProvider
 class FIOSSerialBleApiImpl(
     scope: CoroutineScope,
     val fPeripheralApi: FPeripheralApi,
-    resetApi: FResetSerialBleApi
-) : FSerialBleApi, LogTagProvider, FResetSerialBleApi by resetApi {
+    private val resetApi: FResetSerialBleApi
+) : FSerialBleApi, LogTagProvider {
     override val TAG = "FSerialBleApi"
     private val channel = ByteEndlessReadChannel()
 
@@ -36,5 +36,12 @@ class FIOSSerialBleApiImpl(
 
     override suspend fun send(data: ByteArray) {
         fPeripheralApi.writeValue(data)
+    }
+
+    override fun getRequestCounterFlow() = resetApi.getRequestCounterFlow()
+
+    override suspend fun reset() {
+        resetApi.reset()
+        channel.clear()
     }
 }

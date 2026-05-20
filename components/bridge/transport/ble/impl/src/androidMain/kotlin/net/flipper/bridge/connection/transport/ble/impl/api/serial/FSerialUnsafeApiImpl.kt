@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -24,8 +25,12 @@ import net.flipper.core.busylib.log.debug
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
 import no.nordicsemi.kotlin.ble.client.RemoteCharacteristic
+import no.nordicsemi.kotlin.ble.client.exception.OperationFailedException
+import no.nordicsemi.kotlin.ble.core.CharacteristicProperty
+import no.nordicsemi.kotlin.ble.core.OperationStatus
 import no.nordicsemi.kotlin.ble.core.WriteType
 import no.nordicsemi.kotlin.ble.core.util.chunked
+import kotlin.time.Duration.Companion.milliseconds
 
 @Inject
 @OptIn(ExperimentalStdlibApi::class)
@@ -33,6 +38,7 @@ class FSerialUnsafeApiImpl(
     @Assisted private val rxCharacteristic: Flow<RemoteCharacteristic?>,
     @Assisted private val txCharacteristic: Flow<RemoteCharacteristic?>,
     @Assisted scope: CoroutineScope,
+    @Assisted private val onResetServices: suspend () -> Unit,
     private val context: Context,
 ) : LogTagProvider {
     override val TAG = "FSerialUnsafeApiImpl"
@@ -52,11 +58,22 @@ class FSerialUnsafeApiImpl(
                 .filter {
                     it.isNotifyAvailable()
                 }
-                .flatMapLatest {
+                .flatMapLatest { remoteChar ->
                     info { "Start subscribe on rx char" }
-                    val flow = it.subscribe()
-                    isSubscribed.set(true)
-                    return@flatMapLatest flow
+                    // onSubscription fires after setNotifying(true) (the CCCD write)
+                    // returns. Only then is it safe to issue writes via sendBytes.
+                    remoteChar.subscribe(
+                        onSubscription = {
+                            info { "RX char subscribed, waiting $POST_SUBSCRIBE_SETTLE_DELAY ms delay..." }
+                            // Android's bond-triggered service rediscovery can still be
+                            // in flight when subscribe() returns. Sit out a short settle
+                            // window before allowing the first write so internal stack
+                            // ops don't poison our write callback.
+                            delay(POST_SUBSCRIBE_SETTLE_DELAY)
+                            info { "Post-subscribe settle window elapsed" }
+                            isSubscribed.set(true)
+                        }
+                    )
                 }.collect {
                     info { "Receive data: ${it.decodeToString()}" }
                     receiverByteFlow.emit(it)
@@ -74,16 +91,49 @@ class FSerialUnsafeApiImpl(
         if (context.checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
             throw BLEConnectionPermissionException()
         }
-        val writeCharacteristic = txCharacteristic
-            .filterNotNull()
-            .first()
-
-        data.chunked(MAX_ATTRIBUTE_SIZE).forEach {
-            debug { "Write chunk with ${it.size} with max size $MAX_ATTRIBUTE_SIZE" }
+        data.chunked(MAX_ATTRIBUTE_SIZE).forEach { chunk ->
+            debug { "Write chunk with ${chunk.size} with max size $MAX_ATTRIBUTE_SIZE" }
             debug { "Write ${data.decodeToString()}" }
-            writeCharacteristic.write(it, WriteType.WITH_RESPONSE)
+            writeChunkWithRetry(chunk)
             debug { "Return back from write" }
         }
+    }
+
+    private suspend fun writeChunkWithRetry(chunk: ByteArray) {
+        repeat(MAX_WRITE_ATTEMPTS - 1) { attempt ->
+            try {
+                val writeCharacteristic = txCharacteristic
+                    .filterNotNull()
+                    .filter { it.properties.contains(CharacteristicProperty.WRITE) }
+                    .first()
+                debug { "TX char properties: ${writeCharacteristic.properties}" }
+                writeCharacteristic.write(chunk, WriteType.WITH_RESPONSE)
+                return
+            } catch (e: OperationFailedException) {
+                if (e.reason == OperationStatus.AttributeNotFound || e.reason == OperationStatus.GattError) {
+                    error(e) {
+                        "Write failed on attempt ${attempt + 1}/" +
+                            "$MAX_WRITE_ATTEMPTS, retrying after $RETRY_DELAY"
+                    }
+                    onResetServices()
+                    delay(RETRY_DELAY)
+                } else {
+                    throw e
+                }
+            }
+        }
+        val writeCharacteristic = txCharacteristic
+            .filterNotNull()
+            .filter { it.properties.contains(CharacteristicProperty.WRITE) }
+            .first()
+        debug { "TX char properties: ${writeCharacteristic.properties}" }
+        writeCharacteristic.write(chunk, WriteType.WITH_RESPONSE)
+    }
+
+    private companion object {
+        const val MAX_WRITE_ATTEMPTS = 3
+        val RETRY_DELAY = 200.milliseconds
+        val POST_SUBSCRIBE_SETTLE_DELAY = 500.milliseconds
     }
 
     @Inject
@@ -91,14 +141,17 @@ class FSerialUnsafeApiImpl(
         private val factory: (
             Flow<RemoteCharacteristic?>,
             Flow<RemoteCharacteristic?>,
-            CoroutineScope
+            CoroutineScope,
+            onResetServices: suspend () -> Unit
         ) -> FSerialUnsafeApiImpl
     ) {
         operator fun invoke(
             rxCharacteristic: Flow<RemoteCharacteristic?>,
             txCharacteristic: Flow<RemoteCharacteristic?>,
-            scope: CoroutineScope
-        ): FSerialUnsafeApiImpl = factory(rxCharacteristic, txCharacteristic, scope)
+            scope: CoroutineScope,
+            onResetServices: suspend () -> Unit
+        ): FSerialUnsafeApiImpl =
+            factory(rxCharacteristic, txCharacteristic, scope, onResetServices)
     }
 }
 

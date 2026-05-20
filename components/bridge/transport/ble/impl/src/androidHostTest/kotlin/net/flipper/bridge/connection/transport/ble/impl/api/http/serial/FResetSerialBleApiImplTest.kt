@@ -9,15 +9,18 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.currentTime
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withTimeoutOrNull
 import net.flipper.bridge.connection.transport.ble.impl.BleConstants.POLLING_RESET_INTERVAL
 import net.flipper.bridge.connection.transport.ble.impl.api.serial.FResetSerialBleApiImpl
 import no.nordicsemi.kotlin.ble.client.RemoteCharacteristic
+import no.nordicsemi.kotlin.ble.core.WriteType
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class FResetSerialBleApiImplTest {
@@ -111,6 +114,35 @@ class FResetSerialBleApiImplTest {
             runCurrent()
 
             assertEquals(7, sut.getRequestCounterFlow().first())
+        }
+
+    @Test
+    fun GIVEN_non_zero_counter_WHEN_reset_called_THEN_recheck_is_forced_without_waiting_for_polling_interval() =
+        runTest {
+            val characteristic = createMockCharacteristic(
+                byteArrayOf(0x05, 0x00, 0x00, 0x00),
+                byteArrayOf(0x00, 0x00, 0x00, 0x00),
+            )
+            val characteristicFlow = MutableStateFlow<RemoteCharacteristic?>(characteristic)
+
+            val sut = FResetSerialBleApiImpl(
+                scope = backgroundScope,
+                resetCharacteristicFlow = characteristicFlow,
+            )
+
+            runCurrent()
+            assertEquals(5, sut.getRequestCounterFlow().first())
+
+            val startTime = currentTime
+            sut.reset()
+            val elapsed = currentTime - startTime
+
+            assertTrue(
+                elapsed < POLLING_RESET_INTERVAL.inWholeMilliseconds,
+                "reset() should complete before polling interval elapses, but took ${elapsed}ms",
+            )
+            coVerify { characteristic.write(byteArrayOf(0, 0, 0, 0), WriteType.WITH_RESPONSE) }
+            coVerify(atLeast = 2) { characteristic.read() }
         }
 
     @Test

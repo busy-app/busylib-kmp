@@ -1,11 +1,11 @@
 package net.flipper.bridge.connection.transport.ble.impl.api.serial
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceSerialConfig
 import net.flipper.bridge.connection.transport.ble.impl.serial.FSerialBleApi
-import net.flipper.busylib.core.wrapper.WrappedStateFlow
 import net.flipper.core.busylib.log.LogTagProvider
 import no.nordicsemi.kotlin.ble.client.RemoteService
 
@@ -17,11 +17,12 @@ class SerialApiFactory(
 
     fun build(
         config: FBleDeviceSerialConfig,
-        services: WrappedStateFlow<List<RemoteService>?>,
-        scope: CoroutineScope
+        services: StateFlow<List<RemoteService>>,
+        scope: CoroutineScope,
+        onResetServices: suspend () -> Unit
     ): FSerialBleApi {
         val serialService = services.map { services ->
-            services?.find { it.uuid == config.serialServiceUuid }
+            services.find { it.uuid == config.serialServiceUuid }
         }
         val rxCharacteristic = serialService.map { service ->
             service?.characteristics?.find { it.uuid == config.rxServiceCharUuid }
@@ -32,7 +33,8 @@ class SerialApiFactory(
         val unsafeApi = unsafeApiImplFactory(
             rxCharacteristic = rxCharacteristic,
             txCharacteristic = txCharacteristic,
-            scope = scope
+            scope = scope,
+            onResetServices = onResetServices
         )
         val resetApi = FResetSerialBleApiImpl(
             resetCharacteristicFlow = serialService.map { service ->

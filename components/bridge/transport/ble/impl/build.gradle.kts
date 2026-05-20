@@ -29,7 +29,7 @@ kotlin {
 
     sourceSets.androidMain.dependencies {
         implementation(libs.ble.client)
-        implementation(libs.slf4j.android)
+        implementation(libs.slf4j.api)
     }
 
     androidLibrary {
@@ -44,12 +44,4 @@ kotlin {
             implementation(libs.mockk)
         }
     }
-}
-
-// The slf4j-android adapter is meaningful only on a real Android runtime: its <clinit>
-// touches android.util.Log, which is unimplemented in the stub android.jar used by
-// androidHostTest and throws "Method isLoggable in android.util.Log not mocked" as soon
-// as any classpath consumer (e.g. Ktor's HttpClient) requests a logger.
-configurations.named("androidHostTestRuntimeClasspath") {
-    exclude(group = "uk.uuid.slf4j", module = "slf4j-android")
 }
