@@ -108,7 +108,9 @@ class BLEDeviceConnectionApiImpl(
             config = config.serialConfig,
             services = services,
             scope = scope,
-            onResetServices = device::refreshCache
+            onResetServices = {
+                info { "Requested refresh cache" }
+                device.refreshCache() }
         )
         info { "Created serial api" }
         val streamingApi = AndroidStreamApiFactory.buildStreamingApi(
