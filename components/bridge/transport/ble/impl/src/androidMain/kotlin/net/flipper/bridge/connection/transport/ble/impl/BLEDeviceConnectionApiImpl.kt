@@ -149,6 +149,9 @@ class BLEDeviceConnectionApiImpl(
                 RemoteServices.Unknown -> null
             }
         }.first()
+            .onFailure {
+                error(it) { "Failed to discover service" }
+            }
             .getOrNull()
 
         return if (discoveredServices == null) {

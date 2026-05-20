@@ -69,11 +69,9 @@ class FSerialUnsafeApiImpl(
                             // in flight when subscribe() returns. Sit out a short settle
                             // window before allowing the first write so internal stack
                             // ops don't poison our write callback.
-                            scope.launch {
-                                delay(POST_SUBSCRIBE_SETTLE_DELAY)
-                                info { "Post-subscribe settle window elapsed" }
-                                isSubscribed.set(true)
-                            }
+                            delay(POST_SUBSCRIBE_SETTLE_DELAY)
+                            info { "Post-subscribe settle window elapsed" }
+                            isSubscribed.set(true)
                         }
                     )
                 }.collect {
@@ -152,7 +150,8 @@ class FSerialUnsafeApiImpl(
             txCharacteristic: Flow<RemoteCharacteristic?>,
             scope: CoroutineScope,
             onResetServices: suspend () -> Unit
-        ): FSerialUnsafeApiImpl = factory(rxCharacteristic, txCharacteristic, scope, onResetServices)
+        ): FSerialUnsafeApiImpl =
+            factory(rxCharacteristic, txCharacteristic, scope, onResetServices)
     }
 }
 
