@@ -64,7 +64,7 @@ class FPeripheralLifecycleTest {
     fun GIVEN_cb_errors_WHEN_onError_invoked_THEN_state_is_mapped_for_pairing_and_disconnect_errors() = runTest {
         val sut = createSut().sut
 
-        // onError dispatches state updates on Dispatchers.Default, so await the state transition
+        // onError schedules state updates via scope.launch, so await the state transition
         sut.onError(error(domain = "CBATTErrorDomain", code = CBATTErrorInsufficientEncryption))
         sut.stateStream.first { it == FPeripheralState.PAIRING_FAILED }
 

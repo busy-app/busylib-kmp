@@ -33,7 +33,7 @@ internal fun TestScope.createSut(
     val sut = FPeripheral(
         peripheral = peripheral,
         config = config,
-        scope = this,
+        scope = backgroundScope,
     )
     return Sut(peripheral = peripheral, sut = sut, config = config)
 }
