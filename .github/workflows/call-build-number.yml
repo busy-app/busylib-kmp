@@ -22,7 +22,7 @@ jobs:
       # ${{ steps.buildnumber.outputs.build_number }}
       - name: Generate build number
         id: buildnumber
-        uses: onyxmueller/build-tag-number@bbb3e6dd40d79811d5fb661e5d6651c1748f4210 # v1
+        uses: onyxmueller/build-tag-number@a0792399755057a06c7805cae3299807cbaf0035 # v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
       # ${{ steps.properties.outputs.flipper-major_version }}
