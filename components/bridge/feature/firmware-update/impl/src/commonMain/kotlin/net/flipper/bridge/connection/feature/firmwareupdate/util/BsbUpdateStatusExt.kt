@@ -54,10 +54,10 @@ internal fun UpdateStatus.toBsbUpdateStatus(): BsbUpdateStatus {
         UpdateStatus.Install.Event.ACTION_BEGIN,
         UpdateStatus.Install.Event.ACTION_PROGRESS -> true
     }
-    val readyStatus = if (install.isAllowed) {
-        BsbUpdateStatus.ReadyToInstall.Ready
-    } else {
+    val readyStatus = if (install.isAllowed.not() && install.status == UpdateStatus.Install.Status.BATTERY_LOW) {
         BsbUpdateStatus.ReadyToInstall.BatteryLow
+    } else {
+        BsbUpdateStatus.ReadyToInstall.Ready
     }
     return if (inProgress) {
         when (install.action) {
