@@ -122,7 +122,7 @@ class FDeviceHolder<API : FConnectedDeviceApi>(
                     listener.invoke(
                         this,
                         FInternalTransportConnectionStatus.Disconnected(
-                            FInternalDisconnectedReason.PAIRING_FAILED
+                            FInternalDisconnectedReason.REQUIRES_REPAIRING
                         )
                     )
                 }

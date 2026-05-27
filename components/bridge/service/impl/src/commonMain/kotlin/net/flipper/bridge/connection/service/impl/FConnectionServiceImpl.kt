@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.map
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.config.internal.FInternalDevicePersistedStorage
+import net.flipper.bridge.connection.orchestrator.api.model.DisconnectStatus
 import net.flipper.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
 import net.flipper.bridge.connection.orchestrator.internal.FInternalDeviceOrchestrator
 import net.flipper.bridge.connection.service.api.FConnectionService
@@ -73,7 +74,17 @@ class FConnectionServiceImpl(
                 }
 
                 is FDeviceConnectStatus.Disconnected -> when (expectedState) {
-                    is ExpectedState.Connected -> orchestrator.connectIfNot(expectedState.device)
+                    is ExpectedState.Connected -> {
+                        val sameDevice = realState.device?.uniqueId == expectedState.device.uniqueId
+                        if (sameDevice && realState.reason == DisconnectStatus.REQUIRES_REPAIRING) {
+                            warn {
+                                "Skip reconnect for ${expectedState.device.uniqueId}: pairing failed, " +
+                                        "awaiting explicit user re-pair"
+                            }
+                        } else {
+                            orchestrator.connectIfNot(expectedState.device)
+                        }
+                    }
                     ExpectedState.Disconnected -> Unit
                 }
 

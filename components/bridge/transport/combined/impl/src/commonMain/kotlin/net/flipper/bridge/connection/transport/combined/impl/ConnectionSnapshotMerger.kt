@@ -43,11 +43,10 @@ internal fun mergeSnapshots(snapshots: List<ConnectionSnapshot>): ConnectionSnap
 @Suppress("MagicNumber")
 internal fun getPriority(status: FInternalTransportConnectionStatus): Int {
     return when (status) {
-        // Not sure
         is FInternalTransportConnectionStatus.Disconnected -> {
             when (status.reason) {
                 FInternalDisconnectedReason.OTHER -> 0
-                FInternalDisconnectedReason.PAIRING_FAILED -> 1
+                FInternalDisconnectedReason.REQUIRES_REPAIRING -> 1
             }
         }
         is FInternalTransportConnectionStatus.Connecting -> 2
