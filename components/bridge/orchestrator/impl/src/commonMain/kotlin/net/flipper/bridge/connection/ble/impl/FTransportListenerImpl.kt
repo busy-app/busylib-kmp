@@ -33,7 +33,7 @@ class FTransportListenerImpl(
         info { "Update config $config -> $newConfig" }
         config = newConfig
         state.update {
-            when(it) {
+            when (it) {
                 is FDeviceConnectStatus.Connected -> it.copy(device = config)
                 is FDeviceConnectStatus.Connecting.InProgress -> it.copy(device = config)
                 is FDeviceConnectStatus.Connecting.Offline -> it.copy(device = config)
