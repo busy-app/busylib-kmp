@@ -86,7 +86,7 @@ class FDeviceOrchestratorImpl(
         info { "Create new device" }
         currentDevice = deviceHolderFactory.build(
             uniqueId = newConfig.uniqueId,
-            config = deviceConnectionConfigMapper.getConnectionConfig(newConfig),
+            config = connectionConfig,
             listener = localTransportListener
         )
         info { "New device created successfully" }
