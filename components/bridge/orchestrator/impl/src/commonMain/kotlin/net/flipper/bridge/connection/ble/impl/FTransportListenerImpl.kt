@@ -18,30 +18,46 @@ import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
 
-class FTransportListenerImpl(config: BUSYBar) : LogTagProvider {
-    override val TAG = "FTransportListener-${config.uniqueId}"
+class FTransportListenerImpl(
+    initConfig: BUSYBar,
+    private val onInternalDisconnect: (deviceHolder: FDeviceHolder<*>, postAction: () -> Unit) -> Unit
+) : LogTagProvider {
+    override val TAG = "FTransportListener-${initConfig.uniqueId}"
+    private var config = initConfig
 
     private val state = MutableStateFlow<FDeviceConnectStatus>(DEFAULT_STATUS)
 
     fun getState() = state.asStateFlow()
 
-    fun onErrorDuringConnect(device: BUSYBar, throwable: Throwable) {
+    fun updateConfig(newConfig: BUSYBar) {
+        info { "Update config $config -> $newConfig" }
+        config = newConfig
+    }
+
+    fun onErrorDuringConnect(deviceHolder: FDeviceHolder<*>, throwable: Throwable) {
+        onInternalDisconnect(deviceHolder) {
+            onErrorDuringConnectInternal(throwable)
+        }
+    }
+
+    private fun onErrorDuringConnectInternal(throwable: Throwable) {
         @Suppress("UNUSED_EXPRESSION")
         when (throwable) {
             is FailedPairingConnectException -> {
                 error(throwable) { "Not recoverable error from transport layer" }
                 state.update {
                     FDeviceConnectStatus.Disconnected(
-                        device = device,
+                        device = config,
                         reason = DisconnectStatus.PAIRING_FAILED
                     )
                 }
             }
+
             else -> {
                 error(throwable) { "Unknown error from transport layer" }
                 state.update {
                     FDeviceConnectStatus.Disconnected(
-                        device = device,
+                        device = config,
                         reason = DisconnectStatus.ERROR_UNKNOWN
                     )
                 }
@@ -49,11 +65,22 @@ class FTransportListenerImpl(config: BUSYBar) : LogTagProvider {
         }
     }
 
-    fun onStatusUpdate(device: BUSYBar, status: FInternalTransportConnectionStatus) {
+    fun onStatusUpdate(deviceHolder: FDeviceHolder<*>, status: FInternalTransportConnectionStatus) {
+        info { "Received status update for device ${deviceHolder.uniqueId}: $status" }
+        if (status is FInternalTransportConnectionStatus.Disconnected) {
+            onInternalDisconnect(deviceHolder) {
+                onStatusUpdateInternal(status)
+            }
+        } else {
+            onStatusUpdateInternal(status)
+        }
+    }
+
+    private fun onStatusUpdateInternal(status: FInternalTransportConnectionStatus) {
         val newState = state.updateAndGet { currentStatus ->
             when (status) {
                 is FInternalTransportConnectionStatus.Connected -> FDeviceConnectStatus.Connected(
-                    device = device,
+                    device = config,
                     deviceApi = status.deviceApi,
                     scope = status.scope,
                     transportType = status.connectionTypes.maxBy { it.priority }.toPublic()
@@ -61,7 +88,7 @@ class FTransportListenerImpl(config: BUSYBar) : LogTagProvider {
 
                 is FInternalTransportConnectionStatus.Connecting ->
                     FDeviceConnectStatus.Connecting.InProgress(
-                        device = device,
+                        device = config,
                         status = ConnectingStatus.CONNECTING,
                         transportTypes = status.connectionTypes.map { it.toPublic() }.wrap()
                     )
@@ -69,15 +96,16 @@ class FTransportListenerImpl(config: BUSYBar) : LogTagProvider {
                 is FInternalTransportConnectionStatus.Disconnected -> {
                     currentStatus as? FDeviceConnectStatus.Disconnected
                         ?: FDeviceConnectStatus.Disconnected(
-                            device = device,
+                            device = config,
                             reason = when (status.reason) {
                                 PAIRING_FAILED -> DisconnectStatus.PAIRING_FAILED
                                 OTHER -> DisconnectStatus.REPORTED_BY_TRANSPORT
                             }
                         )
                 }
+
                 FInternalTransportConnectionStatus.Disconnecting -> FDeviceConnectStatus.Disconnecting(
-                    device
+                    config
                 )
             }
         }

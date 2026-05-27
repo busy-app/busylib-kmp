@@ -16,12 +16,10 @@ import net.flipper.bridge.connection.configbuilder.api.FDeviceConnectionConfigMa
 import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
 import net.flipper.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
 import net.flipper.bridge.connection.orchestrator.internal.FInternalDeviceOrchestrator
-import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.ktx.common.withLock
 import net.flipper.core.busylib.log.LogTagProvider
-import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
@@ -65,14 +63,14 @@ class FDeviceOrchestratorImpl(
     private var currentDevice: FDeviceHolder<*>? = null
     private val mutex = Mutex()
 
-    override suspend fun connectIfNot(config: BUSYBar) = withLock(mutex, "connect") {
-        info { "Request connect for config $config" }
+    override suspend fun connectIfNot(newConfig: BUSYBar) = withLock(mutex, "connect") {
+        info { "Request connect for config $newConfig" }
 
-        val connectionConfig = deviceConnectionConfigMapper.getConnectionConfig(config)
+        val connectionConfig = deviceConnectionConfigMapper.getConnectionConfig(newConfig)
         val currentDeviceHolder = currentDevice
 
-        if (currentDeviceHolder != null && currentDeviceHolder.uniqueId == config.uniqueId) {
-            val result = currentDeviceHolder.tryToUpdateConnectionConfig(connectionConfig)
+        if (currentDeviceHolder != null && currentDeviceHolder.uniqueId == newConfig.uniqueId) {
+            val result = currentDeviceHolder.tryToUpdateConnectionConfig(newConfig, connectionConfig)
             if (result.isSuccess) {
                 info { "Device already connected, so skip connection" }
                 return@withLock
@@ -83,34 +81,13 @@ class FDeviceOrchestratorImpl(
 
         disconnectInternalUnsafe()
 
-        val localTransportListener = FTransportListenerImpl(config)
+        val localTransportListener = FTransportListenerImpl(newConfig, ::onInternalDisconnect)
         transportListenerFlow.emit(localTransportListener)
         info { "Create new device" }
         currentDevice = deviceHolderFactory.build(
-            uniqueId = config.uniqueId,
-            config = deviceConnectionConfigMapper.getConnectionConfig(config),
-            listener = { deviceHolder, status ->
-                info { "Received status update for device ${deviceHolder.uniqueId}: $status" }
-                if (status is FInternalTransportConnectionStatus.Disconnected) {
-                    onInternalDisconnect(deviceHolder) {
-                        localTransportListener.onStatusUpdate(config, status)
-                    }
-                } else {
-                    localTransportListener.onStatusUpdate(config, status)
-                }
-            },
-            onConnectError = { deviceHolder, error ->
-                onInternalDisconnect(deviceHolder) {
-                    localTransportListener.onErrorDuringConnect(config, error)
-                }
-                error(error) { "Failed connect" }
-            },
-            exceptionHandler = { deviceHolder, error ->
-                onInternalDisconnect(deviceHolder) {
-                    localTransportListener.onErrorDuringConnect(config, error)
-                }
-                error(error) { "Exception in coroutine" }
-            }
+            uniqueId = newConfig.uniqueId,
+            config = deviceConnectionConfigMapper.getConnectionConfig(newConfig),
+            listener = localTransportListener
         )
         info { "New device created successfully" }
     }
