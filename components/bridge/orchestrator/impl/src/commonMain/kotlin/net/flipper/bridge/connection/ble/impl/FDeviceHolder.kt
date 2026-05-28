@@ -119,7 +119,7 @@ class FDeviceHolder<API : FConnectedDeviceApi>(
                     listener.onStatusUpdate(
                         this,
                         FInternalTransportConnectionStatus.Disconnected(
-                            FInternalDisconnectedReason.PAIRING_FAILED
+                            FInternalDisconnectedReason.REQUIRES_REPAIRING
                         )
                     )
                 }

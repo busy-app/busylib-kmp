@@ -101,10 +101,10 @@ class FCentralManagerTest {
             error = error(domain = "CBErrorDomain", code = CBErrorPeerRemovedPairingInformation)
         )
         // onError schedules state via scope.launch on backgroundScope — wait for the transition.
-        device.stateStream.first { it == FPeripheralState.INVALID_PAIRING }
+        device.stateStream.first { it == FPeripheralState.DEVICE_FORGOT_PAIRING }
         sut.sut.connectedStream.first { !it.containsKey(peripheral.identifier) }
 
-        assertEquals(FPeripheralState.INVALID_PAIRING, device.stateStream.value)
+        assertEquals(FPeripheralState.DEVICE_FORGOT_PAIRING, device.stateStream.value)
         assertFalse(sut.sut.connectedStream.value.containsKey(peripheral.identifier))
     }
 

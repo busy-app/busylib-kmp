@@ -9,7 +9,7 @@ import net.flipper.bridge.connection.orchestrator.api.model.ConnectingStatus
 import net.flipper.bridge.connection.orchestrator.api.model.DisconnectStatus
 import net.flipper.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
 import net.flipper.bridge.connection.transport.common.api.FInternalDisconnectedReason.OTHER
-import net.flipper.bridge.connection.transport.common.api.FInternalDisconnectedReason.PAIRING_FAILED
+import net.flipper.bridge.connection.transport.common.api.FInternalDisconnectedReason.REQUIRES_REPAIRING
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FailedPairingConnectException
 import net.flipper.busylib.core.wrapper.wrap
@@ -57,7 +57,7 @@ class FTransportListenerImpl(
                 state.update {
                     FDeviceConnectStatus.Disconnected(
                         device = config,
-                        reason = DisconnectStatus.PAIRING_FAILED
+                        reason = DisconnectStatus.REQUIRES_REPAIRING
                     )
                 }
             }
@@ -107,7 +107,7 @@ class FTransportListenerImpl(
                         ?: FDeviceConnectStatus.Disconnected(
                             device = config,
                             reason = when (status.reason) {
-                                PAIRING_FAILED -> DisconnectStatus.PAIRING_FAILED
+                                REQUIRES_REPAIRING -> DisconnectStatus.REQUIRES_REPAIRING
                                 OTHER -> DisconnectStatus.REPORTED_BY_TRANSPORT
                             }
                         )

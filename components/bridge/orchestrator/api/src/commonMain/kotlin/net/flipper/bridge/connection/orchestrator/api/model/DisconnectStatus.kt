@@ -4,5 +4,13 @@ enum class DisconnectStatus {
     NOT_INITIALIZED,
     REPORTED_BY_TRANSPORT,
     ERROR_UNKNOWN,
-    PAIRING_FAILED
+    REQUIRES_REPAIRING;
+
+    val isRecoverable: Boolean
+        get() = when (this) {
+            NOT_INITIALIZED,
+            REPORTED_BY_TRANSPORT,
+            ERROR_UNKNOWN -> false
+            REQUIRES_REPAIRING -> true
+        }
 }
