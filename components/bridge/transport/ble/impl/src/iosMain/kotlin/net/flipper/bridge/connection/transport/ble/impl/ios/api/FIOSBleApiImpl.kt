@@ -54,7 +54,7 @@ class FIOSBleApiImpl(
                     )
 
                     FPeripheralState.DISCONNECTING -> FInternalTransportConnectionStatus.Disconnecting
-                    FPeripheralState.DISCONNECTED, FPeripheralState.PAIRING_CANCELLED, -> {
+                    FPeripheralState.DISCONNECTED, FPeripheralState.PAIRING_CANCELLED -> {
                         FInternalTransportConnectionStatus.Disconnected(
                             FInternalDisconnectedReason.OTHER
                         )
