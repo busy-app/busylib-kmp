@@ -7,7 +7,6 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.config.api.getDevice
-import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.config.api.model.copy
 import net.flipper.bridge.connection.config.api.model.copyTransports
 import net.flipper.bridge.connection.config.internal.FInternalDevicePersistedStorage
@@ -35,7 +34,8 @@ class HardwareIdProvisioningWatcher(
     scope: CoroutineScope,
     private val featureProvider: FFeatureProvider,
     private val orchestrator: FDeviceOrchestrator,
-    private val persistedStorage: FInternalDevicePersistedStorage
+    private val persistedStorage: FInternalDevicePersistedStorage,
+    private val cloudFetcherWatcher: CloudFetcherWatcher
 ) : InternalBUSYLibStartupListener, LogTagProvider {
     override val TAG = "HardwareIdProvisioningWatcher"
 
@@ -75,8 +75,8 @@ class HardwareIdProvisioningWatcher(
     }
 
     private suspend fun onNewDeviceStatus(deviceStatus: BusyBarStatusDevice, uniqueId: String) {
-        persistedStorage.transactionInternal {
-            getDevice(uniqueId)?.let { original ->
+        val shouldInvalidateCloud = persistedStorage.transactionInternal {
+            return@transactionInternal getDevice(uniqueId)?.let { original ->
                 if (original.hardwareId == null) {
                     info { "Found device without hardware id (${deviceStatus.serialNumber}): $original" }
                     addOrReplace(
@@ -84,10 +84,11 @@ class HardwareIdProvisioningWatcher(
                             hardwareId = deviceStatus.serialNumber
                         )
                     )
+                    return@let false
                 } else if (original.hardwareId != deviceStatus.serialNumber) {
                     info {
                         "Found device with another hardware id. " +
-                                "Current is $original, but new one is ${deviceStatus.serialNumber}"
+                            "Current is $original, but new one is ${deviceStatus.serialNumber}"
                     }
                     // Add new and set it
                     setCurrentDevice(
@@ -96,8 +97,14 @@ class HardwareIdProvisioningWatcher(
                                 hardwareId = deviceStatus.serialNumber
                             )
                     )
+                    return@let true
+                } else {
+                    return@let false
                 }
-            }
+            } ?: false
+        }
+        if (shouldInvalidateCloud) {
+            cloudFetcherWatcher.invalidate()
         }
     }
 }
