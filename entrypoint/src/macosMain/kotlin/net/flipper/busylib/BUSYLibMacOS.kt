@@ -15,6 +15,8 @@ import net.flipper.bsb.cloud.api.BUSYLibHostApi
 import net.flipper.bsb.cloud.rest.channel.api.BusyFirmwareDirectoryChannelApi
 import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
 import net.flipper.busylib.di.create
+import net.flipper.core.busylib.log.LogTagProvider
+import net.flipper.core.busylib.log.info
 import net.flipper.tools.multistream.api.MultiStreamApi
 import net.flipper.tools.oncall.api.OnCallSingletonApi
 
@@ -29,8 +31,10 @@ class BUSYLibMacOS(
     private val startUpListeners: Set<InternalBUSYLibStartupListener>,
     val onCallSingletonApi: OnCallSingletonApi,
     override val busyFirmwareDirectoryChannelApi: BusyFirmwareDirectoryChannelApi
-) : BUSYLibApple {
+) : BUSYLibApple, LogTagProvider {
+    override val TAG = "BUSYLib"
     override fun launch() {
+        info { "Start BUSY Lib local version" }
         startUpListeners.forEach {
             it.onLaunch()
         }
