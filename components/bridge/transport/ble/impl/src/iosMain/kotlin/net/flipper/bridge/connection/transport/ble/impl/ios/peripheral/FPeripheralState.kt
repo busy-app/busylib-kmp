@@ -7,8 +7,8 @@ enum class FPeripheralState {
     CONNECTING,
     CONNECTED,
     DISCONNECTING,
-    PAIRING_FAILED,
-    INVALID_PAIRING;
+    PAIRING_CANCELLED,
+    DEVICE_FORGOT_PAIRING;
 
     companion object {
         @Suppress("MagicNumber")

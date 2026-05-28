@@ -75,7 +75,7 @@ class AutoReconnectConnection(
                 connection.disconnect()
 
                 when (disconnectedStatus.reason) {
-                    FInternalDisconnectedReason.PAIRING_FAILED -> return@launch
+                    FInternalDisconnectedReason.REQUIRES_REPAIRING -> return@launch
                     FInternalDisconnectedReason.OTHER -> {}
                 }
 

@@ -66,13 +66,13 @@ class FPeripheralLifecycleTest {
 
         // onError schedules state updates via scope.launch, so await the state transition
         sut.onError(error(domain = "CBATTErrorDomain", code = CBATTErrorInsufficientEncryption))
-        sut.stateStream.first { it == FPeripheralState.PAIRING_FAILED }
+        sut.stateStream.first { it == FPeripheralState.PAIRING_CANCELLED }
 
         sut.onError(error(domain = "CBErrorDomain", code = CBErrorPeerRemovedPairingInformation))
-        sut.stateStream.first { it == FPeripheralState.INVALID_PAIRING }
+        sut.stateStream.first { it == FPeripheralState.DEVICE_FORGOT_PAIRING }
 
         sut.onError(error(domain = "CBErrorDomain", code = CBErrorEncryptionTimedOut))
-        sut.stateStream.first { it == FPeripheralState.INVALID_PAIRING }
+        sut.stateStream.first { it == FPeripheralState.DEVICE_FORGOT_PAIRING }
     }
 
     @Test
@@ -98,11 +98,11 @@ class FPeripheralLifecycleTest {
         assertTrue(sut.sut.metaInfoKeysStream.value.isNotEmpty())
 
         sut.sut.onError(error(domain = "CBATTErrorDomain", code = CBATTErrorInsufficientEncryption))
-        sut.sut.stateStream.first { it == FPeripheralState.PAIRING_FAILED }
+        sut.sut.stateStream.first { it == FPeripheralState.PAIRING_CANCELLED }
 
         sut.sut.onDisconnect()
 
-        assertEquals(FPeripheralState.PAIRING_FAILED, sut.sut.stateStream.value)
+        assertEquals(FPeripheralState.PAIRING_CANCELLED, sut.sut.stateStream.value)
         assertTrue(sut.sut.metaInfoKeysStream.value.isNotEmpty())
     }
 
