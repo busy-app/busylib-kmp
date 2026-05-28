@@ -5,6 +5,7 @@ import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.HttpClientEngineConfig
 import io.ktor.client.engine.HttpClientEngineFactory
 import io.ktor.client.plugins.DefaultRequest
+import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.logging.LogLevel
@@ -15,6 +16,7 @@ import io.ktor.client.plugins.websocket.pingInterval
 import io.ktor.client.request.header
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 import net.flipper.busylib.kmp.components.core.buildkonfig.BuildKonfig
@@ -52,6 +54,12 @@ fun getHttpClient(
         header(HttpHeaders.ContentType, ContentType.Application.Json)
     }
 
+    install(HttpRequestRetry) {
+        retryIf(maxRetries = Int.MAX_VALUE) { _, response ->
+            response.status == HttpStatusCode.TooManyRequests
+        }
+        exponentialDelay(respectRetryAfterHeader = true)
+    }
     install(WebSockets) {
         pingInterval = WS_PING_INTERVAL
         contentConverter = LoggingWebsocketConverter(jsonSerializer)

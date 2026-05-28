@@ -2,12 +2,14 @@ package net.flipper.bridge.connection.feature.rpc.impl.util
 
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngine
+import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.http.ContentType
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
@@ -32,6 +34,12 @@ internal fun getHttpClient(httpClientEngine: HttpClientEngine) = HttpClient(http
     }
     defaultRequest {
         contentType(ContentType.Application.Json)
+    }
+    install(HttpRequestRetry) {
+        retryIf(maxRetries = Int.MAX_VALUE) { _, response ->
+            response.status == HttpStatusCode.TooManyRequests
+        }
+        exponentialDelay(respectRetryAfterHeader = true)
     }
     install(Logging) {
         logger = object : Logger {
