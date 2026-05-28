@@ -164,7 +164,7 @@ class FPeripheralValueRouterTest {
         )
 
         // onError schedules state updates via scope.launch, so await the transition
-        sut.stateStream.first { it == FPeripheralState.PAIRING_FAILED }
+        sut.stateStream.first { it == FPeripheralState.PAIRING_CANCELLED }
     }
 
     @Test

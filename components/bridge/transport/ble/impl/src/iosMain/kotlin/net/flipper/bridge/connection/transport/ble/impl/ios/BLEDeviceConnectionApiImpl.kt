@@ -1,7 +1,6 @@
 package net.flipper.bridge.connection.transport.ble.impl.ios
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -116,16 +115,6 @@ class BLEDeviceConnectionApiImpl(
             .bleStatusStream
             .first { status -> status == FBLEStatus.POWERED_ON }
 
-        info { "Waiting for previous connections to disconnect..." }
-        centralManager.disconnect(deviceIdentifier)
-        val existingDevice = centralManager.connectedStream.value[deviceIdentifier]
-        if (existingDevice != null) {
-            existingDevice.stateStream
-                .filter { it == FPeripheralState.DISCONNECTED }
-                .first()
-            info { "Previous connection disconnected, proceeding with new connection..." }
-        }
-
         info { "Connecting to peripheral id=${deviceIdentifier.UUIDString}..." }
         centralManager.connect(scope, config)
 
@@ -147,12 +136,11 @@ class BLEDeviceConnectionApiImpl(
                         true
                     }
 
-                    FPeripheralState.PAIRING_FAILED,
-                    FPeripheralState.INVALID_PAIRING -> {
+                    FPeripheralState.DEVICE_FORGOT_PAIRING -> {
                         info { "Peripheral pairing failed with state: $state" }
                         throw FailedPairingConnectException()
                     }
-                    FPeripheralState.DISCONNECTED -> {
+                    FPeripheralState.DISCONNECTED, FPeripheralState.PAIRING_CANCELLED, -> {
                         info { "Peripheral connection failed with state: $state" }
                         throw FailedConnectToDeviceException()
                     }

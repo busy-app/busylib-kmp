@@ -138,10 +138,10 @@ class FPeripheral(
     override suspend fun onDisconnect() {
         debug { "Peripheral onDisconnect id=${identifier.UUIDString}" }
 
-        if (stateStream.value == FPeripheralState.PAIRING_FAILED ||
-            stateStream.value == FPeripheralState.INVALID_PAIRING
+        if (stateStream.value == FPeripheralState.PAIRING_CANCELLED ||
+            stateStream.value == FPeripheralState.DEVICE_FORGOT_PAIRING
         ) {
-            debug { "#onDisconnect by reason PAIRING_FAILED or INVALID_PAIRING" }
+            debug { "#onDisconnect by reason PAIRING_CANCELLED or DEVICE_FORGOT_PAIRING" }
             return
         }
 
@@ -179,12 +179,12 @@ class FPeripheral(
                 // If user forget pairing on physical device
                 CBErrorPeerRemovedPairingInformation -> {
                     debug { "Cannot connect to device by peerRemovedPairingInformation" }
-                    _stateStream.emit(FPeripheralState.INVALID_PAIRING)
+                    _stateStream.emit(FPeripheralState.DEVICE_FORGOT_PAIRING)
                 }
 
                 CBErrorEncryptionTimedOut -> {
                     debug { "Cannot connect to device by encryptionTimedOut" }
-                    _stateStream.emit(FPeripheralState.INVALID_PAIRING)
+                    _stateStream.emit(FPeripheralState.DEVICE_FORGOT_PAIRING)
                 }
             }
         }
@@ -198,12 +198,12 @@ class FPeripheral(
                 // If user disallow connect to device
                 CBATTErrorInsufficientEncryption -> {
                     debug { "Cannot connect to device by insufficient encryption" }
-                    _stateStream.emit(FPeripheralState.PAIRING_FAILED)
+                    _stateStream.emit(FPeripheralState.PAIRING_CANCELLED)
                 }
                 // If user disallow connect to device
                 CBATTErrorInsufficientAuthentication -> {
                     debug { "CBATTErrorInsufficientAuthentication" }
-                    _stateStream.emit(FPeripheralState.PAIRING_FAILED)
+                    _stateStream.emit(FPeripheralState.PAIRING_CANCELLED)
                 }
             }
         }

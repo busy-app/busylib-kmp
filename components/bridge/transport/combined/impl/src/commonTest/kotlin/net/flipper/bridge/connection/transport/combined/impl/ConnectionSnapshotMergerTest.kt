@@ -345,11 +345,11 @@ class ConnectionSnapshotMergerTest {
         val snapshots = listOf(
             ConnectionSnapshot(
                 capabilities = listOf(FHTTPTransportCapability.BB_WEBSOCKET_SUPPORTED),
-                status = Disconnected(FInternalDisconnectedReason.PAIRING_FAILED)
+                status = Disconnected(FInternalDisconnectedReason.REQUIRES_REPAIRING)
             ),
             ConnectionSnapshot(
                 capabilities = null,
-                status = Disconnected(FInternalDisconnectedReason.PAIRING_FAILED)
+                status = Disconnected(FInternalDisconnectedReason.REQUIRES_REPAIRING)
             )
         )
 
