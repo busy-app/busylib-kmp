@@ -1,7 +1,6 @@
 package net.flipper.bridge.connection.transport.ble.impl.ios
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
