@@ -38,8 +38,7 @@ class FRpcSystemApiImpl(
                     headers[HEADER_NAME_REQUEST_CAPABILITY] = FHTTPTransportCapability
                         .BB_LOCAL_CONNECTION.ordinal.toString()
                 }
-            }
-            httpClient.get("/api/status/device").body<BusyBarStatusDevice>()
+            }.body<BusyBarStatusDevice>()
         }
     }
 
