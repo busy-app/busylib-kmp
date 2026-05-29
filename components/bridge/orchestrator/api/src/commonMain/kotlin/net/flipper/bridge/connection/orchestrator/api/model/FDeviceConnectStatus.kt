@@ -40,7 +40,7 @@ sealed interface FDeviceConnectStatus {
         val device: BUSYBar
     ) : FDeviceConnectStatus
 
-    class Connected(
+    data class Connected(
         val scope: CoroutineScope,
         val device: BUSYBar,
         val deviceApi: FConnectedDeviceApi,

@@ -7,7 +7,7 @@ import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
  * This is internal BUSY Lib class, don't use it outside BUSY Lib
  */
 interface FInternalDeviceOrchestrator : FDeviceOrchestrator {
-    suspend fun connectIfNot(config: BUSYBar)
+    suspend fun connectIfNot(newConfig: BUSYBar)
 
     /**
      * Internal helper used by higher-level "forget" operations, such as
