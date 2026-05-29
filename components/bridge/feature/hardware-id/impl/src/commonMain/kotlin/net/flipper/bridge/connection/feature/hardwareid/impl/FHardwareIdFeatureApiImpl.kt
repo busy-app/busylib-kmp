@@ -21,6 +21,7 @@ import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.log.LogTagProvider
+import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.verbose
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
 
@@ -40,6 +41,7 @@ class FHardwareIdFeatureApiImpl(
                         .fRpcSystemApi
                         .getDeviceStatus(localOnly = true)
                         .map { deviceStatus -> deviceStatus.serialNumber }
+                        .onFailure { error(it) { "Failed to read device status for hardware id, retrying" } }
                 }
             } else {
                 verbose { "Hardware id isn't provided because no local connection" }
