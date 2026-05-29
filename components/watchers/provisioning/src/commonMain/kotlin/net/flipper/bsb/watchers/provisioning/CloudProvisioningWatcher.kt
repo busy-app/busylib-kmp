@@ -114,7 +114,7 @@ class CloudProvisioningWatcher(
             return // Local and cloud transport, cloud linked to current device - skip
         }
 
-        if (cloudId == null) { // Local and cloud, not connected to cloud - preserve until CloudFetcherWatcher reconciles
+        if (cloudId == null) { // Local and cloud, not connected to cloud
             // Don't delete cloud locally, because this may
             // delete the cloud data from another device with a different hardware ID.
             // By design deleting should be from CloudFetcherWatcher

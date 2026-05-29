@@ -3,6 +3,7 @@ package net.flipper.bridge.connection.feature.hardwareid.impl
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import me.tatarka.inject.annotations.Inject
 import me.tatarka.inject.annotations.IntoMap
 import me.tatarka.inject.annotations.Provides
@@ -32,7 +33,7 @@ class FHardwareIdFeatureApiImpl(
     override fun getHardwareIdFlow(): WrappedFlow<String?> = httpDevice
         .hasCapability(FHTTPTransportCapability.BB_LOCAL_CONNECTION)
         .distinctUntilChanged()
-        .map { hasLocalCapability ->
+        .mapLatest { hasLocalCapability ->
             if (hasLocalCapability) {
                 exponentialRetry {
                     rpcFeatureApi
