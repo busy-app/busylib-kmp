@@ -1,7 +1,7 @@
 package net.flipper.bsb.watchers.changename
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import me.tatarka.inject.annotations.Inject
@@ -37,9 +37,14 @@ class BUSYLibNameWatcher(
         singleJobScope.launch(SingleJobMode.CANCEL_PREVIOUS) {
             orchestrator.getState().flatMapLatest {
                 featureProvider.getFilteredFeature<FSettingsFeatureApi>(it)
-            }.filterNotNull().flatMapLatest { (featureApi, state) ->
-                featureApi.getDeviceName().map { deviceName ->
-                    deviceName to state.device.uniqueId
+            }.flatMapLatest { featureWithState ->
+                if (featureWithState == null) {
+                    emptyFlow()
+                } else {
+                    val (featureApi, state) = featureWithState
+                    featureApi.getDeviceName().map { deviceName ->
+                        deviceName to state.device.uniqueId
+                    }
                 }
             }.collect { (deviceName, deviceId) ->
                 info { "Receive $deviceName for $deviceId" }

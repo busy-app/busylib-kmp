@@ -2,7 +2,7 @@ package net.flipper.bsb.watchers.provisioning
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import me.tatarka.inject.annotations.Inject
@@ -45,8 +45,13 @@ class CloudProvisioningWatcher(
         singleJobScope.launch(SingleJobMode.CANCEL_PREVIOUS) {
             orchestrator.getState().flatMapLatest {
                 featureProvider.getFilteredFeature<FRpcCriticalFeatureApi>(it)
-            }.filterNotNull().flatMapLatest { (featureApi, state) ->
-                featureApi.currentAccountInfo.map { it to state.device.uniqueId }
+            }.flatMapLatest { featureWithState ->
+                if (featureWithState == null) {
+                    emptyFlow()
+                } else {
+                    val (featureApi, state) = featureWithState
+                    featureApi.currentAccountInfo.map { it to state.device.uniqueId }
+                }
             }.collectLatest { (linkedInfo, deviceId) ->
                 runSuspendCatching {
                     onNewLinkedInfo(linkedInfo, deviceId)

@@ -1,5 +1,6 @@
 package net.flipper.bsb.watchers.provisioning
 
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
@@ -163,6 +164,65 @@ class HardwareIdProvisioningWatcherTest {
             assertEquals("SN-456", updated.hardwareId)
             assertNotNull(updated.ble, "BLE transport must be preserved")
             assertNotNull(updated.lan, "LAN transport must be preserved")
+        }
+
+    @Test
+    fun GIVEN_status_request_in_flight_WHEN_device_disconnects_THEN_late_status_is_ignored() =
+        runTest {
+            // The pre-PR pipeline cancelled an in-flight device-status request when the device
+            // dropped. The filter rework must keep that guarantee: a status that resolves after
+            // disconnect belongs to a device that is no longer connected and must not be applied.
+            val device = busyBar(
+                id = "device-1",
+                BUSYBar.ConnectionWay.BLE("AA:BB:CC")
+            )
+            val storage = FakePersistedStorage(MutableStateFlow(listOf(device)))
+            val gate = CompletableDeferred<Unit>()
+            val rpcApi = FakeRpcFeatureApi(
+                systemApi = FakeRpcSystemApi(
+                    deviceStatusResult = Result.success(fakeDeviceStatus(serialNumber = "SN-late")),
+                    awaitBeforeResult = { gate.await() }
+                )
+            )
+            val featureFlow = MutableStateFlow<FFeatureStatus<FRpcFeatureApi>>(
+                FFeatureStatus.Supported(rpcApi)
+            )
+            val scope = CoroutineScope(
+                SupervisorJob(backgroundScope.coroutineContext.job) + StandardTestDispatcher(testScheduler)
+            )
+            val orchestratorState = MutableStateFlow<FDeviceConnectStatus>(
+                FDeviceConnectStatus.Connected(
+                    scope = scope,
+                    device = device,
+                    deviceApi = FakeConnectedDeviceApi(),
+                    transportType = FDeviceTransportType.BLE
+                )
+            )
+            val watcher = HardwareIdProvisioningWatcher(
+                scope = scope,
+                featureProvider = FakeFeatureProvider(featureFlow),
+                orchestrator = FakeOrchestrator(orchestratorState),
+                persistedStorage = storage
+            )
+
+            watcher.onLaunch()
+            advanceUntilIdle()
+
+            // Device drops before the status request resolves.
+            orchestratorState.value = FDeviceConnectStatus.Disconnected(
+                device = device,
+                reason = DisconnectStatus.REPORTED_BY_TRANSPORT
+            )
+            advanceUntilIdle()
+
+            // The status request now resolves, but its device is already gone.
+            gate.complete(Unit)
+            advanceUntilIdle()
+
+            assertNull(
+                storage.devices.value.single().hardwareId,
+                "A device status that resolves after disconnect must not be applied"
+            )
         }
 
     // endregion

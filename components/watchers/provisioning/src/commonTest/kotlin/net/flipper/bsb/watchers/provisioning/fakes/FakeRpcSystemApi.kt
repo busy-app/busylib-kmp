@@ -9,11 +9,15 @@ import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarVersion
 import net.flipper.bridge.connection.feature.rpc.api.model.StatusFirmware
 
 internal class FakeRpcSystemApi(
-    private val deviceStatusResult: Result<BusyBarStatusDevice>
+    private val deviceStatusResult: Result<BusyBarStatusDevice>,
+    private val awaitBeforeResult: suspend () -> Unit = {}
 ) : FRpcSystemApi {
     override suspend fun getVersion(): Result<BusyBarVersion> = error("Not used in test")
     override suspend fun getStatus(): Result<BusyBarStatus> = error("Not used in test")
-    override suspend fun getDeviceStatus(): Result<BusyBarStatusDevice> = deviceStatusResult
+    override suspend fun getDeviceStatus(): Result<BusyBarStatusDevice> {
+        awaitBeforeResult()
+        return deviceStatusResult
+    }
     override suspend fun getStatusFirmware(): Result<StatusFirmware> = error("Not used in test")
     override suspend fun getStatusSystem(): Result<BusyBarStatusSystem> = error("Not used in test")
     override suspend fun getStatusPower(): Result<BusyBarStatusPower> = error("Not used in test")
