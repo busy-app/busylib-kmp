@@ -31,7 +31,7 @@ class FTransportListenerImplTest {
     }
 
     @Test
-    fun GIVEN_recoverable_disconnect_WHEN_retry_connecting_THEN_keeps_disconnected() = runTest {
+    fun GIVEN_recoverable_disconnect_WHEN_retry_connecting_THEN_emits_connecting() = runTest {
         val device = busyBar()
         val listener = FTransportListenerImpl(device)
 
@@ -44,9 +44,8 @@ class FTransportListenerImplTest {
             FInternalTransportConnectionStatus.Connecting(FInternalTransportConnectionType.BLE)
         )
 
-        val state = assertIs<FDeviceConnectStatus.Disconnected>(listener.getState().value)
+        val state = assertIs<FDeviceConnectStatus.Connecting.InProgress>(listener.getState().value)
         assertEquals(device, state.device)
-        assertEquals(DisconnectStatus.REPORTED_BY_TRANSPORT, state.reason)
     }
 
     @Test

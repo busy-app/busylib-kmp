@@ -36,7 +36,11 @@ internal class WrappedConnectionInternal(
     private var connectionApi: FConnectedDeviceApi? = null
     val stateFlow: StateFlow<FInternalTransportConnectionStatus>
         field = MutableStateFlow<FInternalTransportConnectionStatus>(
-            FInternalTransportConnectionStatus.Connecting(config.getTransportTypes())
+            getConnectingStatus()
+        )
+    val stateFlowNotDisconnected: StateFlow<FInternalTransportConnectionStatus>
+        field = MutableStateFlow<FInternalTransportConnectionStatus>(
+            getConnectingStatus()
         )
 
     private val scope = ChildSupervisorScope(
@@ -64,7 +68,7 @@ internal class WrappedConnectionInternal(
                     FInternalDisconnectedReason.OTHER
                 }
             }
-            stateFlow.update { FInternalTransportConnectionStatus.Disconnected(recovery) }
+            updateStatus(FInternalTransportConnectionStatus.Disconnected(recovery))
         }
     )
 
@@ -104,15 +108,35 @@ internal class WrappedConnectionInternal(
             warn { "Call #onStatusUpdate after scope is dead" }
             return
         }
-        stateFlow.update { current ->
-            if (current is FInternalTransportConnectionStatus.Disconnected) {
-                warn { "Status updates are not permitted after the 'Disconnected' status" }
-                current
-            } else {
-                status
-            }
-        }
+        updateStatus(status)
         yield() // Allow collectors to process the state before returning
+    }
+
+    private fun updateStatus(status: FInternalTransportConnectionStatus) {
+        if (stateFlow.value is FInternalTransportConnectionStatus.Disconnected) {
+            warn { "Status updates are not permitted after the 'Disconnected' status" }
+            return
+        }
+        // Combined transport keeps recoverable reconnects private and reports them as Connecting.
+        stateFlowNotDisconnected.update { status.toNotDisconnectedStatus() }
+        stateFlow.update { status }
+    }
+
+    private fun FInternalTransportConnectionStatus.toNotDisconnectedStatus(): FInternalTransportConnectionStatus {
+        return when (this) {
+            is FInternalTransportConnectionStatus.Disconnected ->
+                if (reason.isRecoverable) {
+                    getConnectingStatus()
+                } else {
+                    this
+                }
+
+            else -> this
+        }
+    }
+
+    private fun getConnectingStatus(): FInternalTransportConnectionStatus.Connecting {
+        return FInternalTransportConnectionStatus.Connecting(config.getTransportTypes())
     }
 
     suspend fun disconnect() {

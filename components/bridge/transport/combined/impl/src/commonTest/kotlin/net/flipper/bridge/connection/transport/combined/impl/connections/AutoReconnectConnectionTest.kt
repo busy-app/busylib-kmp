@@ -175,6 +175,46 @@ class AutoReconnectConnectionTest {
     }
 
     @Test
+    fun GIVEN_connected_WHEN_recoverable_disconnected_THEN_state_reports_connecting() = runTest {
+        // Given
+        val testDispatcher = StandardTestDispatcher(testScheduler)
+        val connectionBuilder = MockConnectionBuilder()
+        val autoReconnect = AutoReconnectConnection(
+            scope = backgroundScope,
+            initialConfig = TestConfig(),
+            connectionBuilder = connectionBuilder,
+            dispatcher = testDispatcher
+        )
+
+        connectionBuilder.connectCalledDeferred.await()
+        advanceUntilIdle()
+
+        val listener = connectionBuilder.latestListener()!!
+        listener.onStatusUpdate(
+            FInternalTransportConnectionStatus.Connected(
+                scope = backgroundScope,
+                deviceApi = connectionBuilder.deviceApis.last(),
+                connectionType = FInternalTransportConnectionType.MOCK
+            )
+        )
+        advanceUntilIdle()
+
+        // When
+        listener.onStatusUpdate(
+            FInternalTransportConnectionStatus.Disconnected(
+                FInternalDisconnectedReason.OTHER
+            )
+        )
+        advanceUntilIdle()
+
+        // Then
+        assertIs<FInternalTransportConnectionStatus.Connecting>(
+            autoReconnect.stateFlow.value,
+            "Recoverable disconnection should stay hidden behind Connecting"
+        )
+    }
+
+    @Test
     fun GIVEN_connected_WHEN_not_recoverable_disconnected_THEN_automatic_reconnection_stops() = runTest {
         // Given
         val testDispatcher = StandardTestDispatcher(testScheduler)

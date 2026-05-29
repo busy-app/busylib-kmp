@@ -63,7 +63,7 @@ class AutoReconnectConnection(
                 val disconnectedStatus = connection.stateFlow
                     .onEach { connectionStatus ->
                         info { "Got connection status $connectionStatus" }
-                        stateFlow.emit(connectionStatus)
+                        stateFlow.emit(connection.stateFlowNotDisconnected.value)
                         if (connectionStatus is FInternalTransportConnectionStatus.Connected) {
                             retryCount = 0
                         }

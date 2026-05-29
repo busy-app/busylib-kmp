@@ -50,7 +50,7 @@ class FTransportListenerImpl(config: BUSYBar) : LogTagProvider {
     }
 
     fun onStatusUpdate(device: BUSYBar, status: FInternalTransportConnectionStatus) {
-        val newState = state.updateAndGet { currentStatus ->
+        val newState = state.updateAndGet {
             when (status) {
                 is FInternalTransportConnectionStatus.Connected -> FDeviceConnectStatus.Connected(
                     device = device,
@@ -59,36 +59,21 @@ class FTransportListenerImpl(config: BUSYBar) : LogTagProvider {
                     transportType = status.connectionTypes.maxBy { it.priority }.toPublic()
                 )
 
-                is FInternalTransportConnectionStatus.Connecting ->
-                    if (currentStatus.isDisconnectedFor(device)) {
-                        // Hide background reconnect attempts after the first public disconnect.
-                        currentStatus
-                    } else {
-                        FDeviceConnectStatus.Connecting.InProgress(
-                            device = device,
-                            status = ConnectingStatus.CONNECTING,
-                            transportTypes = status.connectionTypes.map { it.toPublic() }.wrap()
-                        )
-                    }
+                is FInternalTransportConnectionStatus.Connecting -> FDeviceConnectStatus.Connecting.InProgress(
+                    device = device,
+                    status = ConnectingStatus.CONNECTING,
+                    transportTypes = status.connectionTypes.map { it.toPublic() }.wrap()
+                )
 
                 is FInternalTransportConnectionStatus.Disconnected -> {
                     val reason = when (status.reason) {
                         REQUIRES_REPAIRING -> DisconnectStatus.REQUIRES_REPAIRING
                         OTHER -> DisconnectStatus.REPORTED_BY_TRANSPORT
                     }
-                    when {
-                        reason == DisconnectStatus.REQUIRES_REPAIRING -> FDeviceConnectStatus.Disconnected(
-                            device = device,
-                            reason = reason
-                        )
-
-                        currentStatus.isDisconnectedFor(device) -> currentStatus
-
-                        else -> FDeviceConnectStatus.Disconnected(
-                            device = device,
-                            reason = reason
-                        )
-                    }
+                    FDeviceConnectStatus.Disconnected(
+                        device = device,
+                        reason = reason
+                    )
                 }
                 FInternalTransportConnectionStatus.Disconnecting -> FDeviceConnectStatus.Disconnecting(
                     device
@@ -96,12 +81,6 @@ class FTransportListenerImpl(config: BUSYBar) : LogTagProvider {
             }
         }
         info { "New state is $newState" }
-    }
-
-    private fun FDeviceConnectStatus.isDisconnectedFor(device: BUSYBar): Boolean {
-        val disconnectedStatus = this as? FDeviceConnectStatus.Disconnected
-            ?: return false
-        return disconnectedStatus.device?.uniqueId == device.uniqueId
     }
 
     companion object {

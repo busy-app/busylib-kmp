@@ -92,13 +92,8 @@ class FDeviceOrchestratorImpl(
             listener = { deviceHolder, status ->
                 info { "Received status update for device ${deviceHolder.uniqueId}: $status" }
                 if (status is FInternalTransportConnectionStatus.Disconnected) {
-                    if (status.reason.isRecoverable) {
-                        // Combined transport owns recoverable reconnects, so keep the holder alive.
+                    onInternalDisconnect(deviceHolder) {
                         localTransportListener.onStatusUpdate(config, status)
-                    } else {
-                        onInternalDisconnect(deviceHolder) {
-                            localTransportListener.onStatusUpdate(config, status)
-                        }
                     }
                 } else {
                     localTransportListener.onStatusUpdate(config, status)
