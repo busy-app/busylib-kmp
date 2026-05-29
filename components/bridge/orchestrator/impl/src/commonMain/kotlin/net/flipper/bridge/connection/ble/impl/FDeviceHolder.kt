@@ -9,6 +9,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.job
 import me.tatarka.inject.annotations.Inject
+import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.connectionbuilder.api.FDeviceConfigToConnection
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
@@ -23,8 +24,6 @@ import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
 
-typealias DeviceHolderListener<API, T> = (FDeviceHolder<API>, T) -> Unit
-
 // Generics don't work with Anvil/Dagger
 @Inject
 class FDeviceHolderFactory(
@@ -33,17 +32,13 @@ class FDeviceHolderFactory(
     fun <API : FConnectedDeviceApi> build(
         uniqueId: String,
         config: FDeviceConnectionConfig<API>,
-        listener: DeviceHolderListener<API, FInternalTransportConnectionStatus>,
-        onConnectError: DeviceHolderListener<API, Throwable>,
-        exceptionHandler: DeviceHolderListener<API, Throwable>
+        listener: FTransportListenerImpl
     ): FDeviceHolder<API> {
         return FDeviceHolder(
             uniqueId = uniqueId,
             config = config,
             listener = listener,
-            onConnectError = onConnectError,
-            deviceConnectionHelper = deviceConnectionHelper,
-            exceptionHandler = exceptionHandler
+            deviceConnectionHelper = deviceConnectionHelper
         )
     }
 }
@@ -51,21 +46,19 @@ class FDeviceHolderFactory(
 class FDeviceHolder<API : FConnectedDeviceApi>(
     val uniqueId: String,
     private val config: FDeviceConnectionConfig<API>,
-    private val listener: DeviceHolderListener<API, FInternalTransportConnectionStatus>,
-    private val onConnectError: DeviceHolderListener<API, Throwable>,
-    private val deviceConnectionHelper: FDeviceConfigToConnection,
-    private val exceptionHandler: DeviceHolderListener<API, Throwable>
+    private val listener: FTransportListenerImpl,
+    private val deviceConnectionHelper: FDeviceConfigToConnection
 ) : LogTagProvider {
     override val TAG = "FDeviceHolder-$config"
 
-    private val transportConnectionListener =
-        FTransportConnectionStatusListener { transportConnectionStatus ->
-            listener.invoke(this, transportConnectionStatus)
-        }
+    private val transportConnectionListener = FTransportConnectionStatusListener { status ->
+        listener.onStatusUpdate(this, status)
+    }
 
     private val scope = CoroutineScope(
         FlipperDispatchers.default + CoroutineExceptionHandler { _, throwable ->
-            exceptionHandler(this, throwable)
+            error(throwable) { "Exception in coroutine" }
+            listener.onErrorDuringConnect(this, throwable)
         }
     )
 
@@ -78,19 +71,23 @@ class FDeviceHolder<API : FConnectedDeviceApi>(
             )
         }.transform { it }
             .onFailure { t ->
-                onConnectError(this@FDeviceHolder, t)
+                error(t) { "Exception in init" }
+                listener.onErrorDuringConnect(this@FDeviceHolder, t)
                 scope.cancel(CancellationException("Connect failed", t))
             }.getOrThrow()
     }
 
     @Suppress("RunCatchingInSuspendRule")
     suspend fun tryToUpdateConnectionConfig(
+        bbConfig: BUSYBar,
         config: FDeviceConnectionConfig<*>
     ): Result<Unit> {
         return runCatching { // By design to handle cancellation exception
             deviceApi.getCompleted()
         }.transform { deviceApi ->
             deviceApi.tryUpdateConnectionConfig(config)
+        }.onSuccess {
+            listener.updateConfig(bbConfig)
         }
     }
 
@@ -110,7 +107,7 @@ class FDeviceHolder<API : FConnectedDeviceApi>(
         scope.coroutineContext.job.invokeOnCompletion { t ->
             when (t) {
                 null, is CancellationException -> {
-                    listener.invoke(
+                    listener.onStatusUpdate(
                         this,
                         FInternalTransportConnectionStatus.Disconnected(
                             FInternalDisconnectedReason.OTHER
@@ -119,7 +116,7 @@ class FDeviceHolder<API : FConnectedDeviceApi>(
                 }
 
                 is FailedPairingConnectException -> {
-                    listener.invoke(
+                    listener.onStatusUpdate(
                         this,
                         FInternalTransportConnectionStatus.Disconnected(
                             FInternalDisconnectedReason.REQUIRES_REPAIRING
@@ -132,7 +129,7 @@ class FDeviceHolder<API : FConnectedDeviceApi>(
                         "#init catch error during invokeOnCompletion. " +
                             "Status update will be handled inside exception handler"
                     }
-                    listener.invoke(
+                    listener.onStatusUpdate(
                         this,
                         FInternalTransportConnectionStatus.Disconnected(
                             FInternalDisconnectedReason.OTHER
