@@ -9,7 +9,6 @@ import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.config.api.getDevice
 import net.flipper.bridge.connection.config.api.model.copy
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
-import net.flipper.bridge.connection.feature.provider.api.get
 import net.flipper.bridge.connection.feature.provider.api.getFilteredFeature
 import net.flipper.bridge.connection.feature.settings.api.FSettingsFeatureApi
 import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
