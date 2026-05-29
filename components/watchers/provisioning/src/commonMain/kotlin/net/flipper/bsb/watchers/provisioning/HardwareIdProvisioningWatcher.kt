@@ -85,13 +85,19 @@ class HardwareIdProvisioningWatcher(
                         "Found device with another hardware id. " +
                                 "Current is $original, but new one is $hardwareId"
                     }
-                    // Add new and set it
-                    setCurrentDevice(
+                    val existedDevice = getAllDevices().find { it.hardwareId == hardwareId }
+                    val newCurrentDevice = if (existedDevice == null) {
                         original.copyTransports(uniqueId = Uuid.random().toString())
                             .copy(
                                 hardwareId = hardwareId
-                            )
-                    )
+                            ).copy(cloud = null)
+                    } else {
+                        info { "Found existed device with hardware id" }
+                        existedDevice
+                    }
+                    info { "New device is: $newCurrentDevice" }
+                    // Add device if not and set it
+                    newCurrentDevice?.let { setCurrentDevice(it) }
                     return@let true
                 } else {
                     return@let false

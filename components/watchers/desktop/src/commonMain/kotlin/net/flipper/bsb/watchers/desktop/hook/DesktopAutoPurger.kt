@@ -15,6 +15,7 @@ class DesktopAutoPurger : TransactionHook, LogTagProvider {
     override fun InternalStorageTransactionScope.postTransaction() {
         val onlyLansOrEmpty = getAllDevices()
             .filter { it.connectionWays.isEmpty() || (it.lan != null && it.connectionWays.size == 1) }
+            .filter { it != getCurrentDevice() }
         if (onlyLansOrEmpty.isEmpty()) {
             return
         }
