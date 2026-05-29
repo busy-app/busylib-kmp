@@ -15,7 +15,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import net.flipper.bridge.connection.connectionbuilder.api.FDeviceConfigToConnection
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
-import net.flipper.bridge.connection.transport.common.api.FInternalDisconnectedReason
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 import net.flipper.core.busylib.ktx.common.getExponentialDelay
@@ -74,9 +73,8 @@ class AutoReconnectConnection(
                 info { "Got disconnected event ${disconnectedStatus.reason}" }
                 connection.disconnect()
 
-                when (disconnectedStatus.reason) {
-                    FInternalDisconnectedReason.REQUIRES_REPAIRING -> return@launch
-                    FInternalDisconnectedReason.OTHER -> {}
+                if (!disconnectedStatus.reason.isRecoverable) {
+                    return@launch
                 }
 
                 delay(getExponentialDelay(retryCount))
