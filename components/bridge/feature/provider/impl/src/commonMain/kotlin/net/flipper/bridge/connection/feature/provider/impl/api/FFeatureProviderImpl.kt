@@ -109,6 +109,27 @@ class FFeatureProviderImpl(
         }
     }
 
+    override fun <T : FDeviceFeatureApi> getFiltered(
+        status: FDeviceConnectStatus.Connected,
+        clazz: KClass<T>
+    ): Flow<FFeatureStatus<T>> {
+        return deviceStateFlow.flatMapLatest { deviceApi ->
+            if (deviceApi == null || deviceApi.isSame(status.deviceApi).not()) {
+                flowOf(FFeatureStatus.Retrieving)
+            } else {
+                flow<FFeatureStatus<T>> {
+                    emit(FFeatureStatus.Retrieving)
+                    val feature = deviceApi.get(clazz)?.await()
+                    if (feature == null) {
+                        emit(FFeatureStatus.Unsupported)
+                    } else {
+                        emit(FFeatureStatus.Supported(feature))
+                    }
+                }
+            }
+        }
+    }
+
     override suspend fun <T : FDeviceFeatureApi> getSync(clazz: KClass<T>): T? {
         return get(clazz)
             .filter { it !is FFeatureStatus.Retrieving }

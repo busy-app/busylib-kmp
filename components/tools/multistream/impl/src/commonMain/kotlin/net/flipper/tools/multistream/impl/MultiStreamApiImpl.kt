@@ -3,6 +3,7 @@ package net.flipper.tools.multistream.impl
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flatMapLatest
@@ -16,9 +17,11 @@ import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
 import net.flipper.bridge.connection.feature.provider.api.get
+import net.flipper.bridge.connection.feature.provider.api.getFiltered
 import net.flipper.bridge.connection.feature.screenstreaming.api.FScreenStreamingFeatureApi
 import net.flipper.bridge.connection.feature.screenstreaming.impl.delegates.ScreenFramesProvider
 import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
+import net.flipper.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
 import net.flipper.bridge.connection.orchestrator.api.model.deviceOrNull
 import net.flipper.bridge.connection.transport.tcp.lan.impl.metainfo.FCloudStreamingApi
 import net.flipper.bsb.cloud.barsws.api.CloudWebSocketOrchestratorApi
@@ -44,16 +47,20 @@ class MultiStreamApiImpl(
     ): WrappedFlow<MultiStreamState> {
         return orchestrator.getState().flatMapLatest { state ->
             if (state.deviceOrNull?.uniqueId == busyBar.uniqueId) {
-                return@flatMapLatest featureProvider
-                    .get<FScreenStreamingFeatureApi>()
-                    .filterIsInstance<FFeatureStatus.Supported<*>>()
-                    .filter { fFeatureStatus -> fFeatureStatus.featureApi is FScreenStreamingFeatureApi }
-                    .filterIsInstance<FFeatureStatus.Supported<FScreenStreamingFeatureApi>>()
-                    .flatMapLatest { status ->
-                        status.featureApi.busyImageFormatFlow.map {
-                            MultiStreamState.Frame(it)
+                if (state is FDeviceConnectStatus.Connected) {
+                    return@flatMapLatest featureProvider
+                        .getFiltered<FScreenStreamingFeatureApi>(state)
+                        .filterIsInstance<FFeatureStatus.Supported<*>>()
+                        .filter { fFeatureStatus -> fFeatureStatus.featureApi is FScreenStreamingFeatureApi }
+                        .filterIsInstance<FFeatureStatus.Supported<FScreenStreamingFeatureApi>>()
+                        .flatMapLatest { status ->
+                            status.featureApi.busyImageFormatFlow.map {
+                                MultiStreamState.Frame(it)
+                            }
                         }
-                    }
+                } else {
+                    return@flatMapLatest emptyFlow()
+                }
             } else {
                 createCloudStreamFlow(busyBar)
             }

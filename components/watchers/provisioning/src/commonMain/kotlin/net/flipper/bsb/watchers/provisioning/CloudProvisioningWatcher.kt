@@ -2,9 +2,7 @@ package net.flipper.bsb.watchers.provisioning
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.config.api.getDevice
@@ -15,16 +13,16 @@ import net.flipper.bridge.connection.config.api.model.copyTransports
 import net.flipper.bridge.connection.config.internal.FInternalDevicePersistedStorage
 import net.flipper.bridge.connection.config.internal.InternalStorageTransactionScope
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
-import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
 import net.flipper.bridge.connection.feature.provider.api.get
+import net.flipper.bridge.connection.feature.provider.api.getFilteredFeature
 import net.flipper.bridge.connection.feature.rpc.api.critical.FRpcCriticalFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.RpcLinkedAccountInfo
 import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
-import net.flipper.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
 import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.ktx.common.SingleJobMode
 import net.flipper.core.busylib.ktx.common.asSingleJobScope
+import net.flipper.core.busylib.ktx.common.flatMapLatestNonNullable
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
@@ -46,31 +44,17 @@ class CloudProvisioningWatcher(
 
     override fun onLaunch() {
         singleJobScope.launch(SingleJobMode.CANCEL_PREVIOUS) {
-            combine(
-                orchestrator.getState(),
-                featureProvider.get<FRpcCriticalFeatureApi>()
-            ) { state, rpcApiStatus ->
-                if (state is FDeviceConnectStatus.Connected) {
-                    when (rpcApiStatus) {
-                        FFeatureStatus.NotFound,
-                        FFeatureStatus.Retrieving,
-                        FFeatureStatus.Unsupported -> flowOf()
-
-                        is FFeatureStatus.Supported<FRpcCriticalFeatureApi> -> {
-                            rpcApiStatus.featureApi.currentAccountInfo.map { it to state.device.uniqueId }
-                        }
-                    }
-                } else {
-                    flowOf()
+            orchestrator.getState().flatMapLatestNonNullable {
+                featureProvider.getFilteredFeature<FRpcCriticalFeatureApi>(it)
+            }.flatMapLatest { (featureApi, state) ->
+                featureApi.currentAccountInfo.map { it to state.device.uniqueId }
+            }.collectLatest { (linkedInfo, deviceId) ->
+                runSuspendCatching {
+                    onNewLinkedInfo(linkedInfo, deviceId)
+                }.onFailure {
+                    error(it) { "Failed to handle new linked info" }
                 }
-            }.flatMapLatest { it }
-                .collectLatest { (linkedInfo, deviceId) ->
-                    runSuspendCatching {
-                        onNewLinkedInfo(linkedInfo, deviceId)
-                    }.onFailure {
-                        error(it) { "Failed to handle new linked info" }
-                    }
-                }
+            }
         }
     }
 

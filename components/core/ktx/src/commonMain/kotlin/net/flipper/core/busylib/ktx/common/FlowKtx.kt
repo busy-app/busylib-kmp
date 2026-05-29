@@ -20,6 +20,12 @@ fun <T> Flow<T>?.orNullable(): Flow<T?> = this ?: flowOf(null)
 
 fun <T> SharedFlow<T>.asFlow(): Flow<T> = this.map { value -> value }
 
+inline fun <T, R> Flow<T>.flatMapLatestNonNullable(crossinline transform: suspend (value: T) -> Flow<R?>): Flow<R> {
+    return flatMapLatest { original ->
+        transform(original)
+    }.flatMapLatest { nullable -> nullable?.let { flowOf(it) } ?: emptyFlow() }
+}
+
 inline fun <T, R> Flow<T>.mapCached(
     crossinline transform: suspend (value: T, previous: R?) -> R
 ): Flow<R> = flow {

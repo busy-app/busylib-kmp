@@ -403,6 +403,11 @@ class CloudProvisioningWatcherTest {
             return rpcFlow as Flow<FFeatureStatus<T>>
         }
 
+        override fun <T : FDeviceFeatureApi> getFiltered(
+            status: FDeviceConnectStatus.Connected,
+            clazz: KClass<T>
+        ): Flow<FFeatureStatus<T>> = get(clazz)
+
         override suspend fun <T : FDeviceFeatureApi> getSync(clazz: KClass<T>): T? = null
     }
 
