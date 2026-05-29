@@ -33,7 +33,7 @@ class HardwareIdProvisioningWatcher(
     private val featureProvider: FFeatureProvider,
     private val orchestrator: FDeviceOrchestrator,
     private val persistedStorage: FInternalDevicePersistedStorage,
-    private val cloudFetcherWatcher: CloudFetcherWatcher
+    private val cloudInvalidator: CloudInvalidator
 ) : InternalBUSYLibStartupListener, LogTagProvider {
     override val TAG = "HardwareIdProvisioningWatcher"
 
@@ -83,7 +83,7 @@ class HardwareIdProvisioningWatcher(
                 } else if (original.hardwareId != hardwareId) {
                     info {
                         "Found device with another hardware id. " +
-                                "Current is $original, but new one is $hardwareId"
+                            "Current is $original, but new one is $hardwareId"
                     }
                     val existedDevice = getAllDevices().find { it.hardwareId == hardwareId }
                     val newCurrentDevice = if (existedDevice == null) {
@@ -105,7 +105,7 @@ class HardwareIdProvisioningWatcher(
             } ?: false
         }
         if (shouldInvalidateCloud) {
-            cloudFetcherWatcher.invalidate()
+            cloudInvalidator.invalidate()
         }
     }
 }
