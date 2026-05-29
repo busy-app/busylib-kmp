@@ -2,6 +2,8 @@ package net.flipper.bsb.watchers.provisioning
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.mapNotNull
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.config.api.getDevice
@@ -18,7 +20,6 @@ import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.ktx.common.SingleJobMode
 import net.flipper.core.busylib.ktx.common.asSingleJobScope
-import net.flipper.core.busylib.ktx.common.flatMapLatestNonNullable
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
@@ -37,9 +38,9 @@ class HardwareIdProvisioningWatcher(
 
     override fun onLaunch() {
         singleJobScope.launch(SingleJobMode.CANCEL_PREVIOUS) {
-            orchestrator.getState().flatMapLatestNonNullable {
+            orchestrator.getState().flatMapLatest {
                 featureProvider.getFilteredFeature<FRpcFeatureApi>(it)
-            }.mapNotNull { (featureApi, state) ->
+            }.filterNotNull().mapNotNull { (featureApi, state) ->
                 if (state.device.hardwareId == null) {
                     featureApi to state.device
                 } else {

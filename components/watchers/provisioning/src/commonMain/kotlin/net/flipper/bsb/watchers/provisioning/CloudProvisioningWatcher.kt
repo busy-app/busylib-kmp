@@ -2,6 +2,7 @@ package net.flipper.bsb.watchers.provisioning
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import me.tatarka.inject.annotations.Inject
@@ -13,7 +14,6 @@ import net.flipper.bridge.connection.config.api.model.copyTransports
 import net.flipper.bridge.connection.config.internal.FInternalDevicePersistedStorage
 import net.flipper.bridge.connection.config.internal.InternalStorageTransactionScope
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
-import net.flipper.bridge.connection.feature.provider.api.get
 import net.flipper.bridge.connection.feature.provider.api.getFilteredFeature
 import net.flipper.bridge.connection.feature.rpc.api.critical.FRpcCriticalFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.RpcLinkedAccountInfo
@@ -22,7 +22,6 @@ import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.ktx.common.SingleJobMode
 import net.flipper.core.busylib.ktx.common.asSingleJobScope
-import net.flipper.core.busylib.ktx.common.flatMapLatestNonNullable
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
@@ -44,9 +43,9 @@ class CloudProvisioningWatcher(
 
     override fun onLaunch() {
         singleJobScope.launch(SingleJobMode.CANCEL_PREVIOUS) {
-            orchestrator.getState().flatMapLatestNonNullable {
+            orchestrator.getState().flatMapLatest {
                 featureProvider.getFilteredFeature<FRpcCriticalFeatureApi>(it)
-            }.flatMapLatest { (featureApi, state) ->
+            }.filterNotNull().flatMapLatest { (featureApi, state) ->
                 featureApi.currentAccountInfo.map { it to state.device.uniqueId }
             }.collectLatest { (linkedInfo, deviceId) ->
                 runSuspendCatching {

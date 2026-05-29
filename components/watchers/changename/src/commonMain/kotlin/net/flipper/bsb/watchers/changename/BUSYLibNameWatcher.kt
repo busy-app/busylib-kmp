@@ -1,6 +1,7 @@
 package net.flipper.bsb.watchers.changename
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import me.tatarka.inject.annotations.Inject
@@ -16,7 +17,6 @@ import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.ktx.common.SingleJobMode
 import net.flipper.core.busylib.ktx.common.asSingleJobScope
-import net.flipper.core.busylib.ktx.common.flatMapLatestNonNullable
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
@@ -36,9 +36,9 @@ class BUSYLibNameWatcher(
     override fun onLaunch() {
         info { "Launched" }
         singleJobScope.launch(SingleJobMode.CANCEL_PREVIOUS) {
-            orchestrator.getState().flatMapLatestNonNullable {
+            orchestrator.getState().flatMapLatest {
                 featureProvider.getFilteredFeature<FSettingsFeatureApi>(it)
-            }.flatMapLatest { (featureApi, state) ->
+            }.filterNotNull().flatMapLatest { (featureApi, state) ->
                 featureApi.getDeviceName().map { deviceName ->
                     deviceName to state.device.uniqueId
                 }
