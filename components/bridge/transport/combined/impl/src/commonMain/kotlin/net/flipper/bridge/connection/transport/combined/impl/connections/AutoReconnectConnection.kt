@@ -38,8 +38,12 @@ class AutoReconnectConnection(
 
     val stateFlow: StateFlow<FInternalTransportConnectionStatus>
         field = MutableStateFlow<FInternalTransportConnectionStatus>(
-            FInternalTransportConnectionStatus.Connecting(config.getTransportTypes())
+            getConnectingStatus()
         )
+
+    private val stateFlowNotDisconnected = MutableStateFlow<FInternalTransportConnectionStatus>(
+        getConnectingStatus()
+    )
 
     init {
         connectionJob = scope.launch {
@@ -63,7 +67,8 @@ class AutoReconnectConnection(
                 val disconnectedStatus = connection.stateFlow
                     .onEach { connectionStatus ->
                         info { "Got connection status $connectionStatus" }
-                        stateFlow.emit(connection.stateFlowNotDisconnected.value)
+                        stateFlowNotDisconnected.emit(connectionStatus.toNotDisconnectedStatus())
+                        stateFlow.emit(stateFlowNotDisconnected.value)
                         if (connectionStatus is FInternalTransportConnectionStatus.Connected) {
                             retryCount = 0
                         }
@@ -104,5 +109,22 @@ class AutoReconnectConnection(
 
     suspend fun disconnect() {
         connectionJob.cancelAndJoin()
+    }
+
+    private fun FInternalTransportConnectionStatus.toNotDisconnectedStatus(): FInternalTransportConnectionStatus {
+        return when (this) {
+            is FInternalTransportConnectionStatus.Disconnected ->
+                if (reason.isRecoverable) {
+                    getConnectingStatus()
+                } else {
+                    this
+                }
+
+            else -> this
+        }
+    }
+
+    private fun getConnectingStatus(): FInternalTransportConnectionStatus.Connecting {
+        return FInternalTransportConnectionStatus.Connecting(config.getTransportTypes())
     }
 }

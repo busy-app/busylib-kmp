@@ -38,10 +38,6 @@ internal class WrappedConnectionInternal(
         field = MutableStateFlow<FInternalTransportConnectionStatus>(
             getConnectingStatus()
         )
-    val stateFlowNotDisconnected: StateFlow<FInternalTransportConnectionStatus>
-        field = MutableStateFlow<FInternalTransportConnectionStatus>(
-            getConnectingStatus()
-        )
 
     private val scope = ChildSupervisorScope(
         parentScope = parentScope,
@@ -117,22 +113,7 @@ internal class WrappedConnectionInternal(
             warn { "Status updates are not permitted after the 'Disconnected' status" }
             return
         }
-        // Combined transport keeps recoverable reconnects private and reports them as Connecting.
-        stateFlowNotDisconnected.update { status.toNotDisconnectedStatus() }
         stateFlow.update { status }
-    }
-
-    private fun FInternalTransportConnectionStatus.toNotDisconnectedStatus(): FInternalTransportConnectionStatus {
-        return when (this) {
-            is FInternalTransportConnectionStatus.Disconnected ->
-                if (reason.isRecoverable) {
-                    getConnectingStatus()
-                } else {
-                    this
-                }
-
-            else -> this
-        }
     }
 
     private fun getConnectingStatus(): FInternalTransportConnectionStatus.Connecting {
