@@ -109,11 +109,13 @@ internal class WrappedConnectionInternal(
     }
 
     private fun updateStatus(status: FInternalTransportConnectionStatus) {
-        if (stateFlow.value is FInternalTransportConnectionStatus.Disconnected) {
-            warn { "Status updates are not permitted after the 'Disconnected' status" }
-            return
+        stateFlow.update { current ->
+            if (current is FInternalTransportConnectionStatus.Disconnected) {
+                warn { "Status updates are not permitted after the 'Disconnected' status" }
+                return@update current
+            }
+            return@update status
         }
-        stateFlow.update { status }
     }
 
     private fun getConnectingStatus(): FInternalTransportConnectionStatus.Connecting {
