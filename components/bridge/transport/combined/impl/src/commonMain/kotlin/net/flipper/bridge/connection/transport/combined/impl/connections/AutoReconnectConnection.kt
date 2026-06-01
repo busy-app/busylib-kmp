@@ -6,9 +6,9 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -40,7 +40,8 @@ class AutoReconnectConnection(
         getConnectingStatus()
     )
 
-    val stateFlow = stateFlowWithDisconnected.map { it.toNotDisconnectedStatus() }
+    val stateFlow: StateFlow<FInternalTransportConnectionStatus>
+        field = MutableStateFlow(stateFlowWithDisconnected.value.toNotDisconnectedStatus())
 
     init {
         connectionJob = scope.launch {
@@ -65,6 +66,7 @@ class AutoReconnectConnection(
                     .onEach { connectionStatus ->
                         info { "Got connection status $connectionStatus" }
                         stateFlowWithDisconnected.emit(connectionStatus)
+                        stateFlow.value = connectionStatus.toNotDisconnectedStatus()
                         if (connectionStatus is FInternalTransportConnectionStatus.Connected) {
                             retryCount = 0
                         }
