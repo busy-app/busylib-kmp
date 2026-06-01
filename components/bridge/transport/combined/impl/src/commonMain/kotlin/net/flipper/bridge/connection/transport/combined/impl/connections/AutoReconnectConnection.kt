@@ -2,13 +2,17 @@ package net.flipper.bridge.connection.transport.combined.impl.connections
 
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalForInheritanceCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -36,14 +40,11 @@ class AutoReconnectConnection(
     private val updateMutex = Mutex()
     private val connectionJob: Job
 
-    val stateFlow: StateFlow<FInternalTransportConnectionStatus>
-        field = MutableStateFlow<FInternalTransportConnectionStatus>(
-            getConnectingStatus()
-        )
-
-    private val stateFlowNotDisconnected = MutableStateFlow<FInternalTransportConnectionStatus>(
+    private val stateFlowWithDisconnected = MutableStateFlow<FInternalTransportConnectionStatus>(
         getConnectingStatus()
     )
+
+    val stateFlow = stateFlowWithDisconnected.map { it.toNotDisconnectedStatus() }
 
     init {
         connectionJob = scope.launch {
@@ -67,8 +68,7 @@ class AutoReconnectConnection(
                 val disconnectedStatus = connection.stateFlow
                     .onEach { connectionStatus ->
                         info { "Got connection status $connectionStatus" }
-                        stateFlowNotDisconnected.emit(connectionStatus.toNotDisconnectedStatus())
-                        stateFlow.emit(stateFlowNotDisconnected.value)
+                        stateFlowWithDisconnected.emit(connectionStatus)
                         if (connectionStatus is FInternalTransportConnectionStatus.Connected) {
                             retryCount = 0
                         }
