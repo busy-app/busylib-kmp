@@ -80,7 +80,6 @@ class FConnectionServiceImpl(
                                 "Skip reconnect for ${expectedState.device.uniqueId}: reason=${realState.reason}, " +
                                     "awaiting explicit user re-pair"
                             }
-                            }
                         } else {
                             orchestrator.connectIfNot(expectedState.device)
                         }
