@@ -2,9 +2,11 @@ package net.flipper.bridge.connection.device.common.api
 
 import kotlinx.coroutines.Deferred
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
+import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import kotlin.reflect.KClass
 
 interface FDeviceApi {
+    fun isSame(connectedDevice: FConnectedDeviceApi): Boolean
     suspend fun <T : FDeviceFeatureApi> get(clazz: KClass<T>): Deferred<T?>?
 }
 

@@ -5,6 +5,7 @@ import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
+import net.flipper.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
 import kotlin.reflect.KClass
 
 internal class FakeFeatureProvider(
@@ -14,6 +15,11 @@ internal class FakeFeatureProvider(
     override fun <T : FDeviceFeatureApi> get(clazz: KClass<T>): Flow<FFeatureStatus<T>> {
         return rpcFlow as Flow<FFeatureStatus<T>>
     }
+
+    override fun <T : FDeviceFeatureApi> getFiltered(
+        status: FDeviceConnectStatus.Connected,
+        clazz: KClass<T>
+    ): Flow<FFeatureStatus<T>> = get(clazz)
 
     override suspend fun <T : FDeviceFeatureApi> getSync(clazz: KClass<T>): T? = null
 }

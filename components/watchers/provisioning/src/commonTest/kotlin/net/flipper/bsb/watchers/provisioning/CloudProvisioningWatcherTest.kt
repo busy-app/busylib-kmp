@@ -31,6 +31,7 @@ import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarLinkCode
 import net.flipper.bridge.connection.feature.rpc.api.model.RpcLinkedAccountInfo
 import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
 import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
+import net.flipper.bridge.connection.orchestrator.api.model.DisconnectStatus
 import net.flipper.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
 import net.flipper.bridge.connection.orchestrator.api.model.FDeviceTransportType
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
@@ -268,6 +269,62 @@ class CloudProvisioningWatcherTest {
         assertTrue(updated.filterNotNull().mapNotNull { it.connectionWays[2] }.first() is BUSYBar.ConnectionWay.BLE)
     }
 
+    @Test
+    fun GIVEN_connected_WHEN_device_disconnects_THEN_late_account_info_from_that_device_is_ignored() =
+        runTest {
+            // Reproduces the wrong-device leak: once the device is gone, its feature flow must
+            // stop being consumed. A late emission from the detached feature must not be applied.
+            val device = busyBar(
+                id = "device-1",
+                BUSYBar.ConnectionWay.BLE("AA:BB:CC")
+            )
+            val storage = FakePersistedStorage(MutableStateFlow(listOf(device)))
+            val accountInfoFlow = MutableStateFlow<RpcLinkedAccountInfo?>(null)
+            val featureFlow = MutableStateFlow<FFeatureStatus<FRpcCriticalFeatureApi>>(
+                FFeatureStatus.Supported(FakeRpcCriticalFeatureApi(accountInfoFlow))
+            )
+            val scope = CoroutineScope(
+                SupervisorJob(backgroundScope.coroutineContext.job) + StandardTestDispatcher(testScheduler)
+            )
+            val orchestratorState = MutableStateFlow<FDeviceConnectStatus>(
+                FDeviceConnectStatus.Connected(
+                    scope = scope,
+                    device = device,
+                    deviceApi = FakeConnectedDeviceApi(),
+                    transportType = FDeviceTransportType.CLOUD
+                )
+            )
+            val watcher = CloudProvisioningWatcher(
+                scope = scope,
+                featureProvider = FakeFeatureProvider(featureFlow),
+                orchestrator = FakeOrchestrator(orchestratorState),
+                persistedStorage = storage
+            )
+
+            watcher.onLaunch()
+            advanceUntilIdle()
+
+            // Device drops and nothing reconnects.
+            orchestratorState.value = FDeviceConnectStatus.Disconnected(
+                device = device,
+                reason = DisconnectStatus.REPORTED_BY_TRANSPORT
+            )
+            advanceUntilIdle()
+
+            // The detached feature emits new linked info after the device is gone.
+            accountInfoFlow.value = RpcLinkedAccountInfo(
+                linked = true,
+                cloudId = Uuid.random().toString()
+            )
+            advanceUntilIdle()
+
+            val updated = storage.findDevice("device-1").first()
+            assertNull(
+                updated?.cloud,
+                "Account info emitted after the device disconnected must not be applied"
+            )
+        }
+
     // endregion
 
     // region Test Setup
@@ -402,6 +459,11 @@ class CloudProvisioningWatcherTest {
         override fun <T : FDeviceFeatureApi> get(clazz: KClass<T>): Flow<FFeatureStatus<T>> {
             return rpcFlow as Flow<FFeatureStatus<T>>
         }
+
+        override fun <T : FDeviceFeatureApi> getFiltered(
+            status: FDeviceConnectStatus.Connected,
+            clazz: KClass<T>
+        ): Flow<FFeatureStatus<T>> = get(clazz)
 
         override suspend fun <T : FDeviceFeatureApi> getSync(clazz: KClass<T>): T? = null
     }
