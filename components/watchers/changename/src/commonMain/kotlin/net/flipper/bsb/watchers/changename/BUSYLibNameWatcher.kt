@@ -1,20 +1,17 @@
 package net.flipper.bsb.watchers.changename
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.config.api.getDevice
 import net.flipper.bridge.connection.config.api.model.copy
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
-import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
-import net.flipper.bridge.connection.feature.provider.api.get
+import net.flipper.bridge.connection.feature.provider.api.getFilteredFeature
 import net.flipper.bridge.connection.feature.settings.api.FSettingsFeatureApi
 import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
-import net.flipper.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
 import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.ktx.common.SingleJobMode
@@ -38,30 +35,21 @@ class BUSYLibNameWatcher(
     override fun onLaunch() {
         info { "Launched" }
         singleJobScope.launch(SingleJobMode.CANCEL_PREVIOUS) {
-            combine(
-                orchestrator.getState(),
-                featureProvider.get<FSettingsFeatureApi>()
-            ) { state, featureApi ->
-                if (state is FDeviceConnectStatus.Connected) {
-                    when (featureApi) {
-                        FFeatureStatus.NotFound,
-                        FFeatureStatus.Retrieving,
-                        FFeatureStatus.Unsupported -> flowOf()
-
-                        is FFeatureStatus.Supported<FSettingsFeatureApi> -> {
-                            featureApi.featureApi.getDeviceName().map { deviceName ->
-                                deviceName to state.device.uniqueId
-                            }
-                        }
-                    }
+            orchestrator.getState().flatMapLatest {
+                featureProvider.getFilteredFeature<FSettingsFeatureApi>(it)
+            }.flatMapLatest { featureWithState ->
+                if (featureWithState == null) {
+                    emptyFlow()
                 } else {
-                    flowOf()
+                    val (featureApi, state) = featureWithState
+                    featureApi.getDeviceName().map { deviceName ->
+                        deviceName to state.device.uniqueId
+                    }
                 }
-            }.flatMapLatest { it }
-                .collect { (deviceName, deviceId) ->
-                    info { "Receive $deviceName for $deviceId" }
-                    updateDeviceName(deviceId, deviceName)
-                }
+            }.collect { (deviceName, deviceId) ->
+                info { "Receive $deviceName for $deviceId" }
+                updateDeviceName(deviceId, deviceName)
+            }
         }
     }
 

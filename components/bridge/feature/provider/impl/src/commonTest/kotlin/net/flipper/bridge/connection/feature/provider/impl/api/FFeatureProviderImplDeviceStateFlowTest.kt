@@ -59,6 +59,8 @@ class FFeatureProviderImplDeviceStateFlowTest {
     }
 
     private class FakeBSBDeviceApi : FBSBDeviceApi {
+        override fun isSame(connectedDevice: FConnectedDeviceApi): Boolean = true
+
         override suspend fun <T : FDeviceFeatureApi> get(clazz: KClass<T>): Deferred<T?>? =
             CompletableDeferred<T?>(null)
     }

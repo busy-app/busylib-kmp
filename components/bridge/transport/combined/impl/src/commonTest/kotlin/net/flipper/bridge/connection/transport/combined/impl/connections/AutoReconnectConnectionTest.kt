@@ -202,7 +202,7 @@ class AutoReconnectConnectionTest {
         // When
         listener.onStatusUpdate(
             FInternalTransportConnectionStatus.Disconnected(
-                FInternalDisconnectedReason.PAIRING_FAILED
+                FInternalDisconnectedReason.REQUIRES_REPAIRING
             )
         )
         advanceTimeBy(1.seconds)

@@ -62,6 +62,10 @@ class FBSBDeviceApiImpl(
         }
     }
 
+    override fun isSame(connectedDevice: FConnectedDeviceApi): Boolean {
+        return connectedDevice === this.connectedDevice
+    }
+
     private suspend fun getFeatureApiWithLock(
         feature: FDeviceFeature
     ): Deferred<FDeviceFeatureApi?> {
