@@ -36,7 +36,7 @@ internal class WrappedConnectionInternal(
     private var connectionApi: FConnectedDeviceApi? = null
     val stateFlow: StateFlow<FInternalTransportConnectionStatus>
         field = MutableStateFlow<FInternalTransportConnectionStatus>(
-            getConnectingStatus()
+            FInternalTransportConnectionStatus.Connecting(config.getTransportTypes())
         )
 
     private val scope = ChildSupervisorScope(
@@ -64,7 +64,7 @@ internal class WrappedConnectionInternal(
                     FInternalDisconnectedReason.OTHER
                 }
             }
-            updateStatus(FInternalTransportConnectionStatus.Disconnected(recovery))
+            stateFlow.update { FInternalTransportConnectionStatus.Disconnected(recovery) }
         }
     )
 
@@ -104,22 +104,15 @@ internal class WrappedConnectionInternal(
             warn { "Call #onStatusUpdate after scope is dead" }
             return
         }
-        updateStatus(status)
-        yield() // Allow collectors to process the state before returning
-    }
-
-    private fun updateStatus(status: FInternalTransportConnectionStatus) {
         stateFlow.update { current ->
             if (current is FInternalTransportConnectionStatus.Disconnected) {
                 warn { "Status updates are not permitted after the 'Disconnected' status" }
-                return@update current
+                current
+            } else {
+                status
             }
-            return@update status
         }
-    }
-
-    private fun getConnectingStatus(): FInternalTransportConnectionStatus.Connecting {
-        return FInternalTransportConnectionStatus.Connecting(config.getTransportTypes())
+        yield() // Allow collectors to process the state before returning
     }
 
     suspend fun disconnect() {
