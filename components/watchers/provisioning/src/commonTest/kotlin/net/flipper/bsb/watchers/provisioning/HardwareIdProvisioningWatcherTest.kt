@@ -1,6 +1,5 @@
 package net.flipper.bsb.watchers.provisioning
 
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
@@ -229,25 +228,20 @@ class HardwareIdProvisioningWatcherTest {
         }
 
     @Test
-    fun GIVEN_status_request_in_flight_WHEN_device_disconnects_THEN_late_status_is_ignored() =
+    fun GIVEN_connected_WHEN_device_disconnects_THEN_late_hardware_id_from_that_device_is_ignored() =
         runTest {
-            // The pre-PR pipeline cancelled an in-flight device-status request when the device
-            // dropped. The filter rework must keep that guarantee: a status that resolves after
-            // disconnect belongs to a device that is no longer connected and must not be applied.
+            // The filter rework must keep the pre-PR guarantee: once the device is gone, its feature
+            // flow must stop being consumed. A hardware id that arrives after disconnect belongs to a
+            // device that is no longer connected and must not be applied.
             val device = busyBar(
                 id = "device-1",
                 BUSYBar.ConnectionWay.BLE("AA:BB:CC")
             )
             val storage = FakePersistedStorage(MutableStateFlow(listOf(device)))
-            val gate = CompletableDeferred<Unit>()
-            val rpcApi = FakeRpcFeatureApi(
-                systemApi = FakeRpcSystemApi(
-                    deviceStatusResult = Result.success(fakeDeviceStatus(serialNumber = "SN-late")),
-                    awaitBeforeResult = { gate.await() }
-                )
-            )
-            val featureFlow = MutableStateFlow<FFeatureStatus<FRpcFeatureApi>>(
-                FFeatureStatus.Supported(rpcApi)
+            val cloudInvalidator = FakeCloudInvalidator()
+            val hardwareIdFlow = MutableStateFlow<String?>(null)
+            val featureFlow = MutableStateFlow<FFeatureStatus<FHardwareIdFeatureApi>>(
+                FFeatureStatus.Supported(FakeHardwareIdFeatureApi(hardwareIdFlow))
             )
             val scope = CoroutineScope(
                 SupervisorJob(backgroundScope.coroutineContext.job) + StandardTestDispatcher(testScheduler)
@@ -264,27 +258,29 @@ class HardwareIdProvisioningWatcherTest {
                 scope = scope,
                 featureProvider = FakeFeatureProvider(featureFlow),
                 orchestrator = FakeOrchestrator(orchestratorState),
-                persistedStorage = storage
+                persistedStorage = storage,
+                cloudInvalidator = cloudInvalidator
             )
 
             watcher.onLaunch()
             advanceUntilIdle()
 
-            // Device drops before the status request resolves.
+            // Device drops and nothing reconnects.
             orchestratorState.value = FDeviceConnectStatus.Disconnected(
                 device = device,
                 reason = DisconnectStatus.REPORTED_BY_TRANSPORT
             )
             advanceUntilIdle()
 
-            // The status request now resolves, but its device is already gone.
-            gate.complete(Unit)
+            // The detached feature emits a hardware id after the device is gone.
+            hardwareIdFlow.value = "HW-late"
             advanceUntilIdle()
 
             assertNull(
                 storage.devices.value.single().hardwareId,
-                "A device status that resolves after disconnect must not be applied"
+                "A hardware id emitted after the device disconnected must not be applied"
             )
+            assertEquals(0, cloudInvalidator.invalidateCount)
         }
 
     // endregion
