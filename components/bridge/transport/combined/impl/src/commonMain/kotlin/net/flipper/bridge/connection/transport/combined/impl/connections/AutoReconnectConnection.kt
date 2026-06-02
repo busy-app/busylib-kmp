@@ -6,16 +6,18 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted.Companion.Eagerly
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import net.flipper.bridge.connection.connectionbuilder.api.FDeviceConfigToConnection
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
-import net.flipper.bridge.connection.transport.common.api.FInternalDisconnectedReason
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 import net.flipper.core.busylib.ktx.common.getExponentialDelay
@@ -37,10 +39,22 @@ class AutoReconnectConnection(
     private val updateMutex = Mutex()
     private val connectionJob: Job
 
-    val stateFlow: StateFlow<FInternalTransportConnectionStatus>
-        field = MutableStateFlow<FInternalTransportConnectionStatus>(
-            FInternalTransportConnectionStatus.Connecting(config.getTransportTypes())
-        )
+    private val initialStatus = FInternalTransportConnectionStatus.Connecting(
+        connectionTypes = config.getTransportTypes()
+    )
+
+    private val stateFlowWithDisconnected = MutableStateFlow<FInternalTransportConnectionStatus>(
+        initialStatus
+    )
+
+    val stateFlow: StateFlow<FInternalTransportConnectionStatus> =
+        stateFlowWithDisconnected
+            .map { it.toNotDisconnectedStatus() }
+            .stateIn(
+                scope = scope,
+                started = Eagerly,
+                initialValue = initialStatus
+            )
 
     init {
         connectionJob = scope.launch {
@@ -64,7 +78,7 @@ class AutoReconnectConnection(
                 val disconnectedStatus = connection.stateFlow
                     .onEach { connectionStatus ->
                         info { "Got connection status $connectionStatus" }
-                        stateFlow.emit(connectionStatus)
+                        stateFlowWithDisconnected.emit(connectionStatus)
                         if (connectionStatus is FInternalTransportConnectionStatus.Connected) {
                             retryCount = 0
                         }
@@ -74,9 +88,8 @@ class AutoReconnectConnection(
                 info { "Got disconnected event ${disconnectedStatus.reason}" }
                 connection.disconnect()
 
-                when (disconnectedStatus.reason) {
-                    FInternalDisconnectedReason.REQUIRES_REPAIRING -> return@launch
-                    FInternalDisconnectedReason.OTHER -> {}
+                if (!disconnectedStatus.reason.isRecoverable) {
+                    return@launch
                 }
 
                 delay(getExponentialDelay(retryCount))
@@ -106,5 +119,18 @@ class AutoReconnectConnection(
 
     suspend fun disconnect() {
         connectionJob.cancelAndJoin()
+    }
+
+    private fun FInternalTransportConnectionStatus.toNotDisconnectedStatus(): FInternalTransportConnectionStatus {
+        return when (this) {
+            is FInternalTransportConnectionStatus.Disconnected ->
+                if (reason.isRecoverable) {
+                    initialStatus
+                } else {
+                    this
+                }
+
+            else -> this
+        }
     }
 }
