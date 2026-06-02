@@ -6,13 +6,10 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted.Companion.Eagerly
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -43,18 +40,8 @@ class AutoReconnectConnection(
         connectionTypes = config.getTransportTypes()
     )
 
-    private val stateFlowWithDisconnected = MutableStateFlow<FInternalTransportConnectionStatus>(
-        initialStatus
-    )
-
-    val stateFlow: StateFlow<FInternalTransportConnectionStatus> =
-        stateFlowWithDisconnected
-            .map { it.toNotDisconnectedStatus() }
-            .stateIn(
-                scope = scope,
-                started = Eagerly,
-                initialValue = initialStatus
-            )
+    val stateFlow: StateFlow<FInternalTransportConnectionStatus>
+        field = MutableStateFlow<FInternalTransportConnectionStatus>(initialStatus)
 
     init {
         connectionJob = scope.launch {
@@ -78,7 +65,7 @@ class AutoReconnectConnection(
                 val disconnectedStatus = connection.stateFlow
                     .onEach { connectionStatus ->
                         info { "Got connection status $connectionStatus" }
-                        stateFlowWithDisconnected.emit(connectionStatus)
+                        stateFlow.emit(connectionStatus.toNotDisconnectedStatus())
                         if (connectionStatus is FInternalTransportConnectionStatus.Connected) {
                             retryCount = 0
                         }
