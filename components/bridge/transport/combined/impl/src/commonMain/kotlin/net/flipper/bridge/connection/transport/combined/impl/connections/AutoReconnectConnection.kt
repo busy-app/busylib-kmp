@@ -15,7 +15,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import net.flipper.bridge.connection.connectionbuilder.api.FDeviceConfigToConnection
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
-import net.flipper.bridge.connection.transport.common.api.FInternalDisconnectedReason
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 import net.flipper.core.busylib.ktx.common.getExponentialDelay
@@ -37,10 +36,12 @@ class AutoReconnectConnection(
     private val updateMutex = Mutex()
     private val connectionJob: Job
 
+    private val initialStatus = FInternalTransportConnectionStatus.Connecting(
+        connectionTypes = config.getTransportTypes()
+    )
+
     val stateFlow: StateFlow<FInternalTransportConnectionStatus>
-        field = MutableStateFlow<FInternalTransportConnectionStatus>(
-            FInternalTransportConnectionStatus.Connecting(config.getTransportTypes())
-        )
+        field = MutableStateFlow<FInternalTransportConnectionStatus>(initialStatus)
 
     init {
         connectionJob = scope.launch {
@@ -64,7 +65,7 @@ class AutoReconnectConnection(
                 val disconnectedStatus = connection.stateFlow
                     .onEach { connectionStatus ->
                         info { "Got connection status $connectionStatus" }
-                        stateFlow.emit(connectionStatus)
+                        stateFlow.emit(connectionStatus.toNotDisconnectedStatus())
                         if (connectionStatus is FInternalTransportConnectionStatus.Connected) {
                             retryCount = 0
                         }
@@ -74,9 +75,8 @@ class AutoReconnectConnection(
                 info { "Got disconnected event ${disconnectedStatus.reason}" }
                 connection.disconnect()
 
-                when (disconnectedStatus.reason) {
-                    FInternalDisconnectedReason.REQUIRES_REPAIRING -> return@launch
-                    FInternalDisconnectedReason.OTHER -> {}
+                if (!disconnectedStatus.reason.isRecoverable) {
+                    return@launch
                 }
 
                 delay(getExponentialDelay(retryCount))
@@ -106,5 +106,18 @@ class AutoReconnectConnection(
 
     suspend fun disconnect() {
         connectionJob.cancelAndJoin()
+    }
+
+    private fun FInternalTransportConnectionStatus.toNotDisconnectedStatus(): FInternalTransportConnectionStatus {
+        return when (this) {
+            is FInternalTransportConnectionStatus.Disconnected ->
+                if (reason.isRecoverable) {
+                    initialStatus
+                } else {
+                    this
+                }
+
+            else -> this
+        }
     }
 }

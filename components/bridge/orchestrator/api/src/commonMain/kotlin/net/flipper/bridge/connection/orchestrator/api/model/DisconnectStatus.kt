@@ -10,7 +10,7 @@ enum class DisconnectStatus {
         get() = when (this) {
             NOT_INITIALIZED,
             REPORTED_BY_TRANSPORT,
-            ERROR_UNKNOWN -> false
-            REQUIRES_REPAIRING -> true
+            ERROR_UNKNOWN -> true
+            REQUIRES_REPAIRING -> false
         }
 }

@@ -75,9 +75,9 @@ class FConnectionServiceImpl(
                 is FDeviceConnectStatus.Disconnected -> when (expectedState) {
                     is ExpectedState.Connected -> {
                         val sameDevice = realState.device?.uniqueId == expectedState.device.uniqueId
-                        if (sameDevice && realState.reason.isRecoverable) {
+                        if (sameDevice && !realState.reason.isRecoverable) {
                             info {
-                                "Skip reconnect for ${expectedState.device.uniqueId}: pairing failed, " +
+                                "Skip reconnect for ${expectedState.device.uniqueId}: reason=${realState.reason}, " +
                                     "awaiting explicit user re-pair"
                             }
                         } else {
