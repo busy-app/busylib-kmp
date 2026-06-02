@@ -11,7 +11,7 @@ interface FRpcSystemApi {
     suspend fun getVersion(): Result<BusyBarVersion>
 
     suspend fun getStatus(): Result<BusyBarStatus>
-    suspend fun getDeviceStatus(): Result<BusyBarStatusDevice>
+    suspend fun getDeviceStatus(localOnly: Boolean = false): Result<BusyBarStatusDevice>
     suspend fun getStatusFirmware(): Result<StatusFirmware>
     suspend fun getStatusSystem(): Result<BusyBarStatusSystem>
     suspend fun getStatusPower(): Result<BusyBarStatusPower>

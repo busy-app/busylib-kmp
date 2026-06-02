@@ -59,7 +59,7 @@ class FCombinedHttpEngine(
             currentDelegates.filter { it.second.contains(requestedCapability) }
                 .also {
                     if (it.isEmpty()) {
-                        error("No delegate with capability $requestedCapability")
+                        error("No delegate with capability $requestedCapability. Existed: $currentDelegates")
                     }
                 }
         }.map { it.first }

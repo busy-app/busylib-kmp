@@ -18,22 +18,30 @@ import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
 import net.flipper.core.busylib.log.warn
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
+import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 import kotlin.uuid.Uuid
 
 private const val DEFAULT_BUSY_BAR_NAME = "BUSY Bar"
 
 @Inject
+@SingleIn(BusyLibGraph::class)
 @ContributesBinding(BusyLibGraph::class, InternalBUSYLibStartupListener::class, multibinding = true)
+@ContributesBinding(BusyLibGraph::class, CloudInvalidator::class)
 class CloudFetcherWatcher(
     scope: CoroutineScope,
     private val persistedStorage: FInternalDevicePersistedStorage,
     private val cloudFetcher: CloudFetcher,
-) : InternalBUSYLibStartupListener, LogTagProvider {
+) : InternalBUSYLibStartupListener, CloudInvalidator, LogTagProvider {
     override val TAG = "CloudFetcherWatcher"
 
     private val singleJobScope = scope.asSingleJobScope()
 
     override fun onLaunch() {
+        invalidate()
+    }
+
+    override fun invalidate() {
+        info { "#invalidate" }
         singleJobScope.launch(SingleJobMode.CANCEL_PREVIOUS) {
             cloudFetcher.getBarsFlow().collectLatest { cloudBars ->
                 persistedStorage.transactionInternal {

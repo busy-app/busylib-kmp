@@ -10,6 +10,7 @@ import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
 import net.flipper.bridge.connection.feature.finishsetup.api.FFinishSetupFeatureApi
 import net.flipper.bridge.connection.feature.firmwareupdate.api.FFirmwareUpdateFeatureApi
+import net.flipper.bridge.connection.feature.hardwareid.api.FHardwareIdFeatureApi
 import net.flipper.bridge.connection.feature.info.api.FDeviceInfoFeatureApi
 import net.flipper.bridge.connection.feature.link.check.ondemand.api.FLinkedInfoOnDemandFeatureApi
 import net.flipper.bridge.connection.feature.oncall.api.FOnCallFeatureApi
@@ -47,6 +48,7 @@ object FZeroFeatureClassToEnumMapper {
             FDeviceFeature.FINISH_SETUP -> FFinishSetupFeatureApi::class
             FDeviceFeature.ABOUT -> FAboutFeatureApi::class
             FDeviceFeature.TIMER -> FTimerFeatureApi::class
+            FDeviceFeature.HARDWARE_ID -> FHardwareIdFeatureApi::class
         }
     }
 

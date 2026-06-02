@@ -4,5 +4,6 @@ import net.flipper.bsb.watchers.provisioning.HardwareIdProvisioningWatcher
 
 internal data class HardwareIdProvisioningTestSetup(
     val watcher: HardwareIdProvisioningWatcher,
-    val storage: FakePersistedStorage
+    val storage: FakePersistedStorage,
+    val cloudInvalidator: FakeCloudInvalidator
 )

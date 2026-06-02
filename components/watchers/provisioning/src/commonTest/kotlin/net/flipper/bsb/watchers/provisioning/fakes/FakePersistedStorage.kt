@@ -14,6 +14,7 @@ internal class FakePersistedStorage(
     val devices: MutableStateFlow<List<BUSYBar>>
 ) : FInternalDevicePersistedStorage {
     private val currentDeviceFlow = MutableStateFlow<BUSYBar?>(null)
+    val currentDevice: BUSYBar? get() = currentDeviceFlow.value
     var transactionCount: Int = 0
         private set
 
@@ -31,10 +32,19 @@ internal class FakePersistedStorage(
             override fun getAllDevices() = devices.value.toList()
 
             override fun setCurrentDevice(device: BUSYBar) {
-                currentDeviceFlow.value = device
+                setCurrentDeviceNullable(device)
             }
 
             override fun setCurrentDeviceNullable(device: BUSYBar?) {
+                if (device == null) {
+                    currentDeviceFlow.value = null
+                    return
+                }
+                // Mirror PersistedStorageTransactionScopeImpl: selecting an
+                // unknown device adds it to storage first.
+                if (devices.value.none { it.uniqueId == device.uniqueId }) {
+                    addOrReplace(device)
+                }
                 currentDeviceFlow.value = device
             }
 

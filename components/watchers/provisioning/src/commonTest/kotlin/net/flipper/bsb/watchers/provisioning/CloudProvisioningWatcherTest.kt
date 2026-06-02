@@ -193,7 +193,7 @@ class CloudProvisioningWatcherTest {
         }
 
     @Test
-    fun GIVEN_local_and_cloud_WHEN_not_connected_to_cloud_THEN_removes_cloud_connection() =
+    fun GIVEN_local_and_cloud_WHEN_not_connected_to_cloud_THEN_cloud_connection_preserved() =
         runTest {
             val cloudId = Uuid.random()
             val device = busyBar(
@@ -211,9 +211,11 @@ class CloudProvisioningWatcherTest {
             setup.watcher.onLaunch()
             advanceUntilIdle()
 
+            // By design, removing a cloud link is delegated to CloudFetcherWatcher so that
+            // disconnecting locally does not wipe cloud data belonging to another device.
             val updated = setup.storage.findDevice("device-1")
             assertNotNull(updated)
-            assertNull(updated.first()?.cloud, "Cloud connection should be removed")
+            assertNotNull(updated.first()?.cloud, "Cloud connection must be preserved locally")
             assertNotNull(updated.first()?.ble, "BLE connection should remain")
         }
 

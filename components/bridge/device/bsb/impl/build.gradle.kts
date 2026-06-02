@@ -31,6 +31,7 @@ kotlin {
         implementation(projects.components.bridge.feature.finishSetup.api)
         implementation(projects.components.bridge.feature.about.api)
         implementation(projects.components.bridge.feature.timer.api)
+        implementation(projects.components.bridge.feature.hardwareId.api)
 
         implementation(libs.kotlin.coroutines)
         implementation(libs.kotlin.immutable)

@@ -73,6 +73,8 @@ kotlin {
         implementation(projects.components.bridge.feature.provider.impl)
         implementation(projects.components.bridge.feature.rpc.api)
         implementation(projects.components.bridge.feature.rpc.impl)
+        implementation(projects.components.bridge.feature.hardwareId.api)
+        implementation(projects.components.bridge.feature.hardwareId.impl)
         api(projects.components.bridge.feature.screenStreaming.api)
         implementation(projects.components.bridge.feature.screenStreaming.impl)
         implementation(projects.components.bridge.feature.sync.impl)
