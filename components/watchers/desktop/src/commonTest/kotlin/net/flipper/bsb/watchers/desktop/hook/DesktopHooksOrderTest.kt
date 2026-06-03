@@ -13,7 +13,6 @@ class DesktopHooksOrderTest {
     private val allHooks: List<TransactionHook> = listOf(
         DesktopEmptyFiller(),
         DesktopAlwaysLan(),
-        DesktopActiveDevice(),
         DesktopAutoPurger()
     )
 
@@ -224,7 +223,7 @@ class DesktopHooksOrderTest {
         currentDevice: BUSYBar?
     ) {
         val permutations = allHooks.permutations()
-        assertEquals(24, permutations.size, "Expected 24 permutations of 4 hooks")
+        assertEquals(6, permutations.size, "Expected 6 permutations of 3 hooks")
 
         val results = permutations.map { orderedHooks ->
             val scope = FakeTransactionScope(

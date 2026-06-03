@@ -9,7 +9,6 @@ import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.config.api.getDevice
 import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.config.api.model.addTransport
-import net.flipper.bridge.connection.config.api.model.copy
 import net.flipper.bridge.connection.config.api.model.copyTransports
 import net.flipper.bridge.connection.config.internal.FInternalDevicePersistedStorage
 import net.flipper.bridge.connection.config.internal.InternalStorageTransactionScope
@@ -103,10 +102,10 @@ class CloudProvisioningWatcher(
             return // Local and cloud transport, cloud linked to current device - skip
         }
 
-        if (cloudId == null) { // Local and cloud, not connected to cloud - remove cloud connection
-            modifyOrDelete(original) {
-                it.copy(cloud = null)
-            }
+        if (cloudId == null) { // Local and cloud, not connected to cloud
+            // Don't delete cloud locally, because this may
+            // delete the cloud data from another device with a different hardware ID.
+            // By design deleting should be from CloudFetcherWatcher
             return
         }
 
@@ -134,17 +133,5 @@ class CloudProvisioningWatcher(
         )
         addOrReplace(newBUSYBar)
         setCurrentDevice(newBUSYBar)
-    }
-}
-
-private fun InternalStorageTransactionScope.modifyOrDelete(
-    original: BUSYBar,
-    block: (BUSYBar) -> BUSYBar?
-) {
-    val result = block(original)
-    if (result == null) {
-        removeDevice(original.uniqueId)
-    } else {
-        addOrReplace(result)
     }
 }

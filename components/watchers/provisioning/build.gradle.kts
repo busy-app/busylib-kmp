@@ -19,6 +19,7 @@ kotlin {
         implementation(projects.components.bridge.orchestrator.api)
         implementation(projects.components.bridge.feature.provider.api)
         implementation(projects.components.bridge.feature.rpc.api)
+        implementation(projects.components.bridge.feature.hardwareId.api)
 
         implementation(projects.components.cloud.api)
         implementation(projects.components.cloud.rest.api)

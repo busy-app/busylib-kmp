@@ -17,5 +17,6 @@ enum class FDeviceFeature {
     TIME_ZONE,
     FINISH_SETUP,
     ABOUT,
-    TIMER
+    TIMER,
+    HARDWARE_ID
 }

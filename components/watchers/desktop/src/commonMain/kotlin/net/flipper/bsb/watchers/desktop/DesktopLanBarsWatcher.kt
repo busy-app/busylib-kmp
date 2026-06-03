@@ -5,7 +5,6 @@ import kotlinx.coroutines.launch
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.config.internal.FInternalDevicePersistedStorage
 import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
-import net.flipper.bsb.watchers.desktop.hook.DesktopActiveDevice
 import net.flipper.bsb.watchers.desktop.hook.DesktopAlwaysLan
 import net.flipper.bsb.watchers.desktop.hook.DesktopAutoPurger
 import net.flipper.bsb.watchers.desktop.hook.DesktopEmptyFiller
@@ -27,7 +26,6 @@ class DesktopLanBarsWatcher(
             persistedStorage.addHook(
                 DesktopEmptyFiller(),
                 DesktopAlwaysLan(),
-                DesktopActiveDevice(),
                 DesktopAutoPurger()
             )
             persistedStorage.transaction { } // Activate all hooks
