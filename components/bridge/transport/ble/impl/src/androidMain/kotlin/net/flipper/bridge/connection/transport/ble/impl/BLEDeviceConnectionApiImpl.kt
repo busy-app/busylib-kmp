@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.transport.ble.api.BleDeviceConnectionApi
 import net.flipper.bridge.connection.transport.ble.api.FBleApi
@@ -54,9 +54,9 @@ class BLEDeviceConnectionApiImpl(
         config: FBleDeviceConnectionConfig,
         listener: FTransportConnectionStatusListener
     ): Result<FBleApi> = runSuspendCatching {
-        withTimeout(CONNECT_TIME) {
+        withTimeoutOrNull(CONNECT_TIME) {
             connectUnsafe(scope, config, listener)
-        }
+        } ?: throw FailedConnectToDeviceException()
     }
 
     @Suppress("ThrowsCount", "LongMethod")
