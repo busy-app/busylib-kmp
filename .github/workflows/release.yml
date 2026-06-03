@@ -2,7 +2,7 @@ name: Release
 on:
   push:
     branches:
-      - main
+      - 0.0.58-patched
   workflow_dispatch:
 jobs:
   # ${{ needs.build_number.outputs.BUILD_NUMBER }}
