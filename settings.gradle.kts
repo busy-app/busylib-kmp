@@ -142,6 +142,9 @@ include(
     ":components:watchers:provisioning",
     ":components:watchers:desktop",
 
+    ":components:bridge:lanmonitor:api",
+    ":components:bridge:lanmonitor:impl",
+
     ":entrypoint",
     ":sample:cmp",
     ":sample:android"
