@@ -6,9 +6,9 @@ import net.flipper.bridge.connection.configbuilder.api.FDeviceConnectionConfigMa
 import net.flipper.bridge.connection.configbuilder.impl.builders.BUSYBarBLEBuilderConfig
 import net.flipper.bridge.connection.configbuilder.impl.builders.BUSYBarCloudBuilderConfig
 import net.flipper.bridge.connection.configbuilder.impl.builders.BUSYBarCombinedBuilderConfig
-import net.flipper.bridge.connection.configbuilder.impl.builders.BUSYBarLanBuilderConfig
 import net.flipper.bridge.connection.configbuilder.impl.builders.BUSYBarMockBuilderConfig
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
+import net.flipper.bridge.connection.transport.tcp.lan.FLanDeviceConnectionConfig
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.data.map
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
@@ -18,7 +18,6 @@ import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 class FDeviceConnectionConfigMapperImpl(
     private val mockBuilderConfig: BUSYBarMockBuilderConfig,
     private val bleBuilderConfig: BUSYBarBLEBuilderConfig,
-    private val lanBuilderConfig: BUSYBarLanBuilderConfig,
     private val cloudBuilderConfig: BUSYBarCloudBuilderConfig,
     private val busyBarCombinedBuilderConfig: BUSYBarCombinedBuilderConfig
 ) : FDeviceConnectionConfigMapper {
@@ -27,6 +26,7 @@ class FDeviceConnectionConfigMapperImpl(
             name = device.humanReadableName,
             connectionConfigs = device.connectionWays.map { connectionWay ->
                 map(
+                    hardwareId = device.hardwareId,
                     connectionWay = connectionWay,
                     humanReadableName = device.humanReadableName
                 )
@@ -35,6 +35,7 @@ class FDeviceConnectionConfigMapperImpl(
     }
 
     private fun map(
+        hardwareId: String?,
         connectionWay: BUSYBar.ConnectionWay,
         humanReadableName: String
     ): FDeviceConnectionConfig<*> {
@@ -49,8 +50,8 @@ class FDeviceConnectionConfigMapperImpl(
                 deviceId = connectionWay.deviceId
             )
 
-            is BUSYBar.ConnectionWay.Lan -> lanBuilderConfig.build(
-                host = connectionWay.host,
+            is BUSYBar.ConnectionWay.Lan -> FLanDeviceConnectionConfig(
+                hardwareId = hardwareId,
                 name = humanReadableName
             )
 

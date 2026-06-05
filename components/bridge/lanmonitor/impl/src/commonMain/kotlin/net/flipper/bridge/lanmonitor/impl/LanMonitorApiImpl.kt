@@ -12,8 +12,6 @@ import net.flipper.bridge.lanmonitor.impl.utils.DeviceMetaInfoRequester
 import net.flipper.core.busylib.ktx.common.exponentialRetry
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 
-internal const val BB_PORT = 80
-internal const val BB_HOST = "10.0.4.20"
 
 @Inject
 @ContributesBinding(BusyLibGraph::class, LanMonitorApi::class)

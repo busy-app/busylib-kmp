@@ -5,8 +5,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.runBlocking
 import me.tatarka.inject.annotations.Inject
-import net.flipper.bridge.lanmonitor.impl.BB_HOST
-import net.flipper.bridge.lanmonitor.impl.BB_PORT
+import net.flipper.bridge.lanmonitor.api.BB_HOST
+import net.flipper.bridge.lanmonitor.api.BB_PORT
 import net.flipper.bridge.lanmonitor.impl.platform.model.KotlinNwStatus
 import net.flipper.bridge.lanmonitor.impl.platform.model.asKotlinNwStatus
 import net.flipper.bridge.lanmonitor.impl.platform.util.withLock

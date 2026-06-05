@@ -2,8 +2,8 @@ package net.flipper.bridge.lanmonitor.impl.platform
 
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
-import net.flipper.bridge.lanmonitor.impl.BB_HOST
-import net.flipper.bridge.lanmonitor.impl.BB_PORT
+import net.flipper.bridge.lanmonitor.api.BB_HOST
+import net.flipper.bridge.lanmonitor.api.BB_PORT
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import java.net.InetSocketAddress
 import java.net.Socket
