@@ -1,6 +1,7 @@
 plugins {
     id("flipper.multiplatform")
     id("flipper.anvil-multiplatform")
+    id("org.jetbrains.kotlin.plugin.serialization")
 }
 
 kotlin {
@@ -10,8 +11,10 @@ kotlin {
         implementation(projects.components.core.di)
         implementation(projects.components.core.log)
         implementation(projects.components.core.ktx)
+        implementation(projects.components.core.ktor)
 
         implementation(libs.kotlin.coroutines)
+        implementation(libs.ktor.client.core)
     }
 
     sourceSets.jvmTest.dependencies {

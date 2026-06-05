@@ -2,6 +2,8 @@ package net.flipper.bridge.lanmonitor.impl.platform
 
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import net.flipper.bridge.lanmonitor.impl.BB_HOST
+import net.flipper.bridge.lanmonitor.impl.BB_PORT
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import java.net.InetSocketAddress
 import java.net.Socket
@@ -14,8 +16,8 @@ import java.net.Socket
  * reachable; any failure (timeout, refused, unresolved host) means it is not.
  */
 class TcpSocketLanReachabilityProbe(
-    private val host: String = DEFAULT_HOST,
-    private val port: Int = DEFAULT_PORT,
+    private val host: String = BB_HOST,
+    private val port: Int = BB_PORT,
     private val connectTimeoutMs: Int = CONNECT_TIMEOUT_MS,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : LanReachabilityProbe {
@@ -29,8 +31,6 @@ class TcpSocketLanReachabilityProbe(
     }
 
     companion object {
-        const val DEFAULT_HOST: String = "10.0.4.20"
-        const val DEFAULT_PORT: Int = 80
         const val CONNECT_TIMEOUT_MS: Int = 2000
     }
 }
