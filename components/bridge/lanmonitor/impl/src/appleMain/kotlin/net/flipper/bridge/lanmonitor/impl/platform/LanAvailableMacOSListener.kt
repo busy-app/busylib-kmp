@@ -3,7 +3,6 @@ package net.flipper.bridge.lanmonitor.impl.platform
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
 import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.lanmonitor.impl.BB_HOST
@@ -51,11 +50,13 @@ import kotlin.time.Duration.Companion.seconds
  * @see KotlinNwStatus.PosixError.TimedOut
  */
 private const val KEEPALIVE_IDLE_TIME_SEC = 5u
+
 /**
  * Amount of seconds between keep-alive requests
  * @see KotlinNwStatus.PosixError.TimedOut
  */
 private const val KEEPALIVE_INTERVAL_SEC = 3u
+
 /**
  * Maximum numbers of unanswered keep-alive requests
  * @see KotlinNwStatus.PosixError.TimedOut
@@ -63,12 +64,17 @@ private const val KEEPALIVE_INTERVAL_SEC = 3u
 private const val KEEPALIVE_COUNT = 3u
 private val RESTART_TIMEOUT = 5.seconds
 
-@Inject
 @SingleIn(BusyLibGraph::class)
 @ContributesBinding(BusyLibGraph::class, LanAvailablePlatformListener::class)
-class LanAvailableMacOSListener(
-    globalScope: CoroutineScope
-) : LanAvailablePlatformListener , LogTagProvider {
+class LanAvailableMacOSListener internal constructor(
+    globalScope: CoroutineScope,
+    private val host: String,
+    private val port: Int,
+) : LanAvailablePlatformListener, LogTagProvider {
+
+    @Inject
+    constructor(globalScope: CoroutineScope) : this(globalScope, BB_HOST, BB_PORT)
+
     override val TAG: String = "FAppleLanConnectionMonitor"
     private val queue = dispatch_queue_create("net.flipper.lan.connection", null)
     private val lanAvailableStateFlow = MutableSharedFlow<Boolean>()
@@ -95,7 +101,7 @@ class LanAvailableMacOSListener(
     private fun createConnectionUnsafe(): nw_connection_t {
         connection?.let { nw_connection_cancel(it) }
 
-        val endpoint = nw_endpoint_create_host(BB_HOST, BB_PORT.toString())
+        val endpoint = nw_endpoint_create_host(host, port.toString())
         val parameters = nw_parameters_create()
         val protocolStack = nw_parameters_copy_default_protocol_stack(parameters)
 
@@ -117,7 +123,7 @@ class LanAvailableMacOSListener(
     private suspend fun handleStateUpdateUnsafe(status: KotlinNwStatus) {
         when (status) {
             KotlinNwStatus.Ready -> {
-                debug { "#handleStateUpdate Connected to $BB_HOST" }
+                debug { "#handleStateUpdate Connected to $host" }
                 lanAvailableStateFlow.emit(true)
             }
 
@@ -209,7 +215,7 @@ class LanAvailableMacOSListener(
             nw_connection_set_queue(currentConnection, queue)
             nw_connection_start(currentConnection)
 
-            info { "#startMonitoring Started monitoring connection to $BB_HOST" }
+            info { "#startMonitoring Started monitoring connection to $host" }
         }
     }
 
@@ -223,7 +229,7 @@ class LanAvailableMacOSListener(
                 nw_connection_force_cancel(localConnection)
             }
             connection = null
-            info { "#stopMonitoring Stopped monitoring connection to $BB_HOST" }
+            info { "#stopMonitoring Stopped monitoring connection to $host" }
         }
     }
 }

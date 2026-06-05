@@ -21,4 +21,9 @@ kotlin {
         implementation(libs.kotlin.test)
         implementation(libs.kotlin.coroutines.test)
     }
+
+    sourceSets.appleTest.dependencies {
+        implementation(libs.kotlin.test)
+        implementation(libs.kotlin.coroutines.test)
+    }
 }
