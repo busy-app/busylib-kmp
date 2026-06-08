@@ -17,7 +17,7 @@ class DesktopAlwaysLan : TransactionHook, LogTagProvider {
         getAllDevices().forEach { device ->
             if (device.lan == null) {
                 info { "Found device without lan: $device, add them" }
-                addOrReplace(device.addTransport(lan = BUSYBar.ConnectionWay.Lan()))
+                addOrReplace(device.addTransport(lan = BUSYBar.ConnectionWay.Lan))
             }
         }
     }
