@@ -37,6 +37,10 @@ class FRpcWifiApiImpl(
             }.body<ApiResponse>()
 
             return@runSuspendCatching when (response) {
+                is ErrorResponse if response.error == BsbRpcError.ALREADY_CONNECTED.error -> {
+                    SuccessResponse(response.error)
+                }
+
                 is ErrorResponse -> error(response.error)
                 is SuccessResponse -> response
             }
