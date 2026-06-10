@@ -66,27 +66,41 @@ class LanMonitorApiImpl(
         storageUpdaterScope.launch(SingleJobMode.CANCEL_PREVIOUS) {
             connectedDeviceFlow.collect { connectedDevice ->
                 if (connectedDevice != null) {
-                    storageApi.transactionInternal {
+                    val event = storageApi.transactionInternal {
                         onDevicePlugIn(connectedDevice.hardwareId)
+                    }
+                    // Publish AFTER the transaction completes. The event bus is a
+                    // rendezvous flow, so publish suspends until a subscriber receives
+                    // the event. Emitting inside transactionInternal would hold the
+                    // global storage lock for that whole time and deadlock if the
+                    // subscriber reacts by opening its own storage transaction.
+                    if (event != null) {
+                        eventApi.publish(event)
                     }
                 }
             }
         }
     }
 
-    private suspend fun InternalStorageTransactionScope.onDevicePlugIn(hardwareId: String) {
+    /**
+     * Reconciles storage with a device that just became reachable over LAN and returns the
+     * [BusyLibEvent] that must be published once the transaction is committed, or `null` when
+     * the active device did not change.
+     */
+    private fun InternalStorageTransactionScope.onDevicePlugIn(hardwareId: String): BusyLibEvent? {
         val existedDevice = getAllDevices().find { it.hardwareId == hardwareId }
         if (existedDevice != null) {
             info { "Found existed device with hardware id $hardwareId, switch to them" }
             // Auto switch
-            addOrReplace(
-                existedDevice.addTransport(lan = BUSYBar.ConnectionWay.Lan)
-            )
-            if (existedDevice.uniqueId != getCurrentDevice()?.uniqueId) {
-                eventApi.publish(BusyLibEvent.ActiveDeviceAutoSwitched(existedDevice))
+            val updatedDevice = existedDevice.addTransport(lan = BUSYBar.ConnectionWay.Lan)
+            addOrReplace(updatedDevice)
+            val wasAlreadyCurrent = existedDevice.uniqueId == getCurrentDevice()?.uniqueId
+            setCurrentDevice(updatedDevice)
+            return if (wasAlreadyCurrent) {
+                null
+            } else {
+                BusyLibEvent.ActiveDeviceAutoSwitched(updatedDevice)
             }
-            setCurrentDevice(existedDevice)
-            return
         }
         val newDevice = BUSYBar(
             humanReadableName = DEFAULT_NAME,
@@ -94,7 +108,7 @@ class LanMonitorApiImpl(
             lan = BUSYBar.ConnectionWay.Lan
         )
         info { "Add new device with hardware id: $newDevice" }
-        eventApi.publish(BusyLibEvent.ActiveDeviceAutoSwitched(newDevice))
         setCurrentDevice(newDevice)
+        return BusyLibEvent.ActiveDeviceAutoSwitched(newDevice)
     }
 }

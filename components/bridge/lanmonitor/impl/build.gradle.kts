@@ -25,12 +25,7 @@ kotlin {
         implementation(projects.components.eventbus.internal)
     }
 
-    sourceSets.jvmTest.dependencies {
-        implementation(libs.kotlin.test)
-        implementation(libs.kotlin.coroutines.test)
-    }
-
-    sourceSets.appleTest.dependencies {
+    sourceSets.commonTest.dependencies {
         implementation(libs.kotlin.test)
         implementation(libs.kotlin.coroutines.test)
     }
