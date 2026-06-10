@@ -3,9 +3,13 @@ package net.flipper.bridge.connection.screens.search
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.config.api.model.BUSYBar
@@ -20,28 +24,6 @@ class LanSearchViewModel(
 ) : ConnectionSearchViewModel(persistedStorage, deviceService), LogTagProvider {
     override val TAG = "LanSearchViewModel"
 
-    private val searchItems = combine(
-        persistedStorage.getAllDevicesFlow(),
-        flowOf(
-            listOf(
-                BUSYBar(
-                    uniqueId = "BUSY_Bar_LAN",
-                    humanReadableName = "BUSY Bar LAN",
-                    lan = BUSYBar.ConnectionWay.Lan()
-                )
-            )
-        )
-    ) { savedDevices, foundDevices ->
-        foundDevices.map { device ->
-            ConnectionSearchItem(
-                address = device.uniqueId,
-                deviceModel = device,
-                isAdded = savedDevices.find { it.uniqueId == device.uniqueId } != null
-            )
-        }.toPersistentList()
-    }.stateIn(viewModelScope, SharingStarted.Eagerly, persistentListOf())
-
-    override fun getDevicesFlow(): WrappedStateFlow<ImmutableList<ConnectionSearchItem>> {
-        return searchItems.wrap()
-    }
+    override fun getDevicesFlow() =
+        MutableStateFlow<ImmutableList<ConnectionSearchItem>>(persistentListOf()).wrap()
 }

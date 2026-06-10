@@ -4,6 +4,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
 import kotlinx.serialization.SerialName
+import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.lanmonitor.model.ConnectedDeviceMetaInfo
 import net.flipper.core.ktor.di.qualifier.KtorNetworkClientQualifier
 
@@ -12,6 +13,7 @@ private data class DeviceStatus(
     val hardwareId: String
 )
 
+@Inject
 class DeviceMetaInfoRequester(
     @KtorNetworkClientQualifier
     private val httpClient: HttpClient,

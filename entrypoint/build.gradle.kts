@@ -50,6 +50,8 @@ kotlin {
         implementation(projects.components.cloud.rest.api)
         implementation(projects.components.cloud.rest.impl)
 
+        implementation(projects.components.bridge.lanmonitor.api)
+
         api(projects.components.bridge.config.api)
         implementation(projects.components.bridge.config.impl)
         implementation(projects.components.bridge.config.internal)
@@ -123,6 +125,7 @@ kotlin {
         implementation(projects.components.watchers.changename)
         implementation(projects.components.watchers.provisioning)
 
+
         api(projects.components.tools.multistream.api)
         implementation(projects.components.tools.multistream.impl)
 
@@ -142,6 +145,7 @@ kotlin {
     sourceSets.jvmMain.dependencies {
         implementation(projects.components.watchers.desktop)
         implementation(projects.components.bridge.transport.tcp.lan.impl)
+        implementation(projects.components.bridge.lanmonitor.impl)
     }
 }
 
@@ -200,6 +204,7 @@ kotlin {
             implementation(projects.components.tools.oncall.impl)
 
             implementation(projects.components.watchers.desktop)
+            implementation(projects.components.bridge.lanmonitor.impl)
         }
     }
 }
