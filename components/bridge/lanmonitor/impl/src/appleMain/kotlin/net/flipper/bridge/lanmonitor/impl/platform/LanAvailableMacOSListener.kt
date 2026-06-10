@@ -77,7 +77,7 @@ class LanAvailableMacOSListener internal constructor(
 
     override val TAG: String = "FAppleLanConnectionMonitor"
     private val queue = dispatch_queue_create("net.flipper.lan.connection", null)
-    private val lanAvailableStateFlow = MutableSharedFlow<Boolean>()
+    private val lanAvailableStateFlow = MutableSharedFlow<Boolean>(replay = 1)
     private val restartMonitoringScope = globalScope.asSingleJobScope()
     private val connectionLock = NSLock()
     private var connection: nw_connection_t = null

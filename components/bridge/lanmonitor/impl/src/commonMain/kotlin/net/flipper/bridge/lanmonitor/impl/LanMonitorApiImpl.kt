@@ -41,7 +41,7 @@ class LanMonitorApiImpl(
         .getLanAvailableFlow()
         .mapLatest { isAvailable ->
             if (isAvailable) {
-                info { "Detect plugin for new device" }
+                info { "Detect plug in for new device" }
                 exponentialRetry {
                     infoRequester.getMetaInfo()
                         .onFailure {
