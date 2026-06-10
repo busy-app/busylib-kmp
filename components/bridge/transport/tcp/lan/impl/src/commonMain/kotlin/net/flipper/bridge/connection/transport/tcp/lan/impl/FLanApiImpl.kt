@@ -57,9 +57,9 @@ class FLanApiImpl(
             lanMonitorApi
                 .getConnectedDeviceFlow()
                 .mapLatest { metaInfo ->
-                    if (metaInfo == null
-                        || currentConfig.hardwareId == null
-                        || metaInfo.hardwareId != currentConfig.hardwareId
+                    if (metaInfo == null ||
+                        currentConfig.hardwareId == null ||
+                        metaInfo.hardwareId != currentConfig.hardwareId
                     ) {
                         FInternalTransportConnectionStatus.Connecting(
                             FInternalTransportConnectionType.LAN

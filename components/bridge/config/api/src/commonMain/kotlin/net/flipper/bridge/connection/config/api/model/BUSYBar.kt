@@ -54,6 +54,7 @@ class BUSYBar internal constructor(
 
         @Serializable
         data object Lan : ConnectionWay
+
         @Serializable
         data class Cloud(
             @SerialName("device_id")

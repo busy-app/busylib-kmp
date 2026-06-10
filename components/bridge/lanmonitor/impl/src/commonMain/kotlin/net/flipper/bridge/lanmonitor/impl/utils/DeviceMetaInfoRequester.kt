@@ -9,6 +9,7 @@ import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.lanmonitor.api.BB_HOST
 import net.flipper.bridge.lanmonitor.api.BB_PORT
 import net.flipper.bridge.lanmonitor.model.ConnectedDeviceMetaInfo
+import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.ktor.di.qualifier.KtorNetworkClientQualifier
 
 @Serializable
@@ -22,10 +23,10 @@ class DeviceMetaInfoRequester(
     @KtorNetworkClientQualifier
     private val httpClient: HttpClient,
 ) {
-    suspend fun getMetaInfo() = runCatching {
+    suspend fun getMetaInfo() = runSuspendCatching {
         val deviceStatus = httpClient.get("http://$BB_HOST:$BB_PORT/api/status/device").body<DeviceStatus>()
 
-        return@runCatching ConnectedDeviceMetaInfo(
+        return@runSuspendCatching ConnectedDeviceMetaInfo(
             hardwareId = deviceStatus.hardwareId
         )
     }

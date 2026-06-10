@@ -10,11 +10,11 @@ import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.config.api.model.addTransport
 import net.flipper.bridge.connection.config.internal.FInternalDevicePersistedStorage
 import net.flipper.bridge.connection.config.internal.InternalStorageTransactionScope
-import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.bridge.lanmonitor.api.LanMonitorApi
 import net.flipper.bridge.lanmonitor.impl.platform.LanAvailablePlatformListener
 import net.flipper.bridge.lanmonitor.impl.utils.DeviceMetaInfoRequester
 import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
+import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.ktx.common.SingleJobMode
 import net.flipper.core.busylib.ktx.common.asSingleJobScope
 import net.flipper.core.busylib.ktx.common.exponentialRetry
@@ -51,7 +51,9 @@ class LanMonitorApiImpl(
                             error(it) { "Failed to request hardware id" }
                         }
                 }
-            } else null
+            } else {
+                null
+            }
         }.onEach {
             info { "New device plug in with hardware id: $it" }
         }.stateIn(globalScope, SharingStarted.Eagerly, null)

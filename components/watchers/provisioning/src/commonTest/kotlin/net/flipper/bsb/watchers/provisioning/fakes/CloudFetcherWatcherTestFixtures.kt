@@ -87,6 +87,7 @@ internal fun busyBar(
         )
         is BUSYBar.ConnectionWay.Lan -> BUSYBar(
             humanReadableName = humanReadableName,
+            hardwareId = hardwareId.orEmpty(),
             uniqueId = id,
             lan = first
         ).copy(hardwareId = hardwareId)
