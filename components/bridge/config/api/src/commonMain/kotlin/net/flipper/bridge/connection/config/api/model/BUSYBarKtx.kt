@@ -40,12 +40,13 @@ fun BUSYBar(
 
 fun BUSYBar(
     humanReadableName: String,
+    hardwareId: String,
     uniqueId: String = Uuid.random().toString(),
     lan: ConnectionWay.Lan
 ): BUSYBar {
     return BUSYBar(
         humanReadableName = humanReadableName,
-        hardwareId = null,
+        hardwareId = hardwareId,
         uniqueId = uniqueId,
         ble = null,
         cloud = null,
