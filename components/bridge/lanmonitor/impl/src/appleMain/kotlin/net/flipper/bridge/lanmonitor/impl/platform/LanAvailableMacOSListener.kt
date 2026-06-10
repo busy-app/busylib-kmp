@@ -75,7 +75,7 @@ class LanAvailableMacOSListener internal constructor(
     @Inject
     constructor(globalScope: CoroutineScope) : this(globalScope, BB_HOST, BB_PORT)
 
-    override val TAG: String = "FAppleLanConnectionMonitor"
+    override val TAG: String = "LanAvailableMacOSListener"
     private val queue = dispatch_queue_create("net.flipper.lan.connection", null)
     private val lanAvailableStateFlow = MutableSharedFlow<Boolean>(replay = 1)
     private val restartMonitoringScope = globalScope.asSingleJobScope()
