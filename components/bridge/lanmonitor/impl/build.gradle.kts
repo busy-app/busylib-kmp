@@ -20,6 +20,9 @@ kotlin {
         implementation(libs.kotlin.coroutines)
         implementation(libs.ktor.client.core)
         implementation(libs.kotlin.serialization.json)
+
+        implementation(projects.components.eventbus.api)
+        implementation(projects.components.eventbus.internal)
     }
 
     sourceSets.jvmTest.dependencies {

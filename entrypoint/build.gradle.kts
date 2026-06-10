@@ -125,9 +125,12 @@ kotlin {
         implementation(projects.components.watchers.changename)
         implementation(projects.components.watchers.provisioning)
 
-
         api(projects.components.tools.multistream.api)
         implementation(projects.components.tools.multistream.impl)
+
+        api(projects.components.eventbus.api)
+        implementation(projects.components.eventbus.internal)
+        implementation(projects.components.eventbus.impl)
 
         implementation(libs.kotlin.coroutines)
         implementation(libs.ktor.client.core)
@@ -181,6 +184,7 @@ kotlin {
                 export(projects.components.bridge.feature.timer.api)
                 export(projects.components.bridge.orchestrator.api)
                 export(projects.components.bridge.service.api)
+                export(projects.components.eventbus.api)
                 export(projects.components.core.log)
                 export(projects.components.core.systrace)
 

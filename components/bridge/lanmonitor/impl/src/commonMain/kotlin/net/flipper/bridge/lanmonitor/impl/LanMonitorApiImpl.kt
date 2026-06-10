@@ -21,6 +21,8 @@ import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
+import net.flipper.eventbus.internal.BusyLibEventPublisher
+import net.flipper.eventbus.model.BusyLibEvent
 import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 
@@ -34,7 +36,8 @@ class LanMonitorApiImpl(
     lanAvailableListener: LanAvailablePlatformListener,
     globalScope: CoroutineScope,
     private val infoRequester: DeviceMetaInfoRequester,
-    private val storageApi: FInternalDevicePersistedStorage
+    private val storageApi: FInternalDevicePersistedStorage,
+    private val eventApi: BusyLibEventPublisher
 ) : LanMonitorApi, InternalBUSYLibStartupListener, LogTagProvider {
     override val TAG = "LanMonitorApi"
     private val connectedDeviceFlow = lanAvailableListener
@@ -69,7 +72,7 @@ class LanMonitorApiImpl(
         }
     }
 
-    private fun InternalStorageTransactionScope.onDevicePlugIn(hardwareId: String) {
+    private suspend fun InternalStorageTransactionScope.onDevicePlugIn(hardwareId: String) {
         val existedDevice = getAllDevices().find { it.hardwareId == hardwareId }
         if (existedDevice != null) {
             info { "Found existed device with hardware id $hardwareId, switch to them" }
@@ -77,6 +80,9 @@ class LanMonitorApiImpl(
             addOrReplace(
                 existedDevice.addTransport(lan = BUSYBar.ConnectionWay.Lan)
             )
+            if (existedDevice.uniqueId != getCurrentDevice()?.uniqueId) {
+                eventApi.publish(BusyLibEvent.ActiveDeviceAutoSwitched(existedDevice))
+            }
             setCurrentDevice(existedDevice)
             return
         }
@@ -86,6 +92,7 @@ class LanMonitorApiImpl(
             lan = BUSYBar.ConnectionWay.Lan
         )
         info { "Add new device with hardware id: $newDevice" }
+        eventApi.publish(BusyLibEvent.ActiveDeviceAutoSwitched(newDevice))
         setCurrentDevice(newDevice)
     }
 }

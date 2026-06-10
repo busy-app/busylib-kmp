@@ -17,6 +17,7 @@ import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
 import net.flipper.busylib.di.create
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
+import net.flipper.eventbus.api.EventBusApi
 import net.flipper.tools.multistream.api.MultiStreamApi
 import net.flipper.tools.oncall.api.OnCallSingletonApi
 
@@ -30,7 +31,8 @@ class BUSYLibMacOS(
     override val multiStreamApi: MultiStreamApi,
     private val startUpListeners: Set<InternalBUSYLibStartupListener>,
     val onCallSingletonApi: OnCallSingletonApi,
-    override val busyFirmwareDirectoryChannelApi: BusyFirmwareDirectoryChannelApi
+    override val busyFirmwareDirectoryChannelApi: BusyFirmwareDirectoryChannelApi,
+    override val eventBus: EventBusApi
 ) : BUSYLibApple, LogTagProvider {
     override val TAG = "BUSYLib"
     override fun launch() {
