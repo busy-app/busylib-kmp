@@ -83,7 +83,7 @@ class FHttpBLEEngine(
             return@withLockResult if (result == null) {
                 error {
                     "Failed to wait ${REQUEST_TIMEOUT.inWholeSeconds} seconds for response," +
-                            " try to make this request again after reset"
+                        " try to make this request again after reset"
                 }
                 resetSerialApi()
                 checkRequestCountUnsafe()
