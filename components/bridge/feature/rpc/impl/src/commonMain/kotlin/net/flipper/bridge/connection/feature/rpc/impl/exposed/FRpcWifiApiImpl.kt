@@ -14,6 +14,7 @@ import net.flipper.bridge.connection.feature.rpc.api.model.ErrorResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.NetworkResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.StatusResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
+import net.flipper.bridge.connection.transport.common.api.serial.attributes.IgnoreRequestTimeoutKey
 import net.flipper.core.busylib.ktx.common.cache.ObjectCache
 import net.flipper.core.busylib.ktx.common.cache.getOrElse
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
@@ -34,6 +35,7 @@ class FRpcWifiApiImpl(
         return runSuspendCatching(dispatcher) {
             val response = httpClient.post("/api/wifi/connect") {
                 setBody(config)
+                attributes.put(IgnoreRequestTimeoutKey, true)
             }.body<ApiResponse>()
 
             return@runSuspendCatching when (response) {
