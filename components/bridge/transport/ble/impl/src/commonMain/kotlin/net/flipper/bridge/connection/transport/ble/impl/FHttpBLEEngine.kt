@@ -73,9 +73,10 @@ class FHttpBLEEngine(
             verbose { "Raw data is: ${rawBytes.decodeToString()}" }
             val channel = serialApi.getReceiveByteChannel()
 
-            val withTimeout = data.attributes.getOrNull(IgnoreRequestTimeoutKey)?.not() ?: true
+            val ignoreTimeout = data.attributes.getOrNull(IgnoreRequestTimeoutKey) ?: false
+            val withTimeout = !ignoreTimeout
 
-            if (!withTimeout) {
+            if (ignoreTimeout) {
                 info { "Warning: execute request without timeout" }
             }
 
