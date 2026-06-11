@@ -32,6 +32,7 @@ import kotlinx.io.Source
 import kotlinx.io.readByteArray
 import net.flipper.bridge.connection.transport.ble.impl.exception.BadHttpResponseException
 import net.flipper.bridge.connection.transport.ble.impl.serial.FSerialBleApi
+import net.flipper.bridge.connection.transport.common.api.serial.attributes.IgnoreRequestTimeoutKey
 import net.flipper.bridge.connection.transport.common.utils.toRawHttpRequest
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.busylib.ktx.common.withLockResult
@@ -72,15 +73,21 @@ class FHttpBLEEngine(
             verbose { "Raw data is: ${rawBytes.decodeToString()}" }
             val channel = serialApi.getReceiveByteChannel()
 
-            val result = sendBytesWithTimeout(rawBytes, channel, requestTime)
+            val withTimeout = data.attributes.getOrNull(IgnoreRequestTimeoutKey)?.not() ?: true
+
+            if (!withTimeout) {
+                info { "Warning: execute request without timeout" }
+            }
+
+            val result = sendBytes(rawBytes, channel, requestTime, withTimeout = withTimeout)
             return@withLockResult if (result == null) {
                 error {
                     "Failed to wait ${REQUEST_TIMEOUT.inWholeSeconds} seconds for response," +
-                        " try to make this request again after reset"
+                            " try to make this request again after reset"
                 }
                 resetSerialApi()
                 checkRequestCountUnsafe()
-                sendBytesWithTimeout(rawBytes, channel, requestTime)
+                sendBytes(rawBytes, channel, requestTime, withTimeout = withTimeout)
                     ?: error("Timeout on request ${processedRequest.url}")
             } else {
                 result
@@ -91,24 +98,38 @@ class FHttpBLEEngine(
     }
 
     @InternalAPI
-    private suspend fun sendBytesWithTimeout(
+    private suspend fun sendBytes(
+        bytes: ByteArray,
+        channel: ByteReadChannel,
+        requestTime: GMTDate,
+        withTimeout: Boolean
+    ): HttpResponseData? {
+        return withContext(NonCancellable) {
+            if (withTimeout) {
+                withTimeoutOrNull(REQUEST_TIMEOUT) {
+                    sendBytesUnsafe(bytes, channel, requestTime)
+                }
+            } else {
+                sendBytesUnsafe(bytes, channel, requestTime)
+            }
+        }
+    }
+
+    @InternalAPI
+    private suspend fun sendBytesUnsafe(
         bytes: ByteArray,
         channel: ByteReadChannel,
         requestTime: GMTDate
     ): HttpResponseData? {
-        return withContext(NonCancellable) {
-            withTimeoutOrNull(REQUEST_TIMEOUT) {
-                serialApi.send(bytes)
-                info { "Waiting for response" }
-                val response = parseRawHttpResponse(
-                    channel = channel,
-                    requestTime = requestTime,
-                    callContext = callContext()
-                )
-                info { "Receive response" }
-                return@withTimeoutOrNull response
-            }
-        }
+        serialApi.send(bytes)
+        info { "Waiting for response" }
+        val response = parseRawHttpResponse(
+            channel = channel,
+            requestTime = requestTime,
+            callContext = callContext()
+        )
+        info { "Receive response" }
+        return response
     }
 
     private suspend fun resetSerialApi() {
