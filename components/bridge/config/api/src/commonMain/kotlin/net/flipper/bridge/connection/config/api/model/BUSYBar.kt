@@ -53,10 +53,7 @@ class BUSYBar internal constructor(
         data object Mock : ConnectionWay
 
         @Serializable
-        data class Lan(
-            @SerialName("host")
-            val host: String = "10.0.4.20",
-        ) : ConnectionWay
+        data object Lan : ConnectionWay
 
         @Serializable
         data class Cloud(

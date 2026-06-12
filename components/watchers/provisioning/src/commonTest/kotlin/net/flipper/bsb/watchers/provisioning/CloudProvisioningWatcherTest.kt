@@ -245,7 +245,7 @@ class CloudProvisioningWatcherTest {
         val cloudId = Uuid.random()
         val device = busyBar(
             id = "device-1",
-            BUSYBar.ConnectionWay.Lan("10.0.4.20"),
+            BUSYBar.ConnectionWay.Lan,
             BUSYBar.ConnectionWay.BLE("AA:BB:CC")
         )
 
@@ -379,7 +379,12 @@ class CloudProvisioningWatcherTest {
         var result = when (first) {
             is BUSYBar.ConnectionWay.BLE -> BUSYBar(humanReadableName = "Test Bar", uniqueId = id, ble = first)
             is BUSYBar.ConnectionWay.Cloud -> BUSYBar(humanReadableName = "Test Bar", uniqueId = id, cloud = first)
-            is BUSYBar.ConnectionWay.Lan -> BUSYBar(humanReadableName = "Test Bar", uniqueId = id, lan = first)
+            is BUSYBar.ConnectionWay.Lan -> BUSYBar(
+                humanReadableName = "Test Bar",
+                hardwareId = "hw-$id",
+                uniqueId = id,
+                lan = first
+            )
             is BUSYBar.ConnectionWay.Mock -> BUSYBar(humanReadableName = "Test Bar", uniqueId = id, mock = first)
         }
         for (way in connectionWays.drop(1)) {

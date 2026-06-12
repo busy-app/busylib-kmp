@@ -6,6 +6,7 @@ import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
 import net.flipper.bridge.connection.service.api.FConnectionService
 import net.flipper.bridge.device.firmwareupdate.updater.api.FirmwareUpdaterApi
 import net.flipper.bsb.cloud.rest.channel.api.BusyFirmwareDirectoryChannelApi
+import net.flipper.eventbus.api.EventBusApi
 import net.flipper.tools.multistream.api.MultiStreamApi
 
 interface BUSYLib {
@@ -16,6 +17,7 @@ interface BUSYLib {
     val persistedStorage: FDevicePersistedStorage
     val multiStreamApi: MultiStreamApi
     val busyFirmwareDirectoryChannelApi: BusyFirmwareDirectoryChannelApi
+    val eventBus: EventBusApi
 
     fun launch()
 }

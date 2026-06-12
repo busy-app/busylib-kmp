@@ -18,6 +18,7 @@ import net.flipper.bsb.cloud.rest.channel.api.BusyFirmwareDirectoryChannelApi
 import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
 import net.flipper.busylib.di.BUSYLibGraphDesktop
 import net.flipper.busylib.di.create
+import net.flipper.eventbus.api.EventBusApi
 import net.flipper.tools.multistream.api.MultiStreamApi
 import kotlin.collections.forEach
 
@@ -30,7 +31,8 @@ class BUSYLibDesktop(
     override val persistedStorage: FDevicePersistedStorage,
     override val multiStreamApi: MultiStreamApi,
     private val startUpListeners: Set<InternalBUSYLibStartupListener>,
-    override val busyFirmwareDirectoryChannelApi: BusyFirmwareDirectoryChannelApi
+    override val busyFirmwareDirectoryChannelApi: BusyFirmwareDirectoryChannelApi,
+    override val eventBus: EventBusApi
 ) : BUSYLib {
     override fun launch() {
         startUpListeners.forEach {

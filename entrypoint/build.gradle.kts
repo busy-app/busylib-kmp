@@ -50,6 +50,8 @@ kotlin {
         implementation(projects.components.cloud.rest.api)
         implementation(projects.components.cloud.rest.impl)
 
+        implementation(projects.components.bridge.lanmonitor.api)
+
         api(projects.components.bridge.config.api)
         implementation(projects.components.bridge.config.impl)
         implementation(projects.components.bridge.config.internal)
@@ -126,6 +128,10 @@ kotlin {
         api(projects.components.tools.multistream.api)
         implementation(projects.components.tools.multistream.impl)
 
+        api(projects.components.eventbus.api)
+        implementation(projects.components.eventbus.internal)
+        implementation(projects.components.eventbus.impl)
+
         implementation(libs.kotlin.coroutines)
         implementation(libs.ktor.client.core)
 
@@ -142,6 +148,7 @@ kotlin {
     sourceSets.jvmMain.dependencies {
         implementation(projects.components.watchers.desktop)
         implementation(projects.components.bridge.transport.tcp.lan.impl)
+        implementation(projects.components.bridge.lanmonitor.impl)
     }
 }
 
@@ -177,6 +184,7 @@ kotlin {
                 export(projects.components.bridge.feature.timer.api)
                 export(projects.components.bridge.orchestrator.api)
                 export(projects.components.bridge.service.api)
+                export(projects.components.eventbus.api)
                 export(projects.components.core.log)
                 export(projects.components.core.systrace)
 
@@ -200,6 +208,7 @@ kotlin {
             implementation(projects.components.tools.oncall.impl)
 
             implementation(projects.components.watchers.desktop)
+            implementation(projects.components.bridge.lanmonitor.impl)
         }
     }
 }

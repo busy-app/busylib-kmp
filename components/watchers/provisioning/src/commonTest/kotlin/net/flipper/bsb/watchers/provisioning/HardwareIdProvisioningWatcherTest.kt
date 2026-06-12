@@ -63,7 +63,7 @@ class HardwareIdProvisioningWatcherTest {
             val device = busyBar(
                 id = "device-1",
                 BUSYBar.ConnectionWay.BLE("AA:BB:CC"),
-                BUSYBar.ConnectionWay.Lan("10.0.4.20")
+                BUSYBar.ConnectionWay.Lan
             )
 
             val setup = createSetup(
@@ -370,6 +370,7 @@ class HardwareIdProvisioningWatcherTest {
             )
             is BUSYBar.ConnectionWay.Lan -> BUSYBar(
                 humanReadableName = "Test Bar",
+                hardwareId = hardwareId.orEmpty(),
                 uniqueId = id,
                 lan = first
             ).copy(hardwareId = hardwareId)

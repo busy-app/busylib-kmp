@@ -5,7 +5,7 @@ import net.flipper.bridge.connection.transport.common.api.FInternalTransportConn
 import net.flipper.core.busylib.data.nonEmptyListOf
 
 data class FLanDeviceConnectionConfig(
-    val host: String,
+    val hardwareId: String?,
     val name: String
 ) : FDeviceConnectionConfig<FLanApi>() {
     override fun getTransportTypes() = nonEmptyListOf(FInternalTransportConnectionType.LAN)

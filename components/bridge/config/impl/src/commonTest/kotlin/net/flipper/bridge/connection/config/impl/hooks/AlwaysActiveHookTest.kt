@@ -35,8 +35,9 @@ class AlwaysActiveHookTest {
 
     private val lanDevice = BUSYBar(
         humanReadableName = "LAN Device",
+        hardwareId = "lan-hw-1",
         uniqueId = "lan-1",
-        lan = BUSYBar.ConnectionWay.Lan()
+        lan = BUSYBar.ConnectionWay.Lan
     )
 
     private val hook = AlwaysActiveHook()
