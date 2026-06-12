@@ -12,6 +12,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
 import net.flipper.bridge.connection.connectionbuilder.api.FDeviceConfigToConnection
 import net.flipper.bridge.connection.transport.combined.impl.connections.utils.ChildSupervisorScope
+import net.flipper.bridge.connection.transport.common.api.BLEConnectionPermissionException
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.common.api.FInternalDisconnectedReason
@@ -57,6 +58,11 @@ internal class WrappedConnectionInternal(
                 is FailedPairingConnectException -> {
                     info { "Wrapped connection $config failed with a not recoverable error" }
                     FInternalDisconnectedReason.REQUIRES_REPAIRING
+                }
+
+                is BLEConnectionPermissionException -> {
+                    info { "Wrapped connection $config failed with a not recoverable error" }
+                    FInternalDisconnectedReason.REQUIRES_PERMISSION
                 }
 
                 else -> {

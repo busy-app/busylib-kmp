@@ -21,7 +21,7 @@ import net.flipper.bridge.connection.transport.ble.impl.BleConstants.CONNECT_TIM
 import net.flipper.bridge.connection.transport.ble.impl.api.FAndroidBleApiImpl
 import net.flipper.bridge.connection.transport.ble.impl.api.serial.SerialApiFactory
 import net.flipper.bridge.connection.transport.ble.impl.api.stream.AndroidStreamApiFactory
-import net.flipper.bridge.connection.transport.ble.impl.exception.BLEConnectionPermissionException
+import net.flipper.bridge.connection.transport.common.api.BLEConnectionPermissionException
 import net.flipper.bridge.connection.transport.ble.impl.exception.FailedConnectToDeviceException
 import net.flipper.bridge.connection.transport.ble.impl.exception.NoFoundDeviceException
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
