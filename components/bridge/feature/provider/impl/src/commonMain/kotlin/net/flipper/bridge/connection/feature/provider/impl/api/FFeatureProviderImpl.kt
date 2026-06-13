@@ -33,7 +33,7 @@ import kotlin.reflect.KClass
 
 @Inject
 @SingleIn(BusyLibGraph::class)
-@ContributesBinding(BusyLibGraph::class, binding = binding<FFeatureProvider>())
+@ContributesBinding(BusyLibGraph::class, binding<FFeatureProvider>())
 class FFeatureProviderImpl(
     orchestrator: FDeviceOrchestrator,
     private val fBSBDeviceApiFactory: FBSBDeviceApi.Factory,

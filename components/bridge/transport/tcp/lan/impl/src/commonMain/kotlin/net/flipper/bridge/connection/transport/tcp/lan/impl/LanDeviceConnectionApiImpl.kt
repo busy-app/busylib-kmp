@@ -13,7 +13,7 @@ import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
 
 @Inject
-@ContributesBinding(BusyLibGraph::class, binding = binding<LanDeviceConnectionApi>())
+@ContributesBinding(BusyLibGraph::class, binding<LanDeviceConnectionApi>())
 class LanDeviceConnectionApiImpl(
     private val lanMonitorApi: LanMonitorApi
 ) : LanDeviceConnectionApi {

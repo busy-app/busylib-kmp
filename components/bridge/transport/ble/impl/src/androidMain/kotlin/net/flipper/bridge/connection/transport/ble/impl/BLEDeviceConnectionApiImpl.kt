@@ -42,7 +42,7 @@ import no.nordicsemi.kotlin.ble.client.android.Peripheral
 import no.nordicsemi.kotlin.ble.core.Phy
 
 @Inject
-@ContributesBinding(BusyLibGraph::class, binding = binding<BleDeviceConnectionApi>())
+@ContributesBinding(BusyLibGraph::class, binding<BleDeviceConnectionApi>())
 class BLEDeviceConnectionApiImpl(
     private val context: Context,
     private val centralManager: CentralManager,

@@ -71,7 +71,7 @@ class FTimeZoneFeatureApiImpl(
     }
 
     @Inject
-    @ContributesIntoMap(BusyLibGraph::class, binding = binding<FDeviceFeatureApi.Factory>())
+    @ContributesIntoMap(BusyLibGraph::class, binding<FDeviceFeatureApi.Factory>())
     @FDeviceFeatureKey(FDeviceFeature.TIME_ZONE)
     class Factory : FDeviceFeatureApi.Factory {
         override suspend fun invoke(

@@ -16,7 +16,7 @@ import net.flipper.core.ktor.di.qualifier.NetworkCoroutineDispatcher
 
 @Inject
 @SingleIn(BusyLibGraph::class)
-@ContributesBinding(BusyLibGraph::class, binding = binding<BusyFirmwareDirectoryApi>())
+@ContributesBinding(BusyLibGraph::class, binding<BusyFirmwareDirectoryApi>())
 class BusyFirmwareDirectoryApiImpl(
     @KtorNetworkClientQualifier
     private val httpClient: HttpClient,

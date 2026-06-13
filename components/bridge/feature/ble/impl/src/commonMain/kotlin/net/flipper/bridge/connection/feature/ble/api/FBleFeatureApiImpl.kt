@@ -58,7 +58,7 @@ class FBleFeatureApiImpl(
     }
 
     @Inject
-    @ContributesIntoMap(BusyLibGraph::class, binding = binding<FDeviceFeatureApi.Factory>())
+    @ContributesIntoMap(BusyLibGraph::class, binding<FDeviceFeatureApi.Factory>())
     @FDeviceFeatureKey(FDeviceFeature.BLE)
     class FBleFeatureFactoryImpl : FDeviceFeatureApi.Factory {
         override suspend fun invoke(

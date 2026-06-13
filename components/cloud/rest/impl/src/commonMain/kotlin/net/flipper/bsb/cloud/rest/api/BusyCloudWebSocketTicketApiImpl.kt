@@ -20,7 +20,7 @@ import net.flipper.core.ktor.di.qualifier.NetworkCoroutineDispatcher
 
 @Inject
 @SingleIn(BusyLibGraph::class)
-@ContributesBinding(BusyLibGraph::class, binding = binding<BusyCloudWebSocketTicketApi>())
+@ContributesBinding(BusyLibGraph::class, binding<BusyCloudWebSocketTicketApi>())
 class BusyCloudWebSocketTicketApiImpl(
     @KtorNetworkClientQualifier
     private val httpClient: HttpClient,

@@ -16,7 +16,7 @@ import net.flipper.bridge.connection.transport.common.api.meta.FTransportMetaInf
 import net.flipper.busylib.core.di.BusyLibGraph
 
 @Inject
-@ContributesIntoMap(BusyLibGraph::class, binding = binding<FDeviceFeatureApi.Factory>())
+@ContributesIntoMap(BusyLibGraph::class, binding<FDeviceFeatureApi.Factory>())
 @FDeviceFeatureKey(FDeviceFeature.BATTERY_INFO)
 class FDeviceBatteryInfoFeatureFactoryImpl : FDeviceFeatureApi.Factory {
     override suspend fun invoke(

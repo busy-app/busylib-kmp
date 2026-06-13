@@ -27,8 +27,8 @@ private const val DEFAULT_BUSY_BAR_NAME = "BUSY Bar"
 
 @Inject
 @SingleIn(BusyLibGraph::class)
-@ContributesIntoSet(BusyLibGraph::class, binding = binding<InternalBUSYLibStartupListener>())
-@ContributesBinding(BusyLibGraph::class, binding = binding<CloudInvalidator>())
+@ContributesIntoSet(BusyLibGraph::class, binding<InternalBUSYLibStartupListener>())
+@ContributesBinding(BusyLibGraph::class, binding<CloudInvalidator>())
 class CloudFetcherWatcher(
     scope: CoroutineScope,
     private val persistedStorage: FInternalDevicePersistedStorage,

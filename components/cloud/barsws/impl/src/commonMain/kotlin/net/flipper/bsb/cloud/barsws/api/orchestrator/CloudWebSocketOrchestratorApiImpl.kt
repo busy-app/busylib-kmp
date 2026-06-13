@@ -37,7 +37,7 @@ import kotlin.uuid.Uuid
 @OptIn(ExperimentalCoroutinesApi::class)
 @Inject
 @SingleIn(BusyLibGraph::class)
-@ContributesBinding(BusyLibGraph::class, binding = binding<CloudWebSocketOrchestratorApi>())
+@ContributesBinding(BusyLibGraph::class, binding<CloudWebSocketOrchestratorApi>())
 class CloudWebSocketOrchestratorApiImpl(
     private val webSocketApi: CloudWebSocketApiInternal,
     scope: CoroutineScope

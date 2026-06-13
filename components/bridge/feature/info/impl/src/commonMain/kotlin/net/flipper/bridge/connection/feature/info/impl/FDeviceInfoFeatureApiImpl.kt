@@ -59,7 +59,7 @@ class FDeviceInfoFeatureApiImpl(
     }.shareIn(scope, SharingStarted.Lazily, 1).wrapFlow()
 
     @Inject
-    @ContributesIntoMap(BusyLibGraph::class, binding = binding<FDeviceFeatureApi.Factory>())
+    @ContributesIntoMap(BusyLibGraph::class, binding<FDeviceFeatureApi.Factory>())
     @FDeviceFeatureKey(FDeviceFeature.DEVICE_INFO)
     class FDeviceFeatureApiFactory : FDeviceFeatureApi.Factory {
         override suspend fun invoke(

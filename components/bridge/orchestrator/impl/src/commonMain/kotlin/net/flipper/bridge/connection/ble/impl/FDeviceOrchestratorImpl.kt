@@ -30,8 +30,8 @@ private val CONNECTING_TIMEOUT = 10.seconds
 
 @Inject
 @SingleIn(BusyLibGraph::class)
-@ContributesBinding(BusyLibGraph::class, binding = binding<FDeviceOrchestrator>())
-@ContributesBinding(BusyLibGraph::class, binding = binding<FInternalDeviceOrchestrator>())
+@ContributesBinding(BusyLibGraph::class, binding<FDeviceOrchestrator>())
+@ContributesBinding(BusyLibGraph::class, binding<FInternalDeviceOrchestrator>())
 class FDeviceOrchestratorImpl(
     private val deviceHolderFactory: FDeviceHolderFactory,
     private val deviceConnectionConfigMapper: FDeviceConnectionConfigMapper,

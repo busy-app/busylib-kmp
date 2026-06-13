@@ -13,7 +13,7 @@ import net.flipper.core.busylib.ktx.common.SingleJobMode
 import net.flipper.core.busylib.ktx.common.asSingleJobScope
 
 @Inject
-@ContributesIntoSet(BusyLibGraph::class, binding = binding<InternalBUSYLibStartupListener>())
+@ContributesIntoSet(BusyLibGraph::class, binding<InternalBUSYLibStartupListener>())
 class DesktopLanBarsWatcher(
     scope: CoroutineScope,
     private val persistedStorage: FInternalDevicePersistedStorage

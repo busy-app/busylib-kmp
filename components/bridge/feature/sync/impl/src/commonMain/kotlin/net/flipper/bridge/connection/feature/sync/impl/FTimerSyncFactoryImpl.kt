@@ -10,7 +10,7 @@ import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.busylib.core.di.BusyLibGraph
 
 @Inject
-@ContributesIntoSet(BusyLibGraph::class, binding = binding<FOnDeviceReadyFeatureApi.Factory>())
+@ContributesIntoSet(BusyLibGraph::class, binding<FOnDeviceReadyFeatureApi.Factory>())
 class FTimerSyncFactoryImpl(
     private val timerSyncFeatureFactory: FTimerSyncFeatureApiImpl.Factory
 ) : FOnDeviceReadyFeatureApi.Factory {

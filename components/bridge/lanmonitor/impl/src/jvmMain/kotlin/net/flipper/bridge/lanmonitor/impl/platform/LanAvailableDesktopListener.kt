@@ -27,7 +27,7 @@ import kotlin.time.Duration.Companion.seconds
  */
 @Inject
 @SingleIn(BusyLibGraph::class)
-@ContributesBinding(BusyLibGraph::class, binding = binding<LanAvailablePlatformListener>())
+@ContributesBinding(BusyLibGraph::class, binding<LanAvailablePlatformListener>())
 class LanAvailableDesktopListener(
     globalScope: CoroutineScope,
     private val probe: LanReachabilityProbe,

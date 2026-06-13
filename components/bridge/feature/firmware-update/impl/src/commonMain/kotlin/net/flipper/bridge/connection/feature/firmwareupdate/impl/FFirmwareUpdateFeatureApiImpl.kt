@@ -147,7 +147,7 @@ class FFirmwareUpdateFeatureApiImpl(
         .wrap()
 
     @Inject
-    @ContributesIntoMap(BusyLibGraph::class, binding = binding<FDeviceFeatureApi.Factory>())
+    @ContributesIntoMap(BusyLibGraph::class, binding<FDeviceFeatureApi.Factory>())
     @FDeviceFeatureKey(FDeviceFeature.FIRMWARE_UPDATE)
     class FDeviceFeatureApiFactory(
         private val busyFirmwareDirectoryApi: BusyFirmwareDirectoryApi,

@@ -20,7 +20,7 @@ import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import kotlin.time.Duration.Companion.seconds
 
 @Inject
-@ContributesBinding(BusyLibGraph::class, binding = binding<MockDeviceConnectionApi>())
+@ContributesBinding(BusyLibGraph::class, binding<MockDeviceConnectionApi>())
 class MockDeviceConnectionApiImpl : MockDeviceConnectionApi {
     override suspend fun connect(
         scope: CoroutineScope,

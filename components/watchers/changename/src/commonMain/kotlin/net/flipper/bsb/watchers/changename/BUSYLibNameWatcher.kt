@@ -22,7 +22,7 @@ import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
 
 @Inject
-@ContributesIntoSet(BusyLibGraph::class, binding = binding<InternalBUSYLibStartupListener>())
+@ContributesIntoSet(BusyLibGraph::class, binding<InternalBUSYLibStartupListener>())
 class BUSYLibNameWatcher(
     scope: CoroutineScope,
     private val featureProvider: FFeatureProvider,

@@ -37,8 +37,8 @@ interface CloudWebSocketApiInternal : CloudWebSocketApi {
 
 @Inject
 @SingleIn(BusyLibGraph::class)
-@ContributesBinding(BusyLibGraph::class, binding = binding<CloudWebSocketApi>())
-@ContributesBinding(BusyLibGraph::class, binding = binding<CloudWebSocketApiInternal>())
+@ContributesBinding(BusyLibGraph::class, binding<CloudWebSocketApi>())
+@ContributesBinding(BusyLibGraph::class, binding<CloudWebSocketApiInternal>())
 class CloudWebSocketApiImpl(
     networkStateApi: BUSYLibNetworkStateApi,
     principalApi: BUSYLibPrincipalApi,

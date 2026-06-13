@@ -15,7 +15,7 @@ import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.busylib.core.di.BusyLibGraph
 
 @Inject
-@ContributesIntoMap(BusyLibGraph::class, binding = binding<FDeviceFeatureApi.Factory>())
+@ContributesIntoMap(BusyLibGraph::class, binding<FDeviceFeatureApi.Factory>())
 @FDeviceFeatureKey(FDeviceFeature.SCREEN_STREAMING)
 class FScreenStreamingFeatureFactoryImpl : FDeviceFeatureApi.Factory {
     override suspend fun invoke(

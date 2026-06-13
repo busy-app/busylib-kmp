@@ -177,7 +177,7 @@ class FSettingsFeatureApiImpl(
     }
 
     @Inject
-    @ContributesIntoMap(BusyLibGraph::class, binding = binding<FDeviceFeatureApi.Factory>())
+    @ContributesIntoMap(BusyLibGraph::class, binding<FDeviceFeatureApi.Factory>())
     @FDeviceFeatureKey(FDeviceFeature.SETTINGS)
     class Factory : FDeviceFeatureApi.Factory {
         override suspend fun invoke(

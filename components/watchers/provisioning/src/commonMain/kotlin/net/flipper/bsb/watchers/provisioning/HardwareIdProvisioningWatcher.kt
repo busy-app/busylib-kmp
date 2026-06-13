@@ -26,7 +26,7 @@ import net.flipper.core.busylib.log.info
 import kotlin.uuid.Uuid
 
 @Inject
-@ContributesIntoSet(BusyLibGraph::class, binding = binding<InternalBUSYLibStartupListener>())
+@ContributesIntoSet(BusyLibGraph::class, binding<InternalBUSYLibStartupListener>())
 class HardwareIdProvisioningWatcher(
     scope: CoroutineScope,
     private val featureProvider: FFeatureProvider,

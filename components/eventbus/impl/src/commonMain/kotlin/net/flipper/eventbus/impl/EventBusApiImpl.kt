@@ -16,8 +16,8 @@ import net.flipper.eventbus.model.BusyLibEvent
 
 @SingleIn(BusyLibGraph::class)
 @Inject
-@ContributesBinding(BusyLibGraph::class, binding = binding<EventBusApi>())
-@ContributesBinding(BusyLibGraph::class, binding = binding<BusyLibEventPublisher>())
+@ContributesBinding(BusyLibGraph::class, binding<EventBusApi>())
+@ContributesBinding(BusyLibGraph::class, binding<BusyLibEventPublisher>())
 class EventBusApiImpl : EventBusApi, BusyLibEventPublisher, LogTagProvider {
     override val TAG: String = "EventBus"
 

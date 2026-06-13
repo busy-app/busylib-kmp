@@ -22,7 +22,7 @@ import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
 
 @Inject
-@ContributesIntoMap(BusyLibGraph::class, binding = binding<FDeviceFeatureApi.Factory>())
+@ContributesIntoMap(BusyLibGraph::class, binding<FDeviceFeatureApi.Factory>())
 @FDeviceFeatureKey(FDeviceFeature.RPC_EXPOSED)
 class FRpcFeatureApiFactoryImpl : FDeviceFeatureApi.Factory, LogTagProvider {
     override val TAG = "FRpcFeatureApiFactory"

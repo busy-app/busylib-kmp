@@ -37,7 +37,7 @@ import platform.darwin.dispatch_queue_create
 import platform.posix.QOS_CLASS_USER_INITIATED
 
 @SingleIn(BusyLibGraph::class)
-@ContributesBinding(BusyLibGraph::class, binding = binding<FCentralManagerApi>())
+@ContributesBinding(BusyLibGraph::class, binding<FCentralManagerApi>())
 class FCentralManager internal constructor(
     scope: CoroutineScope,
     centralManagerProvider: (FCentralManagerDelegate) -> CBCentralManager

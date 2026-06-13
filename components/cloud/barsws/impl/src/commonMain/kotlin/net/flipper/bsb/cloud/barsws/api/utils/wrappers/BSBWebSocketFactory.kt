@@ -44,7 +44,7 @@ interface BSBWebSocketFactory {
  */
 @Inject
 @SingleIn(BusyLibGraph::class)
-@ContributesBinding(BusyLibGraph::class, binding = binding<BSBWebSocketFactory>())
+@ContributesBinding(BusyLibGraph::class, binding<BSBWebSocketFactory>())
 class BSBWebSocketFactoryImpl(
     @KtorNetworkClientQualifier
     private val httpClient: HttpClient,

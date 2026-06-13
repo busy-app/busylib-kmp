@@ -15,7 +15,7 @@ import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
 
 @Inject
-@ContributesBinding(BusyLibGraph::class, binding = binding<CombinedConnectionApi>())
+@ContributesBinding(BusyLibGraph::class, binding<CombinedConnectionApi>())
 class CombinedConnectionApiImpl : CombinedConnectionApi {
     override suspend fun connect(
         scope: CoroutineScope,

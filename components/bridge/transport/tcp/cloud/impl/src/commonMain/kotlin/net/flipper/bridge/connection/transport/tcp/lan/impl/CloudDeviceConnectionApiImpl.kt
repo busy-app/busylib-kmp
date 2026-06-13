@@ -15,7 +15,7 @@ import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
 
 @Inject
-@ContributesBinding(BusyLibGraph::class, binding = binding<CloudDeviceConnectionApi>())
+@ContributesBinding(BusyLibGraph::class, binding<CloudDeviceConnectionApi>())
 class CloudDeviceConnectionApiImpl(
     private val proxyTokenProvider: ProxyTokenProvider.Factory,
     private val cloudEngineFactory: BUSYCloudHttpEngine.Factory,

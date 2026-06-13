@@ -32,8 +32,8 @@ private const val DEFAULT_NAME = "BUSY Bar via LAN"
 
 @Inject
 @SingleIn(BusyLibGraph::class)
-@ContributesBinding(BusyLibGraph::class, binding = binding<LanMonitorApi>())
-@ContributesIntoSet(BusyLibGraph::class, binding = binding<InternalBUSYLibStartupListener>())
+@ContributesBinding(BusyLibGraph::class, binding<LanMonitorApi>())
+@ContributesIntoSet(BusyLibGraph::class, binding<InternalBUSYLibStartupListener>())
 class LanMonitorApiImpl(
     lanAvailableListener: LanAvailablePlatformListener,
     globalScope: CoroutineScope,

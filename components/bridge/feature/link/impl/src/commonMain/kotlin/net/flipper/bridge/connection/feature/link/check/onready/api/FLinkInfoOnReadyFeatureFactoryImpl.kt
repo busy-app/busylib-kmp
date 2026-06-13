@@ -15,8 +15,8 @@ import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.busylib.core.di.BusyLibGraph
 
 @Inject
-@ContributesIntoSet(BusyLibGraph::class, binding = binding<FOnDeviceReadyFeatureApi.Factory>())
-@ContributesIntoMap(BusyLibGraph::class, binding = binding<FDeviceFeatureApi.Factory>())
+@ContributesIntoSet(BusyLibGraph::class, binding<FOnDeviceReadyFeatureApi.Factory>())
+@ContributesIntoMap(BusyLibGraph::class, binding<FDeviceFeatureApi.Factory>())
 @FDeviceFeatureKey(FDeviceFeature.LINKED_USER_STATUS)
 class FLinkInfoOnReadyFeatureFactoryImpl(
     private val fLinkInfoOnReadyFeatureApiImpl: FLinkInfoOnReadyFeatureApiImpl.Factory,

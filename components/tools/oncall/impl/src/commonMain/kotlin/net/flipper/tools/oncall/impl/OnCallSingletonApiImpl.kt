@@ -24,7 +24,7 @@ import net.flipper.tools.oncall.api.OnCallSingletonApi
 
 @Inject
 @SingleIn(BusyLibGraph::class)
-@ContributesBinding(BusyLibGraph::class, binding = binding<OnCallSingletonApi>())
+@ContributesBinding(BusyLibGraph::class, binding<OnCallSingletonApi>())
 class OnCallSingletonApiImpl(
     scope: CoroutineScope,
     featureProvider: FFeatureProvider,

@@ -15,7 +15,7 @@ import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.data.map
 
 @Inject
-@ContributesBinding(BusyLibGraph::class, binding = binding<FDeviceConnectionConfigMapper>())
+@ContributesBinding(BusyLibGraph::class, binding<FDeviceConnectionConfigMapper>())
 class FDeviceConnectionConfigMapperImpl(
     private val mockBuilderConfig: BUSYBarMockBuilderConfig,
     private val bleBuilderConfig: BUSYBarBLEBuilderConfig,

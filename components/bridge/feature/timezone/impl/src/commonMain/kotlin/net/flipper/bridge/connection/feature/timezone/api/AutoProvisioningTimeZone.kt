@@ -94,7 +94,7 @@ class AutoProvisioningTimeZone(
     }
 
     @Inject
-    @ContributesIntoSet(BusyLibGraph::class, binding = binding<FOnDeviceReadyFeatureApi.Factory>())
+    @ContributesIntoSet(BusyLibGraph::class, binding<FOnDeviceReadyFeatureApi.Factory>())
     class Factory : FOnDeviceReadyFeatureApi.Factory {
         override suspend fun invoke(
             unsafeFeatureDeviceApi: FUnsafeDeviceFeatureApi,

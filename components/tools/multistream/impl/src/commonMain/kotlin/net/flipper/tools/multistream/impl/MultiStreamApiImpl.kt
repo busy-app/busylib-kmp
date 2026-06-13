@@ -34,7 +34,7 @@ import net.flipper.tools.multistream.api.MultiStreamApi
 import net.flipper.tools.multistream.api.MultiStreamState
 
 @Inject
-@ContributesBinding(BusyLibGraph::class, binding = binding<MultiStreamApi>())
+@ContributesBinding(BusyLibGraph::class, binding<MultiStreamApi>())
 class MultiStreamApiImpl(
     private val orchestrator: FDeviceOrchestrator,
     private val featureProvider: FFeatureProvider,

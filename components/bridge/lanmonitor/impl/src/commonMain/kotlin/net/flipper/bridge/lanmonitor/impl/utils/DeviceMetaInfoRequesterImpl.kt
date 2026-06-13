@@ -16,7 +16,7 @@ import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.ktor.di.qualifier.KtorNetworkClientQualifier
 
 @Inject
-@ContributesBinding(BusyLibGraph::class, binding = binding<DeviceMetaInfoRequester>())
+@ContributesBinding(BusyLibGraph::class, binding<DeviceMetaInfoRequester>())
 class DeviceMetaInfoRequesterImpl(
     @KtorNetworkClientQualifier
     private val httpClient: HttpClient,

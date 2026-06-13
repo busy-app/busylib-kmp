@@ -23,7 +23,7 @@ import kotlin.uuid.Uuid
 
 @Inject
 @SingleIn(BusyLibGraph::class)
-@ContributesBinding(BusyLibGraph::class, binding = binding<BusyCloudAccessTokenApi>())
+@ContributesBinding(BusyLibGraph::class, binding<BusyCloudAccessTokenApi>())
 class BusyCloudAccessTokenApiImpl(
     @KtorNetworkClientQualifier
     private val httpClient: HttpClient,

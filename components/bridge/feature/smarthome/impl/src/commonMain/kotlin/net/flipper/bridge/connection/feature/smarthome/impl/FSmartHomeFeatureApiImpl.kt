@@ -113,7 +113,7 @@ class FSmartHomeFeatureApiImpl(
     }
 
     @Inject
-    @ContributesIntoMap(BusyLibGraph::class, binding = binding<FDeviceFeatureApi.Factory>())
+    @ContributesIntoMap(BusyLibGraph::class, binding<FDeviceFeatureApi.Factory>())
     @FDeviceFeatureKey(FDeviceFeature.SMART_HOME)
     class Factory : FDeviceFeatureApi.Factory {
         override suspend fun invoke(

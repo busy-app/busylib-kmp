@@ -11,7 +11,7 @@ import net.flipper.busylib.core.di.BusyLibGraph
 
 @Inject
 @SingleIn(BusyLibGraph::class)
-@ContributesBinding(BusyLibGraph::class, binding = binding<BusyFirmwareDirectoryChannelApi>())
+@ContributesBinding(BusyLibGraph::class, binding<BusyFirmwareDirectoryChannelApi>())
 class BusyFirmwareDirectoryChannelApiImpl(
     private val bsbFirmwareChannelIdKrate: BsbFirmwareChannelIdKrate
 ) : BusyFirmwareDirectoryChannelApi {

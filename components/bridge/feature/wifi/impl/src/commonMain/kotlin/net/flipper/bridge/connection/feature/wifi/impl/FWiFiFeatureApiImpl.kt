@@ -136,7 +136,7 @@ class FWiFiFeatureApiImpl(
         .wrap()
 
     @Inject
-    @ContributesIntoMap(BusyLibGraph::class, binding = binding<FDeviceFeatureApi.Factory>())
+    @ContributesIntoMap(BusyLibGraph::class, binding<FDeviceFeatureApi.Factory>())
     @FDeviceFeatureKey(FDeviceFeature.WIFI)
     class Factory : FDeviceFeatureApi.Factory {
         override suspend fun invoke(

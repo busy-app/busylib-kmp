@@ -49,7 +49,7 @@ class FAboutFeatureApiImpl(
     }
 
     @Inject
-    @ContributesIntoMap(BusyLibGraph::class, binding = binding<FDeviceFeatureApi.Factory>())
+    @ContributesIntoMap(BusyLibGraph::class, binding<FDeviceFeatureApi.Factory>())
     @FDeviceFeatureKey(FDeviceFeature.ABOUT)
     class Factory : FDeviceFeatureApi.Factory {
         override suspend fun invoke(

@@ -17,7 +17,7 @@ import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import kotlin.reflect.KClass
 
 @Inject
-@ContributesBinding(BusyLibGraph::class, binding = binding<FDeviceConfigToConnection>())
+@ContributesBinding(BusyLibGraph::class, binding<FDeviceConfigToConnection>())
 class FDeviceConfigToConnectionImpl(
     private val configToConnectionMap: Map<KClass<*>, DeviceConnectionApiHolder>,
     private val combinedConnectionApi: CombinedConnectionApi

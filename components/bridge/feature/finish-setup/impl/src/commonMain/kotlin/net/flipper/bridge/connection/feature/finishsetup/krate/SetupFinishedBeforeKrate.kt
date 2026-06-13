@@ -17,7 +17,7 @@ private const val KEY = "setup_was_finished_before"
 interface SetupFinishedBeforeKrate : StateFlowSuspendMutableKrate<Boolean>
 
 @Inject
-@ContributesBinding(BusyLibGraph::class, binding = binding<SetupFinishedBeforeKrate>())
+@ContributesBinding(BusyLibGraph::class, binding<SetupFinishedBeforeKrate>())
 class SetupFinishedBeforeKrateImpl(
     private val settings: Settings
 ) : SetupFinishedBeforeKrate,

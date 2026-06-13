@@ -26,8 +26,8 @@ import net.flipper.core.busylib.log.info
 
 @Inject
 @SingleIn(BusyLibGraph::class)
-@ContributesBinding(BusyLibGraph::class, binding = binding<FInternalDevicePersistedStorage>())
-@ContributesBinding(BusyLibGraph::class, binding = binding<FDevicePersistedStorage>())
+@ContributesBinding(BusyLibGraph::class, binding<FInternalDevicePersistedStorage>())
+@ContributesBinding(BusyLibGraph::class, binding<FDevicePersistedStorage>())
 class FDevicePersistedStorageImpl(
     observableSettings: ObservableSettings
 ) : FInternalDevicePersistedStorage, LogTagProvider {

@@ -66,7 +66,7 @@ private const val KEEPALIVE_COUNT = 3u
 private val RESTART_TIMEOUT = 5.seconds
 
 @SingleIn(BusyLibGraph::class)
-@ContributesBinding(BusyLibGraph::class, binding = binding<LanAvailablePlatformListener>())
+@ContributesBinding(BusyLibGraph::class, binding<LanAvailablePlatformListener>())
 class LanAvailableMacOSListener internal constructor(
     globalScope: CoroutineScope,
     private val host: String,

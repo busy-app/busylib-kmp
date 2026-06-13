@@ -36,8 +36,8 @@ import net.flipper.core.busylib.log.warn
 
 @SingleIn(BusyLibGraph::class)
 @Inject
-@ContributesBinding(BusyLibGraph::class, binding = binding<FConnectionService>())
-@ContributesIntoSet(BusyLibGraph::class, binding = binding<InternalBUSYLibStartupListener>())
+@ContributesBinding(BusyLibGraph::class, binding<FConnectionService>())
+@ContributesIntoSet(BusyLibGraph::class, binding<InternalBUSYLibStartupListener>())
 class FConnectionServiceImpl(
     private val orchestrator: FInternalDeviceOrchestrator,
     private val fDevicePersistedStorage: FInternalDevicePersistedStorage,

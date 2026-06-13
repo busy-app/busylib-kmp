@@ -204,7 +204,7 @@ class FFinishSetupFeatureApiImpl(
     ).wrap()
 
     @Inject
-    @ContributesIntoMap(BusyLibGraph::class, binding = binding<FDeviceFeatureApi.Factory>())
+    @ContributesIntoMap(BusyLibGraph::class, binding<FDeviceFeatureApi.Factory>())
     @FDeviceFeatureKey(FDeviceFeature.FINISH_SETUP)
     class FDeviceFeatureApiFactory(
         private val setupFinishedBeforeKrate: SetupFinishedBeforeKrate

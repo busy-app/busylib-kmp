@@ -63,7 +63,7 @@ import net.flipper.core.ktor.di.qualifier.KtorNetworkClientQualifier
 import kotlin.time.Instant
 
 @Inject
-@ContributesBinding(BusyLibGraph::class, binding = binding<FirmwareUpdaterApi>())
+@ContributesBinding(BusyLibGraph::class, binding<FirmwareUpdaterApi>())
 @SingleIn(BusyLibGraph::class)
 class FirmwareUpdaterApiImpl(
     private val fFeatureProvider: FFeatureProvider,

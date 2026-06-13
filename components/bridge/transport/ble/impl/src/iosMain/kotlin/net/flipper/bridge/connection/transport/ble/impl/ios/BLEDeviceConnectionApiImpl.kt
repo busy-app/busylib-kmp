@@ -35,7 +35,7 @@ import platform.Foundation.NSUUID
 import kotlin.time.Duration
 
 @Inject
-@ContributesBinding(BusyLibGraph::class, binding = binding<BleDeviceConnectionApi>())
+@ContributesBinding(BusyLibGraph::class, binding<BleDeviceConnectionApi>())
 class BLEDeviceConnectionApiImpl(
     centralManagerProvider: Provider<FCentralManagerApi>
 ) : BleDeviceConnectionApi, LogTagProvider {

@@ -50,7 +50,7 @@ class FHardwareIdFeatureApiImpl(
         }.wrap()
 
     @Inject
-    @ContributesIntoMap(BusyLibGraph::class, binding = binding<FDeviceFeatureApi.Factory>())
+    @ContributesIntoMap(BusyLibGraph::class, binding<FDeviceFeatureApi.Factory>())
     @FDeviceFeatureKey(FDeviceFeature.HARDWARE_ID)
     class FDeviceFeatureApiFactory : FDeviceFeatureApi.Factory {
         override suspend fun invoke(
