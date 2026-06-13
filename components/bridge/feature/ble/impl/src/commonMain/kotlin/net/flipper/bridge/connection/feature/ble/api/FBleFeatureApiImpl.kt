@@ -1,8 +1,5 @@
 package net.flipper.bridge.connection.feature.ble.api
 
-import dev.zacsweers.metro.Assisted
-import dev.zacsweers.metro.AssistedFactory
-import dev.zacsweers.metro.AssistedInject
 import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.binding
@@ -25,11 +22,10 @@ import net.flipper.core.busylib.ktx.common.asFlow
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 
-@AssistedInject
 class FBleFeatureApiImpl(
-    @Assisted private val rpcFeatureApi: FRpcFeatureApi,
-    @Assisted private val fEventsFeatureApi: FEventsFeatureApi?,
-    @Assisted private val scope: CoroutineScope
+    private val rpcFeatureApi: FRpcFeatureApi,
+    private val fEventsFeatureApi: FEventsFeatureApi?,
+    private val scope: CoroutineScope
 ) : FBleFeatureApi, LogTagProvider {
     override val TAG: String = "FBleFeatureApi"
 
@@ -46,15 +42,6 @@ class FBleFeatureApiImpl(
 
     override fun getBleStatus(): WrappedFlow<FBleStatus> {
         return bleStatusSharedFlow
-    }
-
-    @AssistedFactory
-    fun interface Factory {
-        operator fun invoke(
-            rpcFeatureApi: FRpcFeatureApi,
-            fEventsFeatureApi: FEventsFeatureApi?,
-            scope: CoroutineScope
-        ): FBleFeatureApiImpl
     }
 
     @Inject
