@@ -1,7 +1,7 @@
 plugins {
     id("flipper.multiplatform")
     id("kotlinx-serialization")
-    id("flipper.anvil-multiplatform")
+    id("flipper.metro-multiplatform")
 }
 kotlin {
     sourceSets.commonTest.dependencies {

@@ -1,12 +1,14 @@
 package net.flipper.bridge.lanmonitor.impl.platform
 
-import me.tatarka.inject.annotations.Provides
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.Provides
+import dev.zacsweers.metro.SingleIn
 import net.flipper.busylib.core.di.BusyLibGraph
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
-import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 
 @ContributesTo(BusyLibGraph::class)
-interface DesktopLanMonitorModule {
+@BindingContainer
+object DesktopLanMonitorModule {
 
     @Provides
     @SingleIn(BusyLibGraph::class)

@@ -1,11 +1,12 @@
 package net.flipper.bridge.connection.feature.battery.impl
 
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.binding
 import kotlinx.coroutines.CoroutineScope
-import me.tatarka.inject.annotations.Inject
-import me.tatarka.inject.annotations.IntoMap
-import me.tatarka.inject.annotations.Provides
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
+import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureKey
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.feature.common.api.get
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
@@ -13,9 +14,10 @@ import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.bridge.connection.transport.common.api.meta.FTransportMetaInfoApi
 import net.flipper.busylib.core.di.BusyLibGraph
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
 
 @Inject
+@ContributesIntoMap(BusyLibGraph::class, binding = binding<FDeviceFeatureApi.Factory>())
+@FDeviceFeatureKey(FDeviceFeature.BATTERY_INFO)
 class FDeviceBatteryInfoFeatureFactoryImpl : FDeviceFeatureApi.Factory {
     override suspend fun invoke(
         unsafeFeatureDeviceApi: FUnsafeDeviceFeatureApi,
@@ -36,16 +38,5 @@ class FDeviceBatteryInfoFeatureFactoryImpl : FDeviceFeatureApi.Factory {
             eventsApi = eventsApi,
             scope = scope
         )
-    }
-}
-
-@ContributesTo(BusyLibGraph::class)
-interface FDeviceBatteryInfoFeatureComponent {
-    @Provides
-    @IntoMap
-    fun provideFDeviceBatteryInfoFeatureFactory(
-        fDeviceBatteryInfoFeatureFactory: FDeviceBatteryInfoFeatureFactoryImpl
-    ): Pair<FDeviceFeature, FDeviceFeatureApi.Factory> {
-        return FDeviceFeature.BATTERY_INFO to fDeviceBatteryInfoFeatureFactory
     }
 }

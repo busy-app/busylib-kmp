@@ -1,21 +1,23 @@
 package net.flipper.bridge.connection.feature.rpc.impl.critical
 
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.binding
 import kotlinx.coroutines.CoroutineScope
-import me.tatarka.inject.annotations.Inject
-import me.tatarka.inject.annotations.IntoMap
-import me.tatarka.inject.annotations.Provides
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
+import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureKey
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.feature.rpc.impl.util.getHttpClient
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPDeviceApi
 import net.flipper.busylib.core.di.BusyLibGraph
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
 
 @Inject
+@ContributesIntoMap(BusyLibGraph::class, binding = binding<FDeviceFeatureApi.Factory>())
+@FDeviceFeatureKey(FDeviceFeature.RPC_CRITICAL)
 class FRpcCriticalFeatureFactoryImpl(
-    private val fRpcCriticalFeatureApiFactory: FRpcCriticalFeatureApiImpl.InternalFactory,
+    private val fRpcCriticalFeatureApiFactory: FRpcCriticalFeatureApiImpl.Factory,
 ) : FDeviceFeatureApi.Factory {
     override suspend fun invoke(
         unsafeFeatureDeviceApi: FUnsafeDeviceFeatureApi,
@@ -26,16 +28,5 @@ class FRpcCriticalFeatureFactoryImpl(
         return fRpcCriticalFeatureApiFactory.invoke(
             client = getHttpClient(httpClient.getDeviceHttpEngine())
         )
-    }
-}
-
-@ContributesTo(BusyLibGraph::class)
-interface FRpcCriticalFeatureComponent {
-    @Provides
-    @IntoMap
-    fun provideFRpcCriticalFeatureFactory(
-        fRpcCriticalFeatureFactory: FRpcCriticalFeatureFactoryImpl
-    ): Pair<FDeviceFeature, FDeviceFeatureApi.Factory> {
-        return FDeviceFeature.RPC_CRITICAL to fRpcCriticalFeatureFactory
     }
 }

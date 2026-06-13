@@ -1,6 +1,6 @@
 plugins {
     id("flipper.multiplatform")
-    id("flipper.anvil-multiplatform")
+    id("flipper.metro-multiplatform")
 }
 kotlin {
     sourceSets.commonMain.dependencies {

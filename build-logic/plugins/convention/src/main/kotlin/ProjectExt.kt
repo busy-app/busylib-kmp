@@ -10,17 +10,6 @@ import org.gradle.kotlin.dsl.the
 val Project.libs: LibrariesForLibs
     get() = the<LibrariesForLibs>()
 
-fun Project.includeCommonKspConfigurationTo(
-    vararg toConfigurations: String,
-) {
-    pluginManager.withPlugin("com.google.devtools.ksp") {
-        val commonKsp = configurations.create("commonKsp")
-        toConfigurations.forEach { configurationName ->
-            configurations.getByName(configurationName).extendsFrom(commonKsp)
-        }
-    }
-}
-
 val Project.appleEnabled: Boolean
     get() = AnyPropertyValue(this, "flipper.appleEnabled")
         .getValue()

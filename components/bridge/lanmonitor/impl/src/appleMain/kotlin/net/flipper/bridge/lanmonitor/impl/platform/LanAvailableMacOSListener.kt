@@ -1,10 +1,13 @@
 package net.flipper.bridge.lanmonitor.impl.platform
 
+import dev.zacsweers.metro.ContributesBinding
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
+import dev.zacsweers.metro.binding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.runBlocking
-import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.lanmonitor.api.BB_HOST
 import net.flipper.bridge.lanmonitor.api.BB_PORT
 import net.flipper.bridge.lanmonitor.impl.platform.model.KotlinNwStatus
@@ -41,8 +44,6 @@ import platform.Network.nw_tcp_options_set_keepalive_count
 import platform.Network.nw_tcp_options_set_keepalive_idle_time
 import platform.Network.nw_tcp_options_set_keepalive_interval
 import platform.darwin.dispatch_queue_create
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
-import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -65,7 +66,7 @@ private const val KEEPALIVE_COUNT = 3u
 private val RESTART_TIMEOUT = 5.seconds
 
 @SingleIn(BusyLibGraph::class)
-@ContributesBinding(BusyLibGraph::class, LanAvailablePlatformListener::class)
+@ContributesBinding(BusyLibGraph::class, binding = binding<LanAvailablePlatformListener>())
 class LanAvailableMacOSListener internal constructor(
     globalScope: CoroutineScope,
     private val host: String,

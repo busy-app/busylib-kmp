@@ -1,6 +1,9 @@
 package net.flipper.bridge.connection.feature.events.impl
 
 import BSB_State.State
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.binding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -8,11 +11,9 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import me.tatarka.inject.annotations.Inject
-import me.tatarka.inject.annotations.IntoMap
-import me.tatarka.inject.annotations.Provides
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
+import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureKey
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
 import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
@@ -27,7 +28,6 @@ import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.verbose
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
 
 class FEventsFeatureApiImpl(
     streamingApi: FStatusStreamingApi?,
@@ -87,6 +87,8 @@ class FEventsFeatureApiImpl(
     }
 
     @Inject
+    @ContributesIntoMap(BusyLibGraph::class, binding = binding<FDeviceFeatureApi.Factory>())
+    @FDeviceFeatureKey(FDeviceFeature.EVENTS)
     class Factory : FDeviceFeatureApi.Factory {
         override suspend fun invoke(
             unsafeFeatureDeviceApi: FUnsafeDeviceFeatureApi,
@@ -97,17 +99,6 @@ class FEventsFeatureApiImpl(
                 scope = scope,
                 streamingApi = connectedDevice as? FStatusStreamingApi
             )
-        }
-    }
-
-    @ContributesTo(BusyLibGraph::class)
-    interface Component {
-        @Provides
-        @IntoMap
-        fun provideFeatureFactory(
-            factory: Factory
-        ): Pair<FDeviceFeature, FDeviceFeatureApi.Factory> {
-            return FDeviceFeature.EVENTS to factory
         }
     }
 }

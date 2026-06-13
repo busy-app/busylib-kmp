@@ -1,16 +1,17 @@
 package net.flipper.bridge.connection.feature.wifi.impl
 
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.binding
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.isActive
-import me.tatarka.inject.annotations.Inject
-import me.tatarka.inject.annotations.IntoMap
-import me.tatarka.inject.annotations.Provides
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
+import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureKey
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
 import net.flipper.bridge.connection.feature.events.api.get
@@ -41,7 +42,6 @@ import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.orElse
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
 import kotlin.time.Duration.Companion.seconds
 
 private val POOLING_TIME = 3.seconds
@@ -136,6 +136,8 @@ class FWiFiFeatureApiImpl(
         .wrap()
 
     @Inject
+    @ContributesIntoMap(BusyLibGraph::class, binding = binding<FDeviceFeatureApi.Factory>())
+    @FDeviceFeatureKey(FDeviceFeature.WIFI)
     class Factory : FDeviceFeatureApi.Factory {
         override suspend fun invoke(
             unsafeFeatureDeviceApi: FUnsafeDeviceFeatureApi,
@@ -156,17 +158,6 @@ class FWiFiFeatureApiImpl(
                 scope = scope,
                 fHTTPDeviceApi = connectedDevice as? FHTTPDeviceApi
             )
-        }
-    }
-
-    @ContributesTo(BusyLibGraph::class)
-    interface Component {
-        @Provides
-        @IntoMap
-        fun provideFeatureFactory(
-            factory: Factory
-        ): Pair<FDeviceFeature, FDeviceFeatureApi.Factory> {
-            return FDeviceFeature.WIFI to factory
         }
     }
 }

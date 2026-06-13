@@ -13,7 +13,7 @@ import ru.astrainteractive.gradleplugin.property.secretProperty
 
 plugins {
     id("flipper.multiplatform")
-    id("flipper.anvil-multiplatform")
+    id("flipper.metro-multiplatform")
     id("org.jetbrains.kotlin.plugin.serialization")
     alias(libs.plugins.skie)
 }
@@ -149,6 +149,11 @@ kotlin {
         implementation(projects.components.watchers.desktop)
         implementation(projects.components.bridge.transport.tcp.lan.impl)
         implementation(projects.components.bridge.lanmonitor.impl)
+    }
+    sourceSets.jvmTest.dependencies {
+        implementation(libs.kotlin.test)
+        implementation(libs.kotlin.coroutines)
+        implementation(libs.mockk)
     }
 }
 

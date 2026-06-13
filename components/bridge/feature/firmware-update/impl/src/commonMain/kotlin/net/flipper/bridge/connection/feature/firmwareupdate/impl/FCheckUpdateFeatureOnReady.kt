@@ -1,10 +1,12 @@
 package net.flipper.bridge.connection.feature.firmwareupdate.impl
 
+import dev.zacsweers.metro.ContributesIntoSet
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.binding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
-import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.feature.common.api.FOnDeviceReadyFeatureApi
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.feature.common.api.get
@@ -16,7 +18,6 @@ import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 import kotlin.time.Duration.Companion.seconds
 
 private val DELAY = 3.seconds
@@ -49,11 +50,7 @@ class FCheckUpdateFeatureOnReady(
     }
 
     @Inject
-    @ContributesBinding(
-        BusyLibGraph::class,
-        FOnDeviceReadyFeatureApi.Factory::class,
-        multibinding = true
-    )
+    @ContributesIntoSet(BusyLibGraph::class, binding = binding<FOnDeviceReadyFeatureApi.Factory>())
     class Factory : FOnDeviceReadyFeatureApi.Factory {
         override suspend fun invoke(
             unsafeFeatureDeviceApi: FUnsafeDeviceFeatureApi,

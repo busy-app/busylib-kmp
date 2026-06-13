@@ -1,11 +1,12 @@
 package net.flipper.bridge.connection.feature.finishsetup.krate
 
 import com.russhwolf.settings.Settings
-import me.tatarka.inject.annotations.Inject
+import dev.zacsweers.metro.ContributesBinding
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.binding
 import net.flipper.busylib.core.di.BusyLibGraph
 import ru.astrainteractive.klibs.kstorage.suspend.StateFlowSuspendMutableKrate
 import ru.astrainteractive.klibs.kstorage.suspend.impl.DefaultStateFlowSuspendMutableKrate
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 
 private const val KEY = "setup_was_finished_before"
 
@@ -16,7 +17,7 @@ private const val KEY = "setup_was_finished_before"
 interface SetupFinishedBeforeKrate : StateFlowSuspendMutableKrate<Boolean>
 
 @Inject
-@ContributesBinding(BusyLibGraph::class, SetupFinishedBeforeKrate::class)
+@ContributesBinding(BusyLibGraph::class, binding = binding<SetupFinishedBeforeKrate>())
 class SetupFinishedBeforeKrateImpl(
     private val settings: Settings
 ) : SetupFinishedBeforeKrate,

@@ -1,22 +1,25 @@
 package net.flipper.bridge.connection.transport.mock.impl.di
 
-import me.tatarka.inject.annotations.IntoMap
-import me.tatarka.inject.annotations.Provides
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.ClassKey
+import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.IntoMap
+import dev.zacsweers.metro.Provides
 import net.flipper.bridge.connection.transport.common.api.DeviceConnectionApiHolder
 import net.flipper.bridge.connection.transport.mock.FMockDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.mock.MockDeviceConnectionApi
 import net.flipper.busylib.core.di.BusyLibGraph
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
-import kotlin.reflect.KClass
 
 @ContributesTo(BusyLibGraph::class)
-interface MockDeviceConnectionModule {
-    @IntoMap
+@BindingContainer
+object MockDeviceConnectionModule {
     @Provides
+    @IntoMap
+    @ClassKey(FMockDeviceConnectionConfig::class)
     fun getMockDeviceConnection(
         mockDeviceConnectionApi: MockDeviceConnectionApi
-    ): Pair<KClass<*>, DeviceConnectionApiHolder> {
-        return FMockDeviceConnectionConfig::class to DeviceConnectionApiHolder(
+    ): DeviceConnectionApiHolder {
+        return DeviceConnectionApiHolder(
             mockDeviceConnectionApi
         )
     }

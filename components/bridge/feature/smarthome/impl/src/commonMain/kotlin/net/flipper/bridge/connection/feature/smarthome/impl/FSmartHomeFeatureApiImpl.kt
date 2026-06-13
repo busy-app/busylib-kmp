@@ -1,16 +1,17 @@
 package net.flipper.bridge.connection.feature.smarthome.impl
 
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.binding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.isActive
-import me.tatarka.inject.annotations.Inject
-import me.tatarka.inject.annotations.IntoMap
-import me.tatarka.inject.annotations.Provides
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
+import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureKey
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
 import net.flipper.bridge.connection.feature.events.api.get
@@ -38,7 +39,6 @@ import net.flipper.core.busylib.ktx.common.throttleLatestCached
 import net.flipper.core.busylib.ktx.common.transformWhileSubscribed
 import net.flipper.core.busylib.ktx.common.tryConsume
 import net.flipper.core.busylib.log.LogTagProvider
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 
@@ -112,37 +112,28 @@ class FSmartHomeFeatureApiImpl(
         return fRpcMatterApi1.deleteMatterCommissioning().toCResult()
     }
 
-    @ContributesTo(BusyLibGraph::class)
-    interface Component {
-        @Inject
-        class Factory : FDeviceFeatureApi.Factory {
-            override suspend fun invoke(
-                unsafeFeatureDeviceApi: FUnsafeDeviceFeatureApi,
-                scope: CoroutineScope,
-                connectedDevice: FConnectedDeviceApi
-            ): FDeviceFeatureApi? {
-                val fRpcMatterApi = unsafeFeatureDeviceApi
-                    .get(FRpcFeatureApi::class)
-                    ?.await()
-                    ?.fRpcMatterApi
-                    ?: return null
-                val fEventsFeatureApi = unsafeFeatureDeviceApi
-                    .get(FEventsFeatureApi::class)
-                    ?.await()
-                return FSmartHomeFeatureApiImpl(
-                    scope = scope,
-                    fRpcMatterApi1 = fRpcMatterApi,
-                    fEventsFeatureApi = fEventsFeatureApi
-                )
-            }
-        }
-
-        @Provides
-        @IntoMap
-        fun provideSmartHomeFeatureFactory(
-            featureFactory: Factory
-        ): Pair<FDeviceFeature, FDeviceFeatureApi.Factory> {
-            return FDeviceFeature.SMART_HOME to featureFactory
+    @Inject
+    @ContributesIntoMap(BusyLibGraph::class, binding = binding<FDeviceFeatureApi.Factory>())
+    @FDeviceFeatureKey(FDeviceFeature.SMART_HOME)
+    class Factory : FDeviceFeatureApi.Factory {
+        override suspend fun invoke(
+            unsafeFeatureDeviceApi: FUnsafeDeviceFeatureApi,
+            scope: CoroutineScope,
+            connectedDevice: FConnectedDeviceApi
+        ): FDeviceFeatureApi? {
+            val fRpcMatterApi = unsafeFeatureDeviceApi
+                .get(FRpcFeatureApi::class)
+                ?.await()
+                ?.fRpcMatterApi
+                ?: return null
+            val fEventsFeatureApi = unsafeFeatureDeviceApi
+                .get(FEventsFeatureApi::class)
+                ?.await()
+            return FSmartHomeFeatureApiImpl(
+                scope = scope,
+                fRpcMatterApi1 = fRpcMatterApi,
+                fEventsFeatureApi = fEventsFeatureApi
+            )
         }
     }
 }

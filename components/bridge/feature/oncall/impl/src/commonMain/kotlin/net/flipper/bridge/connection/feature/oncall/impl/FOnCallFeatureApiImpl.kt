@@ -1,5 +1,10 @@
 package net.flipper.bridge.connection.feature.oncall.impl
 
+import dev.zacsweers.metro.Assisted
+import dev.zacsweers.metro.AssistedInject
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.binding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.currentCoroutineContext
@@ -7,12 +12,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
-import me.tatarka.inject.annotations.Assisted
-import me.tatarka.inject.annotations.Inject
-import me.tatarka.inject.annotations.IntoMap
-import me.tatarka.inject.annotations.Provides
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
+import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureKey
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.feature.oncall.api.FOnCallFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
@@ -24,10 +26,9 @@ import net.flipper.core.busylib.ktx.common.asSingleJobScope
 import net.flipper.core.busylib.ktx.common.cancelPrevious
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
 import kotlin.time.Duration.Companion.seconds
 
-@Inject
+@AssistedInject
 class FOnCallFeatureApiImpl(
     @Assisted private val rpcFeatureApi: FRpcFeatureApi,
     @Assisted private val scope: CoroutineScope
@@ -90,6 +91,8 @@ class FOnCallFeatureApiImpl(
     }
 
     @Inject
+    @ContributesIntoMap(BusyLibGraph::class, binding = binding<FDeviceFeatureApi.Factory>())
+    @FDeviceFeatureKey(FDeviceFeature.ON_CALL)
     class FOnCallFeatureFactoryImpl : FDeviceFeatureApi.Factory {
         override suspend fun invoke(
             unsafeFeatureDeviceApi: FUnsafeDeviceFeatureApi,
@@ -105,17 +108,6 @@ class FOnCallFeatureApiImpl(
                 rpcFeatureApi = fRpcFeatureApi,
                 scope = scope
             )
-        }
-    }
-
-    @ContributesTo(BusyLibGraph::class)
-    interface FOnCallFeatureComponent {
-        @Provides
-        @IntoMap
-        fun provideFOnCallFeatureFactory(
-            featureFactory: FOnCallFeatureFactoryImpl
-        ): Pair<FDeviceFeature, FDeviceFeatureApi.Factory> {
-            return FDeviceFeature.ON_CALL to featureFactory
         }
     }
 }

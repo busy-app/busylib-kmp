@@ -1,8 +1,12 @@
 package net.flipper.bsb.watchers.provisioning
 
+import dev.zacsweers.metro.ContributesBinding
+import dev.zacsweers.metro.ContributesIntoSet
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
+import dev.zacsweers.metro.binding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
-import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.config.api.model.addTransport
 import net.flipper.bridge.connection.config.api.model.copy
@@ -17,16 +21,14 @@ import net.flipper.core.busylib.ktx.common.asSingleJobScope
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
 import net.flipper.core.busylib.log.warn
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
-import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 import kotlin.uuid.Uuid
 
 private const val DEFAULT_BUSY_BAR_NAME = "BUSY Bar"
 
 @Inject
 @SingleIn(BusyLibGraph::class)
-@ContributesBinding(BusyLibGraph::class, InternalBUSYLibStartupListener::class, multibinding = true)
-@ContributesBinding(BusyLibGraph::class, CloudInvalidator::class)
+@ContributesIntoSet(BusyLibGraph::class, binding = binding<InternalBUSYLibStartupListener>())
+@ContributesBinding(BusyLibGraph::class, binding = binding<CloudInvalidator>())
 class CloudFetcherWatcher(
     scope: CoroutineScope,
     private val persistedStorage: FInternalDevicePersistedStorage,

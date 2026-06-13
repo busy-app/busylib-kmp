@@ -13,11 +13,11 @@ kotlin-serialization-runtime = "1.11.0"
 kotlin-datetime = "0.7.1" # https://github.com/Kotlin/kotlinx-datetime/releases
 kotlin-immutable = "0.4.0"
 kotlin-io = "0.9.0"
-ksp = "2.3.8"
 klibs-gradleplugin = "1.15.0" # https://github.com/makeevrserg/gradle-plugin
 decompose = "3.5.0"
-kotlin-inject = "0.9.0"
-kotlin-inject-anvil = "0.1.7"
+# 1.1.1 is the highest Metro whose Kotlin/Native runtime klibs have ABI 2.3.0 (loadable by our K/N 2.3.21).
+# 1.2.0+ runtime klibs are built with Kotlin 2.4.0 (ABI 2.4.0) and are rejected by the 2.3.21 native compiler.
+metro = "1.1.1"
 settings = "1.3.0"
 ktor = "3.4.3" # https://ktor.io/
 timber = "5.0.1" # https://github.com/JakeWharton/timber/releases
@@ -44,7 +44,7 @@ kotlinx-crypto = { module = "dev.whyoleg.cryptography:cryptography-core", versio
 kotlinx-crypto-provider = { module = "dev.whyoleg.cryptography:cryptography-provider-optimal", version.ref = "kotlinx-crypto" }
 vaniktech = { module = "com.vanniktech:gradle-maven-publish-plugin", version.ref = "vaniktech" }
 android-gradle = { module = "com.android.tools.build:gradle", version.ref = "agp" }
-kotlin-ksp-gradle = { module = "com.google.devtools.ksp:com.google.devtools.ksp.gradle.plugin", version.ref = "ksp" }
+metro-gradle = { module = "dev.zacsweers.metro:gradle-plugin", version.ref = "metro" }
 compose-multiplatform-gradle = { module = "org.jetbrains.compose:compose-gradle-plugin", version.ref = "compose-plugin" }
 kotlin-gradle = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 compose-gradle = { module = "org.jetbrains.kotlin:compose-compiler-gradle-plugin", version.ref = "kotlin" }
@@ -55,13 +55,6 @@ androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidx
 androidx-lifecycle = { module = "androidx.lifecycle:lifecycle-common", version.ref = "lifecycle" }
 androidx-lifecycle-process = { module = "androidx.lifecycle:lifecycle-process", version.ref = "lifecycle" }
 appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
-
-# kotlin-inject dependencies
-kotlin-inject-runtime = { module = "me.tatarka.inject:kotlin-inject-runtime", version.ref = "kotlin-inject" }
-kotlin-inject-compiler = { module = "me.tatarka.inject:kotlin-inject-compiler-ksp", version.ref = "kotlin-inject" }
-kotlin-inject-anvil-runtime = { module = "software.amazon.lastmile.kotlin.inject.anvil:runtime", version.ref = "kotlin-inject-anvil" }
-kotlin-inject-anvil-runtime-optional = { module = "software.amazon.lastmile.kotlin.inject.anvil:runtime-optional", version.ref = "kotlin-inject-anvil" }
-kotlin-inject-anvil-compiler = { module = "software.amazon.lastmile.kotlin.inject.anvil:compiler", version.ref = "kotlin-inject-anvil" }
 
 decompose = { module = "com.arkivanov.decompose:decompose", version.ref = "decompose" }
 decompose-composeExtension = { module = "com.arkivanov.decompose:extensions-compose", version.ref = "decompose" }
@@ -135,7 +128,7 @@ jetbrainsCompose = { id = "org.jetbrains.compose", version.ref = "compose-plugin
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+metro = { id = "dev.zacsweers.metro", version.ref = "metro" }
 kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 googleServices = { id = "com.google.gms.google-services", version.ref = "google-services" }
 

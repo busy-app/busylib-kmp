@@ -1,27 +1,25 @@
 package net.flipper.bridge.connection.feature.link.check.onready.api
 
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.ContributesIntoSet
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.binding
 import kotlinx.coroutines.CoroutineScope
-import me.tatarka.inject.annotations.Inject
-import me.tatarka.inject.annotations.IntoMap
-import me.tatarka.inject.annotations.Provides
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
+import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureKey
 import net.flipper.bridge.connection.feature.common.api.FOnDeviceReadyFeatureApi
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.critical.FRpcCriticalFeatureApi
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.busylib.core.di.BusyLibGraph
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
 
 @Inject
-@ContributesBinding(
-    BusyLibGraph::class,
-    FOnDeviceReadyFeatureApi.Factory::class,
-    multibinding = true
-)
+@ContributesIntoSet(BusyLibGraph::class, binding = binding<FOnDeviceReadyFeatureApi.Factory>())
+@ContributesIntoMap(BusyLibGraph::class, binding = binding<FDeviceFeatureApi.Factory>())
+@FDeviceFeatureKey(FDeviceFeature.LINKED_USER_STATUS)
 class FLinkInfoOnReadyFeatureFactoryImpl(
-    private val fLinkInfoOnReadyFeatureApiImpl: FLinkInfoOnReadyFeatureApiImpl.InternalFactory,
+    private val fLinkInfoOnReadyFeatureApiImpl: FLinkInfoOnReadyFeatureApiImpl.Factory,
 ) : FOnDeviceReadyFeatureApi.Factory, FDeviceFeatureApi.Factory {
     override suspend fun invoke(
         unsafeFeatureDeviceApi: FUnsafeDeviceFeatureApi,
@@ -36,16 +34,5 @@ class FLinkInfoOnReadyFeatureFactoryImpl(
             rpcFeatureApi = fRpcCriticalFeatureApi,
             scope = scope,
         )
-    }
-}
-
-@ContributesTo(BusyLibGraph::class)
-interface FLinkInfoOnDemandFeatureComponent {
-    @Provides
-    @IntoMap
-    fun provideFLinkInfoOnDemandFeatureFactory(
-        fLinkInfoOnDemandFeatureFactory: FLinkInfoOnReadyFeatureFactoryImpl
-    ): Pair<FDeviceFeature, FDeviceFeatureApi.Factory> {
-        return FDeviceFeature.LINKED_USER_STATUS to fLinkInfoOnDemandFeatureFactory
     }
 }

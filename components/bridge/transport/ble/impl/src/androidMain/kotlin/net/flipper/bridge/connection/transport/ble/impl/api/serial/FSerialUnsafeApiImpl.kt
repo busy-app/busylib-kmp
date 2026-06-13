@@ -3,6 +3,9 @@ package net.flipper.bridge.connection.transport.ble.impl.api.serial
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
+import dev.zacsweers.metro.Assisted
+import dev.zacsweers.metro.AssistedFactory
+import dev.zacsweers.metro.AssistedInject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -15,8 +18,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import me.tatarka.inject.annotations.Assisted
-import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.transport.ble.api.MAX_ATTRIBUTE_SIZE
 import net.flipper.bridge.connection.transport.ble.impl.api.utils.isNotifyAvailable
 import net.flipper.bridge.connection.transport.ble.impl.exception.BLEConnectionPermissionException
@@ -32,7 +33,7 @@ import no.nordicsemi.kotlin.ble.core.WriteType
 import no.nordicsemi.kotlin.ble.core.util.chunked
 import kotlin.time.Duration.Companion.milliseconds
 
-@Inject
+@AssistedInject
 @OptIn(ExperimentalStdlibApi::class)
 class FSerialUnsafeApiImpl(
     @Assisted private val rxCharacteristic: Flow<RemoteCharacteristic?>,
@@ -136,22 +137,14 @@ class FSerialUnsafeApiImpl(
         val POST_SUBSCRIBE_SETTLE_DELAY = 500.milliseconds
     }
 
-    @Inject
-    class Factory(
-        private val factory: (
-            Flow<RemoteCharacteristic?>,
-            Flow<RemoteCharacteristic?>,
-            CoroutineScope,
-            onResetServices: suspend () -> Unit
-        ) -> FSerialUnsafeApiImpl
-    ) {
+    @AssistedFactory
+    fun interface Factory {
         operator fun invoke(
             rxCharacteristic: Flow<RemoteCharacteristic?>,
             txCharacteristic: Flow<RemoteCharacteristic?>,
             scope: CoroutineScope,
             onResetServices: suspend () -> Unit
-        ): FSerialUnsafeApiImpl =
-            factory(rxCharacteristic, txCharacteristic, scope, onResetServices)
+        ): FSerialUnsafeApiImpl
     }
 }
 

@@ -1,13 +1,14 @@
 package net.flipper.bridge.connection.feature.rpc.impl.exposed
 
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.binding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onEach
-import me.tatarka.inject.annotations.Inject
-import me.tatarka.inject.annotations.IntoMap
-import me.tatarka.inject.annotations.Provides
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
+import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureKey
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.client.FRpcClientModeApi
 import net.flipper.bridge.connection.feature.rpc.api.critical.FRpcCriticalFeatureApi
@@ -19,9 +20,10 @@ import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 import net.flipper.core.busylib.ktx.common.cache.DefaultObjectCache
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
 
 @Inject
+@ContributesIntoMap(BusyLibGraph::class, binding = binding<FDeviceFeatureApi.Factory>())
+@FDeviceFeatureKey(FDeviceFeature.RPC_EXPOSED)
 class FRpcFeatureApiFactoryImpl : FDeviceFeatureApi.Factory, LogTagProvider {
     override val TAG = "FRpcFeatureApiFactory"
 
@@ -97,16 +99,5 @@ class FRpcFeatureApiFactoryImpl : FDeviceFeatureApi.Factory, LogTagProvider {
                 dispatcher = dispatcher
             )
         )
-    }
-}
-
-@ContributesTo(BusyLibGraph::class)
-interface FRpcFeatureApiComponent {
-    @Provides
-    @IntoMap
-    fun provideFRpcFeatureApiFactory(
-        fRpcFeatureApiFactory: FRpcFeatureApiFactoryImpl
-    ): Pair<FDeviceFeature, FDeviceFeatureApi.Factory> {
-        return FDeviceFeature.RPC_EXPOSED to fRpcFeatureApiFactory
     }
 }

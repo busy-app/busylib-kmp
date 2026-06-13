@@ -1,11 +1,13 @@
 package net.flipper.bridge.connection.transport.ble.impl.ios
 
+import dev.zacsweers.metro.ContributesBinding
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.binding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withTimeoutOrNull
-import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.transport.ble.api.BleDeviceConnectionApi
 import net.flipper.bridge.connection.transport.ble.api.FBleApi
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceConnectionConfig
@@ -30,11 +32,10 @@ import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
 import platform.Foundation.NSUUID
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 import kotlin.time.Duration
 
 @Inject
-@ContributesBinding(BusyLibGraph::class, BleDeviceConnectionApi::class)
+@ContributesBinding(BusyLibGraph::class, binding = binding<BleDeviceConnectionApi>())
 class BLEDeviceConnectionApiImpl(
     centralManagerProvider: Provider<FCentralManagerApi>
 ) : BleDeviceConnectionApi, LogTagProvider {

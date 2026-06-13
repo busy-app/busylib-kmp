@@ -1,15 +1,16 @@
 package net.flipper.bridge.connection.feature.timezone.api
 
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.binding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate.Formats
 import kotlinx.datetime.UtcOffset
 import kotlinx.datetime.format
-import me.tatarka.inject.annotations.Inject
-import me.tatarka.inject.annotations.IntoMap
-import me.tatarka.inject.annotations.Provides
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
+import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureKey
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
 import net.flipper.bridge.connection.feature.events.api.get
@@ -23,7 +24,6 @@ import net.flipper.busylib.core.wrapper.toCResult
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.ktx.common.asFlow
 import net.flipper.core.busylib.log.LogTagProvider
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
 
 class FTimeZoneFeatureApiImpl(
     private val scope: CoroutineScope,
@@ -71,6 +71,8 @@ class FTimeZoneFeatureApiImpl(
     }
 
     @Inject
+    @ContributesIntoMap(BusyLibGraph::class, binding = binding<FDeviceFeatureApi.Factory>())
+    @FDeviceFeatureKey(FDeviceFeature.TIME_ZONE)
     class Factory : FDeviceFeatureApi.Factory {
         override suspend fun invoke(
             unsafeFeatureDeviceApi: FUnsafeDeviceFeatureApi,
@@ -90,17 +92,6 @@ class FTimeZoneFeatureApiImpl(
                 fEventsFeatureApi = fEventsFeatureApi,
                 scope = scope
             )
-        }
-    }
-
-    @ContributesTo(BusyLibGraph::class)
-    interface Component {
-        @Provides
-        @IntoMap
-        fun provideFeatureFactory(
-            factory: Factory
-        ): Pair<FDeviceFeature, FDeviceFeatureApi.Factory> {
-            return FDeviceFeature.TIME_ZONE to factory
         }
     }
 }
