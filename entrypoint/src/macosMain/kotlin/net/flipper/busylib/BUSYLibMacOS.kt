@@ -3,8 +3,9 @@ package net.flipper.busylib
 import com.flipperdevices.core.network.BUSYLibNetworkStateApi
 import com.russhwolf.settings.NSUserDefaultsSettings
 import com.russhwolf.settings.ObservableSettings
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.createGraphFactory
 import kotlinx.coroutines.CoroutineScope
-import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
@@ -14,7 +15,7 @@ import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.cloud.api.BUSYLibHostApi
 import net.flipper.bsb.cloud.rest.channel.api.BusyFirmwareDirectoryChannelApi
 import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
-import net.flipper.busylib.di.create
+import net.flipper.busylib.di.BUSYLibGraphMacOS
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
 import net.flipper.eventbus.api.EventBusApi
@@ -51,7 +52,7 @@ class BUSYLibMacOS(
             hostApi: BUSYLibHostApi,
             networkStateApi: BUSYLibNetworkStateApi
         ): BUSYLibMacOS {
-            val graph = create(
+            val graph = createGraphFactory<BUSYLibGraphMacOS.Factory>().create(
                 scope,
                 principalApi,
                 observableSettings,

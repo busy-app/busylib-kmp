@@ -1,14 +1,15 @@
 package net.flipper.bridge.connection.feature.hardwareid.impl
 
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.binding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
-import me.tatarka.inject.annotations.Inject
-import me.tatarka.inject.annotations.IntoMap
-import me.tatarka.inject.annotations.Provides
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
+import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureKey
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.feature.hardwareid.api.FHardwareIdFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
@@ -23,7 +24,6 @@ import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.verbose
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
 
 class FHardwareIdFeatureApiImpl(
     private val rpcFeatureApi: FRpcFeatureApi,
@@ -50,6 +50,8 @@ class FHardwareIdFeatureApiImpl(
         }.wrap()
 
     @Inject
+    @ContributesIntoMap(BusyLibGraph::class, binding<FDeviceFeatureApi.Factory>())
+    @FDeviceFeatureKey(FDeviceFeature.HARDWARE_ID)
     class FDeviceFeatureApiFactory : FDeviceFeatureApi.Factory {
         override suspend fun invoke(
             unsafeFeatureDeviceApi: FUnsafeDeviceFeatureApi,
@@ -66,17 +68,6 @@ class FHardwareIdFeatureApiImpl(
                 rpcFeatureApi = fRpcFeatureApi,
                 httpDevice = httpDevice
             )
-        }
-    }
-
-    @ContributesTo(BusyLibGraph::class)
-    interface FFeatureComponent {
-        @Provides
-        @IntoMap
-        fun provideFeatureFactory(
-            fDeviceFeatureApiFactory: FDeviceFeatureApiFactory
-        ): Pair<FDeviceFeature, FDeviceFeatureApi.Factory> {
-            return FDeviceFeature.HARDWARE_ID to fDeviceFeatureApiFactory
         }
     }
 }

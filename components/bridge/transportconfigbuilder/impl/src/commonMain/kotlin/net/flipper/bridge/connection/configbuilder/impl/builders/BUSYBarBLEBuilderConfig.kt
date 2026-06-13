@@ -1,7 +1,7 @@
 package net.flipper.bridge.connection.configbuilder.impl.builders
 
+import dev.zacsweers.metro.Inject
 import kotlinx.collections.immutable.persistentMapOf
-import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceSerialConfig
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceStatusStreamingConfig

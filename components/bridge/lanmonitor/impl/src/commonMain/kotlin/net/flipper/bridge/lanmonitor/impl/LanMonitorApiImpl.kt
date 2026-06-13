@@ -1,11 +1,15 @@
 package net.flipper.bridge.lanmonitor.impl
 
+import dev.zacsweers.metro.ContributesBinding
+import dev.zacsweers.metro.ContributesIntoSet
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
+import dev.zacsweers.metro.binding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
-import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.config.api.model.addTransport
 import net.flipper.bridge.connection.config.internal.FInternalDevicePersistedStorage
@@ -23,15 +27,13 @@ import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
 import net.flipper.eventbus.internal.BusyLibEventPublisher
 import net.flipper.eventbus.model.BusyLibEvent
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
-import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 
 private const val DEFAULT_NAME = "BUSY Bar via LAN"
 
 @Inject
 @SingleIn(BusyLibGraph::class)
-@ContributesBinding(BusyLibGraph::class, LanMonitorApi::class)
-@ContributesBinding(BusyLibGraph::class, InternalBUSYLibStartupListener::class, multibinding = true)
+@ContributesBinding(BusyLibGraph::class, binding<LanMonitorApi>())
+@ContributesIntoSet(BusyLibGraph::class, binding<InternalBUSYLibStartupListener>())
 class LanMonitorApiImpl(
     lanAvailableListener: LanAvailablePlatformListener,
     globalScope: CoroutineScope,

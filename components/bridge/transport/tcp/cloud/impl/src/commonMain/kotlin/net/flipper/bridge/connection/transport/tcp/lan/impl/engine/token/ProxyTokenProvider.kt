@@ -1,11 +1,12 @@
 package net.flipper.bridge.connection.transport.tcp.lan.impl.engine.token
 
+import dev.zacsweers.metro.Assisted
+import dev.zacsweers.metro.AssistedFactory
+import dev.zacsweers.metro.AssistedInject
 import kotlinx.coroutines.flow.filterNot
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import me.tatarka.inject.annotations.Assisted
-import me.tatarka.inject.annotations.Inject
 import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
 import net.flipper.bsb.cloud.rest.api.BusyCloudAccessTokenApi
@@ -14,9 +15,7 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
-typealias ProxyTokenProviderFactory = (deviceId: Uuid) -> ProxyTokenProvider
-
-@Inject
+@AssistedInject
 class ProxyTokenProvider(
     @Assisted private val deviceId: Uuid,
     private val principalApi: BUSYLibPrincipalApi,
@@ -61,5 +60,10 @@ class ProxyTokenProvider(
         tokenExpireTime = requestTimestamp + response.expiresInSec.seconds
 
         return response.accessToken
+    }
+
+    @AssistedFactory
+    fun interface Factory {
+        operator fun invoke(deviceId: Uuid): ProxyTokenProvider
     }
 }

@@ -1,8 +1,10 @@
 package net.flipper.bridge.connection.transport.mock.impl
 
+import dev.zacsweers.metro.ContributesBinding
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.binding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
-import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.common.api.FInternalDisconnectedReason
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
@@ -15,11 +17,10 @@ import net.flipper.bridge.connection.transport.mock.MockDeviceConnectionApi
 import net.flipper.bridge.connection.transport.mock.impl.meta.MockFTransportMetaInfoApiImpl
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 import kotlin.time.Duration.Companion.seconds
 
 @Inject
-@ContributesBinding(BusyLibGraph::class, MockDeviceConnectionApi::class)
+@ContributesBinding(BusyLibGraph::class, binding<MockDeviceConnectionApi>())
 class MockDeviceConnectionApiImpl : MockDeviceConnectionApi {
     override suspend fun connect(
         scope: CoroutineScope,

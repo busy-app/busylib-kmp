@@ -3,6 +3,9 @@ package net.flipper.bridge.connection.transport.tcp.lan.impl.engine
 import com.mayakapps.rwmutex.ReadWriteMutex
 import com.mayakapps.rwmutex.withReadLock
 import com.mayakapps.rwmutex.withWriteLock
+import dev.zacsweers.metro.Assisted
+import dev.zacsweers.metro.AssistedFactory
+import dev.zacsweers.metro.AssistedInject
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.HttpClientEngineBase
 import io.ktor.client.engine.HttpClientEngineConfig
@@ -17,17 +20,13 @@ import io.ktor.utils.io.InternalAPI
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import me.tatarka.inject.annotations.Assisted
-import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.transport.tcp.lan.impl.engine.token.ProxyTokenProvider
 import net.flipper.bsb.cloud.api.BUSYLibHostApi
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
 import net.flipper.core.busylib.log.warn
 
-typealias BUSYCloudHttpEngineFactory = (HttpClientEngine, ProxyTokenProvider) -> BUSYCloudHttpEngine
-
-@Inject
+@AssistedInject
 class BUSYCloudHttpEngine(
     @Assisted private val delegate: HttpClientEngine,
     @Assisted private val tokenProvider: ProxyTokenProvider,
@@ -91,5 +90,10 @@ class BUSYCloudHttpEngine(
                 closed = true
             }
         }
+    }
+
+    @AssistedFactory
+    fun interface Factory {
+        operator fun invoke(delegate: HttpClientEngine, tokenProvider: ProxyTokenProvider): BUSYCloudHttpEngine
     }
 }

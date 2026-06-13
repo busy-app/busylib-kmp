@@ -1,7 +1,10 @@
 package net.flipper.eventbus.impl
 
+import dev.zacsweers.metro.ContributesBinding
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
+import dev.zacsweers.metro.binding
 import kotlinx.coroutines.flow.MutableSharedFlow
-import me.tatarka.inject.annotations.Inject
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.core.wrapper.WrappedSharedFlow
 import net.flipper.busylib.core.wrapper.wrap
@@ -10,13 +13,11 @@ import net.flipper.core.busylib.log.verbose
 import net.flipper.eventbus.api.EventBusApi
 import net.flipper.eventbus.internal.BusyLibEventPublisher
 import net.flipper.eventbus.model.BusyLibEvent
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
-import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 
 @SingleIn(BusyLibGraph::class)
 @Inject
-@ContributesBinding(BusyLibGraph::class, EventBusApi::class)
-@ContributesBinding(BusyLibGraph::class, BusyLibEventPublisher::class)
+@ContributesBinding(BusyLibGraph::class, binding<EventBusApi>())
+@ContributesBinding(BusyLibGraph::class, binding<BusyLibEventPublisher>())
 class EventBusApiImpl : EventBusApi, BusyLibEventPublisher, LogTagProvider {
     override val TAG: String = "EventBus"
 

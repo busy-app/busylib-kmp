@@ -1,6 +1,10 @@
 package net.flipper.bsb.cloud.barsws.api.utils
 
 import com.flipperdevices.core.network.BUSYLibNetworkStateApi
+import dev.zacsweers.metro.ContributesBinding
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
+import dev.zacsweers.metro.binding
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -12,7 +16,6 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.shareIn
-import me.tatarka.inject.annotations.Inject
 import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
 import net.flipper.bsb.cloud.api.BUSYLibHostApi
@@ -24,8 +27,6 @@ import net.flipper.core.busylib.ktx.common.wrapWebsocket
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
 import net.flipper.core.busylib.log.verbose
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
-import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 import kotlin.time.Duration.Companion.seconds
 
 private val NETWORK_DISPATCHER = FlipperDispatchers.default
@@ -36,8 +37,8 @@ interface CloudWebSocketApiInternal : CloudWebSocketApi {
 
 @Inject
 @SingleIn(BusyLibGraph::class)
-@ContributesBinding(BusyLibGraph::class, CloudWebSocketApi::class)
-@ContributesBinding(BusyLibGraph::class, CloudWebSocketApiInternal::class)
+@ContributesBinding(BusyLibGraph::class, binding<CloudWebSocketApi>())
+@ContributesBinding(BusyLibGraph::class, binding<CloudWebSocketApiInternal>())
 class CloudWebSocketApiImpl(
     networkStateApi: BUSYLibNetworkStateApi,
     principalApi: BUSYLibPrincipalApi,

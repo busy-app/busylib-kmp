@@ -1,7 +1,9 @@
 package net.flipper.bridge.connection.transport.tcp.lan.impl
 
+import dev.zacsweers.metro.ContributesBinding
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.binding
 import kotlinx.coroutines.CoroutineScope
-import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.bridge.connection.transport.tcp.lan.FLanApi
 import net.flipper.bridge.connection.transport.tcp.lan.FLanDeviceConnectionConfig
@@ -9,10 +11,9 @@ import net.flipper.bridge.connection.transport.tcp.lan.LanDeviceConnectionApi
 import net.flipper.bridge.lanmonitor.api.LanMonitorApi
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 
 @Inject
-@ContributesBinding(BusyLibGraph::class, LanDeviceConnectionApi::class)
+@ContributesBinding(BusyLibGraph::class, binding<LanDeviceConnectionApi>())
 class LanDeviceConnectionApiImpl(
     private val lanMonitorApi: LanMonitorApi
 ) : LanDeviceConnectionApi {

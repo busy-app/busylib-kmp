@@ -1,5 +1,9 @@
 package net.flipper.bsb.cloud.barsws.api.orchestrator
 
+import dev.zacsweers.metro.ContributesBinding
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
+import dev.zacsweers.metro.binding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.NonCancellable
@@ -19,7 +23,6 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.withContext
-import me.tatarka.inject.annotations.Inject
 import net.flipper.bsb.cloud.barsws.api.CloudWebSocketOrchestratorApi
 import net.flipper.bsb.cloud.barsws.api.ProtobufBase64
 import net.flipper.bsb.cloud.barsws.api.model.WebSocketEventInternal
@@ -28,15 +31,13 @@ import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
 import net.flipper.core.busylib.log.verbose
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
-import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 import kotlin.time.Duration.Companion.seconds
 import kotlin.uuid.Uuid
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @Inject
 @SingleIn(BusyLibGraph::class)
-@ContributesBinding(BusyLibGraph::class, CloudWebSocketOrchestratorApi::class)
+@ContributesBinding(BusyLibGraph::class, binding<CloudWebSocketOrchestratorApi>())
 class CloudWebSocketOrchestratorApiImpl(
     private val webSocketApi: CloudWebSocketApiInternal,
     scope: CoroutineScope

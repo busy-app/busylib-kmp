@@ -1,9 +1,12 @@
 package net.flipper.bridge.connection.config.impl
 
 import com.russhwolf.settings.ObservableSettings
+import dev.zacsweers.metro.ContributesBinding
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
+import dev.zacsweers.metro.binding
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Mutex
-import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.config.api.PersistedStorageTransactionScope
 import net.flipper.bridge.connection.config.api.model.BUSYBar
@@ -20,13 +23,11 @@ import net.flipper.core.busylib.ktx.common.withLock
 import net.flipper.core.busylib.ktx.common.withLockResult
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
-import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 
 @Inject
 @SingleIn(BusyLibGraph::class)
-@ContributesBinding(BusyLibGraph::class, FInternalDevicePersistedStorage::class)
-@ContributesBinding(BusyLibGraph::class, FDevicePersistedStorage::class)
+@ContributesBinding(BusyLibGraph::class, binding<FInternalDevicePersistedStorage>())
+@ContributesBinding(BusyLibGraph::class, binding<FDevicePersistedStorage>())
 class FDevicePersistedStorageImpl(
     observableSettings: ObservableSettings
 ) : FInternalDevicePersistedStorage, LogTagProvider {

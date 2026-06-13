@@ -1,21 +1,22 @@
 package net.flipper.bridge.lanmonitor.impl.utils
 
+import dev.zacsweers.metro.ContributesBinding
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.binding
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.lanmonitor.api.BB_HOST
 import net.flipper.bridge.lanmonitor.api.BB_PORT
 import net.flipper.bridge.lanmonitor.model.ConnectedDeviceMetaInfo
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.ktor.di.qualifier.KtorNetworkClientQualifier
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 
 @Inject
-@ContributesBinding(BusyLibGraph::class, DeviceMetaInfoRequester::class)
+@ContributesBinding(BusyLibGraph::class, binding<DeviceMetaInfoRequester>())
 class DeviceMetaInfoRequesterImpl(
     @KtorNetworkClientQualifier
     private val httpClient: HttpClient,

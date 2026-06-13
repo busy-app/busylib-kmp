@@ -1,21 +1,18 @@
 package net.flipper.bridge.connection.feature.sync.impl
 
+import dev.zacsweers.metro.ContributesIntoSet
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.binding
 import kotlinx.coroutines.CoroutineScope
-import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.feature.common.api.FOnDeviceReadyFeatureApi
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.busylib.core.di.BusyLibGraph
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 
 @Inject
-@ContributesBinding(
-    BusyLibGraph::class,
-    FOnDeviceReadyFeatureApi.Factory::class,
-    multibinding = true
-)
+@ContributesIntoSet(BusyLibGraph::class, binding<FOnDeviceReadyFeatureApi.Factory>())
 class FTimerSyncFactoryImpl(
-    private val timerSyncFeatureFactory: FTimerSyncFeatureApiImpl.InternalFactory
+    private val timerSyncFeatureFactory: FTimerSyncFeatureApiImpl.Factory
 ) : FOnDeviceReadyFeatureApi.Factory {
     override suspend fun invoke(
         unsafeFeatureDeviceApi: FUnsafeDeviceFeatureApi,

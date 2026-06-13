@@ -1,7 +1,9 @@
 package net.flipper.bridge.connection.transport.combined.impl
 
+import dev.zacsweers.metro.ContributesBinding
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.binding
 import kotlinx.coroutines.CoroutineScope
-import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.connectionbuilder.api.FDeviceConfigToConnection
 import net.flipper.bridge.connection.transport.combined.CombinedConnectionApi
 import net.flipper.bridge.connection.transport.combined.FCombinedConnectionApi
@@ -11,10 +13,9 @@ import net.flipper.bridge.connection.transport.common.api.FInternalTransportConn
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 
 @Inject
-@ContributesBinding(BusyLibGraph::class, CombinedConnectionApi::class)
+@ContributesBinding(BusyLibGraph::class, binding<CombinedConnectionApi>())
 class CombinedConnectionApiImpl : CombinedConnectionApi {
     override suspend fun connect(
         scope: CoroutineScope,

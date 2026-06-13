@@ -1,15 +1,16 @@
 package net.flipper.bridge.connection.feature.finishsetup.api
 
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.binding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import me.tatarka.inject.annotations.Inject
-import me.tatarka.inject.annotations.IntoMap
-import me.tatarka.inject.annotations.Provides
 import net.flipper.bridge.connection.feature.ble.api.FBleFeatureApi
 import net.flipper.bridge.connection.feature.ble.api.model.FBleStatus
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
+import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureKey
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.feature.finishsetup.krate.SetupFinishedBeforeKrate
 import net.flipper.bridge.connection.feature.finishsetup.model.DeviceSetupTask
@@ -33,7 +34,6 @@ import net.flipper.core.busylib.ktx.common.throttleLatest
 import net.flipper.core.busylib.ktx.common.transformWhileSubscribed
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.verbose
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
 import kotlin.time.Duration.Companion.seconds
 
 class FFinishSetupFeatureApiImpl(
@@ -204,6 +204,8 @@ class FFinishSetupFeatureApiImpl(
     ).wrap()
 
     @Inject
+    @ContributesIntoMap(BusyLibGraph::class, binding<FDeviceFeatureApi.Factory>())
+    @FDeviceFeatureKey(FDeviceFeature.FINISH_SETUP)
     class FDeviceFeatureApiFactory(
         private val setupFinishedBeforeKrate: SetupFinishedBeforeKrate
     ) : FDeviceFeatureApi.Factory {
@@ -245,17 +247,6 @@ class FFinishSetupFeatureApiImpl(
                 fFirmwareUpdateFeatureApi = fFirmwareUpdateFeatureApi,
                 setupFinishedBeforeKrate = setupFinishedBeforeKrate
             )
-        }
-    }
-
-    @ContributesTo(BusyLibGraph::class)
-    interface FFeatureComponent {
-        @Provides
-        @IntoMap
-        fun provideFeatureFactory(
-            fDeviceFeatureApiFactory: FDeviceFeatureApiFactory
-        ): Pair<FDeviceFeature, FDeviceFeatureApi.Factory> {
-            return FDeviceFeature.FINISH_SETUP to fDeviceFeatureApiFactory
         }
     }
 }

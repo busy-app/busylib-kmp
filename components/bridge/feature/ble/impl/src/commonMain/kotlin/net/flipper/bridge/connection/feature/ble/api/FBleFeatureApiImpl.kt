@@ -1,15 +1,15 @@
 package net.flipper.bridge.connection.feature.ble.api
 
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.binding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
-import me.tatarka.inject.annotations.Assisted
-import me.tatarka.inject.annotations.Inject
-import me.tatarka.inject.annotations.IntoMap
-import me.tatarka.inject.annotations.Provides
 import net.flipper.bridge.connection.feature.ble.api.model.FBleStatus
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
+import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureKey
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
 import net.flipper.bridge.connection.feature.events.api.get
@@ -21,13 +21,11 @@ import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.ktx.common.asFlow
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
 
-@Inject
 class FBleFeatureApiImpl(
-    @Assisted private val rpcFeatureApi: FRpcFeatureApi,
-    @Assisted private val fEventsFeatureApi: FEventsFeatureApi?,
-    @Assisted private val scope: CoroutineScope
+    private val rpcFeatureApi: FRpcFeatureApi,
+    private val fEventsFeatureApi: FEventsFeatureApi?,
+    private val scope: CoroutineScope
 ) : FBleFeatureApi, LogTagProvider {
     override val TAG: String = "FBleFeatureApi"
 
@@ -47,6 +45,8 @@ class FBleFeatureApiImpl(
     }
 
     @Inject
+    @ContributesIntoMap(BusyLibGraph::class, binding<FDeviceFeatureApi.Factory>())
+    @FDeviceFeatureKey(FDeviceFeature.BLE)
     class FBleFeatureFactoryImpl : FDeviceFeatureApi.Factory {
         override suspend fun invoke(
             unsafeFeatureDeviceApi: FUnsafeDeviceFeatureApi,
@@ -66,17 +66,6 @@ class FBleFeatureApiImpl(
                 fEventsFeatureApi = fEventsFeatureApi,
                 scope = scope
             )
-        }
-    }
-
-    @ContributesTo(BusyLibGraph::class)
-    interface FBleFeatureComponent {
-        @Provides
-        @IntoMap
-        fun provideFBleFeatureFactory(
-            fBleFeatureFactory: FBleFeatureFactoryImpl
-        ): Pair<FDeviceFeature, FDeviceFeatureApi.Factory> {
-            return FDeviceFeature.BLE to fBleFeatureFactory
         }
     }
 }

@@ -1,5 +1,6 @@
 package net.flipper.bridge.connection.ble.impl
 
+import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
@@ -8,7 +9,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.job
-import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.connectionbuilder.api.FDeviceConfigToConnection
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi

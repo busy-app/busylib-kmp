@@ -6,7 +6,7 @@ plugins {
 dependencies {
     implementation(libs.android.gradle)
     implementation(libs.kotlin.gradle)
-    implementation(libs.kotlin.ksp.gradle)
+    implementation(libs.metro.gradle)
     implementation(libs.compose.multiplatform.gradle)
     implementation(libs.compose.gradle)
     implementation(libs.vaniktech)

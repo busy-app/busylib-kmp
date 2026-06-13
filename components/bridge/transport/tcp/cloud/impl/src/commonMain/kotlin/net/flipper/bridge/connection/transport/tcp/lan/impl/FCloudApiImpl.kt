@@ -15,9 +15,9 @@ import net.flipper.bridge.connection.transport.common.api.serial.StatusStreaming
 import net.flipper.bridge.connection.transport.tcp.cloud.api.FCloudApi
 import net.flipper.bridge.connection.transport.tcp.cloud.api.FCloudDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.tcp.common.monitor.WSEventsDeviceMonitor
-import net.flipper.bridge.connection.transport.tcp.lan.impl.engine.BUSYCloudHttpEngineFactory
-import net.flipper.bridge.connection.transport.tcp.lan.impl.engine.token.ProxyTokenProviderFactory
-import net.flipper.bridge.connection.transport.tcp.lan.impl.metainfo.FCloudStreamingFactory
+import net.flipper.bridge.connection.transport.tcp.lan.impl.engine.BUSYCloudHttpEngine
+import net.flipper.bridge.connection.transport.tcp.lan.impl.engine.token.ProxyTokenProvider
+import net.flipper.bridge.connection.transport.tcp.lan.impl.metainfo.FCloudStreamingApi
 import net.flipper.core.ktor.getPlatformEngineFactory
 
 @Suppress("LongParameterList")
@@ -25,9 +25,9 @@ class FCloudApiImpl(
     private val listener: FTransportConnectionStatusListener,
     private var currentConfig: FCloudDeviceConnectionConfig,
     scope: CoroutineScope,
-    tokenProviderFactory: ProxyTokenProviderFactory,
-    cloudEngineFactory: BUSYCloudHttpEngineFactory,
-    cloudStreamingFactory: FCloudStreamingFactory
+    tokenProviderFactory: ProxyTokenProvider.Factory,
+    cloudEngineFactory: BUSYCloudHttpEngine.Factory,
+    cloudStreamingFactory: FCloudStreamingApi.Factory
 ) : FCloudApi {
     private val httpEngineOriginal = getPlatformEngineFactory().create()
     private val httpEngine = cloudEngineFactory(

@@ -1,9 +1,9 @@
 package net.flipper.bridge.connection.transport.ble.impl.api.serial
 
+import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
-import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceSerialConfig
 import net.flipper.bridge.connection.transport.ble.impl.serial.FSerialBleApi
 import net.flipper.core.busylib.log.LogTagProvider

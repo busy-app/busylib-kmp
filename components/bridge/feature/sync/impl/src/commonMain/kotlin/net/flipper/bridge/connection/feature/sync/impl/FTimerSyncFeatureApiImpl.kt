@@ -1,11 +1,12 @@
 package net.flipper.bridge.connection.feature.sync.impl
 
+import dev.zacsweers.metro.Assisted
+import dev.zacsweers.metro.AssistedFactory
+import dev.zacsweers.metro.AssistedInject
 import kotlinx.coroutines.CoroutineScope
-import me.tatarka.inject.annotations.Assisted
-import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.feature.common.api.FOnDeviceReadyFeatureApi
 
-@Inject
+@AssistedInject
 class FTimerSyncFeatureApiImpl(
     @Suppress("UnusedPrivateProperty")
     @Assisted private val scope: CoroutineScope
@@ -14,12 +15,10 @@ class FTimerSyncFeatureApiImpl(
         // Not implemented
     }
 
-    @Inject
-    class InternalFactory(
-        private val factory: (CoroutineScope) -> FTimerSyncFeatureApiImpl
-    ) {
+    @AssistedFactory
+    fun interface Factory {
         operator fun invoke(
             scope: CoroutineScope
-        ): FTimerSyncFeatureApiImpl = factory(scope)
+        ): FTimerSyncFeatureApiImpl
     }
 }

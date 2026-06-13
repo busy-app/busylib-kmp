@@ -3,7 +3,7 @@ import net.flipper.Config.CURRENT_FLAVOR_TYPE
 
 plugins {
     id("flipper.multiplatform")
-    id("flipper.anvil-multiplatform")
+    id("flipper.metro-multiplatform")
 
     alias(libs.plugins.buildkonfig)
 }

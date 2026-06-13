@@ -38,27 +38,3 @@ kotlin {
         }
     }
 }
-
-var configurations = arrayListOf(
-    "kspJvm",
-    "kspAndroid",
-)
-
-if (appleEnabled) {
-    configurations += arrayListOf(
-        "kspIosX64",
-        "kspIosArm64",
-        "kspIosSimulatorArm64"
-    )
-    if (macOSEnabled) {
-        configurations += arrayListOf(
-            "kspMacosX64",
-            "kspMacosArm64"
-        )
-    }
-}
-
-@Suppress("SpreadOperator")
-includeCommonKspConfigurationTo(
-    *configurations.toTypedArray()
-)

@@ -1,20 +1,20 @@
 package net.flipper.bridge.connection.feature.about.impl
 
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.binding
 import kotlinx.coroutines.CoroutineScope
-import me.tatarka.inject.annotations.Inject
-import me.tatarka.inject.annotations.IntoMap
-import me.tatarka.inject.annotations.Provides
 import net.flipper.bridge.connection.feature.about.api.FAboutFeatureApi
 import net.flipper.bridge.connection.feature.about.model.BusyBarAboutDevice
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
+import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureKey
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.core.wrapper.CResult
 import net.flipper.busylib.core.wrapper.toCResult
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesTo
 
 class FAboutFeatureApiImpl(
     private val rpcFeatureApi: FRpcFeatureApi
@@ -49,6 +49,8 @@ class FAboutFeatureApiImpl(
     }
 
     @Inject
+    @ContributesIntoMap(BusyLibGraph::class, binding<FDeviceFeatureApi.Factory>())
+    @FDeviceFeatureKey(FDeviceFeature.ABOUT)
     class Factory : FDeviceFeatureApi.Factory {
         override suspend fun invoke(
             unsafeFeatureDeviceApi: FUnsafeDeviceFeatureApi,
@@ -61,17 +63,6 @@ class FAboutFeatureApiImpl(
                 ?: return null
 
             return FAboutFeatureApiImpl(fRpcFeatureApi)
-        }
-    }
-
-    @ContributesTo(BusyLibGraph::class)
-    interface Component {
-        @Provides
-        @IntoMap
-        fun provideFeatureFactory(
-            factory: Factory
-        ): Pair<FDeviceFeature, FDeviceFeatureApi.Factory> {
-            return FDeviceFeature.ABOUT to factory
         }
     }
 }

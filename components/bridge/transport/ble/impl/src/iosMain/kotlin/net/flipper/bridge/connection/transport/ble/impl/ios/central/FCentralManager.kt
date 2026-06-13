@@ -1,5 +1,9 @@
 package net.flipper.bridge.connection.transport.ble.impl.ios.central
 
+import dev.zacsweers.metro.ContributesBinding
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
+import dev.zacsweers.metro.binding
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -9,7 +13,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
-import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.ble.impl.BleConstants
 import net.flipper.bridge.connection.transport.ble.impl.ios.peripheral.FPeripheral
@@ -32,11 +35,9 @@ import platform.Foundation.NSUUID
 import platform.darwin.dispatch_queue_attr_make_with_qos_class
 import platform.darwin.dispatch_queue_create
 import platform.posix.QOS_CLASS_USER_INITIATED
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
-import software.amazon.lastmile.kotlin.inject.anvil.SingleIn
 
 @SingleIn(BusyLibGraph::class)
-@ContributesBinding(BusyLibGraph::class, FCentralManagerApi::class)
+@ContributesBinding(BusyLibGraph::class, binding<FCentralManagerApi>())
 class FCentralManager internal constructor(
     scope: CoroutineScope,
     centralManagerProvider: (FCentralManagerDelegate) -> CBCentralManager

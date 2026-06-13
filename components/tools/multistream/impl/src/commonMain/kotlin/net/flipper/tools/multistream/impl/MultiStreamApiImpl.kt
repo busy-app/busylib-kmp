@@ -1,5 +1,8 @@
 package net.flipper.tools.multistream.impl
 
+import dev.zacsweers.metro.ContributesBinding
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.binding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
@@ -10,7 +13,6 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
-import me.tatarka.inject.annotations.Inject
 import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.feature.events.impl.FEventsFeatureApiImpl
 import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
@@ -30,10 +32,9 @@ import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.tools.multistream.api.MultiStreamApi
 import net.flipper.tools.multistream.api.MultiStreamState
-import software.amazon.lastmile.kotlin.inject.anvil.ContributesBinding
 
 @Inject
-@ContributesBinding(BusyLibGraph::class, MultiStreamApi::class)
+@ContributesBinding(BusyLibGraph::class, binding<MultiStreamApi>())
 class MultiStreamApiImpl(
     private val orchestrator: FDeviceOrchestrator,
     private val featureProvider: FFeatureProvider,
