@@ -150,11 +150,6 @@ kotlin {
         implementation(projects.components.bridge.transport.tcp.lan.impl)
         implementation(projects.components.bridge.lanmonitor.impl)
     }
-    sourceSets.jvmTest.dependencies {
-        implementation(libs.kotlin.test)
-        implementation(libs.kotlin.coroutines)
-        implementation(libs.mockk)
-    }
 }
 
 kotlin {
