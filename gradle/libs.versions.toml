@@ -5,38 +5,38 @@ androidx-core = "1.18.0"
 lifecycle = "2.10.0" # https://developer.android.com/jetpack/androidx/releases/lifecycle
 google-services = "4.4.4"
 appcompat = "1.7.1" # https://developer.android.com/jetpack/androidx/releases/appcompat
-compose-plugin = "1.10.3"
+compose-plugin = "1.11.1"
 # Because of SKIE https://skie.touchlab.co/intro#compatibility-with-kotlin
-kotlin = "2.3.21"
-kotlin-coroutines = "1.10.2"
+kotlin = "2.4.0"
+kotlin-coroutines = "1.11.0"
 kotlin-serialization-runtime = "1.11.0"
-kotlin-datetime = "0.7.1" # https://github.com/Kotlin/kotlinx-datetime/releases
-kotlin-immutable = "0.4.0"
+kotlin-datetime = "0.8.0" # https://github.com/Kotlin/kotlinx-datetime/releases
+kotlin-immutable = "0.5.0"
 kotlin-io = "0.9.0"
 klibs-gradleplugin = "1.15.0" # https://github.com/makeevrserg/gradle-plugin
 decompose = "3.5.0"
 # 1.1.1 is the highest Metro whose Kotlin/Native runtime klibs have ABI 2.3.0 (loadable by our K/N 2.3.21).
 # 1.2.0+ runtime klibs are built with Kotlin 2.4.0 (ABI 2.4.0) and are rejected by the 2.3.21 native compiler.
-metro = "1.1.1"
+metro = "1.2.1"
 settings = "1.3.0"
-ktor = "3.4.3" # https://ktor.io/
+ktor = "3.5.0" # https://ktor.io/
 timber = "5.0.1" # https://github.com/JakeWharton/timber/releases
 klibs-kstorage = "5.0.4" # https://github.com/makeevrserg/klibs.kstorage
 encoding-hash = "0.8.0"
-jupiter = "6.0.3"
+jupiter = "6.1.0"
 roboelectric = "4.16.1" # https://github.com/robolectric/robolectric/releases
 androidx-test = "1.3.0"
 ble = "2.0.0-alpha19"
-slf4j-api = "2.0.17" # https://www.slf4j.org/
-mockk = "1.14.9" # https://mockk.io/
+slf4j-api = "2.0.18" # https://www.slf4j.org/
+mockk = "1.14.11" # https://mockk.io/
 vaniktech = "0.36.0" #https://github.com/vanniktech/gradle-maven-publish-plugin
-buildkonfig = "6.0.9"
+buildkonfig = "6.0.10"
 skie = "0.10.12"
 kotlinx-crypto = "0.6.0"
-detekt = "2.0.0-alpha.3" # https://detekt.dev/docs/gettingstarted/gradle/
-detekt-ruleset-compose = "0.5.8" # https://github.com/mrmans0n/compose-rules/releases
+detekt = "2.0.0-alpha.4" # https://detekt.dev/docs/gettingstarted/gradle/
+detekt-ruleset-compose = "0.6.1" # https://github.com/mrmans0n/compose-rules/releases
 detekt-ruleset-decompose = "2.0.0" # https://github.com/LionZXY/detekt-decompose-rule/releases
-wire = "6.2.0"
+wire = "6.4.0"
 rwmutex = "1.0.0"
 
 [libraries]
