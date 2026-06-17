@@ -15,4 +15,6 @@ sealed interface BusyLibEvent {
      * user action. [newDevice] is the device that is now active.
      */
     data class ActiveDeviceAutoSwitched(val newDevice: BUSYBar) : BusyLibEvent
+
+    data object LocalNetworkDenied : BusyLibEvent
 }

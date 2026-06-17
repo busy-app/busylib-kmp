@@ -20,6 +20,8 @@ import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.debug
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
+import net.flipper.eventbus.internal.BusyLibEventPublisher
+import net.flipper.eventbus.model.BusyLibEvent
 import platform.Foundation.NSLock
 import platform.Network.nw_connection_cancel
 import platform.Network.nw_connection_create
@@ -71,6 +73,7 @@ class LanAvailableMacOSListener internal constructor(
     globalScope: CoroutineScope,
     private val host: String,
     private val port: Int,
+    private val eventApi: BusyLibEventPublisher
 ) : LanAvailablePlatformListener, LogTagProvider {
 
     @Inject
@@ -133,7 +136,11 @@ class LanAvailableMacOSListener internal constructor(
                 lanAvailableStateFlow.emit(false)
             }
 
-            is KotlinNwStatus.Waiting.LocalNetworkDenied,
+            is KotlinNwStatus.Waiting.LocalNetworkDenied -> {
+                eventApi.publish(BusyLibEvent.LocalNetworkDenied)
+                error { "#handleStateUpdate $status" }
+                lanAvailableStateFlow.emit(false)
+            }
             is KotlinNwStatus.Waiting.CellularDenied,
             is KotlinNwStatus.Waiting.WifiDenied -> {
                 error { "#handleStateUpdate $status" }
