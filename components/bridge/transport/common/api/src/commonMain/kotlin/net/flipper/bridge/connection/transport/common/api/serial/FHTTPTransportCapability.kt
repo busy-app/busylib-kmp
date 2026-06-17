@@ -25,5 +25,3 @@ enum class FHTTPTransportCapability {
      */
     BB_LOCAL_CONNECTION
 }
-
-const val HEADER_NAME_REQUEST_CAPABILITY = "X-BUSYLib-Request-Capability-Origin"
