@@ -10,6 +10,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -19,11 +20,14 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.job
+import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.feature.firmwareupdate.api.FFirmwareUpdateFeatureApi
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateVersion
 import net.flipper.bridge.connection.feature.info.api.FDeviceInfoFeatureApi
@@ -71,7 +75,8 @@ class FirmwareUpdaterApiImpl(
     private val httpClient: HttpClient,
     private val previousVersionFlowProvider: PreviousVersionFlowProvider,
     private val scope: CoroutineScope,
-    private val updateStatusProvider: UpdateStatusProvider
+    private val updateStatusProvider: UpdateStatusProvider,
+    private val fDevicePersistedStorage: FDevicePersistedStorage
 ) : FirmwareUpdaterApi, LogTagProvider by TaggedLogger("UpdaterApi") {
     private val firmwareDownloaderApi: FirmwareDownloaderApi = FirmwareDownloaderApiImpl(
         httpClient = httpClient
@@ -82,7 +87,10 @@ class FirmwareUpdaterApiImpl(
 
     private val lanUpdaterScope = scope.asSingleJobScope()
 
+    private val installRequestedFlow = MutableStateFlow(false)
+
     private val stateLogger by lazy { FwUpdateStateLogger() }
+
 
     override val state: WrappedStateFlow<FwUpdateState> = combine(
         flow = updateStatusProvider.getUpdateStatus(),
@@ -93,20 +101,37 @@ class FirmwareUpdaterApiImpl(
             .distinctUntilChanged(),
         flow3 = firmwareDownloaderApi.state,
         flow4 = firmwareUploaderApi.state,
-        transform = { updateStatusSource, bsbUpdateVersion, downloaderState, uploaderState ->
+        flow5 = installRequestedFlow,
+        transform = { updateStatusSource, bsbUpdateVersion, downloaderState, uploaderState, isInstallRequested ->
             val result = FwUpdateStatusMapper.map(
                 updateStatusSource,
                 bsbUpdateVersion,
                 downloaderState,
-                uploaderState
+                uploaderState,
+                isInstallRequested
             )
+            when (result) {
+                is FwUpdateState.UpdateAvailable,
+                is FwUpdateState.NoUpdateAvailable,
+                is FwUpdateState.LowBattery,
+                is FwUpdateState.CheckingVersion,
+                is FwUpdateState.CouldNotCheckUpdate,
+                is FwUpdateState.DownloadFailure,
+                is FwUpdateState.Uploading,
+                is FwUpdateState.Updating,
+                is FwUpdateState.Downloading -> installRequestedFlow.emit(false)
+
+                is FwUpdateState.Preparing,
+                is FwUpdateState.Pending -> Unit
+            }
             if (BuildKonfig.IS_VERBOSE_LOG_ENABLED && BuildKonfig.IS_LOG_ENABLED) {
                 stateLogger.logIfChanged(
                     result = result,
                     updateStatusSource = updateStatusSource,
                     bsbUpdateVersion = bsbUpdateVersion,
                     downloaderState = downloaderState,
-                    uploaderState = uploaderState
+                    uploaderState = uploaderState,
+                    isInstallRequested = isInstallRequested
                 )
             }
             return@combine result
@@ -153,11 +178,13 @@ class FirmwareUpdaterApiImpl(
                     .fRpcUpdaterApi
                     .startUpdateAbortDownload()
                     .map { }
+                    .also { installRequestedFlow.value = false }
                     .toCResult()
             }
 
             is BsbUpdateVersion.ReadyToUpdate.Url -> {
                 lanUpdaterScope.cancelPrevious().join()
+                installRequestedFlow.value = false
                 CResult.success(Unit)
             }
 
@@ -228,7 +255,9 @@ class FirmwareUpdaterApiImpl(
     override suspend fun startUpdateInstall(): CResult<Unit> {
         info { "#startUpdateInstall" }
         return lanUpdaterScope.async {
+            installRequestedFlow.value = true
             coroutineContext.job.invokeOnCompletion {
+                installRequestedFlow.value = false
                 firmwareDownloaderApi.reset()
                 firmwareUploaderApi.reset()
             }
@@ -270,5 +299,18 @@ class FirmwareUpdaterApiImpl(
             ?.map { }
             ?.toCResult()
             ?: CResult.failure(IllegalStateException("RPC feature is null"))
+    }
+
+    // Reset updater when connected to another device
+    init {
+        fDevicePersistedStorage.getCurrentDeviceFlow()
+            .map { bUSYBar -> bUSYBar?.uniqueId }
+            .distinctUntilChanged()
+            .onEach {
+                lanUpdaterScope.cancelPrevious().join()
+                firmwareDownloaderApi.reset()
+                firmwareUploaderApi.reset()
+            }
+            .launchIn(scope)
     }
 }

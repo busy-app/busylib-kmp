@@ -11,6 +11,9 @@ sealed interface FwUpdateState {
     data object Updating : FwUpdateState
     data object UpdateAvailable : FwUpdateState
 
+    // Cloud/BLE
+    data object Preparing : FwUpdateState
+
     // Desktop only
     data class Uploading(
         val progress: Float
