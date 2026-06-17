@@ -22,6 +22,8 @@ import net.flipper.bridge.connection.feature.rpc.api.model.ErrorResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.RpcLinkedAccountInfo
 import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
 import net.flipper.bridge.connection.feature.rpc.impl.client.FRpcClientModeApiImpl
+import net.flipper.bridge.connection.transport.common.api.serial.FHTTPTransportCapability
+import net.flipper.bridge.connection.transport.common.api.serial.attributes.RequestCapabilityKey
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 import net.flipper.core.busylib.ktx.common.mapSuspendCatching
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
@@ -54,7 +56,12 @@ class FRpcCriticalFeatureApiImpl(
     override suspend fun getLinkCode(): Result<BusyBarLinkCodeResponse> {
         return withContext(dispatcher) {
             return@withContext runSuspendCatching {
-                client.post("/api/account/link")
+                client.post("/api/account/link") {
+                    attributes.put(
+                        RequestCapabilityKey,
+                        listOf(FHTTPTransportCapability.BB_LOCAL_CONNECTION)
+                    )
+                }
             }.mapSuspendCatching { call ->
                 try {
                     call.body<BusyBarLinkCode>()
@@ -73,7 +80,12 @@ class FRpcCriticalFeatureApiImpl(
     override suspend fun deleteAccount(): Result<SuccessResponse> {
         return withContext(dispatcher) {
             return@withContext runSuspendCatching {
-                client.delete("/api/account").body<SuccessResponse>()
+                client.delete("/api/account") {
+                    attributes.put(
+                        RequestCapabilityKey,
+                        listOf(FHTTPTransportCapability.BB_LOCAL_CONNECTION)
+                    )
+                }.body<SuccessResponse>()
             }
         }
     }
