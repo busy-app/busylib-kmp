@@ -6,10 +6,8 @@ import io.ktor.client.engine.HttpClientEngineCapability
 import io.ktor.client.engine.HttpClientEngineConfig
 import io.ktor.client.plugins.websocket.WebSocketCapability
 import io.ktor.client.plugins.websocket.WebSocketExtensionsCapability
-import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.HttpRequestData
 import io.ktor.client.request.HttpResponseData
-import io.ktor.client.request.takeFrom
 import io.ktor.utils.io.InternalAPI
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -17,8 +15,7 @@ import kotlinx.coroutines.flow.map
 import net.flipper.bridge.connection.transport.combined.impl.connections.SharedConnectionPool
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPDeviceApi
-import net.flipper.bridge.connection.transport.common.api.serial.FHTTPTransportCapability
-import net.flipper.bridge.connection.transport.common.api.serial.HEADER_NAME_REQUEST_CAPABILITY
+import net.flipper.bridge.connection.transport.common.api.serial.attributes.RequestCapabilityKey
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
@@ -49,25 +46,20 @@ class FCombinedHttpEngine(
         }.filterNotNull()
         check(currentDelegates.isNotEmpty()) { "No connected devices" }
 
-        val requestedCapability = data.headers[HEADER_NAME_REQUEST_CAPABILITY]?.toIntOrNull()?.let {
-            FHTTPTransportCapability.entries.getOrNull(it)
-        }
+        val requestedCapabilities = data.attributes.getOrNull(RequestCapabilityKey)
 
-        val filteredDelegates = if (requestedCapability == null) {
+        val filteredDelegates = if (requestedCapabilities.isNullOrEmpty()) {
             currentDelegates.toList()
         } else {
-            currentDelegates.filter { it.second.contains(requestedCapability) }
+            currentDelegates.filter { it.second.containsAll(requestedCapabilities) }
                 .also {
                     if (it.isEmpty()) {
-                        error("No delegate with capability $requestedCapability. Existed: $currentDelegates")
+                        error("No delegate with capabilities $requestedCapabilities. Existed: $currentDelegates")
                     }
                 }
         }.map { it.first }
 
-        val requestBuilder = HttpRequestBuilder()
-            .takeFrom(data)
-        requestBuilder.headers.remove(HEADER_NAME_REQUEST_CAPABILITY)
-        return executeWithRetry(requestBuilder.build(), filteredDelegates)
+        return executeWithRetry(data, filteredDelegates)
     }
 
     @InternalAPI

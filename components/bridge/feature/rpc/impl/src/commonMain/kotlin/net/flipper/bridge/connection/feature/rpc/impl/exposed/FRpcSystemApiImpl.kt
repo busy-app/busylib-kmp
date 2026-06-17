@@ -12,7 +12,7 @@ import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarStatusSystem
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarVersion
 import net.flipper.bridge.connection.feature.rpc.api.model.StatusFirmware
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPTransportCapability
-import net.flipper.bridge.connection.transport.common.api.serial.HEADER_NAME_REQUEST_CAPABILITY
+import net.flipper.bridge.connection.transport.common.api.serial.attributes.RequestCapabilityKey
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
 
 class FRpcSystemApiImpl(
@@ -35,8 +35,10 @@ class FRpcSystemApiImpl(
         return runSuspendCatching(dispatcher) {
             httpClient.get("/api/status/device") {
                 if (localOnly) {
-                    headers[HEADER_NAME_REQUEST_CAPABILITY] = FHTTPTransportCapability
-                        .BB_LOCAL_CONNECTION.ordinal.toString()
+                    attributes.put(
+                        RequestCapabilityKey,
+                        listOf(FHTTPTransportCapability.BB_LOCAL_CONNECTION)
+                    )
                 }
             }.body<BusyBarStatusDevice>()
         }
