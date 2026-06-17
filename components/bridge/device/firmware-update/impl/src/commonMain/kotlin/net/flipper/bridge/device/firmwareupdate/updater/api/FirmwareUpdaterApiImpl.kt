@@ -91,7 +91,6 @@ class FirmwareUpdaterApiImpl(
 
     private val stateLogger by lazy { FwUpdateStateLogger() }
 
-
     override val state: WrappedStateFlow<FwUpdateState> = combine(
         flow = updateStatusProvider.getUpdateStatus(),
         flow2 = fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
