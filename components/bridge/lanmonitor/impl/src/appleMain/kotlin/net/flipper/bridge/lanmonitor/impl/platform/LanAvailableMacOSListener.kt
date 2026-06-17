@@ -77,7 +77,10 @@ class LanAvailableMacOSListener internal constructor(
 ) : LanAvailablePlatformListener, LogTagProvider {
 
     @Inject
-    constructor(globalScope: CoroutineScope) : this(globalScope, BB_HOST, BB_PORT)
+    constructor(
+        globalScope: CoroutineScope,
+        eventApi: BusyLibEventPublisher
+    ) : this(globalScope, BB_HOST, BB_PORT, eventApi)
 
     override val TAG: String = "LanAvailableMacOSListener"
     private val queue = dispatch_queue_create("net.flipper.lan.connection", null)
@@ -141,6 +144,7 @@ class LanAvailableMacOSListener internal constructor(
                 error { "#handleStateUpdate $status" }
                 lanAvailableStateFlow.emit(false)
             }
+
             is KotlinNwStatus.Waiting.CellularDenied,
             is KotlinNwStatus.Waiting.WifiDenied -> {
                 error { "#handleStateUpdate $status" }
