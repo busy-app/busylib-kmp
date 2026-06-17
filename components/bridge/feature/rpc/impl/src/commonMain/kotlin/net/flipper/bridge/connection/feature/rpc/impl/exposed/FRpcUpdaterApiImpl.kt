@@ -23,7 +23,7 @@ import net.flipper.bridge.connection.feature.rpc.api.model.GetUpdateChangelogRes
 import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.UpdateStatus
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPTransportCapability
-import net.flipper.bridge.connection.transport.common.api.serial.attributes.RequestCapabilityKey
+import net.flipper.bridge.connection.transport.common.api.serial.attributes.requireCapabilities
 import net.flipper.core.busylib.ktx.common.cache.ObjectCache
 import net.flipper.core.busylib.ktx.common.cache.getOrElse
 import net.flipper.core.busylib.ktx.common.chunked
@@ -102,9 +102,9 @@ class FRpcUpdaterApiImpl(
     ): Result<Unit> {
         return runSuspendCatching(dispatcher) {
             httpClient.post("/api/update") {
-                attributes.put(
-                    RequestCapabilityKey,
-                    listOf(FHTTPTransportCapability.BB_LOCAL_CONNECTION)
+                requireCapabilities(
+                    FHTTPTransportCapability.BB_LOCAL_CONNECTION,
+                    FHTTPTransportCapability.BB_DOWNLOAD_UPDATE_SUPPORTED
                 )
                 contentType(ContentType.Application.OctetStream)
 

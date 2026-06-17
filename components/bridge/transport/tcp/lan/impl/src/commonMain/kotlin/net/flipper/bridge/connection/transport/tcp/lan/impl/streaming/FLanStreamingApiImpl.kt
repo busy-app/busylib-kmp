@@ -20,7 +20,7 @@ import kotlinx.coroutines.withContext
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPTransportCapability
 import net.flipper.bridge.connection.transport.common.api.serial.FStatusStreamingApi
 import net.flipper.bridge.connection.transport.common.api.serial.StatusStreamingEvent
-import net.flipper.bridge.connection.transport.common.api.serial.attributes.RequestCapabilityKey
+import net.flipper.bridge.connection.transport.common.api.serial.attributes.requireCapabilities
 import net.flipper.busylib.kmp.components.core.buildkonfig.BuildKonfig
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 import net.flipper.core.busylib.ktx.common.wrapWebsocket
@@ -47,10 +47,7 @@ class FLanStreamingApiImpl(
 
     private suspend fun getWebSocket(): Flow<Frame> {
         val session = httpClient.webSocketSession("/api/status/ws") {
-            attributes.put(
-                RequestCapabilityKey,
-                listOf(FHTTPTransportCapability.BB_WEBSOCKET_SUPPORTED)
-            )
+            requireCapabilities(FHTTPTransportCapability.BB_WEBSOCKET_SUPPORTED)
         }
         info { "Init websocket $session" }
         session.send(Frame.Text("{\"enable\":true}"))

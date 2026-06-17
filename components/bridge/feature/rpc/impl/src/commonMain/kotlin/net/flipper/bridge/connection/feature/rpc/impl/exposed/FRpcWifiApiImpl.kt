@@ -14,9 +14,8 @@ import net.flipper.bridge.connection.feature.rpc.api.model.ErrorResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.NetworkResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.StatusResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
-import net.flipper.bridge.connection.transport.common.api.serial.FHTTPTransportCapability
 import net.flipper.bridge.connection.transport.common.api.serial.attributes.IgnoreRequestTimeoutKey
-import net.flipper.bridge.connection.transport.common.api.serial.attributes.RequestCapabilityKey
+import net.flipper.bridge.connection.transport.common.api.serial.attributes.requireLocalConnection
 import net.flipper.core.busylib.ktx.common.cache.ObjectCache
 import net.flipper.core.busylib.ktx.common.cache.getOrElse
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
@@ -30,10 +29,7 @@ class FRpcWifiApiImpl(
     override suspend fun getWifiNetworks(): Result<NetworkResponse> {
         return runSuspendCatching(dispatcher) {
             httpClient.get("/api/wifi/networks") {
-                attributes.put(
-                    RequestCapabilityKey,
-                    listOf(FHTTPTransportCapability.BB_LOCAL_CONNECTION)
-                )
+                requireLocalConnection()
             }.body<NetworkResponse>()
         }
     }
@@ -43,10 +39,7 @@ class FRpcWifiApiImpl(
             val response = httpClient.post("/api/wifi/connect") {
                 setBody(config)
                 attributes.put(IgnoreRequestTimeoutKey, true)
-                attributes.put(
-                    RequestCapabilityKey,
-                    listOf(FHTTPTransportCapability.BB_LOCAL_CONNECTION)
-                )
+                requireLocalConnection()
             }.body<ApiResponse>()
 
             return@runSuspendCatching when (response) {
@@ -63,10 +56,7 @@ class FRpcWifiApiImpl(
     override suspend fun disconnectWifi(): Result<SuccessResponse> {
         return runSuspendCatching(dispatcher) {
             val response = httpClient.post("/api/wifi/disconnect") {
-                attributes.put(
-                    RequestCapabilityKey,
-                    listOf(FHTTPTransportCapability.BB_LOCAL_CONNECTION)
-                )
+                requireLocalConnection()
             }.body<ApiResponse>()
             return@runSuspendCatching when (response) {
                 is ErrorResponse if response.error == BsbRpcError.ALREADY_CONNECTED.error -> {
