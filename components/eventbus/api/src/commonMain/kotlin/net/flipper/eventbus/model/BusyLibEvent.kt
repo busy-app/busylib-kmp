@@ -16,5 +16,9 @@ sealed interface BusyLibEvent {
      */
     data class ActiveDeviceAutoSwitched(val newDevice: BUSYBar) : BusyLibEvent
 
+    /**
+     * The platform denied access to the local network (e.g. Apple "Local Network" permission).
+     * Emitted when LAN monitoring cannot proceed until the user grants access.
+     */
     data object LocalNetworkDenied : BusyLibEvent
 }
