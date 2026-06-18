@@ -9,6 +9,8 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import net.flipper.bridge.lanmonitor.impl.platform.LanAvailableMacOSListener
 import net.flipper.bridge.lanmonitor.impl.platform.fixture.tcp.PosixTcpServer
+import net.flipper.eventbus.internal.BusyLibEventPublisher
+import net.flipper.eventbus.model.BusyLibEvent
 import platform.Foundation.NSThread
 
 /**
@@ -26,6 +28,14 @@ class LanAvailableMacOSListenerTestFixture {
     val server: PosixTcpServer = PosixTcpServer()
     private val monitorScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
+    /**
+     * The listener only publishes when the OS denies local-network access — a state these
+     * integration tests (real loopback [PosixTcpServer]) cannot reproduce — so a no-op double suffices.
+     */
+    private val eventPublisher = object : BusyLibEventPublisher {
+        override suspend fun publish(event: BusyLibEvent) = Unit
+    }
+
     suspend fun createListener(
         host: String = "127.0.0.1",
         port: Int = server.port,
@@ -35,6 +45,7 @@ class LanAvailableMacOSListenerTestFixture {
             globalScope = monitorScope,
             host = host,
             port = port,
+            eventApi = eventPublisher,
         )
 
         val subscribed = CompletableDeferred<Unit>()
