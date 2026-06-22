@@ -9,6 +9,8 @@ private val projectInfo = project.requireProjectInfo
 private val publishInfo = project.requirePublishInfo
 
 mavenPublishing {
+    excludeSignatureChecksums(exclude = true)
+
     // What
     coordinates(
         groupId = publishInfo.publishGroupId,
