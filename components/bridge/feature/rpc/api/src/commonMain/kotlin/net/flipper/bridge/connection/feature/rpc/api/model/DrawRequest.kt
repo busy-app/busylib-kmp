@@ -26,7 +26,7 @@ data class DrawRequest(
         @SerialName("id")
         val id: String,
         @SerialName("timeout")
-        val timeout: Int? = null,
+        val timeoutSec: Int?,
         @SerialName("display_until")
         val displayUntil: String? = null,
         @SerialName("display")

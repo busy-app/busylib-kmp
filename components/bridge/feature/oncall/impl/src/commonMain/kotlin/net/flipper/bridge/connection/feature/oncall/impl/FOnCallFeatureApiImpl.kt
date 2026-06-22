@@ -76,7 +76,8 @@ class FOnCallFeatureApiImpl(
                     display = DrawRequest.Display.FRONT,
                     type = DrawRequest.Element.ElementType.ANIMATION,
                     stockPath = ANIM_PATH,
-                    loop = true
+                    loop = true,
+                    timeoutSec = DISPLAY_TIMEOUT.inWholeSeconds.toInt()
                 )
             )
         )
@@ -87,6 +88,7 @@ class FOnCallFeatureApiImpl(
         private const val DRAW_PRIORITY = 50
         private const val ANIM_ID = "busy_lib_on_call_anim"
         private const val ANIM_PATH = "shared/on_call_72x16.anim"
+        private val DISPLAY_TIMEOUT = 30.seconds
         private val UPDATE_DELAY = 10.seconds
     }
 
