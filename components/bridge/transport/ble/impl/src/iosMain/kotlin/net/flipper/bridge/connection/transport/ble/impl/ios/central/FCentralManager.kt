@@ -128,7 +128,7 @@ class FCentralManager internal constructor(
         info { "CB connect requested id=$id" }
         manager.connectPeripheral(peripheral, options = null)
 
-        scope.coroutineContext.job.invokeOnCompletion(onCancelling = true) {
+        scope.coroutineContext.job.invokeOnCompletion {
             managerScope.launch { disconnect(peripheral.identifier) }
         }
     }
