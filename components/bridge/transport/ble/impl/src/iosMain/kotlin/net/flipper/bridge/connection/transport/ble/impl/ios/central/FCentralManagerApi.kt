@@ -11,7 +11,7 @@ interface FCentralManagerApi {
     val bleStatusStream: WrappedStateFlow<FBLEStatus>
     val discoveredStream: WrappedStateFlow<Set<DiscoveredBluetoothDevice>>
 
-    suspend fun connect(scope: CoroutineScope, config: FBleDeviceConnectionConfig)
+    suspend fun connect(deviceScope: CoroutineScope, config: FBleDeviceConnectionConfig)
     suspend fun disconnect(id: NSUUID)
     suspend fun startScan()
     suspend fun stopScan()
