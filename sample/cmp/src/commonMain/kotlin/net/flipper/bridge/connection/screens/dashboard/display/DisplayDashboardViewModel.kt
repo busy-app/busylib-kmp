@@ -61,7 +61,8 @@ class DisplayDashboardViewModel(
                     y = 4,
                     font = DrawRequest.Element.Font.MEDIUM,
                     color = "#FFFFFFFF",
-                    displayUntil = displayUntil
+                    displayUntil = displayUntil,
+                    timeoutSec = null
                 )
             )
         )
@@ -77,7 +78,8 @@ class DisplayDashboardViewModel(
                     type = DrawRequest.Element.ElementType.ANIMATION,
                     stockPath = SAMPLE_STOCK_ANIMATION_PATH,
                     loop = true,
-                    awaitPreviousEnd = false
+                    awaitPreviousEnd = false,
+                    timeoutSec = null
                 )
             )
         )
