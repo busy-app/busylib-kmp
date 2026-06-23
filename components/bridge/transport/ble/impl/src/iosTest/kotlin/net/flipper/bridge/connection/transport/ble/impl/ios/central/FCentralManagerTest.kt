@@ -89,7 +89,7 @@ class FCentralManagerTest {
     }
 
     @Test
-    fun GIVEN_connecting_peripheral_WHEN_connection_scope_cancelled_THEN_cb_connection_is_torn_down() = runTest {
+    fun GIVEN_connected_peripheral_WHEN_connection_scope_cancelled_THEN_cb_connection_is_torn_down() = runTest {
         val sut = createSut()
         val peripheral = RecordingPeripheral()
         sut.manager.registerPeripheral(peripheral)
