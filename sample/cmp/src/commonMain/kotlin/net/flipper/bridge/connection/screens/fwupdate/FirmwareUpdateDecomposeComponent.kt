@@ -188,8 +188,8 @@ class FirmwareUpdateDecomposeComponent(
 
             FwUpdateState.Preparing -> {
                 Text(
-                    text = "Preparing",
-                    color = MaterialTheme.colors.error
+                    text = "Preparing...",
+                    color = MaterialTheme.colors.onBackground
                 )
             }
         }
