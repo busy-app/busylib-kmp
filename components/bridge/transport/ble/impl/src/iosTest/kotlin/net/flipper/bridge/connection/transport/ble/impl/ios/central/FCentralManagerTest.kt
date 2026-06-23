@@ -182,7 +182,7 @@ class FCentralManagerTest {
             val childScope = CoroutineScope(coroutineContext + childJob)
             backgroundScope.coroutineContext[Job]!!.invokeOnCompletion { childJob.cancel() }
             val sut = FCentralManager(
-                scope = childScope,
+                managerScope = childScope,
                 centralManagerProvider = { delegate -> manager.also { it.delegate = delegate } }
             )
 
@@ -275,7 +275,7 @@ class FCentralManagerTest {
         val childScope = CoroutineScope(coroutineContext + childJob)
         backgroundScope.coroutineContext[Job]!!.invokeOnCompletion { childJob.cancel() }
         val sut = FCentralManager(
-            scope = childScope,
+            managerScope = childScope,
             centralManagerProvider = { delegate -> manager.also { it.delegate = delegate } }
         )
         return Sut(manager = manager, sut = sut)

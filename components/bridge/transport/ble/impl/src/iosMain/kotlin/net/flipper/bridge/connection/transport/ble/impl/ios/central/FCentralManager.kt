@@ -40,17 +40,14 @@ import platform.posix.QOS_CLASS_USER_INITIATED
 @SingleIn(BusyLibGraph::class)
 @ContributesBinding(BusyLibGraph::class, binding<FCentralManagerApi>())
 class FCentralManager internal constructor(
-    scope: CoroutineScope,
+    private val managerScope: CoroutineScope,
     centralManagerProvider: (FCentralManagerDelegate) -> CBCentralManager
 ) : FCentralManagerApi, LogTagProvider {
     private val manager: CBCentralManager
 
-    // The manager's own long-lived scope, used to run teardown after a per-connection scope dies.
-    private val managerScope: CoroutineScope = scope
-
     @Inject
-    constructor(scope: CoroutineScope) : this(
-        scope = scope,
+    constructor(managerScope: CoroutineScope) : this(
+        managerScope = managerScope,
         centralManagerProvider = ::createCentralManager
     )
 
@@ -79,7 +76,7 @@ class FCentralManager internal constructor(
     init {
         manager = centralManagerProvider(delegate)
 
-        scope.launch {
+        managerScope.launch {
             for (event in delegate.events) {
                 processEvent(event)
             }
@@ -105,7 +102,7 @@ class FCentralManager internal constructor(
     }
 
     override suspend fun connect(
-        scope: CoroutineScope,
+        deviceScope: CoroutineScope,
         config: FBleDeviceConnectionConfig
     ) {
         info { "#connect config=$config" }
@@ -118,7 +115,7 @@ class FCentralManager internal constructor(
         }
 
         info { "CB connect preparing id=$id" }
-        val device = FPeripheral(peripheral, config, scope)
+        val device = FPeripheral(peripheral, config, deviceScope)
         device.onConnecting()
 
         _connectedStream.update {
@@ -128,8 +125,8 @@ class FCentralManager internal constructor(
         info { "CB connect requested id=$id" }
         manager.connectPeripheral(peripheral, options = null)
 
-        scope.coroutineContext.job.invokeOnCompletion {
-            managerScope.launch { disconnect(peripheral.identifier) }
+        deviceScope.coroutineContext.job.invokeOnCompletion {
+            this@FCentralManager.managerScope.launch { disconnect(peripheral.identifier) }
         }
     }
 
