@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceConnectionConfig
@@ -43,6 +44,9 @@ class FCentralManager internal constructor(
     centralManagerProvider: (FCentralManagerDelegate) -> CBCentralManager
 ) : FCentralManagerApi, LogTagProvider {
     private val manager: CBCentralManager
+
+    // The manager's own long-lived scope, used to run teardown after a per-connection scope dies.
+    private val managerScope: CoroutineScope = scope
 
     @Inject
     constructor(scope: CoroutineScope) : this(
@@ -123,6 +127,10 @@ class FCentralManager internal constructor(
 
         info { "CB connect requested id=$id" }
         manager.connectPeripheral(peripheral, options = null)
+
+        scope.coroutineContext.job.invokeOnCompletion {
+            managerScope.launch { disconnect(peripheral.identifier) }
+        }
     }
 
     override suspend fun disconnect(id: NSUUID) {

@@ -89,6 +89,43 @@ class FCentralManagerTest {
     }
 
     @Test
+    fun GIVEN_connecting_peripheral_WHEN_connection_scope_cancelled_THEN_cb_connection_is_torn_down() = runTest {
+        val sut = createSut()
+        val peripheral = RecordingPeripheral()
+        sut.manager.registerPeripheral(peripheral)
+
+        // The connection scope is shared down into FPeripheral and its BLEEventQueue consumer.
+        val connectionJob = Job()
+        val connectionScope = CoroutineScope(coroutineContext + connectionJob)
+        sut.sut.connect(connectionScope, createConfig(macAddress = peripheral.identifier.UUIDString))
+        val device = checkNotNull(sut.sut.connectedStream.value[peripheral.identifier])
+        sut.manager.emitDidConnect(peripheral)
+        advanceUntilIdle()
+        // The proper disconnect() is never called for an in-progress connection: it lives in
+        // FIOSBleApiImpl, created only after CONNECTED. Without the scope-completion hook the
+        // CBPeripheral would stay connected and keep streaming into a queue whose consumer died
+        // with the scope, eventually overflowing and crashing the app.
+        assertTrue(sut.manager.cancelRequests.isEmpty(), "No teardown should happen before cancellation")
+
+        // Fast disconnect: the shared connection scope is cancelled while still connecting.
+        connectionJob.cancel()
+        advanceUntilIdle()
+
+        assertTrue(
+            sut.manager.cancelRequests.any { it === peripheral },
+            "Cancelling the connection scope mid-connect must request CB disconnect"
+        )
+
+        // CoreBluetooth delivers didDisconnect in response to cancelPeripheralConnection,
+        // which fully tears the peripheral down.
+        sut.manager.emitDidDisconnect(peripheral, error = null)
+        advanceUntilIdle()
+
+        assertFalse(sut.sut.connectedStream.value.containsKey(peripheral.identifier))
+        assertEquals(FPeripheralState.DISCONNECTED, device.stateStream.value)
+    }
+
+    @Test
     fun GIVEN_pairing_error_on_connect_WHEN_callback_arrives_THEN_entry_removed_and_state_updated() = runTest {
         val sut = createSut()
         val peripheral = RecordingPeripheral()
