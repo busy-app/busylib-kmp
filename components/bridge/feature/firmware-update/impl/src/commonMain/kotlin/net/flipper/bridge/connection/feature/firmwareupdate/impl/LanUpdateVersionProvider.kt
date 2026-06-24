@@ -66,7 +66,7 @@ class LanUpdateVersionProvider(
                 val updateFile = bsbFirmwareUpdateVersion
                     .files
                     .filter { it.target == target }
-                    .firstOrNull { it.type == BsbFirmwareUpdateFileType.UPDATE_TGZ }
+                    .firstOrNull { it.type == BsbFirmwareUpdateFileType.UPDATE_SIGNED_TGZ }
                     ?: error("No update file found")
                 BsbUpdateVersion.ReadyToUpdate.Url(
                     version = bsbFirmwareUpdateVersion.version,

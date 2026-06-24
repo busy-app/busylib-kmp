@@ -17,7 +17,7 @@ internal object FileTypeSerializer : KSerializer<BsbFirmwareUpdateFileType> {
 
     override fun deserialize(decoder: Decoder): BsbFirmwareUpdateFileType {
         return when (decoder.decodeString()) {
-            "update_tgz" -> BsbFirmwareUpdateFileType.UPDATE_TGZ
+            "update_signed_tgz" -> BsbFirmwareUpdateFileType.UPDATE_SIGNED_TGZ
             else -> BsbFirmwareUpdateFileType.UNKNOWN
         }
     }
@@ -27,7 +27,7 @@ internal object FileTypeSerializer : KSerializer<BsbFirmwareUpdateFileType> {
         value: BsbFirmwareUpdateFileType
     ) {
         val serialized = when (value) {
-            BsbFirmwareUpdateFileType.UPDATE_TGZ -> "update_tgz"
+            BsbFirmwareUpdateFileType.UPDATE_SIGNED_TGZ -> "update_signed_tgz"
             BsbFirmwareUpdateFileType.UNKNOWN -> "UNKNOWN"
         }
         encoder.encodeString(serialized)

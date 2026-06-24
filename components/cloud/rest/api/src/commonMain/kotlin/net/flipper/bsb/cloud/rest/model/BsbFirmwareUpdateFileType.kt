@@ -6,8 +6,9 @@ import net.flipper.bsb.cloud.rest.serialization.FileTypeSerializer
 
 @Serializable(with = FileTypeSerializer::class)
 enum class BsbFirmwareUpdateFileType {
-    @SerialName("UPDATE_TGZ")
-    UPDATE_TGZ,
+
+    @SerialName("update_signed_tgz")
+    UPDATE_SIGNED_TGZ,
 
     @SerialName("UNKNOWN")
     UNKNOWN
