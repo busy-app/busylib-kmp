@@ -18,7 +18,8 @@ class FwUpdateStatusMapperTest {
             updateStatusSource = UpdateStatusSource.Fresh(BsbUpdateStatus.ReadyToInstall.Ready),
             bsbUpdateVersion = BsbUpdateVersion.NoUpdateAvailable,
             downloaderState = FirmwareDownloaderState.Pending,
-            uploaderState = FirmwareUploaderState.Pending
+            uploaderState = FirmwareUploaderState.Pending,
+            isInstallRequested = false
         )
 
         assertEquals(FwUpdateState.NoUpdateAvailable, result)

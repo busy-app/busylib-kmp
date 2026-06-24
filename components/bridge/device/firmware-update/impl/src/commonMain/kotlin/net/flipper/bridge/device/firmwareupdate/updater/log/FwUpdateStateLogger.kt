@@ -17,7 +17,8 @@ internal class FwUpdateStateLogger : LogTagProvider by TaggedLogger("UpdaterApi"
         updateStatusSource: UpdateStatusSource,
         bsbUpdateVersion: BsbUpdateVersion?,
         downloaderState: FirmwareDownloaderState,
-        uploaderState: FirmwareUploaderState
+        uploaderState: FirmwareUploaderState,
+        isInstallRequested: Boolean
     ) {
         val signature = listOf(
             updateStatusSource,
@@ -40,7 +41,8 @@ internal class FwUpdateStateLogger : LogTagProvider by TaggedLogger("UpdaterApi"
                 "Receive updateStatusSource: $updateStatusSource, " +
                 "bsbUpdateVersion: $bsbUpdateVersion, " +
                 "downloaderState: $downloaderState, " +
-                "uploaderState: $uploaderState"
+                "uploaderState: $uploaderState," +
+                "isInstallRequested: $isInstallRequested"
         }
     }
 }

@@ -185,6 +185,13 @@ class FirmwareUpdateDecomposeComponent(
                     color = MaterialTheme.colors.error
                 )
             }
+
+            FwUpdateState.Preparing -> {
+                Text(
+                    text = "Preparing...",
+                    color = MaterialTheme.colors.onBackground
+                )
+            }
         }
     }
 
@@ -300,6 +307,7 @@ class FirmwareUpdateDecomposeComponent(
         is FwUpdateState.Uploading -> "Uploading"
         is FwUpdateState.Downloading -> "Downloading"
         FwUpdateState.DownloadFailure -> "Download failure"
+        FwUpdateState.Preparing -> "Preparing"
     }
 
     class Factory(

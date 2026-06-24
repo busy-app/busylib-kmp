@@ -129,13 +129,28 @@ internal object FwUpdateStatusMapper {
         updateStatusSource: UpdateStatusSource,
         bsbUpdateVersion: BsbUpdateVersion?,
         downloaderState: FirmwareDownloaderState,
-        uploaderState: FirmwareUploaderState
+        uploaderState: FirmwareUploaderState,
+        isInstallRequested: Boolean
     ): FwUpdateState {
-        return map(uploaderState)
+        val state = map(uploaderState)
             ?: map(downloaderState)
             ?: map(bsbUpdateVersion)
             ?: map(updateStatusSource, isLanUpdate(bsbUpdateVersion))
             ?: FwUpdateState.Pending
+        return when (state) {
+            FwUpdateState.UpdateAvailable if isInstallRequested -> FwUpdateState.Preparing
+            is FwUpdateState.CheckingVersion,
+            is FwUpdateState.CouldNotCheckUpdate,
+            is FwUpdateState.DownloadFailure,
+            is FwUpdateState.Downloading,
+            is FwUpdateState.LowBattery,
+            is FwUpdateState.NoUpdateAvailable,
+            is FwUpdateState.Pending,
+            is FwUpdateState.Preparing,
+            is FwUpdateState.Updating,
+            is FwUpdateState.Uploading,
+            is FwUpdateState.UpdateAvailable -> state
+        }
     }
 
     private fun isLanUpdate(bsbUpdateVersion: BsbUpdateVersion?): Boolean {
