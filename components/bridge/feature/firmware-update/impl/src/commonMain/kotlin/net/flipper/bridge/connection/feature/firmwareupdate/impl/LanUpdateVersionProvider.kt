@@ -2,17 +2,20 @@ package net.flipper.bridge.connection.feature.firmwareupdate.impl
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateVersion
 import net.flipper.bridge.connection.feature.firmwareupdate.model.FirmwareChannel
 import net.flipper.bridge.connection.feature.firmwareupdate.model.SemVer
 import net.flipper.bridge.connection.feature.info.api.FDeviceInfoFeatureApi
+import net.flipper.bridge.connection.feature.info.model.BsbStatusFirmware
 import net.flipper.bridge.connection.feature.provider.api.get
 import net.flipper.bsb.cloud.rest.api.BusyFirmwareDirectoryApi
 import net.flipper.bsb.cloud.rest.channel.api.BusyFirmwareDirectoryChannelApi
 import net.flipper.bsb.cloud.rest.model.BsbFirmwareChannelId
 import net.flipper.bsb.cloud.rest.model.BsbFirmwareUpdateFileType
 import net.flipper.bsb.cloud.rest.model.BsbFirmwareUpdateTarget
+import net.flipper.busylib.core.wrapper.map
 import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.busylib.log.LogTagProvider
@@ -26,8 +29,28 @@ class LanUpdateVersionProvider(
     private val busyFirmwareDirectoryChannelApi: BusyFirmwareDirectoryChannelApi,
     private val fDeviceInfoFeatureApi: FDeviceInfoFeatureApi
 ) : LogTagProvider by TaggedLogger("LanUpdateVersionProvider") {
+
+    private suspend fun getBsbFirmwareUpdateTarget(): BsbFirmwareUpdateTarget? {
+        return exponentialRetry {
+            fDeviceInfoFeatureApi
+                .getDeviceFirmware()
+                .toKotlinResult()
+                .map(BsbStatusFirmware::target)
+                .map { target ->
+                    BsbFirmwareUpdateTarget
+                        .entries
+                        .find { bsbFirmwareUpdateTarget -> bsbFirmwareUpdateTarget.target == target }
+                        .also { bsbFirmwareUpdateTarget ->
+                            if (bsbFirmwareUpdateTarget != null) return@also
+                            info { "#getBsbFirmwareUpdateTarget could not find target $target" }
+                        }
+                }
+        }
+    }
+
     private suspend fun requireVersionFromRestApi(
-        bsbFirmwareChannelId: BsbFirmwareChannelId
+        bsbFirmwareChannelId: BsbFirmwareChannelId,
+        target: BsbFirmwareUpdateTarget
     ): BsbUpdateVersion.ReadyToUpdate.Url {
         val channelId = bsbFirmwareChannelId.id
         return exponentialRetry {
@@ -42,7 +65,7 @@ class LanUpdateVersionProvider(
                     ?: error("No $channelId version found")
                 val updateFile = bsbFirmwareUpdateVersion
                     .files
-                    .filter { it.target == BsbFirmwareUpdateTarget.F21 }
+                    .filter { it.target == target }
                     .firstOrNull { it.type == BsbFirmwareUpdateFileType.UPDATE_TGZ }
                     ?: error("No update file found")
                 BsbUpdateVersion.ReadyToUpdate.Url(
@@ -60,19 +83,22 @@ class LanUpdateVersionProvider(
         }
     }
 
-    private fun getBsbUpdateVersionUrl(): Flow<BsbUpdateVersion.ReadyToUpdate.Url> {
+    private fun getBsbUpdateVersionUrl(
+        target: BsbFirmwareUpdateTarget
+    ): Flow<BsbUpdateVersion.ReadyToUpdate.Url> {
         return busyFirmwareDirectoryChannelApi
             .getChannelIdFlow()
             .map { bsbFirmwareChannelId ->
                 info { "#updateVersionFlow using channel: $bsbFirmwareChannelId" }
-                requireVersionFromRestApi(bsbFirmwareChannelId)
+                requireVersionFromRestApi(bsbFirmwareChannelId, target)
             }
     }
 
-    fun get(): Flow<BsbUpdateVersion> {
+    suspend fun get(): Flow<BsbUpdateVersion> {
+        val target = getBsbFirmwareUpdateTarget() ?: return flowOf(BsbUpdateVersion.FailedToCheck)
         return fDeviceInfoFeatureApi.deviceVersionFlow
             .flatMapLatest { bsbBusyBarVersion ->
-                getBsbUpdateVersionUrl().map { urlVersion -> bsbBusyBarVersion to urlVersion }
+                getBsbUpdateVersionUrl(target).map { urlVersion -> bsbBusyBarVersion to urlVersion }
             }
             .map { (bsbVersion, urlVersion) ->
                 when (urlVersion.firmwareChannel) {
