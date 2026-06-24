@@ -23,7 +23,6 @@ enum class FlavorType(
         isSensitiveLogEnabled = true,
         isVerboseLogEnabled = true,
         isMockEnabled = true,
-        isDevelopFirmwareChannel = true,
     ),
     DEBUG(
         isLogEnabled = true,
@@ -31,7 +30,6 @@ enum class FlavorType(
         isSensitiveLogEnabled = true,
         isVerboseLogEnabled = true,
         isMockEnabled = true,
-        isDevelopFirmwareChannel = true,
     ),
     PROD(
         isLogEnabled = true,
