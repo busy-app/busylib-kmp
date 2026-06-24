@@ -16,6 +16,7 @@ import kotlinx.coroutines.withTimeout
 import net.flipper.bridge.connection.feature.link.check.ondemand.api.FLinkedInfoOnDemandFeatureApi
 import net.flipper.bridge.connection.feature.link.model.LinkedAccountInfo
 import net.flipper.bridge.connection.feature.rpc.api.critical.FRpcCriticalFeatureApi
+import net.flipper.bridge.connection.feature.rpc.api.model.BsbRpcException
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarLinkCode
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarLinkCodeAlreadyLinked
 import net.flipper.bridge.connection.feature.rpc.api.model.RpcLinkedAccountInfo
@@ -100,7 +101,11 @@ class FLinkInfoOnReadyFeatureApiImpl(
                 info { "Start authorization for BUSY Bar..." }
                 exponentialRetry {
                     authBusyBar(principal).onFailure { t ->
-                        error(t) { "Failed authorize for BUSY Bar" }
+                        if (t is BsbRpcException) {
+                            info { "Can not authorize BUSY Bar yet, device responded: ${t.error}" }
+                        } else {
+                            error(t) { "Failed authorize for BUSY Bar" }
+                        }
                     }
                 }
                 exponentialRetry {

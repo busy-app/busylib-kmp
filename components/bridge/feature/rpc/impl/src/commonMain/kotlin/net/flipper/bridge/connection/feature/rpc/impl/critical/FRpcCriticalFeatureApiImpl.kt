@@ -15,6 +15,7 @@ import kotlinx.coroutines.withContext
 import net.flipper.bridge.connection.feature.rpc.api.client.FRpcClientModeApi
 import net.flipper.bridge.connection.feature.rpc.api.critical.FRpcCriticalFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.BsbRpcError
+import net.flipper.bridge.connection.feature.rpc.api.model.BsbRpcException
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarLinkCode
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarLinkCodeAlreadyLinked
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarLinkCodeResponse
@@ -66,7 +67,8 @@ class FRpcCriticalFeatureApiImpl(
                     if (error == BsbRpcError.ALREADY_LINKED.error) {
                         BusyBarLinkCodeAlreadyLinked
                     } else {
-                        throw e
+                        // Known device-side error (e.g. "Not connected"), not a parsing bug
+                        throw BsbRpcException(error, e)
                     }
                 }
             }
