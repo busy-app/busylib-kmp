@@ -6,6 +6,8 @@ plugins {
 kotlin {
     sourceSets.commonTest.dependencies {
         implementation(libs.kotlin.test)
+        implementation(libs.kotlin.coroutines.test)
+        implementation(libs.settings.test)
     }
     sourceSets.commonMain.dependencies {
         implementation(projects.components.bridge.config.internal)

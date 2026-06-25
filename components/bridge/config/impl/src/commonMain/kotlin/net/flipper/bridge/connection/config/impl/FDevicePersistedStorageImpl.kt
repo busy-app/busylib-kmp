@@ -60,7 +60,9 @@ class FDevicePersistedStorageImpl(
 
     override fun getAllDevicesFlow(): WrappedFlow<List<BUSYBar>> {
         return bleConfigKrate.flow
-            .map { bbConfigSettings -> bbConfigSettings.devices }
+            .map { bbConfigSettings ->
+                bbConfigSettings.devices.sortedWith(BUSYBar.NameComparator)
+            }
             .wrap()
     }
 
