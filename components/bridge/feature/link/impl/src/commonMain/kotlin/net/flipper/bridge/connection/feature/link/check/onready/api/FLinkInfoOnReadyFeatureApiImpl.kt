@@ -175,4 +175,4 @@ class FLinkInfoOnReadyFeatureApiImpl(
     }
 }
 
-private class NotConnectedException : Throwable()
+private class NotConnectedException : Exception()
