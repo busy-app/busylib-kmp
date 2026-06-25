@@ -98,4 +98,9 @@ class BUSYBar internal constructor(
     override fun toString(): String {
         return "BUSYBar(humanReadableName='$humanReadableName', hardwareId=$hardwareId, uniqueId='$uniqueId', ble=$ble, cloud=$cloud, lan=$lan, mock=$mock, onCallEnabled=$onCallEnabled, connectionWays=$connectionWays)"
     }
+
+    companion object {
+        val NameComparator: Comparator<BUSYBar> =
+            compareBy { busyBar -> busyBar.humanReadableName.lowercase() }
+    }
 }
