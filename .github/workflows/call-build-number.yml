@@ -18,11 +18,11 @@ jobs:
       BUILD_NUMBER: ${{ steps.buildnumber.outputs.build_number }}
       MAJOR_VERSION: ${{ steps.properties.outputs.flipper-major_version }}
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v4
       # ${{ steps.buildnumber.outputs.build_number }}
       - name: Generate build number
         id: buildnumber
-        uses: onyxmueller/build-tag-number@bbb3e6dd40d79811d5fb661e5d6651c1748f4210 # v1
+        uses: onyxmueller/build-tag-number@a0792399755057a06c7805cae3299807cbaf0035 # v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
       # ${{ steps.properties.outputs.flipper-major_version }}
