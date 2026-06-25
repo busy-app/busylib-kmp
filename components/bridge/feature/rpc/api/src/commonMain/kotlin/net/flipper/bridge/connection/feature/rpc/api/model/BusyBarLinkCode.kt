@@ -14,3 +14,6 @@ data class BusyBarLinkCode(
 
 @Serializable
 data object BusyBarLinkCodeAlreadyLinked : BusyBarLinkCodeResponse
+
+@Serializable
+data object BusyBarLinkCodeNotConnected : BusyBarLinkCodeResponse

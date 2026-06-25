@@ -16,9 +16,9 @@ import kotlinx.coroutines.withTimeout
 import net.flipper.bridge.connection.feature.link.check.ondemand.api.FLinkedInfoOnDemandFeatureApi
 import net.flipper.bridge.connection.feature.link.model.LinkedAccountInfo
 import net.flipper.bridge.connection.feature.rpc.api.critical.FRpcCriticalFeatureApi
-import net.flipper.bridge.connection.feature.rpc.api.model.BsbRpcException
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarLinkCode
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarLinkCodeAlreadyLinked
+import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarLinkCodeNotConnected
 import net.flipper.bridge.connection.feature.rpc.api.model.RpcLinkedAccountInfo
 import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
 import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
@@ -34,6 +34,7 @@ import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
+import net.flipper.core.busylib.log.warn
 import kotlin.time.Duration.Companion.seconds
 import kotlin.uuid.Uuid
 
@@ -101,8 +102,8 @@ class FLinkInfoOnReadyFeatureApiImpl(
                 info { "Start authorization for BUSY Bar..." }
                 exponentialRetry {
                     authBusyBar(principal).onFailure { t ->
-                        if (t is BsbRpcException) {
-                            info { "Can not authorize BUSY Bar yet, device responded: ${t.error}" }
+                        if (t is NotConnectedException) {
+                            warn { "Can not authorize BUSY Bar yet device don't connected" }
                         } else {
                             error(t) { "Failed authorize for BUSY Bar" }
                         }
@@ -126,6 +127,7 @@ class FLinkInfoOnReadyFeatureApiImpl(
         when (linkCode) {
             is BusyBarLinkCode -> Unit
             BusyBarLinkCodeAlreadyLinked -> return@runSuspendCatching
+            BusyBarLinkCodeNotConnected -> throw NotConnectedException()
         }
 
         info { "Receive link code from BUSY Bar: $linkCode" }
@@ -172,3 +174,5 @@ class FLinkInfoOnReadyFeatureApiImpl(
         private val ACCOUNT_PROVIDING_TIMEOUT = 3.seconds
     }
 }
+
+private class NotConnectedException : Throwable()
