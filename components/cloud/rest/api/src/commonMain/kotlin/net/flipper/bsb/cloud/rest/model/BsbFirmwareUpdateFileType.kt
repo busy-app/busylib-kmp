@@ -1,14 +1,11 @@
 package net.flipper.bsb.cloud.rest.model
 
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import net.flipper.bsb.cloud.rest.serialization.FileTypeSerializer
 
 @Serializable(with = FileTypeSerializer::class)
+@Suppress("SerialNameNotProvidedRule") // Serialized via FileTypeSerializer; enum constants are not the wire format
 enum class BsbFirmwareUpdateFileType {
-    @SerialName("UPDATE_TGZ")
-    UPDATE_TGZ,
-
-    @SerialName("UNKNOWN")
+    UPDATE_SIGNED_TGZ,
     UNKNOWN
 }

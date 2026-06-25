@@ -17,6 +17,7 @@ import net.flipper.bridge.connection.feature.rpc.api.critical.FRpcCriticalFeatur
 import net.flipper.bridge.connection.feature.rpc.api.model.BsbRpcError
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarLinkCode
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarLinkCodeAlreadyLinked
+import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarLinkCodeNotConnected
 import net.flipper.bridge.connection.feature.rpc.api.model.BusyBarLinkCodeResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.ErrorResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.RpcLinkedAccountInfo
@@ -62,11 +63,10 @@ class FRpcCriticalFeatureApiImpl(
                 try {
                     call.body<BusyBarLinkCode>()
                 } catch (e: JsonConvertException) {
-                    val error = call.body<ErrorResponse>().error
-                    if (error == BsbRpcError.ALREADY_LINKED.error) {
-                        BusyBarLinkCodeAlreadyLinked
-                    } else {
-                        throw e
+                    when (call.body<ErrorResponse>().error) {
+                        BsbRpcError.ALREADY_LINKED.error -> BusyBarLinkCodeAlreadyLinked
+                        BsbRpcError.NOT_CONNECTED.error -> BusyBarLinkCodeNotConnected
+                        else -> throw e
                     }
                 }
             }
