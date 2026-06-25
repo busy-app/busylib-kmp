@@ -103,7 +103,7 @@ class FLinkInfoOnReadyFeatureApiImpl(
                 exponentialRetry {
                     authBusyBar(principal).onFailure { t ->
                         if (t is NotConnectedException) {
-                            warn { "Can not authorize BUSY Bar yet device don't connected" }
+                            warn { "Cannot authorize BUSY Bar yet: device isn't connected" }
                         } else {
                             error(t) { "Failed authorize for BUSY Bar" }
                         }
