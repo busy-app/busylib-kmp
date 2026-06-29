@@ -7,7 +7,7 @@ jobs:
     name: "Gradle Wrapper Validation"
     runs-on: [ self-hosted, Linux ]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: recursive
       - name: Validate Gradle Wrapper
