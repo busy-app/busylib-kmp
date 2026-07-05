@@ -36,6 +36,8 @@ import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
 import net.flipper.bridge.connection.feature.provider.api.get
 import net.flipper.bridge.connection.feature.provider.api.getSync
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
+import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
+import net.flipper.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
 import net.flipper.bridge.device.firmwareupdate.downloader.api.FirmwareDownloaderApi
 import net.flipper.bridge.device.firmwareupdate.downloader.api.FirmwareDownloaderApiImpl
 import net.flipper.bridge.device.firmwareupdate.status.api.UpdateStatusProvider
@@ -64,6 +66,7 @@ import net.flipper.core.busylib.log.TaggedLogger
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
 import net.flipper.core.ktor.di.qualifier.KtorNetworkClientQualifier
+import kotlin.coroutines.coroutineContext
 import kotlin.time.Instant
 
 @Inject
@@ -76,7 +79,8 @@ class FirmwareUpdaterApiImpl(
     private val previousVersionFlowProvider: PreviousVersionFlowProvider,
     private val scope: CoroutineScope,
     private val updateStatusProvider: UpdateStatusProvider,
-    private val fDevicePersistedStorage: FDevicePersistedStorage
+    private val fDevicePersistedStorage: FDevicePersistedStorage,
+    private val fDeviceOrchestrator: FDeviceOrchestrator
 ) : FirmwareUpdaterApi, LogTagProvider by TaggedLogger("UpdaterApi") {
     private val firmwareDownloaderApi: FirmwareDownloaderApi = FirmwareDownloaderApiImpl(
         httpClient = httpClient
@@ -86,18 +90,19 @@ class FirmwareUpdaterApiImpl(
     )
 
     private val lanUpdaterScope = scope.asSingleJobScope()
+    private val defaultUpdaterScope = scope.asSingleJobScope()
 
     private val installRequestedFlow = MutableStateFlow(false)
+
+    private val updatingDeviceIdFlow = MutableStateFlow<String?>(null)
+
+    override val updatingDeviceId: WrappedStateFlow<String?> = updatingDeviceIdFlow.wrap()
 
     private val stateLogger by lazy { FwUpdateStateLogger() }
 
     override val state: WrappedStateFlow<FwUpdateState> = combine(
         flow = updateStatusProvider.getUpdateStatus(),
-        flow2 = fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
-            .map { status -> status.tryCast<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>() }
-            .map { status -> status?.featureApi }
-            .flatMapLatest { feature -> feature?.updateVersionFlow.orNullable() }
-            .distinctUntilChanged(),
+        flow2 = updateStatusProvider.getUpdateVersion(),
         flow3 = firmwareDownloaderApi.state,
         flow4 = firmwareUploaderApi.state,
         flow5 = installRequestedFlow,
@@ -137,7 +142,7 @@ class FirmwareUpdaterApiImpl(
         }
     ).stateIn(scope, SharingStarted.Lazily, FwUpdateState.Pending).wrap()
 
-    override val events = previousVersionFlowProvider
+    private val eventsSharedFlow = previousVersionFlowProvider
         .getPreviousVersionFlow(state)
         .map { versionsModel ->
             when {
@@ -156,6 +161,8 @@ class FirmwareUpdaterApiImpl(
         }
         .filterNotNull()
         .shareIn(scope, SharingStarted.Lazily)
+
+    override val events = eventsSharedFlow
         .asFlow()
         .wrap()
 
@@ -179,15 +186,22 @@ class FirmwareUpdaterApiImpl(
                     .map { }
                     .also { installRequestedFlow.value = false }
                     .toCResult()
+                    .onSuccess {
+                        clearUpdatingDeviceId(updatingDeviceIdFlow.value, reason = "stopFirmwareUpdate (default)")
+                    }
             }
 
             is BsbUpdateVersion.ReadyToUpdate.Url -> {
                 lanUpdaterScope.cancelPrevious().join()
                 installRequestedFlow.value = false
+                clearUpdatingDeviceId(updatingDeviceIdFlow.value, reason = "stopFirmwareUpdate (lan)")
                 CResult.success(Unit)
             }
 
-            else -> CResult.success(Unit)
+            else -> {
+                clearUpdatingDeviceId(updatingDeviceIdFlow.value, reason = "stopFirmwareUpdate (no active version)")
+                CResult.success(Unit)
+            }
         }
     }
 
@@ -248,47 +262,91 @@ class FirmwareUpdaterApiImpl(
 
     /**
      * Starts an update install depending on current [BsbUpdateVersion]
-     * Using map for flow here in case connection type changed from lan to other type
      * @see BsbUpdateVersion
      */
     override suspend fun startUpdateInstall(): CResult<Unit> {
         info { "#startUpdateInstall" }
-        return lanUpdaterScope.async {
-            installRequestedFlow.value = true
-            coroutineContext.job.invokeOnCompletion {
-                installRequestedFlow.value = false
-                firmwareDownloaderApi.reset()
-                firmwareUploaderApi.reset()
+        val bsbUpdateVersion = fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
+            .map { status -> status.tryCast<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>() }
+            .flatMapLatest { status -> status?.featureApi?.updateVersionFlow.orNullable() }
+            .filterIsInstance<BsbUpdateVersion.ReadyToUpdate>()
+            .first()
+        info { "#startUpdateInstall bsbUpdateVersion: $bsbUpdateVersion" }
+        return when (bsbUpdateVersion) {
+            is BsbUpdateVersion.ReadyToUpdate.Default -> {
+                defaultUpdaterScope.async { runDefaultInstall(bsbUpdateVersion) }.await()
             }
-            val bootTimeScope = coroutineContext.minusKey(Job)
-                .plus(SupervisorJob(coroutineContext.job))
-                .let(::CoroutineScope)
-            val bootTimeFlow = getBootTimeFlow().shareIn(bootTimeScope, SharingStarted.Eagerly, 1)
 
-            val bsbUpdateVersion = fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
-                .map { status -> status.tryCast<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>() }
-                .flatMapLatest { status -> status?.featureApi?.updateVersionFlow.orNullable() }
-                .filterIsInstance<BsbUpdateVersion.ReadyToUpdate>()
-                .first()
+            is BsbUpdateVersion.ReadyToUpdate.Url -> {
+                lanUpdaterScope.async { runLanInstall(bsbUpdateVersion) }.await()
+            }
+        }
+    }
 
-            info { "#startUpdateInstall bsbUpdateVersion: $bsbUpdateVersion" }
+    /**
+     * Cloud/BLE install: the device downloads and installs the firmware itself, the app
+     * only sends the install RPC. The job therefore ends right after the RPC round-trip;
+     * [updatingDeviceIdFlow] stays set — the update is still running on the device
+     */
+    private suspend fun runDefaultInstall(
+        bsbUpdateVersion: BsbUpdateVersion.ReadyToUpdate.Default
+    ): CResult<Unit> {
+        val updatingDeviceId = beginInstall()
+        val updateResult = getBsbUpdateVersion(bsbUpdateVersion).toCResult()
+        info { "#startUpdateInstall update result is $updateResult" }
+        return updateResult
+            .map { }
+            .onFailure {
+                // The install RPC never succeeded — no update is running, release the gate.
+                installRequestedFlow.value = false
+                clearUpdatingDeviceId(updatingDeviceId, reason = "default install RPC failed")
+            }
+    }
+
+    /**
+     * LAN install: the app itself downloads the firmware and feeds it to the device, so the
+     * whole update lives inside this job — cancelling it (device switch, stop) aborts the
+     * update
+     */
+    private suspend fun runLanInstall(
+        bsbUpdateVersion: BsbUpdateVersion.ReadyToUpdate.Url
+    ): CResult<Unit> {
+        val updatingDeviceId = beginInstall()
+        coroutineContext.job.invokeOnCompletion { cause ->
+            installRequestedFlow.value = false
             firmwareDownloaderApi.reset()
             firmwareUploaderApi.reset()
+            clearUpdatingDeviceId(updatingDeviceId, reason = "lan install job completed (cause=$cause)")
+        }
+        val bootTimeScope = coroutineContext.minusKey(Job)
+            .plus(SupervisorJob(coroutineContext.job))
+            .let(::CoroutineScope)
+        try {
+            val bootTimeFlow = getBootTimeFlow().shareIn(bootTimeScope, SharingStarted.Eagerly, 1)
             val updateResult = getBsbUpdateVersion(bsbUpdateVersion).toCResult()
             info { "#startUpdateInstall update result is $updateResult" }
-            updateResult.map { bsbUpdateVersion ->
-                when (bsbUpdateVersion) {
-                    is BsbUpdateVersion.ReadyToUpdate.Default -> Unit
-                    is BsbUpdateVersion.ReadyToUpdate.Url -> {
-                        info { "#startUpdateInstall bootTimeFlow wait" }
-                        val bootTime = bootTimeFlow.first()
-                        info { "#startUpdateInstall bootTimeFlow cancel" }
-                        bootTimeScope.cancel()
-                        awaitDeviceReconnected(bootTime)
-                    }
-                }
+            return updateResult.map {
+                info { "#startUpdateInstall bootTimeFlow wait" }
+                val bootTime = bootTimeFlow.first()
+                info { "#startUpdateInstall bootTimeFlow cancel" }
+                bootTimeScope.cancel()
+                awaitDeviceReconnected(bootTime)
             }
-        }.await()
+        } finally {
+            bootTimeScope.cancel()
+        }
+    }
+
+    private suspend fun beginInstall(): String? {
+        installRequestedFlow.value = true
+        val updatingDeviceId = fDevicePersistedStorage.getCurrentDeviceFlow()
+            .firstOrNull()
+            ?.uniqueId
+        updatingDeviceIdFlow.value = updatingDeviceId
+        info { "#startUpdateInstall updatingDeviceId=$updatingDeviceId" }
+        firmwareDownloaderApi.reset()
+        firmwareUploaderApi.reset()
+        return updatingDeviceId
     }
 
     override suspend fun checkForUpdates(): CResult<Unit> {
@@ -300,15 +358,52 @@ class FirmwareUpdaterApiImpl(
             ?: CResult.failure(IllegalStateException("RPC feature is null"))
     }
 
+    private fun clearUpdatingDeviceId(expectedDeviceId: String?, reason: String) {
+        if (expectedDeviceId == null) return
+        val cleared = updatingDeviceIdFlow.compareAndSet(expectedDeviceId, null)
+        if (cleared) {
+            info { "#clearUpdatingDeviceId $reason (was=$expectedDeviceId)" }
+        }
+    }
+
     // Reset updater when connected to another device
     init {
         fDevicePersistedStorage.getCurrentDeviceFlow()
             .map { bUSYBar -> bUSYBar?.uniqueId }
             .distinctUntilChanged()
-            .onEach {
+            .onEach { deviceId ->
+                info {
+                    "#init current device changed to $deviceId, cancelling LAN updater " +
+                        "(updatingDeviceId=${updatingDeviceIdFlow.value} kept)"
+                }
                 lanUpdaterScope.cancelPrevious().join()
                 firmwareDownloaderApi.reset()
                 firmwareUploaderApi.reset()
+            }
+            .launchIn(scope)
+
+        // Release updatingDeviceId when the update actually ends. UpdateFinished/UpdateFailed
+        // are detected via the version transition, which is only observable while connected
+        // to the updating device — hence the current == updating gate.
+        eventsSharedFlow
+            .onEach { event ->
+                val updatingId = updatingDeviceIdFlow.value ?: return@onEach
+                val currentId = fDevicePersistedStorage.getCurrentDeviceFlow().firstOrNull()?.uniqueId
+                if (currentId == updatingId) {
+                    clearUpdatingDeviceId(updatingId, reason = "update event $event")
+                }
+            }
+            .launchIn(scope)
+
+        // Fallback for an update that finished while the user was on another device
+        updateStatusProvider.getUpdateVersionKeyed()
+            .onEach { keyed ->
+                val updatingId = updatingDeviceIdFlow.value ?: return@onEach
+                val updateDone = keyed.deviceId == updatingId &&
+                    keyed.version is BsbUpdateVersion.NoUpdateAvailable
+                if (updateDone) {
+                    clearUpdatingDeviceId(updatingId, reason = "fresh NoUpdateAvailable on updating device")
+                }
             }
             .launchIn(scope)
     }

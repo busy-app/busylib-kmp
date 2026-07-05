@@ -11,6 +11,16 @@ interface FirmwareUpdaterApi {
     val events: WrappedFlow<FwUpdateEvent>
 
     /**
+     * `BUSYBar.uniqueId` of the device the currently active firmware update belongs to,
+     * or `null` when no app-initiated update is in progress.
+     *
+     * The updater is app-wide (SingleIn) and its [state]/[events] are a single global
+     * stream, so after a device switch the UI cannot otherwise tell "my update" from another
+     * device's update. Consumers gate on `updatingDeviceId == currentDeviceId` (MOB-2777).
+     */
+    val updatingDeviceId: WrappedStateFlow<String?>
+
+    /**
      * Force stop firmware download if possible
      */
     suspend fun stopFirmwareUpdate(): CResult<Unit>

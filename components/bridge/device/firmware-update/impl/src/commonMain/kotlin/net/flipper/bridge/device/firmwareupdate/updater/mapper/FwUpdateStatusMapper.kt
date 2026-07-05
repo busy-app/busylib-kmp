@@ -132,10 +132,19 @@ internal object FwUpdateStatusMapper {
         uploaderState: FirmwareUploaderState,
         isInstallRequested: Boolean
     ): FwUpdateState {
+        val statusSourceState = map(updateStatusSource, isLanUpdate(bsbUpdateVersion))
+        // MOB-2777: an in-progress status reported by the device itself must not be masked
+        // by a still-running version check — a device busy flashing answers the version
+        // request slowly, and `BsbUpdateVersion.Loading -> Pending` used to shadow its live
+        // Downloading/Updating status for the whole check.
+        val inProgressStatusState = statusSourceState?.takeIf { state ->
+            state is FwUpdateState.Downloading || state is FwUpdateState.Updating
+        }
         val state = map(uploaderState)
             ?: map(downloaderState)
+            ?: inProgressStatusState
             ?: map(bsbUpdateVersion)
-            ?: map(updateStatusSource, isLanUpdate(bsbUpdateVersion))
+            ?: statusSourceState
             ?: FwUpdateState.Pending
         return when (state) {
             FwUpdateState.UpdateAvailable if isInstallRequested -> FwUpdateState.Preparing
