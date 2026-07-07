@@ -17,27 +17,6 @@ class OnCallDisplayLoop(
 ) : LogTagProvider {
     override val TAG: String = "OnCallDisplayLoop"
 
-    suspend fun run() {
-        try {
-            while (currentCoroutineContext().isActive) {
-                rpcAssetsApi
-                    .displayDraw(createDrawRequest())
-                    .onFailure { t -> error(t) { "Failed to display draw" } }
-                delay(UPDATE_DELAY)
-            }
-        } finally {
-            withContext(NonCancellable) {
-                withTimeoutOrNull(STOP_TIMEOUT) {
-                    performStopAttempt()
-                }
-            }
-        }
-    }
-
-    private suspend fun performStopAttempt(): Result<Unit> {
-        return rpcAssetsApi.removeDraw(appId = APP_ID).map { }
-    }
-
     private fun createDrawRequest(): DrawRequest {
         return DrawRequest(
             appId = APP_ID,
@@ -53,6 +32,27 @@ class OnCallDisplayLoop(
                 )
             )
         )
+    }
+
+    private suspend fun performStopAttempt(): Result<Unit> {
+        return rpcAssetsApi.removeDraw(appId = APP_ID).map { }
+    }
+
+    suspend fun run() {
+        try {
+            while (currentCoroutineContext().isActive) {
+                rpcAssetsApi
+                    .displayDraw(createDrawRequest())
+                    .onFailure { t -> error(t) { "Failed to display draw" } }
+                delay(UPDATE_DELAY)
+            }
+        } finally {
+            withContext(NonCancellable) {
+                withTimeoutOrNull(STOP_TIMEOUT) {
+                    performStopAttempt()
+                }
+            }
+        }
     }
 
     companion object {

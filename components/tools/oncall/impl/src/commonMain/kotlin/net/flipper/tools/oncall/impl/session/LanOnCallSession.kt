@@ -12,13 +12,12 @@ import net.flipper.core.busylib.log.info
 import net.flipper.core.ktor.getPlatformEngineFactory
 
 internal class LanOnCallSession(
-    private val hardwareId: String,
     private val host: String
 ) : LogTagProvider {
     override val TAG: String = "LanOnCallSession"
 
     suspend fun run() {
-        info { "Starting LAN on-call session for $hardwareId at $host" }
+        info { "Starting LAN on-call session at $host" }
         val platformEngine = getPlatformEngineFactory().create()
         val lanEngine = BUSYBarHttpEngine(platformEngine, host)
         val httpClient = getHttpClient(lanEngine)
@@ -30,7 +29,7 @@ internal class LanOnCallSession(
             OnCallDisplayLoop(rpcAssetsApi).run()
         } finally {
             withContext(NonCancellable) {
-                info { "Closing LAN on-call session for $hardwareId" }
+                info { "Closing LAN on-call session at $host" }
                 httpClient.close()
                 lanEngine.close()
                 platformEngine.close()
