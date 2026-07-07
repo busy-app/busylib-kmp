@@ -71,6 +71,13 @@ class OnCallSingletonApiImpl(
             }
     }
 
+    private suspend fun runSession(route: OnCallSessionRoute) {
+        when (route) {
+            is OnCallSessionRoute.Lan -> LanOnCallSession(route.host).run()
+            is OnCallSessionRoute.Cloud -> cloudSessionFactory.invoke(route.deviceId).run()
+        }
+    }
+
     private fun getBackgroundOnCallRoutesFlow(): Flow<Set<OnCallSessionRoute>> {
         return combine(
             flow = devicePersistedStorage.getAllDevicesFlow(),
@@ -87,13 +94,6 @@ class OnCallSingletonApiImpl(
                 cloudRoutes.plus(lanRoutes).toSet()
             }
         ).distinctUntilChanged()
-    }
-
-    private suspend fun runSession(route: OnCallSessionRoute) {
-        when (route) {
-            is OnCallSessionRoute.Lan -> LanOnCallSession(route.host).run()
-            is OnCallSessionRoute.Cloud -> cloudSessionFactory.invoke(route.deviceId).run()
-        }
     }
 
     private suspend fun collectBackgroundDevicesOnCall() {
