@@ -11,7 +11,8 @@ import net.flipper.core.busylib.data.nonEmptyListOf
  * @property id Unique identifier for distinguishing configs in tests
  */
 data class TestConfig(
-    val id: String = ""
+    val id: String = "",
+    override val uniqueId: String = "test-device-id"
 ) : FDeviceConnectionConfig<TestConnectedDeviceApi>() {
     override fun getTransportTypes(): NonEmptyList<FInternalTransportConnectionType> {
         return nonEmptyListOf(FInternalTransportConnectionType.MOCK)

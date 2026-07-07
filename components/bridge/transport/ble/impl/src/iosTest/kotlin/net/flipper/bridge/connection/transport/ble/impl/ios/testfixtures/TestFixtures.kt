@@ -207,6 +207,7 @@ internal fun createConfig(
     )
 ): FBleDeviceConnectionConfig {
     return FBleDeviceConnectionConfig(
+        uniqueId = "test-device-id",
         deviceName = "Busy Device",
         macAddress = macAddress,
         serialConfig = FBleDeviceSerialConfig(

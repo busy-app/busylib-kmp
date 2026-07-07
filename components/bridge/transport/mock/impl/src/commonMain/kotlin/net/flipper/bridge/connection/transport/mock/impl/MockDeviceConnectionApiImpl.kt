@@ -33,6 +33,8 @@ class MockDeviceConnectionApiImpl : MockDeviceConnectionApi {
             val bsbMockEngine = getBSBMockHttpEngine()
             override val deviceName get() = currentConfig.deviceName
 
+            override val uniqueId: String get() = currentConfig.uniqueId
+
             override suspend fun tryUpdateConnectionConfig(config: FDeviceConnectionConfig<*>): Result<Unit> {
                 if (config !is FMockDeviceConnectionConfig) {
                     return Result.failure(IllegalArgumentException("Config $config has different type"))
