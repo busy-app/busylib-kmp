@@ -1,7 +1,6 @@
 plugins {
     id("flipper.multiplatform")
     id("flipper.metro-multiplatform")
-    id("kotlinx-serialization")
 }
 
 kotlin {
@@ -27,9 +26,6 @@ kotlin {
         implementation(projects.components.bridge.feature.rpc.impl)
 
         implementation(libs.kotlin.coroutines)
-        implementation(libs.kotlin.serialization.json)
         implementation(libs.ktor.client.core)
-        implementation(libs.ktor.negotiation)
-        implementation(libs.ktor.serialization)
     }
 }
