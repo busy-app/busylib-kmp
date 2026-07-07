@@ -167,19 +167,6 @@ class FirmwareUpdaterApiImpl(
         .wrap()
 
     override suspend fun stopFirmwareUpdate(): CResult<Unit> {
-        val updatingId = updatingDeviceIdFlow.value
-        if (updatingId != null) {
-            val connectedId = (fDeviceOrchestrator.getState().value as? FDeviceConnectStatus.Connected)
-                ?.device
-                ?.uniqueId
-            if (connectedId != updatingId) {
-                info {
-                    "#stopFirmwareUpdate no-op: updating device $updatingId " +
-                        "is not connected (connected=$connectedId)"
-                }
-                return CResult.success(Unit)
-            }
-        }
         val currentUpdateVersion = fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
             .map { status -> status.tryCast<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>() }
             .map { status -> status?.featureApi }
@@ -199,18 +186,20 @@ class FirmwareUpdaterApiImpl(
                     .map { }
                     .also { installRequestedFlow.value = false }
                     .toCResult()
-                    .also { clearUpdatingDeviceId(updatingId, reason = "stopFirmwareUpdate (default)") }
+                    .onSuccess {
+                        clearUpdatingDeviceId(updatingDeviceIdFlow.value, reason = "stopFirmwareUpdate (default)")
+                    }
             }
 
             is BsbUpdateVersion.ReadyToUpdate.Url -> {
                 lanUpdaterScope.cancelPrevious().join()
                 installRequestedFlow.value = false
-                clearUpdatingDeviceId(updatingId, reason = "stopFirmwareUpdate (lan)")
+                clearUpdatingDeviceId(updatingDeviceIdFlow.value, reason = "stopFirmwareUpdate (lan)")
                 CResult.success(Unit)
             }
 
             else -> {
-                clearUpdatingDeviceId(updatingId, reason = "stopFirmwareUpdate (no active version)")
+                clearUpdatingDeviceId(updatingDeviceIdFlow.value, reason = "stopFirmwareUpdate (no active version)")
                 CResult.success(Unit)
             }
         }
