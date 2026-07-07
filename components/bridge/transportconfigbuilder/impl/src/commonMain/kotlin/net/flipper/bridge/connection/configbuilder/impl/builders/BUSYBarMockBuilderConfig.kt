@@ -6,8 +6,10 @@ import net.flipper.bridge.connection.transport.mock.FMockDeviceConnectionConfig
 @Inject
 class BUSYBarMockBuilderConfig {
     fun build(
+        uniqueId: String,
         name: String
     ) = FMockDeviceConnectionConfig(
+        uniqueId = uniqueId,
         deviceName = name
     )
 }

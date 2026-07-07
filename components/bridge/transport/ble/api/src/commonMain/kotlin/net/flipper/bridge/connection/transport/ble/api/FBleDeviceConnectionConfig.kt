@@ -8,6 +8,7 @@ import net.flipper.core.busylib.data.nonEmptyListOf
 import kotlin.uuid.Uuid
 
 data class FBleDeviceConnectionConfig(
+    override val uniqueId: String,
     val deviceName: String,
     val macAddress: String,
     val serialConfig: FBleDeviceSerialConfig,

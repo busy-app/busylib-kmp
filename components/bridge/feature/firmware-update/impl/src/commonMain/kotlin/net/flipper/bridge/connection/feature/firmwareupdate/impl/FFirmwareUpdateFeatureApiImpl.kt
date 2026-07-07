@@ -56,6 +56,8 @@ class FFirmwareUpdateFeatureApiImpl(
     private val lanUpdateVersionProvider: LanUpdateVersionProvider,
 ) : FFirmwareUpdateFeatureApi, LogTagProvider {
     override val TAG: String = "FFirmwareUpdateFeatureApi"
+
+    override val deviceId: String = deviceApi.uniqueId
     private val combinedFlows = UpdateFlowCombinerDelegate(
         rpcFeatureApi = rpcFeatureApi,
         fEventsFeatureApi = fEventsFeatureApi,

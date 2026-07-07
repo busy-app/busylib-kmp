@@ -7,6 +7,7 @@ import net.flipper.core.busylib.data.flatten
 import net.flipper.core.busylib.data.map
 
 data class FCombinedConnectionConfig(
+    override val uniqueId: String,
     val name: String,
     val connectionConfigs: NonEmptyList<FDeviceConnectionConfig<*>>
 ) : FDeviceConnectionConfig<FCombinedConnectionApi>() {

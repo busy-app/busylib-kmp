@@ -36,8 +36,6 @@ import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
 import net.flipper.bridge.connection.feature.provider.api.get
 import net.flipper.bridge.connection.feature.provider.api.getSync
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
-import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
-import net.flipper.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
 import net.flipper.bridge.device.firmwareupdate.downloader.api.FirmwareDownloaderApi
 import net.flipper.bridge.device.firmwareupdate.downloader.api.FirmwareDownloaderApiImpl
 import net.flipper.bridge.device.firmwareupdate.status.api.UpdateStatusProvider
@@ -79,8 +77,7 @@ class FirmwareUpdaterApiImpl(
     private val previousVersionFlowProvider: PreviousVersionFlowProvider,
     private val scope: CoroutineScope,
     private val updateStatusProvider: UpdateStatusProvider,
-    private val fDevicePersistedStorage: FDevicePersistedStorage,
-    private val fDeviceOrchestrator: FDeviceOrchestrator
+    private val fDevicePersistedStorage: FDevicePersistedStorage
 ) : FirmwareUpdaterApi, LogTagProvider by TaggedLogger("UpdaterApi") {
     private val firmwareDownloaderApi: FirmwareDownloaderApi = FirmwareDownloaderApiImpl(
         httpClient = httpClient

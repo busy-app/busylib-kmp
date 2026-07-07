@@ -24,9 +24,11 @@ class FDeviceConnectionConfigMapperImpl(
 ) : FDeviceConnectionConfigMapper {
     override fun getConnectionConfig(device: BUSYBar): FDeviceConnectionConfig<*> {
         return busyBarCombinedBuilderConfig.build(
+            uniqueId = device.uniqueId,
             name = device.humanReadableName,
             connectionConfigs = device.connectionWays.map { connectionWay ->
                 map(
+                    uniqueId = device.uniqueId,
                     hardwareId = device.hardwareId,
                     connectionWay = connectionWay,
                     humanReadableName = device.humanReadableName
@@ -36,27 +38,32 @@ class FDeviceConnectionConfigMapperImpl(
     }
 
     private fun map(
+        uniqueId: String,
         hardwareId: String?,
         connectionWay: BUSYBar.ConnectionWay,
         humanReadableName: String
     ): FDeviceConnectionConfig<*> {
         return when (connectionWay) {
             is BUSYBar.ConnectionWay.BLE -> bleBuilderConfig.build(
+                uniqueId = uniqueId,
                 address = connectionWay.address,
                 deviceName = humanReadableName
             )
 
             is BUSYBar.ConnectionWay.Cloud -> cloudBuilderConfig.build(
+                uniqueId = uniqueId,
                 name = humanReadableName,
                 deviceId = connectionWay.deviceId
             )
 
             is BUSYBar.ConnectionWay.Lan -> FLanDeviceConnectionConfig(
+                uniqueId = uniqueId,
                 hardwareId = hardwareId,
                 name = humanReadableName
             )
 
             BUSYBar.ConnectionWay.Mock -> mockBuilderConfig.build(
+                uniqueId = uniqueId,
                 name = humanReadableName
             )
         }

@@ -17,9 +17,11 @@ private val NOTIFICATION_SERVICE_UUID = Uuid.parse("AF569D00-716A-452D-BE64-66E4
 @Inject
 class BUSYBarBLEBuilderConfig {
     fun build(
+        uniqueId: String,
         address: String,
         deviceName: String
     ) = FBleDeviceConnectionConfig(
+        uniqueId = uniqueId,
         deviceName = deviceName,
         macAddress = address,
         serialConfig = FBleDeviceSerialConfig(

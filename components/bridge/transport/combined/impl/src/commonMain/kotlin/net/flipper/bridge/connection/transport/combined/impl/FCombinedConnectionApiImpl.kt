@@ -102,6 +102,9 @@ class FCombinedConnectionApiImpl(
     override val deviceName: String
         get() = currentConfig.name
 
+    override val uniqueId: String
+        get() = currentConfig.uniqueId
+
     override suspend fun tryUpdateConnectionConfig(
         config: FDeviceConnectionConfig<*>
     ): Result<Unit> {
