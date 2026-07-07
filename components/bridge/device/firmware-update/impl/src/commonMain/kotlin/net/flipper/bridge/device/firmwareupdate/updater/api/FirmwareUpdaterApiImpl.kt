@@ -103,7 +103,8 @@ class FirmwareUpdaterApiImpl(
         flow3 = firmwareDownloaderApi.state,
         flow4 = firmwareUploaderApi.state,
         flow5 = installRequestedFlow,
-        transform = { updateStatusSource, bsbUpdateVersion, downloaderState, uploaderState, isInstallRequested ->
+        transform = { updateStatusSource, deviceUpdateVersion, downloaderState, uploaderState, isInstallRequested ->
+            val bsbUpdateVersion = deviceUpdateVersion?.version
             val result = FwUpdateStatusMapper.map(
                 updateStatusSource,
                 bsbUpdateVersion,
@@ -170,7 +171,7 @@ class FirmwareUpdaterApiImpl(
             .flatMapLatest { feature -> feature?.updateVersionFlow.orNullable() }
             .filterNotNull()
             .firstOrNull()
-        return when (currentUpdateVersion) {
+        return when (currentUpdateVersion?.version) {
             is BsbUpdateVersion.ReadyToUpdate.Default -> {
                 fFeatureProvider.get<FRpcFeatureApi>()
                     .filterIsInstance<FFeatureStatus.Supported<*>>()
@@ -266,6 +267,7 @@ class FirmwareUpdaterApiImpl(
         val bsbUpdateVersion = fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
             .map { status -> status.tryCast<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>() }
             .flatMapLatest { status -> status?.featureApi?.updateVersionFlow.orNullable() }
+            .mapNotNull { deviceUpdateVersion -> deviceUpdateVersion?.version }
             .filterIsInstance<BsbUpdateVersion.ReadyToUpdate>()
             .first()
         info { "#startUpdateInstall bsbUpdateVersion: $bsbUpdateVersion" }
@@ -393,11 +395,12 @@ class FirmwareUpdaterApiImpl(
             .launchIn(scope)
 
         // Fallback for an update that finished while the user was on another device
-        updateStatusProvider.getUpdateVersionKeyed()
-            .onEach { keyed ->
+        updateStatusProvider.getUpdateVersion()
+            .onEach { value ->
                 val updatingId = updatingDeviceIdFlow.value ?: return@onEach
-                val updateDone = keyed.deviceId == updatingId &&
-                    keyed.version is BsbUpdateVersion.NoUpdateAvailable
+                val updateDone = value != null &&
+                    value.deviceId == updatingId &&
+                    value.version is BsbUpdateVersion.NoUpdateAvailable
                 if (updateDone) {
                     clearUpdatingDeviceId(updatingId, reason = "fresh NoUpdateAvailable on updating device")
                 }

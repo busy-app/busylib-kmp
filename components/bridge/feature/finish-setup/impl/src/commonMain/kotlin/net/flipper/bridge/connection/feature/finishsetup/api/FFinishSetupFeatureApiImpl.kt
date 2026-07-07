@@ -6,6 +6,7 @@ import dev.zacsweers.metro.binding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import net.flipper.bridge.connection.feature.ble.api.FBleFeatureApi
 import net.flipper.bridge.connection.feature.ble.api.model.FBleStatus
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
@@ -135,7 +136,8 @@ class FFinishSetupFeatureApiImpl(
             .distinctUntilChanged(),
         flow3 = fWiFiFeatureApi.getWifiStatusFlow()
             .distinctUntilChanged(),
-        flow4 = fFirmwareUpdateFeatureApi.updateVersionFlow,
+        flow4 = fFirmwareUpdateFeatureApi.updateVersionFlow
+            .map { keyedVersion -> keyedVersion.version },
         flow5 = setupFinishedBeforeKrate.cachedStateFlow,
         transform = ::TasksDependencies
     ).transformWhileSubscribed(
