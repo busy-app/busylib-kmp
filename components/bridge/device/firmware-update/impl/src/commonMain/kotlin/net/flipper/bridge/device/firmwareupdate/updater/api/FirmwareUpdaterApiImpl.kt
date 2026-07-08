@@ -39,6 +39,7 @@ import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.device.firmwareupdate.downloader.api.FirmwareDownloaderApi
 import net.flipper.bridge.device.firmwareupdate.downloader.api.FirmwareDownloaderApiImpl
 import net.flipper.bridge.device.firmwareupdate.status.api.UpdateStatusProvider
+import net.flipper.bridge.device.firmwareupdate.status.model.UpdateStatusSource
 import net.flipper.bridge.device.firmwareupdate.updater.log.FwUpdateStateLogger
 import net.flipper.bridge.device.firmwareupdate.updater.mapper.FwUpdateStatusMapper
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateEvent
@@ -61,6 +62,7 @@ import net.flipper.core.busylib.ktx.common.orNullable
 import net.flipper.core.busylib.ktx.common.tryCast
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.TaggedLogger
+import net.flipper.core.busylib.log.debug
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
 import net.flipper.core.ktor.di.qualifier.KtorNetworkClientQualifier
@@ -97,6 +99,12 @@ class FirmwareUpdaterApiImpl(
 
     private val stateLogger by lazy { FwUpdateStateLogger() }
 
+    /**
+     * Id of the currently connected device, `null` while disconnected
+     */
+    private val connectedDeviceIdFlow = updateStatusProvider.getConnectedDeviceId()
+        .stateIn(scope, SharingStarted.Eagerly, null)
+
     override val state: WrappedStateFlow<FwUpdateState> = combine(
         flow = updateStatusProvider.getUpdateStatus(),
         flow2 = updateStatusProvider.getUpdateVersion(),
@@ -105,8 +113,23 @@ class FirmwareUpdaterApiImpl(
         flow5 = installRequestedFlow,
         transform = { updateStatusSource, deviceUpdateVersion, downloaderState, uploaderState, isInstallRequested ->
             val bsbUpdateVersion = deviceUpdateVersion?.version
+            // A status of one device must never be merged with the version of another
+            // (switch window: the old device's Cached status can outlive its connection)
+            val statusDeviceId = updateStatusSource.status?.deviceId
+            val isForeignStatus = statusDeviceId != null &&
+                deviceUpdateVersion != null &&
+                statusDeviceId != deviceUpdateVersion.deviceId
+            val matchedStatusSource = if (isForeignStatus) {
+                debug {
+                    "#state drop status of $statusDeviceId, " +
+                        "connected device is ${deviceUpdateVersion?.deviceId}"
+                }
+                UpdateStatusSource.Fresh(null)
+            } else {
+                updateStatusSource
+            }
             val result = FwUpdateStatusMapper.map(
-                updateStatusSource,
+                matchedStatusSource,
                 bsbUpdateVersion,
                 downloaderState,
                 uploaderState,
@@ -129,7 +152,7 @@ class FirmwareUpdaterApiImpl(
             if (BuildKonfig.IS_VERBOSE_LOG_ENABLED && BuildKonfig.IS_LOG_ENABLED) {
                 stateLogger.logIfChanged(
                     result = result,
-                    updateStatusSource = updateStatusSource,
+                    updateStatusSource = matchedStatusSource,
                     bsbUpdateVersion = bsbUpdateVersion,
                     downloaderState = downloaderState,
                     uploaderState = uploaderState,
@@ -264,20 +287,26 @@ class FirmwareUpdaterApiImpl(
      */
     override suspend fun startUpdateInstall(): CResult<Unit> {
         info { "#startUpdateInstall" }
-        val bsbUpdateVersion = fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
-            .map { status -> status.tryCast<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>() }
-            .flatMapLatest { status -> status?.featureApi?.updateVersionFlow.orNullable() }
-            .mapNotNull { deviceUpdateVersion -> deviceUpdateVersion?.version }
-            .filterIsInstance<BsbUpdateVersion.ReadyToUpdate>()
+        // deviceId and version come from a single emission, so the install below
+        // is always attributed to the device that actually reported ReadyToUpdate
+        val (updatingDeviceId, bsbUpdateVersion) = updateStatusProvider.getUpdateVersion()
+            .mapNotNull { deviceUpdateVersion ->
+                val version = deviceUpdateVersion?.version
+                if (version is BsbUpdateVersion.ReadyToUpdate) {
+                    deviceUpdateVersion.deviceId to version
+                } else {
+                    null
+                }
+            }
             .first()
-        info { "#startUpdateInstall bsbUpdateVersion: $bsbUpdateVersion" }
+        info { "#startUpdateInstall bsbUpdateVersion: $bsbUpdateVersion deviceId=$updatingDeviceId" }
         return when (bsbUpdateVersion) {
             is BsbUpdateVersion.ReadyToUpdate.Default -> {
-                defaultUpdaterScope.async { runDefaultInstall(bsbUpdateVersion) }.await()
+                defaultUpdaterScope.async { runDefaultInstall(bsbUpdateVersion, updatingDeviceId) }.await()
             }
 
             is BsbUpdateVersion.ReadyToUpdate.Url -> {
-                lanUpdaterScope.async { runLanInstall(bsbUpdateVersion) }.await()
+                lanUpdaterScope.async { runLanInstall(bsbUpdateVersion, updatingDeviceId) }.await()
             }
         }
     }
@@ -288,9 +317,10 @@ class FirmwareUpdaterApiImpl(
      * [updatingDeviceIdFlow] stays set — the update is still running on the device
      */
     private suspend fun runDefaultInstall(
-        bsbUpdateVersion: BsbUpdateVersion.ReadyToUpdate.Default
+        bsbUpdateVersion: BsbUpdateVersion.ReadyToUpdate.Default,
+        updatingDeviceId: String
     ): CResult<Unit> {
-        val updatingDeviceId = beginInstall()
+        beginInstall(updatingDeviceId)
         val updateResult = getBsbUpdateVersion(bsbUpdateVersion).toCResult()
         info { "#startUpdateInstall update result is $updateResult" }
         return updateResult
@@ -308,9 +338,10 @@ class FirmwareUpdaterApiImpl(
      * update
      */
     private suspend fun runLanInstall(
-        bsbUpdateVersion: BsbUpdateVersion.ReadyToUpdate.Url
+        bsbUpdateVersion: BsbUpdateVersion.ReadyToUpdate.Url,
+        updatingDeviceId: String
     ): CResult<Unit> {
-        val updatingDeviceId = beginInstall()
+        beginInstall(updatingDeviceId)
         coroutineContext.job.invokeOnCompletion { cause ->
             installRequestedFlow.value = false
             firmwareDownloaderApi.reset()
@@ -336,16 +367,12 @@ class FirmwareUpdaterApiImpl(
         }
     }
 
-    private suspend fun beginInstall(): String? {
+    private fun beginInstall(updatingDeviceId: String) {
         installRequestedFlow.value = true
-        val updatingDeviceId = fDevicePersistedStorage.getCurrentDeviceFlow()
-            .firstOrNull()
-            ?.uniqueId
         updatingDeviceIdFlow.value = updatingDeviceId
         info { "#startUpdateInstall updatingDeviceId=$updatingDeviceId" }
         firmwareDownloaderApi.reset()
         firmwareUploaderApi.reset()
-        return updatingDeviceId
     }
 
     override suspend fun checkForUpdates(): CResult<Unit> {
@@ -383,12 +410,11 @@ class FirmwareUpdaterApiImpl(
 
         // Release updatingDeviceId when the update actually ends. UpdateFinished/UpdateFailed
         // are detected via the version transition, which is only observable while connected
-        // to the updating device — hence the current == updating gate.
+        // to the updating device — hence the connected == updating gate.
         eventsSharedFlow
             .onEach { event ->
                 val updatingId = updatingDeviceIdFlow.value ?: return@onEach
-                val currentId = fDevicePersistedStorage.getCurrentDeviceFlow().firstOrNull()?.uniqueId
-                if (currentId == updatingId) {
+                if (connectedDeviceIdFlow.value == updatingId) {
                     clearUpdatingDeviceId(updatingId, reason = "update event $event")
                 }
             }

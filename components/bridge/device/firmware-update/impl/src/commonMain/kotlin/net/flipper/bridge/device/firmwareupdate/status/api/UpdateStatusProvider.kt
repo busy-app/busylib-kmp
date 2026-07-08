@@ -81,6 +81,17 @@ class UpdateStatusProvider(
     }
 
     /**
+     * Id of the device whose firmware-update feature is currently alive — the feature
+     * lives and dies with its connection, so this is the connected device.
+     * `null` while disconnected.
+     */
+    fun getConnectedDeviceId(): Flow<String?> {
+        return firmwareFeatureFlow()
+            .map { feature -> feature?.deviceId }
+            .distinctUntilChanged()
+    }
+
+    /**
      * The firmware-update feature of the current connection, or `null` while disconnected
      */
     private fun firmwareFeatureFlow(): Flow<FFirmwareUpdateFeatureApi?> {
