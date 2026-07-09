@@ -5,22 +5,36 @@ import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
 import dev.zacsweers.metro.binding
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.feature.oncall.api.FOnCallFeatureApi
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
 import net.flipper.bridge.connection.feature.provider.api.get
+import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
+import net.flipper.bridge.connection.orchestrator.api.model.deviceOrNull
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.ktx.common.SingleJobMode
 import net.flipper.core.busylib.ktx.common.asSingleJobScope
 import net.flipper.core.busylib.ktx.common.cancelPrevious
+import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.busylib.log.LogTagProvider
+import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
 import net.flipper.tools.oncall.api.OnCallSingletonApi
+import net.flipper.tools.oncall.impl.session.CloudOnCallSession
+import kotlin.uuid.Uuid
 
 @Inject
 @SingleIn(BusyLibGraph::class)
@@ -28,6 +42,9 @@ import net.flipper.tools.oncall.api.OnCallSingletonApi
 class OnCallSingletonApiImpl(
     scope: CoroutineScope,
     featureProvider: FFeatureProvider,
+    private val devicePersistedStorage: FDevicePersistedStorage,
+    private val orchestrator: FDeviceOrchestrator,
+    private val cloudSessionFactory: CloudOnCallSession.Factory
 ) : OnCallSingletonApi, LogTagProvider {
     override val TAG = "OnCallSingletonApi"
     private val onCallFeatureApiFlow = featureProvider.get<FOnCallFeatureApi>()
@@ -38,16 +55,53 @@ class OnCallSingletonApiImpl(
 
     private val singleJobScope = scope.asSingleJobScope()
 
+    private suspend fun collectActiveDeviceOnCall() {
+        info { "Subscribing to FOnCallFeatureApi" }
+        onCallFeatureApiFlow
+            .collectLatest { status ->
+                if (status != null) {
+                    info { "FOnCallFeatureApi available, starting on-call" }
+                    status.featureApi.start()
+                }
+            }
+    }
+
+    private fun getBackgroundOnCallRoutesFlow(): Flow<Set<Uuid>> {
+        return combine(
+            flow = devicePersistedStorage.getAllDevicesFlow(),
+            flow2 = orchestrator.getState(),
+            transform = { devices, connectStatus ->
+                devices
+                    .asSequence()
+                    .filter { busyBar -> busyBar.onCallEnabled != false }
+                    .filter { busyBar -> busyBar.uniqueId != connectStatus.deviceOrNull?.uniqueId }
+                    .mapNotNull { busyBar -> busyBar.cloud?.deviceId }
+                    .map { deviceId -> deviceId }
+                    .toSet()
+            }
+        ).distinctUntilChanged()
+    }
+
+    private suspend fun collectBackgroundDevicesOnCall() {
+        getBackgroundOnCallRoutesFlow()
+            .collectLatest { routes ->
+                coroutineScope {
+                    routes.map { deviceId ->
+                        info { "Starting background on-call for $deviceId" }
+                        async {
+                            runSuspendCatching { cloudSessionFactory.invoke(deviceId).run() }
+                                .onFailure { t -> error(t) { "Background on-call session failed for $deviceId" } }
+                                .getOrNull()
+                        }
+                    }.awaitAll()
+                }
+            }
+    }
+
     override fun start() {
         singleJobScope.launch(SingleJobMode.SKIP_IF_RUNNING) {
-            info { "Subscribing to FOnCallFeatureApi" }
-            onCallFeatureApiFlow
-                .collectLatest { status ->
-                    if (status != null) {
-                        info { "FOnCallFeatureApi available, starting on-call" }
-                        status.featureApi.start()
-                    }
-                }
+            launch { collectActiveDeviceOnCall() }
+            launch { collectBackgroundDevicesOnCall() }
         }
     }
 
