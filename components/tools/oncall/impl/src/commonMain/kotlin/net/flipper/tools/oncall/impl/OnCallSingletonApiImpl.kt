@@ -34,8 +34,7 @@ import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
 import net.flipper.tools.oncall.api.OnCallSingletonApi
 import net.flipper.tools.oncall.impl.session.CloudOnCallSession
-import net.flipper.tools.oncall.impl.session.LanOnCallSession
-import net.flipper.tools.oncall.impl.session.OnCallSessionRoute
+import kotlin.uuid.Uuid
 
 @Inject
 @SingleIn(BusyLibGraph::class)
@@ -67,14 +66,7 @@ class OnCallSingletonApiImpl(
             }
     }
 
-    private suspend fun runSession(route: OnCallSessionRoute) {
-        when (route) {
-            is OnCallSessionRoute.Lan -> LanOnCallSession(route.host).run()
-            is OnCallSessionRoute.Cloud -> cloudSessionFactory.invoke(route.deviceId).run()
-        }
-    }
-
-    private fun getBackgroundOnCallRoutesFlow(): Flow<Set<OnCallSessionRoute>> {
+    private fun getBackgroundOnCallRoutesFlow(): Flow<Set<Uuid>> {
         return combine(
             flow = devicePersistedStorage.getAllDevicesFlow(),
             flow2 = orchestrator.getState(),
@@ -84,7 +76,7 @@ class OnCallSingletonApiImpl(
                     .filter { busyBar -> busyBar.onCallEnabled != false }
                     .filter { busyBar -> busyBar.uniqueId != connectStatus.deviceOrNull?.uniqueId }
                     .mapNotNull { busyBar -> busyBar.cloud?.deviceId }
-                    .map { deviceId -> OnCallSessionRoute.Cloud(deviceId) }
+                    .map { deviceId -> deviceId }
                     .toSet()
             }
         ).distinctUntilChanged()
@@ -94,11 +86,11 @@ class OnCallSingletonApiImpl(
         getBackgroundOnCallRoutesFlow()
             .collectLatest { routes ->
                 coroutineScope {
-                    routes.map { route ->
-                        info { "Starting background on-call for $route" }
+                    routes.map { deviceId ->
+                        info { "Starting background on-call for $deviceId" }
                         async {
-                            runSuspendCatching { runSession(route) }
-                                .onFailure { t -> error(t) { "Background on-call session failed for $route" } }
+                            runSuspendCatching { cloudSessionFactory.invoke(deviceId).run() }
+                                .onFailure { t -> error(t) { "Background on-call session failed for $deviceId" } }
                                 .getOrNull()
                         }
                     }.awaitAll()
