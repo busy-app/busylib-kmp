@@ -34,7 +34,6 @@ import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
 import net.flipper.tools.oncall.api.OnCallSingletonApi
 import net.flipper.tools.oncall.impl.session.CloudOnCallSession
-import net.flipper.tools.oncall.impl.session.LanOnCallDeviceScanner
 import net.flipper.tools.oncall.impl.session.LanOnCallSession
 import net.flipper.tools.oncall.impl.session.OnCallSessionRoute
 
@@ -46,7 +45,6 @@ class OnCallSingletonApiImpl(
     featureProvider: FFeatureProvider,
     private val devicePersistedStorage: FDevicePersistedStorage,
     private val orchestrator: FDeviceOrchestrator,
-    private val lanDeviceScanner: LanOnCallDeviceScanner,
     private val cloudSessionFactory: CloudOnCallSession.Factory
 ) : OnCallSingletonApi, LogTagProvider {
     override val TAG = "OnCallSingletonApi"
@@ -80,16 +78,14 @@ class OnCallSingletonApiImpl(
         return combine(
             flow = devicePersistedStorage.getAllDevicesFlow(),
             flow2 = orchestrator.getState(),
-            flow3 = lanDeviceScanner.getLanHostsFlow(),
-            transform = { devices, connectStatus, lanHosts ->
-                val lanRoutes = lanHosts.map { host -> OnCallSessionRoute.Lan(host) }
-                val cloudRoutes = devices
+            transform = { devices, connectStatus ->
+                devices
                     .asSequence()
                     .filter { busyBar -> busyBar.onCallEnabled != false }
                     .filter { busyBar -> busyBar.uniqueId != connectStatus.deviceOrNull?.uniqueId }
                     .mapNotNull { busyBar -> busyBar.cloud?.deviceId }
                     .map { deviceId -> OnCallSessionRoute.Cloud(deviceId) }
-                cloudRoutes.plus(lanRoutes).toSet()
+                    .toSet()
             }
         ).distinctUntilChanged()
     }
