@@ -85,7 +85,7 @@ class OnCallSingletonApiImpl(
                 val lanRoutes = lanHosts.map { host -> OnCallSessionRoute.Lan(host) }
                 val cloudRoutes = devices
                     .asSequence()
-                    .filter { busyBar -> busyBar.onCallEnabled == true }
+                    .filter { busyBar -> busyBar.onCallEnabled != false }
                     .filter { busyBar -> busyBar.uniqueId != connectStatus.deviceOrNull?.uniqueId }
                     .mapNotNull { busyBar -> busyBar.cloud?.deviceId }
                     .map { deviceId -> OnCallSessionRoute.Cloud(deviceId) }
