@@ -24,7 +24,7 @@ internal object FwUpdateStatusMapper {
         }
     }
 
-    private fun map(downloaderState: FirmwareDownloaderState): FwUpdateState.Downloading? {
+    private fun map(downloaderState: FirmwareDownloaderState): FwUpdateState? {
         return when (downloaderState) {
             FirmwareDownloaderState.Downloaded -> {
                 FwUpdateState.Downloading(1f, true)
@@ -33,6 +33,8 @@ internal object FwUpdateStatusMapper {
             is FirmwareDownloaderState.Downloading -> {
                 FwUpdateState.Downloading(downloaderState.progress, true)
             }
+
+            FirmwareDownloaderState.Failed -> FwUpdateState.DownloadFailure
 
             FirmwareDownloaderState.Pending -> null
         }
@@ -83,6 +85,7 @@ internal object FwUpdateStatusMapper {
 
                 BsbUpdateStatus.ReadyToInstall.BatteryLow -> FwUpdateState.LowBattery
                 BsbUpdateStatus.ReadyToInstall.Ready -> FwUpdateState.UpdateAvailable
+                BsbUpdateStatus.Failed -> FwUpdateState.DownloadFailure
                 BsbUpdateStatus.Loading -> null
             }
         }
@@ -107,6 +110,7 @@ internal object FwUpdateStatusMapper {
 
             BsbUpdateStatus.ReadyToInstall.BatteryLow -> FwUpdateState.LowBattery
             BsbUpdateStatus.ReadyToInstall.Ready -> FwUpdateState.UpdateAvailable
+            BsbUpdateStatus.Failed -> FwUpdateState.DownloadFailure
             BsbUpdateStatus.Loading -> null
         }
     }
@@ -133,15 +137,10 @@ internal object FwUpdateStatusMapper {
         uploaderState: FirmwareUploaderState,
         isInstallRequested: Boolean
     ): FwUpdateState {
-        val statusSourceState = map(updateStatusSource, isLanUpdate(bsbUpdateVersion))
-        val inProgressStatusState = statusSourceState?.takeIf { state ->
-            state is FwUpdateState.Downloading || state is FwUpdateState.Updating
-        }
         val state = map(uploaderState)
             ?: map(downloaderState)
-            ?: inProgressStatusState
             ?: map(bsbUpdateVersion)
-            ?: statusSourceState
+            ?: map(updateStatusSource, isLanUpdate(bsbUpdateVersion))
             ?: FwUpdateState.Pending
         return when (state) {
             FwUpdateState.UpdateAvailable if isInstallRequested -> FwUpdateState.Preparing

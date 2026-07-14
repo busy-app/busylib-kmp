@@ -27,4 +27,6 @@ sealed interface BsbUpdateStatus {
     }
 
     data object Loading : BsbUpdateStatus
+
+    data object Failed : BsbUpdateStatus
 }
