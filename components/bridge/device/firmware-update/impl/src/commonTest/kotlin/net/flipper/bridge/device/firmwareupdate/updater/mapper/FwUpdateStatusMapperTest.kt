@@ -29,24 +29,6 @@ class FwUpdateStatusMapperTest {
     }
 
     @Test
-    fun GIVEN_failed_status_WHEN_map_THEN_download_failure_surfaced() {
-        // A device install-failure is surfaced as DownloadFailure. NOTE: this currently
-        // hides the "update available" card (known — the failure-handling UX is still to be
-        // designed; the card was previously kept by mapping Failed->UpdateAvailable, reverted).
-        val result = FwUpdateStatusMapper.map(
-            updateStatusSource = UpdateStatusSource.Fresh(
-                DeviceUpdateStatus("test-device-id", BsbUpdateStatus.Failed)
-            ),
-            bsbUpdateVersion = BsbUpdateVersion.ReadyToUpdate.Default("1.2.3"),
-            downloaderState = FirmwareDownloaderState.Pending,
-            uploaderState = FirmwareUploaderState.Pending,
-            isInstallRequested = false
-        )
-
-        assertEquals(FwUpdateState.DownloadFailure, result)
-    }
-
-    @Test
     fun GIVEN_downloading_status_WHEN_map_THEN_downloading_beats_available_version() {
         val result = FwUpdateStatusMapper.map(
             updateStatusSource = UpdateStatusSource.Fresh(

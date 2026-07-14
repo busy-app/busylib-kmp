@@ -24,7 +24,7 @@ internal object FwUpdateStatusMapper {
         }
     }
 
-    private fun map(downloaderState: FirmwareDownloaderState): FwUpdateState? {
+    private fun map(downloaderState: FirmwareDownloaderState): FwUpdateState.Downloading? {
         return when (downloaderState) {
             FirmwareDownloaderState.Downloaded -> {
                 FwUpdateState.Downloading(1f, true)
@@ -33,8 +33,6 @@ internal object FwUpdateStatusMapper {
             is FirmwareDownloaderState.Downloading -> {
                 FwUpdateState.Downloading(downloaderState.progress, true)
             }
-
-            FirmwareDownloaderState.Failed -> FwUpdateState.DownloadFailure
 
             FirmwareDownloaderState.Pending -> null
         }
@@ -85,7 +83,6 @@ internal object FwUpdateStatusMapper {
 
                 BsbUpdateStatus.ReadyToInstall.BatteryLow -> FwUpdateState.LowBattery
                 BsbUpdateStatus.ReadyToInstall.Ready -> FwUpdateState.UpdateAvailable
-                BsbUpdateStatus.Failed -> FwUpdateState.DownloadFailure
                 BsbUpdateStatus.Loading -> null
             }
         }
@@ -110,7 +107,6 @@ internal object FwUpdateStatusMapper {
 
             BsbUpdateStatus.ReadyToInstall.BatteryLow -> FwUpdateState.LowBattery
             BsbUpdateStatus.ReadyToInstall.Ready -> FwUpdateState.UpdateAvailable
-            BsbUpdateStatus.Failed -> FwUpdateState.DownloadFailure
             BsbUpdateStatus.Loading -> null
         }
     }

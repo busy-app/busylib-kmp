@@ -4,49 +4,8 @@ import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent.Upd
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateStatus
 import net.flipper.bridge.connection.feature.rpc.api.model.UpdateStatus
 
-/**
- * Failure statuses reported by the device. `DOWNLOAD_ABORT` is a user-initiated stop, not an
- * error; `OK`/`BATTERY_LOW`/`BUSY` are not failures either.
- */
-private fun UpdateState.BsbStatus.toFailedOrNull(): BsbUpdateStatus.Failed? = when (this) {
-    UpdateState.BsbStatus.DOWNLOAD_FAILURE,
-    UpdateState.BsbStatus.SHA_MISMATCH,
-    UpdateState.BsbStatus.UNPACK_STAGING_DIR_FAILURE,
-    UpdateState.BsbStatus.UNPACK_ARCHIVE_OPEN_FAILURE,
-    UpdateState.BsbStatus.UNPACK_ARCHIVE_UNPACK_FAILURE,
-    UpdateState.BsbStatus.INSTALL_MANIFEST_NOT_FOUND,
-    UpdateState.BsbStatus.INSTALL_MANIFEST_INVALID,
-    UpdateState.BsbStatus.INSTALL_SESSION_CONFIG_FAILURE,
-    UpdateState.BsbStatus.INSTALL_POINTER_SETUP_FAILURE,
-    UpdateState.BsbStatus.UNKNOWN_FAILURE -> BsbUpdateStatus.Failed
-
-    UpdateState.BsbStatus.OK,
-    UpdateState.BsbStatus.BATTERY_LOW,
-    UpdateState.BsbStatus.BUSY,
-    UpdateState.BsbStatus.DOWNLOAD_ABORT -> null
-}
-
-private fun UpdateStatus.Install.Status.toFailedOrNull(): BsbUpdateStatus.Failed? = when (this) {
-    UpdateStatus.Install.Status.DOWNLOAD_FAILURE,
-    UpdateStatus.Install.Status.SHA_MISMATCH,
-    UpdateStatus.Install.Status.UNPACK_STAGING_DIR_FAILURE,
-    UpdateStatus.Install.Status.UNPACK_ARCHIVE_OPEN_FAILURE,
-    UpdateStatus.Install.Status.UNPACK_ARCHIVE_UNPACK_FAILURE,
-    UpdateStatus.Install.Status.INSTALL_MANIFEST_NOT_FOUND,
-    UpdateStatus.Install.Status.INSTALL_MANIFEST_INVALID,
-    UpdateStatus.Install.Status.INSTALL_SESSION_CONFIG_FAILURE,
-    UpdateStatus.Install.Status.INSTALL_POINTER_SETUP_FAILURE,
-    UpdateStatus.Install.Status.UNKNOWN_FAILURE -> BsbUpdateStatus.Failed
-
-    UpdateStatus.Install.Status.OK,
-    UpdateStatus.Install.Status.BATTERY_LOW,
-    UpdateStatus.Install.Status.BUSY,
-    UpdateStatus.Install.Status.DOWNLOAD_ABORT -> null
-}
-
 @Suppress("CyclomaticComplexMethod")
 internal fun UpdateState.toBsbUpdateStatus(): BsbUpdateStatus {
-    status.toFailedOrNull()?.let { return it }
     val inProgress = when (event) {
         UpdateState.BsbEvent.SESSION_STOP,
         UpdateState.BsbEvent.NONE -> false
@@ -85,7 +44,6 @@ internal fun UpdateState.toBsbUpdateStatus(): BsbUpdateStatus {
 
 @Suppress("CyclomaticComplexMethod")
 internal fun UpdateStatus.toBsbUpdateStatus(): BsbUpdateStatus {
-    install.status.toFailedOrNull()?.let { return it }
     val inProgress = when (install.event) {
         UpdateStatus.Install.Event.SESSION_STOP,
         UpdateStatus.Install.Event.NONE -> false

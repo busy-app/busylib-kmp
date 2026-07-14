@@ -107,7 +107,7 @@ internal class FirmwareDownloaderApiImpl(
             temporalFilePath
         }.onFailure { t ->
             error(t) { "#downloadAndUpload could not finish download" }
-            _state.emit(FirmwareDownloaderState.Failed)
+            _state.emit(FirmwareDownloaderState.Pending)
         }
     }
 }
