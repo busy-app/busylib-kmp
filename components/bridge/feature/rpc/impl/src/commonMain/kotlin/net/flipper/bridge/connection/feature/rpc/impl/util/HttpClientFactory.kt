@@ -21,7 +21,7 @@ import kotlin.time.Duration.Companion.seconds
 
 private const val MAX_RPS = 2 // Limitation for BUSY Bar request
 
-internal fun getHttpClient(httpClientEngine: HttpClientEngine) = HttpClient(httpClientEngine) {
+fun getHttpClient(httpClientEngine: HttpClientEngine) = HttpClient(httpClientEngine) {
     install(ContentNegotiation) {
         json(
             Json {
