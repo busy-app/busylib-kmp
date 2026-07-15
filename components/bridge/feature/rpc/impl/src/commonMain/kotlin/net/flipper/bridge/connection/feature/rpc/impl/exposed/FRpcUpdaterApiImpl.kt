@@ -81,11 +81,11 @@ class FRpcUpdaterApiImpl(
         }
     }
 
-    override suspend fun startUpdateInstall(version: String): Result<SuccessResponse> {
+    override suspend fun startUpdateInstall(version: String): Result<ApiResponse> {
         return runSuspendCatching(dispatcher) {
             httpClient.post("/api/update/install") {
                 parameter("version", version)
-            }.body<SuccessResponse>()
+            }.body<ApiResponse>()
         }
     }
 

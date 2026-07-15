@@ -36,6 +36,9 @@ import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
 import net.flipper.bridge.connection.feature.provider.api.get
 import net.flipper.bridge.connection.feature.provider.api.getSync
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
+import net.flipper.bridge.connection.feature.rpc.api.model.BsbRpcError
+import net.flipper.bridge.connection.feature.rpc.api.model.ErrorResponse
+import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
 import net.flipper.bridge.device.firmwareupdate.downloader.api.FirmwareDownloaderApi
 import net.flipper.bridge.device.firmwareupdate.downloader.api.FirmwareDownloaderApiImpl
 import net.flipper.bridge.device.firmwareupdate.status.api.UpdateStatusProvider
@@ -43,12 +46,12 @@ import net.flipper.bridge.device.firmwareupdate.updater.log.FwUpdateStateLogger
 import net.flipper.bridge.device.firmwareupdate.updater.mapper.FwUpdateStatusMapper
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateEvent
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateState
+import net.flipper.bridge.device.firmwareupdate.updater.model.StartUpdateResponse
 import net.flipper.bridge.device.firmwareupdate.uploader.api.FirmwareUploaderApi
 import net.flipper.bridge.device.firmwareupdate.uploader.api.FirmwareUploaderApiImpl
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.core.wrapper.CResult
 import net.flipper.busylib.core.wrapper.WrappedStateFlow
-import net.flipper.busylib.core.wrapper.map
 import net.flipper.busylib.core.wrapper.toCResult
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.busylib.kmp.components.core.buildkonfig.BuildKonfig
@@ -112,7 +115,6 @@ class FirmwareUpdaterApiImpl(
             when (result) {
                 is FwUpdateState.UpdateAvailable,
                 is FwUpdateState.NoUpdateAvailable,
-                is FwUpdateState.LowBattery,
                 is FwUpdateState.CheckingVersion,
                 is FwUpdateState.CouldNotCheckUpdate,
                 is FwUpdateState.DownloadFailure,
@@ -213,9 +215,9 @@ class FirmwareUpdaterApiImpl(
         info { "#startUpdateInstall device connected!" }
     }
 
-    private suspend fun getBsbUpdateVersion(
+    private suspend fun startUpdateInstallInternal(
         bsbUpdateVersion: BsbUpdateVersion.ReadyToUpdate
-    ): Result<BsbUpdateVersion.ReadyToUpdate> {
+    ): StartUpdateResponse {
         return when (bsbUpdateVersion) {
             is BsbUpdateVersion.ReadyToUpdate.Default -> {
                 fFeatureProvider.get<FRpcFeatureApi>()
@@ -226,7 +228,22 @@ class FirmwareUpdaterApiImpl(
                     .featureApi
                     .fRpcUpdaterApi
                     .startUpdateInstall(bsbUpdateVersion.version)
-                    .map { bsbUpdateVersion }
+                    .fold(
+                        onSuccess = { apiResponse ->
+                            when (apiResponse) {
+                                is ErrorResponse if apiResponse.error == BsbRpcError.BATTERY_LOW.error -> {
+                                    StartUpdateResponse.LowBattery
+                                }
+
+                                is ErrorResponse -> {
+                                    StartUpdateResponse.Failure(Throwable(apiResponse.error))
+                                }
+
+                                is SuccessResponse -> StartUpdateResponse.Success
+                            }
+                        },
+                        onFailure = { t -> StartUpdateResponse.Failure(t) }
+                    )
             }
 
             is BsbUpdateVersion.ReadyToUpdate.Url -> {
@@ -241,7 +258,10 @@ class FirmwareUpdaterApiImpl(
                             .onFailure { t -> error(t) { "#startUpdateInstall could not upload" } }
                             .getOrThrow()
                     }
-                    .map { bsbUpdateVersion }
+                    .fold(
+                        onSuccess = { StartUpdateResponse.Success },
+                        onFailure = { t -> StartUpdateResponse.Failure(t) }
+                    )
             }
         }
     }
@@ -251,8 +271,7 @@ class FirmwareUpdaterApiImpl(
      * Using map for flow here in case connection type changed from lan to other type
      * @see BsbUpdateVersion
      */
-    override suspend fun startUpdateInstall(): CResult<Unit> {
-        info { "#startUpdateInstall" }
+    override suspend fun startUpdateInstall(): StartUpdateResponse {
         return lanUpdaterScope.async {
             installRequestedFlow.value = true
             coroutineContext.job.invokeOnCompletion {
@@ -274,20 +293,22 @@ class FirmwareUpdaterApiImpl(
             info { "#startUpdateInstall bsbUpdateVersion: $bsbUpdateVersion" }
             firmwareDownloaderApi.reset()
             firmwareUploaderApi.reset()
-            val updateResult = getBsbUpdateVersion(bsbUpdateVersion).toCResult()
-            info { "#startUpdateInstall update result is $updateResult" }
-            updateResult.map { bsbUpdateVersion ->
-                when (bsbUpdateVersion) {
-                    is BsbUpdateVersion.ReadyToUpdate.Default -> Unit
-                    is BsbUpdateVersion.ReadyToUpdate.Url -> {
-                        info { "#startUpdateInstall bootTimeFlow wait" }
-                        val bootTime = bootTimeFlow.first()
-                        info { "#startUpdateInstall bootTimeFlow cancel" }
-                        bootTimeScope.cancel()
-                        awaitDeviceReconnected(bootTime)
-                    }
+            val startUpdateResponse = startUpdateInstallInternal(bsbUpdateVersion)
+            when (bsbUpdateVersion) {
+                is BsbUpdateVersion.ReadyToUpdate.Default -> {
+                    bootTimeScope.cancel()
+                }
+
+                is BsbUpdateVersion.ReadyToUpdate.Url -> {
+                    info { "#startUpdateInstall bootTimeFlow wait" }
+                    val bootTime = bootTimeFlow.first()
+                    info { "#startUpdateInstall bootTimeFlow cancel" }
+                    bootTimeScope.cancel()
+                    awaitDeviceReconnected(bootTime)
                 }
             }
+            installRequestedFlow.value = false
+            startUpdateResponse
         }.await()
     }
 

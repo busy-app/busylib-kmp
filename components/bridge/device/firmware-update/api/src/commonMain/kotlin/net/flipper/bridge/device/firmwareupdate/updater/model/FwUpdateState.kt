@@ -5,7 +5,6 @@ sealed interface FwUpdateState {
     data object Pending : FwUpdateState
 
     data object CheckingVersion : FwUpdateState
-    data object LowBattery : FwUpdateState
     data object CouldNotCheckUpdate : FwUpdateState
     data object NoUpdateAvailable : FwUpdateState
     data object Updating : FwUpdateState
