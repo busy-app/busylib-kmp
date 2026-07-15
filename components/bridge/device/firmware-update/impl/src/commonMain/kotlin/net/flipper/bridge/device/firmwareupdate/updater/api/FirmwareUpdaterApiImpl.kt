@@ -83,7 +83,6 @@ class FirmwareUpdaterApiImpl(
     private val scope: CoroutineScope,
     private val updateStatusProvider: UpdateStatusProvider,
     private val fDevicePersistedStorage: FDevicePersistedStorage,
-    private val fEventsFeatureApi: FEventsFeatureApi
 ) : FirmwareUpdaterApi, LogTagProvider by TaggedLogger("UpdaterApi") {
     private val firmwareDownloaderApi: FirmwareDownloaderApi = FirmwareDownloaderApiImpl(
         httpClient = httpClient
@@ -234,10 +233,13 @@ class FirmwareUpdaterApiImpl(
                     .fRpcUpdaterApi
                     .startUpdateInstall(bsbUpdateVersion.version)
                     .mapCatching { apiResponse ->
+                        val fEventsFeatureApi = fFeatureProvider.get<FEventsFeatureApi>()
+                            .tryCast<FFeatureStatus.Supported<FEventsFeatureApi>>()
+                            ?.featureApi
                         when (apiResponse) {
                             is ErrorResponse if apiResponse.error == BsbRpcError.BATTERY_LOW.error -> {
                                 val event = BusyLibUpdateEvent.Update.BatteryStateChanged(true)
-                                fEventsFeatureApi.onBusyLibEvent(event)
+                                fEventsFeatureApi?.onBusyLibEvent(event)
                                 error(apiResponse.error)
                             }
 
@@ -245,7 +247,7 @@ class FirmwareUpdaterApiImpl(
 
                             is SuccessResponse -> {
                                 val event = BusyLibUpdateEvent.Update.BatteryStateChanged(true)
-                                fEventsFeatureApi.onBusyLibEvent(event)
+                                fEventsFeatureApi?.onBusyLibEvent(event)
                             }
                         }
                     }
