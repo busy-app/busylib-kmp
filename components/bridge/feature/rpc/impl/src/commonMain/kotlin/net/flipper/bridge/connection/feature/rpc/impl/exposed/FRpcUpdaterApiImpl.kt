@@ -18,6 +18,7 @@ import kotlinx.coroutines.yield
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcUpdaterApi
 import net.flipper.bridge.connection.feature.rpc.api.model.ApiResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.AutoUpdate
+import net.flipper.bridge.connection.feature.rpc.api.model.BsbRpcError
 import net.flipper.bridge.connection.feature.rpc.api.model.ErrorResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.GetUpdateChangelogResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
@@ -81,11 +82,11 @@ class FRpcUpdaterApiImpl(
         }
     }
 
-    override suspend fun startUpdateInstall(version: String): Result<SuccessResponse> {
+    override suspend fun startUpdateInstall(version: String): Result<ApiResponse> {
         return runSuspendCatching(dispatcher) {
             httpClient.post("/api/update/install") {
                 parameter("version", version)
-            }.body<SuccessResponse>()
+            }.body<ApiResponse>()
         }
     }
 

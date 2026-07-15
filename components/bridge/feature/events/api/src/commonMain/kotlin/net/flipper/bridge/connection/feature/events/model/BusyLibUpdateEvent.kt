@@ -84,6 +84,7 @@ sealed interface BusyLibUpdateEvent {
     }
 
     sealed interface Update : BusyLibUpdateEvent {
+        data class BatteryStateChanged(val isLowBattery: Boolean) : Update
         data class UpdateState(
             val event: BsbEvent,
             val action: BsbAction,

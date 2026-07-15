@@ -28,6 +28,8 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.job
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
+import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
+import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
 import net.flipper.bridge.connection.feature.firmwareupdate.api.FFirmwareUpdateFeatureApi
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateVersion
 import net.flipper.bridge.connection.feature.info.api.FDeviceInfoFeatureApi
@@ -36,6 +38,10 @@ import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
 import net.flipper.bridge.connection.feature.provider.api.get
 import net.flipper.bridge.connection.feature.provider.api.getSync
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
+import net.flipper.bridge.connection.feature.rpc.api.model.ApiResponse
+import net.flipper.bridge.connection.feature.rpc.api.model.BsbRpcError
+import net.flipper.bridge.connection.feature.rpc.api.model.ErrorResponse
+import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
 import net.flipper.bridge.device.firmwareupdate.downloader.api.FirmwareDownloaderApi
 import net.flipper.bridge.device.firmwareupdate.downloader.api.FirmwareDownloaderApiImpl
 import net.flipper.bridge.device.firmwareupdate.status.api.UpdateStatusProvider
@@ -76,7 +82,8 @@ class FirmwareUpdaterApiImpl(
     private val previousVersionFlowProvider: PreviousVersionFlowProvider,
     private val scope: CoroutineScope,
     private val updateStatusProvider: UpdateStatusProvider,
-    private val fDevicePersistedStorage: FDevicePersistedStorage
+    private val fDevicePersistedStorage: FDevicePersistedStorage,
+    private val fEventsFeatureApi: FEventsFeatureApi
 ) : FirmwareUpdaterApi, LogTagProvider by TaggedLogger("UpdaterApi") {
     private val firmwareDownloaderApi: FirmwareDownloaderApi = FirmwareDownloaderApiImpl(
         httpClient = httpClient
@@ -226,6 +233,22 @@ class FirmwareUpdaterApiImpl(
                     .featureApi
                     .fRpcUpdaterApi
                     .startUpdateInstall(bsbUpdateVersion.version)
+                    .mapCatching { apiResponse ->
+                        when (apiResponse) {
+                            is ErrorResponse if apiResponse.error == BsbRpcError.BATTERY_LOW.error -> {
+                                val event = BusyLibUpdateEvent.Update.BatteryStateChanged(true)
+                                fEventsFeatureApi.onBusyLibEvent(event)
+                                error(apiResponse.error)
+                            }
+
+                            is ErrorResponse -> error(apiResponse.error)
+
+                            is SuccessResponse -> {
+                                val event = BusyLibUpdateEvent.Update.BatteryStateChanged(true)
+                                fEventsFeatureApi.onBusyLibEvent(event)
+                            }
+                        }
+                    }
                     .map { bsbUpdateVersion }
             }
 

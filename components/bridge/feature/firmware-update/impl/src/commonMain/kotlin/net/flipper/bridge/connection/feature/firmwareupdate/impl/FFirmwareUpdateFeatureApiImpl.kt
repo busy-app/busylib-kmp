@@ -59,7 +59,7 @@ class FFirmwareUpdateFeatureApiImpl(
     private val combinedFlows = UpdateFlowCombinerDelegate(
         rpcFeatureApi = rpcFeatureApi,
         fEventsFeatureApi = fEventsFeatureApi,
-        scope = scope
+        scope = scope,
     )
 
     private val availableVersionFlow = combinedFlows.availableVersionFlow
