@@ -112,6 +112,7 @@ class FirmwareUpdaterApiImpl(
                 isInstallRequested
             )
             when (result) {
+                is FwUpdateState.BatteryLow,
                 is FwUpdateState.UpdateAvailable,
                 is FwUpdateState.NoUpdateAvailable,
                 is FwUpdateState.CheckingVersion,
@@ -232,7 +233,7 @@ class FirmwareUpdaterApiImpl(
                             info { "#startUpdateInstallInternal commit 3 -> apiResponse: $apiResponse" }
                             when (apiResponse) {
                                 is ErrorResponse if apiResponse.error == BsbRpcError.BATTERY_LOW.error -> {
-                                    StartUpdateResponse.LowBattery
+                                    StartUpdateResponse.BatteryLow
                                 }
 
                                 is ErrorResponse -> {
@@ -307,7 +308,7 @@ class FirmwareUpdaterApiImpl(
 
                 is BsbUpdateVersion.ReadyToUpdate.Url -> {
                     when (startUpdateResponse) {
-                        StartUpdateResponse.LowBattery,
+                        StartUpdateResponse.BatteryLow,
                         is StartUpdateResponse.Failure -> {
                             bootTimeScope.cancel()
                         }

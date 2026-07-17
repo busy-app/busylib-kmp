@@ -19,7 +19,7 @@ internal object FwUpdateStatusMapper {
                 FwUpdateState.Uploading(uploaderState.progress)
             }
 
-            FirmwareUploaderState.BatteryLow,
+            FirmwareUploaderState.BatteryLow -> FwUpdateState.BatteryLow
             FirmwareUploaderState.Pending,
             FirmwareUploaderState.Failed -> null
         }
@@ -140,6 +140,7 @@ internal object FwUpdateStatusMapper {
             ?: FwUpdateState.Pending
         return when (state) {
             FwUpdateState.UpdateAvailable if isInstallRequested -> FwUpdateState.Preparing
+            is FwUpdateState.BatteryLow,
             is FwUpdateState.CheckingVersion,
             is FwUpdateState.CouldNotCheckUpdate,
             is FwUpdateState.DownloadFailure,

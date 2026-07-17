@@ -107,7 +107,7 @@ internal class FirmwareUploaderApiImpl(
             }
 
             is FirmwareUploaderState.BatteryLow -> {
-                StartUpdateResponse.LowBattery
+                StartUpdateResponse.BatteryLow
             }
 
             else -> {

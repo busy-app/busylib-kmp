@@ -62,15 +62,19 @@ class PreviousVersionFlowProvider(
                             )
                         )
                         fwUpdateFlow.filterIsInstance<FwUpdateState.Updating>().first()
-                        fwUpdateFlow.filter { state -> state !is FwUpdateState.Updating }.first()
-                        val afterUpdateVersion = getVersionFlow().filterNotNull().first()
-                        verbose { "#getPreviousVersionFlow afterUpdateVersion: $afterUpdateVersion" }
-                        send(
-                            BusyBarVersionTransition(
-                                previousVersion = beforeUpdateVersion,
-                                currentVersion = afterUpdateVersion
+                        val nonUpdatingState = fwUpdateFlow
+                            .filter { state -> state !is FwUpdateState.Updating }
+                            .first()
+                        if (nonUpdatingState !is FwUpdateState.BatteryLow) {
+                            val afterUpdateVersion = getVersionFlow().filterNotNull().first()
+                            verbose { "#getPreviousVersionFlow afterUpdateVersion: $afterUpdateVersion" }
+                            send(
+                                BusyBarVersionTransition(
+                                    previousVersion = beforeUpdateVersion,
+                                    currentVersion = afterUpdateVersion
+                                )
                             )
-                        )
+                        }
                     }
                     .first()
             }
