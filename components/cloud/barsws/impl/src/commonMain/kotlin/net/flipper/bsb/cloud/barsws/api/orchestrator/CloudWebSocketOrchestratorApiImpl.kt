@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.shareIn
@@ -49,10 +50,8 @@ class CloudWebSocketOrchestratorApiImpl(
     private val subscriberCountsFlow = MutableStateFlow(mapOf<Uuid, Int>())
     private val subscriberCountsFlowWithDebounce = subscriberCountsFlow
         .debounce(1.seconds)
-    private val wsEventSharedFlow = getWSEventsFlow()
-        .shareIn(scope, SharingStarted.Lazily)
 
-    private fun getWSFlow() = subscriberCountsFlowWithDebounce
+    private val wsFlow = subscriberCountsFlowWithDebounce
         .map {
             it.isNotEmpty()
         }
@@ -69,31 +68,35 @@ class CloudWebSocketOrchestratorApiImpl(
                 flowOf(null)
             }
         }
+        .shareIn(scope, SharingStarted.Lazily, replay = 1)
 
-    private fun getWSEventsFlow(): Flow<WebSocketEventInternal.Protobuf> {
-        return combine(
-            subscriberCountsFlowWithDebounce.onEach {
-                verbose { "Events combine: subscriberCounts=$it" }
-            },
-            getWSFlow().onEach {
-                verbose { "Events combine: ws=$it" }
-            },
-        ) { subscriberCounts, webSocket ->
-            verbose { "Events combine triggered: subscriberCounts=$subscriberCounts, webSocket=$webSocket" }
+    private val wsEventSharedFlow = wsFlow
+        .flatMapLatest { webSocket ->
             if (webSocket != null) {
-                info { "Events combine: invalidating subscribers and collecting events" }
+                webSocket.getEventsFlowInternal()
+            } else {
+                flowOf()
+            }
+        }
+        .filterIsInstance<WebSocketEventInternal.Protobuf>()
+        .shareIn(scope, SharingStarted.Lazily)
+
+    init {
+        combine(
+            subscriberCountsFlowWithDebounce,
+            wsFlow,
+        ) { subscriberCounts, webSocket ->
+            if (webSocket != null) {
+                info { "Subscribers combine: invalidating subscribers" }
                 activeWebSocketHolder.invalidateSubscribers(
                     subscriberCounts,
                     webSocket
                 )
-                webSocket.getEventsFlowInternal()
             } else {
-                info { "Events combine: webSocket is null, resetting subscribers" }
+                info { "Subscribers combine: webSocket is null, resetting subscribers" }
                 activeWebSocketHolder.resetSubscribers()
-                flowOf()
             }
-        }.flatMapLatest { it }
-            .filterIsInstance<WebSocketEventInternal.Protobuf>()
+        }.launchIn(scope)
     }
 
     override fun getEventsFlow(cloudId: Uuid): Flow<ProtobufBase64> {
