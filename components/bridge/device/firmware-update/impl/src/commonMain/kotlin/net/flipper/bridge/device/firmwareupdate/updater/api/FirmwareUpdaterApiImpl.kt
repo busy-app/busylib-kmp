@@ -295,11 +295,20 @@ class FirmwareUpdaterApiImpl(
                 }
 
                 is BsbUpdateVersion.ReadyToUpdate.Url -> {
-                    info { "#startUpdateInstall bootTimeFlow wait" }
-                    val bootTime = bootTimeFlow.first()
-                    info { "#startUpdateInstall bootTimeFlow cancel" }
-                    bootTimeScope.cancel()
-                    awaitDeviceReconnected(bootTime)
+                    when (startUpdateResponse) {
+                        StartUpdateResponse.LowBattery,
+                        is StartUpdateResponse.Failure -> {
+                            bootTimeScope.cancel()
+                        }
+
+                        StartUpdateResponse.Success -> {
+                            info { "#startUpdateInstall bootTimeFlow wait" }
+                            val bootTime = bootTimeFlow.first()
+                            info { "#startUpdateInstall bootTimeFlow cancel" }
+                            bootTimeScope.cancel()
+                            awaitDeviceReconnected(bootTime)
+                        }
+                    }
                 }
             }
             installRequestedFlow.value = false
