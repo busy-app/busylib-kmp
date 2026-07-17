@@ -19,6 +19,7 @@ internal object FwUpdateStatusMapper {
                 FwUpdateState.Uploading(uploaderState.progress)
             }
 
+            FirmwareUploaderState.BatteryLow,
             FirmwareUploaderState.Pending,
             FirmwareUploaderState.Failed -> null
         }

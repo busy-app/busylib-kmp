@@ -4,6 +4,7 @@ internal sealed interface FirmwareUploaderState {
     data object Failed : FirmwareUploaderState
     data object Pending : FirmwareUploaderState
     data object Uploaded : FirmwareUploaderState
+    data object BatteryLow : FirmwareUploaderState
     data class Uploading(
         val bytesReceived: Long,
         val totalBytes: Long
