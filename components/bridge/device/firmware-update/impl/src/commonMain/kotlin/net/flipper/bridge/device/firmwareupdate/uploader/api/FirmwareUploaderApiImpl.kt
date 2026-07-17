@@ -87,6 +87,8 @@ internal class FirmwareUploaderApiImpl(
                     val error = apiResponse.tryCast<ErrorResponse>()?.error
                     if (error == BsbRpcError.BATTERY_LOW.error) {
                         _state.emit(FirmwareUploaderState.BatteryLow)
+                    } else if (error == BsbRpcError.UPDATE_NOT_ALLOWED.error) {
+                        _state.emit(FirmwareUploaderState.BatteryLow)
                     }
                 } catch (_: SocketTimeoutException) {
                     info { "#uploadAndInstall device connection lost" }
