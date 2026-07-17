@@ -6,6 +6,7 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
@@ -68,6 +69,7 @@ class PreviousVersionFlowProvider(
                                 .first()
                         }
                         fwUpdateFlow.filterIsInstance<FwUpdateState.Updating>().first()
+                        fwUpdateFlow.filter { state -> state !is FwUpdateState.Updating }.first()
                         if (batteryLowStateDeferred.getOrNull() == null) {
                             val afterUpdateVersion = getVersionFlow().filterNotNull().first()
                             verbose { "#getPreviousVersionFlow afterUpdateVersion: $afterUpdateVersion" }
