@@ -229,6 +229,7 @@ class FirmwareUpdaterApiImpl(
                     .startUpdateInstall(bsbUpdateVersion.version)
                     .fold(
                         onSuccess = { apiResponse ->
+                            info { "#startUpdateInstallInternal commit 3 -> apiResponse: $apiResponse" }
                             when (apiResponse) {
                                 is ErrorResponse if apiResponse.error == BsbRpcError.BATTERY_LOW.error -> {
                                     StartUpdateResponse.LowBattery
@@ -241,7 +242,10 @@ class FirmwareUpdaterApiImpl(
                                 is SuccessResponse -> StartUpdateResponse.Success
                             }
                         },
-                        onFailure = { t -> StartUpdateResponse.Failure(t) }
+                        onFailure = { t ->
+                            error(t) { "#startUpdateInstallInternal commit 3 -> failure" }
+                            StartUpdateResponse.Failure(t)
+                        }
                     )
             }
 
@@ -254,8 +258,14 @@ class FirmwareUpdaterApiImpl(
                         firmwareUploaderApi.uploadAndInstall(path) { firmwareDownloaderApi.reset() }
                     }
                     .fold(
-                        onSuccess = { startUpdateResponse -> startUpdateResponse },
-                        onFailure = { t -> StartUpdateResponse.Failure(t) }
+                        onSuccess = { startUpdateResponse ->
+                            info { "#startUpdateInstallInternal commit 3 -> onSuccess: $startUpdateResponse" }
+                            startUpdateResponse
+                        },
+                        onFailure = { t ->
+                            error(t) { "#startUpdateInstall commit 3 -> onFailure" }
+                            StartUpdateResponse.Failure(t)
+                        }
                     )
             }
         }
@@ -289,6 +299,7 @@ class FirmwareUpdaterApiImpl(
             firmwareDownloaderApi.reset()
             firmwareUploaderApi.reset()
             val startUpdateResponse = startUpdateInstallInternal(bsbUpdateVersion)
+            info { "#startUpdateInstall commit 3 -> startUpdateResponse: $startUpdateResponse" }
             when (bsbUpdateVersion) {
                 is BsbUpdateVersion.ReadyToUpdate.Default -> {
                     bootTimeScope.cancel()
