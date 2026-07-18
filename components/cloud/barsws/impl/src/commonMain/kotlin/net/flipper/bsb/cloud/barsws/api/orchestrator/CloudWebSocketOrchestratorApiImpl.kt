@@ -10,7 +10,6 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
@@ -19,8 +18,11 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.withContext
 import net.flipper.bsb.cloud.barsws.api.CloudWebSocketOrchestratorApi
@@ -49,7 +51,36 @@ class CloudWebSocketOrchestratorApiImpl(
     private val subscriberCountsFlow = MutableStateFlow(mapOf<Uuid, Int>())
     private val subscriberCountsFlowWithDebounce = subscriberCountsFlow
         .debounce(1.seconds)
-    private val wsEventSharedFlow = getWSEventsFlow()
+
+    // The events collection lives for the whole lifetime of a websocket:
+    // subscriber-count changes only re-run invalidateSubscribers (a merged
+    // non-emitting branch) and must never tear down getEventsFlowInternal(),
+    // otherwise events arriving during the resubscription gap are lost.
+    private val wsEventSharedFlow = getWSFlow()
+        .distinctUntilChanged()
+        .flatMapLatest { webSocket ->
+            if (webSocket != null) {
+                info { "New websocket, collecting events and syncing subscribers" }
+                merge(
+                    webSocket.getEventsFlowInternal(),
+                    subscriberCountsFlowWithDebounce
+                        .onStart { emit(subscriberCountsFlow.value) }
+                        .transform<Map<Uuid, Int>, WebSocketEventInternal> { subscriberCounts ->
+                            verbose { "Syncing subscribers: $subscriberCounts" }
+                            activeWebSocketHolder.invalidateSubscribers(
+                                subscriberCounts,
+                                webSocket
+                            )
+                        }
+                )
+            } else {
+                info { "Websocket is null, resetting subscribers" }
+                flow {
+                    activeWebSocketHolder.resetSubscribers()
+                }
+            }
+        }
+        .filterIsInstance<WebSocketEventInternal.Protobuf>()
         .shareIn(scope, SharingStarted.Lazily)
 
     private fun getWSFlow() = subscriberCountsFlowWithDebounce
@@ -69,32 +100,6 @@ class CloudWebSocketOrchestratorApiImpl(
                 flowOf(null)
             }
         }
-
-    private fun getWSEventsFlow(): Flow<WebSocketEventInternal.Protobuf> {
-        return combine(
-            subscriberCountsFlowWithDebounce.onEach {
-                verbose { "Events combine: subscriberCounts=$it" }
-            },
-            getWSFlow().onEach {
-                verbose { "Events combine: ws=$it" }
-            },
-        ) { subscriberCounts, webSocket ->
-            verbose { "Events combine triggered: subscriberCounts=$subscriberCounts, webSocket=$webSocket" }
-            if (webSocket != null) {
-                info { "Events combine: invalidating subscribers and collecting events" }
-                activeWebSocketHolder.invalidateSubscribers(
-                    subscriberCounts,
-                    webSocket
-                )
-                webSocket.getEventsFlowInternal()
-            } else {
-                info { "Events combine: webSocket is null, resetting subscribers" }
-                activeWebSocketHolder.resetSubscribers()
-                flowOf()
-            }
-        }.flatMapLatest { it }
-            .filterIsInstance<WebSocketEventInternal.Protobuf>()
-    }
 
     override fun getEventsFlow(cloudId: Uuid): Flow<ProtobufBase64> {
         return flow {
