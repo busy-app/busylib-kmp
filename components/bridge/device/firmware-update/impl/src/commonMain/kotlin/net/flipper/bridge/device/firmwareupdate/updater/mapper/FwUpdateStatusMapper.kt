@@ -81,7 +81,7 @@ internal object FwUpdateStatusMapper {
                     )
                 }
 
-                BsbUpdateStatus.ReadyToInstall.BatteryLow -> FwUpdateState.LowBattery
+                BsbUpdateStatus.ReadyToInstall.BatteryLow -> FwUpdateState.UpdateAvailable
                 BsbUpdateStatus.ReadyToInstall.Ready -> FwUpdateState.UpdateAvailable
                 BsbUpdateStatus.Loading -> null
             }
@@ -105,7 +105,7 @@ internal object FwUpdateStatusMapper {
                 )
             }
 
-            BsbUpdateStatus.ReadyToInstall.BatteryLow -> FwUpdateState.LowBattery
+            BsbUpdateStatus.ReadyToInstall.BatteryLow -> FwUpdateState.UpdateAvailable
             BsbUpdateStatus.ReadyToInstall.Ready -> FwUpdateState.UpdateAvailable
             BsbUpdateStatus.Loading -> null
         }
@@ -144,7 +144,6 @@ internal object FwUpdateStatusMapper {
             is FwUpdateState.CouldNotCheckUpdate,
             is FwUpdateState.DownloadFailure,
             is FwUpdateState.Downloading,
-            is FwUpdateState.LowBattery,
             is FwUpdateState.NoUpdateAvailable,
             is FwUpdateState.Pending,
             is FwUpdateState.Preparing,

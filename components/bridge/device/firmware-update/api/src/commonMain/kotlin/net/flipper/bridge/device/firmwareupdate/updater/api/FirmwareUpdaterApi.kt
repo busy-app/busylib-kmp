@@ -2,6 +2,7 @@ package net.flipper.bridge.device.firmwareupdate.updater.api
 
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateEvent
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateState
+import net.flipper.bridge.device.firmwareupdate.updater.model.StartUpdateResponse
 import net.flipper.busylib.core.wrapper.CResult
 import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.WrappedStateFlow
@@ -19,7 +20,7 @@ interface FirmwareUpdaterApi {
      * for that device — even when the device cannot be reached
      */
     suspend fun stopFirmwareUpdate(deviceId: String): CResult<Unit>
-    suspend fun startUpdateInstall(): CResult<Unit>
+    suspend fun startUpdateInstall(): StartUpdateResponse
 
     /**
      * Required for button on Firmware settings screen

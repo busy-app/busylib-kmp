@@ -35,6 +35,9 @@ import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
 import net.flipper.bridge.connection.feature.provider.api.get
 import net.flipper.bridge.connection.feature.provider.api.getSync
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
+import net.flipper.bridge.connection.feature.rpc.api.model.BsbRpcError
+import net.flipper.bridge.connection.feature.rpc.api.model.ErrorResponse
+import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
 import net.flipper.bridge.device.firmwareupdate.downloader.api.FirmwareDownloaderApi
 import net.flipper.bridge.device.firmwareupdate.downloader.api.FirmwareDownloaderApiImpl
 import net.flipper.bridge.device.firmwareupdate.status.api.UpdateStatusProvider
@@ -43,12 +46,12 @@ import net.flipper.bridge.device.firmwareupdate.updater.log.FwUpdateStateLogger
 import net.flipper.bridge.device.firmwareupdate.updater.mapper.FwUpdateStatusMapper
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateEvent
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateState
+import net.flipper.bridge.device.firmwareupdate.updater.model.StartUpdateResponse
 import net.flipper.bridge.device.firmwareupdate.uploader.api.FirmwareUploaderApi
 import net.flipper.bridge.device.firmwareupdate.uploader.api.FirmwareUploaderApiImpl
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.core.wrapper.CResult
 import net.flipper.busylib.core.wrapper.WrappedStateFlow
-import net.flipper.busylib.core.wrapper.map
 import net.flipper.busylib.core.wrapper.toCResult
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.busylib.kmp.components.core.buildkonfig.BuildKonfig
@@ -137,7 +140,6 @@ class FirmwareUpdaterApiImpl(
             when (result) {
                 is FwUpdateState.UpdateAvailable,
                 is FwUpdateState.NoUpdateAvailable,
-                is FwUpdateState.LowBattery,
                 is FwUpdateState.CheckingVersion,
                 is FwUpdateState.CouldNotCheckUpdate,
                 is FwUpdateState.DownloadFailure,
@@ -267,13 +269,12 @@ class FirmwareUpdaterApiImpl(
 
     /**
      * Kicks off the install for the given version: Default — sends the install RPC to the
-     * device, Url (LAN) — downloads the firmware and uploads it to the device. Passes the
-     * version through so the caller can keep branching on it
+     * device, Url (LAN) — downloads the firmware and uploads it to the device
      */
     private suspend fun dispatchInstall(
         bsbUpdateVersion: BsbUpdateVersion.ReadyToUpdate,
         onInstallRpcDispatch: () -> Unit = {}
-    ): Result<BsbUpdateVersion.ReadyToUpdate> {
+    ): StartUpdateResponse {
         return when (bsbUpdateVersion) {
             is BsbUpdateVersion.ReadyToUpdate.Default -> {
                 val rpcUpdaterApi = fFeatureProvider.get<FRpcFeatureApi>()
@@ -286,7 +287,22 @@ class FirmwareUpdaterApiImpl(
                 onInstallRpcDispatch()
                 rpcUpdaterApi
                     .startUpdateInstall(bsbUpdateVersion.version)
-                    .map { bsbUpdateVersion }
+                    .fold(
+                        onSuccess = { apiResponse ->
+                            when (apiResponse) {
+                                is ErrorResponse if apiResponse.error == BsbRpcError.BATTERY_LOW.error -> {
+                                    StartUpdateResponse.LowBattery
+                                }
+
+                                is ErrorResponse -> {
+                                    StartUpdateResponse.Failure(Throwable(apiResponse.error))
+                                }
+
+                                is SuccessResponse -> StartUpdateResponse.Success
+                            }
+                        },
+                        onFailure = { t -> StartUpdateResponse.Failure(t) }
+                    )
             }
 
             is BsbUpdateVersion.ReadyToUpdate.Url -> {
@@ -301,7 +317,10 @@ class FirmwareUpdaterApiImpl(
                             .onFailure { t -> error(t) { "#startUpdateInstall could not upload" } }
                             .getOrThrow()
                     }
-                    .map { bsbUpdateVersion }
+                    .fold(
+                        onSuccess = { StartUpdateResponse.Success },
+                        onFailure = { t -> StartUpdateResponse.Failure(t) }
+                    )
             }
         }
     }
@@ -310,7 +329,7 @@ class FirmwareUpdaterApiImpl(
      * Starts an update install depending on current [BsbUpdateVersion]
      * @see BsbUpdateVersion
      */
-    override suspend fun startUpdateInstall(): CResult<Unit> {
+    override suspend fun startUpdateInstall(): StartUpdateResponse {
         info { "#startUpdateInstall" }
         // deviceId and version come from a single emission, so the install below
         // is always attributed to the device that actually reported ReadyToUpdate
@@ -344,28 +363,27 @@ class FirmwareUpdaterApiImpl(
     private suspend fun runDefaultInstall(
         bsbUpdateVersion: BsbUpdateVersion.ReadyToUpdate.Default,
         updatingDeviceId: String
-    ): CResult<Unit> {
+    ): StartUpdateResponse {
         beginInstall(updatingDeviceId)
         var rpcDispatched = false
         coroutineContext.job.invokeOnCompletion { cause ->
             // Cancelled (device switch) or died before the install RPC went out — no update
             // is running anywhere, release the gate and the id so Preparing can't leak.
             // After dispatch the outcome is unknown (the device may be installing), so the
-            // id is conservatively kept; RPC failure below clears it explicitly
+            // id is conservatively kept; a non-Success response below clears it explicitly
             if (cause != null && !rpcDispatched) {
                 installRequestedFlow.value = false
                 clearUpdatingDeviceId(updatingDeviceId, reason = "default install aborted before RPC (cause=$cause)")
             }
         }
-        val updateResult = dispatchInstall(bsbUpdateVersion) { rpcDispatched = true }.toCResult()
-        info { "#startUpdateInstall update result is $updateResult" }
-        return updateResult
-            .map { }
-            .onFailure {
-                // The install RPC never succeeded — no update is running, release the gate.
-                installRequestedFlow.value = false
-                clearUpdatingDeviceId(updatingDeviceId, reason = "default install RPC failed")
-            }
+        val response = dispatchInstall(bsbUpdateVersion) { rpcDispatched = true }
+        info { "#startUpdateInstall update result is $response" }
+        if (response !is StartUpdateResponse.Success) {
+            // The device did not start the update (error or low battery) — release the gate.
+            installRequestedFlow.value = false
+            clearUpdatingDeviceId(updatingDeviceId, reason = "default install did not start ($response)")
+        }
+        return response
     }
 
     /**
@@ -376,7 +394,7 @@ class FirmwareUpdaterApiImpl(
     private suspend fun runLanInstall(
         bsbUpdateVersion: BsbUpdateVersion.ReadyToUpdate.Url,
         updatingDeviceId: String
-    ): CResult<Unit> {
+    ): StartUpdateResponse {
         beginInstall(updatingDeviceId)
         coroutineContext.job.invokeOnCompletion { cause ->
             installRequestedFlow.value = false
@@ -389,15 +407,16 @@ class FirmwareUpdaterApiImpl(
             .let(::CoroutineScope)
         try {
             val bootTimeFlow = getBootTimeFlow().shareIn(bootTimeScope, SharingStarted.Eagerly, 1)
-            val updateResult = dispatchInstall(bsbUpdateVersion).toCResult()
-            info { "#startUpdateInstall update result is $updateResult" }
-            return updateResult.map {
+            val response = dispatchInstall(bsbUpdateVersion)
+            info { "#startUpdateInstall update result is $response" }
+            if (response is StartUpdateResponse.Success) {
                 info { "#startUpdateInstall bootTimeFlow wait" }
                 val bootTime = bootTimeFlow.first()
                 info { "#startUpdateInstall bootTimeFlow cancel" }
                 bootTimeScope.cancel()
                 awaitDeviceReconnected(bootTime)
             }
+            return response
         } finally {
             bootTimeScope.cancel()
         }

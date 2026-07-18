@@ -144,13 +144,6 @@ class FirmwareUpdateDecomposeComponent(
                 LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
             }
 
-            FwUpdateState.LowBattery -> {
-                Text(
-                    text = "Battery too low to update. Please charge the device.",
-                    color = Color.Red
-                )
-            }
-
             FwUpdateState.CouldNotCheckUpdate -> {
                 Text(
                     text = "Could not check for updates. Check connection.",
@@ -298,7 +291,6 @@ class FirmwareUpdateDecomposeComponent(
 
     private fun stateLabel(state: FwUpdateState): String = when (state) {
         FwUpdateState.CheckingVersion -> "Checking Version"
-        FwUpdateState.LowBattery -> "Low Battery"
         FwUpdateState.Pending -> "Pending"
         FwUpdateState.CouldNotCheckUpdate -> "Could Not Check"
         FwUpdateState.NoUpdateAvailable -> "No Update"
