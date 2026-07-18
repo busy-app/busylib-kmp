@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.job
+import kotlinx.coroutines.withTimeoutOrNull
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.feature.firmwareupdate.api.FFirmwareUpdateFeatureApi
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateVersion
@@ -67,6 +68,7 @@ import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
 import net.flipper.core.ktor.di.qualifier.KtorNetworkClientQualifier
 import kotlin.coroutines.coroutineContext
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
 @Inject
@@ -188,28 +190,45 @@ class FirmwareUpdaterApiImpl(
         .wrap()
 
     override suspend fun stopFirmwareUpdate(): CResult<Unit> {
-        val currentUpdateVersion = fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
-            .map { status -> status.tryCast<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>() }
-            .map { status -> status?.featureApi }
-            .flatMapLatest { feature -> feature?.updateVersionFlow.orNullable() }
-            .filterNotNull()
-            .firstOrNull()
+        // Both feature lookups below only resolve while a device is connected. Unbounded,
+        // Cancel on a disconnected device suspends indefinitely, and the parked lookup
+        // later resumes against whatever device connects NEXT — sending the abort to the
+        // wrong device. Cancel is best-effort by contract: when the device is unreachable
+        // within the timeout we just release the local tracking
+        val currentUpdateVersion = withTimeoutOrNull(STOP_FEATURE_LOOKUP_TIMEOUT) {
+            fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
+                .map { status -> status.tryCast<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>() }
+                .map { status -> status?.featureApi }
+                .flatMapLatest { feature -> feature?.updateVersionFlow.orNullable() }
+                .filterNotNull()
+                .firstOrNull()
+        }
         return when (currentUpdateVersion?.version) {
             is BsbUpdateVersion.ReadyToUpdate.Default -> {
-                fFeatureProvider.get<FRpcFeatureApi>()
-                    .filterIsInstance<FFeatureStatus.Supported<*>>()
-                    .filter { fFeatureStatus -> fFeatureStatus.featureApi is FRpcFeatureApi }
-                    .filterIsInstance<FFeatureStatus.Supported<FRpcFeatureApi>>()
-                    .first()
-                    .featureApi
-                    .fRpcUpdaterApi
-                    .startUpdateAbortDownload()
-                    .map { }
-                    .also { installRequestedFlow.value = false }
-                    .toCResult()
-                    .onSuccess {
-                        clearUpdatingDeviceId(updatingDeviceIdFlow.value, reason = "stopFirmwareUpdate (default)")
-                    }
+                val rpcUpdaterApi = withTimeoutOrNull(STOP_FEATURE_LOOKUP_TIMEOUT) {
+                    fFeatureProvider.get<FRpcFeatureApi>()
+                        .filterIsInstance<FFeatureStatus.Supported<*>>()
+                        .filter { fFeatureStatus -> fFeatureStatus.featureApi is FRpcFeatureApi }
+                        .filterIsInstance<FFeatureStatus.Supported<FRpcFeatureApi>>()
+                        .first()
+                        .featureApi
+                        .fRpcUpdaterApi
+                }
+                if (rpcUpdaterApi == null) {
+                    // Device vanished between the two lookups — release locally
+                    installRequestedFlow.value = false
+                    clearUpdatingDeviceId(updatingDeviceIdFlow.value, reason = "stopFirmwareUpdate (rpc unavailable)")
+                    CResult.success(Unit)
+                } else {
+                    rpcUpdaterApi
+                        .startUpdateAbortDownload()
+                        .map { }
+                        .also { installRequestedFlow.value = false }
+                        .toCResult()
+                        .onSuccess {
+                            clearUpdatingDeviceId(updatingDeviceIdFlow.value, reason = "stopFirmwareUpdate (default)")
+                        }
+                }
             }
 
             is BsbUpdateVersion.ReadyToUpdate.Url -> {
@@ -220,7 +239,11 @@ class FirmwareUpdaterApiImpl(
             }
 
             else -> {
-                clearUpdatingDeviceId(updatingDeviceIdFlow.value, reason = "stopFirmwareUpdate (no active version)")
+                installRequestedFlow.value = false
+                clearUpdatingDeviceId(
+                    updatingDeviceIdFlow.value,
+                    reason = "stopFirmwareUpdate (no active version / device unreachable)"
+                )
                 CResult.success(Unit)
             }
         }
@@ -458,3 +481,9 @@ class FirmwareUpdaterApiImpl(
             .launchIn(scope)
     }
 }
+
+/**
+ * How long [FirmwareUpdaterApiImpl.stopFirmwareUpdate] waits for the connected device's
+ * features before giving up and releasing the local tracking without a device round-trip
+ */
+private val STOP_FEATURE_LOOKUP_TIMEOUT = 5.seconds
