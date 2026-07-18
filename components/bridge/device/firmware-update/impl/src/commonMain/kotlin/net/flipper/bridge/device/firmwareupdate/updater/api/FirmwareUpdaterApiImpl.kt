@@ -248,7 +248,12 @@ class FirmwareUpdaterApiImpl(
         info { "#startUpdateInstall device connected!" }
     }
 
-    private suspend fun getBsbUpdateVersion(
+    /**
+     * Kicks off the install for the given version: Default — sends the install RPC to the
+     * device, Url (LAN) — downloads the firmware and uploads it to the device. Passes the
+     * version through so the caller can keep branching on it
+     */
+    private suspend fun dispatchInstall(
         bsbUpdateVersion: BsbUpdateVersion.ReadyToUpdate,
         onInstallRpcDispatch: () -> Unit = {}
     ): Result<BsbUpdateVersion.ReadyToUpdate> {
@@ -335,7 +340,7 @@ class FirmwareUpdaterApiImpl(
                 clearUpdatingDeviceId(updatingDeviceId, reason = "default install aborted before RPC (cause=$cause)")
             }
         }
-        val updateResult = getBsbUpdateVersion(bsbUpdateVersion) { rpcDispatched = true }.toCResult()
+        val updateResult = dispatchInstall(bsbUpdateVersion) { rpcDispatched = true }.toCResult()
         info { "#startUpdateInstall update result is $updateResult" }
         return updateResult
             .map { }
@@ -367,7 +372,7 @@ class FirmwareUpdaterApiImpl(
             .let(::CoroutineScope)
         try {
             val bootTimeFlow = getBootTimeFlow().shareIn(bootTimeScope, SharingStarted.Eagerly, 1)
-            val updateResult = getBsbUpdateVersion(bsbUpdateVersion).toCResult()
+            val updateResult = dispatchInstall(bsbUpdateVersion).toCResult()
             info { "#startUpdateInstall update result is $updateResult" }
             return updateResult.map {
                 info { "#startUpdateInstall bootTimeFlow wait" }
