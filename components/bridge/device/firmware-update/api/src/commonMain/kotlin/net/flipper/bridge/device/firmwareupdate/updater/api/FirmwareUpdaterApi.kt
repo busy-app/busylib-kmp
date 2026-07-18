@@ -13,9 +13,12 @@ interface FirmwareUpdaterApi {
     val updatingDeviceId: WrappedStateFlow<String?>
 
     /**
-     * Force stop firmware download if possible
+     * Best-effort cancel of the firmware update on [deviceId]: aborts the device-side
+     * download when that device is reachable, cancels the app-side LAN update job it owns,
+     * and always releases the local update tracking ([updatingDeviceId], install gate)
+     * for that device — even when the device cannot be reached
      */
-    suspend fun stopFirmwareUpdate(): CResult<Unit>
+    suspend fun stopFirmwareUpdate(deviceId: String): CResult<Unit>
     suspend fun startUpdateInstall(): CResult<Unit>
 
     /**

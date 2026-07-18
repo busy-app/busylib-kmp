@@ -19,7 +19,6 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
@@ -29,7 +28,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.job
 import kotlinx.coroutines.withTimeoutOrNull
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
-import net.flipper.bridge.connection.feature.firmwareupdate.api.FFirmwareUpdateFeatureApi
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateVersion
 import net.flipper.bridge.connection.feature.info.api.FDeviceInfoFeatureApi
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
@@ -59,7 +57,6 @@ import net.flipper.core.busylib.ktx.common.asSingleJobScope
 import net.flipper.core.busylib.ktx.common.cancelPrevious
 import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.mapSuspendCatching
-import net.flipper.core.busylib.ktx.common.orNullable
 import net.flipper.core.busylib.ktx.common.tryCast
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.TaggedLogger
@@ -189,76 +186,61 @@ class FirmwareUpdaterApiImpl(
         .asFlow()
         .wrap()
 
-    override suspend fun stopFirmwareUpdate(): CResult<Unit> {
-        val updatingId = updatingDeviceIdFlow.value
-        val connectedId = connectedDeviceIdFlow.value
-        if (updatingId != null && connectedId != null && connectedId != updatingId) {
-            // The tracked update belongs to another device: the abort RPC below would hit
-            // the CONNECTED device (which isn't installing anything), and clearing the id
-            // would drop tracking of the still-running update. Cancel is best-effort by
-            // contract, so a no-op success is an allowed outcome. When nothing is connected
-            // (connectedId == null) we deliberately fall through — the timed-out lookups
-            // below release the local tracking, which is the only escape for a stale id
-            info { "#stopFirmwareUpdate no-op: connected=$connectedId, updating=$updatingId" }
-            return CResult.success(Unit)
+    override suspend fun stopFirmwareUpdate(deviceId: String): CResult<Unit> {
+        info { "#stopFirmwareUpdate deviceId=$deviceId" }
+        // The LAN job drives the update from the app side; it belongs to the device that
+        // started it, so cancel it only when that device is the target
+        if (updatingDeviceIdFlow.value == deviceId) {
+            lanUpdaterScope.cancelPrevious().join()
         }
-        // Both feature lookups below only resolve while a device is connected. Unbounded,
-        // Cancel on a disconnected device suspends indefinitely, and the parked lookup
-        // later resumes against whatever device connects NEXT — sending the abort to the
-        // wrong device. Cancel is best-effort by contract: when the device is unreachable
-        // within the timeout we just release the local tracking
-        val currentUpdateVersion = withTimeoutOrNull(STOP_FEATURE_LOOKUP_TIMEOUT) {
-            fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
-                .map { status -> status.tryCast<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>() }
-                .map { status -> status?.featureApi }
-                .flatMapLatest { feature -> feature?.updateVersionFlow.orNullable() }
-                .filterNotNull()
+        // Keyed lookup: the TARGET device's version decides the abort strategy. Bounded —
+        // while the target is not connected its version never emits, and Cancel must not
+        // hang (nor may a parked lookup resume against another device later)
+        val version = withTimeoutOrNull(STOP_FEATURE_LOOKUP_TIMEOUT) {
+            updateStatusProvider.getUpdateVersion()
+                .filter { deviceUpdateVersion -> deviceUpdateVersion?.deviceId == deviceId }
                 .firstOrNull()
+        }?.version
+        info {
+            "#stopFirmwareUpdate target version=$version " +
+                "connected=${connectedDeviceIdFlow.value} updating=${updatingDeviceIdFlow.value}"
         }
-        return when (currentUpdateVersion?.version) {
-            is BsbUpdateVersion.ReadyToUpdate.Default -> {
-                val rpcUpdaterApi = withTimeoutOrNull(STOP_FEATURE_LOOKUP_TIMEOUT) {
-                    fFeatureProvider.get<FRpcFeatureApi>()
-                        .filterIsInstance<FFeatureStatus.Supported<*>>()
-                        .filter { fFeatureStatus -> fFeatureStatus.featureApi is FRpcFeatureApi }
-                        .filterIsInstance<FFeatureStatus.Supported<FRpcFeatureApi>>()
-                        .first()
-                        .featureApi
-                        .fRpcUpdaterApi
+        val isDefaultUpdateOnConnectedTarget = version is BsbUpdateVersion.ReadyToUpdate.Default &&
+            connectedDeviceIdFlow.value == deviceId
+        val abortResult = if (isDefaultUpdateOnConnectedTarget) {
+            // Only the feature ACQUISITION is bounded. The abort RPC itself runs unbounded:
+            // wrapping it in the timeout cancels a slow round-trip (busy device, cloud
+            // transport) before the command is actually delivered — Cancel then silently
+            // does nothing on the device
+            val rpcUpdaterApi = withTimeoutOrNull(STOP_FEATURE_LOOKUP_TIMEOUT) {
+                fFeatureProvider.get<FRpcFeatureApi>()
+                    .filterIsInstance<FFeatureStatus.Supported<*>>()
+                    .filter { fFeatureStatus -> fFeatureStatus.featureApi is FRpcFeatureApi }
+                    .filterIsInstance<FFeatureStatus.Supported<FRpcFeatureApi>>()
+                    .first()
+                    .featureApi
+                    .fRpcUpdaterApi
+            }
+            rpcUpdaterApi
+                ?.startUpdateAbortDownload()
+                ?.map { }
+                ?.toCResult()
+                ?.also { result -> info { "#stopFirmwareUpdate abort result=$result" } }
+                ?: run {
+                    info { "#stopFirmwareUpdate abort skipped: rpc feature unavailable" }
+                    null
                 }
-                if (rpcUpdaterApi == null) {
-                    // Device vanished between the two lookups — release locally
-                    installRequestedFlow.value = false
-                    clearUpdatingDeviceId(updatingDeviceIdFlow.value, reason = "stopFirmwareUpdate (rpc unavailable)")
-                    CResult.success(Unit)
-                } else {
-                    rpcUpdaterApi
-                        .startUpdateAbortDownload()
-                        .map { }
-                        .also { installRequestedFlow.value = false }
-                        .toCResult()
-                        .onSuccess {
-                            clearUpdatingDeviceId(updatingDeviceIdFlow.value, reason = "stopFirmwareUpdate (default)")
-                        }
-                }
-            }
-
-            is BsbUpdateVersion.ReadyToUpdate.Url -> {
-                lanUpdaterScope.cancelPrevious().join()
-                installRequestedFlow.value = false
-                clearUpdatingDeviceId(updatingDeviceIdFlow.value, reason = "stopFirmwareUpdate (lan)")
-                CResult.success(Unit)
-            }
-
-            else -> {
-                installRequestedFlow.value = false
-                clearUpdatingDeviceId(
-                    updatingDeviceIdFlow.value,
-                    reason = "stopFirmwareUpdate (no active version / device unreachable)"
-                )
-                CResult.success(Unit)
-            }
+        } else {
+            info { "#stopFirmwareUpdate abort skipped: not a running default update on the target" }
+            null
         }
+        // Local tracking is released regardless of the abort outcome: an abort RPC sent to
+        // an idle or stuck device may fail, and Cancel exists exactly to escape such
+        // states. The clear is CAS-guarded by the target id, so a newer install on another
+        // device is never affected
+        installRequestedFlow.value = false
+        clearUpdatingDeviceId(deviceId, reason = "stopFirmwareUpdate($deviceId)")
+        return abortResult ?: CResult.success(Unit)
     }
 
     /**
@@ -495,7 +477,8 @@ class FirmwareUpdaterApiImpl(
 }
 
 /**
- * How long [FirmwareUpdaterApiImpl.stopFirmwareUpdate] waits for the connected device's
- * features before giving up and releasing the local tracking without a device round-trip
+ * How long [FirmwareUpdaterApiImpl.stopFirmwareUpdate] waits for the target device's
+ * version/features before giving up and releasing the local tracking without a device
+ * round-trip
  */
 private val STOP_FEATURE_LOOKUP_TIMEOUT = 5.seconds
