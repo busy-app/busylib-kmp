@@ -249,17 +249,20 @@ class FirmwareUpdaterApiImpl(
     }
 
     private suspend fun getBsbUpdateVersion(
-        bsbUpdateVersion: BsbUpdateVersion.ReadyToUpdate
+        bsbUpdateVersion: BsbUpdateVersion.ReadyToUpdate,
+        onInstallRpcDispatch: () -> Unit = {}
     ): Result<BsbUpdateVersion.ReadyToUpdate> {
         return when (bsbUpdateVersion) {
             is BsbUpdateVersion.ReadyToUpdate.Default -> {
-                fFeatureProvider.get<FRpcFeatureApi>()
+                val rpcUpdaterApi = fFeatureProvider.get<FRpcFeatureApi>()
                     .filterIsInstance<FFeatureStatus.Supported<*>>()
                     .filter { fFeatureStatus -> fFeatureStatus.featureApi is FRpcFeatureApi }
                     .filterIsInstance<FFeatureStatus.Supported<FRpcFeatureApi>>()
                     .first()
                     .featureApi
                     .fRpcUpdaterApi
+                onInstallRpcDispatch()
+                rpcUpdaterApi
                     .startUpdateInstall(bsbUpdateVersion.version)
                     .map { bsbUpdateVersion }
             }
@@ -321,7 +324,18 @@ class FirmwareUpdaterApiImpl(
         updatingDeviceId: String
     ): CResult<Unit> {
         beginInstall(updatingDeviceId)
-        val updateResult = getBsbUpdateVersion(bsbUpdateVersion).toCResult()
+        var rpcDispatched = false
+        coroutineContext.job.invokeOnCompletion { cause ->
+            // Cancelled (device switch) or died before the install RPC went out — no update
+            // is running anywhere, release the gate and the id so Preparing can't leak.
+            // After dispatch the outcome is unknown (the device may be installing), so the
+            // id is conservatively kept; RPC failure below clears it explicitly
+            if (cause != null && !rpcDispatched) {
+                installRequestedFlow.value = false
+                clearUpdatingDeviceId(updatingDeviceId, reason = "default install aborted before RPC (cause=$cause)")
+            }
+        }
+        val updateResult = getBsbUpdateVersion(bsbUpdateVersion) { rpcDispatched = true }.toCResult()
         info { "#startUpdateInstall update result is $updateResult" }
         return updateResult
             .map { }
@@ -399,10 +413,15 @@ class FirmwareUpdaterApiImpl(
             .distinctUntilChanged()
             .onEach { deviceId ->
                 info {
-                    "#init current device changed to $deviceId, cancelling LAN updater " +
+                    "#init current device changed to $deviceId, cancelling updater jobs " +
                         "(updatingDeviceId=${updatingDeviceIdFlow.value} kept)"
                 }
                 lanUpdaterScope.cancelPrevious().join()
+                // A default install job is only alive while it waits for the RPC feature and
+                // the round-trip; left running, a pre-RPC wait would resume against the NEXT
+                // connected device and install A's firmware on B. A dispatched update runs
+                // on the device itself and is not affected by this cancel
+                defaultUpdaterScope.cancelPrevious().join()
                 firmwareDownloaderApi.reset()
                 firmwareUploaderApi.reset()
             }
