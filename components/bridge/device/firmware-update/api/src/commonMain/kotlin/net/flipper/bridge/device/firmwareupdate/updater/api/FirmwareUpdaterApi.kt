@@ -15,9 +15,7 @@ interface FirmwareUpdaterApi {
 
     /**
      * Best-effort cancel of the firmware update on [deviceId]: aborts the device-side
-     * download when that device is reachable, cancels the app-side LAN update job it owns,
-     * and always releases the local update tracking ([updatingDeviceId], install gate)
-     * for that device — even when the device cannot be reached
+     * download when reachable and always releases the local update tracking for that device
      */
     suspend fun stopFirmwareUpdate(deviceId: String): CResult<Unit>
     suspend fun startUpdateInstall(): StartUpdateResponse

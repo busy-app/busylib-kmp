@@ -190,14 +190,12 @@ class FirmwareUpdaterApiImpl(
 
     override suspend fun stopFirmwareUpdate(deviceId: String): CResult<Unit> {
         info { "#stopFirmwareUpdate deviceId=$deviceId" }
-        // The LAN job drives the update from the app side; it belongs to the device that
-        // started it, so cancel it only when that device is the target
+        // The LAN job belongs to the device that started it — cancel only for the target
         if (updatingDeviceIdFlow.value == deviceId) {
             lanUpdaterScope.cancelPrevious().join()
         }
-        // Keyed lookup: the TARGET device's version decides the abort strategy. Bounded —
-        // while the target is not connected its version never emits, and Cancel must not
-        // hang (nor may a parked lookup resume against another device later)
+        // Bounded: unbounded, this would hang while the target is disconnected and later
+        // resume against the NEXT connected device
         val version = withTimeoutOrNull(STOP_FEATURE_LOOKUP_TIMEOUT) {
             updateStatusProvider.getUpdateVersion()
                 .filter { deviceUpdateVersion -> deviceUpdateVersion?.deviceId == deviceId }
@@ -210,10 +208,8 @@ class FirmwareUpdaterApiImpl(
         val isDefaultUpdateOnConnectedTarget = version is BsbUpdateVersion.ReadyToUpdate.Default &&
             connectedDeviceIdFlow.value == deviceId
         val abortResult = if (isDefaultUpdateOnConnectedTarget) {
-            // Only the feature ACQUISITION is bounded. The abort RPC itself runs unbounded:
-            // wrapping it in the timeout cancels a slow round-trip (busy device, cloud
-            // transport) before the command is actually delivered — Cancel then silently
-            // does nothing on the device
+            // Timeout bounds only the api lookup — a bounded abort RPC would be cancelled
+            // mid-flight on a slow transport and never reach the device
             val rpcUpdaterApi = withTimeoutOrNull(STOP_FEATURE_LOOKUP_TIMEOUT) {
                 fFeatureProvider.get<FRpcFeatureApi>()
                     .filterIsInstance<FFeatureStatus.Supported<*>>()
@@ -236,10 +232,8 @@ class FirmwareUpdaterApiImpl(
             info { "#stopFirmwareUpdate abort skipped: not a running default update on the target" }
             null
         }
-        // Local tracking is released regardless of the abort outcome: an abort RPC sent to
-        // an idle or stuck device may fail, and Cancel exists exactly to escape such
-        // states. The clear is CAS-guarded by the target id, so a newer install on another
-        // device is never affected
+        // Released regardless of the abort outcome — Cancel must escape stuck states;
+        // the clear compares against the target id, so it never affects a newer install
         installRequestedFlow.value = false
         clearUpdatingDeviceId(deviceId, reason = "stopFirmwareUpdate($deviceId)")
         return abortResult ?: CResult.success(Unit)
@@ -268,8 +262,8 @@ class FirmwareUpdaterApiImpl(
     }
 
     /**
-     * Kicks off the install for the given version: Default — sends the install RPC to the
-     * device, Url (LAN) — downloads the firmware and uploads it to the device
+     * Default — sends the install RPC (the device installs itself); Url (LAN) — downloads
+     * the firmware and uploads it to the device
      */
     private suspend fun dispatchInstall(
         bsbUpdateVersion: BsbUpdateVersion.ReadyToUpdate,
@@ -356,9 +350,8 @@ class FirmwareUpdaterApiImpl(
     }
 
     /**
-     * Cloud/BLE install: the device downloads and installs the firmware itself, the app
-     * only sends the install RPC. The job therefore ends right after the RPC round-trip;
-     * [updatingDeviceIdFlow] stays set — the update is still running on the device
+     * Cloud/BLE: the job ends right after the install RPC round-trip;
+     * [updatingDeviceIdFlow] stays set — the update keeps running on the device
      */
     private suspend fun runDefaultInstall(
         bsbUpdateVersion: BsbUpdateVersion.ReadyToUpdate.Default,
@@ -367,10 +360,8 @@ class FirmwareUpdaterApiImpl(
         beginInstall(updatingDeviceId)
         var rpcDispatched = false
         coroutineContext.job.invokeOnCompletion { cause ->
-            // Cancelled (device switch) or died before the install RPC went out — no update
-            // is running anywhere, release the gate and the id so Preparing can't leak.
-            // After dispatch the outcome is unknown (the device may be installing), so the
-            // id is conservatively kept; a non-Success response below clears it explicitly
+            // Died before the RPC went out — nothing is running, release the gate and id.
+            // After dispatch the outcome is unknown, so the id is conservatively kept
             if (cause != null && !rpcDispatched) {
                 installRequestedFlow.value = false
                 clearUpdatingDeviceId(updatingDeviceId, reason = "default install aborted before RPC (cause=$cause)")
@@ -387,9 +378,7 @@ class FirmwareUpdaterApiImpl(
     }
 
     /**
-     * LAN install: the app itself downloads the firmware and feeds it to the device, so the
-     * whole update lives inside this job — cancelling it (device switch, stop) aborts the
-     * update
+     * LAN: the whole update lives inside this job — cancelling it aborts the update
      */
     private suspend fun runLanInstall(
         bsbUpdateVersion: BsbUpdateVersion.ReadyToUpdate.Url,
@@ -458,19 +447,16 @@ class FirmwareUpdaterApiImpl(
                         "(updatingDeviceId=${updatingDeviceIdFlow.value} kept)"
                 }
                 lanUpdaterScope.cancelPrevious().join()
-                // A default install job is only alive while it waits for the RPC feature and
-                // the round-trip; left running, a pre-RPC wait would resume against the NEXT
-                // connected device and install A's firmware on B. A dispatched update runs
-                // on the device itself and is not affected by this cancel
+                // A default job is only alive pre-RPC; left running, its wait would resume
+                // against the NEXT connected device and install A's firmware on B
                 defaultUpdaterScope.cancelPrevious().join()
                 firmwareDownloaderApi.reset()
                 firmwareUploaderApi.reset()
             }
             .launchIn(scope)
 
-        // Release updatingDeviceId when the update actually ends. UpdateFinished/UpdateFailed
-        // are detected via the version transition, which is only observable while connected
-        // to the updating device — hence the connected == updating gate.
+        // Release updatingDeviceId on update end; events are observable only while
+        // connected to the updating device — hence the connected == updating gate
         eventsSharedFlow
             .onEach { event ->
                 val updatingId = updatingDeviceIdFlow.value ?: return@onEach
@@ -497,7 +483,6 @@ class FirmwareUpdaterApiImpl(
 
 /**
  * How long [FirmwareUpdaterApiImpl.stopFirmwareUpdate] waits for the target device's
- * version/features before giving up and releasing the local tracking without a device
- * round-trip
+ * features before releasing the local tracking without a device round-trip
  */
 private val STOP_FEATURE_LOOKUP_TIMEOUT = 5.seconds
