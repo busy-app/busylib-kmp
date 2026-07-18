@@ -190,6 +190,18 @@ class FirmwareUpdaterApiImpl(
         .wrap()
 
     override suspend fun stopFirmwareUpdate(): CResult<Unit> {
+        val updatingId = updatingDeviceIdFlow.value
+        val connectedId = connectedDeviceIdFlow.value
+        if (updatingId != null && connectedId != null && connectedId != updatingId) {
+            // The tracked update belongs to another device: the abort RPC below would hit
+            // the CONNECTED device (which isn't installing anything), and clearing the id
+            // would drop tracking of the still-running update. Cancel is best-effort by
+            // contract, so a no-op success is an allowed outcome. When nothing is connected
+            // (connectedId == null) we deliberately fall through — the timed-out lookups
+            // below release the local tracking, which is the only escape for a stale id
+            info { "#stopFirmwareUpdate no-op: connected=$connectedId, updating=$updatingId" }
+            return CResult.success(Unit)
+        }
         // Both feature lookups below only resolve while a device is connected. Unbounded,
         // Cancel on a disconnected device suspends indefinitely, and the parked lookup
         // later resumes against whatever device connects NEXT — sending the abort to the
