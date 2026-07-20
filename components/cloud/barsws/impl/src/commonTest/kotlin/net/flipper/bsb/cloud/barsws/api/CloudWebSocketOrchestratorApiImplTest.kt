@@ -483,6 +483,57 @@ class CloudWebSocketOrchestratorApiImplTest {
         }
 
     @Test
+    fun GIVEN_active_subscriber_WHEN_websocket_changes_THEN_resubscribes_without_waiting_for_debounce() =
+        runTest(UnconfinedTestDispatcher()) {
+            val env = CloudWebSocketOrchestratorTestEnvironment(backgroundScope)
+
+            val job = env.orchestrator.getEventsFlow(barId1)
+                .launchIn(backgroundScope)
+            advanceDebounce()
+
+            val newWs = MockBSBWebSocket()
+            env.mockApi.setWebSocket(newWs)
+            testScheduler.runCurrent()
+
+            assertEquals(
+                listOf(InternalWebSocketRequest.SubscribeState(listOf(barId1))),
+                newWs.sentRequests
+            )
+
+            job.cancel()
+        }
+
+    @Test
+    fun GIVEN_transient_subscriber_within_debounce_WHEN_websocket_changes_THEN_transient_bar_never_subscribed() =
+        runTest(UnconfinedTestDispatcher()) {
+            val env = CloudWebSocketOrchestratorTestEnvironment(backgroundScope)
+
+            val stableJob = env.orchestrator.getEventsFlow(barId1)
+                .launchIn(backgroundScope)
+            advanceDebounce()
+
+            // barId2 appears but is not yet debounce-stable when the socket flaps
+            val transientJob = env.orchestrator.getEventsFlow(barId2)
+                .launchIn(backgroundScope)
+            testScheduler.runCurrent()
+
+            val newWs = MockBSBWebSocket()
+            env.mockApi.setWebSocket(newWs)
+            testScheduler.runCurrent()
+
+            // ...and disappears before the debounce window closes
+            transientJob.cancel()
+            advanceDebounce()
+
+            assertEquals(
+                listOf(InternalWebSocketRequest.SubscribeState(listOf(barId1))),
+                newWs.sentRequests
+            )
+
+            stableJob.cancel()
+        }
+
+    @Test
     fun GIVEN_subscriber_WHEN_websocket_changes_THEN_events_from_new_ws_are_received() =
         runTest(UnconfinedTestDispatcher()) {
             val env = CloudWebSocketOrchestratorTestEnvironment(backgroundScope)

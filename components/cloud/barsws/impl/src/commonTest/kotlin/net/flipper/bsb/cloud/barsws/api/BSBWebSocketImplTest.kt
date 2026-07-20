@@ -166,7 +166,7 @@ class BSBWebSocketImplTest {
     }
 
     @Test
-    fun GIVEN_websocket_WHEN_late_subscriber_joins_THEN_receives_replay_event() = runTest {
+    fun GIVEN_websocket_WHEN_late_subscriber_joins_THEN_receives_only_new_events() = runTest {
         // Given
         val mockSession = MockBSBWebSocketSession()
         val testDispatcher = StandardTestDispatcher(testScheduler)
@@ -203,11 +203,25 @@ class BSBWebSocketImplTest {
 
         advanceUntilIdle()
 
-        // Then - late subscriber should get replayed event due to replay = 1
+        // Then - replay = 0: events emitted before the late subscriber joined are not replayed
+        assertEquals(
+            0,
+            lateSubscriberEvents.value.size,
+            "Late subscriber should not receive events emitted before it joined"
+        )
+
+        mockSession.emitEvent(createMockEvent())
+        advanceUntilIdle()
+
+        assertEquals(
+            2,
+            firstSubscriberEvents.first { it.size == 2 }.size,
+            "First subscriber should receive both events"
+        )
         assertEquals(
             1,
             lateSubscriberEvents.first { it.size == 1 }.size,
-            "Late subscriber should receive replayed event"
+            "Late subscriber should receive events emitted after it joined"
         )
 
         job1.cancel()

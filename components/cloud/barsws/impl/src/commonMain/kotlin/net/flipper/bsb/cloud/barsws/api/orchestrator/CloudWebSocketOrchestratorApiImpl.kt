@@ -20,8 +20,8 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.withContext
@@ -49,8 +49,10 @@ class CloudWebSocketOrchestratorApiImpl(
     private val activeWebSocketHolder = ActiveWebSocketHolder(this as LogTagProvider)
 
     private val subscriberCountsFlow = MutableStateFlow(mapOf<Uuid, Int>())
+
     private val subscriberCountsFlowWithDebounce = subscriberCountsFlow
         .debounce(1.seconds)
+        .stateIn(scope, SharingStarted.Eagerly, subscriberCountsFlow.value)
 
     private val wsEventSharedFlow = getWSFlow()
         .distinctUntilChanged()
@@ -60,8 +62,7 @@ class CloudWebSocketOrchestratorApiImpl(
                 merge(
                     webSocket.getEventsFlowInternal(),
                     subscriberCountsFlowWithDebounce
-                        .onStart { emit(subscriberCountsFlow.value) }
-                        .transform<Map<Uuid, Int>, WebSocketEventInternal> { subscriberCounts ->
+                        .transform { subscriberCounts ->
                             verbose { "Syncing subscribers: $subscriberCounts" }
                             activeWebSocketHolder.invalidateSubscribers(
                                 subscriberCounts,
