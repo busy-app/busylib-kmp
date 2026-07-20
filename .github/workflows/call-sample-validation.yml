@@ -13,7 +13,7 @@ jobs:
           - name: "Android"
             task: ":sample:android:assembleDebug"
     name: "Build jvm sample:cmp (${{ matrix.name }})"
-    runs-on: [ self-hosted, Linux ]
+    runs-on: [ self-hosted, Linux, Android ]
     env:
       ORG_GRADLE_PROJECT_current_flavor_type: DEBUG
     steps:
