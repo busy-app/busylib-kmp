@@ -26,7 +26,8 @@ class FirmwareUpdateViewModel(
 
     fun stopUpdate() {
         viewModelScope.launch {
-            firmwareUpdaterApi.stopFirmwareUpdate()
+            val deviceId = firmwareUpdaterApi.updatingDeviceId.value ?: return@launch
+            firmwareUpdaterApi.stopFirmwareUpdate(deviceId)
         }
     }
 }

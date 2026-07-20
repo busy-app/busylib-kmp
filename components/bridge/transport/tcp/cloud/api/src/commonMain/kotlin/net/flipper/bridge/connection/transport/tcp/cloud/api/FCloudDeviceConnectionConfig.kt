@@ -6,6 +6,7 @@ import net.flipper.core.busylib.data.nonEmptyListOf
 import kotlin.uuid.Uuid
 
 data class FCloudDeviceConnectionConfig(
+    override val uniqueId: String,
     val deviceId: Uuid,
     val name: String
 ) : FDeviceConnectionConfig<FCloudApi>() {

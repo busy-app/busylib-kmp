@@ -604,6 +604,7 @@ class WrappedConnectionInternalTest {
             // Given
             val throwingDeviceApi = object : FConnectedDeviceApi {
                 override val deviceName = "ThrowingDevice"
+                override val uniqueId = "throwing-device-id"
                 override suspend fun tryUpdateConnectionConfig(
                     config: FDeviceConnectionConfig<*>
                 ): Result<Unit> = throw NotImplementedError()

@@ -87,6 +87,9 @@ class FAndroidBleApiImpl(
 
     override val deviceName = peripheral.name ?: currentConfig.deviceName
 
+    override val uniqueId: String
+        get() = currentConfig.uniqueId
+
     override suspend fun tryUpdateConnectionConfig(config: FDeviceConnectionConfig<*>): Result<Unit> {
         if (config !is FBleDeviceConnectionConfig) {
             return Result.failure(IllegalArgumentException("Config $config has different type"))

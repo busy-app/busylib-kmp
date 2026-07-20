@@ -11,10 +11,13 @@ interface FirmwareUpdaterApi {
     val state: WrappedStateFlow<FwUpdateState>
     val events: WrappedFlow<FwUpdateEvent>
 
+    val updatingDeviceId: WrappedStateFlow<String?>
+
     /**
-     * Force stop firmware download if possible
+     * Best-effort cancel of the firmware update on [deviceId]: aborts the device-side
+     * download when reachable and always releases the local update tracking for that device
      */
-    suspend fun stopFirmwareUpdate(): CResult<Unit>
+    suspend fun stopFirmwareUpdate(deviceId: String): CResult<Unit>
     suspend fun startUpdateInstall(): StartUpdateResponse
 
     /**

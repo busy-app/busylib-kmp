@@ -19,7 +19,6 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
@@ -27,8 +26,8 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.job
+import kotlinx.coroutines.withTimeoutOrNull
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
-import net.flipper.bridge.connection.feature.firmwareupdate.api.FFirmwareUpdateFeatureApi
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateVersion
 import net.flipper.bridge.connection.feature.info.api.FDeviceInfoFeatureApi
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
@@ -42,6 +41,7 @@ import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
 import net.flipper.bridge.device.firmwareupdate.downloader.api.FirmwareDownloaderApi
 import net.flipper.bridge.device.firmwareupdate.downloader.api.FirmwareDownloaderApiImpl
 import net.flipper.bridge.device.firmwareupdate.status.api.UpdateStatusProvider
+import net.flipper.bridge.device.firmwareupdate.status.model.UpdateStatusSource
 import net.flipper.bridge.device.firmwareupdate.updater.log.FwUpdateStateLogger
 import net.flipper.bridge.device.firmwareupdate.updater.mapper.FwUpdateStatusMapper
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateEvent
@@ -60,13 +60,15 @@ import net.flipper.core.busylib.ktx.common.asSingleJobScope
 import net.flipper.core.busylib.ktx.common.cancelPrevious
 import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.mapSuspendCatching
-import net.flipper.core.busylib.ktx.common.orNullable
 import net.flipper.core.busylib.ktx.common.tryCast
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.TaggedLogger
+import net.flipper.core.busylib.log.debug
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
 import net.flipper.core.ktor.di.qualifier.KtorNetworkClientQualifier
+import kotlin.coroutines.coroutineContext
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
 @Inject
@@ -89,24 +91,47 @@ class FirmwareUpdaterApiImpl(
     )
 
     private val lanUpdaterScope = scope.asSingleJobScope()
+    private val defaultUpdaterScope = scope.asSingleJobScope()
 
     private val installRequestedFlow = MutableStateFlow(false)
 
+    private val updatingDeviceIdFlow = MutableStateFlow<String?>(null)
+
+    override val updatingDeviceId: WrappedStateFlow<String?> = updatingDeviceIdFlow.wrap()
+
     private val stateLogger by lazy { FwUpdateStateLogger() }
+
+    /**
+     * Id of the currently connected device, `null` while disconnected
+     */
+    private val connectedDeviceIdFlow = updateStatusProvider.getConnectedDeviceId()
+        .stateIn(scope, SharingStarted.Eagerly, null)
 
     override val state: WrappedStateFlow<FwUpdateState> = combine(
         flow = updateStatusProvider.getUpdateStatus(),
-        flow2 = fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
-            .map { status -> status.tryCast<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>() }
-            .map { status -> status?.featureApi }
-            .flatMapLatest { feature -> feature?.updateVersionFlow.orNullable() }
-            .distinctUntilChanged(),
+        flow2 = updateStatusProvider.getUpdateVersion(),
         flow3 = firmwareDownloaderApi.state,
         flow4 = firmwareUploaderApi.state,
         flow5 = installRequestedFlow,
-        transform = { updateStatusSource, bsbUpdateVersion, downloaderState, uploaderState, isInstallRequested ->
+        transform = { updateStatusSource, deviceUpdateVersion, downloaderState, uploaderState, isInstallRequested ->
+            val bsbUpdateVersion = deviceUpdateVersion?.version
+            // A status of one device must never be merged with the version of another
+            // (switch window: the old device's Cached status can outlive its connection)
+            val statusDeviceId = updateStatusSource.status?.deviceId
+            val isForeignStatus = statusDeviceId != null &&
+                deviceUpdateVersion != null &&
+                statusDeviceId != deviceUpdateVersion.deviceId
+            val matchedStatusSource = if (isForeignStatus) {
+                debug {
+                    "#state drop status of $statusDeviceId, " +
+                        "connected device is ${deviceUpdateVersion?.deviceId}"
+                }
+                UpdateStatusSource.Fresh(null)
+            } else {
+                updateStatusSource
+            }
             val result = FwUpdateStatusMapper.map(
-                updateStatusSource,
+                matchedStatusSource,
                 bsbUpdateVersion,
                 downloaderState,
                 uploaderState,
@@ -128,7 +153,7 @@ class FirmwareUpdaterApiImpl(
             if (BuildKonfig.IS_VERBOSE_LOG_ENABLED && BuildKonfig.IS_LOG_ENABLED) {
                 stateLogger.logIfChanged(
                     result = result,
-                    updateStatusSource = updateStatusSource,
+                    updateStatusSource = matchedStatusSource,
                     bsbUpdateVersion = bsbUpdateVersion,
                     downloaderState = downloaderState,
                     uploaderState = uploaderState,
@@ -139,7 +164,7 @@ class FirmwareUpdaterApiImpl(
         }
     ).stateIn(scope, SharingStarted.Lazily, FwUpdateState.Pending).wrap()
 
-    override val events = previousVersionFlowProvider
+    private val eventsSharedFlow = previousVersionFlowProvider
         .getPreviousVersionFlow(state)
         .map { versionsModel ->
             when {
@@ -158,18 +183,34 @@ class FirmwareUpdaterApiImpl(
         }
         .filterNotNull()
         .shareIn(scope, SharingStarted.Lazily)
+
+    override val events = eventsSharedFlow
         .asFlow()
         .wrap()
 
-    override suspend fun stopFirmwareUpdate(): CResult<Unit> {
-        val currentUpdateVersion = fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
-            .map { status -> status.tryCast<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>() }
-            .map { status -> status?.featureApi }
-            .flatMapLatest { feature -> feature?.updateVersionFlow.orNullable() }
-            .filterNotNull()
-            .firstOrNull()
-        return when (currentUpdateVersion) {
-            is BsbUpdateVersion.ReadyToUpdate.Default -> {
+    override suspend fun stopFirmwareUpdate(deviceId: String): CResult<Unit> {
+        info { "#stopFirmwareUpdate deviceId=$deviceId" }
+        // The LAN job belongs to the device that started it — cancel only for the target
+        if (updatingDeviceIdFlow.value == deviceId) {
+            lanUpdaterScope.cancelPrevious().join()
+        }
+        // Bounded: unbounded, this would hang while the target is disconnected and later
+        // resume against the NEXT connected device
+        val version = withTimeoutOrNull(STOP_FEATURE_LOOKUP_TIMEOUT) {
+            updateStatusProvider.getUpdateVersion()
+                .filter { deviceUpdateVersion -> deviceUpdateVersion?.deviceId == deviceId }
+                .firstOrNull()
+        }?.version
+        info {
+            "#stopFirmwareUpdate target version=$version " +
+                "connected=${connectedDeviceIdFlow.value} updating=${updatingDeviceIdFlow.value}"
+        }
+        val isDefaultUpdateOnConnectedTarget = version is BsbUpdateVersion.ReadyToUpdate.Default &&
+            connectedDeviceIdFlow.value == deviceId
+        val abortResult = if (isDefaultUpdateOnConnectedTarget) {
+            // Timeout bounds only the api lookup — a bounded abort RPC would be cancelled
+            // mid-flight on a slow transport and never reach the device
+            val rpcUpdaterApi = withTimeoutOrNull(STOP_FEATURE_LOOKUP_TIMEOUT) {
                 fFeatureProvider.get<FRpcFeatureApi>()
                     .filterIsInstance<FFeatureStatus.Supported<*>>()
                     .filter { fFeatureStatus -> fFeatureStatus.featureApi is FRpcFeatureApi }
@@ -177,20 +218,25 @@ class FirmwareUpdaterApiImpl(
                     .first()
                     .featureApi
                     .fRpcUpdaterApi
-                    .startUpdateAbortDownload()
-                    .map { }
-                    .also { installRequestedFlow.value = false }
-                    .toCResult()
             }
-
-            is BsbUpdateVersion.ReadyToUpdate.Url -> {
-                lanUpdaterScope.cancelPrevious().join()
-                installRequestedFlow.value = false
-                CResult.success(Unit)
-            }
-
-            else -> CResult.success(Unit)
+            rpcUpdaterApi
+                ?.startUpdateAbortDownload()
+                ?.map { }
+                ?.toCResult()
+                ?.also { result -> info { "#stopFirmwareUpdate abort result=$result" } }
+                ?: run {
+                    info { "#stopFirmwareUpdate abort skipped: rpc feature unavailable" }
+                    null
+                }
+        } else {
+            info { "#stopFirmwareUpdate abort skipped: not a running default update on the target" }
+            null
         }
+        // Released regardless of the abort outcome — Cancel must escape stuck states;
+        // the clear compares against the target id, so it never affects a newer install
+        installRequestedFlow.value = false
+        clearUpdatingDeviceId(deviceId, reason = "stopFirmwareUpdate($deviceId)")
+        return abortResult ?: CResult.success(Unit)
     }
 
     /**
@@ -215,18 +261,25 @@ class FirmwareUpdaterApiImpl(
         info { "#startUpdateInstall device connected!" }
     }
 
-    private suspend fun startUpdateInstallInternal(
-        bsbUpdateVersion: BsbUpdateVersion.ReadyToUpdate
+    /**
+     * Default — sends the install RPC (the device installs itself); Url (LAN) — downloads
+     * the firmware and uploads it to the device
+     */
+    private suspend fun dispatchInstall(
+        bsbUpdateVersion: BsbUpdateVersion.ReadyToUpdate,
+        onInstallRpcDispatch: () -> Unit = {}
     ): StartUpdateResponse {
         return when (bsbUpdateVersion) {
             is BsbUpdateVersion.ReadyToUpdate.Default -> {
-                fFeatureProvider.get<FRpcFeatureApi>()
+                val rpcUpdaterApi = fFeatureProvider.get<FRpcFeatureApi>()
                     .filterIsInstance<FFeatureStatus.Supported<*>>()
                     .filter { fFeatureStatus -> fFeatureStatus.featureApi is FRpcFeatureApi }
                     .filterIsInstance<FFeatureStatus.Supported<FRpcFeatureApi>>()
                     .first()
                     .featureApi
                     .fRpcUpdaterApi
+                onInstallRpcDispatch()
+                rpcUpdaterApi
                     .startUpdateInstall(bsbUpdateVersion.version)
                     .fold(
                         onSuccess = { apiResponse ->
@@ -268,48 +321,102 @@ class FirmwareUpdaterApiImpl(
 
     /**
      * Starts an update install depending on current [BsbUpdateVersion]
-     * Using map for flow here in case connection type changed from lan to other type
      * @see BsbUpdateVersion
      */
     override suspend fun startUpdateInstall(): StartUpdateResponse {
-        return lanUpdaterScope.async {
-            installRequestedFlow.value = true
-            coroutineContext.job.invokeOnCompletion {
-                installRequestedFlow.value = false
-                firmwareDownloaderApi.reset()
-                firmwareUploaderApi.reset()
+        info { "#startUpdateInstall" }
+        // deviceId and version come from a single emission, so the install below
+        // is always attributed to the device that actually reported ReadyToUpdate
+        val (updatingDeviceId, bsbUpdateVersion) = updateStatusProvider.getUpdateVersion()
+            .mapNotNull { deviceUpdateVersion ->
+                val version = deviceUpdateVersion?.version
+                if (version is BsbUpdateVersion.ReadyToUpdate) {
+                    deviceUpdateVersion.deviceId to version
+                } else {
+                    null
+                }
             }
-            val bootTimeScope = coroutineContext.minusKey(Job)
-                .plus(SupervisorJob(coroutineContext.job))
-                .let(::CoroutineScope)
-            val bootTimeFlow = getBootTimeFlow().shareIn(bootTimeScope, SharingStarted.Eagerly, 1)
+            .first()
+        info { "#startUpdateInstall bsbUpdateVersion: $bsbUpdateVersion deviceId=$updatingDeviceId" }
+        return when (bsbUpdateVersion) {
+            is BsbUpdateVersion.ReadyToUpdate.Default -> {
+                defaultUpdaterScope.async { runDefaultInstall(bsbUpdateVersion, updatingDeviceId) }.await()
+            }
 
-            val bsbUpdateVersion = fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
-                .map { status -> status.tryCast<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>() }
-                .flatMapLatest { status -> status?.featureApi?.updateVersionFlow.orNullable() }
-                .filterIsInstance<BsbUpdateVersion.ReadyToUpdate>()
-                .first()
+            is BsbUpdateVersion.ReadyToUpdate.Url -> {
+                lanUpdaterScope.async { runLanInstall(bsbUpdateVersion, updatingDeviceId) }.await()
+            }
+        }
+    }
 
-            info { "#startUpdateInstall bsbUpdateVersion: $bsbUpdateVersion" }
+    /**
+     * Cloud/BLE: the job ends right after the install RPC round-trip;
+     * [updatingDeviceIdFlow] stays set — the update keeps running on the device
+     */
+    private suspend fun runDefaultInstall(
+        bsbUpdateVersion: BsbUpdateVersion.ReadyToUpdate.Default,
+        updatingDeviceId: String
+    ): StartUpdateResponse {
+        beginInstall(updatingDeviceId)
+        var rpcDispatched = false
+        coroutineContext.job.invokeOnCompletion { cause ->
+            // Died before the RPC went out — nothing is running, release the gate and id.
+            // After dispatch the outcome is unknown, so the id is conservatively kept
+            if (cause != null && !rpcDispatched) {
+                installRequestedFlow.value = false
+                clearUpdatingDeviceId(updatingDeviceId, reason = "default install aborted before RPC (cause=$cause)")
+            }
+        }
+        val response = dispatchInstall(bsbUpdateVersion) { rpcDispatched = true }
+        info { "#startUpdateInstall update result is $response" }
+        if (response !is StartUpdateResponse.Success) {
+            // The device did not start the update (error or low battery) — release the gate.
+            installRequestedFlow.value = false
+            clearUpdatingDeviceId(updatingDeviceId, reason = "default install did not start ($response)")
+        }
+        return response
+    }
+
+    /**
+     * LAN: the whole update lives inside this job — cancelling it aborts the update
+     */
+    private suspend fun runLanInstall(
+        bsbUpdateVersion: BsbUpdateVersion.ReadyToUpdate.Url,
+        updatingDeviceId: String
+    ): StartUpdateResponse {
+        beginInstall(updatingDeviceId)
+        coroutineContext.job.invokeOnCompletion { cause ->
+            installRequestedFlow.value = false
             firmwareDownloaderApi.reset()
             firmwareUploaderApi.reset()
-            val startUpdateResponse = startUpdateInstallInternal(bsbUpdateVersion)
-            when (bsbUpdateVersion) {
-                is BsbUpdateVersion.ReadyToUpdate.Default -> {
-                    bootTimeScope.cancel()
-                }
-
-                is BsbUpdateVersion.ReadyToUpdate.Url -> {
-                    info { "#startUpdateInstall bootTimeFlow wait" }
-                    val bootTime = bootTimeFlow.first()
-                    info { "#startUpdateInstall bootTimeFlow cancel" }
-                    bootTimeScope.cancel()
-                    awaitDeviceReconnected(bootTime)
-                }
+            clearUpdatingDeviceId(updatingDeviceId, reason = "lan install job completed (cause=$cause)")
+        }
+        val bootTimeScope = coroutineContext.minusKey(Job)
+            .plus(SupervisorJob(coroutineContext.job))
+            .let(::CoroutineScope)
+        try {
+            val bootTimeFlow = getBootTimeFlow().shareIn(bootTimeScope, SharingStarted.Eagerly, 1)
+            val response = dispatchInstall(bsbUpdateVersion)
+            info { "#startUpdateInstall update result is $response" }
+            if (response is StartUpdateResponse.Success) {
+                info { "#startUpdateInstall bootTimeFlow wait" }
+                val bootTime = bootTimeFlow.first()
+                info { "#startUpdateInstall bootTimeFlow cancel" }
+                bootTimeScope.cancel()
+                awaitDeviceReconnected(bootTime)
             }
-            installRequestedFlow.value = false
-            startUpdateResponse
-        }.await()
+            return response
+        } finally {
+            bootTimeScope.cancel()
+        }
+    }
+
+    private fun beginInstall(updatingDeviceId: String) {
+        installRequestedFlow.value = true
+        updatingDeviceIdFlow.value = updatingDeviceId
+        info { "#startUpdateInstall updatingDeviceId=$updatingDeviceId" }
+        firmwareDownloaderApi.reset()
+        firmwareUploaderApi.reset()
     }
 
     override suspend fun checkForUpdates(): CResult<Unit> {
@@ -321,16 +428,61 @@ class FirmwareUpdaterApiImpl(
             ?: CResult.failure(IllegalStateException("RPC feature is null"))
     }
 
+    private fun clearUpdatingDeviceId(expectedDeviceId: String?, reason: String) {
+        if (expectedDeviceId == null) return
+        val cleared = updatingDeviceIdFlow.compareAndSet(expectedDeviceId, null)
+        if (cleared) {
+            info { "#clearUpdatingDeviceId $reason (was=$expectedDeviceId)" }
+        }
+    }
+
     // Reset updater when connected to another device
     init {
         fDevicePersistedStorage.getCurrentDeviceFlow()
             .map { bUSYBar -> bUSYBar?.uniqueId }
             .distinctUntilChanged()
-            .onEach {
+            .onEach { deviceId ->
+                info {
+                    "#init current device changed to $deviceId, cancelling updater jobs " +
+                        "(updatingDeviceId=${updatingDeviceIdFlow.value} kept)"
+                }
                 lanUpdaterScope.cancelPrevious().join()
+                // A default job is only alive pre-RPC; left running, its wait would resume
+                // against the NEXT connected device and install A's firmware on B
+                defaultUpdaterScope.cancelPrevious().join()
                 firmwareDownloaderApi.reset()
                 firmwareUploaderApi.reset()
             }
             .launchIn(scope)
+
+        // Release updatingDeviceId on update end; events are observable only while
+        // connected to the updating device — hence the connected == updating gate
+        eventsSharedFlow
+            .onEach { event ->
+                val updatingId = updatingDeviceIdFlow.value ?: return@onEach
+                if (connectedDeviceIdFlow.value == updatingId) {
+                    clearUpdatingDeviceId(updatingId, reason = "update event $event")
+                }
+            }
+            .launchIn(scope)
+
+        // Fallback for an update that finished while the user was on another device
+        updateStatusProvider.getUpdateVersion()
+            .onEach { value ->
+                val updatingId = updatingDeviceIdFlow.value ?: return@onEach
+                val updateDone = value != null &&
+                    value.deviceId == updatingId &&
+                    value.version is BsbUpdateVersion.NoUpdateAvailable
+                if (updateDone) {
+                    clearUpdatingDeviceId(updatingId, reason = "fresh NoUpdateAvailable on updating device")
+                }
+            }
+            .launchIn(scope)
     }
 }
+
+/**
+ * How long [FirmwareUpdaterApiImpl.stopFirmwareUpdate] waits for the target device's
+ * features before releasing the local tracking without a device round-trip
+ */
+private val STOP_FEATURE_LOOKUP_TIMEOUT = 5.seconds

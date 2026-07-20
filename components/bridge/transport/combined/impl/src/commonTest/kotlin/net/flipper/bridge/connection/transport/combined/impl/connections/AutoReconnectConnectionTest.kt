@@ -1084,6 +1084,7 @@ class AutoReconnectConnectionTest {
             val api1UpdateResult = CompletableDeferred<Result<Unit>>()
             val deviceApi1 = object : FConnectedDeviceApi {
                 override val deviceName = "Device-1"
+                override val uniqueId = "device-1-id"
                 override suspend fun tryUpdateConnectionConfig(
                     config: FDeviceConnectionConfig<*>
                 ): Result<Unit> {
@@ -1196,6 +1197,7 @@ class AutoReconnectConnectionTest {
 
             val deviceApi = object : FConnectedDeviceApi {
                 override val deviceName = "RacyDevice"
+                override val uniqueId = "racy-device-id"
                 override suspend fun tryUpdateConnectionConfig(
                     config: FDeviceConnectionConfig<*>
                 ): Result<Unit> {

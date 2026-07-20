@@ -52,6 +52,9 @@ class FCloudApiImpl(
     override val deviceName: String
         get() = currentConfig.name
 
+    override val uniqueId: String
+        get() = currentConfig.uniqueId
+
     override suspend fun tryUpdateConnectionConfig(config: FDeviceConnectionConfig<*>): Result<Unit> {
         if (config !is FCloudDeviceConnectionConfig) {
             return Result.failure(IllegalArgumentException("Config $config has different type"))

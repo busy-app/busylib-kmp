@@ -25,6 +25,8 @@ import net.flipper.bridge.connection.feature.firmwareupdate.model.AvailableVersi
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateVersion
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateVersion.ReadyToUpdate.Default
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateVersion.ReadyToUpdate.Url
+import net.flipper.bridge.connection.feature.firmwareupdate.model.DeviceUpdateStatus
+import net.flipper.bridge.connection.feature.firmwareupdate.model.DeviceUpdateVersion
 import net.flipper.bridge.connection.feature.info.api.FDeviceInfoFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.AutoUpdate
@@ -56,6 +58,8 @@ class FFirmwareUpdateFeatureApiImpl(
     private val lanUpdateVersionProvider: LanUpdateVersionProvider,
 ) : FFirmwareUpdateFeatureApi, LogTagProvider {
     override val TAG: String = "FFirmwareUpdateFeatureApi"
+
+    override val deviceId: String = deviceApi.uniqueId
     private val combinedFlows = UpdateFlowCombinerDelegate(
         rpcFeatureApi = rpcFeatureApi,
         fEventsFeatureApi = fEventsFeatureApi,
@@ -63,7 +67,15 @@ class FFirmwareUpdateFeatureApiImpl(
     )
 
     private val availableVersionFlow = combinedFlows.availableVersionFlow
-    override val updateStatusFlow = combinedFlows.updateStatusFlow.wrap()
+
+    override val updateStatusFlow = combinedFlows.updateStatusFlow
+        .map { status -> DeviceUpdateStatus(deviceId, status) }
+        .stateIn(
+            scope = scope,
+            started = SharingStarted.WhileSubscribed(),
+            initialValue = DeviceUpdateStatus(deviceId, combinedFlows.updateStatusFlow.value)
+        )
+        .wrap()
 
     override suspend fun setAutoUpdate(isEnabled: Boolean): CResult<Unit> {
         val request = AutoUpdate(
@@ -116,13 +128,14 @@ class FFirmwareUpdateFeatureApiImpl(
                     }
             }
         }
+        .map { version -> DeviceUpdateVersion(deviceId, version) }
         .onEach { info { "#updateVersionFlow: $it" } }
-        .stateIn(scope, SharingStarted.Lazily, BsbUpdateVersion.Loading)
+        .stateIn(scope, SharingStarted.Lazily, DeviceUpdateVersion(deviceId, BsbUpdateVersion.Loading))
         .wrap()
 
     override val updateVersionChangelog: WrappedFlow<String?> = updateVersionFlow
-        .mapLatest { busyBarVersion ->
-            return@mapLatest when (busyBarVersion) {
+        .mapLatest { keyedVersion ->
+            return@mapLatest when (val busyBarVersion = keyedVersion.version) {
                 is Default -> {
                     exponentialRetry {
                         rpcFeatureApi.fRpcUpdaterApi
