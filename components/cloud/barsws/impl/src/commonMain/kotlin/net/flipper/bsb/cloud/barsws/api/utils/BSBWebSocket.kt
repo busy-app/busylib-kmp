@@ -69,7 +69,7 @@ class BSBWebSocketImpl(
             }
             message?.let { send(it) }
         }
-    }.flowOn(dispatcher).shareIn(scope, SharingStarted.WhileSubscribed(), 1)
+    }.flowOn(dispatcher).shareIn(scope, SharingStarted.WhileSubscribed(), 0)
 
     override fun getEventsFlow(): Flow<WebSocketEvent> {
         return eventsFlow.mapNotNull { it.toPublic() }

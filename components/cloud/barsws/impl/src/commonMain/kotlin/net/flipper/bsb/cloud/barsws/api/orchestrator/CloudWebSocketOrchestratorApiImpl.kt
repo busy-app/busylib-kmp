@@ -52,10 +52,6 @@ class CloudWebSocketOrchestratorApiImpl(
     private val subscriberCountsFlowWithDebounce = subscriberCountsFlow
         .debounce(1.seconds)
 
-    // The events collection lives for the whole lifetime of a websocket:
-    // subscriber-count changes only re-run invalidateSubscribers (a merged
-    // non-emitting branch) and must never tear down getEventsFlowInternal(),
-    // otherwise events arriving during the resubscription gap are lost.
     private val wsEventSharedFlow = getWSFlow()
         .distinctUntilChanged()
         .flatMapLatest { webSocket ->
