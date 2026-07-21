@@ -330,6 +330,7 @@ class FirmwareUpdaterApiImpl(
                 lanUpdaterScope.cancelPrevious().join()
                 firmwareDownloaderApi.reset()
                 firmwareUploaderApi.reset()
+                installRequestedFlow.emit(false)
             }
             .launchIn(scope)
     }
