@@ -8,6 +8,7 @@ import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -62,17 +63,20 @@ class FFeatureProviderImpl(
                     value = statusPairScope.coroutineContext[CoroutineExceptionHandler],
                     lazyMessage = { "The scope of statusPair should contain CoroutineExceptionHandler" }
                 )
-                val channelFlowJob = requireNotNull(coroutineContext[Job]) {
-                    "channelFlow doesn't contains Job"
-                }
+                val featureScope = CoroutineScope(
+                    coroutineContext
+                        .plus(SupervisorJob(statusPairScope.coroutineContext.job))
+                        .plus(exceptionHandler)
+                )
                 // SupervisorJob isolates child failures so they reach `exceptionHandler`
                 // (statusPairScope's handler) instead of cancelling channelFlow upstream.
-                // It is parented to channelFlow's Job so the captured scope dies when
-                // either statusPairScope dies (channelFlow closes) or globalScope dies.
+                // It is parented to statusPairScope's Job so the connection teardown
+                // (job.cancelAndJoin in FDeviceHolder.disconnect) returns only after every
+                // feature coroutine is destroyed — a new device never connects while
+                // features of the previous one are still alive. The globalScope-death case
+                // is covered by cancelling the scope in awaitClose.
                 val fBSBDeviceApi: FBSBDeviceApi = fBSBDeviceApiFactory(
-                    scope = CoroutineScope(
-                        coroutineContext + SupervisorJob(channelFlowJob) + exceptionHandler
-                    ),
+                    scope = featureScope,
                     connectedDevice = deviceApi
                 )
                 withContext(statusPairScope.coroutineContext.minusKey(Job)) {
@@ -86,6 +90,7 @@ class FFeatureProviderImpl(
                     }
                 awaitClose {
                     statusPairScopeDisposable.dispose()
+                    featureScope.cancel()
                 }
             }
         }
