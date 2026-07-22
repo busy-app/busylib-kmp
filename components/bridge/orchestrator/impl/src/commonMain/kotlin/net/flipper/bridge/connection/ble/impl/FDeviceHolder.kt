@@ -9,6 +9,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.job
+import kotlinx.coroutines.withTimeoutOrNull
 import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.connectionbuilder.api.FDeviceConfigToConnection
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
@@ -17,12 +18,14 @@ import net.flipper.bridge.connection.transport.common.api.FInternalDisconnectedR
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
 import net.flipper.bridge.connection.transport.common.api.FailedPairingConnectException
+import net.flipper.busylib.kmp.components.core.buildkonfig.BuildKonfig
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.busylib.ktx.common.transform
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
+import kotlin.time.Duration.Companion.seconds
 
 // Generics don't work with Anvil/Dagger
 @Inject
@@ -99,7 +102,20 @@ class FDeviceHolder<API : FConnectedDeviceApi>(
             .getOrNull()
             ?.disconnect()
         info { "Cancel scope" }
-        scope.coroutineContext.job.cancelAndJoin()
+        // Features live on this scope, so this join also waits for their teardown
+        if (BuildKonfig.CRASH_APP_ON_FAILED_CHECKS) {
+            scope.coroutineContext.job.cancelAndJoin()
+        } else {
+            val isCompleted = withTimeoutOrNull(DISCONNECT_TEARDOWN_TIMEOUT) {
+                scope.coroutineContext.job.cancelAndJoin()
+            }
+            if (isCompleted == null) {
+                error {
+                    "Teardown timed out after $DISCONNECT_TEARDOWN_TIMEOUT, a feature ignored " +
+                        "cancellation; connecting the next device with it possibly still alive"
+                }
+            }
+        }
         scope.cancel()
     }
 
@@ -138,5 +154,9 @@ class FDeviceHolder<API : FConnectedDeviceApi>(
                 }
             }
         }
+    }
+
+    companion object {
+        private val DISCONNECT_TEARDOWN_TIMEOUT = 5.seconds
     }
 }
