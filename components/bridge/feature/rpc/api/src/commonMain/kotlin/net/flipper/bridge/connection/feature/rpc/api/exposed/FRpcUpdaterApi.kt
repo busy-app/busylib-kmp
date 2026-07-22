@@ -19,5 +19,5 @@ interface FRpcUpdaterApi {
         bytesFlow: Flow<ByteArray>,
         totalBytes: Long,
         onTransferred: (Long) -> Unit
-    ): Result<Unit>
+    ): Result<ApiResponse>
 }
