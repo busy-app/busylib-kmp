@@ -16,6 +16,9 @@ import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
 import net.flipper.bridge.connection.feature.provider.api.get
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
+import net.flipper.bridge.connection.feature.rpc.api.model.BsbRpcError
+import net.flipper.bridge.connection.feature.rpc.api.model.ErrorResponse
+import net.flipper.bridge.device.firmwareupdate.updater.model.StartUpdateResponse
 import net.flipper.bridge.device.firmwareupdate.uploader.model.FirmwareUploaderState
 import net.flipper.core.busylib.ktx.common.onLatest
 import net.flipper.core.busylib.ktx.common.tryCast
@@ -35,10 +38,25 @@ internal class FirmwareUploaderApiImpl(
         _state.update { FirmwareUploaderState.Pending }
     }
 
+    private fun onFailure(t: Throwable) {
+        // don't reset state without throwable!
+        error(t) { "#uploadAndInstall could not post update" }
+        _state.update { state ->
+            when (state) {
+                FirmwareUploaderState.BatteryLow,
+                FirmwareUploaderState.Failed,
+                FirmwareUploaderState.Uploaded -> state
+
+                FirmwareUploaderState.Pending,
+                is FirmwareUploaderState.Uploading -> FirmwareUploaderState.Failed
+            }
+        }
+    }
+
     override suspend fun uploadAndInstall(
         clientFilePath: Path,
         onPrepared: suspend () -> Unit
-    ): Result<Unit> {
+    ): StartUpdateResponse {
         _state.emit(FirmwareUploaderState.Uploading(0, 0))
         onPrepared.invoke()
         fFeatureProvider.get<FRpcFeatureApi>()
@@ -54,7 +72,7 @@ internal class FirmwareUploaderApiImpl(
                 }
                 _state.emit(FirmwareUploaderState.Uploading(0, size))
                 try {
-                    fFeatureApi.postUpdate(
+                    val apiResponse = fFeatureApi.postUpdate(
                         totalBytes = size,
                         bytesFlow = SystemFileSystem.source(clientFilePath).asFlow(),
                         onTransferred = { bytesUploaded ->
@@ -66,6 +84,12 @@ internal class FirmwareUploaderApiImpl(
                             }
                         }
                     ).getOrThrow()
+                    val error = apiResponse.tryCast<ErrorResponse>()?.error
+                    if (error == BsbRpcError.BATTERY_LOW.error) {
+                        _state.emit(FirmwareUploaderState.BatteryLow)
+                    } else if (error == BsbRpcError.UPDATE_NOT_ALLOWED.error) {
+                        _state.emit(FirmwareUploaderState.BatteryLow)
+                    }
                 } catch (_: SocketTimeoutException) {
                     info { "#uploadAndInstall device connection lost" }
                     _state.emit(FirmwareUploaderState.Uploaded)
@@ -73,23 +97,23 @@ internal class FirmwareUploaderApiImpl(
             }
             .map { }
             .catch { t ->
-                // don't reset state without throwable!
-                error(t) { "#uploadAndInstall could not post update" }
-                _state.update { state ->
-                    when (state) {
-                        FirmwareUploaderState.Failed,
-                        FirmwareUploaderState.Uploaded -> state
-                        FirmwareUploaderState.Pending,
-                        is FirmwareUploaderState.Uploading -> FirmwareUploaderState.Failed
-                    }
-                }
+                onFailure(t)
                 emit(Unit)
             }
             .first()
-        if (_state.first() is FirmwareUploaderState.Failed) {
-            return Result.failure(Exception("Upload failed"))
+        return when (_state.first()) {
+            is FirmwareUploaderState.Failed -> {
+                StartUpdateResponse.Failure(Exception("Upload failed"))
+            }
+
+            is FirmwareUploaderState.BatteryLow -> {
+                StartUpdateResponse.BatteryLow
+            }
+
+            else -> {
+                _state.emit(FirmwareUploaderState.Uploaded)
+                StartUpdateResponse.Success
+            }
         }
-        _state.emit(FirmwareUploaderState.Uploaded)
-        return Result.success(Unit)
     }
 }

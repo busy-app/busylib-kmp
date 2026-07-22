@@ -99,7 +99,7 @@ class FRpcUpdaterApiImpl(
         bytesFlow: Flow<ByteArray>,
         totalBytes: Long,
         onTransferred: (Long) -> Unit
-    ): Result<Unit> {
+    ): Result<ApiResponse> {
         return runSuspendCatching(dispatcher) {
             httpClient.post("/api/update") {
                 requireCapabilities(
@@ -127,7 +127,7 @@ class FRpcUpdaterApiImpl(
                         }
                     }
                 )
-            }
-        }.map { }
+            }.body<ApiResponse>()
+        }
     }
 }
