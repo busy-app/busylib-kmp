@@ -199,7 +199,7 @@ class FFinishSetupFeatureApiImpl(
                 } else {
                     FFinishSetupState.Loaded(tasks)
                 }
-            }
+            }.distinctUntilChanged()
         }
     ).wrap()
 
