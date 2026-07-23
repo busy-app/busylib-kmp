@@ -15,7 +15,7 @@ jobs:
     name: "Publish XCFramework"
     runs-on: [ self-hosted, macOS ]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: recursive
       - name: Set up JDK 1.17
@@ -45,7 +45,7 @@ jobs:
           ORG_GRADLE_PROJECT_current_flavor_type: DEBUG
       - name: Publish release
         id: create_release
-        uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe # v2
+        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
