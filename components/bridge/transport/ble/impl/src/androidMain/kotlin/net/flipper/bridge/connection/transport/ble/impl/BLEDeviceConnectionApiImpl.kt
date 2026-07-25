@@ -7,6 +7,7 @@ import dev.zacsweers.metro.ContributesBinding
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.binding
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.filterIsInstance
@@ -15,6 +16,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import net.flipper.bridge.connection.transport.ble.api.BleDeviceConnectionApi
 import net.flipper.bridge.connection.transport.ble.api.FBleApi
@@ -25,6 +27,7 @@ import net.flipper.bridge.connection.transport.ble.impl.api.serial.SerialApiFact
 import net.flipper.bridge.connection.transport.ble.impl.api.stream.AndroidStreamApiFactory
 import net.flipper.bridge.connection.transport.ble.impl.exception.BLEConnectionPermissionException
 import net.flipper.bridge.connection.transport.ble.impl.exception.FailedConnectToDeviceException
+import net.flipper.bridge.connection.transport.ble.impl.exception.FailedDiscoverServicesException
 import net.flipper.bridge.connection.transport.ble.impl.exception.NoFoundDeviceException
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
 import net.flipper.bridge.connection.transport.common.api.FTransportConnectionStatusListener
@@ -40,6 +43,9 @@ import no.nordicsemi.kotlin.ble.client.RemoteServices
 import no.nordicsemi.kotlin.ble.client.android.CentralManager
 import no.nordicsemi.kotlin.ble.client.android.Peripheral
 import no.nordicsemi.kotlin.ble.core.Phy
+import no.nordicsemi.kotlin.ble.core.exception.BluetoothException
+import no.nordicsemi.kotlin.ble.core.exception.GattException
+import kotlin.coroutines.cancellation.CancellationException
 
 @Inject
 @ContributesBinding(BusyLibGraph::class, binding<BleDeviceConnectionApi>())
@@ -60,7 +66,23 @@ class BLEDeviceConnectionApiImpl(
         } ?: throw FailedConnectToDeviceException()
     }
 
-    @Suppress("ThrowsCount", "LongMethod")
+    /**
+     * A failure or cancellation after a successful [CentralManager.connect] leaves the peripheral
+     * connected with no owner: nobody disconnects it, the next connect() short-circuits on the
+     * stale connected state and every GATT request fails instantly. Release the peripheral so the
+     * next attempt starts from a disconnected state.
+     */
+    private suspend fun releasePeripheralAndRethrow(
+        device: Peripheral,
+        cause: Throwable
+    ): Nothing {
+        withContext(NonCancellable) {
+            runSuspendCatching { device.disconnect() }
+                .onFailure { t -> error(t) { "Failed to release peripheral after failed connect" } }
+        }
+        throw cause
+    }
+
     private suspend fun connectUnsafe(
         scope: CoroutineScope,
         config: FBleDeviceConnectionConfig,
@@ -85,6 +107,37 @@ class BLEDeviceConnectionApiImpl(
             )
         )
         info { "Device connected!" }
+        return try {
+            buildBleApi(scope, config, listener, device)
+        } catch (e: CancellationException) {
+            // Timeout in connect() or scope teardown aborted the setup mid-flight
+            releasePeripheralAndRethrow(device, e)
+        } catch (e: FailedConnectToDeviceException) {
+            releasePeripheralAndRethrow(device, e)
+        } catch (e: FailedDiscoverServicesException) {
+            releasePeripheralAndRethrow(device, e)
+        } catch (e: BluetoothException) {
+            // Nordic transport failures: PeripheralNotConnected, BondingFailed, PeripheralClosed
+            releasePeripheralAndRethrow(device, e)
+        } catch (e: GattException) {
+            // Nordic GATT request failures: OperationFailedException from MTU request
+            releasePeripheralAndRethrow(device, e)
+        } catch (e: SecurityException) {
+            // BLUETOOTH_CONNECT permission revoked between the initial check and a GATT request
+            releasePeripheralAndRethrow(device, e)
+        } catch (t: Throwable) {
+            error(t) { "Failed to determine exception type" }
+            throw t
+        }
+    }
+
+
+    private suspend fun buildBleApi(
+        scope: CoroutineScope,
+        config: FBleDeviceConnectionConfig,
+        listener: FTransportConnectionStatusListener,
+        device: Peripheral
+    ): FBleApi {
         if (!device.isConnected) {
             info { "Device failed to connect, so throw exception" }
             throw FailedConnectToDeviceException()
@@ -143,7 +196,11 @@ class BLEDeviceConnectionApiImpl(
 
         val discoveredServices = servicesFlow.mapNotNull { state ->
             when (state) {
-                is RemoteServices.Failed -> Result.failure(RuntimeException("Failed get service: ${state.reason}"))
+                is RemoteServices.Failed -> {
+                    val t = FailedDiscoverServicesException("Failed get service: ${state.reason}")
+                    Result.failure(t)
+                }
+
                 is RemoteServices.Discovered -> Result.success(state.services)
 
                 RemoteServices.Discovering,
