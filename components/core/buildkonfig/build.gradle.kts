@@ -1,5 +1,6 @@
 import dev.detekt.gradle.Detekt
 import net.flipper.Config.CURRENT_FLAVOR_TYPE
+import net.flipper.baseGradleProperty
 
 plugins {
     id("flipper.multiplatform")
@@ -42,5 +43,10 @@ buildConfig {
         Boolean::class.java,
         "IS_DEVELOP_FIRMWARE_CHANNEL",
         CURRENT_FLAVOR_TYPE.isDevelopFirmwareChannel
+    )
+    buildConfigField(
+        String::class.java,
+        "VERSION",
+        baseGradleProperty("project.version.string").getValue().getOrThrow()
     )
 }

@@ -37,6 +37,7 @@ kotlin {
         implementation(projects.components.core.di)
         implementation(projects.components.core.ktx)
         implementation(projects.components.core.ktor)
+        api(projects.components.core.buildkonfig)
         api(projects.components.core.log)
         api(projects.components.core.systrace)
         api(projects.components.core.network)
@@ -185,6 +186,7 @@ kotlin {
                 export(projects.components.bridge.orchestrator.api)
                 export(projects.components.bridge.service.api)
                 export(projects.components.eventbus.api)
+                export(projects.components.core.buildkonfig)
                 export(projects.components.core.log)
                 export(projects.components.core.systrace)
 
