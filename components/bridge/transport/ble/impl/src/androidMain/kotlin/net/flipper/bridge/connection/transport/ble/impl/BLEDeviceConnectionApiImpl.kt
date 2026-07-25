@@ -83,6 +83,7 @@ class BLEDeviceConnectionApiImpl(
         throw cause
     }
 
+    @Suppress("ThrowsCount")
     private suspend fun connectUnsafe(
         scope: CoroutineScope,
         config: FBleDeviceConnectionConfig,
@@ -130,7 +131,6 @@ class BLEDeviceConnectionApiImpl(
             throw t
         }
     }
-
 
     private suspend fun buildBleApi(
         scope: CoroutineScope,

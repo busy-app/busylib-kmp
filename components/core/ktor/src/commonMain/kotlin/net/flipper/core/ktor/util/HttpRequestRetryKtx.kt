@@ -20,12 +20,11 @@ private fun Throwable.isTransientException(): Boolean {
 }
 
 /**
- * Ktor installs default exception-retry behavior in [HttpRequestRetryConfig] init -> [retryOnExceptionOrServerErrors(3)]
+ * Ktor installs default exception-retry behavior in
+ * [HttpRequestRetryConfig] init -> [retryOnExceptionOrServerErrors(3)]
  */
 fun HttpRequestRetryConfig.retryOnTransientExceptions() {
     retryOnExceptionIf { _, cause ->
         retryCount <= MAX_TRANSIENT_EXCEPTION_RETRIES && cause.isTransientException()
     }
 }
-
-
