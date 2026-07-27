@@ -10,6 +10,7 @@ interface FRpcFeatureApi : FDeviceFeatureApi {
     val fRpcSettingsApi: FRpcSettingsApi
     val fRpcStreamingApi: FRpcStreamingApi
     val fRpcAssetsApi: FRpcAssetsApi
+    val fRpcStorageApi: FRpcStorageApi
     val fRpcUpdaterApi: FRpcUpdaterApi
     val fRpcMatterApi: FRpcMatterApi
     val fRpcTimeZoneApi: FRpcTimeZoneApi

@@ -35,6 +35,9 @@ sealed class DashboardConfig {
     data object Display : DashboardConfig()
 
     @Serializable
+    data object DrawTool : DashboardConfig()
+
+    @Serializable
     data object ScreenStreaming : DashboardConfig()
 
     @Serializable

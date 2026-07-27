@@ -7,6 +7,7 @@ import net.flipper.bridge.connection.feature.battery.api.FDeviceBatteryInfoFeatu
 import net.flipper.bridge.connection.feature.ble.api.FBleFeatureApi
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
+import net.flipper.bridge.connection.feature.drawtool.api.FDrawToolFeatureApi
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
 import net.flipper.bridge.connection.feature.finishsetup.api.FFinishSetupFeatureApi
 import net.flipper.bridge.connection.feature.firmwareupdate.api.FFirmwareUpdateFeatureApi
@@ -49,6 +50,7 @@ object FZeroFeatureClassToEnumMapper {
             FDeviceFeature.ABOUT -> FAboutFeatureApi::class
             FDeviceFeature.TIMER -> FTimerFeatureApi::class
             FDeviceFeature.HARDWARE_ID -> FHardwareIdFeatureApi::class
+            FDeviceFeature.DRAW_TOOL -> FDrawToolFeatureApi::class
         }
     }
 
