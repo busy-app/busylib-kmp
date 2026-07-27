@@ -82,6 +82,11 @@ class FDeviceHolder<API : FConnectedDeviceApi>(
         bbConfig: BUSYBar,
         config: FDeviceConnectionConfig<*>
     ): Result<Unit> {
+        if (!deviceApi.isCompleted && this.config == config) {
+            info { "Connection for the same config is already in progress, skip update" }
+            listener.updateConfig(bbConfig)
+            return Result.success(Unit)
+        }
         return runCatching { // By design to handle cancellation exception
             deviceApi.getCompleted()
         }.transform { deviceApi ->
