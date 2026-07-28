@@ -6,8 +6,6 @@ plugins {
 
 kotlin {
     sourceSets.commonMain.dependencies {
-        implementation(projects.components.tools.drawtool.api)
-
         implementation(projects.components.core.data)
         implementation(projects.components.core.di)
         implementation(projects.components.core.ktx)

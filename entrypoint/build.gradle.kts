@@ -131,7 +131,6 @@ kotlin {
         api(projects.components.tools.multistream.api)
         implementation(projects.components.tools.multistream.impl)
 
-        api(projects.components.tools.drawtool.api)
         implementation(projects.components.tools.drawtool.impl)
 
         api(projects.components.eventbus.api)
@@ -189,7 +188,6 @@ kotlin {
                 export(projects.components.bridge.feature.about.api)
                 export(projects.components.bridge.feature.timer.api)
                 export(projects.components.bridge.feature.drawTool.api)
-                export(projects.components.tools.drawtool.api)
                 export(projects.components.bridge.orchestrator.api)
                 export(projects.components.bridge.service.api)
                 export(projects.components.eventbus.api)
