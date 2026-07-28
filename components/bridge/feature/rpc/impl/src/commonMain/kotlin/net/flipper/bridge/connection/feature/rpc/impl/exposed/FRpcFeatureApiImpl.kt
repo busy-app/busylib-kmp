@@ -6,6 +6,7 @@ import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcBusyApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcMatterApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcSettingsApi
+import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcStorageApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcStreamingApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcSystemApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcTimeZoneApi
@@ -20,6 +21,7 @@ class FRpcFeatureApiImpl(
     override val fRpcSettingsApi: FRpcSettingsApi,
     override val fRpcStreamingApi: FRpcStreamingApi,
     override val fRpcAssetsApi: FRpcAssetsApi,
+    override val fRpcStorageApi: FRpcStorageApi,
     override val fRpcUpdaterApi: FRpcUpdaterApi,
     override val fRpcMatterApi: FRpcMatterApi,
     override val fRpcTimeZoneApi: FRpcTimeZoneApi,

@@ -74,6 +74,7 @@ kotlin {
         implementation(libs.kotlinx.crypto)
         implementation(libs.kotlinx.crypto.provider)
         implementation(projects.components.bridge.feature.rpc.api)
+        implementation(projects.components.bridge.feature.drawTool.api)
     }
 
     sourceSets.jvmMain.dependencies {

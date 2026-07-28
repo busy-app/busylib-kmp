@@ -106,6 +106,8 @@ kotlin {
         implementation(projects.components.bridge.feature.about.impl)
         api(projects.components.bridge.feature.timer.api)
         implementation(projects.components.bridge.feature.timer.impl)
+        api(projects.components.bridge.feature.drawTool.api)
+        implementation(projects.components.bridge.feature.drawTool.impl)
 
         implementation(projects.components.bridge.transport.ble.api)
         implementation(projects.components.bridge.transport.common.api)
@@ -183,6 +185,7 @@ kotlin {
                 export(projects.components.bridge.feature.settings.api)
                 export(projects.components.bridge.feature.about.api)
                 export(projects.components.bridge.feature.timer.api)
+                export(projects.components.bridge.feature.drawTool.api)
                 export(projects.components.bridge.orchestrator.api)
                 export(projects.components.bridge.service.api)
                 export(projects.components.eventbus.api)

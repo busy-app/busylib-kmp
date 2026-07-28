@@ -120,6 +120,8 @@ include(
     ":components:bridge:feature:about:impl",
     ":components:bridge:feature:timer:api",
     ":components:bridge:feature:timer:impl",
+    ":components:bridge:feature:draw-tool:api",
+    ":components:bridge:feature:draw-tool:impl",
     ":components:bridge:feature:hardware-id:api",
     ":components:bridge:feature:hardware-id:impl",
 

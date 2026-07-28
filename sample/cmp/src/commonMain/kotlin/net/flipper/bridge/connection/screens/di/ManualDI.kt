@@ -8,6 +8,7 @@ import net.flipper.bridge.connection.screens.dashboard.account.AccountDashboardV
 import net.flipper.bridge.connection.screens.dashboard.assets.AssetsDashboardViewModel
 import net.flipper.bridge.connection.screens.dashboard.deviceinfo.DeviceInfoDashboardViewModel
 import net.flipper.bridge.connection.screens.dashboard.display.DisplayDashboardViewModel
+import net.flipper.bridge.connection.screens.dashboard.drawtool.DrawToolDashboardViewModel
 import net.flipper.bridge.connection.screens.dashboard.hardware.HardwareDashboardViewModel
 import net.flipper.bridge.connection.screens.dashboard.oncall.OnCallDashboardViewModel
 import net.flipper.bridge.connection.screens.dashboard.root.DashboardDecomposeComponent
@@ -134,6 +135,7 @@ private fun getDashboardDecomposeComponentFactory(
         timezoneViewModelFactory = { TimezoneDashboardViewModel(fFeatureProvider) },
         assetsViewModelFactory = { AssetsDashboardViewModel(fFeatureProvider) },
         displayViewModelFactory = { DisplayDashboardViewModel(fFeatureProvider) },
+        drawToolViewModelFactory = { DrawToolDashboardViewModel(fFeatureProvider) },
         screenStreamingViewModelFactory = { ScreenStreamingDashboardViewModel(fFeatureProvider) },
         wifiViewModelFactory = { WiFiDashboardViewModel(fFeatureProvider) },
         firmwareUpdateViewModelFactory = { FirmwareUpdateViewModel(firmwareUpdaterApi) },
