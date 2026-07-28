@@ -5,7 +5,6 @@ import dev.zacsweers.metro.ContributesBinding
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.binding
 import kotlinx.io.files.Path
-import kotlinx.io.files.SystemFileSystem
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.tools.drawtool.storage.api.DrawToolStoragePathProvider
 
