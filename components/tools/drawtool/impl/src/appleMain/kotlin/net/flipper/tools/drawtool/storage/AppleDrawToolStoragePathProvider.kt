@@ -3,6 +3,7 @@ package net.flipper.tools.drawtool.storage
 import dev.zacsweers.metro.ContributesBinding
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.binding
+import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import net.flipper.busylib.core.di.BusyLibGraph
@@ -14,6 +15,7 @@ import platform.Foundation.NSUserDomainMask
 @Inject
 @ContributesBinding(BusyLibGraph::class, binding<DrawToolStoragePathProvider>())
 class AppleDrawToolStoragePathProvider : DrawToolStoragePathProvider {
+    @OptIn(ExperimentalForeignApi::class)
     override fun getDrawerRootPath(): Result<Path> {
         SystemFileSystem
 

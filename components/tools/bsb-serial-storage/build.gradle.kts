@@ -1,0 +1,28 @@
+plugins {
+    id("flipper.multiplatform")
+    id("flipper.metro-multiplatform")
+    id("kotlinx-serialization")
+}
+
+kotlin {
+    sourceSets.commonMain.dependencies {
+        implementation(projects.components.core.data)
+        implementation(projects.components.core.di)
+        implementation(projects.components.core.ktx)
+        implementation(projects.components.core.log)
+
+        implementation(projects.components.bridge.config.api)
+        implementation(projects.components.bridge.orchestrator.api)
+        implementation(projects.components.bridge.transport.common.api)
+        implementation(projects.components.bridge.feature.common.api)
+        implementation(projects.components.bridge.feature.provider.api)
+        implementation(projects.components.bridge.feature.rpc.api)
+
+        implementation(projects.components.watchers.api)
+
+        implementation(libs.klibs.kstorage)
+        implementation(libs.kotlin.coroutines)
+        implementation(libs.kotlin.serialization.json)
+        implementation(libs.settings)
+    }
+}
