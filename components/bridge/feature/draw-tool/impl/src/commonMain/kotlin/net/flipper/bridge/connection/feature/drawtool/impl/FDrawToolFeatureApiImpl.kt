@@ -139,7 +139,7 @@ class FDrawToolFeatureApiImpl(
          * Overlaps built-in bar screens (priority 10) but is rejected
          * during an active work session (priority 90).
          */
-        private const val DRAW_PRIORITY = 50
+        private const val DRAW_PRIORITY = 40
 
         /**
          * Stable element id: a repeated draw request with the same
