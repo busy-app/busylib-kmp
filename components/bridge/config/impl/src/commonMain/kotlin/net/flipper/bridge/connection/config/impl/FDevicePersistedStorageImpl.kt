@@ -7,6 +7,7 @@ import dev.zacsweers.metro.SingleIn
 import dev.zacsweers.metro.binding
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.serialization.json.Json
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.config.api.PersistedStorageTransactionScope
 import net.flipper.bridge.connection.config.api.model.BUSYBar
@@ -19,6 +20,7 @@ import net.flipper.bridge.connection.config.internal.TransactionHook
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.wrap
+import net.flipper.core.busylib.data.di.qualifier.BusyLibJsonQualifier
 import net.flipper.core.busylib.ktx.common.withLock
 import net.flipper.core.busylib.ktx.common.withLockResult
 import net.flipper.core.busylib.log.LogTagProvider
@@ -29,12 +31,17 @@ import net.flipper.core.busylib.log.info
 @ContributesBinding(BusyLibGraph::class, binding<FInternalDevicePersistedStorage>())
 @ContributesBinding(BusyLibGraph::class, binding<FDevicePersistedStorage>())
 class FDevicePersistedStorageImpl(
-    observableSettings: ObservableSettings
+    observableSettings: ObservableSettings,
+    @BusyLibJsonQualifier json: Json
 ) : FInternalDevicePersistedStorage, LogTagProvider {
     override val TAG = "FDevicePersistedStorage"
     private val mutex = Mutex()
 
-    private val bleConfigKrate = BBConfigSettingsKrateImpl(observableSettings, logger = this)
+    private val bleConfigKrate = BBConfigSettingsKrateImpl(
+        observableSettings = observableSettings,
+        json = json,
+        logger = this
+    )
     private var hooks = listOf<TransactionHook>(
         AlwaysActiveHook(),
         RemoveDuplicateCloudHook(),

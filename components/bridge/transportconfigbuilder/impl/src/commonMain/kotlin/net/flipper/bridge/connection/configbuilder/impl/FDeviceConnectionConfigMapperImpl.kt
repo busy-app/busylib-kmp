@@ -27,7 +27,7 @@ class FDeviceConnectionConfigMapperImpl(
             name = device.humanReadableName,
             connectionConfigs = device.connectionWays.map { connectionWay ->
                 map(
-                    hardwareId = device.hardwareId,
+                    hardwareId = device.serialNumber,
                     connectionWay = connectionWay,
                     humanReadableName = device.humanReadableName
                 )

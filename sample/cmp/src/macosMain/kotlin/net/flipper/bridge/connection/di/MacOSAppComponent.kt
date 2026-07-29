@@ -26,7 +26,7 @@ private val applicationScope by lazy {
 }
 
 private val hostApi = BUSYLibHostApiStub(
-    host = "cloud.dev.busy.app",
+    host = "cloud.busy.app",
 )
 
 private val principalApi by lazy {

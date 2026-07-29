@@ -423,7 +423,7 @@ class CloudFetcherWatcherTest {
         assertEquals("device-1", updated.uniqueId)
         assertEquals("Renamed", updated.humanReadableName)
         assertEquals(cloudId, updated.cloud?.deviceId)
-        assertEquals(hardwareId, updated.hardwareId, "Existing hardwareId must be preserved")
+        assertEquals(hardwareId, updated.serialNumber, "Existing hardwareId must be preserved")
     }
 
     @Test
@@ -449,7 +449,7 @@ class CloudFetcherWatcherTest {
 
         val updated = setup.storage.devices.value.single()
         assertEquals("Renamed", updated.humanReadableName)
-        assertEquals(hardwareId, updated.hardwareId)
+        assertEquals(hardwareId, updated.serialNumber)
         assertEquals(1, setup.storage.transactionCount, "Name + hardwareId update must share one transaction")
     }
 
@@ -541,6 +541,6 @@ class CloudFetcherWatcherTest {
         assertEquals("Renamed", updated.humanReadableName)
         assertEquals(cloudId, updated.cloud?.deviceId)
         assertEquals(device.ble, updated.ble, "BLE transport must be preserved")
-        assertEquals(hardwareId, updated.hardwareId, "Existing hardwareId must be preserved")
+        assertEquals(hardwareId, updated.serialNumber, "Existing hardwareId must be preserved")
     }
 }

@@ -17,8 +17,8 @@ class RemoveDuplicateHardwareIdHook : TransactionHook, LogTagProvider {
         val allDevices = getAllDevices()
         val currentDevice = getCurrentDevice()
         val hwIdDuplicatesDevices = allDevices
-            .filter { it.hardwareId != null }
-            .groupBy { it.hardwareId }
+            .filter { it.serialNumber != null }
+            .groupBy { it.serialNumber }
             .values
             .filter { it.size > 1 }
 
@@ -33,7 +33,7 @@ class RemoveDuplicateHardwareIdHook : TransactionHook, LogTagProvider {
                 if (device.uniqueId != best.uniqueId) {
                     info {
                         "Removing duplicate device ${device.uniqueId} " +
-                            "with hardware id ${device.hardwareId}, keeping ${best.uniqueId}"
+                            "with hardware id ${device.serialNumber}, keeping ${best.uniqueId}"
                     }
                     removeDevice(device.uniqueId)
                     if (currentDevice?.uniqueId == device.uniqueId) {

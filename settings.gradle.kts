@@ -139,6 +139,8 @@ include(
     ":components:tools:multistream:api",
     ":components:tools:multistream:impl",
 
+    ":components:tools:drawtool:impl",
+
     ":components:watchers:api",
     ":components:watchers:changename",
     ":components:watchers:provisioning",
