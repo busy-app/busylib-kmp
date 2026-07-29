@@ -133,8 +133,6 @@ include(
     ":components:cloud:rest:api",
     ":components:cloud:rest:impl",
 
-    ":components:tools:bsb-serial-storage",
-
     ":components:tools:oncall:api",
     ":components:tools:oncall:impl",
 
