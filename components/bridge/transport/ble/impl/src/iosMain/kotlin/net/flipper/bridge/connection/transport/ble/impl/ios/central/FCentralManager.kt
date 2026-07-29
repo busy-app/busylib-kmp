@@ -26,6 +26,7 @@ import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
 import net.flipper.core.busylib.log.warn
+import platform.CoreBluetooth.CBAdvertisementDataLocalNameKey
 import platform.CoreBluetooth.CBCentralManager
 import platform.CoreBluetooth.CBManagerState
 import platform.CoreBluetooth.CBPeripheral
@@ -238,7 +239,7 @@ class FCentralManager internal constructor(
         info { "CB didDisconnect id=${peripheral.identifier}" }
     }
 
-    private suspend fun didFailToConnect(
+    private fun didFailToConnect(
         peripheral: CBPeripheral,
         error: NSError?
     ) {
@@ -259,18 +260,22 @@ class FCentralManager internal constructor(
         error { "CB didFailToConnect id=${peripheral.identifier} error=$error" }
     }
 
-    private suspend fun didDiscover(
+    private fun didDiscover(
         peripheral: CBPeripheral,
         advertisementData: Map<Any?, *>,
         rssi: NSNumber
     ) {
-        info { "#didDiscover peripheral=${peripheral.identifier} rssi=$rssi ad=$advertisementData" }
         val uuid = peripheral.identifier
-        val name = peripheral.name
+
+        val advertisedName = advertisementData[CBAdvertisementDataLocalNameKey] as? String
+        val name = peripheral.name ?: advertisedName
+
+        info { "#didDiscover peripheral=$uuid name=$name rssi=$rssi ad=$advertisementData" }
 
         val devices = _discoveredStream.updateAndGet { current ->
-            val device = DiscoveredBluetoothDevice(id = uuid, name = name)
-            current + device
+            val existing = current.firstOrNull { it.id == uuid }
+            val resolved = name ?: existing?.name
+            current.filterNot { it.id == uuid }.toSet() + DiscoveredBluetoothDevice(id = uuid, name = resolved)
         }
         info { "Emitted to discovered stream, total devices: ${devices.size}" }
     }
