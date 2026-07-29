@@ -136,8 +136,6 @@ kotlin {
         implementation(projects.components.tools.drawtool.api)
         implementation(projects.components.tools.drawtool.impl)
 
-        implementation(projects.components.tools.bsbSerialStorage)
-
         api(projects.components.eventbus.api)
         implementation(projects.components.eventbus.internal)
         implementation(projects.components.eventbus.impl)

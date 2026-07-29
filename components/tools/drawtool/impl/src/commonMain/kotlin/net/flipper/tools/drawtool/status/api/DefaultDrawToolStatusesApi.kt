@@ -43,8 +43,9 @@ class DefaultDrawToolStatusesApi(
     drawToolCollectionFactoryFactory: DrawToolCollectionFactory.Factory
 ) : DrawToolStatusesApi {
     private val writeMutex = Mutex()
-    private val collectionFactory =
-        drawToolCollectionFactoryFactory.invoke(SystemFlipperFileSystem(delegate = SystemFileSystem))
+    private val collectionFactory = drawToolCollectionFactoryFactory.invoke(
+        fileSystem = SystemFlipperFileSystem(delegate = SystemFileSystem)
+    )
 
     override suspend fun getStatusIds(uniqueId: String): CResult<ImmutableList<String>> {
         return collectionResolver.getPath(uniqueId).map(collectionFactory::create)
