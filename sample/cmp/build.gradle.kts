@@ -75,6 +75,10 @@ kotlin {
         implementation(libs.kotlinx.crypto.provider)
         implementation(projects.components.bridge.feature.rpc.api)
         implementation(projects.components.bridge.feature.drawTool.api)
+        implementation(projects.components.bridge.feature.storage.api)
+        // The sample writes Draw tool collections itself, which needs the
+        // directory layout and the collection reader the library keeps in :impl.
+        implementation(projects.components.tools.drawtool.impl)
     }
 
     sourceSets.jvmMain.dependencies {

@@ -78,6 +78,8 @@ kotlin {
         implementation(projects.components.bridge.feature.rpc.impl)
         implementation(projects.components.bridge.feature.hardwareId.api)
         implementation(projects.components.bridge.feature.hardwareId.impl)
+        implementation(projects.components.bridge.feature.storage.api)
+        implementation(projects.components.bridge.feature.storage.impl)
         api(projects.components.bridge.feature.screenStreaming.api)
         implementation(projects.components.bridge.feature.screenStreaming.impl)
         implementation(projects.components.bridge.feature.sync.impl)
@@ -132,6 +134,8 @@ kotlin {
         implementation(projects.components.tools.multistream.impl)
 
         implementation(projects.components.tools.drawtool.impl)
+
+        implementation(projects.components.tools.bsbSerialStorage)
 
         api(projects.components.eventbus.api)
         implementation(projects.components.eventbus.internal)

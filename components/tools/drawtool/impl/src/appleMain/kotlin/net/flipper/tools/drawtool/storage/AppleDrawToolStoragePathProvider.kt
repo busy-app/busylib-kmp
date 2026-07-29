@@ -12,6 +12,7 @@ import platform.Foundation.NSApplicationSupportDirectory
 import platform.Foundation.NSFileManager
 import platform.Foundation.NSUserDomainMask
 
+/** Draw tool root under `Application Support`, which is created if absent. */
 @Inject
 @ContributesBinding(BusyLibGraph::class, binding<DrawToolStoragePathProvider>())
 class AppleDrawToolStoragePathProvider : DrawToolStoragePathProvider {

@@ -27,7 +27,9 @@ class DrawToolDashboardDecomposeComponent(
             actionState = actionState,
             onShowPreviewOnFront = viewModel::showPreviewOnFront,
             onShowPreviewOnBack = viewModel::showPreviewOnBack,
-            onHidePreview = viewModel::hidePreview
+            onHidePreview = viewModel::hidePreview,
+            onGenerateStatus = viewModel::generateStatus,
+            onReadStatuses = viewModel::readStatuses
         )
     }
 }

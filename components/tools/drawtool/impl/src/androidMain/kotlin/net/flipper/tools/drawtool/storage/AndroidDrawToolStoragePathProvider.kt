@@ -8,6 +8,7 @@ import kotlinx.io.files.Path
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.tools.drawtool.storage.api.DrawToolStoragePathProvider
 
+/** Draw tool root in the private files directory of the app. */
 @Inject
 @ContributesBinding(BusyLibGraph::class, binding<DrawToolStoragePathProvider>())
 class AndroidDrawToolStoragePathProvider(

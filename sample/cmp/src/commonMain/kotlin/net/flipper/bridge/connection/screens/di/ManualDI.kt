@@ -1,6 +1,8 @@
 package net.flipper.bridge.connection.screens.di
 
 import com.arkivanov.decompose.ComponentContext
+import kotlinx.io.files.SystemFileSystem
+import kotlinx.serialization.json.Json
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
@@ -8,7 +10,9 @@ import net.flipper.bridge.connection.screens.dashboard.account.AccountDashboardV
 import net.flipper.bridge.connection.screens.dashboard.assets.AssetsDashboardViewModel
 import net.flipper.bridge.connection.screens.dashboard.deviceinfo.DeviceInfoDashboardViewModel
 import net.flipper.bridge.connection.screens.dashboard.display.DisplayDashboardViewModel
+import net.flipper.bridge.connection.screens.dashboard.drawtool.DrawToolCollectionSourceResolver
 import net.flipper.bridge.connection.screens.dashboard.drawtool.DrawToolDashboardViewModel
+import net.flipper.bridge.connection.screens.dashboard.drawtool.DrawToolSampleStatusWriter
 import net.flipper.bridge.connection.screens.dashboard.hardware.HardwareDashboardViewModel
 import net.flipper.bridge.connection.screens.dashboard.oncall.OnCallDashboardViewModel
 import net.flipper.bridge.connection.screens.dashboard.root.DashboardDecomposeComponent
@@ -31,6 +35,11 @@ import net.flipper.bridge.connection.utils.principal.impl.UserPrincipalApiSample
 import net.flipper.bridge.device.firmwareupdate.updater.api.FirmwareUpdaterApi
 import net.flipper.bsb.cloud.rest.channel.api.BusyFirmwareDirectoryChannelApi
 import net.flipper.busylib.BUSYLib
+import net.flipper.core.busylib.ktx.io.SystemFlipperFileSystem
+import net.flipper.tools.drawtool.api.DrawToolStatusesApi
+import net.flipper.tools.drawtool.collection.util.DrawToolFileTypeResolver
+import net.flipper.tools.drawtool.collection.util.DrawToolStatusIdValidator
+import net.flipper.tools.drawtool.status.util.DrawToolStatusIdGenerator
 import net.flipper.tools.multistream.api.MultiStreamApi
 
 fun getRootDecomposeComponent(
@@ -52,7 +61,8 @@ fun getRootDecomposeComponent(
         firmwareUpdaterApi = busyLib.firmwareUpdaterApi,
         principalApi = principalApi,
         multiStreamApi = busyLib.multiStreamApi,
-        busyFirmwareDirectoryChannelApi = busyFirmwareDirectoryChannelApi
+        busyFirmwareDirectoryChannelApi = busyFirmwareDirectoryChannelApi,
+        drawToolStatusesApi = busyLib.drawToolStatusesApi
     ).invoke(componentContext)
 }
 
@@ -68,6 +78,7 @@ private fun getRootDecomposeComponentFactory(
     principalApi: UserPrincipalApiSampleImpl,
     multiStreamApi: MultiStreamApi,
     busyFirmwareDirectoryChannelApi: BusyFirmwareDirectoryChannelApi,
+    drawToolStatusesApi: DrawToolStatusesApi,
 ): ConnectionRootDecomposeComponent.Factory {
     return ConnectionRootDecomposeComponent.Factory(
         permissionChecker = permissionChecker,
@@ -85,7 +96,9 @@ private fun getRootDecomposeComponentFactory(
             fFeatureProvider = featureProvider,
             principalApi = principalApi,
             firmwareUpdaterApi = firmwareUpdaterApi,
-            busyFirmwareDirectoryChannelApi = busyFirmwareDirectoryChannelApi
+            busyFirmwareDirectoryChannelApi = busyFirmwareDirectoryChannelApi,
+            persistedStorage = persistedStorage,
+            drawToolStatusesApi = drawToolStatusesApi
         ),
     )
 }
@@ -119,11 +132,46 @@ private fun getConnectionDeviceScreenDecomposeComponentFactory(
     )
 }
 
+private fun getDrawToolViewModelFactory(
+    fFeatureProvider: FFeatureProvider,
+    persistedStorage: FDevicePersistedStorage,
+    drawToolStatusesApi: DrawToolStatusesApi,
+): () -> DrawToolDashboardViewModel {
+    val json = Json {
+        isLenient = true
+        ignoreUnknownKeys = true
+        encodeDefaults = true
+        prettyPrint = false
+    }
+    val collectionSourceResolver = DrawToolCollectionSourceResolver(
+        featureProvider = fFeatureProvider,
+        clientStatusesApi = drawToolStatusesApi,
+        clientFileSystem = SystemFlipperFileSystem(delegate = SystemFileSystem),
+        json = json,
+        statusIdValidator = DrawToolStatusIdValidator(),
+        fileTypeResolver = DrawToolFileTypeResolver()
+    )
+    val statusWriter = DrawToolSampleStatusWriter(
+        json = json,
+        statusIdGenerator = DrawToolStatusIdGenerator()
+    )
+    return {
+        DrawToolDashboardViewModel(
+            featureProvider = fFeatureProvider,
+            persistedStorage = persistedStorage,
+            collectionSourceResolver = collectionSourceResolver,
+            statusWriter = statusWriter
+        )
+    }
+}
+
 private fun getDashboardDecomposeComponentFactory(
     fFeatureProvider: FFeatureProvider,
     principalApi: UserPrincipalApiSampleImpl,
     firmwareUpdaterApi: FirmwareUpdaterApi,
     busyFirmwareDirectoryChannelApi: BusyFirmwareDirectoryChannelApi,
+    persistedStorage: FDevicePersistedStorage,
+    drawToolStatusesApi: DrawToolStatusesApi,
 ): DashboardDecomposeComponent.Factory {
     return DashboardDecomposeComponent.Factory(
         settingsViewModelFactory = { SettingsDashboardViewModel(fFeatureProvider) },
@@ -135,7 +183,11 @@ private fun getDashboardDecomposeComponentFactory(
         timezoneViewModelFactory = { TimezoneDashboardViewModel(fFeatureProvider) },
         assetsViewModelFactory = { AssetsDashboardViewModel(fFeatureProvider) },
         displayViewModelFactory = { DisplayDashboardViewModel(fFeatureProvider) },
-        drawToolViewModelFactory = { DrawToolDashboardViewModel(fFeatureProvider) },
+        drawToolViewModelFactory = getDrawToolViewModelFactory(
+            fFeatureProvider = fFeatureProvider,
+            persistedStorage = persistedStorage,
+            drawToolStatusesApi = drawToolStatusesApi
+        ),
         screenStreamingViewModelFactory = { ScreenStreamingDashboardViewModel(fFeatureProvider) },
         wifiViewModelFactory = { WiFiDashboardViewModel(fFeatureProvider) },
         firmwareUpdateViewModelFactory = { FirmwareUpdateViewModel(firmwareUpdaterApi) },

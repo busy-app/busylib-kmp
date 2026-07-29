@@ -9,6 +9,7 @@ kotlin {
 
         implementation(libs.kotlin.coroutines)
         implementation(libs.kotlin.immutable)
+        implementation(libs.kotlin.io)
         implementation(libs.kotlin.serialization.json)
     }
 }

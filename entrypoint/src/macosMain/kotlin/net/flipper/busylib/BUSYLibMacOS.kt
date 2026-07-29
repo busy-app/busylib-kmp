@@ -18,6 +18,7 @@ import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
 import net.flipper.busylib.di.BUSYLibGraphMacOS
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.eventbus.api.EventBusApi
+import net.flipper.tools.drawtool.api.DrawToolStatusesApi
 import net.flipper.tools.multistream.api.MultiStreamApi
 import net.flipper.tools.oncall.api.OnCallSingletonApi
 
@@ -29,6 +30,7 @@ class BUSYLibMacOS(
     override val firmwareUpdaterApi: FirmwareUpdaterApi,
     override val persistedStorage: FDevicePersistedStorage,
     override val multiStreamApi: MultiStreamApi,
+    override val drawToolStatusesApi: DrawToolStatusesApi,
     private val startUpListeners: Set<InternalBUSYLibStartupListener>,
     val onCallSingletonApi: OnCallSingletonApi,
     override val busyFirmwareDirectoryChannelApi: BusyFirmwareDirectoryChannelApi,

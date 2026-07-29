@@ -15,6 +15,27 @@ import net.flipper.bridge.connection.screens.dashboard.common.DashboardSectionCa
 import net.flipper.bridge.connection.screens.dashboard.common.orUnavailable
 
 @Composable
+private fun DrawToolCollectionSection(
+    target: DrawToolStorageTarget,
+    onGenerateStatus: (DrawToolStorageTarget) -> Unit,
+    onReadStatuses: (DrawToolStorageTarget) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    DashboardSectionCard(
+        title = "${target.title} collection",
+        modifier = modifier
+    ) {
+        Text("Generates a status directory per DrawToolStatusDirectoryLayout, then reads it back into the log.")
+        DashboardButtonRow(
+            primaryTitle = "Generate status",
+            onPrimaryClick = { onGenerateStatus(target) },
+            secondaryTitle = "Read statuses",
+            onSecondaryClick = { onReadStatuses(target) }
+        )
+    }
+}
+
+@Composable
 fun DrawToolDashboardContent(
     onBack: () -> Unit,
     state: DrawToolDashboardState,
@@ -22,6 +43,8 @@ fun DrawToolDashboardContent(
     onShowPreviewOnFront: () -> Unit,
     onShowPreviewOnBack: () -> Unit,
     onHidePreview: () -> Unit,
+    onGenerateStatus: (DrawToolStorageTarget) -> Unit,
+    onReadStatuses: (DrawToolStorageTarget) -> Unit,
     modifier: Modifier = Modifier
 ) {
     DashboardScreenLayout(
@@ -46,6 +69,15 @@ fun DrawToolDashboardContent(
             ) {
                 Text("Hide Preview")
             }
+        }
+
+        DrawToolStorageTarget.entries.forEach { target ->
+            DrawToolCollectionSection(
+                target = target,
+                onGenerateStatus = onGenerateStatus,
+                onReadStatuses = onReadStatuses,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
         }
 
         DashboardLogCard(
