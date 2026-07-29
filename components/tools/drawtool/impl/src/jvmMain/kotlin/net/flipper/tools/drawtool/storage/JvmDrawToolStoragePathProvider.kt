@@ -15,7 +15,7 @@ class JvmDrawToolStoragePathProvider : DrawToolStoragePathProvider {
         return if (userHome.isNullOrBlank()) {
             Result.failure(IllegalStateException("The user.home system property is not set"))
         } else {
-            Result.success(Path(userHome, ".busylib", "drawer"))
+            Result.success(Path(userHome, ".busylib", "draw_tool"))
         }
     }
 }

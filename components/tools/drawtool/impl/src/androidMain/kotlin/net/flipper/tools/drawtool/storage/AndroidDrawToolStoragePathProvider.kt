@@ -14,6 +14,6 @@ class AndroidDrawToolStoragePathProvider(
     private val context: Context
 ) : DrawToolStoragePathProvider {
     override fun getDrawerRootPath(): Result<Path> {
-        return Result.success(Path(context.filesDir.absolutePath, "busylib", "drawer"))
+        return Result.success(Path(context.filesDir.absolutePath, "busylib", "draw_tool"))
     }
 }
