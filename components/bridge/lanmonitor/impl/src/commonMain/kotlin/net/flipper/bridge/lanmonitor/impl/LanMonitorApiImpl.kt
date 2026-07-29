@@ -90,7 +90,7 @@ class LanMonitorApiImpl(
      * the active device did not change.
      */
     private fun InternalStorageTransactionScope.onDevicePlugIn(hardwareId: String): BusyLibEvent? {
-        val existedDevice = getAllDevices().find { it.hardwareId == hardwareId }
+        val existedDevice = getAllDevices().find { it.serialNumber == hardwareId }
         if (existedDevice != null) {
             info { "Found existed device with hardware id $hardwareId, switch to them" }
             // Auto switch

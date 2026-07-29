@@ -52,7 +52,7 @@ class HardwareIdProvisioningWatcherTest {
 
             val updated = setup.storage.devices.value.single()
             assertEquals("device-1", updated.uniqueId)
-            assertEquals("HW-123", updated.hardwareId)
+            assertEquals("HW-123", updated.serialNumber)
             assertNotNull(updated.ble, "BLE transport must be preserved")
             assertEquals(0, setup.cloudInvalidator.invalidateCount, "First provisioning must not invalidate cloud")
         }
@@ -76,7 +76,7 @@ class HardwareIdProvisioningWatcherTest {
             advanceUntilIdle()
 
             val updated = setup.storage.devices.value.single()
-            assertEquals("HW-456", updated.hardwareId)
+            assertEquals("HW-456", updated.serialNumber)
             assertNotNull(updated.ble, "BLE transport must be preserved")
             assertNotNull(updated.lan, "LAN transport must be preserved")
             assertEquals(0, setup.cloudInvalidator.invalidateCount)
@@ -104,7 +104,7 @@ class HardwareIdProvisioningWatcherTest {
         advanceUntilIdle()
 
         val updated = setup.storage.devices.value.single()
-        assertEquals("HW-123", updated.hardwareId, "Matching hardwareId must not be touched")
+        assertEquals("HW-123", updated.serialNumber, "Matching hardwareId must not be touched")
         assertNull(setup.storage.currentDevice, "Current device must not change when id matches")
         assertEquals(0, setup.cloudInvalidator.invalidateCount)
     }
@@ -123,7 +123,7 @@ class HardwareIdProvisioningWatcherTest {
         advanceUntilIdle()
 
         val updated = setup.storage.devices.value.single()
-        assertNull(updated.hardwareId, "A null hardwareId emission must be ignored")
+        assertNull(updated.serialNumber, "A null hardwareId emission must be ignored")
         assertEquals(0, setup.cloudInvalidator.invalidateCount)
     }
 
@@ -141,7 +141,7 @@ class HardwareIdProvisioningWatcherTest {
         advanceUntilIdle()
 
         val updated = setup.storage.devices.value.single()
-        assertNull(updated.hardwareId, "hardwareId must remain null while disconnected")
+        assertNull(updated.serialNumber, "hardwareId must remain null while disconnected")
         assertEquals(0, setup.cloudInvalidator.invalidateCount)
     }
 
@@ -183,7 +183,7 @@ class HardwareIdProvisioningWatcherTest {
             advanceUntilIdle()
 
             val current = assertNotNull(setup.storage.currentDevice, "A new device must become current")
-            assertEquals("new-hw", current.hardwareId)
+            assertEquals("new-hw", current.serialNumber)
             assertNotNull(current.ble, "BLE transport must carry over to the new device")
             assertNull(current.cloud, "Cloud link must be dropped on the re-provisioned device")
             assertEquals("device-1", setup.storage.devices.value.first { it.uniqueId == "device-1" }.uniqueId)
@@ -277,7 +277,7 @@ class HardwareIdProvisioningWatcherTest {
             advanceUntilIdle()
 
             assertNull(
-                storage.devices.value.single().hardwareId,
+                storage.devices.value.single().serialNumber,
                 "A hardware id emitted after the device disconnected must not be applied"
             )
             assertEquals(0, cloudInvalidator.invalidateCount)
@@ -301,7 +301,7 @@ class HardwareIdProvisioningWatcherTest {
         advanceUntilIdle()
 
         val updated = setup.storage.devices.value.single()
-        assertNull(updated.hardwareId, "hardwareId must remain null when feature is not supported")
+        assertNull(updated.serialNumber, "hardwareId must remain null when feature is not supported")
         assertEquals(0, setup.cloudInvalidator.invalidateCount)
     }
 
