@@ -264,9 +264,9 @@ class FCentralManager internal constructor(
         advertisementData: Map<Any?, *>,
         rssi: NSNumber
     ) {
-        info { "#didDiscover peripheral=${peripheral.identifier} rssi=$rssi ad=$advertisementData" }
         val uuid = peripheral.identifier
         val name = peripheral.name
+        info { "#didDiscover peripheral=$uuid name=$name rssi=$rssi ad=$advertisementData" }
 
         val devices = _discoveredStream.updateAndGet { current ->
             val device = DiscoveredBluetoothDevice(id = uuid, name = name)
