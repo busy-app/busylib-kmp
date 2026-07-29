@@ -133,6 +133,7 @@ kotlin {
         api(projects.components.tools.multistream.api)
         implementation(projects.components.tools.multistream.impl)
 
+        implementation(projects.components.tools.drawtool.api)
         implementation(projects.components.tools.drawtool.impl)
 
         implementation(projects.components.tools.bsbSerialStorage)

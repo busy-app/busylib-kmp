@@ -78,6 +78,7 @@ kotlin {
         implementation(projects.components.bridge.feature.storage.api)
         // The sample writes Draw tool collections itself, which needs the
         // directory layout and the collection reader the library keeps in :impl.
+        api(projects.components.tools.drawtool.api)
         implementation(projects.components.tools.drawtool.impl)
     }
 
