@@ -8,14 +8,13 @@ import kotlinx.datetime.format.char
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.io.files.Path
 import net.flipper.tools.drawtool.api.DrawToolStatusDirectoryLayout
-import net.flipper.tools.drawtool.api.model.DrawToolFileType
 import net.flipper.tools.drawtool.api.model.DrawToolStoredFile
 import kotlin.time.Clock
 
 /**
  * The layout used for a client-side collection (mobile/macOS/desktop).
  * To address the collection on the bar itself, pass
- * [DrawToolStatusDirectoryLayout.BUBSYBAR_DRAWTOOL_PATH] as [collectionPath].
+ * [DrawToolStatusDirectoryLayout.BUSYBAR_DRAWTOOL_PATH] as [collectionPath].
  *
  * [clock] is only used to name newly saved statuses; it is a parameter so tests
  * can pin the produced name.
@@ -42,9 +41,9 @@ class DefaultDrawToolStatusDirectoryLayout(
     }
 
     override fun getStoredFilePath(file: DrawToolStoredFile): Path {
-        return when (file.type) {
-            DrawToolFileType.PREVIEW -> getPreviewFilePath()
-            DrawToolFileType.STATUS -> Path(collectionPath, file.path.name)
+        return when (file) {
+            is DrawToolStoredFile.Preview -> getPreviewFilePath()
+            is DrawToolStoredFile.Status -> Path(collectionPath, file.path.name)
         }
     }
 

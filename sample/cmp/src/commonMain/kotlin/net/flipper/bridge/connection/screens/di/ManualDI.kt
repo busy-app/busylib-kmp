@@ -36,7 +36,7 @@ import net.flipper.bsb.cloud.rest.channel.api.BusyFirmwareDirectoryChannelApi
 import net.flipper.busylib.BUSYLib
 import net.flipper.core.busylib.ktx.io.SystemFlipperFileSystem
 import net.flipper.tools.drawtool.api.DrawToolStatusesApi
-import net.flipper.tools.drawtool.status.util.DrawToolFileTypeResolver
+import net.flipper.tools.drawtool.status.util.DrawToolStoredFileResolver
 import net.flipper.tools.multistream.api.MultiStreamApi
 
 fun getRootDecomposeComponent(
@@ -136,12 +136,13 @@ private fun getDrawToolViewModelFactory(
         featureProvider = fFeatureProvider,
         clientStatusesApi = drawToolStatusesApi,
         clientFileSystem = SystemFlipperFileSystem(delegate = SystemFileSystem),
-        fileTypeResolver = DrawToolFileTypeResolver()
+        storedFileResolver = DrawToolStoredFileResolver()
     )
     val statusWriter = DrawToolSampleStatusWriter()
     return {
         DrawToolDashboardViewModel(
             featureProvider = fFeatureProvider,
+            clientStatusesApi = drawToolStatusesApi,
             collectionSourceResolver = collectionSourceResolver,
             statusWriter = statusWriter
         )

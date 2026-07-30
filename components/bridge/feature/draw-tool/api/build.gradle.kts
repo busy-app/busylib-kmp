@@ -8,6 +8,7 @@ kotlin {
 
         api(projects.components.bridge.feature.common.api)
 
+        api(libs.kotlin.io)
         implementation(libs.kotlin.coroutines)
     }
 }

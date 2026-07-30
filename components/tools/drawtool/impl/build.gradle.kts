@@ -16,6 +16,8 @@ kotlin {
 
         implementation(projects.components.bridge.config.api)
         implementation(projects.components.bridge.feature.common.api)
+        implementation(projects.components.bridge.feature.drawTool.api)
+        implementation(projects.components.bridge.feature.provider.api)
         implementation(projects.components.bridge.feature.storage.api)
         implementation(projects.components.bridge.transport.common.api)
 

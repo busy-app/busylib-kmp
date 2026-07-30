@@ -30,6 +30,6 @@ interface DrawToolStatusDirectoryLayout {
          * collection it is not keyed by serial — a bar holds only its own
          * statuses.
          */
-        val BUBSYBAR_DRAWTOOL_PATH = Path("/ext", "user_assets", "draw_tool")
+        val BUSYBAR_DRAWTOOL_PATH = Path("/ext", "user_assets", "draw_tool")
     }
 }

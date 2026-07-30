@@ -38,8 +38,17 @@ suspend fun FlipperFileSystem.writeFileBytes(path: Path, content: ByteArray) {
 
 /** Streams [sourcePath] into [destinationPath] without loading it into memory. */
 suspend fun FlipperFileSystem.copyFile(sourcePath: Path, destinationPath: Path) {
+    copyFileTo(sourcePath, destinationPath)
+}
+
+/** [copyFile] across filesystems: this one holds [sourcePath], [destination] takes it. */
+suspend fun FlipperFileSystem.copyFileTo(
+    sourcePath: Path,
+    destinationPath: Path,
+    destination: FlipperFileSystem = this,
+) {
     source(sourcePath).buffered().use { source ->
-        sink(destinationPath).buffered().use { sink ->
+        destination.sink(destinationPath).buffered().use { sink ->
             source.transferTo(sink)
         }
     }
