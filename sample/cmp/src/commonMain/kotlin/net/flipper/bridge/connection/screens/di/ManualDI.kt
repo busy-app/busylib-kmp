@@ -37,8 +37,8 @@ import net.flipper.bsb.cloud.rest.channel.api.BusyFirmwareDirectoryChannelApi
 import net.flipper.busylib.BUSYLib
 import net.flipper.core.busylib.ktx.io.SystemFlipperFileSystem
 import net.flipper.tools.drawtool.api.DrawToolStatusesApi
-import net.flipper.tools.drawtool.collection.util.DrawToolFileTypeResolver
 import net.flipper.tools.drawtool.collection.util.DrawToolStatusIdValidator
+import net.flipper.tools.drawtool.status.util.DrawToolFileTypeResolver
 import net.flipper.tools.drawtool.status.util.DrawToolStatusIdGenerator
 import net.flipper.tools.multistream.api.MultiStreamApi
 

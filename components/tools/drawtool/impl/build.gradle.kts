@@ -20,6 +20,7 @@ kotlin {
         implementation(projects.components.bridge.transport.common.api)
 
         implementation(libs.kotlin.coroutines)
+        implementation(libs.kotlin.datetime)
         implementation(libs.kotlin.immutable)
         implementation(libs.kotlin.io)
         implementation(libs.kotlin.serialization.json)

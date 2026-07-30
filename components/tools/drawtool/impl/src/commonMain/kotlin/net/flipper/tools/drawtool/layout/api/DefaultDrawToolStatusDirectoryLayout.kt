@@ -1,74 +1,72 @@
 package net.flipper.tools.drawtool.layout.api
 
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.format
+import kotlinx.datetime.format.DateTimeFormat
+import kotlinx.datetime.format.char
+import kotlinx.datetime.toLocalDateTime
 import kotlinx.io.files.Path
 import net.flipper.tools.drawtool.api.DrawToolStatusDirectoryLayout
+import net.flipper.tools.drawtool.api.model.DrawToolFileType
+import net.flipper.tools.drawtool.api.model.DrawToolStoredFile
+import kotlin.time.Clock
 
 /**
- * The layout used for a client-side collection (mobile/macOS/desktop). To
- * address the collection on the bar itself, pass
+ * The layout used for a client-side collection (mobile/macOS/desktop).
+ * To address the collection on the bar itself, pass
  * [DrawToolStatusDirectoryLayout.BUBSYBAR_DRAWTOOL_PATH] as [collectionPath].
+ *
+ * [clock] is only used to name newly saved statuses; it is a parameter so tests
+ * can pin the produced name.
  */
 class DefaultDrawToolStatusDirectoryLayout(
-    private val collectionPath: Path
+    private val collectionPath: Path,
+    private val clock: Clock = Clock.System
 ) : DrawToolStatusDirectoryLayout {
-    override fun getStatusDirectoryPath(statusId: String): Path {
+    override fun getPreviewFilePath(): Path {
         return Path(
             collectionPath,
-            statusId
-        )
-    }
-
-    override fun getTemporaryDirectoryPath(statusId: String): Path {
-        return Path(
-            collectionPath,
-            ".tmp.$statusId"
-        )
-    }
-
-    override fun getTrashDirectoryPath(statusId: String): Path {
-        return Path(
-            collectionPath,
-            ".trash.$statusId"
-        )
-    }
-
-    override fun getAnimationFilePath(statusId: String): Path {
-        return Path(
-            collectionPath,
-            statusId,
-            DrawToolStatusDirectoryLayout.ANIMATION_FILE_NAME
-        )
-    }
-
-    override fun getAssetsDirectoryPath(statusId: String): Path {
-        return Path(
-            collectionPath,
-            statusId,
-            DrawToolStatusDirectoryLayout.ASSETS_DIRECTORY_NAME
-        )
-    }
-
-    override fun getFrameFilePath(statusId: String, index: Int): Path {
-        return Path(
-            collectionPath,
-            statusId,
-            DrawToolStatusDirectoryLayout.frameFileName(index)
-        )
-    }
-
-    override fun getPreviewFilePath(statusId: String): Path {
-        return Path(
-            collectionPath,
-            statusId,
             DrawToolStatusDirectoryLayout.PREVIEW_FILE_NAME
         )
     }
 
-    override fun getProjectFilePath(statusId: String): Path {
+    override fun getStatusFilePath(): Path {
+        val name = clock.now()
+            .toLocalDateTime(TimeZone.UTC)
+            .format(STATUS_NAME_FORMAT)
         return Path(
             collectionPath,
-            statusId,
-            DrawToolStatusDirectoryLayout.PROJECT_FILE_NAME
+            name + DrawToolStatusDirectoryLayout.PNG_EXTENSION
         )
+    }
+
+    override fun getStoredFilePath(file: DrawToolStoredFile): Path {
+        return when (file.type) {
+            DrawToolFileType.PREVIEW -> getPreviewFilePath()
+            DrawToolFileType.STATUS -> Path(collectionPath, file.path.name)
+        }
+    }
+
+    private companion object {
+        /**
+         * `2026-07-29_20_51_11` — zero padded, second resolution, always UTC.
+         * Every component is fixed width, so the name sorts chronologically as
+         * plain text.
+         */
+        private val STATUS_NAME_FORMAT: DateTimeFormat<LocalDateTime>
+            get() = LocalDateTime.Format {
+                year()
+                char('-')
+                monthNumber()
+                char('-')
+                day()
+                char('_')
+                hour()
+                char('_')
+                minute()
+                char('_')
+                second()
+            }
     }
 }

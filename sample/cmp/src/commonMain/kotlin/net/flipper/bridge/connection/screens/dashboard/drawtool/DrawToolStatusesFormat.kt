@@ -1,9 +1,9 @@
 package net.flipper.bridge.connection.screens.dashboard.drawtool
 
 import kotlinx.io.files.Path
-import net.flipper.tools.drawtool.api.model.DrawToolStatus
+import net.flipper.tools.drawtool.api.model.DrawToolDirectoryContents
 
-private fun StringBuilder.appendStatus(status: DrawToolStatus) {
+private fun StringBuilder.appendStatus(status: DrawToolDirectoryContents) {
     appendLine("- ${status.id} updatedAt=${status.updatedAt} files=${status.files.size}")
     status.files.forEach { storedFile ->
         appendLine("    ${storedFile.type} ${storedFile.path}")
@@ -18,7 +18,7 @@ private fun StringBuilder.appendStatus(status: DrawToolStatus) {
 internal fun formatDrawToolStatuses(
     target: DrawToolStorageTarget,
     collectionPath: Path,
-    statuses: List<DrawToolStatus>
+    statuses: List<DrawToolDirectoryContents>
 ): String {
     return buildString {
         appendLine("${target.title} collection $collectionPath: ${statuses.size} status(es)")

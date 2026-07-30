@@ -8,10 +8,10 @@ import net.flipper.core.busylib.ktx.io.FlipperFileSystem
 import net.flipper.tools.drawtool.api.DrawToolStatusDirectoryLayout
 import net.flipper.tools.drawtool.api.DrawToolStatusesApi
 import net.flipper.tools.drawtool.collection.api.CollectionDrawToolStatusesApi
-import net.flipper.tools.drawtool.collection.util.DrawToolFileTypeResolver
 import net.flipper.tools.drawtool.collection.util.DrawToolStatusIdValidator
 import net.flipper.tools.drawtool.collection.util.DrawToolStatusReader
 import net.flipper.tools.drawtool.layout.api.DefaultDrawToolStatusDirectoryLayout
+import net.flipper.tools.drawtool.status.util.DrawToolFileTypeResolver
 
 /**
  * Resolves the collection of a [DrawToolStorageTarget].

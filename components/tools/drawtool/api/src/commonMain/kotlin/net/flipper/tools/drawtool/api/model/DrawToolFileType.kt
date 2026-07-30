@@ -1,22 +1,18 @@
 package net.flipper.tools.drawtool.api.model
 
-/** Role of a file inside a status directory, per the layout of the spec. */
-enum class DrawToolFileType {
-    /** A render frame `frameNNN.png`; a static status has a single one. */
-    FRAME,
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
+/** Role of a file inside a status directory, per the layout of the spec. */
+@Serializable
+enum class DrawToolFileType {
     /** The `preview.png` shown in the status list. */
+    @SerialName("PREVIEW")
     PREVIEW,
 
-    /** A scene media source in `assets/`, named by its content hash. */
-    ASSET,
-
-    /** The packed `status.anim` the bar plays for animated statuses. */
-    ANIMATION,
-
     /**
-     * Not recognized by this client version. Kept so that statuses written by
-     * newer clients survive a read/save round trip untouched.
+     * The status file named YYYY-mm-dd_HH-mm-ss.png
      */
-    OTHER
+    @SerialName("STATUS")
+    STATUS,
 }
