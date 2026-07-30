@@ -7,11 +7,14 @@ import dev.zacsweers.metro.binding
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.io.files.FileSystem
+import kotlinx.io.files.SystemFileSystem
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.core.wrapper.CResult
 import net.flipper.busylib.core.wrapper.toCResult
 import net.flipper.core.busylib.ktx.common.mapSuspendCatching
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
+import net.flipper.core.busylib.ktx.io.FlipperFileSystem
+import net.flipper.core.busylib.ktx.io.SystemFlipperFileSystem
 import net.flipper.tools.drawtool.api.DrawToolStatusDirectoryLayout
 import net.flipper.tools.drawtool.api.DrawToolStatusesApi
 import net.flipper.tools.drawtool.api.model.DrawToolDirectoryContents
@@ -25,15 +28,15 @@ import net.flipper.tools.drawtool.storage.api.DrawToolStoragePathProvider
 @ContributesBinding(BusyLibGraph::class, binding<DrawToolStatusesApi>())
 class DefaultDrawToolStatusesApi(
     private val drawToolStoragePathProvider: DrawToolStoragePathProvider,
-    private val fileSystem: FileSystem,
-    private val drawToolFileTypeResolver: DrawToolFileTypeResolver
+    private val drawToolFileTypeResolver: DrawToolFileTypeResolver,
+    private val systemFileSystem: FlipperFileSystem = SystemFlipperFileSystem(SystemFileSystem),
 ) : DrawToolStatusesApi {
     private val mutex = Mutex()
 
     override suspend fun getStatuses(): CResult<DrawToolDirectoryContents> {
         return mutex.withLock {
             drawToolStoragePathProvider.getPath()
-                .mapSuspendCatching(fileSystem::list)
+                .mapSuspendCatching(systemFileSystem::list)
                 .map { paths ->
                     val drawToolStoredFiles = paths.mapNotNull { path ->
                         val type = drawToolFileTypeResolver
@@ -54,7 +57,7 @@ class DefaultDrawToolStatusesApi(
         return mutex.withLock {
             runSuspendCatching {
                 files.forEach { drawToolStoredFile ->
-                    fileSystem.delete(drawToolStoredFile.path, false)
+                    systemFileSystem.delete(drawToolStoredFile.path, false)
                 }
             }.toCResult()
         }

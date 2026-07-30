@@ -10,7 +10,8 @@ import net.flipper.tools.drawtool.api.DrawToolStatusesApi
  * an action needs, in a form that does not reveal which target it came from.
  *
  * [fileSystem] and [layout] are what writing a status needs, [statusesApi] is
- * what reading it back needs, and [collectionPath] is only there to be logged.
+ * what reading it back needs, and [collectionPath] is the directory both work
+ * in — created before a write and reported in the log.
  */
 class DrawToolCollectionSource(
     val collectionPath: Path,

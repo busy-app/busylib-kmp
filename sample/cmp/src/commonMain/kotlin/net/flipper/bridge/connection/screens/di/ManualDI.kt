@@ -2,7 +2,6 @@ package net.flipper.bridge.connection.screens.di
 
 import com.arkivanov.decompose.ComponentContext
 import kotlinx.io.files.SystemFileSystem
-import kotlinx.serialization.json.Json
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
@@ -37,9 +36,7 @@ import net.flipper.bsb.cloud.rest.channel.api.BusyFirmwareDirectoryChannelApi
 import net.flipper.busylib.BUSYLib
 import net.flipper.core.busylib.ktx.io.SystemFlipperFileSystem
 import net.flipper.tools.drawtool.api.DrawToolStatusesApi
-import net.flipper.tools.drawtool.collection.util.DrawToolStatusIdValidator
 import net.flipper.tools.drawtool.status.util.DrawToolFileTypeResolver
-import net.flipper.tools.drawtool.status.util.DrawToolStatusIdGenerator
 import net.flipper.tools.multistream.api.MultiStreamApi
 
 fun getRootDecomposeComponent(
@@ -97,7 +94,6 @@ private fun getRootDecomposeComponentFactory(
             principalApi = principalApi,
             firmwareUpdaterApi = firmwareUpdaterApi,
             busyFirmwareDirectoryChannelApi = busyFirmwareDirectoryChannelApi,
-            persistedStorage = persistedStorage,
             drawToolStatusesApi = drawToolStatusesApi
         ),
     )
@@ -134,31 +130,18 @@ private fun getConnectionDeviceScreenDecomposeComponentFactory(
 
 private fun getDrawToolViewModelFactory(
     fFeatureProvider: FFeatureProvider,
-    persistedStorage: FDevicePersistedStorage,
     drawToolStatusesApi: DrawToolStatusesApi,
 ): () -> DrawToolDashboardViewModel {
-    val json = Json {
-        isLenient = true
-        ignoreUnknownKeys = true
-        encodeDefaults = true
-        prettyPrint = false
-    }
     val collectionSourceResolver = DrawToolCollectionSourceResolver(
         featureProvider = fFeatureProvider,
         clientStatusesApi = drawToolStatusesApi,
         clientFileSystem = SystemFlipperFileSystem(delegate = SystemFileSystem),
-        json = json,
-        statusIdValidator = DrawToolStatusIdValidator(),
         fileTypeResolver = DrawToolFileTypeResolver()
     )
-    val statusWriter = DrawToolSampleStatusWriter(
-        json = json,
-        statusIdGenerator = DrawToolStatusIdGenerator()
-    )
+    val statusWriter = DrawToolSampleStatusWriter()
     return {
         DrawToolDashboardViewModel(
             featureProvider = fFeatureProvider,
-            persistedStorage = persistedStorage,
             collectionSourceResolver = collectionSourceResolver,
             statusWriter = statusWriter
         )
@@ -170,7 +153,6 @@ private fun getDashboardDecomposeComponentFactory(
     principalApi: UserPrincipalApiSampleImpl,
     firmwareUpdaterApi: FirmwareUpdaterApi,
     busyFirmwareDirectoryChannelApi: BusyFirmwareDirectoryChannelApi,
-    persistedStorage: FDevicePersistedStorage,
     drawToolStatusesApi: DrawToolStatusesApi,
 ): DashboardDecomposeComponent.Factory {
     return DashboardDecomposeComponent.Factory(
@@ -185,7 +167,6 @@ private fun getDashboardDecomposeComponentFactory(
         displayViewModelFactory = { DisplayDashboardViewModel(fFeatureProvider) },
         drawToolViewModelFactory = getDrawToolViewModelFactory(
             fFeatureProvider = fFeatureProvider,
-            persistedStorage = persistedStorage,
             drawToolStatusesApi = drawToolStatusesApi
         ),
         screenStreamingViewModelFactory = { ScreenStreamingDashboardViewModel(fFeatureProvider) },

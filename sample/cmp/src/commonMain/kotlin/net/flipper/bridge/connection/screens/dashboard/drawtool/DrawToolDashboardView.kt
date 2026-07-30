@@ -25,7 +25,7 @@ private fun DrawToolCollectionSection(
         title = "${target.title} collection",
         modifier = modifier
     ) {
-        Text("Generates a status directory per DrawToolStatusDirectoryLayout, then reads it back into the log.")
+        Text("Writes a UTC-named status PNG plus the shared preview, then reads the collection back into the log.")
         DashboardButtonRow(
             primaryTitle = "Generate status",
             onPrimaryClick = { onGenerateStatus(target) },

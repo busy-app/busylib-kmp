@@ -1,62 +1,38 @@
 package net.flipper.bridge.connection.screens.dashboard.drawtool
 
-import kotlinx.serialization.json.Json
-import net.flipper.core.busylib.ktx.common.encodeToFile
-import net.flipper.core.busylib.ktx.common.listOrEmpty
+import kotlinx.io.files.Path
 import net.flipper.core.busylib.ktx.common.writeFileBytes
-import net.flipper.tools.drawtool.collection.model.DrawToolProjectFile
-import net.flipper.tools.drawtool.status.util.DrawToolStatusIdGenerator
-import kotlin.time.Instant
 
 /**
- * Fills a collection with a status directory shaped exactly as
- * [net.flipper.tools.drawtool.api.DrawToolStatusDirectoryLayout] describes it.
+ * Fills a collection with files shaped exactly as
+ * [net.flipper.tools.drawtool.api.DrawToolStatusDirectoryLayout] describes them:
+ * flat PNGs directly in the collection directory, a UTC-named status file next
+ * to the shared list preview.
  *
- * Write order follows the spec: content first, `project.json` last. That file
- * is the commit point of a status — a directory without a parseable one does
- * not exist for readers — so an interrupted generation leaves no half-status
- * behind for the reader buttons to trip over.
+ * Write order is status file first, preview second. The status file is what a
+ * reader reports, so an interrupted generation leaves a listable status behind
+ * rather than a preview of a status that is not there.
+ *
+ * The status name comes from the layout, not from here: it is the current UTC
+ * time at second resolution, so two generations within the same second address
+ * the same file.
  */
-class DrawToolSampleStatusWriter(
-    private val json: Json,
-    private val statusIdGenerator: DrawToolStatusIdGenerator
-) {
-    /**
-     * A status id free within [source]. Existing directory names are taken as
-     * they are: a name that is not a valid id cannot collide with a generated
-     * one anyway, and filtering them out would only hide dirt from the log.
-     */
-    private suspend fun generateStatusId(source: DrawToolCollectionSource): String {
-        val existingNames = source.fileSystem
-            .listOrEmpty(source.collectionPath)
-            .map { childPath -> childPath.name }
-        return statusIdGenerator.generateFree(existingNames).getOrThrow()
-    }
-
-    /** Returns the id of the generated status. */
+class DrawToolSampleStatusWriter {
+    /** Returns the path of the written status file. */
     suspend fun write(
         source: DrawToolCollectionSource,
-        frameCount: Int,
-        frameContent: ByteArray,
-        updatedAt: Instant
-    ): String {
-        val statusId = generateStatusId(source)
-        source.fileSystem.createDirectories(source.layout.getStatusDirectoryPath(statusId))
-        repeat(frameCount) { frameIndex ->
-            source.fileSystem.writeFileBytes(
-                path = source.layout.getFrameFilePath(statusId, frameIndex),
-                content = frameContent
-            )
-        }
+        content: ByteArray
+    ): Path {
+        source.fileSystem.createDirectories(source.collectionPath)
+        val statusFilePath = source.layout.getStatusFilePath()
         source.fileSystem.writeFileBytes(
-            path = source.layout.getPreviewFilePath(statusId),
-            content = frameContent
+            path = statusFilePath,
+            content = content
         )
-        json.encodeToFile(
-            fileSystem = source.fileSystem,
-            path = source.layout.getProjectFilePath(statusId),
-            value = DrawToolProjectFile.of(updatedAt)
-        ).getOrThrow()
-        return statusId
+        source.fileSystem.writeFileBytes(
+            path = source.layout.getPreviewFilePath(),
+            content = content
+        )
+        return statusFilePath
     }
 }
