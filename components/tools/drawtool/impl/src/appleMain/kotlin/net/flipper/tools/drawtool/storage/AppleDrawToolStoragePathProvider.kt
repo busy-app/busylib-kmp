@@ -31,6 +31,6 @@ class AppleDrawToolStoragePathProvider : DrawToolStoragePathProvider {
             ?: return Result.failure(
                 IllegalStateException("Cannot resolve the Application Support directory")
             )
-        return Result.success(Path(applicationSupportPath, "busylib", "drawer"))
+        return Result.success(Path(applicationSupportPath, "busylib", "draw_tool"))
     }
 }

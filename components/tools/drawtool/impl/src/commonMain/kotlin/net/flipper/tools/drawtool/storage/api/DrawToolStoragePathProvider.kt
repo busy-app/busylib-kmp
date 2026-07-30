@@ -4,7 +4,7 @@ import kotlinx.io.files.Path
 
 /**
  * Platform-specific Draw tool root on the client (mobile/macOS/desktop), for
- * example `<app data>/busylib/drawer`. It holds one collection per known bar,
+ * example `<app data>/busylib/draw_tool`. It holds one collection per known bar,
  * at `<root>/<device serial>`.
  */
 interface DrawToolStoragePathProvider {
