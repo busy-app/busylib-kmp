@@ -58,16 +58,33 @@ class FDrawToolFeatureApiImpl(
         )
     }
 
+    private suspend fun drawFile(
+        fileName: String,
+        displaySide: DrawToolDisplaySide
+    ): CResult<Unit> {
+        return assetsApi
+            .displayDraw(buildDrawRequest(fileName, displaySide))
+            .map { }
+            .toCResult()
+    }
+
+    override suspend fun showPreview(
+        image: ByteArray,
+        displaySide: DrawToolDisplaySide
+    ): CResult<Unit> = mutex.withLock {
+        assetsApi
+            .uploadAsset(appId = APP_ID, file = PREVIEW_FILE_NAME, content = image)
+            .fold(
+                onSuccess = { _ -> drawFile(PREVIEW_FILE_NAME, displaySide) },
+                onFailure = { error -> CResult.failure(error) }
+            )
+    }
+
     override suspend fun showFile(
         path: Path,
         displaySide: DrawToolDisplaySide
     ): CResult<Unit> = mutex.withLock {
-        assetsApi
-            .displayDraw(buildDrawRequest(path.name, displaySide))
-            .fold(
-                onSuccess = { _ -> CResult.success(Unit) },
-                onFailure = { error -> CResult.failure(error) }
-            )
+        drawFile(path.name, displaySide)
     }
 
     override suspend fun hidePreview(): CResult<Unit> = mutex.withLock {
@@ -109,6 +126,9 @@ class FDrawToolFeatureApiImpl(
          * element, so a repeated request replaces the drawing in place.
          */
         private const val APP_ID = "draw_tool"
+
+        /** The preview slot in the bar assets, overwritten on every show. */
+        private const val PREVIEW_FILE_NAME = "temp.png"
 
         private const val NO_TIMEOUT_SEC = 0
         private const val ORIGIN = 0

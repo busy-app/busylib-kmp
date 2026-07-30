@@ -6,7 +6,6 @@ import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.screens.dashboard.common.DashboardFeatureViewModel
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
-import net.flipper.tools.drawtool.api.DrawToolStatusDirectoryLayout
 import net.flipper.tools.drawtool.api.DrawToolStatusesApi
 import net.flipper.tools.drawtool.api.model.DrawToolStoredFile
 
@@ -32,11 +31,6 @@ class DrawToolDashboardViewModel(
         }
     }
 
-    fun uploadPreview() = runAction("draw tool upload preview") {
-        clientStatusesApi.uploadPreview().getOrThrow()
-        report("Uploaded the preview into ${DrawToolStatusDirectoryLayout.BUSYBAR_DRAWTOOL_PATH}")
-    }
-
     fun uploadLatestStatus() = runAction("draw tool upload status") {
         val status = requireLatestClientStatus()
         clientStatusesApi.uploadStatus(status).getOrThrow()
@@ -44,7 +38,9 @@ class DrawToolDashboardViewModel(
     }
 
     fun showPreview(displaySide: DrawToolDisplaySide) = runAction("draw tool show preview") {
-        clientStatusesApi.showPreview(displaySide).getOrThrow()
+        requireFeature<FDrawToolFeatureApi>(featureProvider, "DrawTool")
+            .showPreview(DrawToolSampleImage.bytes(), displaySide)
+            .getOrThrow()
         report("Preview shown on ${displaySide.name}")
     }
 

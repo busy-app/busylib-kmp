@@ -25,7 +25,7 @@ private fun DrawToolDisplaySection(
         title = "Bar display",
         modifier = modifier
     ) {
-        Text("Draws a file of the bar collection, transferring nothing. Upload it first.")
+        Text("Preview uploads the sample image and draws it. Status draws an uploaded bar file.")
         DashboardButtonRow(
             primaryTitle = "Preview → Front",
             onPrimaryClick = { onShowPreview(DrawToolDisplaySide.FRONT) },
@@ -49,7 +49,6 @@ private fun DrawToolDisplaySection(
 
 @Composable
 private fun DrawToolUploadSection(
-    onUploadPreview: () -> Unit,
     onUploadLatestStatus: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -57,13 +56,13 @@ private fun DrawToolUploadSection(
         title = "Upload to bar",
         modifier = modifier
     ) {
-        Text("Copies a file of the client collection into the collection of the bar. Draws nothing on its own.")
-        DashboardButtonRow(
-            primaryTitle = "Upload preview",
-            onPrimaryClick = onUploadPreview,
-            secondaryTitle = "Upload status",
-            onSecondaryClick = onUploadLatestStatus
-        )
+        Text("Copies the latest client status into the collection of the bar. Draws nothing on its own.")
+        OutlinedButton(
+            onClick = onUploadLatestStatus,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Upload latest status")
+        }
     }
 }
 
@@ -102,7 +101,6 @@ fun DrawToolDashboardContent(
     onShowPreview: (DrawToolDisplaySide) -> Unit,
     onShowLatestStatus: (DrawToolDisplaySide) -> Unit,
     onHidePreview: () -> Unit,
-    onUploadPreview: () -> Unit,
     onUploadLatestStatus: () -> Unit,
     onGenerateStatus: (DrawToolStorageTarget) -> Unit,
     onReadStatuses: (DrawToolStorageTarget) -> Unit,
@@ -122,7 +120,6 @@ fun DrawToolDashboardContent(
         )
 
         DrawToolUploadSection(
-            onUploadPreview = onUploadPreview,
             onUploadLatestStatus = onUploadLatestStatus,
             modifier = Modifier.padding(horizontal = 16.dp)
         )

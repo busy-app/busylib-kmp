@@ -74,7 +74,7 @@ class DefaultDrawToolStatusesApi(
             .toCResult()
     }
 
-    private suspend fun uploadToBarUnsafe(file: DrawToolStoredFile) {
+    private suspend fun uploadToBarUnsafe(file: DrawToolStoredFile.Status) {
         val busyBarFileSystem: FlipperFileSystem = requireNotNull(
             value = featureProvider.getSync<FStorageFeatureApi>(),
             lazyMessage = { "FStorageFeatureApi feature is unavailable, the bar is most likely not connected" }
@@ -98,27 +98,10 @@ class DefaultDrawToolStatusesApi(
         drawToolFeatureApi.showFile(filePath, displaySide).getOrThrow()
     }
 
-    override suspend fun uploadPreview(): CResult<Unit> {
-        return mutex.withLock {
-            runSuspendCatching {
-                val previewPath = getLayout().getOrThrow().getPreviewFilePath()
-                uploadToBarUnsafe(DrawToolStoredFile.Preview(previewPath))
-            }.toCResult()
-        }
-    }
-
     override suspend fun uploadStatus(file: DrawToolStoredFile.Status): CResult<Unit> {
         return mutex.withLock {
             runSuspendCatching {
                 uploadToBarUnsafe(file)
-            }.toCResult()
-        }
-    }
-
-    override suspend fun showPreview(displaySide: DrawToolDisplaySide): CResult<Unit> {
-        return mutex.withLock {
-            runSuspendCatching {
-                drawOnBarUnsafe(barLayout.getPreviewFilePath(), displaySide)
             }.toCResult()
         }
     }

@@ -26,7 +26,6 @@ class DrawToolDashboardDecomposeComponent(
             onShowPreview = viewModel::showPreview,
             onShowLatestStatus = viewModel::showLatestStatus,
             onHidePreview = viewModel::hidePreview,
-            onUploadPreview = viewModel::uploadPreview,
             onUploadLatestStatus = viewModel::uploadLatestStatus,
             onGenerateStatus = viewModel::generateStatus,
             onReadStatuses = viewModel::readStatuses,

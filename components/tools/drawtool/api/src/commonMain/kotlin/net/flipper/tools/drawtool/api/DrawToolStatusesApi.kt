@@ -22,29 +22,21 @@ interface DrawToolStatusesApi {
     suspend fun deleteStatuses(files: List<DrawToolStoredFile.Status>): CResult<Unit>
 
     /**
-     * Streams the preview into the bar collection at
-     * [DrawToolStatusDirectoryLayout.BUSYBAR_DRAWTOOL_PATH].
+     * Streams [file] into the bar collection at
+     * [DrawToolStatusDirectoryLayout.BUSYBAR_DRAWTOOL_PATH], keeping its
+     * timestamped name. Displays nothing.
      *
-     * Fails without a connected bar or without a preview.
-     */
-    suspend fun uploadPreview(): CResult<Unit>
-
-    /**
-     * [uploadPreview] for a status of this collection. [file] keeps its
-     * timestamped name on the bar.
+     * Fails without a connected bar.
      */
     suspend fun uploadStatus(file: DrawToolStoredFile.Status): CResult<Unit>
 
     /**
-     * Draws the preview of the bar collection on [displaySide], transferring
-     * nothing: [uploadPreview] has to have put it there.
+     * Draws a [file] [uploadStatus] has put on the bar on [displaySide],
+     * transferring nothing.
      *
-     * Fails without a connected bar, without an uploaded preview, or during a
+     * Fails without a connected bar, without the uploaded file, or during a
      * work session — its screen outranks the drawing.
      */
-    suspend fun showPreview(displaySide: DrawToolDisplaySide): CResult<Unit>
-
-    /** [showPreview] for a [file] [uploadStatus] has put on the bar. */
     suspend fun showStatus(
         file: DrawToolStoredFile.Status,
         displaySide: DrawToolDisplaySide

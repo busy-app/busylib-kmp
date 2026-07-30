@@ -12,6 +12,14 @@ import net.flipper.busylib.core.wrapper.CResult
  */
 interface FDrawToolFeatureApi : FDeviceFeatureApi {
     /**
+     * Uploads [image] to the bar and shows it on [displaySide]. Repeated
+     * calls overwrite the previous preview.
+     *
+     * [image] must be a PNG sized as the bar screen matrix (72x16).
+     */
+    suspend fun showPreview(image: ByteArray, displaySide: DrawToolDisplaySide): CResult<Unit>
+
+    /**
      * Shows [path], already on the bar, on [displaySide]. Transfers nothing.
      *
      * [path] must be a file directly inside `/ext/user_assets/draw_tool/`.
