@@ -1,9 +1,7 @@
 package net.flipper.tools.drawtool.status.api
 
-import dev.zacsweers.metro.ContributesBinding
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
-import dev.zacsweers.metro.binding
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.io.files.Path
@@ -28,14 +26,15 @@ import net.flipper.tools.drawtool.api.model.DrawToolStoredFile
 import net.flipper.tools.drawtool.layout.api.DefaultDrawToolStatusDirectoryLayout
 import net.flipper.tools.drawtool.status.util.DrawToolStoredFileResolver
 import net.flipper.tools.drawtool.storage.api.DrawToolStoragePathProvider
+import net.flipper.tools.drawtool.storage.di.ClientFileSystemQualifier
 
 @SingleIn(BusyLibGraph::class)
 @Inject
-@ContributesBinding(BusyLibGraph::class, binding<DrawToolStatusesApi>())
 class DefaultDrawToolStatusesApi(
     private val drawToolStoragePathProvider: DrawToolStoragePathProvider,
     private val drawToolStoredFileResolver: DrawToolStoredFileResolver,
     private val featureProvider: FFeatureProvider,
+    @ClientFileSystemQualifier
     private val systemFileSystem: FlipperFileSystem = SystemFlipperFileSystem(SystemFileSystem),
 ) : DrawToolStatusesApi {
     private val mutex = Mutex()

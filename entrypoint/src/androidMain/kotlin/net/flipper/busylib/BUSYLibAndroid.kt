@@ -22,6 +22,7 @@ import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
 import net.flipper.busylib.di.BUSYLibGraphAndroid
 import net.flipper.eventbus.api.EventBusApi
 import net.flipper.tools.drawtool.api.DrawToolStatusesApi
+import net.flipper.tools.drawtool.api.DrawToolSyncApi
 import net.flipper.tools.multistream.api.MultiStreamApi
 import no.nordicsemi.kotlin.ble.client.android.CentralManager
 
@@ -35,6 +36,7 @@ class BUSYLibAndroid(
     override val persistedStorage: FDevicePersistedStorage,
     override val multiStreamApi: MultiStreamApi,
     override val drawToolStatusesApi: DrawToolStatusesApi,
+    override val drawToolSyncApi: DrawToolSyncApi,
     override val busyFirmwareDirectoryChannelApi: BusyFirmwareDirectoryChannelApi,
     override val eventBus: EventBusApi,
     val flipperScanner: FlipperScanner,
