@@ -18,7 +18,7 @@ class DrawToolSyncTargetResolver(
     private val orchestrator: FDeviceOrchestrator,
     private val featureProvider: FFeatureProvider,
 ) {
-    private suspend fun getConnectedSerialNumber(): String {
+    private suspend fun getConnectedSerialNumberUnsafe(): String {
         val status = orchestrator.getState()
             .first()
             .tryCast<FDeviceConnectStatus.Connected>()
@@ -33,7 +33,7 @@ class DrawToolSyncTargetResolver(
      * @throws DrawToolSyncException.SerialNumberUnknown when the bar has no serial number yet
      */
     suspend fun resolve(): DrawToolSyncTarget {
-        val serialNumber = getConnectedSerialNumber()
+        val serialNumber = getConnectedSerialNumberUnsafe()
         val barFileSystem = featureProvider.getSync<FStorageFeatureApi>()
             ?: throw DrawToolSyncException.BarNotConnected()
         return DrawToolSyncTarget(
