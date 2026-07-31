@@ -3,6 +3,7 @@ package net.flipper.bridge.connection.feature.rpc.api.model
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import net.flipper.core.busylib.data.serialization.DurationSerializer
+import net.flipper.core.busylib.data.serialization.InstantEpochSecondsSerializer
 import net.flipper.core.busylib.data.serialization.InstantUtcSerializer
 import kotlin.time.Duration
 import kotlin.time.Instant
@@ -24,7 +25,7 @@ data class BusyBarStatusDevice(
     @SerialName("otp_valid") val otpValid: Boolean,
     @SerialName("otp_model") val otpModel: String? = null,
     @SerialName("otp_timestamp")
-    @Serializable(InstantUtcSerializer::class)
+    @Serializable(InstantEpochSecondsSerializer::class)
     val otpTimestamp: Instant? = null
 )
 
