@@ -5,17 +5,21 @@ import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.binding
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.io.files.Path
+import kotlinx.io.files.SystemFileSystem
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.tools.drawtool.storage.api.DrawToolStoragePathProvider
 import platform.Foundation.NSApplicationSupportDirectory
 import platform.Foundation.NSFileManager
 import platform.Foundation.NSUserDomainMask
 
+/** Draw tool root under `Application Support`, which is created if absent. */
 @Inject
 @ContributesBinding(BusyLibGraph::class, binding<DrawToolStoragePathProvider>())
 class AppleDrawToolStoragePathProvider : DrawToolStoragePathProvider {
     @OptIn(ExperimentalForeignApi::class)
-    override fun getDrawerRootPath(): Result<Path> {
+    override fun getPath(): Result<Path> {
+        SystemFileSystem
+
         val applicationSupportUrl = NSFileManager.defaultManager.URLForDirectory(
             directory = NSApplicationSupportDirectory,
             inDomain = NSUserDomainMask,

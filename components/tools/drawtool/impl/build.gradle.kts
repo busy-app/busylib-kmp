@@ -6,6 +6,8 @@ plugins {
 
 kotlin {
     sourceSets.commonMain.dependencies {
+        implementation(projects.components.tools.drawtool.api)
+
         implementation(projects.components.core.data)
         implementation(projects.components.core.di)
         implementation(projects.components.core.ktx)
@@ -13,16 +15,14 @@ kotlin {
         implementation(projects.components.core.wrapper)
 
         implementation(projects.components.bridge.config.api)
-        implementation(projects.components.bridge.orchestrator.api)
-        implementation(projects.components.bridge.transport.common.api)
         implementation(projects.components.bridge.feature.common.api)
+        implementation(projects.components.bridge.feature.drawTool.api)
         implementation(projects.components.bridge.feature.provider.api)
-        implementation(projects.components.bridge.feature.rpc.api)
+        implementation(projects.components.bridge.feature.storage.api)
+        implementation(projects.components.bridge.transport.common.api)
 
-        implementation(projects.components.watchers.api)
-
-        implementation(libs.klibs.kstorage)
         implementation(libs.kotlin.coroutines)
+        implementation(libs.kotlin.datetime)
         implementation(libs.kotlin.immutable)
         implementation(libs.kotlin.io)
         implementation(libs.kotlin.serialization.json)

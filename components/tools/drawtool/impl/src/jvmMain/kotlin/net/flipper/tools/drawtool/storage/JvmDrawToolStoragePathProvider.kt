@@ -7,10 +7,11 @@ import kotlinx.io.files.Path
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.tools.drawtool.storage.api.DrawToolStoragePathProvider
 
+/** Draw tool root in the home directory of the user, as `.busylib/draw_tool`. */
 @Inject
 @ContributesBinding(BusyLibGraph::class, binding<DrawToolStoragePathProvider>())
 class JvmDrawToolStoragePathProvider : DrawToolStoragePathProvider {
-    override fun getDrawerRootPath(): Result<Path> {
+    override fun getPath(): Result<Path> {
         val userHome = System.getProperty("user.home")
         return if (userHome.isNullOrBlank()) {
             Result.failure(IllegalStateException("The user.home system property is not set"))

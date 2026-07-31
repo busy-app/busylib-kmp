@@ -3,6 +3,7 @@ package net.flipper.bridge.connection.feature.rpc.impl.exposed
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.delete
+import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
@@ -10,6 +11,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import kotlinx.coroutines.CoroutineDispatcher
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcStorageApi
+import net.flipper.bridge.connection.feature.rpc.api.model.StorageListResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
 
@@ -30,6 +32,22 @@ class FRpcStorageApiImpl(
         }
     }
 
+    override suspend fun readFile(path: String): Result<ByteArray> {
+        return runSuspendCatching(dispatcher) {
+            httpClient.get("/api/storage/read") {
+                parameter("path", path)
+            }.body<ByteArray>()
+        }
+    }
+
+    override suspend fun listFiles(path: String): Result<StorageListResponse> {
+        return runSuspendCatching(dispatcher) {
+            httpClient.get("/api/storage/list") {
+                parameter("path", path)
+            }.body<StorageListResponse>()
+        }
+    }
+
     override suspend fun createDirectory(path: String): Result<SuccessResponse> {
         return runSuspendCatching(dispatcher) {
             httpClient.post("/api/storage/mkdir") {
@@ -42,6 +60,18 @@ class FRpcStorageApiImpl(
         return runSuspendCatching(dispatcher) {
             httpClient.delete("/api/storage/remove") {
                 parameter("path", path)
+            }.body<SuccessResponse>()
+        }
+    }
+
+    override suspend fun renameFile(
+        path: String,
+        newPath: String
+    ): Result<SuccessResponse> {
+        return runSuspendCatching(dispatcher) {
+            httpClient.post("/api/storage/rename") {
+                parameter("path", path)
+                parameter("new_path", newPath)
             }.body<SuccessResponse>()
         }
     }
