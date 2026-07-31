@@ -4,7 +4,7 @@ on:
 jobs:
   detekt:
     name: "Check project by detekt"
-    runs-on: [ self-hosted, Linux ]
+    runs-on: [ self-hosted, Linux, Android ]
     steps:
       - uses: actions/checkout@v6
         with:

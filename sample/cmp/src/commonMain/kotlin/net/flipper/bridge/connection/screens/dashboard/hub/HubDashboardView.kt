@@ -20,6 +20,7 @@ fun HubDashboardContent(
     onOpenTimezone: () -> Unit,
     onOpenAssets: () -> Unit,
     onOpenDisplay: () -> Unit,
+    onOpenDrawTool: () -> Unit,
     onOpenScreenStreaming: () -> Unit,
     onOpenWiFi: () -> Unit,
     onOpenFwUpdate: () -> Unit,
@@ -43,6 +44,7 @@ fun HubDashboardContent(
             DashboardFeatureButton(title = "Timezone", onClick = onOpenTimezone)
             DashboardFeatureButton(title = "Assets", onClick = onOpenAssets)
             DashboardFeatureButton(title = "Display", onClick = onOpenDisplay)
+            DashboardFeatureButton(title = "Draw Tool", onClick = onOpenDrawTool)
             DashboardFeatureButton(title = "Screen Streaming", onClick = onOpenScreenStreaming)
             DashboardFeatureButton(title = "WiFi", onClick = onOpenWiFi)
             DashboardFeatureButton(title = "Firmware Update", onClick = onOpenFwUpdate)

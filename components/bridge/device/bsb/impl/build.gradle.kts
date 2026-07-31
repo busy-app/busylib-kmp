@@ -16,6 +16,7 @@ kotlin {
         implementation(projects.components.bridge.transport.common.api)
 
         implementation(projects.components.bridge.feature.rpc.api)
+        implementation(projects.components.bridge.feature.drawTool.api)
         implementation(projects.components.bridge.feature.info.api)
         implementation(projects.components.bridge.feature.battery.api)
         implementation(projects.components.bridge.feature.wifi.api)
@@ -32,6 +33,7 @@ kotlin {
         implementation(projects.components.bridge.feature.about.api)
         implementation(projects.components.bridge.feature.timer.api)
         implementation(projects.components.bridge.feature.hardwareId.api)
+        implementation(projects.components.bridge.feature.storage.api)
 
         implementation(libs.kotlin.coroutines)
         implementation(libs.kotlin.immutable)

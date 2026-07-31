@@ -18,6 +18,7 @@ class HubDashboardDecomposeComponent(
     private val onOpenTimezone: () -> Unit,
     private val onOpenAssets: () -> Unit,
     private val onOpenDisplay: () -> Unit,
+    private val onOpenDrawTool: () -> Unit,
     private val onOpenScreenStreaming: () -> Unit,
     private val onOpenWiFi: () -> Unit,
     private val onOpenFwUpdate: () -> Unit
@@ -36,6 +37,7 @@ class HubDashboardDecomposeComponent(
             onOpenTimezone = onOpenTimezone,
             onOpenAssets = onOpenAssets,
             onOpenDisplay = onOpenDisplay,
+            onOpenDrawTool = onOpenDrawTool,
             onOpenScreenStreaming = onOpenScreenStreaming,
             onOpenWiFi = onOpenWiFi,
             onOpenFwUpdate = onOpenFwUpdate

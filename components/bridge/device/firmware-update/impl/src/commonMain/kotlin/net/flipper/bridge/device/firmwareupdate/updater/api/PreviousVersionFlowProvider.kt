@@ -1,6 +1,7 @@
 package net.flipper.bridge.device.firmwareupdate.updater.api
 
 import dev.zacsweers.metro.Inject
+import kotlinx.coroutines.async
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
@@ -23,6 +24,7 @@ import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
 import net.flipper.bridge.connection.feature.provider.api.get
 import net.flipper.bridge.device.firmwareupdate.updater.model.BusyBarVersionTransition
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateState
+import net.flipper.core.busylib.ktx.common.getOrNull
 import net.flipper.core.busylib.ktx.common.orNullable
 import net.flipper.core.busylib.ktx.common.tryCast
 import net.flipper.core.busylib.log.LogTagProvider
@@ -61,16 +63,23 @@ class PreviousVersionFlowProvider(
                                 currentVersion = beforeUpdateVersion
                             )
                         )
+                        val batteryLowStateDeferred = async {
+                            fwUpdateFlow
+                                .filterIsInstance<FwUpdateState.BatteryLow>()
+                                .first()
+                        }
                         fwUpdateFlow.filterIsInstance<FwUpdateState.Updating>().first()
                         fwUpdateFlow.filter { state -> state !is FwUpdateState.Updating }.first()
-                        val afterUpdateVersion = getVersionFlow().filterNotNull().first()
-                        verbose { "#getPreviousVersionFlow afterUpdateVersion: $afterUpdateVersion" }
-                        send(
-                            BusyBarVersionTransition(
-                                previousVersion = beforeUpdateVersion,
-                                currentVersion = afterUpdateVersion
+                        if (batteryLowStateDeferred.getOrNull() == null) {
+                            val afterUpdateVersion = getVersionFlow().filterNotNull().first()
+                            verbose { "#getPreviousVersionFlow afterUpdateVersion: $afterUpdateVersion" }
+                            send(
+                                BusyBarVersionTransition(
+                                    previousVersion = beforeUpdateVersion,
+                                    currentVersion = afterUpdateVersion
+                                )
                             )
-                        )
+                        }
                     }
                     .first()
             }

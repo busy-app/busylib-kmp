@@ -6,6 +6,7 @@ import com.russhwolf.settings.MapSettings
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import net.flipper.bridge.connection.config.api.model.BUSYBar
+import net.flipper.core.busylib.data.di.BusyLibJsonModule
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -18,7 +19,10 @@ class FDevicePersistedStorageImplTest {
         ble = BUSYBar.ConnectionWay.BLE(address = id)
     )
 
-    private fun createStorage() = FDevicePersistedStorageImpl(MapSettings())
+    private fun createStorage() = FDevicePersistedStorageImpl(
+        observableSettings = MapSettings(),
+        json = BusyLibJsonModule.provideBusyLibJson()
+    )
 
     @Test
     fun returnsDevicesSortedAlphabeticallyRegardlessOfInsertionOrder() = runTest {

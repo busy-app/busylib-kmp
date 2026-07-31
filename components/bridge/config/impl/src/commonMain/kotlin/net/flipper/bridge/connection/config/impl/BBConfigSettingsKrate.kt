@@ -14,11 +14,7 @@ interface BBConfigSettingsKrate : FlowMutableKrate<BBConfigSettings>
 
 class BBConfigSettingsKrateImpl(
     observableSettings: ObservableSettings,
-    json: Json = Json {
-        isLenient = true
-        ignoreUnknownKeys = true
-        prettyPrint = false
-    },
+    json: Json,
     logger: LogTagProvider
 ) : BBConfigSettingsKrate,
     FlowMutableKrate<BBConfigSettings> by DefaultFlowMutableKrate(

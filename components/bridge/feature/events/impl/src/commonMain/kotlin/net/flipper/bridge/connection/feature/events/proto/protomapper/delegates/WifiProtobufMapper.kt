@@ -6,16 +6,16 @@ import BSB_State.IpProtocol
 import BSB_State.Wifi
 import BSB_State.WifiConnectionStatus
 import BSB_State.WifiSecurity
-import BSB_State.WifiStateConnected
+import BSB_State.WifiStateActive
 import net.flipper.bridge.connection.feature.events.model.BusyLibUpdateEvent
 
 object WifiProtobufMapper {
     fun map(wifi: Wifi): BusyLibUpdateEvent.Wifi? {
         val addresses = wifi.ip_addresses.map(::mapIp)
-        val connected = wifi.connected
+        val active = wifi.active
         val state = when {
-            connected != null -> mapConnected(connected) ?: return null
-            wifi.disconnected != null -> BusyLibUpdateEvent.Wifi.State.Disconnected
+            active != null -> mapConnected(active) ?: return null
+            wifi.inactive != null -> BusyLibUpdateEvent.Wifi.State.Disconnected
             wifi.unknown != null -> BusyLibUpdateEvent.Wifi.State.Unknown
             else -> return null
         }
@@ -25,14 +25,14 @@ object WifiProtobufMapper {
         )
     }
 
-    private fun mapConnected(connected: WifiStateConnected): BusyLibUpdateEvent.Wifi.State.Connected? {
+    private fun mapConnected(active: WifiStateActive): BusyLibUpdateEvent.Wifi.State.Connected? {
         return BusyLibUpdateEvent.Wifi.State.Connected(
-            ssid = connected.ssid,
-            bssid = connected.bssid,
-            channel = connected.channel,
-            rssi = connected.rssi,
-            security = connected.security.toState(),
-            status = connected.status.toState() ?: return null
+            ssid = active.ssid,
+            bssid = active.bssid,
+            channel = active.channel,
+            rssi = active.rssi,
+            security = active.security.toState(),
+            status = active.status.toState() ?: return null
         )
     }
 

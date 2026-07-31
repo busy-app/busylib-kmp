@@ -37,6 +37,7 @@ kotlin {
         implementation(projects.components.core.di)
         implementation(projects.components.core.ktx)
         implementation(projects.components.core.ktor)
+        api(projects.components.core.buildkonfig)
         api(projects.components.core.log)
         api(projects.components.core.systrace)
         api(projects.components.core.network)
@@ -77,6 +78,8 @@ kotlin {
         implementation(projects.components.bridge.feature.rpc.impl)
         implementation(projects.components.bridge.feature.hardwareId.api)
         implementation(projects.components.bridge.feature.hardwareId.impl)
+        implementation(projects.components.bridge.feature.storage.api)
+        implementation(projects.components.bridge.feature.storage.impl)
         api(projects.components.bridge.feature.screenStreaming.api)
         implementation(projects.components.bridge.feature.screenStreaming.impl)
         implementation(projects.components.bridge.feature.sync.impl)
@@ -105,6 +108,8 @@ kotlin {
         implementation(projects.components.bridge.feature.about.impl)
         api(projects.components.bridge.feature.timer.api)
         implementation(projects.components.bridge.feature.timer.impl)
+        api(projects.components.bridge.feature.drawTool.api)
+        implementation(projects.components.bridge.feature.drawTool.impl)
 
         implementation(projects.components.bridge.transport.ble.api)
         implementation(projects.components.bridge.transport.common.api)
@@ -127,6 +132,9 @@ kotlin {
 
         api(projects.components.tools.multistream.api)
         implementation(projects.components.tools.multistream.impl)
+
+        api(projects.components.tools.drawtool.api)
+        implementation(projects.components.tools.drawtool.impl)
 
         api(projects.components.eventbus.api)
         implementation(projects.components.eventbus.internal)
@@ -182,9 +190,12 @@ kotlin {
                 export(projects.components.bridge.feature.settings.api)
                 export(projects.components.bridge.feature.about.api)
                 export(projects.components.bridge.feature.timer.api)
+                export(projects.components.bridge.feature.drawTool.api)
+                export(projects.components.tools.drawtool.api)
                 export(projects.components.bridge.orchestrator.api)
                 export(projects.components.bridge.service.api)
                 export(projects.components.eventbus.api)
+                export(projects.components.core.buildkonfig)
                 export(projects.components.core.log)
                 export(projects.components.core.systrace)
 

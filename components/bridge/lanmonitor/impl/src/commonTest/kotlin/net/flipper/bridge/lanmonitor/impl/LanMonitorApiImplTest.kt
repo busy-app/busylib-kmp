@@ -50,12 +50,12 @@ class LanMonitorApiImplTest {
         advanceUntilIdle()
 
         val device = storage.snapshotDevices().single()
-        assertEquals("hw-new", device.hardwareId)
+        assertEquals("hw-new", device.serialNumber)
         assertNotNull(device.lan, "New device must be reachable over LAN")
         assertEquals(device.uniqueId, storage.snapshotCurrentId(), "New device must become the active device")
 
         val event = assertIs<BusyLibEvent.ActiveDeviceAutoSwitched>(publisher.events.single())
-        assertEquals("hw-new", event.newDevice.hardwareId)
+        assertEquals("hw-new", event.newDevice.serialNumber)
     }
 
     @Test

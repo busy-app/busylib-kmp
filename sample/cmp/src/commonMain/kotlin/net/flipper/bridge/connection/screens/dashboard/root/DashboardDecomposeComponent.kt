@@ -14,6 +14,8 @@ import net.flipper.bridge.connection.screens.dashboard.deviceinfo.DeviceInfoDash
 import net.flipper.bridge.connection.screens.dashboard.deviceinfo.DeviceInfoDashboardViewModel
 import net.flipper.bridge.connection.screens.dashboard.display.DisplayDashboardDecomposeComponent
 import net.flipper.bridge.connection.screens.dashboard.display.DisplayDashboardViewModel
+import net.flipper.bridge.connection.screens.dashboard.drawtool.DrawToolDashboardDecomposeComponent
+import net.flipper.bridge.connection.screens.dashboard.drawtool.DrawToolDashboardViewModel
 import net.flipper.bridge.connection.screens.dashboard.hardware.HardwareDashboardDecomposeComponent
 import net.flipper.bridge.connection.screens.dashboard.hardware.HardwareDashboardViewModel
 import net.flipper.bridge.connection.screens.dashboard.hub.HubDashboardDecomposeComponent
@@ -50,6 +52,7 @@ class DashboardDecomposeComponent(
     private val timezoneViewModelFactory: () -> TimezoneDashboardViewModel,
     private val assetsViewModelFactory: () -> AssetsDashboardViewModel,
     private val displayViewModelFactory: () -> DisplayDashboardViewModel,
+    private val drawToolViewModelFactory: () -> DrawToolDashboardViewModel,
     private val screenStreamingViewModelFactory: () -> ScreenStreamingDashboardViewModel,
     private val wifiViewModelFactory: () -> WiFiDashboardViewModel,
     private val firmwareUpdateViewModelFactory: () -> FirmwareUpdateViewModel,
@@ -123,6 +126,12 @@ class DashboardDecomposeComponent(
             viewModelFactory = displayViewModelFactory
         )
 
+        DashboardConfig.DrawTool -> DrawToolDashboardDecomposeComponent(
+            componentContext = componentContext,
+            onBack = navigation::pop,
+            viewModelFactory = drawToolViewModelFactory
+        )
+
         DashboardConfig.ScreenStreaming -> ScreenStreamingDashboardDecomposeComponent(
             componentContext = componentContext,
             onBack = navigation::pop,
@@ -155,6 +164,7 @@ class DashboardDecomposeComponent(
         onOpenTimezone = { navigation.pushNew(DashboardConfig.Timezone) },
         onOpenAssets = { navigation.pushNew(DashboardConfig.Assets) },
         onOpenDisplay = { navigation.pushNew(DashboardConfig.Display) },
+        onOpenDrawTool = { navigation.pushNew(DashboardConfig.DrawTool) },
         onOpenScreenStreaming = { navigation.pushNew(DashboardConfig.ScreenStreaming) },
         onOpenWiFi = { navigation.pushNew(DashboardConfig.WiFi) },
         onOpenFwUpdate = { navigation.pushNew(DashboardConfig.FirmwareUpdate) }
@@ -170,6 +180,7 @@ class DashboardDecomposeComponent(
         private val timezoneViewModelFactory: () -> TimezoneDashboardViewModel,
         private val assetsViewModelFactory: () -> AssetsDashboardViewModel,
         private val displayViewModelFactory: () -> DisplayDashboardViewModel,
+        private val drawToolViewModelFactory: () -> DrawToolDashboardViewModel,
         private val screenStreamingViewModelFactory: () -> ScreenStreamingDashboardViewModel,
         private val wifiViewModelFactory: () -> WiFiDashboardViewModel,
         private val firmwareUpdateViewModelFactory: () -> FirmwareUpdateViewModel,
@@ -191,6 +202,7 @@ class DashboardDecomposeComponent(
                 timezoneViewModelFactory = timezoneViewModelFactory,
                 assetsViewModelFactory = assetsViewModelFactory,
                 displayViewModelFactory = displayViewModelFactory,
+                drawToolViewModelFactory = drawToolViewModelFactory,
                 screenStreamingViewModelFactory = screenStreamingViewModelFactory,
                 wifiViewModelFactory = wifiViewModelFactory,
                 firmwareUpdateViewModelFactory = firmwareUpdateViewModelFactory,

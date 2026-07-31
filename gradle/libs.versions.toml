@@ -12,7 +12,7 @@ kotlin-coroutines = "1.10.2"
 kotlin-serialization-runtime = "1.11.0"
 kotlin-datetime = "0.7.1" # https://github.com/Kotlin/kotlinx-datetime/releases
 kotlin-immutable = "0.4.0"
-kotlin-io = "0.9.0"
+kotlin-io = "0.9.1"
 klibs-gradleplugin = "1.15.0" # https://github.com/makeevrserg/gradle-plugin
 decompose = "3.5.0"
 # 1.1.1 is the highest Metro whose Kotlin/Native runtime klibs have ABI 2.3.0 (loadable by our K/N 2.3.21).

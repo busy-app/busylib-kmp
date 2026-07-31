@@ -2,6 +2,7 @@ package net.flipper.bridge.device.firmwareupdate.uploader.api
 
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.io.files.Path
+import net.flipper.bridge.device.firmwareupdate.updater.model.StartUpdateResponse
 import net.flipper.bridge.device.firmwareupdate.uploader.model.FirmwareUploaderState
 
 internal interface FirmwareUploaderApi {
@@ -9,7 +10,7 @@ internal interface FirmwareUploaderApi {
     suspend fun uploadAndInstall(
         clientFilePath: Path,
         onPrepared: suspend () -> Unit
-    ): Result<Unit>
+    ): StartUpdateResponse
 
     fun reset()
 }

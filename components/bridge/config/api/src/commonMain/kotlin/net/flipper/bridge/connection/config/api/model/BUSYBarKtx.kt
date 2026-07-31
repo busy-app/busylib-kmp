@@ -10,7 +10,7 @@ fun BUSYBar(
 ): BUSYBar {
     return BUSYBar(
         humanReadableName = humanReadableName,
-        hardwareId = null,
+        serialNumber = null,
         uniqueId = uniqueId,
         ble = ble,
         cloud = null,
@@ -29,7 +29,7 @@ fun BUSYBar(
     return BUSYBar(
         humanReadableName = humanReadableName,
         uniqueId = uniqueId,
-        hardwareId = hardwareId,
+        serialNumber = hardwareId,
         ble = null,
         cloud = cloud,
         lan = null,
@@ -46,7 +46,7 @@ fun BUSYBar(
 ): BUSYBar {
     return BUSYBar(
         humanReadableName = humanReadableName,
-        hardwareId = hardwareId,
+        serialNumber = hardwareId,
         uniqueId = uniqueId,
         ble = null,
         cloud = null,
@@ -65,7 +65,7 @@ fun BUSYBar(
 ): BUSYBar {
     return BUSYBar(
         humanReadableName = humanReadableName,
-        hardwareId = hardwareId,
+        serialNumber = hardwareId,
         uniqueId = uniqueId,
         ble = null,
         cloud = null,
@@ -77,12 +77,12 @@ fun BUSYBar(
 
 fun BUSYBar.copy(
     humanReadableName: String = this.humanReadableName,
-    hardwareId: String? = this.hardwareId,
+    hardwareId: String? = this.serialNumber,
     onCallEnabled: Boolean? = this.onCallEnabled
 ): BUSYBar {
     return BUSYBar(
         humanReadableName = humanReadableName,
-        hardwareId = hardwareId,
+        serialNumber = hardwareId,
         uniqueId = uniqueId,
         ble = ble,
         cloud = cloud,
@@ -98,7 +98,7 @@ fun BUSYBar.copyTransports(
     return BUSYBar(
         humanReadableName = humanReadableName,
         uniqueId = uniqueId,
-        hardwareId = hardwareId,
+        serialNumber = serialNumber,
         ble = ble,
         cloud = cloud,
         lan = lan,
@@ -120,7 +120,7 @@ fun BUSYBar.copy(
     }
     return BUSYBar(
         humanReadableName = humanReadableName,
-        hardwareId = hardwareId,
+        serialNumber = serialNumber,
         uniqueId = uniqueId,
         ble = ble,
         cloud = cloud,
@@ -138,7 +138,7 @@ fun BUSYBar.addTransport(
 ): BUSYBar {
     return BUSYBar(
         humanReadableName = humanReadableName,
-        hardwareId = hardwareId,
+        serialNumber = serialNumber,
         uniqueId = uniqueId,
         ble = ble ?: this.ble,
         cloud = cloud ?: this.cloud,
@@ -159,8 +159,8 @@ fun mergeBBIfEmpty(original: BUSYBar, other: BUSYBar): BUSYBar {
     if (result.lan == null) {
         result = result.addTransport(lan = other.lan)
     }
-    if (result.hardwareId == null) {
-        result = result.copy(hardwareId = other.hardwareId)
+    if (result.serialNumber == null) {
+        result = result.copy(hardwareId = other.serialNumber)
     }
     if (result.onCallEnabled == null) {
         result = result.copy(onCallEnabled = other.onCallEnabled)

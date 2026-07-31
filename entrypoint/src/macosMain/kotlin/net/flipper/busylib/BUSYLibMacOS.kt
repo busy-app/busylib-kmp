@@ -17,8 +17,9 @@ import net.flipper.bsb.cloud.rest.channel.api.BusyFirmwareDirectoryChannelApi
 import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
 import net.flipper.busylib.di.BUSYLibGraphMacOS
 import net.flipper.core.busylib.log.LogTagProvider
-import net.flipper.core.busylib.log.info
 import net.flipper.eventbus.api.EventBusApi
+import net.flipper.tools.drawtool.api.DrawToolStatusesApi
+import net.flipper.tools.drawtool.api.DrawToolSyncApi
 import net.flipper.tools.multistream.api.MultiStreamApi
 import net.flipper.tools.oncall.api.OnCallSingletonApi
 
@@ -30,6 +31,8 @@ class BUSYLibMacOS(
     override val firmwareUpdaterApi: FirmwareUpdaterApi,
     override val persistedStorage: FDevicePersistedStorage,
     override val multiStreamApi: MultiStreamApi,
+    override val drawToolStatusesApi: DrawToolStatusesApi,
+    override val drawToolSyncApi: DrawToolSyncApi,
     private val startUpListeners: Set<InternalBUSYLibStartupListener>,
     val onCallSingletonApi: OnCallSingletonApi,
     override val busyFirmwareDirectoryChannelApi: BusyFirmwareDirectoryChannelApi,
@@ -37,7 +40,6 @@ class BUSYLibMacOS(
 ) : BUSYLibApple, LogTagProvider {
     override val TAG = "BUSYLib"
     override fun launch() {
-        info { "Start BUSY Lib local version" }
         startUpListeners.forEach {
             it.onLaunch()
         }

@@ -185,6 +185,13 @@ class FirmwareUpdateDecomposeComponent(
                     color = MaterialTheme.colors.onBackground
                 )
             }
+
+            FwUpdateState.BatteryLow -> {
+                Text(
+                    text = "Low battery",
+                    color = MaterialTheme.colors.onBackground
+                )
+            }
         }
     }
 
@@ -300,6 +307,7 @@ class FirmwareUpdateDecomposeComponent(
         is FwUpdateState.Downloading -> "Downloading"
         FwUpdateState.DownloadFailure -> "Download failure"
         FwUpdateState.Preparing -> "Preparing"
+        FwUpdateState.BatteryLow -> "Low battery"
     }
 
     class Factory(

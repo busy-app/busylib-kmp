@@ -113,14 +113,14 @@ class CloudFetcherWatcher(
             it.cloud?.deviceId != null
         }.associateBy { it.cloud?.deviceId }
         val localByHardwareId = getAllDevices().filter {
-            it.hardwareId != null
-        }.associateBy { it.hardwareId }
+            it.serialNumber != null
+        }.associateBy { it.serialNumber }
         val toAdd = cloudBars.toMutableSet()
 
         cloudBars.forEach { cloud ->
             val local = localByCloudId[cloud.id] ?: localByHardwareId[cloud.hardwareId]
             if (local != null) {
-                if (local.hardwareId != cloud.hardwareId) {
+                if (local.serialNumber != cloud.hardwareId) {
                     warn { "Hardware id mismatch: $local vs $cloud" }
                 }
                 info { "Update existing busy bar $local" }
