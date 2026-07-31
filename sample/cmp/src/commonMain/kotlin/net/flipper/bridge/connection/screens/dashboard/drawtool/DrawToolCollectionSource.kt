@@ -6,12 +6,9 @@ import net.flipper.tools.drawtool.api.DrawToolStatusDirectoryLayout
 import net.flipper.tools.drawtool.api.DrawToolStatusesApi
 
 /**
- * One Draw tool collection resolved for a [DrawToolStorageTarget]: everything
- * an action needs, in a form that does not reveal which target it came from.
- *
- * [fileSystem] and [layout] are what writing a status needs, [statusesApi] is
- * what reading it back needs, and [collectionPath] is the directory both work
- * in — created before a write and reported in the log.
+ * A [DrawToolStorageTarget] resolved into what an action needs, with the target
+ * itself no longer visible: [fileSystem] and [layout] write a status,
+ * [statusesApi] reads it back, [collectionPath] is the directory of both.
  */
 class DrawToolCollectionSource(
     val collectionPath: Path,

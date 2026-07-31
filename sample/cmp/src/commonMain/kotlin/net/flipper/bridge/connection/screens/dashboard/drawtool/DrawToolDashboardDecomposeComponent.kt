@@ -18,18 +18,18 @@ class DrawToolDashboardDecomposeComponent(
 
     @Composable
     override fun Render(modifier: Modifier) {
-        val state by viewModel.state.collectAsState()
         val actionState by viewModel.actionState.collectAsState()
         DrawToolDashboardContent(
             modifier = modifier,
             onBack = onBack::invoke,
-            state = state,
             actionState = actionState,
-            onShowPreviewOnFront = viewModel::showPreviewOnFront,
-            onShowPreviewOnBack = viewModel::showPreviewOnBack,
+            onShowPreview = viewModel::showPreview,
+            onShowLatestStatus = viewModel::showLatestStatus,
             onHidePreview = viewModel::hidePreview,
+            onUploadLatestStatus = viewModel::uploadLatestStatus,
             onGenerateStatus = viewModel::generateStatus,
-            onReadStatuses = viewModel::readStatuses
+            onReadStatuses = viewModel::readStatuses,
+            onDeleteStatuses = viewModel::deleteStatuses
         )
     }
 }

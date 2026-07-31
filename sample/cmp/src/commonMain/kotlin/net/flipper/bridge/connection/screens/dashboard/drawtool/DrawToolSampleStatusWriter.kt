@@ -4,18 +4,12 @@ import kotlinx.io.files.Path
 import net.flipper.core.busylib.ktx.common.writeFileBytes
 
 /**
- * Fills a collection with files shaped exactly as
- * [net.flipper.tools.drawtool.api.DrawToolStatusDirectoryLayout] describes them:
- * flat PNGs directly in the collection directory, a UTC-named status file next
- * to the shared list preview.
+ * Writes a status and the shared preview as flat PNGs in the collection
+ * directory, status first: an interrupted run then leaves a listable status
+ * rather than a preview of nothing.
  *
- * Write order is status file first, preview second. The status file is what a
- * reader reports, so an interrupted generation leaves a listable status behind
- * rather than a preview of a status that is not there.
- *
- * The status name comes from the layout, not from here: it is the current UTC
- * time at second resolution, so two generations within the same second address
- * the same file.
+ * The name comes from the layout — UTC at second resolution, so two runs within
+ * one second hit the same file.
  */
 class DrawToolSampleStatusWriter {
     /** Returns the path of the written status file. */

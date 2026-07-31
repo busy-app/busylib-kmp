@@ -6,18 +6,29 @@ import kotlinx.serialization.Serializable
 import net.flipper.tools.drawtool.api.serialization.PathSerializer
 
 /**
- * A reference to one file of a Draw tool status. The library never loads the
- * content into memory: it stays on disk and is streamed when copied.
- *
- * [path] is absolute. For statuses returned by the library it points inside the
- * local collection; when saving a status it points at the caller's source file,
- * which the library copies into the collection.
+ * One file of a Draw tool collection, by role. [path] is absolute and stays on
+ * disk: the content is streamed, not held.
  */
 @Serializable
-data class DrawToolStoredFile(
-    @SerialName("type")
-    val type: DrawToolFileType,
+sealed interface DrawToolStoredFile {
     @SerialName("path")
-    @Serializable(PathSerializer::class)
-    val path: Path,
-)
+    val path: Path
+
+    /** The `temp.png` working file. */
+    @Serializable
+    @SerialName("PREVIEW")
+    data class Preview(
+        @SerialName("path")
+        @Serializable(PathSerializer::class)
+        override val path: Path,
+    ) : DrawToolStoredFile
+
+    /** A committed status, `YYYY-mm-dd_HH_mm_ss.png`. */
+    @Serializable
+    @SerialName("STATUS")
+    data class Status(
+        @SerialName("path")
+        @Serializable(PathSerializer::class)
+        override val path: Path,
+    ) : DrawToolStoredFile
+}
