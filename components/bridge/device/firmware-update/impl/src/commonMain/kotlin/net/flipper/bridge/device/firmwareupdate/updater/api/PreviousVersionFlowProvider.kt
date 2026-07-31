@@ -44,6 +44,13 @@ class PreviousVersionFlowProvider(
             .map { bsbBusyBarVersion -> bsbBusyBarVersion?.version?.let(::BsbBusyBarVersion) }
     }
 
+    private suspend fun isDeviceStillCurrent(trackedDeviceId: String?): Boolean {
+        val currentDeviceId = fDevicePersistedStorage.getCurrentDeviceFlow()
+            .first()
+            ?.uniqueId
+        return currentDeviceId == trackedDeviceId
+    }
+
     internal fun getPreviousVersionFlow(fwUpdateFlow: Flow<FwUpdateState>) = channelFlow(
         block = {
             // Reset versionTransition on BusyBar change
@@ -52,7 +59,7 @@ class PreviousVersionFlowProvider(
                     .onStart { send(null) }
                     .distinctUntilChangedBy { busyBar -> busyBar?.uniqueId }
                     .onEach { send(null) }
-                    .mapLatest {
+                    .mapLatest { trackedBusyBar ->
                         val beforeUpdateVersion = getVersionFlow()
                             .filterNotNull()
                             .first()
@@ -70,6 +77,8 @@ class PreviousVersionFlowProvider(
                         }
                         fwUpdateFlow.filterIsInstance<FwUpdateState.Updating>().first()
                         fwUpdateFlow.filter { state -> state !is FwUpdateState.Updating }.first()
+                        val isUpdatedDeviceCurrent = isDeviceStillCurrent(trackedBusyBar?.uniqueId)
+                        if (!isUpdatedDeviceCurrent) return@mapLatest
                         if (batteryLowStateDeferred.getOrNull() == null) {
                             val afterUpdateVersion = getVersionFlow().filterNotNull().first()
                             verbose { "#getPreviousVersionFlow afterUpdateVersion: $afterUpdateVersion" }
