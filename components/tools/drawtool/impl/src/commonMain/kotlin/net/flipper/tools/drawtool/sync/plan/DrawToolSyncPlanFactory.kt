@@ -8,6 +8,7 @@ import net.flipper.core.busylib.ktx.io.FlipperFileSystem
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
 import net.flipper.tools.drawtool.api.DrawToolStatusDirectoryLayout
+import net.flipper.tools.drawtool.storage.di.ClientFileSystemQualifier
 import net.flipper.tools.drawtool.sync.model.DrawToolStatusName
 import net.flipper.tools.drawtool.sync.model.DrawToolSyncPlan
 import net.flipper.tools.drawtool.sync.model.DrawToolSyncTarget
@@ -18,33 +19,36 @@ import net.flipper.tools.drawtool.sync.storage.DrawToolSyncStateRepository
 class DrawToolSyncPlanFactory(
     private val planner: DrawToolSyncPlanner,
     private val stateRepository: DrawToolSyncStateRepository,
+    @ClientFileSystemQualifier
     private val systemFileSystem: FlipperFileSystem,
 ) : LogTagProvider {
     override val TAG = "DrawToolSyncPlanFactory"
 
-    private suspend fun listStatusNames(
-        fileSystem: FlipperFileSystem,
-        directory: Path,
-    ): Set<DrawToolStatusName> {
-        return fileSystem.listOrEmpty(directory)
+    private fun toStatusNames(paths: Collection<Path>): Set<DrawToolStatusName> {
+        return paths
             .map { path -> path.name }
             .filter { name -> DrawToolStatusDirectoryLayout.STATUS_FILE_REGEX.matches(name) }
             .map(::DrawToolStatusName)
             .toSet()
     }
 
+    private suspend fun listLocalStatusNames(
+        localLayout: DrawToolStatusDirectoryLayout,
+    ): Set<DrawToolStatusName> {
+        return toStatusNames(systemFileSystem.listOrEmpty(localLayout.getCollectionPath()))
+    }
+
     /**
-     * An unreachable bar and a reset bar both list as empty, and an empty
-     * listing is what turns remembered deletions into a re-fill. Only a
-     * successful write proves the emptiness is real: creating the collection
-     * throws on an unreachable bar and is idempotent on a reset one.
+     * An unreachable bar and a reset bar can both look empty, and an empty
+     * listing is what turns remembered deletions into a re-fill. Two proofs
+     * keep them apart: creating the collection throws on an unreachable bar
+     * and is idempotent on a reset one, and the strict [FlipperFileSystem.list]
+     * throws instead of reading an unlistable directory as empty.
      */
     private suspend fun listBarStatusNames(target: DrawToolSyncTarget): Set<DrawToolStatusName> {
         val barCollectionPath = target.barLayout.getCollectionPath()
-        val names = listStatusNames(target.barFileSystem, barCollectionPath)
-        if (names.isNotEmpty()) return names
         target.barFileSystem.createDirectories(barCollectionPath, mustCreate = false)
-        return listStatusNames(target.barFileSystem, barCollectionPath)
+        return toStatusNames(target.barFileSystem.list(barCollectionPath))
     }
 
     suspend fun create(
@@ -54,7 +58,7 @@ class DrawToolSyncPlanFactory(
         return runSuspendCatching {
             val snapshot = stateRepository.getSnapshot()
             planner.plan(
-                localNames = listStatusNames(systemFileSystem, localLayout.getCollectionPath()),
+                localNames = listLocalStatusNames(localLayout),
                 barNames = listBarStatusNames(target),
                 syncedWithBar = snapshot.syncedBySerial[target.serialNumber].orEmpty(),
                 tombstones = snapshot.tombstones,

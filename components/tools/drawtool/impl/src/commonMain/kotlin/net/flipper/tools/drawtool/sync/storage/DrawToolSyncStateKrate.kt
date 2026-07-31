@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.Json
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.data.di.qualifier.BusyLibJsonQualifier
+import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.busylib.log.TaggedLogger
 import net.flipper.core.busylib.log.error
 import net.flipper.tools.drawtool.sync.model.DrawToolSyncStateSnapshot
@@ -38,7 +39,7 @@ class DrawToolSyncStateKrateImpl(
                     if (stringValue.isNullOrBlank()) {
                         null
                     } else {
-                        runCatching { json.decodeFromString(Serializer, stringValue) }
+                        runSuspendCatching { json.decodeFromString(Serializer, stringValue) }
                             .getOrElse { throwable ->
                                 logger.error(throwable) {
                                     "Could not read the sync state, starting empty"

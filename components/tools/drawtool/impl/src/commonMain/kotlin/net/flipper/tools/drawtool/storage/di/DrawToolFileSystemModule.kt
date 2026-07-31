@@ -20,6 +20,7 @@ object DrawToolFileSystemModule {
 
     @Provides
     @SingleIn(BusyLibGraph::class)
+    @ClientFileSystemQualifier
     fun provideSystemFlipperFileSystem(): FlipperFileSystem {
         return SystemFlipperFileSystem(SystemFileSystem)
     }

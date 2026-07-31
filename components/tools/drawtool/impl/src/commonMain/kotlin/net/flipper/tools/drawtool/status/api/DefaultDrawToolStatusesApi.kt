@@ -26,6 +26,7 @@ import net.flipper.tools.drawtool.api.model.DrawToolStoredFile
 import net.flipper.tools.drawtool.layout.api.DefaultDrawToolStatusDirectoryLayout
 import net.flipper.tools.drawtool.status.util.DrawToolStoredFileResolver
 import net.flipper.tools.drawtool.storage.api.DrawToolStoragePathProvider
+import net.flipper.tools.drawtool.storage.di.ClientFileSystemQualifier
 
 @SingleIn(BusyLibGraph::class)
 @Inject
@@ -33,6 +34,7 @@ class DefaultDrawToolStatusesApi(
     private val drawToolStoragePathProvider: DrawToolStoragePathProvider,
     private val drawToolStoredFileResolver: DrawToolStoredFileResolver,
     private val featureProvider: FFeatureProvider,
+    @ClientFileSystemQualifier
     private val systemFileSystem: FlipperFileSystem = SystemFlipperFileSystem(SystemFileSystem),
 ) : DrawToolStatusesApi {
     private val mutex = Mutex()

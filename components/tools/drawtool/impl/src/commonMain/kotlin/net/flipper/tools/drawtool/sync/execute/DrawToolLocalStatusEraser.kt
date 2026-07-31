@@ -6,6 +6,7 @@ import net.flipper.core.busylib.ktx.io.FlipperFileSystem
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import net.flipper.tools.drawtool.api.DrawToolStatusDirectoryLayout
+import net.flipper.tools.drawtool.storage.di.ClientFileSystemQualifier
 import net.flipper.tools.drawtool.sync.model.DrawToolStatusName
 import net.flipper.tools.drawtool.sync.storage.DrawToolSyncStateRepository
 
@@ -16,6 +17,7 @@ import net.flipper.tools.drawtool.sync.storage.DrawToolSyncStateRepository
 @Inject
 class DrawToolLocalStatusEraser(
     private val stateRepository: DrawToolSyncStateRepository,
+    @ClientFileSystemQualifier
     private val systemFileSystem: FlipperFileSystem,
 ) : LogTagProvider {
     override val TAG = "DrawToolLocalStatusEraser"

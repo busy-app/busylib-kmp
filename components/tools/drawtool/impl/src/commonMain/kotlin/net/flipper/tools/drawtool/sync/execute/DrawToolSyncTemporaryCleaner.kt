@@ -4,6 +4,7 @@ import dev.zacsweers.metro.Inject
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.busylib.ktx.io.FlipperFileSystem
 import net.flipper.tools.drawtool.api.DrawToolStatusDirectoryLayout
+import net.flipper.tools.drawtool.storage.di.ClientFileSystemQualifier
 import net.flipper.tools.drawtool.sync.model.DrawToolSyncTarget
 
 /**
@@ -12,6 +13,7 @@ import net.flipper.tools.drawtool.sync.model.DrawToolSyncTarget
  */
 @Inject
 class DrawToolSyncTemporaryCleaner(
+    @ClientFileSystemQualifier
     private val systemFileSystem: FlipperFileSystem,
 ) {
     suspend fun cleanup(target: DrawToolSyncTarget, localLayout: DrawToolStatusDirectoryLayout) {

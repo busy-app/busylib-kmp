@@ -16,7 +16,7 @@ import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.busylib.ktx.common.transform
 import net.flipper.tools.drawtool.api.DrawToolSyncApi
 import net.flipper.tools.drawtool.api.model.DrawToolSyncState
-import net.flipper.tools.drawtool.layout.api.DefaultDrawToolStatusDirectoryLayout
+import net.flipper.tools.drawtool.layout.api.DrawToolStatusDirectoryLayoutFactory
 import net.flipper.tools.drawtool.storage.api.DrawToolStoragePathProvider
 import net.flipper.tools.drawtool.sync.execute.DrawToolSyncPlanExecutor
 import net.flipper.tools.drawtool.sync.execute.DrawToolSyncTemporaryCleaner
@@ -29,6 +29,7 @@ import net.flipper.tools.drawtool.sync.plan.DrawToolSyncTargetResolver
 @ContributesBinding(BusyLibGraph::class, binding<DrawToolSyncApi>())
 class DefaultDrawToolSyncApi(
     private val drawToolStoragePathProvider: DrawToolStoragePathProvider,
+    private val layoutFactory: DrawToolStatusDirectoryLayoutFactory,
     private val targetResolver: DrawToolSyncTargetResolver,
     private val temporaryCleaner: DrawToolSyncTemporaryCleaner,
     private val planFactory: DrawToolSyncPlanFactory,
@@ -41,7 +42,7 @@ class DefaultDrawToolSyncApi(
 
     private suspend fun syncWith(target: DrawToolSyncTarget): Result<Unit> {
         return drawToolStoragePathProvider.getPath()
-            .map(::DefaultDrawToolStatusDirectoryLayout)
+            .map(layoutFactory::createLocalLayout)
             .transform { localLayout ->
                 temporaryCleaner.cleanup(target, localLayout)
                 planFactory.create(target, localLayout).transform { plan ->
@@ -51,7 +52,7 @@ class DefaultDrawToolSyncApi(
     }
 
     private suspend fun syncInternal(): Result<Unit> {
-        return runSuspendCatching { targetResolver.resolve() }
+        return runSuspendCatching { targetResolver.resolveUnsafe() }
             .transform(::syncWith)
     }
 

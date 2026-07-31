@@ -23,13 +23,14 @@ sealed class DrawToolSyncException(
     /**
      * What succeeded stays synchronized; the next pass retries the rest.
      *
-     * @param cause the first per-file failure
+     * @param failedOperationsCount failed steps of the pass, transfers and deletions alike
+     * @param cause the first per-operation failure
      */
     class PartiallyFailed(
-        failedFilesCount: Int,
+        failedOperationsCount: Int,
         cause: Throwable,
     ) : DrawToolSyncException(
-        message = "Draw tool sync failed for $failedFilesCount files",
+        message = "Draw tool sync failed for $failedOperationsCount operations",
         cause = cause,
     )
 }

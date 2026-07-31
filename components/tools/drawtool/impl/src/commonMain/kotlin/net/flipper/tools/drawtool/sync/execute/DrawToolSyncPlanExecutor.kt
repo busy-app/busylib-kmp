@@ -25,7 +25,7 @@ class DrawToolSyncPlanExecutor(
         val firstFailure = failures.firstOrNull() ?: return Result.success(Unit)
         return Result.failure(
             DrawToolSyncException.PartiallyFailed(
-                failedFilesCount = failures.size,
+                failedOperationsCount = failures.size,
                 cause = firstFailure,
             )
         )
