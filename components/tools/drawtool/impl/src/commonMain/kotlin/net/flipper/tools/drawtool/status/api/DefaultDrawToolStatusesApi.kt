@@ -1,9 +1,7 @@
 package net.flipper.tools.drawtool.status.api
 
-import dev.zacsweers.metro.ContributesBinding
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
-import dev.zacsweers.metro.binding
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.io.files.Path
@@ -31,7 +29,6 @@ import net.flipper.tools.drawtool.storage.api.DrawToolStoragePathProvider
 
 @SingleIn(BusyLibGraph::class)
 @Inject
-@ContributesBinding(BusyLibGraph::class, binding<DrawToolStatusesApi>())
 class DefaultDrawToolStatusesApi(
     private val drawToolStoragePathProvider: DrawToolStoragePathProvider,
     private val drawToolStoredFileResolver: DrawToolStoredFileResolver,

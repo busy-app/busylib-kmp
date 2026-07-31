@@ -23,6 +23,10 @@ class DefaultDrawToolStatusDirectoryLayout(
     private val collectionPath: Path,
     private val clock: Clock = Clock.System
 ) : DrawToolStatusDirectoryLayout {
+    override fun getCollectionPath(): Path {
+        return collectionPath
+    }
+
     override fun getPreviewFilePath(): Path {
         return Path(
             collectionPath,
@@ -40,11 +44,22 @@ class DefaultDrawToolStatusDirectoryLayout(
         )
     }
 
+    override fun getStatusFilePath(name: String): Path {
+        return Path(collectionPath, name)
+    }
+
     override fun getStoredFilePath(file: DrawToolStoredFile): Path {
         return when (file) {
             is DrawToolStoredFile.Preview -> getPreviewFilePath()
             is DrawToolStoredFile.Status -> Path(collectionPath, file.path.name)
         }
+    }
+
+    override fun getTemporaryFilePath(): Path {
+        return Path(
+            collectionPath,
+            DrawToolStatusDirectoryLayout.TEMPORARY_FILE_NAME
+        )
     }
 
     private companion object {

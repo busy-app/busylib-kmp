@@ -20,6 +20,7 @@ import net.flipper.busylib.core.di.Provider
 import net.flipper.busylib.di.BUSYLibGraphIOS
 import net.flipper.eventbus.api.EventBusApi
 import net.flipper.tools.drawtool.api.DrawToolStatusesApi
+import net.flipper.tools.drawtool.api.DrawToolSyncApi
 import net.flipper.tools.multistream.api.MultiStreamApi
 
 @Inject
@@ -31,6 +32,7 @@ class BUSYLibIOS(
     override val persistedStorage: FDevicePersistedStorage,
     override val multiStreamApi: MultiStreamApi,
     override val drawToolStatusesApi: DrawToolStatusesApi,
+    override val drawToolSyncApi: DrawToolSyncApi,
     val fCentralManagerApi: Provider<FCentralManagerApi>,
     private val startUpListeners: Set<InternalBUSYLibStartupListener>,
     override val busyFirmwareDirectoryChannelApi: BusyFirmwareDirectoryChannelApi,
