@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 import net.flipper.bsb.cloud.barsws.api.WebSocketEvent
 import kotlin.uuid.Uuid
 
-@Serializable
+@Serializable(with = WebSocketEventInternalSerializer::class)
 sealed interface WebSocketEventInternal {
 
     @Serializable
@@ -37,6 +37,14 @@ sealed interface WebSocketEventInternal {
         @SerialName("state")
         val state: String
     ) : WebSocketEventInternal
+
+    @Serializable
+    data class SubscriptionError(
+        @SerialName("error")
+        val error: String,
+        @SerialName("bar_id")
+        val cloudId: Uuid? = null
+    ) : WebSocketEventInternal
 }
 
 fun WebSocketEventInternal.toPublic() = when (this) {
@@ -53,4 +61,6 @@ fun WebSocketEventInternal.toPublic() = when (this) {
     )
 
     is WebSocketEventInternal.Protobuf -> null
+
+    is WebSocketEventInternal.SubscriptionError -> null
 }
