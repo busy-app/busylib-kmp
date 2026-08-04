@@ -5,6 +5,7 @@ package net.flipper.busylib
 import net.flipper.bridge.connection.feature.about.api.FAboutFeatureApi
 import net.flipper.bridge.connection.feature.battery.api.FDeviceBatteryInfoFeatureApi
 import net.flipper.bridge.connection.feature.ble.api.FBleFeatureApi
+import net.flipper.bridge.connection.feature.drawtool.api.FDrawToolFeatureApi
 import net.flipper.bridge.connection.feature.finishsetup.api.FFinishSetupFeatureApi
 import net.flipper.bridge.connection.feature.firmwareupdate.api.FFirmwareUpdateFeatureApi
 import net.flipper.bridge.connection.feature.info.api.FDeviceInfoFeatureApi
@@ -135,4 +136,13 @@ fun FFeatureProvider.getTimerFeature(): WrappedFlow<FFeatureStatus<FTimerFeature
 
 suspend fun FFeatureProvider.getTimerFeatureSync(): FTimerFeatureApi? {
     return this.getSync(FTimerFeatureApi::class)
+}
+
+// Draw Tool Feature
+fun FFeatureProvider.getDrawToolFeature(): WrappedFlow<FFeatureStatus<FDrawToolFeatureApi>> {
+    return get(FDrawToolFeatureApi::class).wrap()
+}
+
+suspend fun FFeatureProvider.getDrawToolFeatureSync(): FDrawToolFeatureApi? {
+    return this.getSync(FDrawToolFeatureApi::class)
 }
