@@ -199,17 +199,18 @@ class FFinishSetupFeatureApiImpl(
                 val pairBleTask = bleStatus?.let(::createPairBleTask)
 
                 val connectWifiTask = createConnectWifiTask(wifiStatus)
-                    .takeIf { tasksDependencies.isLanConnection }
 
                 val linkAccountTask = createLinkAccountTask(
                     linkedAccountInfo = linkedAccountInfo,
-                    connectWifiTaskStatus = connectWifiTask?.status
-                        ?: DeviceSetupTaskStatus.COMPLETED
+                    connectWifiTaskStatus = connectWifiTask.status
                 )
                 val updateFirmwareTask = createUpdateFirmwareTask(
                     updateVersion = updateVersion,
-                    connectWifiTaskStatus = connectWifiTask?.status
-                        ?: DeviceSetupTaskStatus.COMPLETED
+                    connectWifiTaskStatus = when {
+                        tasksDependencies.isLanConnection -> DeviceSetupTaskStatus.COMPLETED
+
+                        else -> connectWifiTask.status
+                    }
                 )
                 val tasks = listOfNotNull(
                     pairBleTask,
