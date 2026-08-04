@@ -41,7 +41,15 @@ internal class MockBSBWebSocket(
         _eventsFlow.emit(event)
     }
 
-    fun close() {
+    var closeCalled = false
+        private set
+
+    override suspend fun close() {
+        closeCalled = true
+        simulateClosed()
+    }
+
+    fun simulateClosed() {
         closedSignal.complete(Unit)
         onClose()
     }
