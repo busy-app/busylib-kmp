@@ -41,7 +41,6 @@ import net.flipper.core.busylib.ktx.common.transformWhileSubscribed
 import net.flipper.core.busylib.ktx.common.tryCast
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.verbose
-import java.lang.StringTemplate.combine
 import kotlin.time.Duration.Companion.seconds
 
 class FFinishSetupFeatureApiImpl(
