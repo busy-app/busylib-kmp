@@ -10,8 +10,10 @@ kotlin {
         implementation(libs.kotlin.coroutines)
         implementation(libs.kotlin.datetime)
 
-        implementation(libs.kotlin.io)
+        // FlipperFileSystem exposes kotlinx-io types in its public signature
+        api(libs.kotlin.io)
         implementation(libs.encoding.hash.md)
+        implementation(libs.kotlin.serialization.json)
     }
 
     sourceSets.androidMain.dependencies {

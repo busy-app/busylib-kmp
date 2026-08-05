@@ -17,6 +17,7 @@ import net.flipper.bridge.connection.feature.rpc.impl.util.throttle.HttpRequestT
 import net.flipper.busylib.kmp.components.core.buildkonfig.BuildKonfig
 import net.flipper.core.busylib.log.info
 import net.flipper.core.ktor.util.minimizeBodyLogMessage
+import net.flipper.core.ktor.util.retryOnTransientExceptions
 import kotlin.time.Duration.Companion.seconds
 
 private const val MAX_RPS = 2 // Limitation for BUSY Bar request
@@ -39,6 +40,7 @@ fun getHttpClient(httpClientEngine: HttpClientEngine) = HttpClient(httpClientEng
         retryIf(maxRetries = Int.MAX_VALUE) { _, response ->
             response.status == HttpStatusCode.TooManyRequests
         }
+        retryOnTransientExceptions()
         exponentialDelay(respectRetryAfterHeader = true)
     }
     install(Logging) {

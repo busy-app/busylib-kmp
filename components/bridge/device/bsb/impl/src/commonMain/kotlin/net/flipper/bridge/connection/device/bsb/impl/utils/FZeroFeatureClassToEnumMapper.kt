@@ -7,6 +7,7 @@ import net.flipper.bridge.connection.feature.battery.api.FDeviceBatteryInfoFeatu
 import net.flipper.bridge.connection.feature.ble.api.FBleFeatureApi
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
+import net.flipper.bridge.connection.feature.drawtool.api.FDrawToolFeatureApi
 import net.flipper.bridge.connection.feature.events.api.FEventsFeatureApi
 import net.flipper.bridge.connection.feature.finishsetup.api.FFinishSetupFeatureApi
 import net.flipper.bridge.connection.feature.firmwareupdate.api.FFirmwareUpdateFeatureApi
@@ -19,6 +20,7 @@ import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.screenstreaming.api.FScreenStreamingFeatureApi
 import net.flipper.bridge.connection.feature.settings.api.FSettingsFeatureApi
 import net.flipper.bridge.connection.feature.smarthome.api.FSmartHomeFeatureApi
+import net.flipper.bridge.connection.feature.storage.api.FStorageFeatureApi
 import net.flipper.bridge.connection.feature.timer.api.FTimerFeatureApi
 import net.flipper.bridge.connection.feature.timezone.api.FTimeZoneFeatureApi
 import net.flipper.bridge.connection.feature.wifi.api.FWiFiFeatureApi
@@ -49,6 +51,8 @@ object FZeroFeatureClassToEnumMapper {
             FDeviceFeature.ABOUT -> FAboutFeatureApi::class
             FDeviceFeature.TIMER -> FTimerFeatureApi::class
             FDeviceFeature.HARDWARE_ID -> FHardwareIdFeatureApi::class
+            FDeviceFeature.DRAW_TOOL -> FDrawToolFeatureApi::class
+            FDeviceFeature.STORAGE -> FStorageFeatureApi::class
         }
     }
 

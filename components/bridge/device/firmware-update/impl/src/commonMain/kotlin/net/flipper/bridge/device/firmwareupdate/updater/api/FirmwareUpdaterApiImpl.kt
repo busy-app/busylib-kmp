@@ -59,7 +59,6 @@ import net.flipper.core.busylib.ktx.common.asFlow
 import net.flipper.core.busylib.ktx.common.asSingleJobScope
 import net.flipper.core.busylib.ktx.common.cancelPrevious
 import net.flipper.core.busylib.ktx.common.exponentialRetry
-import net.flipper.core.busylib.ktx.common.mapSuspendCatching
 import net.flipper.core.busylib.ktx.common.orNullable
 import net.flipper.core.busylib.ktx.common.tryCast
 import net.flipper.core.busylib.log.LogTagProvider
@@ -113,6 +112,7 @@ class FirmwareUpdaterApiImpl(
                 isInstallRequested
             )
             when (result) {
+                is FwUpdateState.BatteryLow,
                 is FwUpdateState.UpdateAvailable,
                 is FwUpdateState.NoUpdateAvailable,
                 is FwUpdateState.CheckingVersion,
@@ -232,7 +232,7 @@ class FirmwareUpdaterApiImpl(
                         onSuccess = { apiResponse ->
                             when (apiResponse) {
                                 is ErrorResponse if apiResponse.error == BsbRpcError.BATTERY_LOW.error -> {
-                                    StartUpdateResponse.LowBattery
+                                    StartUpdateResponse.BatteryLow
                                 }
 
                                 is ErrorResponse -> {
@@ -242,7 +242,9 @@ class FirmwareUpdaterApiImpl(
                                 is SuccessResponse -> StartUpdateResponse.Success
                             }
                         },
-                        onFailure = { t -> StartUpdateResponse.Failure(t) }
+                        onFailure = { t ->
+                            StartUpdateResponse.Failure(t)
+                        }
                     )
             }
 
@@ -250,17 +252,17 @@ class FirmwareUpdaterApiImpl(
                 firmwareDownloaderApi.download(bsbUpdateVersion)
                     .onSuccess { info { "#startUpdateInstall download finished" } }
                     .onFailure { t -> error(t) { "#startUpdateInstall could not download" } }
-                    .mapSuspendCatching { path ->
+                    .map { path ->
                         info { "#startUpdateInstall start uploading" }
-                        firmwareUploaderApi
-                            .uploadAndInstall(path) { firmwareDownloaderApi.reset() }
-                            .onSuccess { info { "#startUpdateInstall finish upload" } }
-                            .onFailure { t -> error(t) { "#startUpdateInstall could not upload" } }
-                            .getOrThrow()
+                        firmwareUploaderApi.uploadAndInstall(path) { firmwareDownloaderApi.reset() }
                     }
                     .fold(
-                        onSuccess = { StartUpdateResponse.Success },
-                        onFailure = { t -> StartUpdateResponse.Failure(t) }
+                        onSuccess = { startUpdateResponse ->
+                            startUpdateResponse
+                        },
+                        onFailure = { t ->
+                            StartUpdateResponse.Failure(t)
+                        }
                     )
             }
         }
@@ -300,11 +302,20 @@ class FirmwareUpdaterApiImpl(
                 }
 
                 is BsbUpdateVersion.ReadyToUpdate.Url -> {
-                    info { "#startUpdateInstall bootTimeFlow wait" }
-                    val bootTime = bootTimeFlow.first()
-                    info { "#startUpdateInstall bootTimeFlow cancel" }
-                    bootTimeScope.cancel()
-                    awaitDeviceReconnected(bootTime)
+                    when (startUpdateResponse) {
+                        StartUpdateResponse.BatteryLow,
+                        is StartUpdateResponse.Failure -> {
+                            bootTimeScope.cancel()
+                        }
+
+                        StartUpdateResponse.Success -> {
+                            info { "#startUpdateInstall bootTimeFlow wait" }
+                            val bootTime = bootTimeFlow.first()
+                            info { "#startUpdateInstall bootTimeFlow cancel" }
+                            bootTimeScope.cancel()
+                            awaitDeviceReconnected(bootTime)
+                        }
+                    }
                 }
             }
             installRequestedFlow.value = false

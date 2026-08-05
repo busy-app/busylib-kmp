@@ -12,6 +12,7 @@ kotlin {
     sourceSets.commonMain.dependencies {
         implementation(projects.components.bridge.config.internal)
 
+        implementation(projects.components.core.data)
         implementation(projects.components.core.log)
         implementation(projects.components.core.di)
         implementation(projects.components.core.ktx)

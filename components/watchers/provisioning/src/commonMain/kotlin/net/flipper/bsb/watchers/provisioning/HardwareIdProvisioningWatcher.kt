@@ -63,7 +63,7 @@ class HardwareIdProvisioningWatcher(
     private suspend fun onNewHardwareId(hardwareId: String, uniqueId: String) {
         val shouldInvalidateCloud = persistedStorage.transactionInternal {
             return@transactionInternal getDevice(uniqueId)?.let { original ->
-                if (original.hardwareId == null) {
+                if (original.serialNumber == null) {
                     info { "Found device without hardware id ($hardwareId): $original" }
                     addOrReplace(
                         original.copy(
@@ -71,12 +71,12 @@ class HardwareIdProvisioningWatcher(
                         )
                     )
                     return@let false
-                } else if (original.hardwareId != hardwareId) {
+                } else if (original.serialNumber != hardwareId) {
                     info {
                         "Found device with another hardware id. " +
                             "Current is $original, but new one is $hardwareId"
                     }
-                    val existedDevice = getAllDevices().find { it.hardwareId == hardwareId }
+                    val existedDevice = getAllDevices().find { it.serialNumber == hardwareId }
                     val newCurrentDevice = if (existedDevice == null) {
                         original.copyTransports(uniqueId = Uuid.random().toString())
                             .copy(

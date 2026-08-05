@@ -5,6 +5,7 @@ import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.AssistedInject
 import dev.zacsweers.metro.ContributesBinding
 import dev.zacsweers.metro.binding
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -129,6 +130,8 @@ class FBSBDeviceApiImpl(
                 }
                 info { "$featureApi onReady feature creation successful!" }
                 (featureApi as? FOnDeviceReadyFeatureApi)?.onReady()
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Throwable) {
                 error(e) { "Failed init on ready device factory $factory" }
             }

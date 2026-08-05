@@ -23,6 +23,7 @@ import net.flipper.busylib.kmp.components.core.buildkonfig.BuildKonfig
 import net.flipper.core.busylib.log.TaggedLogger
 import net.flipper.core.busylib.log.info
 import net.flipper.core.ktor.util.minimizeBodyLogMessage
+import net.flipper.core.ktor.util.retryOnTransientExceptions
 import kotlin.time.Duration.Companion.seconds
 
 private val ktorTimber = TaggedLogger("Ktor")
@@ -58,6 +59,7 @@ fun getHttpClient(
         retryIf(maxRetries = Int.MAX_VALUE) { _, response ->
             response.status == HttpStatusCode.TooManyRequests
         }
+        retryOnTransientExceptions()
         exponentialDelay(respectRetryAfterHeader = true)
     }
     install(WebSockets) {

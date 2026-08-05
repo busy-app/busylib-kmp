@@ -29,7 +29,7 @@ private val principalApi by lazy {
 }
 
 private val hostApi = BUSYLibHostApiStub(
-    host = "cloud.dev.busy.app",
+    host = "cloud.busy.app",
 )
 
 val busyLib: BUSYLibIOS by lazy {
