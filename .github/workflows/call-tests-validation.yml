@@ -11,13 +11,13 @@ jobs:
     name: "Run tests"
     runs-on: [ self-hosted, macOS ]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           submodules: recursive
       - name: Set up JDK 1.17
         uses: ./.github/actions/setup-java
       - name: Setup Android SDK
-        uses: android-actions/setup-android@v4
+        uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4
         with:
           # Pin to 16.0 (v3 default) — cmdline-tools 20.0 crashes on self-hosted macOS runners
           cmdline-tools-version: '12266719'
@@ -25,6 +25,6 @@ jobs:
         run: chmod +x gradlew
       - name: Run tests
         timeout-minutes: 30
-        uses: gradle/gradle-build-action@v3
+        uses: gradle/gradle-build-action@ac2d340dc04d9e1113182899e983b5400c17cda1 # v3
         with:
           arguments: ${{ matrix.target }} --stacktrace
