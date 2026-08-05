@@ -30,7 +30,7 @@ runs:
       shell: bash
       run: rm -f "$HOME/.m2/toolchains.xml"
     - name: Set up JDK ${{ inputs.java-version }}
-      uses: actions/setup-java@v5
+      uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
       with:
         distribution: ${{ inputs.distribution }}
         java-version: ${{ inputs.java-version }}

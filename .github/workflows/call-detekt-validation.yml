@@ -6,7 +6,7 @@ jobs:
     name: "Check project by detekt"
     runs-on: [ self-hosted, Linux, Android ]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           submodules: recursive
       - name: Set up JDK 1.17
@@ -14,6 +14,6 @@ jobs:
       - name: Give gradle permission
         run: chmod +x gradlew
       - name: detekt
-        uses: gradle/gradle-build-action@v3
+        uses: gradle/gradle-build-action@ac2d340dc04d9e1113182899e983b5400c17cda1 # v3
         with:
           arguments: detekt
