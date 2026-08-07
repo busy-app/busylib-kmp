@@ -27,7 +27,10 @@ class DrawToolSyncPlanFactory(
     private fun toStatusNames(paths: Collection<Path>): Set<DrawToolStatusName> {
         return paths
             .map { path -> path.name }
-            .filter { name -> DrawToolStatusDirectoryLayout.STATUS_FILE_REGEX.matches(name) }
+            .filter { name ->
+                DrawToolStatusDirectoryLayout.STATUS_FILE_BROKEN_REGEX.matches(name)
+                    .or(DrawToolStatusDirectoryLayout.STATUS_FILE_REGEX.matches(name))
+            }
             .map(::DrawToolStatusName)
             .toSet()
     }
