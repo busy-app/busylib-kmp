@@ -36,7 +36,10 @@ class SyncAwareDrawToolStatusesApi(
     override suspend fun deleteStatuses(files: List<DrawToolStoredFile.Status>): CResult<Unit> {
         val statusNames = files
             .map { storedFile -> storedFile.path.name }
-            .filter { name -> DrawToolStatusDirectoryLayout.STATUS_FILE_REGEX.matches(name) }
+            .filter { name ->
+                DrawToolStatusDirectoryLayout.STATUS_FILE_BROKEN_REGEX.matches(name)
+                    .or(DrawToolStatusDirectoryLayout.STATUS_FILE_REGEX.matches(name))
+            }
             .map(::DrawToolStatusName)
         return runSuspendCatching { stateRepository.recordTombstones(statusNames) }
             .transform { _ -> delegate.deleteStatuses(files).toKotlinResult() }
