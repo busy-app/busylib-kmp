@@ -8,8 +8,8 @@ import net.flipper.Config.CURRENT_FLAVOR_TYPE
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
 import org.jetbrains.kotlin.konan.target.Family
-import ru.astrainteractive.gradleplugin.property.extension.PrimitivePropertyValueExt.stringOrNull
-import ru.astrainteractive.gradleplugin.property.secretProperty
+import ru.astrainteractive.gradle.property.api.secretProperty
+import ru.astrainteractive.gradleplugin.property.util.stringOrNull
 
 plugins {
     id("flipper.multiplatform")

@@ -45,22 +45,25 @@ val deviceInfo = busyLib
 
 ### Creating local build
 
-Create `local.properties` and execute gradle commands
+Create a `local.properties` in the repository root and execute gradle commands. The file is
+git-ignored, so it is the place for per-developer overrides.
 
-```properties
-# Disable macOS/apple if needed
-flipper.macOSEnabled=false
-flipper.appleEnabled=false
-# Disable signing for publications
-# ./gradlew publishToMavenLocal
-flipper.signPublications=false
-# If want to use xcFramework, add destination, where it should be copied
-# Then run ./gradlew :entrypoint:copyXCFrameworkDebug
-flipper.iosProjectBridgeAbsolutePath=/Users/makeevrserg/Desktop/git/iOS/Bridge
-flipper.iosProjectAbsolutePath=/Users/makeevrserg/Desktop/git/iOS/
-# If want more verbose logging, add this
-current_flavor_type=DEVELOP
-```
+| Property                               | Default | Example                          | Effect                                                                                                                    |
+|----------------------------------------|---------|----------------------------------|---------------------------------------------------------------------------------------------------------------------------|
+| `flipper.appleEnabled`                 | `true`  | `flipper.appleEnabled=false`     | Registers the iOS and macOS targets. Set to `false` on non-Apple machines.                                                |
+| `flipper.macOSEnabled`                 | `true`  | `flipper.macOSEnabled=false`     | Registers the `macosArm64` / `macosX64` targets only, leaving iOS alone.                                                  |
+| `flipper.signPublications`             | `true`  | `flipper.signPublications=false` | Signs Maven publications. Must be `false` to run `./gradlew publishToMavenLocal` without signing keys.                    |
+| `flipper.iosProjectBridgeAbsolutePath` | —       | `/Users/me/git/iOS/Bridge`       | Where `./gradlew :entrypoint:copyXCFrameworkDebug` copies the XCFramework.                                                |
+| `flipper.iosProjectAbsolutePath`       | —       | `/Users/me/git/iOS/`             | Xcode project root used by the same task. Both paths must be set for it to run.                                           |
+| `current_flavor_type`                  | `DEBUG` | `current_flavor_type=DEVELOP`    | BuildKonfig flavor: `DEBUG`, `DEVELOP` or `PROD`. `PROD` drops verbose/sensitive logging, mocks and dev firmware channel. |
+
+`flipper.appleEnabled`, `flipper.macOSEnabled` and `current_flavor_type` are also accepted as Gradle
+properties (`gradle.properties` or `-P`). `flipper.signPublications` and the two path properties are
+read only from `local.properties` or from the environment with dots replaced by underscores
+(`flipper_signPublications`), because they are CI secrets.
+
+Every `klibs.*` key from `gradle.properties` — project coordinates, version, Android SDK and Java
+levels — can be overridden the same way; `local.properties` wins over `gradle.properties`.
 
 For xcode don't forget:
 
