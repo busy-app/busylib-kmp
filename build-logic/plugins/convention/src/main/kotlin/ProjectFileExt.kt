@@ -11,14 +11,18 @@ private fun File.takeIfIsLinkOrExist(): File? {
     return null
 }
 
+// Walks directories rather than Project.parent: calling file() on a parent project is forbidden
+// under isolated projects. Same directories as long as no project overrides its projectDir.
 internal fun Project.fileOrParentFile(name: String): File? {
-    val parentOrNull = parent
-    val projectFileOrNull = file(name).takeIfIsLinkOrExist()
-    return when {
-        projectFileOrNull != null -> projectFileOrNull
-        parentOrNull != null -> parentOrNull.fileOrParentFile(name)
-        else -> rootProject.file(name).takeIfIsLinkOrExist()
+    val rootDir = rootDir
+    var currentDir: File? = projectDir
+    while (currentDir != null) {
+        val candidate = File(currentDir, name).takeIfIsLinkOrExist()
+        if (candidate != null) return candidate
+        if (currentDir == rootDir) break
+        currentDir = currentDir.parentFile
     }
+    return File(rootDir, name).takeIfIsLinkOrExist()
 }
 
 internal fun Project.requireFileOrParentFile(name: String): File {
