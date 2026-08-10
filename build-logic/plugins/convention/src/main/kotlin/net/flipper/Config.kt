@@ -13,8 +13,8 @@ import org.gradle.api.Project
 object Config {
     val Project.CURRENT_FLAVOR_TYPE: FlavorType
         get() {
-            val property = AnyPropertyValue(rootProject, "current_flavor_type")
-                .asCached(rootProject.extensions)
+            val property = AnyPropertyValue(this, "current_flavor_type")
+                .asCached(this)
             val propertyValue = property
                 .getValue()
                 .onFailure { exception ->
@@ -58,9 +58,9 @@ object Config {
         )
 }
 
-private const val BASE_PREFIX = "makeevrserg"
+private const val BASE_PREFIX = "klibs"
 
 fun Project.baseGradleProperty(path: String): PropertyValue {
     return GradlePropertyValue(this, "$BASE_PREFIX.$path")
-        .asCached(rootProject.extensions)
+        .asCached(this)
 }

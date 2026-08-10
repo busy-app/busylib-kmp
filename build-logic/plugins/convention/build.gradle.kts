@@ -8,9 +8,9 @@ dependencies {
     implementation(libs.kotlin.gradle)
     implementation(libs.metro.gradle)
     implementation(libs.compose.multiplatform.gradle)
+    implementation(libs.compose.hot.reload.gradle)
     implementation(libs.compose.gradle)
     implementation(libs.vaniktech)
-    implementation(libs.klibs.gradle.android)
     implementation(libs.klibs.gradle.convention)
     implementation(libs.detekt.gradle)
 

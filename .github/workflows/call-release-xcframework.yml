@@ -27,8 +27,8 @@ jobs:
           cmdline-tools-version: '12266719'
       - name: Replace gradle properties with sed
         run: |
-          sed -i -e 's/^makeevrserg.project.version.string=.*$/makeevrserg.project.version.string=${{ inputs.VERSION_NAME }}/g' gradle.properties
-          sed -i -e 's/^makeevrserg.project.version.code=.*$/makeevrserg.project.version.code=${{ inputs.VERSION_CODE }}/g' gradle.properties
+          sed -i -e 's/^klibs.project.version.string=.*$/klibs.project.version.string=${{ inputs.VERSION_NAME }}/g' gradle.properties
+          sed -i -e 's/^klibs.project.version.code=.*$/klibs.project.version.code=${{ inputs.VERSION_CODE }}/g' gradle.properties
       - name: Build release xcframework zip
         id: files_release
         run: |

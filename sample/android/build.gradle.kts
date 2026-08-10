@@ -1,6 +1,5 @@
-import ru.astrainteractive.gradleplugin.property.baseGradleProperty
-import ru.astrainteractive.gradleplugin.property.extension.ModelPropertyValueExt.requireProjectInfo
-import ru.astrainteractive.gradleplugin.property.extension.PrimitivePropertyValueExt.requireInt
+import ru.astrainteractive.gradleplugin.property.util.requireProjectInfo
+import ru.astrainteractive.gradleplugin.property.util.requireVersionCode
 
 
 plugins {
@@ -65,7 +64,7 @@ kotlin {
 android {
     defaultConfig {
         applicationId = requireProjectInfo.group
-        versionCode = baseGradleProperty("project.version.code").requireInt
+        versionCode = requireVersionCode
         versionName = requireProjectInfo.versionString
 
         multiDexEnabled = true

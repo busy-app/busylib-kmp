@@ -47,8 +47,8 @@ jobs:
           cmdline-tools-version: '12266719'
       - name: Replace gradle properties with sed
         run: |
-          sed -i -e 's/^makeevrserg.project.version.string=.*$/makeevrserg.project.version.string=${{ inputs.VERSION_NAME }}/g' gradle.properties
-          sed -i -e 's/^makeevrserg.project.version.code=.*$/makeevrserg.project.version.code=${{ inputs.VERSION_CODE }}/g' gradle.properties
+          sed -i -e 's/^klibs.project.version.string=.*$/klibs.project.version.string=${{ inputs.VERSION_NAME }}/g' gradle.properties
+          sed -i -e 's/^klibs.project.version.code=.*$/klibs.project.version.code=${{ inputs.VERSION_CODE }}/g' gradle.properties
       - name: Run publish
         uses: gradle/gradle-build-action@ac2d340dc04d9e1113182899e983b5400c17cda1 # v3
         with:
