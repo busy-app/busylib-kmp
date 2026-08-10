@@ -56,7 +56,12 @@ interface DrawToolStatusDirectoryLayout {
          * Anything a listing finds that does not match is ignored, whatever
          * put it there.
          */
-        val STATUS_FILE_REGEX = Regex("""^\d{4}-\d{2}-\d{2}_\d{2}_\d{2}_\d{2}\.png$""")
+        val STATUS_FILE_REGEX = Regex("""^\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\.png$""")
+
+        /**
+         * The old broken regex, which doesn't match with WEB-version regex
+         */
+        val STATUS_FILE_BROKEN_REGEX = Regex("""^\d{4}-\d{2}-\d{2}_\d{2}_\d{2}_\d{2}\.png$""")
 
         /**
          * The Draw tool collection on the bar itself. Unlike a client

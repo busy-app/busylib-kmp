@@ -77,9 +77,9 @@ class DefaultDrawToolStatusDirectoryLayout(
                 day()
                 char('_')
                 hour()
-                char('_')
+                char('-')
                 minute()
-                char('_')
+                char('-')
                 second()
             }
     }

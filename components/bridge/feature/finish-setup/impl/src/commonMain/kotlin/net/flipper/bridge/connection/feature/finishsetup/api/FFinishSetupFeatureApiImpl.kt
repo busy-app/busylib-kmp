@@ -4,6 +4,7 @@ import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.binding
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -25,14 +26,19 @@ import net.flipper.bridge.connection.feature.link.model.LinkedAccountInfo
 import net.flipper.bridge.connection.feature.wifi.api.FWiFiFeatureApi
 import net.flipper.bridge.connection.feature.wifi.api.model.BsbWifiStatus
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
+import net.flipper.bridge.connection.transport.common.api.serial.FHTTPDeviceApi
+import net.flipper.bridge.connection.transport.common.api.serial.FHTTPTransportCapability
+import net.flipper.bridge.connection.transport.common.api.serial.hasCapability
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.core.wrapper.WrappedSharedFlow
 import net.flipper.busylib.core.wrapper.wrap
+import net.flipper.core.busylib.ktx.common.combine
 import net.flipper.core.busylib.ktx.common.orNullable
 import net.flipper.core.busylib.ktx.common.platform.BusyLibPlatform
 import net.flipper.core.busylib.ktx.common.platform.currentPlatform
 import net.flipper.core.busylib.ktx.common.throttleLatest
 import net.flipper.core.busylib.ktx.common.transformWhileSubscribed
+import net.flipper.core.busylib.ktx.common.tryCast
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.verbose
 import kotlin.time.Duration.Companion.seconds
@@ -43,7 +49,8 @@ class FFinishSetupFeatureApiImpl(
     private val fLinkedInfoOnDemandFeatureApi: FLinkedInfoOnDemandFeatureApi,
     private val fWiFiFeatureApi: FWiFiFeatureApi,
     private val fFirmwareUpdateFeatureApi: FFirmwareUpdateFeatureApi,
-    private val setupFinishedBeforeKrate: SetupFinishedBeforeKrate
+    private val setupFinishedBeforeKrate: SetupFinishedBeforeKrate,
+    private val fConnectedDeviceApi: FConnectedDeviceApi
 ) : FFinishSetupFeatureApi, LogTagProvider {
     override val TAG: String = "FFinishSetupFeatureApi"
 
@@ -52,8 +59,17 @@ class FFinishSetupFeatureApiImpl(
         val linkedAccountInfo: LinkedAccountInfo,
         val wifiStatus: BsbWifiStatus,
         val updateVersion: BsbUpdateVersion,
-        val isSetupFinishedBefore: Boolean
+        val isSetupFinishedBefore: Boolean,
+        val isLanConnection: Boolean
     )
+
+    private fun isLanConnectionFlow(): Flow<Boolean> {
+        return fConnectedDeviceApi
+            .tryCast<FHTTPDeviceApi>()
+            ?.hasCapability(FHTTPTransportCapability.BB_DOWNLOAD_UPDATE_SUPPORTED)
+            .orNullable()
+            .map { isDownloadSupported -> isDownloadSupported == true }
+    }
 
     private fun createPairBleTask(bleStatus: FBleStatus): DeviceSetupTask {
         val deviceSetupTask = DeviceSetupTask(
@@ -115,6 +131,7 @@ class FFinishSetupFeatureApiImpl(
                         BsbUpdateVersion.FailedToCheck -> DeviceSetupTaskStatus.NOT_AVAILABLE
                         BsbUpdateVersion.CheckingOnBBInProgress,
                         BsbUpdateVersion.Loading -> DeviceSetupTaskStatus.LOADING
+
                         BsbUpdateVersion.NoUpdateAvailable -> DeviceSetupTaskStatus.COMPLETED
                         is BsbUpdateVersion.ReadyToUpdate -> DeviceSetupTaskStatus.NOT_COMPLETED
                     }
@@ -139,6 +156,7 @@ class FFinishSetupFeatureApiImpl(
         flow4 = fFirmwareUpdateFeatureApi.updateVersionFlow
             .map { keyedVersion -> keyedVersion.version },
         flow5 = setupFinishedBeforeKrate.cachedStateFlow,
+        flow6 = isLanConnectionFlow(),
         transform = ::TasksDependencies
     ).transformWhileSubscribed(
         timeout = 5.seconds,
@@ -163,27 +181,36 @@ class FFinishSetupFeatureApiImpl(
                     verbose { "#taskListResourceFlow BLE is not initialized" }
                     return@throttleLatest FFinishSetupState.Loading
                 }
-                when (wifiStatus) {
-                    BsbWifiStatus.Connecting,
-                    BsbWifiStatus.Reconnecting -> {
-                        verbose { "#taskListResourceFlow WIFI not initialized yet" }
-                        return@throttleLatest FFinishSetupState.Loading
+                if (!tasksDependencies.isLanConnection) {
+                    when (wifiStatus) {
+                        BsbWifiStatus.Connecting,
+                        BsbWifiStatus.Reconnecting -> {
+                            verbose { "#taskListResourceFlow WIFI not initialized yet" }
+                            return@throttleLatest FFinishSetupState.Loading
+                        }
+
+                        is BsbWifiStatus.Connected,
+                        BsbWifiStatus.Disconnected,
+                        BsbWifiStatus.Disconnecting,
+                        BsbWifiStatus.Unknown -> Unit
                     }
-                    is BsbWifiStatus.Connected,
-                    BsbWifiStatus.Disconnected,
-                    BsbWifiStatus.Disconnecting,
-                    BsbWifiStatus.Unknown -> Unit
                 }
 
                 val pairBleTask = bleStatus?.let(::createPairBleTask)
+
                 val connectWifiTask = createConnectWifiTask(wifiStatus)
+
                 val linkAccountTask = createLinkAccountTask(
                     linkedAccountInfo = linkedAccountInfo,
                     connectWifiTaskStatus = connectWifiTask.status
                 )
                 val updateFirmwareTask = createUpdateFirmwareTask(
                     updateVersion = updateVersion,
-                    connectWifiTaskStatus = connectWifiTask.status
+                    connectWifiTaskStatus = when {
+                        tasksDependencies.isLanConnection -> DeviceSetupTaskStatus.COMPLETED
+
+                        else -> connectWifiTask.status
+                    }
                 )
                 val tasks = listOfNotNull(
                     pairBleTask,
@@ -247,7 +274,8 @@ class FFinishSetupFeatureApiImpl(
                 fLinkedInfoOnDemandFeatureApi = fLinkedInfoOnDemandFeatureApi,
                 fWiFiFeatureApi = fWiFiFeatureApi,
                 fFirmwareUpdateFeatureApi = fFirmwareUpdateFeatureApi,
-                setupFinishedBeforeKrate = setupFinishedBeforeKrate
+                fConnectedDeviceApi = connectedDevice,
+                setupFinishedBeforeKrate = setupFinishedBeforeKrate,
             )
         }
     }

@@ -127,7 +127,16 @@ class FWiFiFeatureApiImpl(
     }
 
     override suspend fun disconnect(): CResult<Unit> {
-        return rpcFeatureApi.fRpcWifiApi.disconnectWifi().map { }.toCResult()
+        return rpcFeatureApi.fRpcWifiApi.disconnectWifi()
+            .map { }
+            .onSuccess {
+                val event = BusyLibUpdateEvent.Wifi(
+                    ips = emptyList(),
+                    state = BusyLibUpdateEvent.Wifi.State.Disconnected
+                )
+                fEventsFeatureApi?.onBusyLibEvent(event)
+            }
+            .toCResult()
     }
 
     override val isWifiEditingAllowed = fHTTPDeviceApi

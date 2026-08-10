@@ -29,7 +29,7 @@ internal class MockBSBWebSocketFactory(
         val webSocket = MockBSBWebSocket(onWebSocketClosed)
         lastCreatedWebSocket = webSocket
         scope.coroutineContext[Job]?.invokeOnCompletion {
-            webSocket.close()
+            webSocket.simulateClosed()
         }
         return webSocket
     }

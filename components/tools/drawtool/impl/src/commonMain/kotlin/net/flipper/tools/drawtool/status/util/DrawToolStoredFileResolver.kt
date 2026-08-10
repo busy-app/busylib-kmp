@@ -16,7 +16,7 @@ class DrawToolStoredFileResolver : LogTagProvider by TaggedLogger("DrawToolStore
 
     private fun isStatus(path: Path): Boolean {
         return DrawToolStatusDirectoryLayout
-            .STATUS_FILE_REGEX
+            .STATUS_FILE_BROKEN_REGEX
             .matches(path.name)
     }
 

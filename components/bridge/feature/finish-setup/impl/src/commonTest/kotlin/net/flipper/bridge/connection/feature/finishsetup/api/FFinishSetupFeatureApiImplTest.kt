@@ -31,6 +31,8 @@ import net.flipper.bridge.connection.feature.wifi.api.FWiFiFeatureApi
 import net.flipper.bridge.connection.feature.wifi.api.model.BsbWifiStatus
 import net.flipper.bridge.connection.feature.wifi.api.model.WiFiNetwork
 import net.flipper.bridge.connection.feature.wifi.api.model.WiFiSecurity
+import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
+import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import net.flipper.busylib.core.wrapper.CResult
 import net.flipper.busylib.core.wrapper.WrappedFlow
 import net.flipper.busylib.core.wrapper.WrappedSharedFlow
@@ -115,6 +117,18 @@ class FFinishSetupFeatureApiImplTest {
             MutableStateFlow<String?>(null).asFlow().wrap()
     }
 
+    private class FakeConnectedDeviceApi : FConnectedDeviceApi {
+        override val deviceName: String = "test-device"
+
+        override val uniqueId: String = "test-unique-id"
+
+        override suspend fun tryUpdateConnectionConfig(
+            config: FDeviceConnectionConfig<*>
+        ): Result<Unit> = Result.success(Unit)
+
+        override suspend fun disconnect() = Unit
+    }
+
     private fun FakeSetupFinishedBeforeKrate(initialValue: Boolean = false): SetupFinishedBeforeKrate {
         var value = initialValue
         val krate = DefaultStateFlowSuspendMutableKrate(
@@ -157,7 +171,8 @@ class FFinishSetupFeatureApiImplTest {
             fLinkedInfoOnDemandFeatureApi = FakeLinkedInfoOnDemandFeatureApi(linkedAccountInfo),
             fWiFiFeatureApi = FakeWiFiFeatureApi(wifiStatus),
             fFirmwareUpdateFeatureApi = FakeFirmwareUpdateFeatureApi(updateVersion),
-            setupFinishedBeforeKrate = FakeSetupFinishedBeforeKrate(isSetupFinishedBefore)
+            setupFinishedBeforeKrate = FakeSetupFinishedBeforeKrate(isSetupFinishedBefore),
+            fConnectedDeviceApi = FakeConnectedDeviceApi(),
         )
     }
 
@@ -206,7 +221,8 @@ class FFinishSetupFeatureApiImplTest {
             },
             fWiFiFeatureApi = FakeWiFiFeatureApi(connectedWifi),
             fFirmwareUpdateFeatureApi = FakeFirmwareUpdateFeatureApi(BsbUpdateVersion.NoUpdateAvailable),
-            setupFinishedBeforeKrate = FakeSetupFinishedBeforeKrate(false)
+            setupFinishedBeforeKrate = FakeSetupFinishedBeforeKrate(false),
+            fConnectedDeviceApi = FakeConnectedDeviceApi(),
         )
 
         advanceUntilIdle()
@@ -241,7 +257,8 @@ class FFinishSetupFeatureApiImplTest {
                 override suspend fun disconnect(): CResult<Unit> = CResult.Success(Unit)
             },
             fFirmwareUpdateFeatureApi = FakeFirmwareUpdateFeatureApi(BsbUpdateVersion.NoUpdateAvailable),
-            setupFinishedBeforeKrate = FakeSetupFinishedBeforeKrate(false)
+            setupFinishedBeforeKrate = FakeSetupFinishedBeforeKrate(false),
+            fConnectedDeviceApi = FakeConnectedDeviceApi(),
         )
 
         advanceUntilIdle()

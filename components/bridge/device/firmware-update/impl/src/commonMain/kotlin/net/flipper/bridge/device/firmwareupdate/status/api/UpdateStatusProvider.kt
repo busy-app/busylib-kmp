@@ -3,11 +3,13 @@ package net.flipper.bridge.device.firmwareupdate.status.api
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.runningFold
+import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.feature.firmwareupdate.api.FFirmwareUpdateFeatureApi
 import net.flipper.bridge.connection.feature.firmwareupdate.model.DeviceUpdateStatus
 import net.flipper.bridge.connection.feature.firmwareupdate.model.DeviceUpdateVersion
@@ -24,6 +26,7 @@ import net.flipper.core.busylib.log.info
 @Inject
 class UpdateStatusProvider(
     private val fFeatureProvider: FFeatureProvider,
+    private val fDevicePersistedStorage: FDevicePersistedStorage,
 ) : LogTagProvider by TaggedLogger("UpdateStatusProvider") {
 
     private fun UpdateStatusSource.withLatestStatus(
@@ -52,7 +55,17 @@ class UpdateStatusProvider(
         }
     }
 
+    /**
+     * Restarts from [UpdateStatusSource.Fresh] (null) whenever the current device changes,
+     * so the previous device's status never leaks into the new selection.
+     */
     fun getUpdateStatus(): Flow<UpdateStatusSource> {
+        return fDevicePersistedStorage.getCurrentDeviceFlow()
+            .distinctUntilChangedBy { busyBar -> busyBar?.uniqueId }
+            .flatMapLatest { _ -> getCurrentDeviceUpdateStatus() }
+    }
+
+    private fun getCurrentDeviceUpdateStatus(): Flow<UpdateStatusSource> {
         return firmwareFeatureFlow()
             .flatMapLatest { feature -> feature?.updateStatusFlow ?: flowOf(null) }
             .runningFold<DeviceUpdateStatus?, UpdateStatusSource>(
