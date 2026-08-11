@@ -60,7 +60,7 @@ import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.busylib.kmp.components.core.buildkonfig.BuildKonfig
 import net.flipper.core.busylib.ktx.common.asFlow
 import net.flipper.core.busylib.ktx.common.asSingleJobScope
-import net.flipper.core.busylib.ktx.common.cancelPrevious
+import net.flipper.core.busylib.ktx.common.cancelPreviousAndJoin
 import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.tryCast
 import net.flipper.core.busylib.log.LogTagProvider
@@ -195,7 +195,7 @@ class FirmwareUpdaterApiImpl(
         info { "#stopFirmwareUpdate deviceId=$deviceId" }
         // The LAN job belongs to the device that started it — cancel only for the target
         if (updatingDeviceIdFlow.value == deviceId) {
-            lanUpdaterScope.cancelPrevious().join()
+            lanUpdaterScope.cancelPreviousAndJoin()
         }
         // Bounded: unbounded, this would hang while the target is disconnected and later
         // resume against the NEXT connected device
@@ -397,18 +397,26 @@ class FirmwareUpdaterApiImpl(
     }
 
     /**
-     * LAN: the whole update lives inside this job — cancelling it aborts the update
+     * LAN: the app owns the update only until the firmware is delivered — cancelling
+     * this job aborts the download/upload, but once the upload has succeeded the
+     * device flashes itself and the job is a mere observer
      */
     private suspend fun runLanInstall(
         bsbUpdateVersion: BsbUpdateVersion.ReadyToUpdate.Url,
         updatingDeviceId: String
     ): StartUpdateResponse {
         beginInstall(updatingDeviceId)
+        var deviceUpdatesItself = false
         coroutineContext.job.invokeOnCompletion { cause ->
             installRequestedFlow.value = false
             firmwareDownloaderApi.reset()
             firmwareUploaderApi.reset()
-            clearUpdatingDeviceId(updatingDeviceId, reason = "lan install job completed (cause=$cause)")
+            // Cancelled after the firmware was delivered: the device keeps flashing
+            // itself, so the id must survive until the real outcome (events watcher
+            // or the version fallback releases it)
+            if (cause == null || !deviceUpdatesItself) {
+                clearUpdatingDeviceId(updatingDeviceId, reason = "lan install job completed (cause=$cause)")
+            }
         }
         val bootTimeScope = coroutineContext.minusKey(Job)
             .plus(SupervisorJob(coroutineContext.job))
@@ -418,6 +426,7 @@ class FirmwareUpdaterApiImpl(
             val response = dispatchInstall(bsbUpdateVersion)
             info { "#startUpdateInstall update result is $response" }
             if (response is StartUpdateResponse.Success) {
+                deviceUpdatesItself = true
                 info { "#startUpdateInstall bootTimeFlow wait" }
                 val bootTime = bootTimeFlow.first()
                 info { "#startUpdateInstall bootTimeFlow cancel" }
@@ -465,10 +474,10 @@ class FirmwareUpdaterApiImpl(
                     "#init current device changed to $deviceId, cancelling updater jobs " +
                         "(updatingDeviceId=${updatingDeviceIdFlow.value} kept)"
                 }
-                lanUpdaterScope.cancelPrevious().join()
+                lanUpdaterScope.cancelPreviousAndJoin()
                 // A default job is only alive pre-RPC; left running, its wait would resume
                 // against the NEXT connected device and install A's firmware on B
-                defaultUpdaterScope.cancelPrevious().join()
+                defaultUpdaterScope.cancelPreviousAndJoin()
                 firmwareDownloaderApi.reset()
                 firmwareUploaderApi.reset()
                 installRequestedFlow.emit(false)

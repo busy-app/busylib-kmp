@@ -50,6 +50,16 @@ fun SingleJobCoroutineScope.cancelPrevious(): Job {
 }
 
 /**
+ * Cancels previous running jobs and suspends until they are fully finished,
+ * including their `finally`/`invokeOnCompletion` cleanup. Unlike
+ * `cancelPrevious().join()`, which only joins the freshly launched empty job,
+ * this guarantees no leftover cleanup runs after the call returns
+ */
+suspend fun SingleJobCoroutineScope.cancelPreviousAndJoin() {
+    launch(SingleJobMode.CANCEL_AND_AWAIT_PREVIOUS, block = {}).join()
+}
+
+/**
  * Defines how a [SingleJobCoroutineScope] behaves when a new coroutine launch
  * is requested while another job is already running
  */
@@ -58,6 +68,12 @@ enum class SingleJobMode {
      * Cancels any currently running job and immediately launches the new coroutine
      */
     CANCEL_PREVIOUS,
+
+    /**
+     * Cancels any currently running job and waits for it to fully finish — including
+     * its `finally`/`invokeOnCompletion` cleanup — before launching the new coroutine
+     */
+    CANCEL_AND_AWAIT_PREVIOUS,
 
     /**
      * Waiting for the existing job to complete before launching the new coroutine
@@ -108,6 +124,24 @@ private class MutexSingleJobCoroutineScope(
             context = context,
             start = start,
             block = block
+        ).also(activeJobs::add)
+    }
+
+    private fun <T> cancelAndAwaitPreviousUnsafe(
+        scope: CoroutineScope,
+        context: CoroutineContext,
+        start: CoroutineStart,
+        block: suspend CoroutineScope.() -> T
+    ): Deferred<T> {
+        val previousJobs = activeJobs.toList()
+        previousJobs.forEach(Job::cancel)
+        return scope.async(
+            context = context,
+            start = start,
+            block = {
+                previousJobs.joinAll()
+                block.invoke(this)
+            }
         ).also(activeJobs::add)
     }
 
@@ -164,6 +198,15 @@ private class MutexSingleJobCoroutineScope(
                     when (mode) {
                         SingleJobMode.CANCEL_PREVIOUS -> {
                             cancelPreviousUnsafe(
+                                context = context,
+                                start = start,
+                                block = block,
+                                scope = this
+                            )
+                        }
+
+                        SingleJobMode.CANCEL_AND_AWAIT_PREVIOUS -> {
+                            cancelAndAwaitPreviousUnsafe(
                                 context = context,
                                 start = start,
                                 block = block,
