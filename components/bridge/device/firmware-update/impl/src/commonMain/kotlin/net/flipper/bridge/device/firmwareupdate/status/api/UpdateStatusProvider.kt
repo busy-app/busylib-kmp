@@ -4,6 +4,7 @@ import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -56,28 +57,34 @@ class UpdateStatusProvider(
     }
 
     /**
-     * Restarts from [UpdateStatusSource.Fresh] (null) whenever the current device changes,
-     * so the previous device's status never leaks into the new selection.
+     * Restarts from [UpdateStatusSource.Fresh] (null) whenever the current device changes
+     * and only lets the selected device's own statuses through, so a still-alive feature
+     * of the previous device can never surface (or get [UpdateStatusSource.Cached])
+     * under the new selection.
      */
     fun getUpdateStatus(): Flow<UpdateStatusSource> {
         return fDevicePersistedStorage.getCurrentDeviceFlow()
             .distinctUntilChangedBy { busyBar -> busyBar?.uniqueId }
-            .flatMapLatest { _ -> getCurrentDeviceUpdateStatus() }
+            .flatMapLatest { busyBar -> getCurrentDeviceUpdateStatus(busyBar?.uniqueId) }
     }
 
-    private fun getCurrentDeviceUpdateStatus(): Flow<UpdateStatusSource> {
+    private fun getCurrentDeviceUpdateStatus(selectedDeviceId: String?): Flow<UpdateStatusSource> {
         return firmwareFeatureFlow()
             .flatMapLatest { feature -> feature?.updateStatusFlow ?: flowOf(null) }
+            .filter { latest ->
+                val isSelectedDevice = latest == null || latest.deviceId == selectedDeviceId
+                if (!isSelectedDevice) {
+                    info {
+                        "#getUpdateStatus drop status of ${latest?.deviceId}, " +
+                            "selected device is $selectedDeviceId"
+                    }
+                }
+                isSelectedDevice
+            }
             .runningFold<DeviceUpdateStatus?, UpdateStatusSource>(
                 initial = UpdateStatusSource.Fresh(null)
             ) { source, latest ->
-                val isNewDevice = latest != null && latest.deviceId != source.status?.deviceId
-                val localSource = if (isNewDevice) {
-                    info { "#getUpdateStatus reset source for new deviceId=${latest.deviceId}" }
-                    UpdateStatusSource.Fresh(latest)
-                } else {
-                    source.withLatestStatus(latest)
-                }
+                val localSource = source.withLatestStatus(latest)
                 debug { "#getUpdateStatus latest=$latest source: $source -> $localSource" }
                 localSource
             }
