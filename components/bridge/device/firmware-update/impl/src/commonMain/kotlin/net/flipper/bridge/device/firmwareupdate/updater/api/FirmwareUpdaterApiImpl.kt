@@ -14,11 +14,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
@@ -35,6 +37,7 @@ import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
 import net.flipper.bridge.connection.feature.provider.api.get
 import net.flipper.bridge.connection.feature.provider.api.getSync
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
+import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcUpdaterApi
 import net.flipper.bridge.connection.feature.rpc.api.model.BsbRpcError
 import net.flipper.bridge.connection.feature.rpc.api.model.ErrorResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
@@ -211,13 +214,7 @@ class FirmwareUpdaterApiImpl(
             // Timeout bounds only the api lookup — a bounded abort RPC would be cancelled
             // mid-flight on a slow transport and never reach the device
             val rpcUpdaterApi = withTimeoutOrNull(STOP_FEATURE_LOOKUP_TIMEOUT) {
-                fFeatureProvider.get<FRpcFeatureApi>()
-                    .filterIsInstance<FFeatureStatus.Supported<*>>()
-                    .filter { fFeatureStatus -> fFeatureStatus.featureApi is FRpcFeatureApi }
-                    .filterIsInstance<FFeatureStatus.Supported<FRpcFeatureApi>>()
-                    .first()
-                    .featureApi
-                    .fRpcUpdaterApi
+                connectedTargetRpcUpdaterApi(deviceId).firstOrNull()
             }
             rpcUpdaterApi
                 ?.startUpdateAbortDownload()
@@ -237,6 +234,26 @@ class FirmwareUpdaterApiImpl(
         installRequestedFlow.value = false
         clearUpdatingDeviceId(deviceId, reason = "stopFirmwareUpdate($deviceId)")
         return abortResult ?: CResult.success(Unit)
+    }
+
+    /**
+     * [FRpcUpdaterApi] of [deviceId], emitted only while [deviceId] is the connected
+     * device. The inner wait dies with the connection, so a device connected later
+     * can never satisfy a lookup made for this target.
+     */
+    private fun connectedTargetRpcUpdaterApi(deviceId: String): Flow<FRpcUpdaterApi> {
+        return updateStatusProvider.getConnectedDeviceId()
+            .flatMapLatest { connectedId ->
+                if (connectedId == deviceId) {
+                    fFeatureProvider.get<FRpcFeatureApi>()
+                        .filterIsInstance<FFeatureStatus.Supported<*>>()
+                        .map { supported -> supported.featureApi }
+                        .filterIsInstance<FRpcFeatureApi>()
+                        .map { rpcFeatureApi -> rpcFeatureApi.fRpcUpdaterApi }
+                } else {
+                    emptyFlow()
+                }
+            }
     }
 
     /**
