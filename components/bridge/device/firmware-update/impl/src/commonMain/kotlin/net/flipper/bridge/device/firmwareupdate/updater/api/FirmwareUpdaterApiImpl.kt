@@ -486,15 +486,41 @@ class FirmwareUpdaterApiImpl(
             }
             .launchIn(scope)
 
-        // Fallback for an update that finished while the user was on another device
+        // Fallback for an update that ended while the user was on another device:
+        // NoUpdateAvailable = finished; ReadyToUpdate seen again after the target went
+        // out of sight = the install did not survive (failed or the install RPC was
+        // lost) — the device sits idle offering the same update, so the id must stop
+        // forcing the "updating" UI. The out-of-sight requirement protects a
+        // just-started install from its own ReadyToUpdate replay while still connected.
+        var trackedUpdatingId: String? = null
+        var targetOutOfSight = false
         updateStatusProvider.getUpdateVersion()
             .onEach { value ->
-                val updatingId = updatingDeviceIdFlow.value ?: return@onEach
-                val updateDone = value != null &&
-                    value.deviceId == updatingId &&
-                    value.version is BsbUpdateVersion.NoUpdateAvailable
-                if (updateDone) {
-                    clearUpdatingDeviceId(updatingId, reason = "fresh NoUpdateAvailable on updating device")
+                val updatingId = updatingDeviceIdFlow.value
+                if (updatingId != trackedUpdatingId) {
+                    trackedUpdatingId = updatingId
+                    targetOutOfSight = false
+                }
+                if (updatingId == null) return@onEach
+                if (value == null || value.deviceId != updatingId) {
+                    targetOutOfSight = true
+                    return@onEach
+                }
+                when (value.version) {
+                    is BsbUpdateVersion.NoUpdateAvailable -> clearUpdatingDeviceId(
+                        updatingId,
+                        reason = "fresh NoUpdateAvailable on updating device"
+                    )
+
+                    is BsbUpdateVersion.ReadyToUpdate -> if (targetOutOfSight) {
+                        clearUpdatingDeviceId(
+                            updatingId,
+                            reason = "update still offered after target reconnected, " +
+                                "install did not survive"
+                        )
+                    }
+
+                    else -> Unit
                 }
             }
             .launchIn(scope)
