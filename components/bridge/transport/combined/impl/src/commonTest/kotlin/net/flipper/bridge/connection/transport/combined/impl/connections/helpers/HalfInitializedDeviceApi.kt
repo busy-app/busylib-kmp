@@ -7,7 +7,6 @@ import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfi
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPDeviceApi
 import net.flipper.bridge.connection.transport.common.api.serial.FHTTPTransportCapability
 
-
 class HalfInitializedDeviceApi : FConnectedDeviceApi, FHTTPDeviceApi {
     @Suppress("UNCHECKED_CAST")
     private fun <T> notYetAssigned(): T = null as T
