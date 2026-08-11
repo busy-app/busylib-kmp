@@ -26,7 +26,7 @@ class CloudDeviceConnectionApiImpl(
         config: FCloudDeviceConnectionConfig,
         listener: FTransportConnectionStatusListener
     ): Result<FCloudApi> = runSuspendCatching {
-        val lanApi = FCloudApiImpl(
+        val cloudApi = FCloudApiImpl(
             listener = listener,
             currentConfig = config,
             tokenProviderFactory = proxyTokenProvider,
@@ -34,6 +34,7 @@ class CloudDeviceConnectionApiImpl(
             cloudStreamingFactory = cloudStreamingFactory,
             scope = scope
         )
-        return@runSuspendCatching lanApi
+        cloudApi.startMonitoring()
+        return@runSuspendCatching cloudApi
     }
 }
