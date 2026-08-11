@@ -14,6 +14,7 @@ import net.flipper.bridge.connection.transport.common.api.serial.FHTTPTransportC
 import net.flipper.core.busylib.ktx.common.asFlow
 import net.flipper.core.busylib.ktx.common.combine
 import net.flipper.core.busylib.log.LogTagProvider
+import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
 
 data class ConnectionSnapshot(
@@ -36,7 +37,12 @@ class SharedConnectionPool(
             info { "#getConnectionSnapshot deviceApi is not FHTTPDeviceApi: $deviceApi" }
             return flowOf(ConnectionSnapshot(status = status))
         }
-        return deviceApi.getCapabilities().map { capabilities ->
+        val capabilitiesFlow: Flow<List<FHTTPTransportCapability>>? = deviceApi.getCapabilities()
+        if (capabilitiesFlow == null) {
+            error { "#getConnectionSnapshot getCapabilities() is null for $deviceApi" }
+            return flowOf(ConnectionSnapshot(status = status))
+        }
+        return capabilitiesFlow.map { capabilities ->
             ConnectionSnapshot(capabilities, status)
         }
     }

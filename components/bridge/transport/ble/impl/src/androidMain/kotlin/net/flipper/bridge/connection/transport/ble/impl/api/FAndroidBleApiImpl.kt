@@ -46,7 +46,19 @@ class FAndroidBleApiImpl(
     override val TAG = "FBleApi"
     private val bleHttpEngine = FHttpBLEEngine(serialApi)
 
-    private fun startPeripheralStatusCollectionJob() {
+    override val deviceName = peripheral.name ?: currentConfig.deviceName
+
+    private val _capabilities = flowOf(
+        listOf(
+            FHTTPTransportCapability.BB_LOCAL_CONNECTION,
+        )
+    ).shareIn(scope, SharingStarted.WhileSubscribed(), 1)
+
+    override fun getCapabilities(): Flow<List<FHTTPTransportCapability>> {
+        return _capabilities
+    }
+
+    fun startStatusCollection() {
         combine(
             flow = peripheral.state,
             flow2 = peripheral.bondState,
@@ -81,12 +93,6 @@ class FAndroidBleApiImpl(
         }.launchIn(scope)
     }
 
-    init {
-        startPeripheralStatusCollectionJob()
-    }
-
-    override val deviceName = peripheral.name ?: currentConfig.deviceName
-
     override suspend fun tryUpdateConnectionConfig(config: FDeviceConnectionConfig<*>): Result<Unit> {
         if (config !is FBleDeviceConnectionConfig) {
             return Result.failure(IllegalArgumentException("Config $config has different type"))
@@ -102,16 +108,6 @@ class FAndroidBleApiImpl(
     }
 
     override fun getDeviceHttpEngine() = bleHttpEngine
-
-    private val _capabilities = flowOf(
-        listOf(
-            FHTTPTransportCapability.BB_LOCAL_CONNECTION,
-        )
-    ).shareIn(scope, SharingStarted.WhileSubscribed(), 1)
-
-    override fun getCapabilities(): Flow<List<FHTTPTransportCapability>> {
-        return _capabilities
-    }
 
     override suspend fun disconnect() {
         peripheral.disconnect()
