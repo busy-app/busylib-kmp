@@ -9,8 +9,12 @@ import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import kotlinx.coroutines.CoroutineDispatcher
+import net.flipper.bridge.connection.feature.rpc.api.exception.DrawLowPriorityException
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcAssetsApi
+import net.flipper.bridge.connection.feature.rpc.api.model.ApiResponse
+import net.flipper.bridge.connection.feature.rpc.api.model.BsbRpcError
 import net.flipper.bridge.connection.feature.rpc.api.model.DrawRequest
+import net.flipper.bridge.connection.feature.rpc.api.model.ErrorResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
 
@@ -37,9 +41,18 @@ class FRpcAssetsApiImpl(
         request: DrawRequest
     ): Result<SuccessResponse> {
         return runSuspendCatching(dispatcher) {
-            httpClient.post("/api/display/draw") {
+            val response = httpClient.post("/api/display/draw") {
                 setBody(request)
-            }.body<SuccessResponse>()
+            }.body<ApiResponse>()
+
+            return@runSuspendCatching when (response) {
+                is ErrorResponse if response.error == BsbRpcError.NOT_DRAWN_LOW_PRIORITY.error -> {
+                    throw DrawLowPriorityException()
+                }
+
+                is ErrorResponse -> error(response.error)
+                is SuccessResponse -> response
+            }
         }
     }
 
