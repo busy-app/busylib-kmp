@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.job
 import kotlinx.coroutines.withTimeoutOrNull
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
@@ -49,6 +50,7 @@ import net.flipper.bridge.device.firmwareupdate.updater.log.FwUpdateStateLogger
 import net.flipper.bridge.device.firmwareupdate.updater.mapper.FwUpdateStatusMapper
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateEvent
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateState
+import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateTrack
 import net.flipper.bridge.device.firmwareupdate.updater.model.StartUpdateResponse
 import net.flipper.bridge.device.firmwareupdate.uploader.api.FirmwareUploaderApi
 import net.flipper.bridge.device.firmwareupdate.uploader.api.FirmwareUploaderApiImpl
@@ -97,9 +99,10 @@ class FirmwareUpdaterApiImpl(
 
     private val installRequestedFlow = MutableStateFlow(false)
 
-    private val updatingDeviceIdFlow = MutableStateFlow<String?>(null)
+    private val updatingDevicesFlow = MutableStateFlow<Map<String, FwUpdateTrack>>(emptyMap())
 
-    override val updatingDeviceId: WrappedStateFlow<String?> = updatingDeviceIdFlow.wrap()
+    override val updatingDevices: WrappedStateFlow<Map<String, FwUpdateTrack>> =
+        updatingDevicesFlow.wrap()
 
     private val stateLogger by lazy { FwUpdateStateLogger() }
 
@@ -194,7 +197,7 @@ class FirmwareUpdaterApiImpl(
     override suspend fun stopFirmwareUpdate(deviceId: String): CResult<Unit> {
         info { "#stopFirmwareUpdate deviceId=$deviceId" }
         // The LAN job belongs to the device that started it — cancel only for the target
-        if (updatingDeviceIdFlow.value == deviceId) {
+        if (updatingDevicesFlow.value[deviceId]?.installType == FwUpdateTrack.InstallType.LAN) {
             lanUpdaterScope.cancelPreviousAndJoin()
         }
         // Bounded: unbounded, this would hang while the target is disconnected and later
@@ -206,7 +209,7 @@ class FirmwareUpdaterApiImpl(
         }?.version
         info {
             "#stopFirmwareUpdate target version=$version " +
-                "connected=${connectedDeviceIdFlow.value} updating=${updatingDeviceIdFlow.value}"
+                "connected=${connectedDeviceIdFlow.value} tracked=${updatingDevicesFlow.value.keys}"
         }
         val isDefaultUpdateOnConnectedTarget = version is BsbUpdateVersion.ReadyToUpdate.Default &&
             connectedDeviceIdFlow.value == deviceId
@@ -230,9 +233,9 @@ class FirmwareUpdaterApiImpl(
             null
         }
         // Released regardless of the abort outcome — Cancel must escape stuck states;
-        // the clear compares against the target id, so it never affects a newer install
+        // the removal is keyed by the target id, so it never affects other devices
         installRequestedFlow.value = false
-        clearUpdatingDeviceId(deviceId, reason = "stopFirmwareUpdate($deviceId)")
+        removeUpdatingDevice(deviceId, reason = "stopFirmwareUpdate($deviceId)")
         return abortResult ?: CResult.success(Unit)
     }
 
@@ -370,20 +373,20 @@ class FirmwareUpdaterApiImpl(
 
     /**
      * Cloud/BLE: the job ends right after the install RPC round-trip;
-     * [updatingDeviceIdFlow] stays set — the update keeps running on the device
+     * the track stays — the update keeps running on the device
      */
     private suspend fun runDefaultInstall(
         bsbUpdateVersion: BsbUpdateVersion.ReadyToUpdate.Default,
         updatingDeviceId: String
     ): StartUpdateResponse {
-        beginInstall(updatingDeviceId)
+        beginInstall(updatingDeviceId, FwUpdateTrack.InstallType.DEFAULT)
         var rpcDispatched = false
         coroutineContext.job.invokeOnCompletion { cause ->
-            // Died before the RPC went out — nothing is running, release the gate and id.
-            // After dispatch the outcome is unknown, so the id is conservatively kept
+            // Died before the RPC went out — nothing is running, release the gate and track.
+            // After dispatch the outcome is unknown, so the track is conservatively kept
             if (cause != null && !rpcDispatched) {
                 installRequestedFlow.value = false
-                clearUpdatingDeviceId(updatingDeviceId, reason = "default install aborted before RPC (cause=$cause)")
+                removeUpdatingDevice(updatingDeviceId, reason = "default install aborted before RPC (cause=$cause)")
             }
         }
         val response = dispatchInstall(bsbUpdateVersion) { rpcDispatched = true }
@@ -391,7 +394,7 @@ class FirmwareUpdaterApiImpl(
         if (response !is StartUpdateResponse.Success) {
             // The device did not start the update (error or low battery) — release the gate.
             installRequestedFlow.value = false
-            clearUpdatingDeviceId(updatingDeviceId, reason = "default install did not start ($response)")
+            removeUpdatingDevice(updatingDeviceId, reason = "default install did not start ($response)")
         }
         return response
     }
@@ -405,17 +408,17 @@ class FirmwareUpdaterApiImpl(
         bsbUpdateVersion: BsbUpdateVersion.ReadyToUpdate.Url,
         updatingDeviceId: String
     ): StartUpdateResponse {
-        beginInstall(updatingDeviceId)
+        beginInstall(updatingDeviceId, FwUpdateTrack.InstallType.LAN)
         var deviceUpdatesItself = false
         coroutineContext.job.invokeOnCompletion { cause ->
             installRequestedFlow.value = false
             firmwareDownloaderApi.reset()
             firmwareUploaderApi.reset()
             // Cancelled after the firmware was delivered: the device keeps flashing
-            // itself, so the id must survive until the real outcome (events watcher
+            // itself, so the track must survive until the real outcome (events watcher
             // or the version fallback releases it)
             if (cause == null || !deviceUpdatesItself) {
-                clearUpdatingDeviceId(updatingDeviceId, reason = "lan install job completed (cause=$cause)")
+                removeUpdatingDevice(updatingDeviceId, reason = "lan install job completed (cause=$cause)")
             }
         }
         val bootTimeScope = coroutineContext.minusKey(Job)
@@ -439,10 +442,12 @@ class FirmwareUpdaterApiImpl(
         }
     }
 
-    private fun beginInstall(updatingDeviceId: String) {
+    private fun beginInstall(updatingDeviceId: String, installType: FwUpdateTrack.InstallType) {
         installRequestedFlow.value = true
-        updatingDeviceIdFlow.value = updatingDeviceId
-        info { "#startUpdateInstall updatingDeviceId=$updatingDeviceId" }
+        updatingDevicesFlow.update { tracks ->
+            tracks + (updatingDeviceId to FwUpdateTrack(installType))
+        }
+        info { "#startUpdateInstall track added for $updatingDeviceId ($installType)" }
         firmwareDownloaderApi.reset()
         firmwareUploaderApi.reset()
     }
@@ -456,11 +461,14 @@ class FirmwareUpdaterApiImpl(
             ?: CResult.failure(IllegalStateException("RPC feature is null"))
     }
 
-    private fun clearUpdatingDeviceId(expectedDeviceId: String?, reason: String) {
-        if (expectedDeviceId == null) return
-        val cleared = updatingDeviceIdFlow.compareAndSet(expectedDeviceId, null)
-        if (cleared) {
-            info { "#clearUpdatingDeviceId $reason (was=$expectedDeviceId)" }
+    private fun removeUpdatingDevice(deviceId: String, reason: String) {
+        var removed = false
+        updatingDevicesFlow.update { tracks ->
+            removed = deviceId in tracks
+            tracks - deviceId
+        }
+        if (removed) {
+            info { "#removeUpdatingDevice $reason (deviceId=$deviceId)" }
         }
     }
 
@@ -472,7 +480,7 @@ class FirmwareUpdaterApiImpl(
             .onEach { deviceId ->
                 info {
                     "#init current device changed to $deviceId, cancelling updater jobs " +
-                        "(updatingDeviceId=${updatingDeviceIdFlow.value} kept)"
+                        "(tracked=${updatingDevicesFlow.value.keys} kept)"
                 }
                 lanUpdaterScope.cancelPreviousAndJoin()
                 // A default job is only alive pre-RPC; left running, its wait would resume
@@ -484,13 +492,13 @@ class FirmwareUpdaterApiImpl(
             }
             .launchIn(scope)
 
-        // Release updatingDeviceId on update end; events are observable only while
-        // connected to the updating device — hence the connected == updating gate
+        // Release the track on update end; events are observable only while connected
+        // to the updating device — hence the release targets the connected device
         eventsSharedFlow
             .onEach { event ->
-                val updatingId = updatingDeviceIdFlow.value ?: return@onEach
-                if (connectedDeviceIdFlow.value == updatingId) {
-                    clearUpdatingDeviceId(updatingId, reason = "update event $event")
+                val connectedId = connectedDeviceIdFlow.value ?: return@onEach
+                if (connectedId in updatingDevicesFlow.value) {
+                    removeUpdatingDevice(connectedId, reason = "update event $event")
                 }
             }
             .launchIn(scope)
@@ -498,32 +506,32 @@ class FirmwareUpdaterApiImpl(
         // Fallback for an update that ended while the user was on another device:
         // NoUpdateAvailable = finished; ReadyToUpdate seen again after the target went
         // out of sight = the install did not survive (failed or the install RPC was
-        // lost) — the device sits idle offering the same update, so the id must stop
+        // lost) — the device sits idle offering the same update, so the track must stop
         // forcing the "updating" UI. The out-of-sight requirement protects a
         // just-started install from its own ReadyToUpdate replay while still connected.
-        var trackedUpdatingId: String? = null
-        var targetOutOfSight = false
         updateStatusProvider.getUpdateVersion()
             .onEach { value ->
-                val updatingId = updatingDeviceIdFlow.value
-                if (updatingId != trackedUpdatingId) {
-                    trackedUpdatingId = updatingId
-                    targetOutOfSight = false
+                val visibleDeviceId = value?.deviceId
+                updatingDevicesFlow.update { tracks ->
+                    tracks.mapValues { (deviceId, track) ->
+                        if (deviceId != visibleDeviceId && !track.targetOutOfSight) {
+                            track.copy(targetOutOfSight = true)
+                        } else {
+                            track
+                        }
+                    }
                 }
-                if (updatingId == null) return@onEach
-                if (value == null || value.deviceId != updatingId) {
-                    targetOutOfSight = true
-                    return@onEach
-                }
+                if (visibleDeviceId == null) return@onEach
+                val track = updatingDevicesFlow.value[visibleDeviceId] ?: return@onEach
                 when (value.version) {
-                    is BsbUpdateVersion.NoUpdateAvailable -> clearUpdatingDeviceId(
-                        updatingId,
+                    is BsbUpdateVersion.NoUpdateAvailable -> removeUpdatingDevice(
+                        visibleDeviceId,
                         reason = "fresh NoUpdateAvailable on updating device"
                     )
 
-                    is BsbUpdateVersion.ReadyToUpdate -> if (targetOutOfSight) {
-                        clearUpdatingDeviceId(
-                            updatingId,
+                    is BsbUpdateVersion.ReadyToUpdate -> if (track.targetOutOfSight) {
+                        removeUpdatingDevice(
+                            visibleDeviceId,
                             reason = "update still offered after target reconnected, " +
                                 "install did not survive"
                         )
