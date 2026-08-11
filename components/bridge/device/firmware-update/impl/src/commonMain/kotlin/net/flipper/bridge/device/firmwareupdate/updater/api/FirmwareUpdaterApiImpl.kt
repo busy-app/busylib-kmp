@@ -31,6 +31,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.job
 import kotlinx.coroutines.withTimeoutOrNull
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
+import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateStatus
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateVersion
 import net.flipper.bridge.connection.feature.info.api.FDeviceInfoFeatureApi
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
@@ -505,12 +506,18 @@ class FirmwareUpdaterApiImpl(
 
         // Fallback for an update that ended while the user was on another device:
         // NoUpdateAvailable = finished; ReadyToUpdate seen again after the target went
-        // out of sight = the install did not survive (failed or the install RPC was
-        // lost) — the device sits idle offering the same update, so the track must stop
-        // forcing the "updating" UI. The out-of-sight requirement protects a
-        // just-started install from its own ReadyToUpdate replay while still connected.
-        updateStatusProvider.getUpdateVersion()
-            .onEach { value ->
+        // out of sight AND the device reports an idle status = the install did not
+        // survive (failed or the install RPC was lost) — the device sits idle offering
+        // the same update, so the track must stop forcing the "updating" UI.
+        // The out-of-sight requirement protects a just-started install from its own
+        // ReadyToUpdate replay while still connected; the idle-status requirement
+        // protects a device that is mid-download of its own update — its check still
+        // answers AVAILABLE (fresh ReadyToUpdate) while its status says InProgress.
+        combine(
+            updateStatusProvider.getUpdateVersion(),
+            updateStatusProvider.getUpdateStatus()
+        ) { deviceUpdateVersion, statusSource -> deviceUpdateVersion to statusSource }
+            .onEach { (value, statusSource) ->
                 val visibleDeviceId = value?.deviceId
                 updatingDevicesFlow.update { tracks ->
                     tracks.mapValues { (deviceId, track) ->
@@ -529,12 +536,18 @@ class FirmwareUpdaterApiImpl(
                         reason = "fresh NoUpdateAvailable on updating device"
                     )
 
-                    is BsbUpdateVersion.ReadyToUpdate -> if (track.targetOutOfSight) {
-                        removeUpdatingDevice(
-                            visibleDeviceId,
-                            reason = "update still offered after target reconnected, " +
-                                "install did not survive"
-                        )
+                    is BsbUpdateVersion.ReadyToUpdate -> {
+                        val freshStatus = (statusSource as? UpdateStatusSource.Fresh)?.status
+                        val isTargetIdle = freshStatus != null &&
+                            freshStatus.deviceId == visibleDeviceId &&
+                            freshStatus.status is BsbUpdateStatus.ReadyToInstall
+                        if (track.targetOutOfSight && isTargetIdle) {
+                            removeUpdatingDevice(
+                                visibleDeviceId,
+                                reason = "update still offered by an idle device after " +
+                                    "it reconnected, install did not survive"
+                            )
+                        }
                     }
 
                     else -> Unit
