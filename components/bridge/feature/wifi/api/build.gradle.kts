@@ -14,4 +14,8 @@ kotlin {
         implementation(libs.kotlin.immutable)
         implementation(libs.kotlin.serialization.json)
     }
+
+    sourceSets.commonTest.dependencies {
+        implementation(libs.kotlin.test)
+    }
 }

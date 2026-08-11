@@ -5,7 +5,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.shareIn
-import kotlinx.coroutines.launch
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.common.api.FInternalDisconnectedReason
 import net.flipper.bridge.connection.transport.common.api.FInternalTransportConnectionStatus
@@ -45,12 +44,20 @@ class FCloudApiImpl(
         listener = listener
     )
 
-    init {
-        scope.launch { wsEventsDeviceMonitor.startMonitoring() }
+    private val _capabilities = flowOf(
+        listOf<FHTTPTransportCapability>()
+    ).shareIn(scope, SharingStarted.WhileSubscribed(), 1)
+
+    override fun getCapabilities(): Flow<List<FHTTPTransportCapability>> {
+        return _capabilities
     }
 
     override val deviceName: String
         get() = currentConfig.name
+
+    suspend fun startMonitoring() {
+        wsEventsDeviceMonitor.startMonitoring()
+    }
 
     override suspend fun tryUpdateConnectionConfig(config: FDeviceConnectionConfig<*>): Result<Unit> {
         if (config !is FCloudDeviceConnectionConfig) {
@@ -77,14 +84,6 @@ class FCloudApiImpl(
     }
 
     override fun getDeviceHttpEngine() = httpEngine
-
-    private val _capabilities = flowOf(
-        listOf<FHTTPTransportCapability>()
-    ).shareIn(scope, SharingStarted.WhileSubscribed(), 1)
-
-    override fun getCapabilities(): Flow<List<FHTTPTransportCapability>> {
-        return _capabilities
-    }
 
     override fun getEvents(): Flow<StatusStreamingEvent> {
         return cloudStreamingApi.getEvents()
