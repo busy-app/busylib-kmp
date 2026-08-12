@@ -10,7 +10,14 @@ sealed interface InternalWebSocketRequest {
     data class Authorization(
         @SerialName("token")
         val token: String
-    ) : InternalWebSocketRequest
+    ) : InternalWebSocketRequest {
+        /**
+         * We don't want [token] in logs
+         */
+        override fun toString(): String {
+            return "Authorization(token=***)"
+        }
+    }
 
     @Serializable
     data class SubscribeState(

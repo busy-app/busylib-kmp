@@ -100,6 +100,7 @@ class BLEDeviceConnectionApiImpl(
         ) {
             centralManager.disconnect(peripheral.identifier)
         }
+        bleApi.startStatusCollection()
         return bleApi
     }
 

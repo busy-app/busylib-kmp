@@ -42,13 +42,28 @@ class FIOSBleApiImpl(
     FTransportMetaInfoApi {
     private val bleHttpEngine = FHttpBLEEngine(serialApi)
 
+    override val deviceName = peripheral.name ?: currentConfig.deviceName
+
+    override val uniqueId: String
+        get() = currentConfig.uniqueId
+
+    private val _capabilities = flowOf(
+        listOf(
+            FHTTPTransportCapability.BB_LOCAL_CONNECTION,
+        )
+    ).shareIn(scope, SharingStarted.WhileSubscribed(), 1)
+
     override fun getDeviceHttpEngine() = bleHttpEngine
 
-    init {
+    override fun getCapabilities(): Flow<List<FHTTPTransportCapability>> {
+        return _capabilities
+    }
+
+    fun startStatusCollection() {
         peripheral
             .stateStream
-            .map {
-                when (it) {
+            .map { state ->
+                when (state) {
                     FPeripheralState.CONNECTING -> FInternalTransportConnectionStatus.Connecting(
                         FInternalTransportConnectionType.BLE
                     )
@@ -65,21 +80,16 @@ class FIOSBleApiImpl(
 
                     FPeripheralState.CONNECTED -> FInternalTransportConnectionStatus.Connected(
                         scope = scope,
-                        deviceApi = this,
+                        deviceApi = this@FIOSBleApiImpl,
                         connectionType = FInternalTransportConnectionType.BLE
                     )
                 }
             }
-            .onEach {
-                listener.onStatusUpdate(it)
+            .onEach { status ->
+                listener.onStatusUpdate(status)
             }
             .launchIn(scope + FlipperDispatchers.default)
     }
-
-    override val deviceName = peripheral.name ?: currentConfig.deviceName
-
-    override val uniqueId: String
-        get() = currentConfig.uniqueId
 
     override suspend fun tryUpdateConnectionConfig(config: FDeviceConnectionConfig<*>): Result<Unit> {
         if (config !is FBleDeviceConnectionConfig) {
@@ -99,20 +109,10 @@ class FIOSBleApiImpl(
         onDisconnect()
     }
 
-    private val _capabilities = flowOf(
-        listOf(
-            FHTTPTransportCapability.BB_LOCAL_CONNECTION,
-        )
-    ).shareIn(scope, SharingStarted.WhileSubscribed(), 1)
-
-    override fun getCapabilities(): Flow<List<FHTTPTransportCapability>> {
-        return _capabilities
-    }
-
     override fun get(key: TransportMetaInfoKey): Flow<Result<Flow<TransportMetaInfoData?>>> {
         if (currentConfig.metaInfoGattMap.containsKey(key)) {
             val innerFlow = peripheral.metaInfoKeysStream.map { metaMap ->
-                metaMap[key]?.let { TransportMetaInfoData.RawBytes(it) }
+                metaMap[key]?.let { rawValue -> TransportMetaInfoData.RawBytes(rawValue) }
             }
             return flowOf(Result.success(innerFlow))
         }

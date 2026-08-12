@@ -6,6 +6,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -106,6 +107,7 @@ class FCombinedConnectionApiImplTest {
             connectionBuilder = globalConnectionBuilder,
             scope = scope
         )
+        sut.startStatusCollection()
         return Triple(sut, globalConnectionBuilder, statusHistory)
     }
 
@@ -207,6 +209,7 @@ class FCombinedConnectionApiImplTest {
                 connectionBuilder = builder,
                 scope = backgroundScope
             )
+            sut.startStatusCollection()
             advanceUntilIdle()
 
             val connectionsBefore = sut.connections.value
@@ -262,6 +265,7 @@ class FCombinedConnectionApiImplTest {
                 connectionBuilder = builder,
                 scope = backgroundScope
             )
+            sut.startStatusCollection()
             advanceUntilIdle()
 
             val config2 = createConfig("Device", configA2)
@@ -312,6 +316,7 @@ class FCombinedConnectionApiImplTest {
                 connectionBuilder = builder,
                 scope = backgroundScope
             )
+            sut.startStatusCollection()
             advanceUntilIdle()
 
             val config2 = createConfig("Device", configB)
@@ -365,6 +370,7 @@ class FCombinedConnectionApiImplTest {
                 connectionBuilder = builderA,
                 scope = backgroundScope
             )
+            sut.startStatusCollection()
             advanceUntilIdle()
 
             // Remove configB, keep only configA
@@ -404,6 +410,7 @@ class FCombinedConnectionApiImplTest {
                 connectionBuilder = builder,
                 scope = sutScope
             )
+            sut.startStatusCollection()
             advanceUntilIdle()
 
             // Replace all configs with a different one
@@ -450,6 +457,7 @@ class FCombinedConnectionApiImplTest {
                 connectionBuilder = builder,
                 scope = backgroundScope
             )
+            sut.startStatusCollection()
             advanceUntilIdle()
 
             // Add configB
@@ -474,6 +482,7 @@ class FCombinedConnectionApiImplTest {
             connectionBuilder = builder,
             scope = backgroundScope
         )
+        sut.startStatusCollection()
         advanceUntilIdle()
 
         val configA = TestConfig("a")
@@ -533,6 +542,7 @@ class FCombinedConnectionApiImplTest {
                 connectionBuilder = builderA,
                 scope = backgroundScope
             )
+            sut.startStatusCollection()
             advanceUntilIdle()
 
             // Reverse order
@@ -596,6 +606,7 @@ class FCombinedConnectionApiImplTest {
                 connectionBuilder = builderA,
                 scope = backgroundScope
             )
+            sut.startStatusCollection()
             advanceUntilIdle()
 
             // configA: kept, configB: removed, configC: kept, configD: added
@@ -642,6 +653,7 @@ class FCombinedConnectionApiImplTest {
                 connectionBuilder = builder,
                 scope = backgroundScope
             )
+            sut.startStatusCollection()
             advanceUntilIdle()
 
             val observedSizes = mutableListOf<Int>()
@@ -705,6 +717,7 @@ class FCombinedConnectionApiImplTest {
                 connectionBuilder = builder,
                 scope = sutScope
             )
+            sut.startStatusCollection()
             advanceUntilIdle()
 
             // Replace config — connected connection can be updated in place
@@ -753,6 +766,7 @@ class FCombinedConnectionApiImplTest {
                 connectionBuilder = builder,
                 scope = backgroundScope
             )
+            sut.startStatusCollection()
             advanceUntilIdle()
 
             // Launch concurrent updates
@@ -793,6 +807,7 @@ class FCombinedConnectionApiImplTest {
                 connectionBuilder = builder,
                 scope = backgroundScope
             )
+            sut.startStatusCollection()
             advanceUntilIdle()
 
             val configA = TestConfig("a")
@@ -859,6 +874,7 @@ class FCombinedConnectionApiImplTest {
                 connectionBuilder = builder,
                 scope = backgroundScope
             )
+            sut.startStatusCollection()
             advanceUntilIdle()
 
             // Update with different config - child rejects, so new connection should be created
@@ -895,6 +911,7 @@ class FCombinedConnectionApiImplTest {
                 connectionBuilder = builder,
                 scope = backgroundScope
             )
+            sut.startStatusCollection()
             advanceUntilIdle()
 
             // Replace configs — disconnect will be called on old conn
@@ -929,6 +946,7 @@ class FCombinedConnectionApiImplTest {
                 connectionBuilder = builder,
                 scope = sutScope
             )
+            sut.startStatusCollection()
             advanceUntilIdle()
             statusHistory.clear()
 
@@ -983,6 +1001,7 @@ class FCombinedConnectionApiImplTest {
             connectionBuilder = builder,
             scope = sutScope
         )
+        sut.startStatusCollection()
         advanceUntilIdle()
 
         // Verify we're connected
@@ -1046,6 +1065,7 @@ class FCombinedConnectionApiImplTest {
             connectionBuilder = builderA,
             scope = backgroundScope
         )
+        sut.startStatusCollection()
         advanceUntilIdle()
 
         sut.disconnect()
@@ -1076,6 +1096,7 @@ class FCombinedConnectionApiImplTest {
                 connectionBuilder = builder,
                 scope = backgroundScope
             )
+            sut.startStatusCollection()
             advanceUntilIdle()
 
             sut.disconnect()
@@ -1106,6 +1127,7 @@ class FCombinedConnectionApiImplTest {
             connectionBuilder = builder,
             scope = backgroundScope
         )
+        sut.startStatusCollection()
 
         assertEquals("MyDevice", sut.deviceName)
     }
@@ -1122,6 +1144,7 @@ class FCombinedConnectionApiImplTest {
             connectionBuilder = builder,
             scope = backgroundScope
         )
+        sut.startStatusCollection()
         advanceUntilIdle()
 
         sut.tryUpdateConnectionConfig(createConfig("NewName"))
@@ -1147,6 +1170,7 @@ class FCombinedConnectionApiImplTest {
                 connectionBuilder = builder,
                 scope = backgroundScope
             )
+            sut.startStatusCollection()
             advanceUntilIdle()
 
             // Two identical child configs
@@ -1183,6 +1207,7 @@ class FCombinedConnectionApiImplTest {
                 connectionBuilder = builder,
                 scope = parentScope
             )
+            sut.startStatusCollection()
             advanceUntilIdle()
 
             parentJob.cancel()
@@ -1215,6 +1240,7 @@ class FCombinedConnectionApiImplTest {
                 connectionBuilder = builder,
                 scope = backgroundScope
             )
+            sut.startStatusCollection()
             advanceUntilIdle()
 
             val result1 = sut.tryUpdateConnectionConfig(config)
@@ -1263,6 +1289,7 @@ class FCombinedConnectionApiImplTest {
                 connectionBuilder = builder,
                 scope = backgroundScope
             )
+            sut.startStatusCollection()
             advanceUntilIdle()
 
             // State should be Connecting (not Connected)
@@ -1426,6 +1453,7 @@ class FCombinedConnectionApiImplTest {
             connectionBuilder = builder,
             scope = sutScope
         )
+        sut.startStatusCollection()
         advanceUntilIdle()
 
         // Phase 2: Simulate connected
@@ -1499,6 +1527,7 @@ class FCombinedConnectionApiImplTest {
             connectionBuilder = builderA,
             scope = backgroundScope
         )
+        sut.startStatusCollection()
         advanceUntilIdle()
 
         // Swap order
@@ -1541,6 +1570,7 @@ class FCombinedConnectionApiImplTest {
                 connectionBuilder = builder,
                 scope = backgroundScope
             )
+            sut.startStatusCollection()
             advanceUntilIdle()
 
             // Update: configA -> configA2 (different instance, child not connected)
@@ -1572,6 +1602,7 @@ class FCombinedConnectionApiImplTest {
                 connectionBuilder = builder,
                 scope = sutScope
             )
+            sut.startStatusCollection()
             advanceUntilIdle()
 
             assertTrue(

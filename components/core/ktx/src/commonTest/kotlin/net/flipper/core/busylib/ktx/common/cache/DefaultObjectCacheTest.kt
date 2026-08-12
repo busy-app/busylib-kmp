@@ -102,6 +102,7 @@ class DefaultObjectCacheTest {
         val cache = DefaultObjectCache(
             aliveAfterRead = 10.milliseconds,
             aliveAfterWrite = 1.seconds,
+            timeProvider = TestTimeProvider(),
             scope = backgroundScope
         )
         val counterFlow = MutableStateFlow(0)
@@ -138,6 +139,7 @@ class DefaultObjectCacheTest {
         val cache = DefaultObjectCache(
             aliveAfterRead = 1.seconds,
             aliveAfterWrite = 10.milliseconds,
+            timeProvider = TestTimeProvider(),
             scope = backgroundScope
         )
         val counterFlow = MutableStateFlow(0)
@@ -173,6 +175,7 @@ class DefaultObjectCacheTest {
         val cache = DefaultObjectCache(
             aliveAfterRead = 1.seconds,
             aliveAfterWrite = 1.seconds,
+            timeProvider = TestTimeProvider(),
             scope = backgroundScope
         )
         val counterFlow = MutableStateFlow(0)

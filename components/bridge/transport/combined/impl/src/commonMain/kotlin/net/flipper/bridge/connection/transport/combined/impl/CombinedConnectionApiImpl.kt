@@ -32,12 +32,14 @@ class CombinedConnectionApiImpl : CombinedConnectionApi {
                 connectionBuilder = connectionBuilder
             )
         }
-        return@runSuspendCatching FCombinedConnectionApiImpl(
+        val combinedApi = FCombinedConnectionApiImpl(
             scope = scope,
             initialConnections = connections,
             listener = listener,
             currentConfig = config,
             connectionBuilder = connectionBuilder
         )
+        combinedApi.startStatusCollection()
+        return@runSuspendCatching combinedApi
     }
 }

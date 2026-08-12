@@ -5,5 +5,6 @@ enum class BsbRpcError(val error: String) {
     ALREADY_LINKED("Already linked"),
     NOT_CONNECTED("Not connected"),
     BATTERY_LOW("Battery level too low"),
-    UPDATE_NOT_ALLOWED("Update not allowed: Battery level too low")
+    UPDATE_NOT_ALLOWED("Update not allowed: Battery level too low"),
+    NOT_DRAWN_LOW_PRIORITY("Not drawn due to low priority")
 }
