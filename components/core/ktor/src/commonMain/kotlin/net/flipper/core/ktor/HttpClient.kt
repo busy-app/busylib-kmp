@@ -24,6 +24,7 @@ import net.flipper.core.busylib.log.TaggedLogger
 import net.flipper.core.busylib.log.info
 import net.flipper.core.ktor.util.minimizeBodyLogMessage
 import net.flipper.core.ktor.util.retryOnTransientExceptions
+import net.flipper.core.ktor.util.sanitizeSensitiveHeaders
 import kotlin.time.Duration.Companion.seconds
 
 private val ktorTimber = TaggedLogger("Ktor")
@@ -75,6 +76,7 @@ fun getHttpClient(
             }
         }
         level = if (BuildKonfig.IS_VERBOSE_LOG_ENABLED) LogLevel.ALL else LogLevel.INFO
+        sanitizeSensitiveHeaders()
     }
     install(HttpTimeout) {
         connectTimeoutMillis = 30.seconds.inWholeMilliseconds

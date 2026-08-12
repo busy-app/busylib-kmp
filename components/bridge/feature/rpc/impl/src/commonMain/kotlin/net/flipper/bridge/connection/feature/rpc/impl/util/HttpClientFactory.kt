@@ -18,6 +18,7 @@ import net.flipper.busylib.kmp.components.core.buildkonfig.BuildKonfig
 import net.flipper.core.busylib.log.info
 import net.flipper.core.ktor.util.minimizeBodyLogMessage
 import net.flipper.core.ktor.util.retryOnTransientExceptions
+import net.flipper.core.ktor.util.sanitizeSensitiveHeaders
 import kotlin.time.Duration.Companion.seconds
 
 private const val MAX_RPS = 2 // Limitation for BUSY Bar request
@@ -51,6 +52,7 @@ fun getHttpClient(httpClientEngine: HttpClientEngine) = HttpClient(httpClientEng
             }
         }
         level = if (BuildKonfig.IS_VERBOSE_LOG_ENABLED) LogLevel.ALL else LogLevel.INFO
+        sanitizeSensitiveHeaders()
     }
     install(HttpRequestThrottle) {
         throttler(
