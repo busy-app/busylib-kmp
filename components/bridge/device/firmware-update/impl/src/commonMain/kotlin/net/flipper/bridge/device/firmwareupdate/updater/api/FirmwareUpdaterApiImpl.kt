@@ -10,6 +10,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -24,6 +25,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
@@ -171,25 +173,34 @@ class FirmwareUpdaterApiImpl(
         }
     ).stateIn(scope, SharingStarted.Lazily, FwUpdateState.Pending).wrap()
 
-    private val eventsSharedFlow = previousVersionFlowProvider
-        .getPreviousVersionFlow(state)
-        .map { versionsModel ->
-            when {
-                versionsModel == null -> null
-                versionsModel.previousVersion == null -> null
-                versionsModel.currentVersion == versionsModel.previousVersion -> {
-                    FwUpdateEvent.UpdateFailed
-                }
+    /**
+     * The version-transition pipeline detects an update end only while continuously
+     * observing the updating device; an update that ends while the user is away is
+     * detected by the fallback watcher instead, which reports it here
+     */
+    private val syntheticEventsFlow = MutableSharedFlow<FwUpdateEvent>(extraBufferCapacity = 1)
 
-                versionsModel.currentVersion != versionsModel.previousVersion -> {
-                    FwUpdateEvent.UpdateFinished
-                }
+    private val eventsSharedFlow = merge(
+        previousVersionFlowProvider
+            .getPreviousVersionFlow(state)
+            .map { versionsModel ->
+                when {
+                    versionsModel == null -> null
+                    versionsModel.previousVersion == null -> null
+                    versionsModel.currentVersion == versionsModel.previousVersion -> {
+                        FwUpdateEvent.UpdateFailed
+                    }
 
-                else -> null
+                    versionsModel.currentVersion != versionsModel.previousVersion -> {
+                        FwUpdateEvent.UpdateFinished
+                    }
+
+                    else -> null
+                }
             }
-        }
-        .filterNotNull()
-        .shareIn(scope, SharingStarted.Lazily)
+            .filterNotNull(),
+        syntheticEventsFlow
+    ).shareIn(scope, SharingStarted.Lazily)
 
     override val events = eventsSharedFlow
         .asFlow()
@@ -531,10 +542,20 @@ class FirmwareUpdaterApiImpl(
                 if (visibleDeviceId == null) return@onEach
                 val track = updatingDevicesFlow.value[visibleDeviceId] ?: return@onEach
                 when (value.version) {
-                    is BsbUpdateVersion.NoUpdateAvailable -> removeUpdatingDevice(
-                        visibleDeviceId,
-                        reason = "fresh NoUpdateAvailable on updating device"
-                    )
+                    is BsbUpdateVersion.NoUpdateAvailable -> {
+                        // Finished while the user was away: the version-transition
+                        // pipeline was restarted by the device switches and cannot
+                        // report this end — do it for it. While continuously observed
+                        // (never out of sight) the pipeline reports on its own.
+                        if (track.targetOutOfSight) {
+                            syntheticEventsFlow.tryEmit(FwUpdateEvent.UpdateFinished)
+                            info { "#init synthetic UpdateFinished for $visibleDeviceId" }
+                        }
+                        removeUpdatingDevice(
+                            visibleDeviceId,
+                            reason = "fresh NoUpdateAvailable on updating device"
+                        )
+                    }
 
                     is BsbUpdateVersion.ReadyToUpdate -> {
                         val freshStatus = (statusSource as? UpdateStatusSource.Fresh)?.status
