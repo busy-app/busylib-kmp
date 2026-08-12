@@ -1,17 +1,20 @@
 package net.flipper.property
 
-import org.gradle.api.plugins.ExtensionContainer
+import org.gradle.api.Project
 
 interface PropertyValue {
     val key: String
     fun getValue(): Result<String>
 }
 
-// Don't replace extensionContainer with project
-// Different projects have different extensionContainer
-fun PropertyValue.asCached(extensionContainer: ExtensionContainer): PropertyValue {
+private const val CACHE_SERVICE_NAME = "flipperBuildPropertyCache"
+
+fun PropertyValue.asCached(project: Project): PropertyValue {
+    val cache = project.gradle.sharedServices
+        .registerIfAbsent(CACHE_SERVICE_NAME, BuildPropertyCacheService::class.java) {}
+        .get()
     return CachedPropertyValue(
-        extensionContainer = extensionContainer,
+        cache = cache,
         propertyValue = this
     )
 }

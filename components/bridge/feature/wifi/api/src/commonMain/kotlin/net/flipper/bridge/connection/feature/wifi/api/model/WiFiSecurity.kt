@@ -3,10 +3,12 @@ package net.flipper.bridge.connection.feature.wifi.api.model
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import net.flipper.bridge.connection.feature.wifi.api.serialization.WiFiSecurityPasswordSerializer
+import net.flipper.bridge.connection.feature.wifi.api.serialization.WiFiSecuritySerializer
+import net.flipper.bridge.connection.feature.wifi.api.serialization.WiFiSecuritySupportedSerializer
 
-@Serializable
+@Serializable(with = WiFiSecuritySerializer::class)
 sealed interface WiFiSecurity {
-    @Serializable
+    @Serializable(with = WiFiSecuritySupportedSerializer::class)
     sealed interface Supported : WiFiSecurity {
         @Serializable
         data object None : Supported

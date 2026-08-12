@@ -12,7 +12,9 @@ import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureKey
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.feature.drawtool.api.FDrawToolFeatureApi
+import net.flipper.bridge.connection.feature.drawtool.api.exception.DrawToolLowPriorityException
 import net.flipper.bridge.connection.feature.drawtool.api.model.DrawToolDisplaySide
+import net.flipper.bridge.connection.feature.rpc.api.exception.DrawLowPriorityException
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcAssetsApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.DrawRequest
@@ -64,8 +66,16 @@ class FDrawToolFeatureApiImpl(
     ): CResult<Unit> {
         return assetsApi
             .displayDraw(buildDrawRequest(fileName, displaySide))
-            .map { }
-            .toCResult()
+            .fold(
+                onSuccess = { CResult.success(Unit) },
+                onFailure = { error ->
+                    if (error is DrawLowPriorityException) {
+                        CResult.failure(DrawToolLowPriorityException())
+                    } else {
+                        CResult.failure(error)
+                    }
+                }
+            )
     }
 
     override suspend fun showPreview(

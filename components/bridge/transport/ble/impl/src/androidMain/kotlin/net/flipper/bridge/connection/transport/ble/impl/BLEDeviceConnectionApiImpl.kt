@@ -181,6 +181,7 @@ class BLEDeviceConnectionApiImpl(
             streamingApi = streamingApi
         )
         info { "Created ble api" }
+        bleApi.startStatusCollection()
         return bleApi
     }
 

@@ -44,6 +44,12 @@ interface BSBWebSocketInternal : BSBWebSocket {
      * upstream [wrapWebsocket] retry loop to detect transport death and reconnect.
      */
     suspend fun awaitClosed()
+
+    /**
+     * Closes the session, which unblocks [awaitClosed] and lets the upstream
+     * retry loop establish a fresh session with fresh authorization.
+     */
+    suspend fun close()
 }
 
 class BSBWebSocketImpl(
@@ -86,6 +92,10 @@ class BSBWebSocketImpl(
 
     override suspend fun awaitClosed() {
         session.awaitClosed()
+    }
+
+    override suspend fun close() {
+        session.close()
     }
 }
 

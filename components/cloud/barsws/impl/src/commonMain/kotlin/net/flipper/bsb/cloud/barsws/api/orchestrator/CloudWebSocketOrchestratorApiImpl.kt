@@ -28,6 +28,7 @@ import kotlinx.coroutines.withContext
 import net.flipper.bsb.cloud.barsws.api.CloudWebSocketOrchestratorApi
 import net.flipper.bsb.cloud.barsws.api.ProtobufBase64
 import net.flipper.bsb.cloud.barsws.api.model.WebSocketEventInternal
+import net.flipper.bsb.cloud.barsws.api.utils.BSBWebSocketInternal
 import net.flipper.bsb.cloud.barsws.api.utils.CloudWebSocketApiInternal
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.log.LogTagProvider
@@ -54,13 +55,38 @@ class CloudWebSocketOrchestratorApiImpl(
         .debounce(1.seconds)
         .stateIn(scope, SharingStarted.Eagerly, subscriberCountsFlow.value)
 
+    private suspend fun reconnectOnSubscriptionError(
+        event: WebSocketEventInternal,
+        webSocket: BSBWebSocketInternal
+    ) {
+        if (event !is WebSocketEventInternal.SubscriptionError) {
+            return
+        }
+        val cloudId = event.cloudId
+        if (cloudId == null) {
+            info { "Websocket error without device id: '${event.error}', ignoring" }
+            return
+        }
+        val subscriberCount = subscriberCountsFlow.value[cloudId]
+        if (subscriberCount == null || subscriberCount <= 0) {
+            info { "Subscription error for not watched device $cloudId, ignoring" }
+            return
+        }
+        info {
+            "Subscription for $cloudId rejected with '${event.error}', " +
+                "reconnecting websocket to refresh authorization"
+        }
+        webSocket.close()
+    }
+
     private val wsEventSharedFlow = getWSFlow()
         .distinctUntilChanged()
         .flatMapLatest { webSocket ->
             if (webSocket != null) {
                 info { "New websocket, collecting events and syncing subscribers" }
                 merge(
-                    webSocket.getEventsFlowInternal(),
+                    webSocket.getEventsFlowInternal()
+                        .onEach { event -> reconnectOnSubscriptionError(event, webSocket) },
                     subscriberCountsFlowWithDebounce
                         .transform { subscriberCounts ->
                             verbose { "Syncing subscribers: $subscriberCounts" }

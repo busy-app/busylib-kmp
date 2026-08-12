@@ -3,7 +3,6 @@ package net.flipper.bridge.connection.transport.combined.impl
 import io.ktor.client.engine.HttpClientEngine
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -54,6 +53,24 @@ class FCombinedConnectionApiImpl(
     )
 
     private val updateMutex = Mutex()
+
+    private val httpEngine = FCombinedHttpEngine(connectionPool)
+    private val metaInfoApi = CombinedMetaInfoApiImpl(connectionPool)
+    private val streamingApi = FCombinedStreamingApiImpl(connectionPool)
+
+    private val _capabilities = connectionPool.get().map { currentConnections ->
+        currentConnections
+            .flatMap { connectionSnapshot -> connectionSnapshot.capabilities.orEmpty() }
+            .distinct()
+    }
+
+    override val deviceName: String
+        get() = currentConfig.name
+
+    override fun getCapabilities(): Flow<List<FHTTPTransportCapability>> {
+        return _capabilities
+    }
+
     private fun getCurrentConnectionSnapshotFlow(): Flow<ConnectionSnapshot?> {
         return connectionPool
             .get()
@@ -71,8 +88,8 @@ class FCombinedConnectionApiImpl(
             .distinctUntilChanged()
     }
 
-    private fun startCollectTransportStatusUpdateJob(): Job {
-        return getCurrentConnectionSnapshotFlow()
+    fun startStatusCollection() {
+        getCurrentConnectionSnapshotFlow()
             .onEach { connectionSnapshot ->
                 val transportConnectionStatus = connectionSnapshot
                     ?.status
@@ -94,13 +111,6 @@ class FCombinedConnectionApiImpl(
             }
             .launchIn(scope)
     }
-
-    init {
-        startCollectTransportStatusUpdateJob()
-    }
-
-    override val deviceName: String
-        get() = currentConfig.name
 
     override suspend fun tryUpdateConnectionConfig(
         config: FDeviceConnectionConfig<*>
@@ -124,26 +134,15 @@ class FCombinedConnectionApiImpl(
                 val newConnections = UpdateConfigDelegate.updateConnectionConfigUnsafe(
                     oldConnections = connections.value,
                     config = config,
-                    factory = { AutoReconnectConnection(scope, it, connectionBuilder) }
+                    factory = { connectionConfig ->
+                        AutoReconnectConnection(scope, connectionConfig, connectionBuilder)
+                    }
                 )
                 connections.value = newConnections
                 currentConfig = config
             }
         }
     }
-
-    private val _capabilities = connectionPool.get().map { currentConnections ->
-        currentConnections
-            .flatMap { connectionSnapshot -> connectionSnapshot.capabilities.orEmpty() }
-            .distinct()
-    }
-
-    override fun getCapabilities(): Flow<List<FHTTPTransportCapability>> {
-        return _capabilities
-    }
-
-    private val httpEngine = FCombinedHttpEngine(connectionPool)
-    private val metaInfoApi = CombinedMetaInfoApiImpl(connectionPool)
 
     override fun getDeviceHttpEngine(): HttpClientEngine {
         return httpEngine
@@ -153,15 +152,13 @@ class FCombinedConnectionApiImpl(
         return metaInfoApi.get(key)
     }
 
-    override suspend fun disconnect() {
-        connections.value.forEach {
-            runSuspendCatching { it.disconnect() }
-        }
-    }
-
-    private val streamingApi = FCombinedStreamingApiImpl(connectionPool)
-
     override fun getEvents(): Flow<StatusStreamingEvent> {
         return streamingApi.getEvents()
+    }
+
+    override suspend fun disconnect() {
+        connections.value.forEach { connection ->
+            runSuspendCatching { connection.disconnect() }
+        }
     }
 }
