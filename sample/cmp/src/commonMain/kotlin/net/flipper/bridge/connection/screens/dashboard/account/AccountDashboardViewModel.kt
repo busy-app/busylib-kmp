@@ -29,7 +29,7 @@ class AccountDashboardViewModel(
     val isLoggingIn = _isLoggingIn.asStateFlow()
 
     fun login(email: String, password: String) {
-        info { "#login $email and $password, principal api is $principalApi" }
+        info { "#login $email, principal api is $principalApi" }
         val api = principalApi
         viewModelScope.launch(FlipperDispatchers.default) {
             _isLoggingIn.value = true

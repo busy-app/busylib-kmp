@@ -2,6 +2,14 @@ package net.flipper.core.ktor.util
 
 import io.ktor.client.plugins.logging.LoggingConfig
 import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
+
+private val SENSITIVE_HEADERS = setOf(
+    HttpHeaders.Authorization,
+    HttpHeaders.Cookie,
+    HttpHeaders.ProxyAuthorization,
+    HttpHeaders.SetCookie
+)
 
 private fun replaceBody(message: String, replacement: () -> String): String {
     val iStart = message.indexOf("BODY START")
@@ -40,4 +48,15 @@ fun LoggingConfig.minimizeBodyLogMessage(message: String): String {
     return message
         .let { nextMessage -> tryMinimizeOctetStreamBody(nextMessage) }
         .let { nextMessage -> tryMinimizeScreenStreamingBody(nextMessage) }
+}
+
+/**
+ * Remove AUTH headers from logs
+ */
+fun LoggingConfig.sanitizeSensitiveHeaders() {
+    sanitizeHeader { header ->
+        SENSITIVE_HEADERS.any { sensitiveHeader ->
+            sensitiveHeader.equals(header, ignoreCase = true)
+        }
+    }
 }

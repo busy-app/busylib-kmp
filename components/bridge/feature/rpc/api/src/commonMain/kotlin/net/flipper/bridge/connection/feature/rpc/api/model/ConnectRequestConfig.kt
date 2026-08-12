@@ -14,6 +14,14 @@ data class ConnectRequestConfig(
     @SerialName("ip_config")
     val ipConfig: IpConfig? = null
 ) {
+    /**
+     * We don't want [password] in logs
+     */
+    override fun toString(): String {
+        return "ConnectRequestConfig(ssid=$ssid, password=***, " +
+            "security=$security, ipConfig=$ipConfig)"
+    }
+
     @Serializable
     data class IpConfig(
         @SerialName("ip_method")
