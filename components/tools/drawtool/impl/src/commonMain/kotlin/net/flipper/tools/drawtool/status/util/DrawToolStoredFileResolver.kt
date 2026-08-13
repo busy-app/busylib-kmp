@@ -15,9 +15,14 @@ class DrawToolStoredFileResolver : LogTagProvider by TaggedLogger("DrawToolStore
     }
 
     private fun isStatus(path: Path): Boolean {
-        return DrawToolStatusDirectoryLayout
+        val isBrokenRegexFile = DrawToolStatusDirectoryLayout
             .STATUS_FILE_BROKEN_REGEX
             .matches(path.name)
+
+        val isNormalRegexFile = DrawToolStatusDirectoryLayout
+            .STATUS_FILE_REGEX
+            .matches(path.name)
+        return isBrokenRegexFile || isNormalRegexFile
     }
 
     fun resolve(path: Path): DrawToolStoredFile? {
