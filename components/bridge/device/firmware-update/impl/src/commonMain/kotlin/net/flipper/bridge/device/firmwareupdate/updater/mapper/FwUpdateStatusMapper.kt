@@ -4,6 +4,7 @@ import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateStatu
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateVersion
 import net.flipper.bridge.device.firmwareupdate.downloader.model.FirmwareDownloaderState
 import net.flipper.bridge.device.firmwareupdate.status.model.UpdateStatusSource
+import net.flipper.bridge.device.firmwareupdate.updater.model.FwInstallRequest
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateState
 import net.flipper.bridge.device.firmwareupdate.uploader.model.FirmwareUploaderState
 
@@ -81,7 +82,7 @@ internal object FwUpdateStatusMapper {
                     )
                 }
 
-                BsbUpdateStatus.ReadyToInstall.BatteryLow -> FwUpdateState.UpdateAvailable
+                BsbUpdateStatus.ReadyToInstall.BatteryLow -> FwUpdateState.BatteryLow
                 BsbUpdateStatus.ReadyToInstall.Ready -> FwUpdateState.UpdateAvailable
                 BsbUpdateStatus.Loading -> null
             }
@@ -105,7 +106,7 @@ internal object FwUpdateStatusMapper {
                 )
             }
 
-            BsbUpdateStatus.ReadyToInstall.BatteryLow -> FwUpdateState.UpdateAvailable
+            BsbUpdateStatus.ReadyToInstall.BatteryLow -> FwUpdateState.BatteryLow
             BsbUpdateStatus.ReadyToInstall.Ready -> FwUpdateState.UpdateAvailable
             BsbUpdateStatus.Loading -> null
         }
@@ -126,12 +127,27 @@ internal object FwUpdateStatusMapper {
         }
     }
 
+    private fun mapInstallRequest(
+        state: FwUpdateState,
+        installRequest: FwInstallRequest,
+        isLanUpdate: Boolean
+    ): FwUpdateState {
+        return when (installRequest) {
+            FwInstallRequest.NONE -> state
+            FwInstallRequest.REQUESTED -> FwUpdateState.Preparing
+            FwInstallRequest.STARTED -> FwUpdateState.Downloading(
+                progress = 0f,
+                isLanUpdate = isLanUpdate
+            )
+        }
+    }
+
     fun map(
         updateStatusSource: UpdateStatusSource,
         bsbUpdateVersion: BsbUpdateVersion?,
         downloaderState: FirmwareDownloaderState,
         uploaderState: FirmwareUploaderState,
-        isInstallRequested: Boolean
+        installRequest: FwInstallRequest
     ): FwUpdateState {
         val state = map(uploaderState)
             ?: map(downloaderState)
@@ -139,18 +155,22 @@ internal object FwUpdateStatusMapper {
             ?: map(updateStatusSource, isLanUpdate(bsbUpdateVersion))
             ?: FwUpdateState.Pending
         return when (state) {
-            FwUpdateState.UpdateAvailable if isInstallRequested -> FwUpdateState.Preparing
+            is FwUpdateState.UpdateAvailable,
+            is FwUpdateState.Pending -> mapInstallRequest(
+                state = state,
+                installRequest = installRequest,
+                isLanUpdate = isLanUpdate(bsbUpdateVersion)
+            )
+
             is FwUpdateState.BatteryLow,
             is FwUpdateState.CheckingVersion,
             is FwUpdateState.CouldNotCheckUpdate,
             is FwUpdateState.DownloadFailure,
             is FwUpdateState.Downloading,
             is FwUpdateState.NoUpdateAvailable,
-            is FwUpdateState.Pending,
             is FwUpdateState.Preparing,
             is FwUpdateState.Updating,
-            is FwUpdateState.Uploading,
-            is FwUpdateState.UpdateAvailable -> state
+            is FwUpdateState.Uploading -> state
         }
     }
 

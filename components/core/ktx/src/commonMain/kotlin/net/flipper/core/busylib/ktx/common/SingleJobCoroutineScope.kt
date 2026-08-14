@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.job
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.coroutines.CoroutineContext
@@ -80,12 +79,17 @@ private class MutexSingleJobCoroutineScope(
     private val activeJobs = mutableListOf<Job>()
     private val mutex = Mutex()
 
+    private fun removeCompletedJobsUnsafe() {
+        activeJobs.removeAll(Job::isCompleted)
+    }
+
     private fun <T> awaitPreviousUnsafe(
         scope: CoroutineScope,
         context: CoroutineContext,
         start: CoroutineStart,
         block: suspend CoroutineScope.() -> T
     ): Deferred<T> {
+        removeCompletedJobsUnsafe()
         val previousJobs = activeJobs.toList()
         return scope.async(
             context = context,
@@ -103,11 +107,17 @@ private class MutexSingleJobCoroutineScope(
         start: CoroutineStart,
         block: suspend CoroutineScope.() -> T
     ): Deferred<T> {
-        activeJobs.forEach(Job::cancel)
+        removeCompletedJobsUnsafe()
+        val previousJobs = activeJobs.toList()
+        activeJobs.clear()
+        previousJobs.forEach(Job::cancel)
         return scope.async(
             context = context,
             start = start,
-            block = block
+            block = {
+                previousJobs.joinAll()
+                block.invoke(this)
+            }
         ).also(activeJobs::add)
     }
 
@@ -117,6 +127,7 @@ private class MutexSingleJobCoroutineScope(
         start: CoroutineStart,
         block: suspend CoroutineScope.() -> T
     ): Deferred<T>? {
+        removeCompletedJobsUnsafe()
         val isAnyJobActive = activeJobs.any(Job::isActive)
         return if (isAnyJobActive) {
             null
@@ -192,18 +203,6 @@ private class MutexSingleJobCoroutineScope(
                 }?.join()
             }
         )
-    }
-
-    private fun listenForOnDestroy() {
-        scope.coroutineContext[Job]?.invokeOnCompletion {
-            runBlocking {
-                mutex.withLock { activeJobs.clear() }
-            }
-        }
-    }
-
-    init {
-        listenForOnDestroy()
     }
 }
 

@@ -66,6 +66,22 @@ class SingleJobCoroutineScopeTest {
     }
 
     @Test
+    fun GIVEN_finished_job_WHEN_skip_if_running_THEN_new_job_runs() = runTest {
+        val singleJobScope = asSingleJobScope()
+        val incrementFlow = MutableStateFlow(0)
+        singleJobScope.launch(SingleJobMode.SKIP_IF_RUNNING) {
+            incrementFlow.update { value -> value + 1 }
+        }
+        advanceTimeBy(1L)
+        singleJobScope.launch(SingleJobMode.SKIP_IF_RUNNING) {
+            incrementFlow.update { value -> value + 1 }
+        }
+        advanceTimeBy(1L)
+
+        assertEquals(2, incrementFlow.first())
+    }
+
+    @Test
     fun GIVEN_suspend_then_cancel_WHEN_cancel_last_THEN_cancelled() = runTest {
         val singleJobScope = asSingleJobScope()
         val incrementFlow = MutableStateFlow(0)
