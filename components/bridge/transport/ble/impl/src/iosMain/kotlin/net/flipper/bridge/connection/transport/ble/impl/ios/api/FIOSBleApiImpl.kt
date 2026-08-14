@@ -44,6 +44,9 @@ class FIOSBleApiImpl(
 
     override val deviceName = peripheral.name ?: currentConfig.deviceName
 
+    override val uniqueId: String
+        get() = currentConfig.uniqueId
+
     private val _capabilities = flowOf(
         listOf(
             FHTTPTransportCapability.BB_LOCAL_CONNECTION,

@@ -65,10 +65,11 @@ internal object FwUpdateStatusMapper {
         updateStatusSource: UpdateStatusSource.Fresh,
         isLanUpdate: Boolean
     ): FwUpdateState? {
-        return if (updateStatusSource.freshUpdateStatus == null) {
+        val freshUpdateStatus = updateStatusSource.status?.status
+        return if (freshUpdateStatus == null) {
             FwUpdateState.Pending
         } else {
-            when (updateStatusSource.freshUpdateStatus) {
+            when (freshUpdateStatus) {
                 BsbUpdateStatus.InProgress.Downloading.NotSpecified -> {
                     FwUpdateState.Downloading(0f, isLanUpdate)
                 }
@@ -76,7 +77,7 @@ internal object FwUpdateStatusMapper {
                 is BsbUpdateStatus.InProgress.Other -> FwUpdateState.Downloading(1f, isLanUpdate)
                 is BsbUpdateStatus.InProgress.Downloading.Specified -> {
                     FwUpdateState.Downloading(
-                        updateStatusSource.freshUpdateStatus.progress,
+                        freshUpdateStatus.progress,
                         isLanUpdate
                     )
                 }
@@ -92,7 +93,7 @@ internal object FwUpdateStatusMapper {
         updateStatusSource: UpdateStatusSource.Cached,
         isLanUpdate: Boolean
     ): FwUpdateState? {
-        return when (updateStatusSource.cachedUpdateStatus) {
+        return when (val cachedUpdateStatus = updateStatusSource.status.status) {
             BsbUpdateStatus.InProgress.Downloading.NotSpecified -> {
                 FwUpdateState.Downloading(0f, isLanUpdate)
             }
@@ -100,7 +101,7 @@ internal object FwUpdateStatusMapper {
             is BsbUpdateStatus.InProgress.Other -> FwUpdateState.Updating
             is BsbUpdateStatus.InProgress.Downloading.Specified -> {
                 FwUpdateState.Downloading(
-                    updateStatusSource.cachedUpdateStatus.progress,
+                    cachedUpdateStatus.progress,
                     isLanUpdate
                 )
             }

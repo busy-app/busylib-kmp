@@ -10,7 +10,8 @@ import net.flipper.bridge.connection.transport.common.api.serial.FHTTPTransportC
 
 class TestHttpConnectedDeviceApi(
     override val deviceName: String,
-    private val capabilities: List<FHTTPTransportCapability>
+    private val capabilities: List<FHTTPTransportCapability>,
+    override val uniqueId: String = "test-device-id"
 ) : FConnectedDeviceApi, FHTTPDeviceApi {
     override fun getCapabilities(): Flow<List<FHTTPTransportCapability>> {
         return flowOf(capabilities)

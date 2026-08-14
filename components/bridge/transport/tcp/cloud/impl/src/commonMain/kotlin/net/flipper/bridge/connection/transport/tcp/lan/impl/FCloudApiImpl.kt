@@ -55,6 +55,9 @@ class FCloudApiImpl(
     override val deviceName: String
         get() = currentConfig.name
 
+    override val uniqueId: String
+        get() = currentConfig.uniqueId
+
     suspend fun startMonitoring() {
         wsEventsDeviceMonitor.startMonitoring()
     }

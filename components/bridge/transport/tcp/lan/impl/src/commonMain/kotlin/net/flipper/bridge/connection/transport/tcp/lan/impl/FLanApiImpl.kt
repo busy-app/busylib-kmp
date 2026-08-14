@@ -40,6 +40,9 @@ class FLanApiImpl(
     override val deviceName: String
         get() = currentConfig.name
 
+    override val uniqueId: String
+        get() = currentConfig.uniqueId
+
     private val _capabilities = flowOf(
         listOf(
             FHTTPTransportCapability.BB_WEBSOCKET_SUPPORTED,

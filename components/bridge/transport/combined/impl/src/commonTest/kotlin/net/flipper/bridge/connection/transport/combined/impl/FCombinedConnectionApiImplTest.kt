@@ -64,6 +64,7 @@ class FCombinedConnectionApiImplTest {
     ): FCombinedConnectionConfig {
         val configs = childConfigs.toList()
         return FCombinedConnectionConfig(
+            uniqueId = "test-device-id",
             name = name,
             connectionConfigs = if (configs.isEmpty()) {
                 nonEmptyListOf(TestConfig())

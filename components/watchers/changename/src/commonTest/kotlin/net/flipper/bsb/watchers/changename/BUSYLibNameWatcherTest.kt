@@ -134,6 +134,7 @@ class BUSYLibNameWatcherTest {
 
     private class FakeConnectedDeviceApi : FConnectedDeviceApi {
         override val deviceName = "Test Device"
+        override val uniqueId = "test-device-id"
         override suspend fun tryUpdateConnectionConfig(
             config: FDeviceConnectionConfig<*>
         ): Result<Unit> = Result.failure(NotImplementedError())

@@ -381,6 +381,7 @@ class CombinedMetaInfoApiImplTest {
  */
 private class TestMetaInfoDeviceApi(
     override val deviceName: String = "TestMetaDevice",
+    override val uniqueId: String = "test-device-id",
     private val supportedKeys: Map<TransportMetaInfoKey, Flow<TransportMetaInfoData?>> = emptyMap()
 ) : FConnectedDeviceApi, FTransportMetaInfoApi {
 

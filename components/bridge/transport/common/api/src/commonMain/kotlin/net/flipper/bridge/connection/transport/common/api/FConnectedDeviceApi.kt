@@ -4,6 +4,12 @@ interface FConnectedDeviceApi {
     val deviceName: String
 
     /**
+     * Stable identity of the device this connection belongs to (`BUSYBar.uniqueId`).
+     * Constant for the whole lifetime of the connection.
+     */
+    val uniqueId: String
+
+    /**
      * Try to update connection config without interrupting connection
      *
      * If it's not possible, return Result.failure() with description

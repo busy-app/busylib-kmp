@@ -423,6 +423,7 @@ class FBSBDeviceApiImplRaceConditionTest {
     ): FBSBDeviceApiImpl {
         val mockConnectedDevice = object : FConnectedDeviceApi {
             override val deviceName: String = "TestDevice"
+            override val uniqueId: String = "test-device-id"
             override suspend fun tryUpdateConnectionConfig(
                 config: FDeviceConnectionConfig<*>
             ): Result<Unit> = throw NotImplementedError()

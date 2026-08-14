@@ -153,7 +153,8 @@ class FFinishSetupFeatureApiImpl(
             .distinctUntilChanged(),
         flow3 = fWiFiFeatureApi.getWifiStatusFlow()
             .distinctUntilChanged(),
-        flow4 = fFirmwareUpdateFeatureApi.updateVersionFlow,
+        flow4 = fFirmwareUpdateFeatureApi.updateVersionFlow
+            .map { keyedVersion -> keyedVersion.version },
         flow5 = setupFinishedBeforeKrate.cachedStateFlow,
         flow6 = isLanConnectionFlow(),
         transform = ::TasksDependencies

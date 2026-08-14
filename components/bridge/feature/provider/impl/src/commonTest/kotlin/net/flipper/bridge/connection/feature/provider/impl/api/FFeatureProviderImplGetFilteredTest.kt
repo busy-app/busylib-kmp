@@ -48,6 +48,7 @@ class FFeatureProviderImplGetFilteredTest {
 
     private class FakeConnectedDeviceApi : FConnectedDeviceApi {
         override val deviceName: String = "Test"
+        override val uniqueId: String = "test-device-id"
         override suspend fun tryUpdateConnectionConfig(
             config: FDeviceConnectionConfig<*>
         ): Result<Unit> = Result.success(Unit)

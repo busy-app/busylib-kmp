@@ -13,6 +13,8 @@ class HalfInitializedDeviceApi : FConnectedDeviceApi, FHTTPDeviceApi {
 
     override val deviceName = "HalfInitializedDevice"
 
+    override val uniqueId: String = "half-initialized-device-id"
+
     override fun getCapabilities(): Flow<List<FHTTPTransportCapability>> {
         return notYetAssigned()
     }

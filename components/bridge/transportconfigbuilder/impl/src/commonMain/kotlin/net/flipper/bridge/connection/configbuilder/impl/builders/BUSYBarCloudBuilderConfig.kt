@@ -7,10 +7,12 @@ import kotlin.uuid.Uuid
 @Inject
 class BUSYBarCloudBuilderConfig {
     fun build(
+        uniqueId: String,
         name: String,
         deviceId: Uuid
     ): FCloudDeviceConnectionConfig {
         return FCloudDeviceConnectionConfig(
+            uniqueId = uniqueId,
             name = name,
             deviceId = deviceId
         )

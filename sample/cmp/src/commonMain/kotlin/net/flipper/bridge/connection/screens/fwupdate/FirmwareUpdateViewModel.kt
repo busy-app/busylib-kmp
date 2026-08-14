@@ -26,7 +26,10 @@ class FirmwareUpdateViewModel(
 
     fun stopUpdate() {
         viewModelScope.launch {
-            firmwareUpdaterApi.stopFirmwareUpdate()
+            // The sample has no device selection UI — stop any tracked update
+            val deviceId = firmwareUpdaterApi.updatingDevices.value.keys.firstOrNull()
+                ?: return@launch
+            firmwareUpdaterApi.stopFirmwareUpdate(deviceId)
         }
     }
 }

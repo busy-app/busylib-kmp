@@ -5,6 +5,7 @@ import net.flipper.bridge.connection.transport.common.api.FInternalTransportConn
 import net.flipper.core.busylib.data.nonEmptyListOf
 
 data class FLanDeviceConnectionConfig(
+    override val uniqueId: String,
     val hardwareId: String?,
     val name: String
 ) : FDeviceConnectionConfig<FLanApi>() {

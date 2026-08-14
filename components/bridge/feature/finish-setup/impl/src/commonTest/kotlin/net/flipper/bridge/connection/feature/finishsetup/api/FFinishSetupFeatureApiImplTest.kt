@@ -23,6 +23,8 @@ import net.flipper.bridge.connection.feature.finishsetup.model.FFinishSetupState
 import net.flipper.bridge.connection.feature.firmwareupdate.api.FFirmwareUpdateFeatureApi
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateStatus
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateVersion
+import net.flipper.bridge.connection.feature.firmwareupdate.model.DeviceUpdateStatus
+import net.flipper.bridge.connection.feature.firmwareupdate.model.DeviceUpdateVersion
 import net.flipper.bridge.connection.feature.link.check.ondemand.api.FLinkedInfoOnDemandFeatureApi
 import net.flipper.bridge.connection.feature.link.model.LinkedAccountInfo
 import net.flipper.bridge.connection.feature.wifi.api.FWiFiFeatureApi
@@ -91,8 +93,12 @@ class FFinishSetupFeatureApiImplTest {
     private class FakeFirmwareUpdateFeatureApi(
         initialUpdateVersion: BsbUpdateVersion
     ) : FFirmwareUpdateFeatureApi {
-        private val _updateStatus = MutableStateFlow<BsbUpdateStatus>(BsbUpdateStatus.Loading)
-        override val updateStatusFlow: WrappedStateFlow<BsbUpdateStatus> =
+        override val deviceId: String = "test-device-id"
+
+        private val _updateStatus = MutableStateFlow(
+            DeviceUpdateStatus(deviceId, BsbUpdateStatus.Loading)
+        )
+        override val updateStatusFlow: WrappedStateFlow<DeviceUpdateStatus> =
             _updateStatus.asStateFlow().wrap()
 
         override suspend fun setAutoUpdate(isEnabled: Boolean): CResult<Unit> =
@@ -101,8 +107,10 @@ class FFinishSetupFeatureApiImplTest {
         override val isAutoUpdateEnabledFlow: WrappedSharedFlow<Boolean> =
             MutableSharedFlow<Boolean>().wrap()
 
-        private val _updateVersion = MutableStateFlow(initialUpdateVersion)
-        override val updateVersionFlow: WrappedStateFlow<BsbUpdateVersion> =
+        private val _updateVersion = MutableStateFlow(
+            DeviceUpdateVersion(deviceId, initialUpdateVersion)
+        )
+        override val updateVersionFlow: WrappedStateFlow<DeviceUpdateVersion> =
             _updateVersion.asStateFlow().wrap()
 
         override val updateVersionChangelog: WrappedFlow<String?> =
@@ -111,6 +119,8 @@ class FFinishSetupFeatureApiImplTest {
 
     private class FakeConnectedDeviceApi : FConnectedDeviceApi {
         override val deviceName: String = "test-device"
+
+        override val uniqueId: String = "test-unique-id"
 
         override suspend fun tryUpdateConnectionConfig(
             config: FDeviceConnectionConfig<*>

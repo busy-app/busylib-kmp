@@ -67,6 +67,9 @@ class FCombinedConnectionApiImpl(
     override val deviceName: String
         get() = currentConfig.name
 
+    override val uniqueId: String
+        get() = currentConfig.uniqueId
+
     override fun getCapabilities(): Flow<List<FHTTPTransportCapability>> {
         return _capabilities
     }

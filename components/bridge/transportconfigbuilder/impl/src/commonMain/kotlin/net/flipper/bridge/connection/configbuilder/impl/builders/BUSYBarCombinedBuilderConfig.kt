@@ -8,9 +8,11 @@ import net.flipper.core.busylib.data.NonEmptyList
 @Inject
 class BUSYBarCombinedBuilderConfig {
     fun build(
+        uniqueId: String,
         name: String,
         connectionConfigs: NonEmptyList<FDeviceConnectionConfig<*>>
     ) = FCombinedConnectionConfig(
+        uniqueId = uniqueId,
         name = name,
         connectionConfigs = connectionConfigs
     )

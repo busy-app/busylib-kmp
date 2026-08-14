@@ -11,7 +11,8 @@ import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfi
  * @property deviceName The name of the test device
  */
 class TestConnectedDeviceApi(
-    override val deviceName: String = "TestDevice"
+    override val deviceName: String = "TestDevice",
+    override val uniqueId: String = "test-device-id"
 ) : FConnectedDeviceApi {
     var tryUpdateResult: Result<Unit> = Result.success(Unit)
     var tryUpdateConfigReceived: FDeviceConnectionConfig<*>? = null
