@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.job
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.feature.firmwareupdate.api.FFirmwareUpdateFeatureApi
+import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateStatus
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateVersion
 import net.flipper.bridge.connection.feature.info.api.FDeviceInfoFeatureApi
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
@@ -205,19 +206,13 @@ class FirmwareUpdaterApiImpl(
             .flatMapLatest { status -> status?.featureApi?.updateVersionFlow.orNullable() }
     }
 
-    private suspend fun awaitUpdateInstalled(installedVersion: String) {
-        info { "#startUpdateInstall awaiting $installedVersion to stop being offered" }
-        getUpdateVersionFlow().first { bsbUpdateVersion ->
-            when (bsbUpdateVersion) {
-                BsbUpdateVersion.NoUpdateAvailable -> true
-                is BsbUpdateVersion.ReadyToUpdate -> bsbUpdateVersion.version != installedVersion
-                BsbUpdateVersion.CheckingOnBBInProgress,
-                BsbUpdateVersion.FailedToCheck,
-                BsbUpdateVersion.Loading,
-                null -> false
-            }
-        }
-        info { "#startUpdateInstall $installedVersion is installed" }
+    private suspend fun awaitDeviceReportedProgress() {
+        info { "#startUpdateInstall awaiting BSB to report progress on its own" }
+        fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
+            .map { status -> status.tryCast<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>() }
+            .flatMapLatest { status -> status?.featureApi?.updateStatusFlow.orNullable() }
+            .filterIsInstance<BsbUpdateStatus.InProgress>().first()
+        info { "#startUpdateInstall BSB drives the state from now on" }
     }
 
     private suspend fun startUpdateInstallInternal(
@@ -283,7 +278,7 @@ class FirmwareUpdaterApiImpl(
 
             StartUpdateResponse.Success -> {
                 installRequestFlow.value = FwInstallRequest.STARTED
-                awaitUpdateInstalled(bsbUpdateVersion.version)
+                awaitDeviceReportedProgress()
             }
         }
         return startUpdateResponse
