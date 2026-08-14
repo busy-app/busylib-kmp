@@ -15,6 +15,7 @@ import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.core.wrapper.CResult
 import net.flipper.busylib.core.wrapper.toCResult
 import net.flipper.core.busylib.ktx.common.copyFileTo
+import net.flipper.core.busylib.ktx.common.listOrEmpty
 import net.flipper.core.busylib.ktx.common.mapSuspendCatching
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.busylib.ktx.io.FlipperFileSystem
@@ -46,7 +47,9 @@ class DefaultDrawToolStatusesApi(
     override suspend fun getDrawToolDirectoryContents(): CResult<DrawToolDirectoryContents> {
         return mutex.withLock {
             drawToolStoragePathProvider.getPath()
-                .mapSuspendCatching(systemFileSystem::list)
+                .mapSuspendCatching { collectionPath ->
+                    systemFileSystem.listOrEmpty(collectionPath)
+                }
                 .map { paths ->
                     val drawToolStoredFiles = paths
                         .mapNotNull { path -> drawToolStoredFileResolver.resolve(path) }
