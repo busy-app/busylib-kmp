@@ -23,5 +23,11 @@ data class FwUpdateTrack(
 
         /** LAN: the app downloads the firmware and uploads it, then the device installs */
         LAN,
+
+        /**
+         * Started outside this client (from the device itself or another client) —
+         * detected from the device's own reported update status, no local install job exists
+         */
+        REMOTE,
     }
 }

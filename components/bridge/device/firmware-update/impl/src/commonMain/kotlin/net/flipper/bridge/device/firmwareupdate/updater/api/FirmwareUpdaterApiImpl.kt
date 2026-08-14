@@ -504,6 +504,27 @@ class FirmwareUpdaterApiImpl(
             }
             .launchIn(scope)
 
+        // An update started outside this client (from the device itself or another
+        // client) never goes through startUpdateInstall — latch it from the device's
+        // own reported status so it survives switch-away/back like a local one
+        updateStatusProvider.getUpdateStatus()
+            .onEach { source ->
+                var latchedDeviceId: String? = null
+                updatingDevicesFlow.update { tracks ->
+                    val next = RemoteUpdateTrackLatch.tracksAfter(source, tracks)
+                    latchedDeviceId = if (next !== tracks) {
+                        (next.keys - tracks.keys).firstOrNull()
+                    } else {
+                        null
+                    }
+                    next
+                }
+                latchedDeviceId?.let { deviceId ->
+                    info { "#init track latched for remotely started update on $deviceId" }
+                }
+            }
+            .launchIn(scope)
+
         // Release the track on update end; events are observable only while connected
         // to the updating device — hence the release targets the connected device
         eventsSharedFlow
