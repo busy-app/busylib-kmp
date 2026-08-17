@@ -3,6 +3,7 @@ package net.flipper.bridge.device.firmwareupdate.updater.log
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateVersion
 import net.flipper.bridge.device.firmwareupdate.downloader.model.FirmwareDownloaderState
 import net.flipper.bridge.device.firmwareupdate.status.model.UpdateStatusSource
+import net.flipper.bridge.device.firmwareupdate.updater.model.FwInstallRequest
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateState
 import net.flipper.bridge.device.firmwareupdate.uploader.model.FirmwareUploaderState
 import net.flipper.core.busylib.log.LogTagProvider
@@ -18,7 +19,7 @@ internal class FwUpdateStateLogger : LogTagProvider by TaggedLogger("UpdaterApi"
         bsbUpdateVersion: BsbUpdateVersion?,
         downloaderState: FirmwareDownloaderState,
         uploaderState: FirmwareUploaderState,
-        isInstallRequested: Boolean
+        installRequest: FwInstallRequest
     ) {
         val signature = listOf(
             updateStatusSource,
@@ -42,7 +43,7 @@ internal class FwUpdateStateLogger : LogTagProvider by TaggedLogger("UpdaterApi"
                 "bsbUpdateVersion: $bsbUpdateVersion, " +
                 "downloaderState: $downloaderState, " +
                 "uploaderState: $uploaderState," +
-                "isInstallRequested: $isInstallRequested"
+                "installRequest: $installRequest"
         }
     }
 }

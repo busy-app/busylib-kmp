@@ -26,4 +26,8 @@ kotlin {
         implementation(libs.kotlin.coroutines)
         implementation(libs.kotlin.immutable)
     }
+
+    sourceSets.commonTest.dependencies {
+        implementation(libs.kotlin.test)
+    }
 }

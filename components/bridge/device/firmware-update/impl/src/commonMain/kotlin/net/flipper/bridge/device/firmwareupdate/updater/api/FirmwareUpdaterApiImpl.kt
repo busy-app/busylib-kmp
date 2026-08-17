@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.job
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.feature.firmwareupdate.api.FFirmwareUpdateFeatureApi
+import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateStatus
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateVersion
 import net.flipper.bridge.connection.feature.info.api.FDeviceInfoFeatureApi
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
@@ -44,6 +45,7 @@ import net.flipper.bridge.device.firmwareupdate.downloader.api.FirmwareDownloade
 import net.flipper.bridge.device.firmwareupdate.status.api.UpdateStatusProvider
 import net.flipper.bridge.device.firmwareupdate.updater.log.FwUpdateStateLogger
 import net.flipper.bridge.device.firmwareupdate.updater.mapper.FwUpdateStatusMapper
+import net.flipper.bridge.device.firmwareupdate.updater.model.FwInstallRequest
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateEvent
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateState
 import net.flipper.bridge.device.firmwareupdate.updater.model.StartUpdateResponse
@@ -66,6 +68,7 @@ import net.flipper.core.busylib.log.TaggedLogger
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
 import net.flipper.core.ktor.di.qualifier.KtorNetworkClientQualifier
+import kotlin.coroutines.coroutineContext
 import kotlin.time.Instant
 
 @Inject
@@ -89,7 +92,7 @@ class FirmwareUpdaterApiImpl(
 
     private val lanUpdaterScope = scope.asSingleJobScope()
 
-    private val installRequestedFlow = MutableStateFlow(false)
+    private val installRequestFlow = MutableStateFlow(FwInstallRequest.NONE)
 
     private val stateLogger by lazy { FwUpdateStateLogger() }
 
@@ -102,29 +105,15 @@ class FirmwareUpdaterApiImpl(
             .distinctUntilChanged(),
         flow3 = firmwareDownloaderApi.state,
         flow4 = firmwareUploaderApi.state,
-        flow5 = installRequestedFlow,
-        transform = { updateStatusSource, bsbUpdateVersion, downloaderState, uploaderState, isInstallRequested ->
+        flow5 = installRequestFlow,
+        transform = { updateStatusSource, bsbUpdateVersion, downloaderState, uploaderState, installRequest ->
             val result = FwUpdateStatusMapper.map(
                 updateStatusSource,
                 bsbUpdateVersion,
                 downloaderState,
                 uploaderState,
-                isInstallRequested
+                installRequest
             )
-            when (result) {
-                is FwUpdateState.BatteryLow,
-                is FwUpdateState.UpdateAvailable,
-                is FwUpdateState.NoUpdateAvailable,
-                is FwUpdateState.CheckingVersion,
-                is FwUpdateState.CouldNotCheckUpdate,
-                is FwUpdateState.DownloadFailure,
-                is FwUpdateState.Uploading,
-                is FwUpdateState.Updating,
-                is FwUpdateState.Downloading -> installRequestedFlow.emit(false)
-
-                is FwUpdateState.Preparing,
-                is FwUpdateState.Pending -> Unit
-            }
             if (BuildKonfig.IS_VERBOSE_LOG_ENABLED && BuildKonfig.IS_LOG_ENABLED) {
                 stateLogger.logIfChanged(
                     result = result,
@@ -132,7 +121,7 @@ class FirmwareUpdaterApiImpl(
                     bsbUpdateVersion = bsbUpdateVersion,
                     downloaderState = downloaderState,
                     uploaderState = uploaderState,
-                    isInstallRequested = isInstallRequested
+                    installRequest = installRequest
                 )
             }
             return@combine result
@@ -162,6 +151,7 @@ class FirmwareUpdaterApiImpl(
         .wrap()
 
     override suspend fun stopFirmwareUpdate(): CResult<Unit> {
+        lanUpdaterScope.cancelPrevious().join()
         val currentUpdateVersion = fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
             .map { status -> status.tryCast<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>() }
             .map { status -> status?.featureApi }
@@ -179,15 +169,10 @@ class FirmwareUpdaterApiImpl(
                     .fRpcUpdaterApi
                     .startUpdateAbortDownload()
                     .map { }
-                    .also { installRequestedFlow.value = false }
                     .toCResult()
             }
 
-            is BsbUpdateVersion.ReadyToUpdate.Url -> {
-                lanUpdaterScope.cancelPrevious().join()
-                installRequestedFlow.value = false
-                CResult.success(Unit)
-            }
+            is BsbUpdateVersion.ReadyToUpdate.Url -> CResult.success(Unit)
 
             else -> CResult.success(Unit)
         }
@@ -213,6 +198,21 @@ class FirmwareUpdaterApiImpl(
         info { "#startUpdateInstall upload finished! Awaiting new boot time" }
         getBootTimeFlow().filter { instant -> instant > previousBootTime }.first()
         info { "#startUpdateInstall device connected!" }
+    }
+
+    private fun getUpdateVersionFlow(): Flow<BsbUpdateVersion?> {
+        return fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
+            .map { status -> status.tryCast<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>() }
+            .flatMapLatest { status -> status?.featureApi?.updateVersionFlow.orNullable() }
+    }
+
+    private suspend fun awaitDeviceReportedProgress() {
+        info { "#startUpdateInstall awaiting BSB to report progress on its own" }
+        fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
+            .map { status -> status.tryCast<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>() }
+            .flatMapLatest { status -> status?.featureApi?.updateStatusFlow.orNullable() }
+            .filterIsInstance<BsbUpdateStatus.InProgress>().first()
+        info { "#startUpdateInstall BSB drives the state from now on" }
     }
 
     private suspend fun startUpdateInstallInternal(
@@ -268,6 +268,46 @@ class FirmwareUpdaterApiImpl(
         }
     }
 
+    private suspend fun startDeviceInstall(
+        bsbUpdateVersion: BsbUpdateVersion.ReadyToUpdate.Default
+    ): StartUpdateResponse {
+        val startUpdateResponse = startUpdateInstallInternal(bsbUpdateVersion)
+        when (startUpdateResponse) {
+            StartUpdateResponse.BatteryLow,
+            is StartUpdateResponse.Failure -> Unit
+
+            StartUpdateResponse.Success -> {
+                installRequestFlow.value = FwInstallRequest.STARTED
+                awaitDeviceReportedProgress()
+            }
+        }
+        return startUpdateResponse
+    }
+
+    private suspend fun startLanInstall(
+        bsbUpdateVersion: BsbUpdateVersion.ReadyToUpdate.Url
+    ): StartUpdateResponse {
+        val bootTimeScope = coroutineContext.minusKey(Job)
+            .plus(SupervisorJob(coroutineContext.job))
+            .let(::CoroutineScope)
+        val bootTimeFlow = getBootTimeFlow().shareIn(bootTimeScope, SharingStarted.Eagerly, 1)
+        val startUpdateResponse = startUpdateInstallInternal(bsbUpdateVersion)
+        when (startUpdateResponse) {
+            StartUpdateResponse.BatteryLow,
+            is StartUpdateResponse.Failure -> bootTimeScope.cancel()
+
+            StartUpdateResponse.Success -> {
+                installRequestFlow.value = FwInstallRequest.STARTED
+                info { "#startUpdateInstall bootTimeFlow wait" }
+                val bootTime = bootTimeFlow.first()
+                info { "#startUpdateInstall bootTimeFlow cancel" }
+                bootTimeScope.cancel()
+                awaitDeviceReconnected(bootTime)
+            }
+        }
+        return startUpdateResponse
+    }
+
     /**
      * Starts an update install depending on current [BsbUpdateVersion]
      * Using map for flow here in case connection type changed from lan to other type
@@ -275,51 +315,28 @@ class FirmwareUpdaterApiImpl(
      */
     override suspend fun startUpdateInstall(): StartUpdateResponse {
         return lanUpdaterScope.async {
-            installRequestedFlow.value = true
+            installRequestFlow.value = FwInstallRequest.REQUESTED
             coroutineContext.job.invokeOnCompletion {
-                installRequestedFlow.value = false
+                installRequestFlow.value = FwInstallRequest.NONE
                 firmwareDownloaderApi.reset()
                 firmwareUploaderApi.reset()
             }
-            val bootTimeScope = coroutineContext.minusKey(Job)
-                .plus(SupervisorJob(coroutineContext.job))
-                .let(::CoroutineScope)
-            val bootTimeFlow = getBootTimeFlow().shareIn(bootTimeScope, SharingStarted.Eagerly, 1)
-
-            val bsbUpdateVersion = fFeatureProvider.get<FFirmwareUpdateFeatureApi>()
-                .map { status -> status.tryCast<FFeatureStatus.Supported<FFirmwareUpdateFeatureApi>>() }
-                .flatMapLatest { status -> status?.featureApi?.updateVersionFlow.orNullable() }
+            val bsbUpdateVersion = getUpdateVersionFlow()
                 .filterIsInstance<BsbUpdateVersion.ReadyToUpdate>()
                 .first()
 
             info { "#startUpdateInstall bsbUpdateVersion: $bsbUpdateVersion" }
             firmwareDownloaderApi.reset()
             firmwareUploaderApi.reset()
-            val startUpdateResponse = startUpdateInstallInternal(bsbUpdateVersion)
             when (bsbUpdateVersion) {
                 is BsbUpdateVersion.ReadyToUpdate.Default -> {
-                    bootTimeScope.cancel()
+                    startDeviceInstall(bsbUpdateVersion)
                 }
 
                 is BsbUpdateVersion.ReadyToUpdate.Url -> {
-                    when (startUpdateResponse) {
-                        StartUpdateResponse.BatteryLow,
-                        is StartUpdateResponse.Failure -> {
-                            bootTimeScope.cancel()
-                        }
-
-                        StartUpdateResponse.Success -> {
-                            info { "#startUpdateInstall bootTimeFlow wait" }
-                            val bootTime = bootTimeFlow.first()
-                            info { "#startUpdateInstall bootTimeFlow cancel" }
-                            bootTimeScope.cancel()
-                            awaitDeviceReconnected(bootTime)
-                        }
-                    }
+                    startLanInstall(bsbUpdateVersion)
                 }
             }
-            installRequestedFlow.value = false
-            startUpdateResponse
         }.await()
     }
 
