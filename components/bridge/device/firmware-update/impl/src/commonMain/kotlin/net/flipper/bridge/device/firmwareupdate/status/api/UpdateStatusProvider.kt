@@ -34,8 +34,8 @@ class UpdateStatusProvider(
             is UpdateStatusSource.Cached -> this
             is UpdateStatusSource.Fresh ->
                 freshUpdateStatus
-                ?.let(UpdateStatusSource::Cached)
-                ?: this
+                    ?.let(UpdateStatusSource::Cached)
+                    ?: this
         }
     }
 
