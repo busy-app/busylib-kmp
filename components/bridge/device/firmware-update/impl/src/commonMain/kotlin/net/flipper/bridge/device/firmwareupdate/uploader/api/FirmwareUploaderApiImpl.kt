@@ -53,6 +53,7 @@ internal class FirmwareUploaderApiImpl(
         }
     }
 
+    @Suppress("LongMethod")
     override suspend fun uploadAndInstall(
         clientFilePath: Path,
         onPrepared: suspend () -> Unit
@@ -84,11 +85,18 @@ internal class FirmwareUploaderApiImpl(
                             }
                         }
                     ).getOrThrow()
-                    val error = apiResponse.tryCast<ErrorResponse>()?.error
-                    if (error == BsbRpcError.BATTERY_LOW.error) {
-                        _state.emit(FirmwareUploaderState.BatteryLow)
-                    } else if (error == BsbRpcError.UPDATE_NOT_ALLOWED.error) {
-                        _state.emit(FirmwareUploaderState.BatteryLow)
+                    val rejectionReason = apiResponse.tryCast<ErrorResponse>()?.error
+                    when (rejectionReason) {
+                        null -> Unit
+                        BsbRpcError.BATTERY_LOW.error,
+                        BsbRpcError.UPDATE_NOT_ALLOWED.error -> {
+                            _state.emit(FirmwareUploaderState.BatteryLow)
+                        }
+
+                        else -> {
+                            error { "#uploadAndInstall update rejected: $rejectionReason" }
+                            _state.emit(FirmwareUploaderState.Failed)
+                        }
                     }
                 } catch (_: SocketTimeoutException) {
                     info { "#uploadAndInstall device connection lost" }

@@ -19,9 +19,9 @@ data class UpdateStatus(
         @SerialName("action")
         val action: Action,
         @SerialName("status")
-        val status: Status,
+        val status: Status = Status.OK, // Compatibility with older firmware
         @SerialName("detail")
-        val detail: String,
+        val detail: String = "No details provided", // Compatibility with older firmware
         @SerialName("download")
         val download: Download
     ) {

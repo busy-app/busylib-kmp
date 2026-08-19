@@ -2,6 +2,7 @@ package net.flipper.bridge.device.firmwareupdate.updater.mapper
 
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateStatus
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateVersion
+import net.flipper.bridge.connection.feature.firmwareupdate.model.FirmwareChannel
 import net.flipper.bridge.device.firmwareupdate.downloader.model.FirmwareDownloaderState
 import net.flipper.bridge.device.firmwareupdate.status.model.UpdateStatusSource
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwInstallRequest
@@ -184,7 +185,96 @@ class FwUpdateStatusMapperTest {
         assertEquals(FwUpdateState.Downloading(progress = 0.25f, isLanUpdate = false), result)
     }
 
+    @Test
+    fun GIVEN_lan_url_version_and_ready_status_WHEN_map_THEN_returns_update_available() {
+        val result = FwUpdateStatusMapper.map(
+            updateStatusSource = UpdateStatusSource.Fresh(BsbUpdateStatus.ReadyToInstall.Ready),
+            bsbUpdateVersion = LAN_UPDATE_VERSION,
+            downloaderState = FirmwareDownloaderState.Pending,
+            uploaderState = FirmwareUploaderState.Pending,
+            installRequest = FwInstallRequest.NONE
+        )
+
+        assertEquals(FwUpdateState.UpdateAvailable, result)
+    }
+
+    @Test
+    fun GIVEN_lan_url_version_and_battery_low_status_WHEN_map_THEN_returns_battery_low() {
+        // Regression: Url used to map to UpdateAvailable and shadow the device battery status
+        val result = FwUpdateStatusMapper.map(
+            updateStatusSource = UpdateStatusSource.Fresh(BsbUpdateStatus.ReadyToInstall.BatteryLow),
+            bsbUpdateVersion = LAN_UPDATE_VERSION,
+            downloaderState = FirmwareDownloaderState.Pending,
+            uploaderState = FirmwareUploaderState.Pending,
+            installRequest = FwInstallRequest.NONE
+        )
+
+        assertEquals(FwUpdateState.BatteryLow, result)
+    }
+
+    @Test
+    fun GIVEN_lan_url_version_and_cached_battery_low_status_WHEN_map_THEN_returns_battery_low() {
+        val result = FwUpdateStatusMapper.map(
+            updateStatusSource = UpdateStatusSource.Cached(BsbUpdateStatus.ReadyToInstall.BatteryLow),
+            bsbUpdateVersion = LAN_UPDATE_VERSION,
+            downloaderState = FirmwareDownloaderState.Pending,
+            uploaderState = FirmwareUploaderState.Pending,
+            installRequest = FwInstallRequest.NONE
+        )
+
+        assertEquals(FwUpdateState.BatteryLow, result)
+    }
+
+    @Test
+    fun GIVEN_version_loading_and_battery_low_status_WHEN_map_THEN_returns_battery_low() {
+        // LAN version resolution takes seconds; battery low must not be hidden meanwhile
+        val result = FwUpdateStatusMapper.map(
+            updateStatusSource = UpdateStatusSource.Fresh(BsbUpdateStatus.ReadyToInstall.BatteryLow),
+            bsbUpdateVersion = BsbUpdateVersion.Loading,
+            downloaderState = FirmwareDownloaderState.Pending,
+            uploaderState = FirmwareUploaderState.Pending,
+            installRequest = FwInstallRequest.NONE
+        )
+
+        assertEquals(FwUpdateState.BatteryLow, result)
+    }
+
+    @Test
+    fun GIVEN_no_update_available_and_battery_low_status_WHEN_map_THEN_returns_no_update_available() {
+        // Without an update to install the battery level is irrelevant
+        val result = FwUpdateStatusMapper.map(
+            updateStatusSource = UpdateStatusSource.Fresh(BsbUpdateStatus.ReadyToInstall.BatteryLow),
+            bsbUpdateVersion = BsbUpdateVersion.NoUpdateAvailable,
+            downloaderState = FirmwareDownloaderState.Pending,
+            uploaderState = FirmwareUploaderState.Pending,
+            installRequest = FwInstallRequest.NONE
+        )
+
+        assertEquals(FwUpdateState.NoUpdateAvailable, result)
+    }
+
+    @Test
+    fun GIVEN_lan_url_version_and_uploader_battery_low_WHEN_map_THEN_returns_battery_low() {
+        // Device refused the install after the upload finished
+        val result = FwUpdateStatusMapper.map(
+            updateStatusSource = UpdateStatusSource.Fresh(BsbUpdateStatus.ReadyToInstall.Ready),
+            bsbUpdateVersion = LAN_UPDATE_VERSION,
+            downloaderState = FirmwareDownloaderState.Pending,
+            uploaderState = FirmwareUploaderState.BatteryLow,
+            installRequest = FwInstallRequest.NONE
+        )
+
+        assertEquals(FwUpdateState.BatteryLow, result)
+    }
+
     private companion object {
         private const val UPDATE_VERSION = "1.1.1"
+        private val LAN_UPDATE_VERSION = BsbUpdateVersion.ReadyToUpdate.Url(
+            version = UPDATE_VERSION,
+            url = "https://update.example/busybar-f21-update_signed-1.1.1.tgz",
+            sha256 = "2f0b654001ebb0a3d83b4a1c0e55d88fc0c5ee39f043f2771353e41b36302d19",
+            changelog = "changelog",
+            firmwareChannel = FirmwareChannel.RELEASE
+        )
     }
 }
