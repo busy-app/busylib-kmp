@@ -127,6 +127,18 @@ internal object FwUpdateStatusMapper {
         }
     }
 
+    private fun mapVersionWithDeviceStatus(
+        bsbUpdateVersion: BsbUpdateVersion?,
+        deviceStatusState: FwUpdateState?
+    ): FwUpdateState? {
+        val versionState = map(bsbUpdateVersion) ?: return null
+        return if (versionState is FwUpdateState.UpdateAvailable && deviceStatusState is FwUpdateState.BatteryLow) {
+            deviceStatusState
+        } else {
+            versionState
+        }
+    }
+
     private fun mapInstallRequest(
         state: FwUpdateState,
         installRequest: FwInstallRequest,
@@ -149,10 +161,11 @@ internal object FwUpdateStatusMapper {
         uploaderState: FirmwareUploaderState,
         installRequest: FwInstallRequest
     ): FwUpdateState {
+        val deviceStatusState = map(updateStatusSource, isLanUpdate(bsbUpdateVersion))
         val state = map(uploaderState)
             ?: map(downloaderState)
-            ?: map(bsbUpdateVersion)
-            ?: map(updateStatusSource, isLanUpdate(bsbUpdateVersion))
+            ?: mapVersionWithDeviceStatus(bsbUpdateVersion, deviceStatusState)
+            ?: deviceStatusState
             ?: FwUpdateState.Pending
         return when (state) {
             is FwUpdateState.UpdateAvailable,
