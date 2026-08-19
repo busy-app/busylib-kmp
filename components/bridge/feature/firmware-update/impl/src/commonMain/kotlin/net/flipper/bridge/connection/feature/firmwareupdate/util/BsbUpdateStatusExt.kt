@@ -16,6 +16,11 @@ internal fun UpdateState.toBsbUpdateStatus(): BsbUpdateStatus {
         UpdateState.BsbEvent.ACTION_BEGIN,
         UpdateState.BsbEvent.ACTION_PROGRESS -> true
     }
+    val readyStatus = if (status == UpdateState.BsbStatus.BATTERY_LOW) {
+        BsbUpdateStatus.ReadyToInstall.BatteryLow
+    } else {
+        BsbUpdateStatus.ReadyToInstall.Ready
+    }
     return if (inProgress) {
         when (action) {
             UpdateState.BsbAction.DOWNLOAD -> BsbUpdateStatus.InProgress.Downloading.NotSpecified
@@ -35,10 +40,10 @@ internal fun UpdateState.toBsbUpdateStatus(): BsbUpdateStatus {
                 BsbUpdateStatus.InProgress.Other.ProgressStage.APPLY
             )
 
-            UpdateState.BsbAction.NONE -> BsbUpdateStatus.ReadyToInstall.Ready
+            UpdateState.BsbAction.NONE -> readyStatus
         }
     } else {
-        BsbUpdateStatus.ReadyToInstall.Ready
+        readyStatus
     }
 }
 
