@@ -132,7 +132,9 @@ internal object FwUpdateStatusMapper {
         deviceStatusState: FwUpdateState?
     ): FwUpdateState? {
         val versionState = map(bsbUpdateVersion) ?: return null
-        return if (versionState is FwUpdateState.UpdateAvailable && deviceStatusState is FwUpdateState.BatteryLow) {
+        val isBatteryLowRelevant = deviceStatusState is FwUpdateState.BatteryLow &&
+            versionState !is FwUpdateState.NoUpdateAvailable
+        return if (isBatteryLowRelevant) {
             deviceStatusState
         } else {
             versionState

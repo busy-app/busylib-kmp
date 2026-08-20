@@ -37,6 +37,7 @@ import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
 import net.flipper.bridge.connection.feature.provider.api.get
 import net.flipper.bridge.connection.feature.provider.api.getSync
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
+import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcUpdaterApi
 import net.flipper.bridge.connection.feature.rpc.api.model.BsbRpcError
 import net.flipper.bridge.connection.feature.rpc.api.model.ErrorResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
@@ -51,6 +52,7 @@ import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateState
 import net.flipper.bridge.device.firmwareupdate.updater.model.StartUpdateResponse
 import net.flipper.bridge.device.firmwareupdate.uploader.api.FirmwareUploaderApi
 import net.flipper.bridge.device.firmwareupdate.uploader.api.FirmwareUploaderApiImpl
+import net.flipper.bridge.device.firmwareupdate.uploader.model.FirmwareUploaderState
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.busylib.core.wrapper.CResult
 import net.flipper.busylib.core.wrapper.WrappedStateFlow
@@ -74,6 +76,7 @@ import kotlin.time.Instant
 @Inject
 @ContributesBinding(BusyLibGraph::class, binding<FirmwareUpdaterApi>())
 @SingleIn(BusyLibGraph::class)
+@Suppress("TooManyFunctions")
 class FirmwareUpdaterApiImpl(
     private val fFeatureProvider: FFeatureProvider,
     @KtorNetworkClientQualifier
@@ -215,23 +218,40 @@ class FirmwareUpdaterApiImpl(
         info { "#startUpdateInstall BSB drives the state from now on" }
     }
 
+    private suspend fun getRpcUpdaterApi(): FRpcUpdaterApi {
+        return fFeatureProvider.get<FRpcFeatureApi>()
+            .filterIsInstance<FFeatureStatus.Supported<*>>()
+            .filter { fFeatureStatus -> fFeatureStatus.featureApi is FRpcFeatureApi }
+            .filterIsInstance<FFeatureStatus.Supported<FRpcFeatureApi>>()
+            .first()
+            .featureApi
+            .fRpcUpdaterApi
+    }
+
+    private suspend fun isInstallAllowedByDevice(): Boolean {
+        return getRpcUpdaterApi()
+            .getUpdateStatus(ignoreCache = true)
+            .fold(
+                onSuccess = { updateStatus -> updateStatus.install.isAllowed },
+                onFailure = { t ->
+                    error(t) { "#isInstallAllowedByDevice could not get update status" }
+                    true
+                }
+            )
+    }
+
     private suspend fun startUpdateInstallInternal(
         bsbUpdateVersion: BsbUpdateVersion.ReadyToUpdate
     ): StartUpdateResponse {
         return when (bsbUpdateVersion) {
             is BsbUpdateVersion.ReadyToUpdate.Default -> {
-                fFeatureProvider.get<FRpcFeatureApi>()
-                    .filterIsInstance<FFeatureStatus.Supported<*>>()
-                    .filter { fFeatureStatus -> fFeatureStatus.featureApi is FRpcFeatureApi }
-                    .filterIsInstance<FFeatureStatus.Supported<FRpcFeatureApi>>()
-                    .first()
-                    .featureApi
-                    .fRpcUpdaterApi
+                getRpcUpdaterApi()
                     .startUpdateInstall(bsbUpdateVersion.version)
                     .fold(
                         onSuccess = { apiResponse ->
                             when (apiResponse) {
-                                is ErrorResponse if apiResponse.error == BsbRpcError.BATTERY_LOW.error -> {
+                                is ErrorResponse if apiResponse.error == BsbRpcError.BATTERY_LOW.error ||
+                                    apiResponse.error == BsbRpcError.UPDATE_NOT_ALLOWED.error -> {
                                     StartUpdateResponse.BatteryLow
                                 }
 
@@ -249,6 +269,10 @@ class FirmwareUpdaterApiImpl(
             }
 
             is BsbUpdateVersion.ReadyToUpdate.Url -> {
+                if (!isInstallAllowedByDevice()) {
+                    info { "#startUpdateInstall install is not allowed by device: battery low" }
+                    return StartUpdateResponse.BatteryLow
+                }
                 firmwareDownloaderApi.download(bsbUpdateVersion)
                     .onSuccess { info { "#startUpdateInstall download finished" } }
                     .onFailure { t -> error(t) { "#startUpdateInstall could not download" } }
@@ -319,7 +343,10 @@ class FirmwareUpdaterApiImpl(
             coroutineContext.job.invokeOnCompletion {
                 installRequestFlow.value = FwInstallRequest.NONE
                 firmwareDownloaderApi.reset()
-                firmwareUploaderApi.reset()
+                // keep refused install visible as BatteryLow
+                if (firmwareUploaderApi.state.value !is FirmwareUploaderState.BatteryLow) {
+                    firmwareUploaderApi.reset()
+                }
             }
             val bsbUpdateVersion = getUpdateVersionFlow()
                 .filterIsInstance<BsbUpdateVersion.ReadyToUpdate>()
