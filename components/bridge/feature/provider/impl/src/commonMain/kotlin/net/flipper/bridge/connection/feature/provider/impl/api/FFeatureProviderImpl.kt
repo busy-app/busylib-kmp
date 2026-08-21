@@ -4,10 +4,11 @@ import dev.zacsweers.metro.ContributesBinding
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
 import dev.zacsweers.metro.binding
-import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -20,8 +21,10 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.job
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import net.flipper.bridge.connection.device.bsb.api.FBSBDeviceApi
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
@@ -29,7 +32,11 @@ import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
 import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
 import net.flipper.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
 import net.flipper.busylib.core.di.BusyLibGraph
+import net.flipper.busylib.kmp.components.core.buildkonfig.BuildKonfig
+import net.flipper.core.busylib.ktx.common.launchOnCompletion
+import net.flipper.core.busylib.log.LogTagProvider
 import kotlin.reflect.KClass
+import kotlin.time.Duration.Companion.seconds
 
 @Inject
 @SingleIn(BusyLibGraph::class)
@@ -38,7 +45,9 @@ class FFeatureProviderImpl(
     orchestrator: FDeviceOrchestrator,
     private val fBSBDeviceApiFactory: FBSBDeviceApi.Factory,
     globalScope: CoroutineScope
-) : FFeatureProvider {
+) : FFeatureProvider, LogTagProvider {
+    override val TAG = "FFeatureProvider"
+
     @Suppress("MemberVisibilityCanBePrivate")
     internal val deviceStateFlow = orchestrator
         .getState()
@@ -58,34 +67,51 @@ class FFeatureProviderImpl(
                 withContext(statusPairScope.coroutineContext.minusKey(Job)) {
                     send(null)
                 }
-                val exceptionHandler = requireNotNull(
-                    value = statusPairScope.coroutineContext[CoroutineExceptionHandler],
-                    lazyMessage = { "The scope of statusPair should contain CoroutineExceptionHandler" }
+                // Parent to the device scope (== FDeviceHolder.scope): the orchestrator
+                // disconnects via deviceScope.cancelAndJoin(), so features are fully destroyed
+                // before the next device connects. SupervisorJob keeps a failing feature from
+                // cancelling its siblings or this flow (it hits statusPairScope's handler).
+                val featureScope = CoroutineScope(
+                    statusPairScope.coroutineContext
+                        .plus(SupervisorJob(statusPairScope.coroutineContext.job))
                 )
-                val channelFlowJob = requireNotNull(coroutineContext[Job]) {
-                    "channelFlow doesn't contains Job"
-                }
-                // SupervisorJob isolates child failures so they reach `exceptionHandler`
-                // (statusPairScope's handler) instead of cancelling channelFlow upstream.
-                // It is parented to channelFlow's Job so the captured scope dies when
-                // either statusPairScope dies (channelFlow closes) or globalScope dies.
-                val fBSBDeviceApi: FBSBDeviceApi = fBSBDeviceApiFactory(
-                    scope = CoroutineScope(
-                        coroutineContext + SupervisorJob(channelFlowJob) + exceptionHandler
-                    ),
-                    connectedDevice = deviceApi
-                )
-                withContext(statusPairScope.coroutineContext.minusKey(Job)) {
-                    send(fBSBDeviceApi)
-                }
-                val statusPairScopeDisposable = statusPairScope.coroutineContext
-                    .job
-                    .invokeOnCompletion { t ->
-                        trySend(null)
-                        close(t)
+                try {
+                    // Don't attach to already dead scope
+                    if (featureScope.isActive) {
+                        featureScope.launchOnCompletion { trySend(null) }
+                        val fBSBDeviceApi: FBSBDeviceApi = fBSBDeviceApiFactory(
+                            scope = featureScope,
+                            connectedDevice = deviceApi
+                        )
+                        withContext(statusPairScope.coroutineContext.minusKey(Job)) {
+                            send(fBSBDeviceApi)
+                        }
                     }
-                awaitClose {
-                    statusPairScopeDisposable.dispose()
+                    val statusPairScopeDisposable = statusPairScope.coroutineContext
+                        .job
+                        .invokeOnCompletion { t ->
+                            trySend(null)
+                            close(t)
+                        }
+                    awaitClose {
+                        statusPairScopeDisposable.dispose()
+                    }
+                } finally {
+                    withContext(NonCancellable) {
+                        if (BuildKonfig.CRASH_APP_ON_FAILED_CHECKS) {
+                            featureScope.coroutineContext.job.cancelAndJoin()
+                        } else {
+                            val isCompleted = withTimeoutOrNull(FEATURE_TEARDOWN_TIMEOUT) {
+                                featureScope.coroutineContext.job.cancelAndJoin()
+                            }
+                            if (isCompleted == null) {
+                                error {
+                                    "Feature teardown timed out after $FEATURE_TEARDOWN_TIMEOUT, " +
+                                        "a feature ignored cancellation"
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -143,5 +169,9 @@ class FFeatureProviderImpl(
                     FFeatureStatus.Retrieving -> error("Impossible situation")
                 }
             }.first()
+    }
+
+    companion object {
+        private val FEATURE_TEARDOWN_TIMEOUT = 5.seconds
     }
 }
