@@ -41,12 +41,11 @@ import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
 import net.flipper.core.busylib.log.verbose
 import kotlin.coroutines.CoroutineContext
-import kotlin.time.Duration.Companion.seconds
-
-private val REQUEST_TIMEOUT = 10.seconds
+import kotlin.time.Duration
 
 class FHttpBLEEngine(
     private val serialApi: FSerialBleApi,
+    private val requestTimeout: Duration,
 ) : HttpClientEngineBase("ble-serial"), LogTagProvider {
     private var requestCount = 0
     override val TAG = "FHttpBLEEngine"
@@ -83,7 +82,7 @@ class FHttpBLEEngine(
             val result = sendBytes(rawBytes, channel, requestTime, withTimeout = withTimeout)
             return@withLockResult if (result == null) {
                 error {
-                    "Failed to wait ${REQUEST_TIMEOUT.inWholeSeconds} seconds for response," +
+                    "Failed to wait ${requestTimeout.inWholeSeconds} seconds for response," +
                         " try to make this request again after reset"
                 }
                 resetSerialApi()
@@ -107,7 +106,7 @@ class FHttpBLEEngine(
     ): HttpResponseData? {
         return withContext(NonCancellable) {
             if (withTimeout) {
-                withTimeoutOrNull(REQUEST_TIMEOUT) {
+                withTimeoutOrNull(requestTimeout) {
                     sendBytesUnsafe(bytes, channel, requestTime)
                 }
             } else {

@@ -14,6 +14,9 @@ import net.flipper.bridge.connection.transport.ble.impl.serial.FSerialBleApi
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
+import kotlin.time.Duration.Companion.seconds
+
+private val TEST_REQUEST_TIMEOUT = 1.seconds
 
 class FHttpBLEEngineTest {
     @Test
@@ -24,7 +27,7 @@ class FHttpBLEEngineTest {
                 enqueueResponse(ResponsePlan.RawHttpResponse(validHttpResponse("OK")))
                 requestCounterStateFlow.value = 0
             }
-            val engine = FHttpBLEEngine(serialApi)
+            val engine = FHttpBLEEngine(serialApi, TEST_REQUEST_TIMEOUT)
             val client = HttpClient(engine)
 
             try {

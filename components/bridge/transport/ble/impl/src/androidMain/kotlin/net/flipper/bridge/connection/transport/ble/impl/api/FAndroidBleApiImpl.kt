@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.shareIn
 import net.flipper.bridge.connection.transport.ble.api.FBleApi
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceConnectionConfig
+import net.flipper.bridge.connection.transport.ble.impl.BleConstants
 import net.flipper.bridge.connection.transport.ble.impl.FHttpBLEEngine
 import net.flipper.bridge.connection.transport.ble.impl.meta.FTransportMetaInfoApiImpl
 import net.flipper.bridge.connection.transport.ble.impl.serial.FSerialBleApi
@@ -44,7 +45,7 @@ class FAndroidBleApiImpl(
     FStatusStreamingApi by streamingApi,
     LogTagProvider {
     override val TAG = "FBleApi"
-    private val bleHttpEngine = FHttpBLEEngine(serialApi)
+    private val bleHttpEngine = FHttpBLEEngine(serialApi, BleConstants.REQUEST_TIMEOUT)
 
     override val deviceName = peripheral.name ?: currentConfig.deviceName
 
