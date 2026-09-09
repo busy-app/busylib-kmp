@@ -81,6 +81,19 @@ class DurationSerializerTest {
     }
 
     @Test
+    fun GIVEN_zero_padded_device_uptime_WHEN_parse_THEN_ok() {
+        assertEquals(
+            expected = 46.seconds,
+            actual = DurationSerializer.toDuration("00d 00h 00m 46s")
+        )
+
+        assertEquals(
+            expected = 4.hours + 48.minutes + 56.seconds,
+            actual = DurationSerializer.toDuration("00d 04h 48m 56s")
+        )
+    }
+
+    @Test
     fun GIVEN_surrounding_whitespace_WHEN_parse_THEN_ok() {
         assertEquals(
             expected = 1.days + 2.hours,
