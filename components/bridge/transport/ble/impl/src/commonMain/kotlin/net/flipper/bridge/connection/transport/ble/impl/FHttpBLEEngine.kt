@@ -31,6 +31,7 @@ import kotlinx.io.InternalIoApi
 import kotlinx.io.Source
 import kotlinx.io.readByteArray
 import net.flipper.bridge.connection.transport.ble.impl.exception.BadHttpResponseException
+import net.flipper.bridge.connection.transport.ble.impl.exception.DeviceNotRespondingException
 import net.flipper.bridge.connection.transport.ble.impl.serial.FSerialBleApi
 import net.flipper.bridge.connection.transport.common.api.serial.attributes.IgnoreRequestTimeoutKey
 import net.flipper.bridge.connection.transport.common.utils.toRawHttpRequest
@@ -132,13 +133,20 @@ class FHttpBLEEngine(
         return response
     }
 
+    private suspend fun <T> withLinkDeadline(operation: String, block: suspend () -> T): T {
+        return withTimeoutOrNull(requestTimeout) { block() }
+            ?: throw DeviceNotRespondingException(operation)
+    }
+
     private suspend fun resetSerialApi() {
-        serialApi.reset()
+        withLinkDeadline("reset handshake") { serialApi.reset() }
         requestCount = 0
     }
 
     private suspend fun checkRequestCountUnsafe() {
-        val deviceRequestCount = serialApi.getRequestCounterFlow().first()
+        val deviceRequestCount = withLinkDeadline("request counter") {
+            serialApi.getRequestCounterFlow().first()
+        }
         if (requestCount < deviceRequestCount) {
             error { "Received request count: $deviceRequestCount, but current request count is $requestCount" }
             resetSerialApi()
