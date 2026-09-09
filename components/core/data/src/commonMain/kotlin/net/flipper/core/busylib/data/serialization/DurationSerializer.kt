@@ -1,6 +1,7 @@
 package net.flipper.core.busylib.data.serialization
 
 import kotlinx.serialization.KSerializer
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
@@ -14,6 +15,8 @@ import kotlin.time.Duration.Companion.seconds
 
 @Suppress("MagicNumber")
 object DurationSerializer : KSerializer<Duration> {
+    private const val NEGATIVE_SIGN = "-"
+
     override val descriptor: SerialDescriptor =
         PrimitiveSerialDescriptor("AstraKDuration", PrimitiveKind.STRING)
 
@@ -44,6 +47,9 @@ object DurationSerializer : KSerializer<Duration> {
     }
 
     fun fromDuration(duration: Duration): String {
+        if (duration.isNegative()) {
+            return NEGATIVE_SIGN.plus(fromDuration(-duration))
+        }
         return duration.toComponents { days, hours, minutes, seconds, _ ->
             buildString {
                 if (days >= 7) {
@@ -74,11 +80,39 @@ object DurationSerializer : KSerializer<Duration> {
         }
     }
 
+    @Suppress("MaxLineLength")
+    private fun parseDurationPart(part: String, value: String): Duration {
+        val delimiter = Delimiter.entries
+            .firstOrNull { delimiter -> part.contains(delimiter.value) }
+            ?: throw SerializationException(
+                "Wrong usage on argument. Could not determine delimiter $value. Should be as 3w4d6h10m30s"
+            )
+
+        val amount = part
+            .replace(delimiter.value, "")
+            .toLongOrNull()
+            ?: throw SerializationException(
+                "Wrong usage on argument. Could not convert to number $value. Should be as 3w4d6h10m30s"
+            )
+
+        return when (delimiter) {
+            Delimiter.W -> (amount * 7).days
+            Delimiter.D -> amount.days
+            Delimiter.H -> amount.hours
+            Delimiter.M -> amount.minutes
+            Delimiter.S -> amount.seconds
+        }
+    }
+
     // 1 year 2 month 3 weeks 4 days 5 hours 10 minutes 30 seconds
     // 3w4d6h10m30s
     @Suppress("MaxLineLength")
     fun toDuration(value: String): Duration {
-        val split = value
+        val trimmed = value.trim()
+        if (trimmed.startsWith(NEGATIVE_SIGN)) {
+            return -toDuration(trimmed.removePrefix(NEGATIVE_SIGN))
+        }
+        val split = trimmed
             .replace(Delimiter.W.value, Delimiter.W.value.plus(" "))
             .replace(Delimiter.D.value, Delimiter.D.value.plus(" "))
             .replace(Delimiter.H.value, Delimiter.H.value.plus(" "))
@@ -86,24 +120,10 @@ object DurationSerializer : KSerializer<Duration> {
             .replace(Delimiter.S.value, Delimiter.S.value.plus(" "))
             .split(" ")
             .filter { string -> string.isNotBlank() }
-        val durationList = split.map { part ->
-            val delimiter = Delimiter.entries
-                .firstOrNull { delimiter -> part.contains(delimiter.value) }
-                ?: error("Wrong usage on argument. Could not determine delimiter $value. Should be as 3w4d6h10m30s")
-
-            val intAmount = part
-                .replace(delimiter.value, "")
-                .toIntOrNull()
-                ?: error("Wrong usage on argument. Could not convert to int $value. Should be as 3w4d6h10m30s")
-
-            when (delimiter) {
-                Delimiter.W -> (intAmount * 7).days
-                Delimiter.D -> intAmount.days
-                Delimiter.H -> intAmount.hours
-                Delimiter.M -> intAmount.minutes
-                Delimiter.S -> intAmount.seconds
-            }
+        if (split.isEmpty()) {
+            throw SerializationException("Wrong usage on argument. Blank duration $value. Should be as 3w4d6h10m30s")
         }
+        val durationList = split.map { part -> parseDurationPart(part, value) }
         return durationList.sumOf { duration -> duration }
     }
 }
