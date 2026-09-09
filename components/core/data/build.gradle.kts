@@ -10,4 +10,9 @@ kotlin {
         implementation(projects.components.core.log)
         implementation(libs.kotlin.serialization.json)
     }
+
+    sourceSets.commonTest.dependencies {
+        implementation(libs.kotlin.test)
+        implementation(libs.kotlin.serialization.json)
+    }
 }
