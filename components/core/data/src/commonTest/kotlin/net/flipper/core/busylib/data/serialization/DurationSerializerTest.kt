@@ -1,6 +1,5 @@
-package net.flipper.bridge.connection.feature.rpc.api.serialization
+package net.flipper.core.busylib.data.serialization
 
-import net.flipper.core.busylib.data.serialization.DurationSerializer
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.time.Duration
