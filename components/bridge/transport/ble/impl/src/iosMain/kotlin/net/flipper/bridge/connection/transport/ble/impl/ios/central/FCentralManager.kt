@@ -25,6 +25,7 @@ import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
+import net.flipper.core.busylib.log.verbose
 import net.flipper.core.busylib.log.warn
 import platform.CoreBluetooth.CBAdvertisementDataLocalNameKey
 import platform.CoreBluetooth.CBCentralManager
@@ -270,14 +271,14 @@ class FCentralManager internal constructor(
         val advertisedName = advertisementData[CBAdvertisementDataLocalNameKey] as? String
         val name = peripheral.name ?: advertisedName
 
-        info { "#didDiscover peripheral=$uuid name=$name rssi=$rssi ad=$advertisementData" }
+        verbose { "#didDiscover peripheral=$uuid name=$name rssi=$rssi" }
 
         val devices = _discoveredStream.updateAndGet { current ->
             val existing = current.firstOrNull { it.id == uuid }
             val resolved = name ?: existing?.name
             current.filterNot { it.id == uuid }.toSet() + DiscoveredBluetoothDevice(id = uuid, name = resolved)
         }
-        info { "Emitted to discovered stream, total devices: ${devices.size}" }
+        verbose { "Emitted to discovered stream, total devices: ${devices.size}" }
     }
 }
 

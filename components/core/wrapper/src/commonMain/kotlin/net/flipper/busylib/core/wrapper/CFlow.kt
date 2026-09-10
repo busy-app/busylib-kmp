@@ -8,15 +8,18 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
+import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 
-private fun <T> Flow<T>.onEach(
+private fun <T> Flow<T>.watchOnMain(
     onEach: (T) -> Unit,
-    onComplete: () -> Unit = {},
-    onError: (Throwable) -> Unit = {}
+    onComplete: () -> Unit,
+    onError: (Throwable) -> Unit
 ): Closeable {
     val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
@@ -43,7 +46,11 @@ class WrappedFlow<T : Any?>(private val origin: Flow<T>) : Flow<T> by origin {
         onEach: (T) -> Unit,
         onComplete: () -> Unit = {},
         onError: (Throwable) -> Unit = {}
-    ): Closeable = origin.onEach(onEach, onComplete, onError)
+    ): Closeable {
+        return origin
+            .flowOn(FlipperDispatchers.default)
+            .watchOnMain(onEach, onComplete, onError)
+    }
 }
 
 @OptIn(ExperimentalForInheritanceCoroutinesApi::class)
@@ -52,7 +59,9 @@ class WrappedStateFlow<T : Any?>(private val origin: StateFlow<T>) : StateFlow<T
         onEach: (T) -> Unit,
         onComplete: () -> Unit = {},
         onError: (Throwable) -> Unit = {}
-    ): Closeable = origin.onEach(onEach, onComplete, onError)
+    ): Closeable {
+        return origin.watchOnMain(onEach, onComplete, onError)
+    }
 }
 
 @OptIn(ExperimentalForInheritanceCoroutinesApi::class)
@@ -61,7 +70,11 @@ class WrappedSharedFlow<T : Any?>(private val origin: SharedFlow<T>) : SharedFlo
         onEach: (T) -> Unit,
         onComplete: () -> Unit = {},
         onError: (Throwable) -> Unit = {}
-    ): Closeable = origin.onEach(onEach, onComplete, onError)
+    ): Closeable {
+        return origin
+            .buffer()
+            .watchOnMain(onEach, onComplete, onError)
+    }
 }
 
 fun <T : Any?> StateFlow<T>.wrap(): WrappedStateFlow<T> = WrappedStateFlow(this)

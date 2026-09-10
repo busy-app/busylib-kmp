@@ -5,7 +5,6 @@ import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.io.files.Path
-import kotlinx.io.files.SystemFileSystem
 import net.flipper.bridge.connection.feature.drawtool.api.FDrawToolFeatureApi
 import net.flipper.bridge.connection.feature.drawtool.api.model.DrawToolDisplaySide
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
@@ -19,7 +18,6 @@ import net.flipper.core.busylib.ktx.common.listOrEmpty
 import net.flipper.core.busylib.ktx.common.mapSuspendCatching
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.busylib.ktx.io.FlipperFileSystem
-import net.flipper.core.busylib.ktx.io.SystemFlipperFileSystem
 import net.flipper.tools.drawtool.api.DrawToolStatusDirectoryLayout
 import net.flipper.tools.drawtool.api.DrawToolStatusesApi
 import net.flipper.tools.drawtool.api.model.DrawToolDirectoryContents
@@ -36,7 +34,7 @@ class DefaultDrawToolStatusesApi(
     private val drawToolStoredFileResolver: DrawToolStoredFileResolver,
     private val featureProvider: FFeatureProvider,
     @ClientFileSystemQualifier
-    private val systemFileSystem: FlipperFileSystem = SystemFlipperFileSystem(SystemFileSystem),
+    private val systemFileSystem: FlipperFileSystem,
 ) : DrawToolStatusesApi {
     private val mutex = Mutex()
 

@@ -59,7 +59,7 @@ class DrawToolCollectionSourceResolver(
             layout = DefaultDrawToolStatusDirectoryLayout(collectionPath),
             statusesApi = DefaultDrawToolStatusesApi(
                 drawToolStoragePathProvider = object : DrawToolStoragePathProvider {
-                    override fun getPath(): Result<Path> = Result.success(collectionPath)
+                    override suspend fun getPath(): Result<Path> = Result.success(collectionPath)
                 },
                 drawToolStoredFileResolver = storedFileResolver,
                 featureProvider = featureProvider,
