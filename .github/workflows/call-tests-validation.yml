@@ -21,6 +21,10 @@ jobs:
         with:
           # Pin to 16.0 (v3 default) — cmdline-tools 20.0 crashes on self-hosted macOS runners
           cmdline-tools-version: '12266719'
+          # TODO: remove once the action stops requesting the 'tools' package,
+          #  which Google removed from the SDK repo on 2026-09-15
+          #  https://github.com/android-actions/setup-android/issues/537
+          packages: 'platform-tools'
       - name: Give gradle permission
         run: chmod +x gradlew
       - name: Run tests
