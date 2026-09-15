@@ -271,7 +271,7 @@ class FCentralManager internal constructor(
         val advertisedName = advertisementData[CBAdvertisementDataLocalNameKey] as? String
         val name = peripheral.name ?: advertisedName
 
-        verbose { "#didDiscover peripheral=$uuid name=$name rssi=$rssi" }
+        verbose { "#didDiscover peripheral=$uuid name=$name rssi=$rssi ad=$advertisementData" }
 
         val devices = _discoveredStream.updateAndGet { current ->
             val existing = current.firstOrNull { it.id == uuid }
