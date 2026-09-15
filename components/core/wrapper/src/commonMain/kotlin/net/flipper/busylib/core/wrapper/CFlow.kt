@@ -1,27 +1,31 @@
 package net.flipper.busylib.core.wrapper
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalForInheritanceCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 
-private fun <T> Flow<T>.watchOnMain(
+/**
+ * Deliberately not the main thread: Swift hands every value straight to an
+ * `AsyncStream` continuation, which is thread safe, and its consumer hops to
+ * whatever actor it belongs to on its own. Collecting on the main one would
+ * only add a dispatch per value, and would drag every upstream operator of a
+ * cold flow onto it.
+ */
+private fun <T> Flow<T>.subscribe(
     onEach: (T) -> Unit,
     onComplete: () -> Unit,
     onError: (Throwable) -> Unit
 ): Closeable {
-    val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    val scope = CoroutineScope(SupervisorJob() + FlipperDispatchers.default)
 
     onEach(onEach)
         .catch { e ->
@@ -47,9 +51,7 @@ class WrappedFlow<T : Any?>(private val origin: Flow<T>) : Flow<T> by origin {
         onComplete: () -> Unit = {},
         onError: (Throwable) -> Unit = {}
     ): Closeable {
-        return origin
-            .flowOn(FlipperDispatchers.default)
-            .watchOnMain(onEach, onComplete, onError)
+        return origin.subscribe(onEach, onComplete, onError)
     }
 }
 
@@ -60,7 +62,7 @@ class WrappedStateFlow<T : Any?>(private val origin: StateFlow<T>) : StateFlow<T
         onComplete: () -> Unit = {},
         onError: (Throwable) -> Unit = {}
     ): Closeable {
-        return origin.watchOnMain(onEach, onComplete, onError)
+        return origin.subscribe(onEach, onComplete, onError)
     }
 }
 
@@ -71,9 +73,7 @@ class WrappedSharedFlow<T : Any?>(private val origin: SharedFlow<T>) : SharedFlo
         onComplete: () -> Unit = {},
         onError: (Throwable) -> Unit = {}
     ): Closeable {
-        return origin
-            .buffer()
-            .watchOnMain(onEach, onComplete, onError)
+        return origin.subscribe(onEach, onComplete, onError)
     }
 }
 
