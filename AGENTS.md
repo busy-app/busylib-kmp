@@ -11,11 +11,11 @@ Changes to the public API of this library affect both consumers. When changing e
 - **KMP targets**: `android`, `iosArm64`, `iosSimulatorArm64`, `iosX64`, `macosArm64`, `macosX64`, `jvm` (desktop). macOS targets are opt-in via `flipper.macOSEnabled` in `local.properties`.
 - **Version catalog**: `gradle/libs.versions.toml`.
 - **Custom Gradle convention plugins** live in `build-logic/plugins/convention/`:
-  - `flipper.multiplatform` — base KMP configuration
-  - `flipper.multiplatform-compose` — Compose Multiplatform
-  - `flipper.anvil-multiplatform` — kotlin-inject + Anvil DI
-  - `flipper.publish` — Maven publishing
-  - Detekt integration (`net.flipper.busylib.detekt`)
+    - `flipper.multiplatform` — base KMP configuration
+    - `flipper.multiplatform-compose` — Compose Multiplatform
+    - `flipper.anvil-multiplatform` — kotlin-inject + Anvil DI
+    - `flipper.publish` — Maven publishing
+    - Detekt integration (`net.flipper.busylib.detekt`)
 
 ## Running Gradle
 

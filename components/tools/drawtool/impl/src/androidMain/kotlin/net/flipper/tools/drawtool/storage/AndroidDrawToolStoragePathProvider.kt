@@ -14,7 +14,7 @@ import net.flipper.tools.drawtool.storage.api.DrawToolStoragePathProvider
 class AndroidDrawToolStoragePathProvider(
     private val context: Context
 ) : DrawToolStoragePathProvider {
-    override fun getPath(): Result<Path> {
+    override suspend fun getPath(): Result<Path> {
         return Result.success(Path(context.filesDir.absolutePath, "busylib", "draw_tool"))
     }
 }

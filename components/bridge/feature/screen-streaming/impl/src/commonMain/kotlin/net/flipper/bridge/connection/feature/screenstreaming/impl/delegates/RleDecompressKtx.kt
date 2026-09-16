@@ -1,5 +1,16 @@
 package net.flipper.bridge.connection.feature.screenstreaming.impl.delegates
 
+private const val INITIAL_CAPACITY = 1024
+
+private fun ByteArray.grownFor(size: Int, required: Int): ByteArray {
+    if (required <= this.size) return this
+    var capacity = maxOf(this.size, INITIAL_CAPACITY)
+    while (capacity < required) {
+        capacity *= 2
+    }
+    return copyInto(ByteArray(capacity), endIndex = size)
+}
+
 /**
  * Decompresses run-length encoded data.
  *
@@ -11,7 +22,8 @@ package net.flipper.bridge.connection.feature.screenstreaming.impl.delegates
 fun rleDecompress(data: ByteArray, blkSize: Int): ByteArray {
     var index = 0
     val dataLen = data.size
-    val decompressed = mutableListOf<Byte>()
+    var decompressed = ByteArray(0)
+    var size = 0
 
     while (index < dataLen) {
         val ctrlByte = data[index].toInt() and 0xFF
@@ -19,23 +31,32 @@ fun rleDecompress(data: ByteArray, blkSize: Int): ByteArray {
 
         if ((ctrlByte and 0x80) != 0) {
             // Unique blocks: ctrl_byte & 0x7F = unique sequence length
-            val count = ctrlByte and 0x7F
-            for (i in 0 until count * blkSize) {
-                decompressed.add(data[index + i])
-            }
-            index += count * blkSize
+            val byteCount = (ctrlByte and 0x7F) * blkSize
+            decompressed = decompressed.grownFor(size, size + byteCount)
+            data.copyInto(
+                destination = decompressed,
+                destinationOffset = size,
+                startIndex = index,
+                endIndex = index + byteCount
+            )
+            size += byteCount
+            index += byteCount
         } else {
             // Repeated block: ctrl_byte = repeat count
             val count = ctrlByte
-            val block = data.copyOfRange(index, index + blkSize)
+            decompressed = decompressed.grownFor(size, size + count * blkSize)
             repeat(count) {
-                for (j in 0 until blkSize) {
-                    decompressed.add(block[j])
-                }
+                data.copyInto(
+                    destination = decompressed,
+                    destinationOffset = size,
+                    startIndex = index,
+                    endIndex = index + blkSize
+                )
+                size += blkSize
             }
             index += blkSize
         }
     }
 
-    return decompressed.toByteArray()
+    return decompressed.copyOf(size)
 }

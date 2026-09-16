@@ -8,5 +8,5 @@ import kotlinx.io.files.Path
  * not keyed by bar.
  */
 interface DrawToolStoragePathProvider {
-    fun getPath(): Result<Path>
+    suspend fun getPath(): Result<Path>
 }

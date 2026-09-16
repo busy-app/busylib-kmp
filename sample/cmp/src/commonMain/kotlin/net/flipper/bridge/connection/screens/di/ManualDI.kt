@@ -34,6 +34,7 @@ import net.flipper.bridge.connection.utils.principal.impl.UserPrincipalApiSample
 import net.flipper.bridge.device.firmwareupdate.updater.api.FirmwareUpdaterApi
 import net.flipper.bsb.cloud.rest.channel.api.BusyFirmwareDirectoryChannelApi
 import net.flipper.busylib.BUSYLib
+import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 import net.flipper.core.busylib.ktx.io.SystemFlipperFileSystem
 import net.flipper.tools.drawtool.api.DrawToolStatusesApi
 import net.flipper.tools.drawtool.status.util.DrawToolStoredFileResolver
@@ -135,7 +136,10 @@ private fun getDrawToolViewModelFactory(
     val collectionSourceResolver = DrawToolCollectionSourceResolver(
         featureProvider = fFeatureProvider,
         clientStatusesApi = drawToolStatusesApi,
-        clientFileSystem = SystemFlipperFileSystem(delegate = SystemFileSystem),
+        clientFileSystem = SystemFlipperFileSystem(
+            delegate = SystemFileSystem,
+            dispatcher = FlipperDispatchers.default
+        ),
         storedFileResolver = DrawToolStoredFileResolver()
     )
     val statusWriter = DrawToolSampleStatusWriter()

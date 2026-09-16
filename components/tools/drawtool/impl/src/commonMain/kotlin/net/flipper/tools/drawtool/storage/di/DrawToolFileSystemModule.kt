@@ -6,6 +6,7 @@ import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
 import kotlinx.io.files.SystemFileSystem
 import net.flipper.busylib.core.di.BusyLibGraph
+import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 import net.flipper.core.busylib.ktx.io.FlipperFileSystem
 import net.flipper.core.busylib.ktx.io.SystemFlipperFileSystem
 
@@ -22,6 +23,9 @@ object DrawToolFileSystemModule {
     @SingleIn(BusyLibGraph::class)
     @ClientFileSystemQualifier
     fun provideSystemFlipperFileSystem(): FlipperFileSystem {
-        return SystemFlipperFileSystem(SystemFileSystem)
+        return SystemFlipperFileSystem(
+            delegate = SystemFileSystem,
+            dispatcher = FlipperDispatchers.default
+        )
     }
 }

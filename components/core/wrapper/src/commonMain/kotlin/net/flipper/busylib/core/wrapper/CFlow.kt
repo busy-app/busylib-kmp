@@ -1,7 +1,6 @@
 package net.flipper.busylib.core.wrapper
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalForInheritanceCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
@@ -12,13 +11,21 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
+import net.flipper.core.busylib.ktx.common.FlipperDispatchers
 
-private fun <T> Flow<T>.onEach(
+/**
+ * Deliberately not the main thread: Swift hands every value straight to an
+ * `AsyncStream` continuation, which is thread safe, and its consumer hops to
+ * whatever actor it belongs to on its own. Collecting on the main one would
+ * only add a dispatch per value, and would drag every upstream operator of a
+ * cold flow onto it.
+ */
+private fun <T> Flow<T>.subscribe(
     onEach: (T) -> Unit,
-    onComplete: () -> Unit = {},
-    onError: (Throwable) -> Unit = {}
+    onComplete: () -> Unit,
+    onError: (Throwable) -> Unit
 ): Closeable {
-    val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    val scope = CoroutineScope(SupervisorJob() + FlipperDispatchers.default)
 
     onEach(onEach)
         .catch { e ->
@@ -43,7 +50,9 @@ class WrappedFlow<T : Any?>(private val origin: Flow<T>) : Flow<T> by origin {
         onEach: (T) -> Unit,
         onComplete: () -> Unit = {},
         onError: (Throwable) -> Unit = {}
-    ): Closeable = origin.onEach(onEach, onComplete, onError)
+    ): Closeable {
+        return origin.subscribe(onEach, onComplete, onError)
+    }
 }
 
 @OptIn(ExperimentalForInheritanceCoroutinesApi::class)
@@ -52,7 +61,9 @@ class WrappedStateFlow<T : Any?>(private val origin: StateFlow<T>) : StateFlow<T
         onEach: (T) -> Unit,
         onComplete: () -> Unit = {},
         onError: (Throwable) -> Unit = {}
-    ): Closeable = origin.onEach(onEach, onComplete, onError)
+    ): Closeable {
+        return origin.subscribe(onEach, onComplete, onError)
+    }
 }
 
 @OptIn(ExperimentalForInheritanceCoroutinesApi::class)
@@ -61,7 +72,9 @@ class WrappedSharedFlow<T : Any?>(private val origin: SharedFlow<T>) : SharedFlo
         onEach: (T) -> Unit,
         onComplete: () -> Unit = {},
         onError: (Throwable) -> Unit = {}
-    ): Closeable = origin.onEach(onEach, onComplete, onError)
+    ): Closeable {
+        return origin.subscribe(onEach, onComplete, onError)
+    }
 }
 
 fun <T : Any?> StateFlow<T>.wrap(): WrappedStateFlow<T> = WrappedStateFlow(this)
