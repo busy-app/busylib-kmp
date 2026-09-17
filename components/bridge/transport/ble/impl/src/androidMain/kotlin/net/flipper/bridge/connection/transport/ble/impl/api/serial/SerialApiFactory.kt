@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.map
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceSerialConfig
 import net.flipper.bridge.connection.transport.ble.impl.serial.FSerialBleApi
 import net.flipper.core.busylib.log.LogTagProvider
+import net.flipper.core.busylib.log.info
 import no.nordicsemi.kotlin.ble.client.RemoteService
 
 @Inject
@@ -15,7 +16,7 @@ class SerialApiFactory(
 ) : LogTagProvider {
     override val TAG = "SerialApiCombinedFactory"
 
-    fun build(
+    suspend fun build(
         config: FBleDeviceSerialConfig,
         services: StateFlow<List<RemoteService>>,
         scope: CoroutineScope,
@@ -43,10 +44,13 @@ class SerialApiFactory(
             scope = scope
         )
 
-        return FAndroidSerialBleApiImpl(
+        val serialApi = FAndroidSerialBleApiImpl(
             scope = scope,
             unsafeSerialApi = unsafeApi,
             resetApi = resetApi
         )
+        unsafeApi.awaitReady()
+        info { "Serial api is ready to carry requests" }
+        return serialApi
     }
 }

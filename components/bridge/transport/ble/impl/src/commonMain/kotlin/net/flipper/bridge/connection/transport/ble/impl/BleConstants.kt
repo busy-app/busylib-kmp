@@ -7,4 +7,6 @@ object BleConstants {
     val DISCONNECT_TIME = 10.seconds
 
     val POLLING_RESET_INTERVAL = 5.seconds
+
+    val REQUEST_TIMEOUT = 10.seconds
 }
