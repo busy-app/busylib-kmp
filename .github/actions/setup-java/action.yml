@@ -1,4 +1,4 @@
-name: 'Setup Java'
+name: 'Set up Java'
 description: |
   Wraps actions/setup-java with a workaround for
   https://github.com/actions/setup-java/issues/530.
