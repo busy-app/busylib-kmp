@@ -1,37 +1,47 @@
-name: "Release in internal maven"
+name: Internal Maven release
 on:
   workflow_call:
     inputs:
       VERSION_NAME:
+        description: "Version name of the published artifacts"
         required: true
         type: string
       VERSION_CODE:
+        description: "Version code of the published artifacts"
         required: false
         type: string
         default: 1
       FLAVOR_TYPE:
+        description: "Value of the current_flavor_type Gradle property"
         required: true
         type: string
     secrets:
       ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEY:
+        description: "PGP key that signs the publications"
         required: true
       ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEYID:
+        description: "ID of the signing PGP key"
         required: true
       ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEYPASSWORD:
+        description: "Password of the signing PGP key"
         required: true
       ORG_GRADLE_PROJECT_FLIPPERMAVEN_USERNAME:
+        description: "User name of the Flipper Maven repository"
         required: true
       ORG_GRADLE_PROJECT_FLIPPERMAVEN_PASSWORD:
+        description: "Password of the Flipper Maven repository"
         required: true
     outputs:
       HASH_XCFRAMEWORK_DEBUG:
+        description: "SwiftPM checksum of the debug XCFramework zip"
         value: ${{ jobs.publish_internal.outputs.HASH_XCFRAMEWORK_DEBUG }}
       HASH_XCFRAMEWORK_RELEASE:
+        description: "SwiftPM checksum of the release XCFramework zip"
         value: ${{ jobs.publish_internal.outputs.HASH_XCFRAMEWORK_RELEASE }}
 
 jobs:
   publish_internal:
-    name: "Publish on Internal Maven"
+    name: Publish on Internal Maven
     runs-on: [ self-hosted, macOS ]
     env:
       ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEY }}
@@ -44,13 +54,14 @@ jobs:
       HASH_XCFRAMEWORK_DEBUG: ${{ steps.hashes.outputs.hash_debug }}
       HASH_XCFRAMEWORK_RELEASE: ${{ steps.hashes.outputs.hash_release }}
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: recursive
-      - name: Set up JDK 1.21
+      - name: Set up JDK 21
         uses: ./.github/actions/setup-java
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4.0.1
         with:
           # Pin to 16.0 (v3 default) — cmdline-tools 20.0 crashes on self-hosted macOS runners
           cmdline-tools-version: '12266719'
@@ -58,15 +69,15 @@ jobs:
           #  which Google removed from the SDK repo on 2026-09-15
           #  https://github.com/android-actions/setup-android/issues/537
           packages: 'platform-tools'
-      - name: Replace gradle properties with sed
+      - name: Set version in gradle.properties
         run: |
           sed -i -e 's/^klibs.project.version.string=.*$/klibs.project.version.string=${{ inputs.VERSION_NAME }}/g' gradle.properties
           sed -i -e 's/^klibs.project.version.code=.*$/klibs.project.version.code=${{ inputs.VERSION_CODE }}/g' gradle.properties
-      - name: Run publish
-        uses: gradle/gradle-build-action@ac2d340dc04d9e1113182899e983b5400c17cda1 # v3
+      - name: Publish to Flipper Maven
+        uses: gradle/gradle-build-action@ac2d340dc04d9e1113182899e983b5400c17cda1 # v3.5.0
         with:
           arguments: publishAllPublicationsToFlipperMavenRepository --stacktrace
-      - name: Print hashes
+      - name: Compute XCFramework checksums
         id: hashes
         run: |
           echo "hash_debug=$(swift package compute-checksum entrypoint/build/xcframework-zips/BusyLibKMP-debug.xcframework.zip)" >> "$GITHUB_OUTPUT"

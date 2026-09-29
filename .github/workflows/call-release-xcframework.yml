@@ -1,27 +1,30 @@
-name: "Release iOS XCFramework"
+name: XCFramework release
 
 on:
   workflow_call:
     inputs:
       VERSION_NAME:
+        description: "Version name of the release, also used as its Git tag"
         required: true
         type: string
       VERSION_CODE:
+        description: "Version code of the release"
         required: false
         type: string
 
 jobs:
   publish_xcframework:
-    name: "Publish XCFramework"
+    name: Publish XCFramework to GitHub
     runs-on: [ self-hosted, macOS ]
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: recursive
-      - name: Set up JDK 1.21
+      - name: Set up JDK 21
         uses: ./.github/actions/setup-java
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4.0.1
         with:
           # Pin to 16.0 (v3 default) — cmdline-tools 20.0 crashes on self-hosted macOS runners
           cmdline-tools-version: '12266719'
@@ -29,27 +32,27 @@ jobs:
           #  which Google removed from the SDK repo on 2026-09-15
           #  https://github.com/android-actions/setup-android/issues/537
           packages: 'platform-tools'
-      - name: Replace gradle properties with sed
+      - name: Set version in gradle.properties
         run: |
           sed -i -e 's/^klibs.project.version.string=.*$/klibs.project.version.string=${{ inputs.VERSION_NAME }}/g' gradle.properties
           sed -i -e 's/^klibs.project.version.code=.*$/klibs.project.version.code=${{ inputs.VERSION_CODE }}/g' gradle.properties
-      - name: Build release xcframework zip
+      - name: Build release XCFramework zip
         id: files_release
         run: |
           ./gradlew :entrypoint:zipXCFrameworkRelease --stacktrace
           echo "file_release=entrypoint/build/xcframework-zips/BusyLibKMP-release.xcframework.zip" >> "$GITHUB_OUTPUT"
         env:
           ORG_GRADLE_PROJECT_current_flavor_type: PROD
-      - name: Build debug xcframework zip
+      - name: Build debug XCFramework zip
         id: files_debug
         run: |
           ./gradlew :entrypoint:zipXCFrameworkDebug --stacktrace
           echo "file_debug=entrypoint/build/xcframework-zips/BusyLibKMP-debug.xcframework.zip" >> "$GITHUB_OUTPUT"
         env:
           ORG_GRADLE_PROJECT_current_flavor_type: DEBUG
-      - name: Publish release
+      - name: Create GitHub release
         id: create_release
-        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v2
+        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
