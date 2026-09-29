@@ -1,4 +1,4 @@
-name: Reposilite cleanup
+name: Clean Reposilite
 
 on:
   schedule:
@@ -12,16 +12,14 @@ on:
 
 jobs:
   scan:
-    name: Scan ${{ matrix.repo }}
+    name: "Scan: ${{ matrix.repo }}"
     runs-on: ubuntu-latest
     strategy:
       matrix:
         repo: [releases, snapshots]
     steps:
-      - name: Check out repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Set up Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: "3.12"
       - name: Scan for old artifacts
@@ -34,33 +32,28 @@ jobs:
             --exclude-file .github/workflows/reposilite-cleaner/exclude.txt \
             --output scan_result.csv \
             --cleanup-output cleanup_dirs.csv
-      - name: Upload scan result
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: scan-${{ matrix.repo }}
           path: scan_result.csv
-      - name: Upload cleanup list
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: cleanup-${{ matrix.repo }}
           path: cleanup_dirs.csv
 
   delete:
-    name: Delete old artifacts in ${{ matrix.repo }}
+    name: "Delete: ${{ matrix.repo }}"
     needs: scan
     runs-on: ubuntu-latest
     strategy:
       matrix:
         repo: [releases, snapshots]
     steps:
-      - name: Check out repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Set up Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: "3.12"
-      - name: Download scan result
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: scan-${{ matrix.repo }}
       - name: Delete old artifacts
@@ -69,21 +62,18 @@ jobs:
         run: python .github/workflows/reposilite-cleaner/delete.py --repo ${{ matrix.repo }} --input scan_result.csv
 
   cleanup:
-    name: Remove empty directories in ${{ matrix.repo }}
+    name: "Cleanup: ${{ matrix.repo }}"
     needs: scan
     runs-on: ubuntu-latest
     strategy:
       matrix:
         repo: [releases, snapshots]
     steps:
-      - name: Check out repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Set up Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: "3.12"
-      - name: Download cleanup list
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: cleanup-${{ matrix.repo }}
       - name: Remove empty directories
@@ -92,7 +82,7 @@ jobs:
         run: python .github/workflows/reposilite-cleaner/cleanup.py --repo ${{ matrix.repo }} --input cleanup_dirs.csv
 
   report:
-    name: Cleanup report
+    name: "Cleanup Report"
     needs: [delete, cleanup]
     if: always()
     runs-on: ubuntu-latest
@@ -100,14 +90,11 @@ jobs:
       contents: read
       actions: read
     steps:
-      - name: Check out repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Set up Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: "3.12"
-      - name: Download all results
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           path: artifacts
       - name: Generate report

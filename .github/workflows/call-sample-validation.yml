@@ -1,4 +1,4 @@
-name: Sample build
+name: "Sample build"
 on:
   workflow_call:
 
@@ -12,19 +12,18 @@ jobs:
             task: ":sample:cmp:jvmJar"
           - name: "Android"
             task: ":sample:android:assembleDebug"
-    name: Build sample (${{ matrix.name }})
+    name: "Build jvm sample:cmp (${{ matrix.name }})"
     runs-on: [ self-hosted, Linux, Android ]
     env:
       ORG_GRADLE_PROJECT_current_flavor_type: DEBUG
     steps:
-      - name: Check out repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           submodules: recursive
-      - name: Set up JDK 21
+      - name: Set up JDK 1.21
         uses: ./.github/actions/setup-java
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4.0.1
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4
         with:
           # Pin to 16.0 (v3 default) — cmdline-tools 20.0 crashes on self-hosted macOS runners
           cmdline-tools-version: '12266719'
@@ -32,10 +31,10 @@ jobs:
           #  which Google removed from the SDK repo on 2026-09-15
           #  https://github.com/android-actions/setup-android/issues/537
           packages: 'platform-tools'
-      - name: Make gradlew executable
+      - name: Give gradle permission
         run: chmod +x gradlew
-      - name: Build ${{ matrix.task }}
-        uses: gradle/gradle-build-action@ac2d340dc04d9e1113182899e983b5400c17cda1 # v3.5.0
+      - name: Build sample:cmp target
+        uses: gradle/gradle-build-action@ac2d340dc04d9e1113182899e983b5400c17cda1 # v3
         with:
           arguments: ${{ matrix.task }} --stacktrace
   sample_cmp_build_apple:
@@ -47,19 +46,18 @@ jobs:
             task: ":sample:cmp:linkDebugFrameworkIosFat"
           - name: "macOS"
             task: ":sample:cmp:linkDebugFrameworkOsxFat"
-    name: Build sample (${{ matrix.name }})
+    name: "Build apple sample:cmp (${{ matrix.name }})"
     runs-on: [ self-hosted, macOS ]
     env:
       ORG_GRADLE_PROJECT_current_flavor_type: DEBUG
     steps:
-      - name: Check out repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           submodules: recursive
-      - name: Set up JDK 21
+      - name: Set up JDK 1.21
         uses: ./.github/actions/setup-java
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4.0.1
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4
         with:
           # Pin to 16.0 (v3 default) — cmdline-tools 20.0 crashes on self-hosted macOS runners
           cmdline-tools-version: '12266719'
@@ -67,9 +65,9 @@ jobs:
           #  which Google removed from the SDK repo on 2026-09-15
           #  https://github.com/android-actions/setup-android/issues/537
           packages: 'platform-tools'
-      - name: Make gradlew executable
+      - name: Give gradle permission
         run: chmod +x gradlew
-      - name: Build ${{ matrix.task }}
-        uses: gradle/gradle-build-action@ac2d340dc04d9e1113182899e983b5400c17cda1 # v3.5.0
+      - name: Build sample:cmp target
+        uses: gradle/gradle-build-action@ac2d340dc04d9e1113182899e983b5400c17cda1 # v3
         with:
           arguments: ${{ matrix.task }} --stacktrace

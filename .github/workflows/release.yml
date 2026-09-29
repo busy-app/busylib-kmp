@@ -8,13 +8,13 @@ jobs:
   # ${{ needs.build_number.outputs.BUILD_NUMBER }}
   # ${{ needs.build_number.outputs.MAJOR_VERSION }}
   build_number:
-    name: Build number
+    name: "Create build number"
     uses: ./.github/workflows/call-build-number.yml
   gradle_validation:
-    name: Validate Gradle wrapper
+    name: Validate gradle wrapper
     uses: ./.github/workflows/call-gradle-wrapper-validation.yml
   release-central:
-    name: Maven Central release
+    name: Release Central
     needs: [ gradle_validation, build_number ]
     if: false
     uses: ./.github/workflows/call-release-central.yml
@@ -29,7 +29,7 @@ jobs:
       VERSION_CODE: ${{ needs.build_number.outputs.BUILD_NUMBER }}
       FLAVOR_TYPE: PROD
   release-internal:
-    name: Internal Maven release
+    name: Release Internal
     needs: [ gradle_validation, build_number ]
     uses: ./.github/workflows/call-release-internal.yml
     secrets:
@@ -43,7 +43,7 @@ jobs:
       VERSION_CODE: ${{ needs.build_number.outputs.BUILD_NUMBER }}
       FLAVOR_TYPE: PROD
   release-internal-debug:
-    name: Internal Maven debug release
+    name: Release Internal
     needs: [ gradle_validation, build_number ]
     uses: ./.github/workflows/call-release-internal.yml
     secrets:
@@ -57,7 +57,7 @@ jobs:
       VERSION_CODE: ${{ needs.build_number.outputs.BUILD_NUMBER }}
       FLAVOR_TYPE: DEBUG
   release-ios:
-    name: XCFramework release
+    name: Release Internal
     needs: [ gradle_validation, build_number ]
     uses: ./.github/workflows/call-release-xcframework.yml
     with:
