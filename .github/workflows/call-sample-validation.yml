@@ -43,10 +43,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # Compose Multiplatform no longer ships x64 Apple targets, so the sample links arm64 only
           - name: "iOS"
-            task: ":sample:cmp:linkDebugFrameworkIosFat"
+            task: ":sample:cmp:linkDebugFrameworkIosArm64 :sample:cmp:linkDebugFrameworkIosSimulatorArm64"
           - name: "macOS"
-            task: ":sample:cmp:linkDebugFrameworkOsxFat"
+            task: ":sample:cmp:linkDebugFrameworkMacosArm64"
     name: Build sample (${{ matrix.name }})
     runs-on: [ self-hosted, macOS ]
     env:

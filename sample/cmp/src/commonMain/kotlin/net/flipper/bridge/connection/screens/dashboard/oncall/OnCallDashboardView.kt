@@ -28,20 +28,35 @@ fun OnCallDashboardContent(
             title = "On-Call",
             modifier = Modifier.padding(horizontal = 16.dp)
         ) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(
-                    onClick = onStartOnCall,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text("Enable")
-                }
-                OutlinedButton(
-                    onClick = onStopOnCall,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text("Disable")
-                }
-            }
+            OnCallButtons(
+                onStartOnCall = onStartOnCall,
+                onStopOnCall = onStopOnCall
+            )
+        }
+    }
+}
+
+@Composable
+private fun OnCallButtons(
+    onStartOnCall: () -> Unit,
+    onStopOnCall: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Button(
+            onClick = onStartOnCall,
+            modifier = Modifier.weight(1f)
+        ) {
+            Text("Enable")
+        }
+        OutlinedButton(
+            onClick = onStopOnCall,
+            modifier = Modifier.weight(1f)
+        ) {
+            Text("Disable")
         }
     }
 }

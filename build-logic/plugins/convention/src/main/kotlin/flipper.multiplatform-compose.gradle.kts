@@ -1,6 +1,7 @@
 plugins {
-    id("flipper.multiplatform")
+    // Must be applied before flipper.multiplatform, see appleX64Enabled
     id("org.jetbrains.compose")
+    id("flipper.multiplatform")
     id("org.jetbrains.kotlin.plugin.compose")
 }
 

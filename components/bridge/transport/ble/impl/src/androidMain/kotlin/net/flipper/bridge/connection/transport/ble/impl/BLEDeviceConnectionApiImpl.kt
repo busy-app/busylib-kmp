@@ -42,7 +42,6 @@ import no.nordicsemi.kotlin.ble.client.RemoteService
 import no.nordicsemi.kotlin.ble.client.RemoteServices
 import no.nordicsemi.kotlin.ble.client.android.CentralManager
 import no.nordicsemi.kotlin.ble.client.android.Peripheral
-import no.nordicsemi.kotlin.ble.core.Phy
 import no.nordicsemi.kotlin.ble.core.exception.BluetoothException
 import no.nordicsemi.kotlin.ble.core.exception.GattException
 import kotlin.coroutines.cancellation.CancellationException
@@ -103,7 +102,6 @@ class BLEDeviceConnectionApiImpl(
             device,
             CentralManager.ConnectionOptions.Direct(
                 timeout = CONNECT_TIME,
-                preferredPhy = listOf(Phy.PHY_LE_2M),
                 automaticallyRequestHighestValueLength = false
             )
         )
