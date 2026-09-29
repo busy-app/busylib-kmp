@@ -1,29 +1,29 @@
 version: 2
+# Gradle and GitHub Actions updates are combined into a single pull request
+# https://docs.github.com/en/code-security/how-tos/secure-your-supply-chain/secure-your-dependencies/configuring-multi-ecosystem-updates
+multi-ecosystem-groups:
+  versions:
+    schedule:
+      interval: "monthly"
+      time: "08:00"
+      timezone: "Europe/Moscow"
+    open-pull-requests-limit: 1
 updates:
   - package-ecosystem: "gradle"
     directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "08:00"
-      timezone: "Europe/London"
-    open-pull-requests-limit: 1
+    patterns: [ "*" ]
+    multi-ecosystem-group: "versions"
     rebase-strategy: "disabled"
-    groups:
-      all-gradle-deps:
-        patterns:
-          - "*"
+    ignore:
+      # Dependabot doesn't support regex, so compat versions must be listed explicitly
+      - dependency-name: "org.jetbrains.kotlinx:kotlinx-datetime"
+        versions:
+          - "0.7.1-0.6.x-compat"
+          - "0.8.0-rc02-0.6.x-compat"
+          - "0.8.0-0.6.x-compat"
 
   - package-ecosystem: "github-actions"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "08:00"
-      timezone: "Europe/London"
-    open-pull-requests-limit: 1
+    directories: [ "/", "/.github/actions/*" ]
+    patterns: [ "*" ]
+    multi-ecosystem-group: "versions"
     rebase-strategy: "disabled"
-    groups:
-      all-actions:
-        patterns:
-          - "*"
