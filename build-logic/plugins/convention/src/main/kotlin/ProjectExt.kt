@@ -24,10 +24,12 @@ val Project.macOSEnabled: Boolean
         ?.toBoolean()
         ?: true
 
-// Compose Multiplatform 1.12+ no longer publishes iosX64/macosX64 artifacts,
-// so modules with the Compose plugin skip the x64 Apple targets.
 val Project.appleX64Enabled: Boolean
-    get() = !pluginManager.hasPlugin("org.jetbrains.compose")
+    get() = AnyPropertyValue(this, "flipper.appleX64Enabled")
+        .getValue()
+        .getOrNull()
+        ?.toBoolean()
+        ?: true
 
 val Project.signPublications: Boolean
     get() = SecretPropertyValue(this, "flipper.signPublications")
