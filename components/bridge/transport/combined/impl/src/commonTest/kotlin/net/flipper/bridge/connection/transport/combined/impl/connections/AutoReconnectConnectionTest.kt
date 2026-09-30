@@ -1,5 +1,6 @@
 package net.flipper.bridge.connection.transport.combined.impl.connections
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
@@ -783,6 +784,35 @@ class AutoReconnectConnectionTest {
             attemptsBefore,
             connectionBuilder.connectAttempts,
             "No more attempts after parent cancelled"
+        )
+    }
+
+    @Test
+    fun GIVEN_connect_attempt_cancelled_WHEN_backoff_elapses_THEN_next_attempt_is_made() = runTest {
+        // Given
+        val testDispatcher = StandardTestDispatcher(testScheduler)
+        val connectionBuilder = MockConnectionBuilder()
+        connectionBuilder.onConnectCallback = {
+            if (connectionBuilder.connectAttempts == 1) {
+                throw CancellationException("Transport cancelled connect")
+            }
+        }
+
+        // When
+        AutoReconnectConnection(
+            scope = backgroundScope,
+            initialConfig = TestConfig(),
+            connectionBuilder = connectionBuilder,
+            dispatcher = testDispatcher
+        )
+        advanceTimeBy(5.seconds)
+        advanceUntilIdle()
+
+        // Then
+        assertEquals(
+            2,
+            connectionBuilder.connectAttempts,
+            "A cancelled attempt must not stall the reconnect loop"
         )
     }
 

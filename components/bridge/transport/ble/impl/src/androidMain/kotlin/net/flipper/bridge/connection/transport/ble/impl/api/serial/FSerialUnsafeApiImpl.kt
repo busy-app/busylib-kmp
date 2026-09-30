@@ -86,8 +86,12 @@ class FSerialUnsafeApiImpl(
         return receiverByteFlow.asSharedFlow()
     }
 
+    suspend fun awaitReady() {
+        isSubscribed.waitUntil { subscribed -> subscribed }
+    }
+
     suspend fun sendBytes(data: ByteArray) {
-        isSubscribed.waitUntil { it }
+        awaitReady()
 
         if (context.checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
             throw BLEConnectionPermissionException()

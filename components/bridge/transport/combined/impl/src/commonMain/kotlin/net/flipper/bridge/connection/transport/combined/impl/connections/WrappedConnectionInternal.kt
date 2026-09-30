@@ -71,18 +71,19 @@ internal class WrappedConnectionInternal(
     private fun initConnectionApi() {
         scope.launch {
             info { "#init connect connectionApi with config $config" }
-            val connectionApiResult = connectionBuilder.connect(
-                scope = scope,
-                config = config,
-                listener = this@WrappedConnectionInternal
-            )
-            val exception = connectionApiResult.exceptionOrNull()
-            if (exception is CancellationException) {
-                throw exception
+            try {
+                connectionApi = connectionBuilder.connect(
+                    scope = scope,
+                    config = config,
+                    listener = this@WrappedConnectionInternal
+                )
+                    .onFailure { t -> error(t) { "Could not build connectionApi" } }
+                    .getOrThrow()
+            } catch (t: CancellationException) {
+                info { "#init connect attempt for $config was cancelled" }
+                scope.cancel(t)
+                throw t
             }
-            connectionApi = connectionApiResult
-                .onFailure { t -> error(t) { "Could not build connectionApi" } }
-                .getOrThrow()
         }
     }
 
