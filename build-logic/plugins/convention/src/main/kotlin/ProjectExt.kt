@@ -24,6 +24,13 @@ val Project.macOSEnabled: Boolean
         ?.toBoolean()
         ?: true
 
+val Project.appleX64Enabled: Boolean
+    get() = AnyPropertyValue(this, "flipper.appleX64Enabled")
+        .getValue()
+        .getOrNull()
+        ?.toBoolean()
+        ?: true
+
 val Project.signPublications: Boolean
     get() = SecretPropertyValue(this, "flipper.signPublications")
         .getValue()

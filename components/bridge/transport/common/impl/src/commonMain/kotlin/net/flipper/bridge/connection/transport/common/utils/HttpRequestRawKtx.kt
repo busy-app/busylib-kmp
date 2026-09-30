@@ -10,8 +10,7 @@ import io.ktor.utils.io.ByteChannel
 import io.ktor.utils.io.core.BytePacketBuilder
 import io.ktor.utils.io.core.append
 import io.ktor.utils.io.core.build
-import io.ktor.utils.io.core.readBytes
-import io.ktor.utils.io.readRemaining
+import io.ktor.utils.io.readBuffer
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.io.readByteArray
@@ -89,7 +88,7 @@ private suspend fun HttpRequestData.captureBodyBytes(): Pair<ByteArray, Outgoing
 private suspend fun OutgoingContent.toByteArray(): ByteArray = when (this) {
     is OutgoingContent.NoContent -> ByteArray(0)
     is OutgoingContent.ByteArrayContent -> bytes()
-    is OutgoingContent.ReadChannelContent -> readFrom().readRemaining().readBytes()
+    is OutgoingContent.ReadChannelContent -> readFrom().readBuffer().readByteArray()
     is OutgoingContent.WriteChannelContent -> {
         val ch = ByteChannel(autoFlush = true)
         coroutineScope {
@@ -97,7 +96,7 @@ private suspend fun OutgoingContent.toByteArray(): ByteArray = when (this) {
                 writeTo(ch)
                 ch.close()
             }
-            val out = ch.readRemaining().readBytes()
+            val out = ch.readBuffer().readByteArray()
             w.join()
             out
         }

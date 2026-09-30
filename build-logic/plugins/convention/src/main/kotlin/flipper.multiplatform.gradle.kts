@@ -20,11 +20,15 @@ kotlin {
     jvm()
     androidLibrary {}
     if (appleEnabled) {
-        iosX64()
+        if (appleX64Enabled) {
+            iosX64()
+        }
         iosArm64()
         iosSimulatorArm64()
         if (macOSEnabled) {
-            macosX64()
+            if (appleX64Enabled) {
+                macosX64()
+            }
             macosArm64()
         }
     }
