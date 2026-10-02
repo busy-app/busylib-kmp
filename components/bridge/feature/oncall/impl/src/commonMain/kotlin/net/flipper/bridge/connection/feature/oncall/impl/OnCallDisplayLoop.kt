@@ -1,5 +1,8 @@
 package net.flipper.bridge.connection.feature.oncall.impl
 
+import dev.zacsweers.metro.Assisted
+import dev.zacsweers.metro.AssistedFactory
+import dev.zacsweers.metro.AssistedInject
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
@@ -12,8 +15,9 @@ import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
 import kotlin.time.Duration.Companion.seconds
 
+@AssistedInject
 class OnCallDisplayLoop(
-    private val rpcAssetsApi: FRpcAssetsApi
+    @Assisted private val rpcAssetsApi: FRpcAssetsApi
 ) : LogTagProvider {
     override val TAG: String = "OnCallDisplayLoop"
 
@@ -39,20 +43,26 @@ class OnCallDisplayLoop(
     }
 
     suspend fun run() {
-        try {
-            while (currentCoroutineContext().isActive) {
-                rpcAssetsApi
-                    .displayDraw(createDrawRequest())
-                    .onFailure { t -> error(t) { "Failed to display draw" } }
-                delay(UPDATE_DELAY)
-            }
-        } finally {
-            withContext(NonCancellable) {
-                withTimeoutOrNull(STOP_TIMEOUT) {
-                    performStopAttempt()
-                }
+        while (currentCoroutineContext().isActive) {
+            rpcAssetsApi
+                .displayDraw(createDrawRequest())
+                .onFailure { t -> error(t) { "Failed to display draw" } }
+            delay(UPDATE_DELAY)
+        }
+    }
+
+    suspend fun clear() {
+        withContext(NonCancellable) {
+            withTimeoutOrNull(STOP_TIMEOUT) {
+                performStopAttempt()
+                    .onFailure { t -> error(t) { "Failed to remove draw" } }
             }
         }
+    }
+
+    @AssistedFactory
+    fun interface Factory {
+        operator fun invoke(rpcAssetsApi: FRpcAssetsApi): OnCallDisplayLoop
     }
 
     companion object {
