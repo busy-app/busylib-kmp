@@ -6,6 +6,9 @@ import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.binding
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.dropWhile
+import kotlinx.coroutines.flow.launchIn
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureKey
@@ -14,9 +17,7 @@ import net.flipper.bridge.connection.feature.oncall.api.FOnCallFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.busylib.core.di.BusyLibGraph
-import net.flipper.core.busylib.ktx.common.SingleJobMode
-import net.flipper.core.busylib.ktx.common.asSingleJobScope
-import net.flipper.core.busylib.ktx.common.cancelPrevious
+import net.flipper.core.busylib.ktx.common.onLatest
 import net.flipper.core.busylib.log.LogTagProvider
 
 @AssistedInject
@@ -28,16 +29,23 @@ class FOnCallFeatureApiImpl(
     override val TAG: String = "FOnCallFeatureApi"
 
     private val displayLoop = OnCallDisplayLoop(rpcFeatureApi.fRpcAssetsApi)
-    private val singleJobScope = scope.asSingleJobScope()
+    private val isOnCallFlow = MutableStateFlow(false)
+
+    init {
+        isOnCallFlow
+            .dropWhile { isOnCall -> !isOnCall }
+            .onLatest { isOnCall ->
+                if (isOnCall) displayLoop.run() else displayLoop.clear()
+            }
+            .launchIn(scope)
+    }
 
     override fun start() {
-        singleJobScope.launch(SingleJobMode.SKIP_IF_RUNNING) {
-            displayLoop.run()
-        }
+        isOnCallFlow.value = true
     }
 
     override fun stop() {
-        singleJobScope.cancelPrevious()
+        isOnCallFlow.value = false
     }
 
     @Inject
