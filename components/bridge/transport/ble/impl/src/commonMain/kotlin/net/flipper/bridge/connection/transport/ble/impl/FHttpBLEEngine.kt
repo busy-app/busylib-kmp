@@ -31,6 +31,7 @@ import kotlinx.io.InternalIoApi
 import kotlinx.io.Source
 import kotlinx.io.readByteArray
 import net.flipper.bridge.connection.transport.ble.impl.exception.BadHttpResponseException
+import net.flipper.bridge.connection.transport.ble.impl.exception.DeviceNotRespondingException
 import net.flipper.bridge.connection.transport.ble.impl.serial.FSerialBleApi
 import net.flipper.bridge.connection.transport.common.api.serial.attributes.IgnoreRequestTimeoutKey
 import net.flipper.bridge.connection.transport.common.utils.toRawHttpRequest
@@ -41,12 +42,11 @@ import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
 import net.flipper.core.busylib.log.verbose
 import kotlin.coroutines.CoroutineContext
-import kotlin.time.Duration.Companion.seconds
-
-private val REQUEST_TIMEOUT = 10.seconds
+import kotlin.time.Duration
 
 class FHttpBLEEngine(
     private val serialApi: FSerialBleApi,
+    private val requestTimeout: Duration,
 ) : HttpClientEngineBase("ble-serial"), LogTagProvider {
     private var requestCount = 0
     override val TAG = "FHttpBLEEngine"
@@ -83,7 +83,7 @@ class FHttpBLEEngine(
             val result = sendBytes(rawBytes, channel, requestTime, withTimeout = withTimeout)
             return@withLockResult if (result == null) {
                 error {
-                    "Failed to wait ${REQUEST_TIMEOUT.inWholeSeconds} seconds for response," +
+                    "Failed to wait ${requestTimeout.inWholeSeconds} seconds for response," +
                         " try to make this request again after reset"
                 }
                 resetSerialApi()
@@ -107,7 +107,7 @@ class FHttpBLEEngine(
     ): HttpResponseData? {
         return withContext(NonCancellable) {
             if (withTimeout) {
-                withTimeoutOrNull(REQUEST_TIMEOUT) {
+                withTimeoutOrNull(requestTimeout) {
                     sendBytesUnsafe(bytes, channel, requestTime)
                 }
             } else {
@@ -133,13 +133,20 @@ class FHttpBLEEngine(
         return response
     }
 
+    private suspend fun <T> withLinkDeadline(operation: String, block: suspend () -> T): T {
+        return withTimeoutOrNull(requestTimeout) { block() }
+            ?: throw DeviceNotRespondingException(operation)
+    }
+
     private suspend fun resetSerialApi() {
-        serialApi.reset()
+        withLinkDeadline("reset handshake") { serialApi.reset() }
         requestCount = 0
     }
 
     private suspend fun checkRequestCountUnsafe() {
-        val deviceRequestCount = serialApi.getRequestCounterFlow().first()
+        val deviceRequestCount = withLinkDeadline("request counter") {
+            serialApi.getRequestCounterFlow().first()
+        }
         if (requestCount < deviceRequestCount) {
             error { "Received request count: $deviceRequestCount, but current request count is $requestCount" }
             resetSerialApi()
