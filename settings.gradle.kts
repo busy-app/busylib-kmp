@@ -144,6 +144,9 @@ include(
     ":components:tools:drawtool:api",
     ":components:tools:drawtool:impl",
 
+    ":components:tools:debug:api",
+    ":components:tools:debug:impl",
+
     ":components:watchers:api",
     ":components:watchers:changename",
     ":components:watchers:provisioning",

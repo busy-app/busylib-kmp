@@ -19,6 +19,7 @@ import net.flipper.bsb.cloud.rest.channel.api.BusyFirmwareDirectoryChannelApi
 import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
 import net.flipper.busylib.di.BUSYLibGraphDesktop
 import net.flipper.eventbus.api.EventBusApi
+import net.flipper.tools.debug.api.api.DebugToolsApi
 import net.flipper.tools.drawtool.api.DrawToolStatusesApi
 import net.flipper.tools.drawtool.api.DrawToolSyncApi
 import net.flipper.tools.multistream.api.MultiStreamApi
@@ -36,7 +37,8 @@ class BUSYLibDesktop(
     override val drawToolSyncApi: DrawToolSyncApi,
     private val startUpListeners: Set<InternalBUSYLibStartupListener>,
     override val busyFirmwareDirectoryChannelApi: BusyFirmwareDirectoryChannelApi,
-    override val eventBus: EventBusApi
+    override val eventBus: EventBusApi,
+    override val debugToolsApi: DebugToolsApi
 ) : BUSYLib {
     override fun launch() {
         startUpListeners.forEach {

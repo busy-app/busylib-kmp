@@ -18,6 +18,7 @@ import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
 import net.flipper.busylib.di.BUSYLibGraphMacOS
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.eventbus.api.EventBusApi
+import net.flipper.tools.debug.api.api.DebugToolsApi
 import net.flipper.tools.drawtool.api.DrawToolStatusesApi
 import net.flipper.tools.drawtool.api.DrawToolSyncApi
 import net.flipper.tools.multistream.api.MultiStreamApi
@@ -36,7 +37,8 @@ class BUSYLibMacOS(
     private val startUpListeners: Set<InternalBUSYLibStartupListener>,
     val onCallSingletonApi: OnCallSingletonApi,
     override val busyFirmwareDirectoryChannelApi: BusyFirmwareDirectoryChannelApi,
-    override val eventBus: EventBusApi
+    override val eventBus: EventBusApi,
+    override val debugToolsApi: DebugToolsApi
 ) : BUSYLibApple, LogTagProvider {
     override val TAG = "BUSYLib"
     override fun launch() {

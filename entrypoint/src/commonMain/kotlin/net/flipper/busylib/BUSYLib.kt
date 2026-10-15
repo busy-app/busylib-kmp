@@ -7,6 +7,7 @@ import net.flipper.bridge.connection.service.api.FConnectionService
 import net.flipper.bridge.device.firmwareupdate.updater.api.FirmwareUpdaterApi
 import net.flipper.bsb.cloud.rest.channel.api.BusyFirmwareDirectoryChannelApi
 import net.flipper.eventbus.api.EventBusApi
+import net.flipper.tools.debug.api.api.DebugToolsApi
 import net.flipper.tools.drawtool.api.DrawToolStatusesApi
 import net.flipper.tools.drawtool.api.DrawToolSyncApi
 import net.flipper.tools.multistream.api.MultiStreamApi
@@ -22,6 +23,7 @@ interface BUSYLib {
     val drawToolSyncApi: DrawToolSyncApi
     val busyFirmwareDirectoryChannelApi: BusyFirmwareDirectoryChannelApi
     val eventBus: EventBusApi
+    val debugToolsApi: DebugToolsApi
 
     fun launch()
 }

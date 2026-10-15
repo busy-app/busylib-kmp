@@ -21,6 +21,7 @@ import net.flipper.bsb.cloud.rest.channel.api.BusyFirmwareDirectoryChannelApi
 import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
 import net.flipper.busylib.di.BUSYLibGraphAndroid
 import net.flipper.eventbus.api.EventBusApi
+import net.flipper.tools.debug.api.api.DebugToolsApi
 import net.flipper.tools.drawtool.api.DrawToolStatusesApi
 import net.flipper.tools.drawtool.api.DrawToolSyncApi
 import net.flipper.tools.multistream.api.MultiStreamApi
@@ -39,6 +40,7 @@ class BUSYLibAndroid(
     override val drawToolSyncApi: DrawToolSyncApi,
     override val busyFirmwareDirectoryChannelApi: BusyFirmwareDirectoryChannelApi,
     override val eventBus: EventBusApi,
+    override val debugToolsApi: DebugToolsApi,
     val flipperScanner: FlipperScanner,
     val centralManager: CentralManager,
     private val startUpListeners: Set<InternalBUSYLibStartupListener>
