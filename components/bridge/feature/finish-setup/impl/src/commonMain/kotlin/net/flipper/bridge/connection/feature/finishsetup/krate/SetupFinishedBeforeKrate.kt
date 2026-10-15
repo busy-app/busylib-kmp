@@ -17,7 +17,6 @@ private const val KEY = "setup_was_finished_before"
  */
 interface SetupFinishedBeforeKrate : StateFlowSuspendMutableKrate<Boolean>
 
-// Single instance: the debug reset has to hit the cache the finish-setup feature observes
 @Inject
 @SingleIn(BusyLibGraph::class)
 @ContributesBinding(BusyLibGraph::class, binding<SetupFinishedBeforeKrate>())

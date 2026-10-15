@@ -21,7 +21,6 @@ kotlin {
         implementation(projects.components.bridge.transport.common.api)
 
         implementation(projects.components.bridge.feature.rpc.api)
-        implementation(projects.components.tools.debug.api)
 
         implementation(libs.kotlin.coroutines)
         implementation(libs.kotlin.serialization.json)
