@@ -3,6 +3,7 @@ package net.flipper.bridge.connection.feature.finishsetup.krate
 import com.russhwolf.settings.Settings
 import dev.zacsweers.metro.ContributesBinding
 import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 import dev.zacsweers.metro.binding
 import net.flipper.busylib.core.di.BusyLibGraph
 import ru.astrainteractive.klibs.kstorage.suspend.StateFlowSuspendMutableKrate
@@ -16,7 +17,9 @@ private const val KEY = "setup_was_finished_before"
  */
 interface SetupFinishedBeforeKrate : StateFlowSuspendMutableKrate<Boolean>
 
+// Single instance: the debug reset has to hit the cache the finish-setup feature observes
 @Inject
+@SingleIn(BusyLibGraph::class)
 @ContributesBinding(BusyLibGraph::class, binding<SetupFinishedBeforeKrate>())
 class SetupFinishedBeforeKrateImpl(
     private val settings: Settings
