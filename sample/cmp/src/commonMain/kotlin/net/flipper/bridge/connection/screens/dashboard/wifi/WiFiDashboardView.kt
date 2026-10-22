@@ -42,7 +42,7 @@ fun WiFiDashboardContent(
         ) {
             val connected = status as? BsbWifiStatus.Connected
             DashboardInfoRow(label = "State", value = status?.stateLabel().orUnavailable())
-            DashboardInfoRow(label = "SSID", value = connected?.ssid.orUnavailable())
+            DashboardInfoRow(label = "SSID", value = status?.ssid().orUnavailable())
             DashboardInfoRow(label = "RSSI", value = connected?.rssi?.toString().orUnavailable())
             DashboardInfoRow(label = "Channel", value = connected?.channel?.toString().orUnavailable())
             DashboardInfoRow(label = "IP", value = connected?.ipConfig?.address.orUnavailable())
@@ -94,11 +94,20 @@ private fun WiFiSecurity.label(): String = when (this) {
     is WiFiSecurity.Other -> "Other(${internalWifiSecurity.name})"
 }
 
+private fun BsbWifiStatus.ssid(): String? = when (this) {
+    is BsbWifiStatus.Connected -> ssid
+    is BsbWifiStatus.Connecting -> ssid
+    is BsbWifiStatus.Disconnecting -> ssid
+    is BsbWifiStatus.Reconnecting -> ssid
+    BsbWifiStatus.Disconnected,
+    BsbWifiStatus.Unknown -> null
+}
+
 private fun BsbWifiStatus.stateLabel(): String = when (this) {
     is BsbWifiStatus.Connected -> "CONNECTED"
-    BsbWifiStatus.Connecting -> "CONNECTING"
+    is BsbWifiStatus.Connecting -> "CONNECTING"
     BsbWifiStatus.Disconnected -> "DISCONNECTED"
-    BsbWifiStatus.Disconnecting -> "DISCONNECTING"
-    BsbWifiStatus.Reconnecting -> "RECONNECTING"
+    is BsbWifiStatus.Disconnecting -> "DISCONNECTING"
+    is BsbWifiStatus.Reconnecting -> "RECONNECTING"
     BsbWifiStatus.Unknown -> "UNKNOWN"
 }

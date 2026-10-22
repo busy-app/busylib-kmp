@@ -18,7 +18,7 @@ sealed interface BsbWifiStatus {
 
     data object Unknown : BsbWifiStatus
     data object Disconnected : BsbWifiStatus
-    data object Connecting : BsbWifiStatus
-    data object Disconnecting : BsbWifiStatus
-    data object Reconnecting : BsbWifiStatus
+    data class Connecting(val ssid: String?) : BsbWifiStatus
+    data class Disconnecting(val ssid: String?) : BsbWifiStatus
+    data class Reconnecting(val ssid: String?) : BsbWifiStatus
 }
