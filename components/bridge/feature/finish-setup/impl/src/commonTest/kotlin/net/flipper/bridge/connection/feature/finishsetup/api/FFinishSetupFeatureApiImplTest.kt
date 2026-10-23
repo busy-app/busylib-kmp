@@ -294,7 +294,7 @@ class FFinishSetupFeatureApiImplTest {
             scope = backgroundScope,
             fBleFeatureApi = FakeBleFeatureApi(FBleStatus.Connected("AA:BB:CC")),
             linkedAccountInfo = LinkedAccountInfo.NotLinked,
-            wifiStatus = BsbWifiStatus.Connecting,
+            wifiStatus = BsbWifiStatus.Connecting(ssid = null),
             updateVersion = BsbUpdateVersion.NoUpdateAvailable,
             isSetupFinishedBefore = false
         )
@@ -309,7 +309,7 @@ class FFinishSetupFeatureApiImplTest {
             scope = backgroundScope,
             fBleFeatureApi = FakeBleFeatureApi(FBleStatus.Connected("AA:BB:CC")),
             linkedAccountInfo = LinkedAccountInfo.Linked.SameUser(testUuid, "a@b.com"),
-            wifiStatus = BsbWifiStatus.Reconnecting,
+            wifiStatus = BsbWifiStatus.Reconnecting(ssid = null),
             updateVersion = BsbUpdateVersion.NoUpdateAvailable,
             isSetupFinishedBefore = false
         )
@@ -472,7 +472,7 @@ class FFinishSetupFeatureApiImplTest {
             scope = backgroundScope,
             fBleFeatureApi = FakeBleFeatureApi(FBleStatus.Connected("AA:BB:CC")),
             linkedAccountInfo = LinkedAccountInfo.NotLinked,
-            wifiStatus = BsbWifiStatus.Disconnecting,
+            wifiStatus = BsbWifiStatus.Disconnecting(ssid = null),
             updateVersion = availableUpdate,
             isSetupFinishedBefore = false
         )
@@ -629,7 +629,7 @@ class FFinishSetupFeatureApiImplTest {
             scope = backgroundScope,
             fBleFeatureApi = FakeBleFeatureApi(FBleStatus.Connected("AA:BB:CC")),
             linkedAccountInfo = LinkedAccountInfo.Linked.DifferentUser(testUuid, "x@y.com"),
-            wifiStatus = BsbWifiStatus.Disconnecting,
+            wifiStatus = BsbWifiStatus.Disconnecting(ssid = null),
             updateVersion = availableUpdate,
             isSetupFinishedBefore = false
         )
@@ -753,7 +753,7 @@ class FFinishSetupFeatureApiImplTest {
             scope = backgroundScope,
             fBleFeatureApi = FakeBleFeatureApi(FBleStatus.Connected("AA:BB:CC")),
             linkedAccountInfo = LinkedAccountInfo.Linked.SameUser(testUuid, "a@b.com"),
-            wifiStatus = BsbWifiStatus.Disconnecting,
+            wifiStatus = BsbWifiStatus.Disconnecting(ssid = null),
             updateVersion = availableUpdate,
             isSetupFinishedBefore = false
         )

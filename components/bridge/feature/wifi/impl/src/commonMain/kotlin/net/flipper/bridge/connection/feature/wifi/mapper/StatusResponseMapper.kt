@@ -11,9 +11,9 @@ internal fun StatusResponse.toBsbWifiStatusResponse(): BsbWifiStatus {
     return when (state) {
         StatusResponse.State.UNKNOWN -> BsbWifiStatus.Unknown
         StatusResponse.State.DISCONNECTED -> BsbWifiStatus.Disconnected
-        StatusResponse.State.CONNECTING -> BsbWifiStatus.Connecting
-        StatusResponse.State.DISCONNECTING -> BsbWifiStatus.Disconnecting
-        StatusResponse.State.RECONNECTING -> BsbWifiStatus.Reconnecting
+        StatusResponse.State.CONNECTING -> BsbWifiStatus.Connecting(ssid = ssid)
+        StatusResponse.State.DISCONNECTING -> BsbWifiStatus.Disconnecting(ssid = ssid)
+        StatusResponse.State.RECONNECTING -> BsbWifiStatus.Reconnecting(ssid = ssid)
         StatusResponse.State.CONNECTED -> BsbWifiStatus.Connected(
             ssid = ssid,
             bssid = bssid,

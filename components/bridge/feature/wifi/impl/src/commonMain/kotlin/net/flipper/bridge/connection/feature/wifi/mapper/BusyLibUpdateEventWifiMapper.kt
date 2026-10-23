@@ -11,9 +11,15 @@ internal fun BusyLibUpdateEvent.Wifi.toBsbWifiStatusResponse(): BsbWifiStatus {
         BusyLibUpdateEvent.Wifi.State.Disconnected -> BsbWifiStatus.Disconnected
         BusyLibUpdateEvent.Wifi.State.Unknown -> BsbWifiStatus.Unknown
         is BusyLibUpdateEvent.Wifi.State.Connected -> when (localState.status) {
-            BusyLibUpdateEvent.Wifi.State.Connected.Status.CONNECTING -> BsbWifiStatus.Connecting
-            BusyLibUpdateEvent.Wifi.State.Connected.Status.DISCONNECTING -> BsbWifiStatus.Disconnecting
-            BusyLibUpdateEvent.Wifi.State.Connected.Status.RECONNECTING -> BsbWifiStatus.Reconnecting
+            BusyLibUpdateEvent.Wifi.State.Connected.Status.CONNECTING -> BsbWifiStatus.Connecting(
+                ssid = localState.ssid
+            )
+            BusyLibUpdateEvent.Wifi.State.Connected.Status.DISCONNECTING -> BsbWifiStatus.Disconnecting(
+                ssid = localState.ssid
+            )
+            BusyLibUpdateEvent.Wifi.State.Connected.Status.RECONNECTING -> BsbWifiStatus.Reconnecting(
+                ssid = localState.ssid
+            )
             BusyLibUpdateEvent.Wifi.State.Connected.Status.CONNECTED -> mapConnected(
                 state = localState,
                 ipAddress = ips.firstOrNull()

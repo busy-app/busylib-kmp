@@ -89,9 +89,9 @@ class FFinishSetupFeatureApiImpl(
             status = when (wifiStatus) {
                 is BsbWifiStatus.Connected -> DeviceSetupTaskStatus.COMPLETED
                 BsbWifiStatus.Disconnected -> DeviceSetupTaskStatus.NOT_COMPLETED
-                BsbWifiStatus.Connecting,
-                BsbWifiStatus.Disconnecting,
-                BsbWifiStatus.Reconnecting,
+                is BsbWifiStatus.Connecting,
+                is BsbWifiStatus.Disconnecting,
+                is BsbWifiStatus.Reconnecting,
                 BsbWifiStatus.Unknown -> DeviceSetupTaskStatus.NOT_AVAILABLE
             },
         )
@@ -182,15 +182,15 @@ class FFinishSetupFeatureApiImpl(
                 }
                 if (!tasksDependencies.isLanConnection) {
                     when (wifiStatus) {
-                        BsbWifiStatus.Connecting,
-                        BsbWifiStatus.Reconnecting -> {
+                        is BsbWifiStatus.Connecting,
+                        is BsbWifiStatus.Reconnecting -> {
                             verbose { "#taskListResourceFlow WIFI not initialized yet" }
                             return@throttleLatest FFinishSetupState.Loading
                         }
 
                         is BsbWifiStatus.Connected,
                         BsbWifiStatus.Disconnected,
-                        BsbWifiStatus.Disconnecting,
+                        is BsbWifiStatus.Disconnecting,
                         BsbWifiStatus.Unknown -> Unit
                     }
                 }
