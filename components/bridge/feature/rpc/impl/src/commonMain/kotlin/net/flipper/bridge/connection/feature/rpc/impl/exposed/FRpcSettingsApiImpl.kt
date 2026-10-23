@@ -7,9 +7,12 @@ import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import kotlinx.coroutines.CoroutineDispatcher
+import net.flipper.bridge.connection.feature.rpc.api.exception.DeviceNameRejectedException
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcSettingsApi
+import net.flipper.bridge.connection.feature.rpc.api.model.ApiResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.AudioVolumeInfo
 import net.flipper.bridge.connection.feature.rpc.api.model.DisplayBrightnessInfo
+import net.flipper.bridge.connection.feature.rpc.api.model.ErrorResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.NameInfo
 import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
 import net.flipper.core.busylib.ktx.common.cache.ObjectCache
@@ -30,10 +33,14 @@ class FRpcSettingsApiImpl(
     }
 
     override suspend fun setName(body: NameInfo): Result<SuccessResponse> {
-        return runSuspendCatching(dispatcher) {
+        val response = runSuspendCatching(dispatcher) {
             httpClient.post("/api/name") {
                 setBody(body)
-            }.body<SuccessResponse>()
+            }.body<ApiResponse>()
+        }.getOrElse { error -> return Result.failure(error) }
+        return when (response) {
+            is SuccessResponse -> Result.success(response)
+            is ErrorResponse -> Result.failure(DeviceNameRejectedException(response.error))
         }
     }
 
