@@ -20,6 +20,7 @@ import net.flipper.bridge.connection.feature.rpc.api.model.AudioVolumeInfo
 import net.flipper.bridge.connection.feature.rpc.api.model.NameInfo
 import net.flipper.bridge.connection.feature.settings.mapper.toBsbBrightnessInfo
 import net.flipper.bridge.connection.feature.settings.mapper.toBsbVolume
+import net.flipper.bridge.connection.feature.settings.mapper.toDeviceNameError
 import net.flipper.bridge.connection.feature.settings.mapper.toDisplayBrightnessInfo
 import net.flipper.bridge.connection.feature.settings.model.BsbBrightness
 import net.flipper.bridge.connection.feature.settings.model.BsbBrightnessInfo
@@ -159,6 +160,10 @@ class FSettingsFeatureApiImpl(
                 val event = BusyLibUpdateEvent.DeviceName(model)
                 fEventsFeatureApi?.onBusyLibEvent(event)
             }
+            .fold(
+                onSuccess = { Result.success(Unit) },
+                onFailure = { error -> Result.failure(error.toDeviceNameError()) }
+            )
             .toCResult()
     }
 
