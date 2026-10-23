@@ -202,6 +202,56 @@ class WrappedConnectionInternalTest {
         assertEquals(1, connectionBuilder.connectAttempts)
     }
 
+    @Test
+    fun GIVEN_connect_throws_cancellation_WHEN_attempt_ends_THEN_state_becomes_recoverable_disconnected() =
+        runTest {
+            // Given
+            val testDispatcher = StandardTestDispatcher(testScheduler)
+            val connectionBuilder = MockConnectionBuilder().apply {
+                onConnectCallback = { throw CancellationException("Transport cancelled connect") }
+            }
+
+            // When
+            val connection = WrappedConnectionInternal(
+                config = TestConfig(),
+                parentScope = backgroundScope,
+                connectionBuilder = connectionBuilder,
+                dispatcher = testDispatcher
+            )
+            advanceUntilIdle()
+
+            // Then
+            val status = connection.stateFlow.value
+            assertIs<FInternalTransportConnectionStatus.Disconnected>(
+                status,
+                "A cancelled connect attempt must report Disconnected, otherwise nothing ever retries"
+            )
+            assertTrue(status.reason.isRecoverable)
+        }
+
+    @Test
+    fun GIVEN_connect_result_carries_cancellation_WHEN_attempt_ends_THEN_state_becomes_disconnected() =
+        runTest {
+            // Given
+            val testDispatcher = StandardTestDispatcher(testScheduler)
+            val connectionBuilder = MockConnectionBuilder().apply {
+                shouldAlwaysFail = true
+                failureException = CancellationException("Transport cancelled connect")
+            }
+
+            // When
+            val connection = WrappedConnectionInternal(
+                config = TestConfig(),
+                parentScope = backgroundScope,
+                connectionBuilder = connectionBuilder,
+                dispatcher = testDispatcher
+            )
+            advanceUntilIdle()
+
+            // Then
+            assertIs<FInternalTransportConnectionStatus.Disconnected>(connection.stateFlow.value)
+        }
+
     // endregion
 
     // region State Transition Tests

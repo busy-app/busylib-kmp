@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.plus
 import net.flipper.bridge.connection.transport.ble.api.FBleApi
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceConnectionConfig
+import net.flipper.bridge.connection.transport.ble.impl.BleConstants
 import net.flipper.bridge.connection.transport.ble.impl.FHttpBLEEngine
 import net.flipper.bridge.connection.transport.ble.impl.ios.peripheral.FPeripheralApi
 import net.flipper.bridge.connection.transport.ble.impl.ios.peripheral.FPeripheralState
@@ -40,7 +41,7 @@ class FIOSBleApiImpl(
     FHTTPDeviceApi,
     FStatusStreamingApi by streamingApi,
     FTransportMetaInfoApi {
-    private val bleHttpEngine = FHttpBLEEngine(serialApi)
+    private val bleHttpEngine = FHttpBLEEngine(serialApi, BleConstants.REQUEST_TIMEOUT)
 
     override val deviceName = peripheral.name ?: currentConfig.deviceName
 
