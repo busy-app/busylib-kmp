@@ -30,6 +30,13 @@ sealed interface WebSocketEventInternal {
     ) : WebSocketEventInternal
 
     @Serializable
+    @SerialName("busy-bar-access.updated")
+    data class BusyBarAccessUpdated(
+        @SerialName("busy_bar_access")
+        val access: BusyBarAccessInternal
+    ) : WebSocketEventInternal
+
+    @Serializable
     @SerialName("protobuf")
     data class Protobuf(
         @SerialName("bar_id")
@@ -58,6 +65,11 @@ fun WebSocketEventInternal.toPublic() = when (this) {
 
     is WebSocketEventInternal.UnlinkDevice -> WebSocketEvent.UnlinkEvent(
         device.toPublic()
+    )
+
+    is WebSocketEventInternal.BusyBarAccessUpdated -> WebSocketEvent.BusyBarAccessUpdatedEvent(
+        granted = access.granted,
+        graceUntil = access.graceUntil
     )
 
     is WebSocketEventInternal.Protobuf -> null

@@ -149,6 +149,7 @@ include(
 
     ":components:watchers:api",
     ":components:watchers:changename",
+    ":components:watchers:busybaraccess",
     ":components:watchers:provisioning",
     ":components:watchers:desktop",
 

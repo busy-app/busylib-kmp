@@ -128,6 +128,7 @@ kotlin {
 
         implementation(projects.components.watchers.api)
         implementation(projects.components.watchers.changename)
+        implementation(projects.components.watchers.busybaraccess)
         implementation(projects.components.watchers.provisioning)
 
         api(projects.components.tools.multistream.api)

@@ -22,6 +22,7 @@ object WebSocketEventInternalSerializer : KSerializer<WebSocketEventInternal> {
         WebSocketEventInternal.LinkDevice.serializer(),
         WebSocketEventInternal.UnlinkDevice.serializer(),
         WebSocketEventInternal.NameUpdated.serializer(),
+        WebSocketEventInternal.BusyBarAccessUpdated.serializer(),
         WebSocketEventInternal.Protobuf.serializer()
     ).associateBy { serializer -> serializer.descriptor.serialName }
 

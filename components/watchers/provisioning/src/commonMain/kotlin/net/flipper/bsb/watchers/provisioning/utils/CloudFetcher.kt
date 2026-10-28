@@ -81,6 +81,8 @@ class CloudFetcher(
                 is WebSocketEvent.UnlinkEvent -> {
                     barsMap.remove(it.device.cloudId)
                 }
+
+                is WebSocketEvent.BusyBarAccessUpdatedEvent -> return@collect
             }
             val barsList = barsMap.values.toList()
             info { "New bars list: $barsList" }
