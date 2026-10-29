@@ -30,6 +30,8 @@ import net.flipper.core.busylib.log.verbose
 import kotlin.time.Duration.Companion.seconds
 
 private val NETWORK_DISPATCHER = FlipperDispatchers.default
+private val MAX_RECONNECT_DELAY = 60.seconds
+private val HEALTHY_CONNECTION_DURATION = 30.seconds
 
 interface CloudWebSocketApiInternal : CloudWebSocketApi {
     fun getWSInternalFlow(): Flow<BSBWebSocketInternal?>
@@ -55,7 +57,10 @@ class CloudWebSocketApiImpl(
         hostApi.getHost()
     ) { isNetworkAvailable, principal, host ->
         if (isNetworkAvailable && principal is BUSYLibUserPrincipal.Token) {
-            wrapWebsocket {
+            wrapWebsocket(
+                maxDelay = MAX_RECONNECT_DELAY,
+                healthyAfter = HEALTHY_CONNECTION_DURATION
+            ) {
                 channelFlow {
                     val ws = webSocketFactory.create(
                         logger = this@CloudWebSocketApiImpl,
