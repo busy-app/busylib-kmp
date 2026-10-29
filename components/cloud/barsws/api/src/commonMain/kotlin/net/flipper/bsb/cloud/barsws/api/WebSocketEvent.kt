@@ -1,5 +1,6 @@
 package net.flipper.bsb.cloud.barsws.api
 
+import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
 sealed interface WebSocketEvent {
@@ -13,6 +14,11 @@ sealed interface WebSocketEvent {
 
     data class NameChangeEvent(
         val device: BUSYBarWebSocket
+    ) : WebSocketEvent
+
+    data class BusyBarAccessUpdatedEvent(
+        val granted: Boolean,
+        val graceUntil: Instant?
     ) : WebSocketEvent
 }
 

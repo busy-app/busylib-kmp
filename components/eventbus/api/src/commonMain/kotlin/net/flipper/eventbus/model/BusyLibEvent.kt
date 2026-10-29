@@ -1,6 +1,7 @@
 package net.flipper.eventbus.model
 
 import net.flipper.bridge.connection.config.api.model.BUSYBar
+import kotlin.time.Instant
 
 /**
  * Events emitted by the BUSY library to notify native consumers about notable,
@@ -21,4 +22,14 @@ sealed interface BusyLibEvent {
      * Emitted when LAN monitoring cannot proceed until the user grants access.
      */
     data object LocalNetworkDenied : BusyLibEvent
+
+    /**
+     * The cloud granted or revoked the BUSY Bar owner access for the current user.
+     * [graceUntil] is set while the access is kept for a grace period after the last bar was unlinked.
+     * Consumers should refresh the entitlements from the purchase provider.
+     */
+    data class BusyBarAccessUpdated(
+        val granted: Boolean,
+        val graceUntil: Instant?
+    ) : BusyLibEvent
 }
