@@ -1,5 +1,6 @@
 package net.flipper.bridge.device.firmwareupdate.updater.api
 
+import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateCheckResult
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateEvent
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateState
 import net.flipper.bridge.device.firmwareupdate.updater.model.StartUpdateResponse
@@ -21,4 +22,9 @@ interface FirmwareUpdaterApi {
      * Required for button on Firmware settings screen
      */
     suspend fun checkForUpdates(): CResult<Unit>
+
+    /**
+     * Starts an update check like [checkForUpdates] and waits for its result in [state]
+     */
+    suspend fun checkForUpdatesAndAwaitResult(): FwUpdateCheckResult
 }
