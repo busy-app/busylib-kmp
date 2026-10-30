@@ -4,6 +4,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withTimeout
 import net.flipper.bsb.cloud.barsws.api.model.InternalWebSocketRequest
 import net.flipper.bsb.cloud.barsws.api.utils.BSBWebSocketInternal
+import net.flipper.core.busylib.ktx.common.runSuspendCatchingUnlessCancelled
 import net.flipper.core.busylib.ktx.common.withLock
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.error
@@ -77,15 +78,12 @@ class ActiveWebSocketHolder(private val logger: LogTagProvider) {
         request: InternalWebSocketRequest
     ): Result<Unit> {
         logger.verbose { "Send $request" }
-        @Suppress("RunCatchingInSuspendRule")
-        return runCatching { // By design ignore cancellation exception from webSocketApi.send
+        return runSuspendCatchingUnlessCancelled {
             withTimeout(SEND_TIMEOUT) {
-                webSocketApi.send(
-                    request
-                )
+                webSocketApi.send(request)
             }
-        }.onFailure {
-            logger.error(it) { "Failed to send request $request" }
+        }.onFailure { throwable ->
+            logger.error(throwable) { "Failed to send request $request" }
         }
     }
 }
