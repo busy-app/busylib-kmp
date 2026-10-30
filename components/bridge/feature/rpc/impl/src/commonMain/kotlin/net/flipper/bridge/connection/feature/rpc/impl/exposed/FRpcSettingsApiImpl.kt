@@ -5,6 +5,7 @@ import io.ktor.client.call.body
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import io.ktor.client.request.post
+import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import kotlinx.coroutines.CoroutineDispatcher
 import net.flipper.bridge.connection.feature.rpc.api.exception.DeviceNameRejectedException
@@ -15,6 +16,7 @@ import net.flipper.bridge.connection.feature.rpc.api.model.DisplayBrightnessInfo
 import net.flipper.bridge.connection.feature.rpc.api.model.ErrorResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.NameInfo
 import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
+import net.flipper.bridge.connection.feature.rpc.api.model.TelemetryInfo
 import net.flipper.core.busylib.ktx.common.cache.ObjectCache
 import net.flipper.core.busylib.ktx.common.cache.getOrElse
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
@@ -56,6 +58,22 @@ class FRpcSettingsApiImpl(
         return runSuspendCatching(dispatcher) {
             httpClient.post("/api/display/brightness") {
                 parameter("value", brightnessInfo.value)
+            }.body<SuccessResponse>()
+        }
+    }
+
+    override suspend fun getTelemetry(ignoreCache: Boolean): Result<TelemetryInfo> {
+        return runSuspendCatching(dispatcher) {
+            objectCache.getOrElse(ignoreCache) {
+                httpClient.get("/api/telemetry").body<TelemetryInfo>()
+            }
+        }
+    }
+
+    override suspend fun setTelemetry(body: TelemetryInfo): Result<SuccessResponse> {
+        return runSuspendCatching(dispatcher) {
+            httpClient.put("/api/telemetry") {
+                setBody(body)
             }.body<SuccessResponse>()
         }
     }
