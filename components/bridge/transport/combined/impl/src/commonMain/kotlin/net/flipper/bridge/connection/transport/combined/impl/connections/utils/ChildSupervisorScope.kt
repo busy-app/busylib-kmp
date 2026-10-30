@@ -17,10 +17,12 @@ fun ChildSupervisorScope(
         invokeOnCompletion { onCompletion(it) }
     }
 
-    // Link cancellation: when parentScope is cancelled, our scope will be cancelled too
-    parentScope.coroutineContext[Job]?.invokeOnCompletion {
+    // Link cancellation: when parentScope is cancelled, our scope will be cancelled too.
+    // A long-lived parent would otherwise keep one handler per child scope ever created.
+    val parentCompletionHandle = parentScope.coroutineContext[Job]?.invokeOnCompletion {
         job.cancel()
     }
+    job.invokeOnCompletion { parentCompletionHandle?.dispose() }
 
     // Catch unhandled exceptions and destroy the scope
     val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
