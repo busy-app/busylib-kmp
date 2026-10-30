@@ -36,6 +36,9 @@ import net.flipper.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
 import net.flipper.bridge.connection.orchestrator.api.model.FDeviceTransportType
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.bridge.connection.transport.common.api.FDeviceConnectionConfig
+import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
+import net.flipper.bsb.watchers.provisioning.fakes.FakePrincipalApi
+import net.flipper.bsb.watchers.provisioning.fakes.fakeToken
 import net.flipper.busylib.core.wrapper.WrappedStateFlow
 import net.flipper.busylib.core.wrapper.wrap
 import net.flipper.core.busylib.ktx.common.asFlow
@@ -49,6 +52,8 @@ import kotlin.uuid.Uuid
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class CloudProvisioningWatcherTest {
+
+    private val currentUserId = Uuid.random()
 
     // region Test Cases
 
@@ -64,7 +69,11 @@ class CloudProvisioningWatcherTest {
             val setup = createSetup(
                 devices = listOf(device),
                 connectedDevice = device,
-                linkedInfo = RpcLinkedAccountInfo(linked = true, cloudId = cloudId.toString())
+                linkedInfo = RpcLinkedAccountInfo(
+                    linked = true,
+                    userIdRaw = currentUserId.toString(),
+                    cloudId = cloudId.toString()
+                )
             )
 
             setup.watcher.onLaunch()
@@ -111,7 +120,11 @@ class CloudProvisioningWatcherTest {
             val setup = createSetup(
                 devices = listOf(device),
                 connectedDevice = device,
-                linkedInfo = RpcLinkedAccountInfo(linked = true, cloudId = cloudId.toString())
+                linkedInfo = RpcLinkedAccountInfo(
+                    linked = true,
+                    userIdRaw = currentUserId.toString(),
+                    cloudId = cloudId.toString()
+                )
             )
 
             setup.watcher.onLaunch()
@@ -136,7 +149,11 @@ class CloudProvisioningWatcherTest {
             val setup = createSetup(
                 devices = listOf(device),
                 connectedDevice = device,
-                linkedInfo = RpcLinkedAccountInfo(linked = true, cloudId = newCloudId.toString())
+                linkedInfo = RpcLinkedAccountInfo(
+                    linked = true,
+                    userIdRaw = currentUserId.toString(),
+                    cloudId = newCloudId.toString()
+                )
             )
 
             setup.watcher.onLaunch()
@@ -179,6 +196,7 @@ class CloudProvisioningWatcherTest {
                 connectedDevice = device,
                 linkedInfo = RpcLinkedAccountInfo(
                     linked = true,
+                    userIdRaw = currentUserId.toString(),
                     cloudId = targetCloudId.toString()
                 )
             )
@@ -252,7 +270,11 @@ class CloudProvisioningWatcherTest {
         val setup = createSetup(
             devices = listOf(device),
             connectedDevice = device,
-            linkedInfo = RpcLinkedAccountInfo(linked = true, cloudId = cloudId.toString())
+            linkedInfo = RpcLinkedAccountInfo(
+                linked = true,
+                userIdRaw = currentUserId.toString(),
+                cloudId = cloudId.toString()
+            )
         )
 
         setup.watcher.onLaunch()
@@ -300,7 +322,10 @@ class CloudProvisioningWatcherTest {
                 scope = scope,
                 featureProvider = FakeFeatureProvider(featureFlow),
                 orchestrator = FakeOrchestrator(orchestratorState),
-                persistedStorage = storage
+                persistedStorage = storage,
+                principalApi = FakePrincipalApi(
+                    MutableStateFlow<BUSYLibUserPrincipal>(fakeToken(userId = currentUserId))
+                )
             )
 
             watcher.onLaunch()
@@ -316,6 +341,7 @@ class CloudProvisioningWatcherTest {
             // The detached feature emits new linked info after the device is gone.
             accountInfoFlow.value = RpcLinkedAccountInfo(
                 linked = true,
+                userIdRaw = currentUserId.toString(),
                 cloudId = Uuid.random().toString()
             )
             advanceUntilIdle()
@@ -326,6 +352,57 @@ class CloudProvisioningWatcherTest {
                 "Account info emitted after the device disconnected must not be applied"
             )
         }
+
+    @Test
+    fun GIVEN_only_local_transport_WHEN_linked_to_another_user_THEN_no_cloud_transport() = runTest {
+        val device = busyBar(
+            id = "device-1",
+            BUSYBar.ConnectionWay.Lan
+        )
+
+        val setup = createSetup(
+            devices = listOf(device),
+            connectedDevice = device,
+            linkedInfo = RpcLinkedAccountInfo(
+                linked = true,
+                userIdRaw = Uuid.random().toString(),
+                cloudId = Uuid.random().toString()
+            )
+        )
+
+        setup.watcher.onLaunch()
+        advanceUntilIdle()
+
+        val updated = setup.storage.findDevice("device-1").first()
+        assertNotNull(updated)
+        assertNull(updated.cloud, "Cloud of another user must not be attached")
+    }
+
+    @Test
+    fun GIVEN_only_local_transport_WHEN_linked_but_user_logged_out_THEN_no_cloud_transport() = runTest {
+        val device = busyBar(
+            id = "device-1",
+            BUSYBar.ConnectionWay.Lan
+        )
+
+        val setup = createSetup(
+            devices = listOf(device),
+            connectedDevice = device,
+            linkedInfo = RpcLinkedAccountInfo(
+                linked = true,
+                userIdRaw = currentUserId.toString(),
+                cloudId = Uuid.random().toString()
+            ),
+            principal = BUSYLibUserPrincipal.Empty
+        )
+
+        setup.watcher.onLaunch()
+        advanceUntilIdle()
+
+        val updated = setup.storage.findDevice("device-1").first()
+        assertNotNull(updated)
+        assertNull(updated.cloud, "Cloud must not be attached while nobody is logged in")
+    }
 
     // endregion
 
@@ -339,7 +416,8 @@ class CloudProvisioningWatcherTest {
     private fun TestScope.createSetup(
         devices: List<BUSYBar>,
         connectedDevice: BUSYBar,
-        linkedInfo: RpcLinkedAccountInfo?
+        linkedInfo: RpcLinkedAccountInfo?,
+        principal: BUSYLibUserPrincipal = fakeToken(userId = currentUserId)
     ): TestSetup {
         val storage = FakePersistedStorage(MutableStateFlow(devices))
 
@@ -367,7 +445,8 @@ class CloudProvisioningWatcherTest {
             scope = scope,
             featureProvider = FakeFeatureProvider(featureFlow),
             orchestrator = FakeOrchestrator(orchestratorState),
-            persistedStorage = storage
+            persistedStorage = storage,
+            principalApi = FakePrincipalApi(MutableStateFlow(principal))
         )
 
         return TestSetup(watcher, storage)
