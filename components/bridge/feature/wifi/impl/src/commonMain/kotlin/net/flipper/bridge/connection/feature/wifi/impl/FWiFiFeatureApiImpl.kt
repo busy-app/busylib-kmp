@@ -6,8 +6,10 @@ import dev.zacsweers.metro.binding
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.isActive
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureKey
@@ -57,7 +59,7 @@ class FWiFiFeatureApiImpl(
         return flow {
             var networks = listOf<WiFiNetwork>()
 
-            while (true) {
+            while (currentCoroutineContext().isActive) {
                 val networksResponse = exponentialRetry {
                     rpcFeatureApi
                         .fRpcWifiApi
