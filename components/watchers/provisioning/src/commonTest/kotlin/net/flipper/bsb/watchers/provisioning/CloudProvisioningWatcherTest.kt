@@ -404,6 +404,43 @@ class CloudProvisioningWatcherTest {
         assertNull(updated.cloud, "Cloud must not be attached while nobody is logged in")
     }
 
+    @Test
+    fun GIVEN_principal_loading_WHEN_principal_becomes_matching_token_THEN_adds_cloud_transport() =
+        runTest {
+            val cloudId = Uuid.random()
+            val device = busyBar(
+                id = "device-1",
+                BUSYBar.ConnectionWay.Lan
+            )
+            val principalFlow = MutableStateFlow<BUSYLibUserPrincipal>(BUSYLibUserPrincipal.Loading)
+
+            val setup = createSetup(
+                devices = listOf(device),
+                connectedDevice = device,
+                linkedInfo = RpcLinkedAccountInfo(
+                    linked = true,
+                    userIdRaw = currentUserId.toString(),
+                    cloudId = cloudId.toString()
+                ),
+                principalFlow = principalFlow
+            )
+
+            setup.watcher.onLaunch()
+            advanceUntilIdle()
+
+            assertNull(
+                setup.storage.findDevice("device-1").first()?.cloud,
+                "Cloud must not be attached while principal is loading"
+            )
+
+            principalFlow.value = fakeToken(userId = currentUserId)
+            advanceUntilIdle()
+
+            val updated = setup.storage.findDevice("device-1").first()
+            assertNotNull(updated)
+            assertEquals(cloudId, updated.cloud?.deviceId)
+        }
+
     // endregion
 
     // region Test Setup
@@ -417,7 +454,8 @@ class CloudProvisioningWatcherTest {
         devices: List<BUSYBar>,
         connectedDevice: BUSYBar,
         linkedInfo: RpcLinkedAccountInfo?,
-        principal: BUSYLibUserPrincipal = fakeToken(userId = currentUserId)
+        principal: BUSYLibUserPrincipal = fakeToken(userId = currentUserId),
+        principalFlow: MutableStateFlow<BUSYLibUserPrincipal> = MutableStateFlow(principal)
     ): TestSetup {
         val storage = FakePersistedStorage(MutableStateFlow(devices))
 
@@ -446,7 +484,7 @@ class CloudProvisioningWatcherTest {
             featureProvider = FakeFeatureProvider(featureFlow),
             orchestrator = FakeOrchestrator(orchestratorState),
             persistedStorage = storage,
-            principalApi = FakePrincipalApi(MutableStateFlow(principal))
+            principalApi = FakePrincipalApi(principalFlow)
         )
 
         return TestSetup(watcher, storage)
