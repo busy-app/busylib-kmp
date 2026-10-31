@@ -5,9 +5,9 @@ import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.binding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
 import net.flipper.bridge.connection.config.api.getDevice
 import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.config.api.model.addTransport
@@ -19,6 +19,8 @@ import net.flipper.bridge.connection.feature.provider.api.getFilteredFeature
 import net.flipper.bridge.connection.feature.rpc.api.critical.FRpcCriticalFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.RpcLinkedAccountInfo
 import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
+import net.flipper.bsb.auth.principal.api.BUSYLibPrincipalApi
+import net.flipper.bsb.auth.principal.api.BUSYLibUserPrincipal
 import net.flipper.bsb.watchers.api.InternalBUSYLibStartupListener
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.ktx.common.SingleJobMode
@@ -35,7 +37,8 @@ class CloudProvisioningWatcher(
     scope: CoroutineScope,
     private val featureProvider: FFeatureProvider,
     private val orchestrator: FDeviceOrchestrator,
-    private val persistedStorage: FInternalDevicePersistedStorage
+    private val persistedStorage: FInternalDevicePersistedStorage,
+    private val principalApi: BUSYLibPrincipalApi
 ) : InternalBUSYLibStartupListener, LogTagProvider {
     override val TAG = "CloudProvisioningWatcher"
 
@@ -50,11 +53,16 @@ class CloudProvisioningWatcher(
                     emptyFlow()
                 } else {
                     val (featureApi, state) = featureWithState
-                    featureApi.currentAccountInfo.map { it to state.device.uniqueId }
+                    combine(
+                        featureApi.currentAccountInfo,
+                        principalApi.getPrincipalFlow()
+                    ) { linkedInfo, principal ->
+                        Triple(linkedInfo, principal, state.device.uniqueId)
+                    }
                 }
-            }.collectLatest { (linkedInfo, deviceId) ->
+            }.collectLatest { (linkedInfo, principal, deviceId) ->
                 runSuspendCatching {
-                    onNewLinkedInfo(linkedInfo, deviceId)
+                    onNewLinkedInfo(linkedInfo, principal, deviceId)
                 }.onFailure {
                     error(it) { "Failed to handle new linked info" }
                 }
@@ -62,11 +70,24 @@ class CloudProvisioningWatcher(
         }
     }
 
-    private suspend fun onNewLinkedInfo(linkedInfo: RpcLinkedAccountInfo?, deviceId: String) {
-        if (linkedInfo == null) {
+    private suspend fun onNewLinkedInfo(
+        linkedInfo: RpcLinkedAccountInfo?,
+        principal: BUSYLibUserPrincipal,
+        deviceId: String
+    ) {
+        if (linkedInfo == null || principal is BUSYLibUserPrincipal.Loading) {
             return
         }
-        val cloudId = linkedInfo.cloudId?.let(Uuid::parseOrNull)
+        val currentUserId = (principal as? BUSYLibUserPrincipal.Token)?.userId
+        val cloudId = linkedInfo.cloudId
+            ?.let(Uuid::parseOrNull)
+            ?.takeIf { linkedInfo.userId != null && linkedInfo.userId == currentUserId }
+        if (cloudId == null && linkedInfo.linked) {
+            info {
+                "Device $deviceId is linked to user ${linkedInfo.userId}, " +
+                    "current user is $currentUserId, skip cloud provisioning"
+            }
+        }
         persistedStorage.transactionInternal {
             getDevice(deviceId)?.let {
                 updateBUSYBar(cloudId, it)
