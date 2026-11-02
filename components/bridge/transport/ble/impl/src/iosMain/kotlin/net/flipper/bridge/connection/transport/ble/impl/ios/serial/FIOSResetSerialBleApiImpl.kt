@@ -1,18 +1,25 @@
 package net.flipper.bridge.connection.transport.ble.impl.ios.serial
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.isActive
 import net.flipper.bridge.connection.transport.ble.api.FBleDeviceConnectionConfig
 import net.flipper.bridge.connection.transport.ble.impl.BleConstants.POLLING_RESET_INTERVAL
 import net.flipper.bridge.connection.transport.ble.impl.ios.peripheral.FPeripheralApi
 import net.flipper.bridge.connection.transport.ble.impl.serial.FResetSerialBleApi
-import net.flipper.bridge.connection.transport.ble.impl.serial.pollRequestCounter
+import net.flipper.bridge.connection.transport.ble.impl.toRequestCounter
 import net.flipper.bridge.connection.transport.ble.impl.toUInt32ByteArray
+import net.flipper.core.busylib.ktx.common.runSuspendCatchingUnlessCancelled
 import net.flipper.core.busylib.log.LogTagProvider
+import net.flipper.core.busylib.log.debug
+import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
 
 class FIOSResetSerialBleApiImpl(
@@ -22,9 +29,7 @@ class FIOSResetSerialBleApiImpl(
 ) : FResetSerialBleApi, LogTagProvider {
     override val TAG = "FResetSerialBleApi"
 
-    private val requestCounterFlow = pollRequestCounter(POLLING_RESET_INTERVAL) {
-        fPeripheralApi.readValue(config.serialConfig.resetCharUuid)
-    }.shareIn(scope, SharingStarted.Eagerly, 1)
+    private val requestCounterFlow = pollRequestCounter().shareIn(scope, SharingStarted.Eagerly, 1)
 
     override fun getRequestCounterFlow(): Flow<Int> {
         return requestCounterFlow
@@ -38,5 +43,20 @@ class FIOSResetSerialBleApiImpl(
         info { "Reset command written, waiting for request counter to be zero" }
         requestCounterFlow.filter { it == 0 }.first()
         info { "Reset success" }
+    }
+
+    private fun pollRequestCounter(): Flow<Int> = flow {
+        while (currentCoroutineContext().isActive) {
+            val payload = runSuspendCatchingUnlessCancelled {
+                fPeripheralApi.readValue(config.serialConfig.resetCharUuid)
+            }.onFailure { throwable -> error(throwable) { "Failed to read request counter, keep polling" } }
+                .getOrNull()
+            if (payload != null) {
+                val counter = payload.toRequestCounter()
+                debug { "Receive request counter $counter" }
+                emit(counter)
+            }
+            delay(POLLING_RESET_INTERVAL)
+        }
     }
 }
