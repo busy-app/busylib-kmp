@@ -30,23 +30,7 @@ class FIOSResetSerialBleApiImpl(
 ) : FResetSerialBleApi, LogTagProvider {
     override val TAG = "FResetSerialBleApi"
 
-    private val requestCounterFlow = pollRequestCounter().shareIn(scope, SharingStarted.Eagerly, 1)
-
-    override fun getRequestCounterFlow(): Flow<Int> {
-        return requestCounterFlow
-    }
-
-    override suspend fun reset() {
-        fPeripheralApi.writeValue(
-            characteristicUuid = config.serialConfig.resetCharUuid,
-            data = 0.toUInt32ByteArray(),
-        )
-        info { "Reset command written, waiting for request counter to be zero" }
-        requestCounterFlow.filter { it == 0 }.first()
-        info { "Reset success" }
-    }
-
-    private fun pollRequestCounter(): Flow<Int> = flow {
+    private val requestCounterFlow = flow {
         while (currentCoroutineContext().isActive) {
             val payload = try {
                 fPeripheralApi.readValue(config.serialConfig.resetCharUuid)
@@ -66,5 +50,19 @@ class FIOSResetSerialBleApiImpl(
             }
             delay(POLLING_RESET_INTERVAL)
         }
+    }.shareIn(scope, SharingStarted.Eagerly, 1)
+
+    override fun getRequestCounterFlow(): Flow<Int> {
+        return requestCounterFlow
+    }
+
+    override suspend fun reset() {
+        fPeripheralApi.writeValue(
+            characteristicUuid = config.serialConfig.resetCharUuid,
+            data = 0.toUInt32ByteArray(),
+        )
+        info { "Reset command written, waiting for request counter to be zero" }
+        requestCounterFlow.filter { it == 0 }.first()
+        info { "Reset success" }
     }
 }
