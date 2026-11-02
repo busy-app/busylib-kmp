@@ -2,7 +2,7 @@ package net.flipper.bridge.connection.feature.rpc.api.model
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import net.flipper.core.busylib.data.serialization.InstantUtcSerializer
+import net.flipper.core.busylib.data.serialization.InstantEpochSecondsSerializer
 import kotlin.time.Instant
 
 @Serializable
@@ -14,7 +14,7 @@ data class MatterCommissionedFabrics(
 ) {
     @Serializable
     data class CommissioningStatus(
-        @Serializable(InstantUtcSerializer::class)
+        @Serializable(InstantEpochSecondsSerializer::class)
         @SerialName("timestamp")
         val timestamp: Instant? = null,
         @SerialName("value")
