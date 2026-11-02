@@ -57,7 +57,7 @@ class FTransportMetaInfoApiImpl(
 
         if (characteristic.properties.contains(CharacteristicProperty.NOTIFY).not() &&
             characteristic.properties.contains(CharacteristicProperty.INDICATE).not() &&
-            characteristic.isNotifying.not()
+            characteristic.isNotifying.value.not()
         ) {
             warn {
                 "Not found PROPERTY_NOTIFY or PROPERTY_INDICATE for property $address, " +
