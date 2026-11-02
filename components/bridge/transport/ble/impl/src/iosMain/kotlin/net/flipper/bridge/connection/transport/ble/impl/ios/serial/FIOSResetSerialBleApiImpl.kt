@@ -3,6 +3,7 @@ package net.flipper.bridge.connection.transport.ble.impl.ios.serial
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.filter
@@ -16,11 +17,11 @@ import net.flipper.bridge.connection.transport.ble.impl.ios.peripheral.FPeripher
 import net.flipper.bridge.connection.transport.ble.impl.serial.FResetSerialBleApi
 import net.flipper.bridge.connection.transport.ble.impl.toRequestCounter
 import net.flipper.bridge.connection.transport.ble.impl.toUInt32ByteArray
-import net.flipper.core.busylib.ktx.common.runSuspendCatchingUnlessCancelled
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.debug
 import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
+import kotlin.coroutines.cancellation.CancellationException
 
 class FIOSResetSerialBleApiImpl(
     scope: CoroutineScope,
@@ -47,10 +48,17 @@ class FIOSResetSerialBleApiImpl(
 
     private fun pollRequestCounter(): Flow<Int> = flow {
         while (currentCoroutineContext().isActive) {
-            val payload = runSuspendCatchingUnlessCancelled {
+            val payload = try {
                 fPeripheralApi.readValue(config.serialConfig.resetCharUuid)
-            }.onFailure { throwable -> error(throwable) { "Failed to read request counter, keep polling" } }
-                .getOrNull()
+            } catch (cancellation: CancellationException) {
+                // A superseded read can be retried, but cancellation of this polling coroutine must propagate.
+                currentCoroutineContext().ensureActive()
+                error(cancellation) { "Failed to read request counter, keep polling" }
+                null
+            } catch (throwable: Throwable) {
+                error(throwable) { "Failed to read request counter, keep polling" }
+                null
+            }
             if (payload != null) {
                 val counter = payload.toRequestCounter()
                 debug { "Receive request counter $counter" }

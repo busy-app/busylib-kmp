@@ -1,8 +1,6 @@
 package net.flipper.core.busylib.ktx.common
 
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -37,20 +35,5 @@ suspend inline fun <R> runSuspendCatching(
         throw c
     } catch (e: Throwable) {
         Result.failure(e)
-    }
-}
-
-/**
- * @return failure for a [CancellationException] raised inside [block] while the caller is still active
- * (a `withTimeout` expiry, a `Deferred` completed exceptionally); the caller's own cancellation is rethrown
- */
-suspend inline fun <R> runSuspendCatchingUnlessCancelled(
-    crossinline block: suspend () -> R
-): Result<R> {
-    return try {
-        runSuspendCatching { block() }
-    } catch (cancellation: CancellationException) {
-        currentCoroutineContext().ensureActive()
-        Result.failure(cancellation)
     }
 }
