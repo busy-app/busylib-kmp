@@ -18,12 +18,16 @@ import net.flipper.bridge.connection.feature.events.model.ConsumableUpdateEvent
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.model.AudioVolumeInfo
 import net.flipper.bridge.connection.feature.rpc.api.model.NameInfo
+import net.flipper.bridge.connection.feature.rpc.api.model.TelemetryInfo
 import net.flipper.bridge.connection.feature.settings.mapper.toBsbBrightnessInfo
+import net.flipper.bridge.connection.feature.settings.mapper.toBsbTelemetry
 import net.flipper.bridge.connection.feature.settings.mapper.toBsbVolume
 import net.flipper.bridge.connection.feature.settings.mapper.toDeviceNameError
 import net.flipper.bridge.connection.feature.settings.mapper.toDisplayBrightnessInfo
+import net.flipper.bridge.connection.feature.settings.mapper.toTelemetryInfo
 import net.flipper.bridge.connection.feature.settings.model.BsbBrightness
 import net.flipper.bridge.connection.feature.settings.model.BsbBrightnessInfo
+import net.flipper.bridge.connection.feature.settings.model.BsbTelemetry
 import net.flipper.bridge.connection.feature.settings.model.BsbVolume
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.busylib.core.di.BusyLibGraph
@@ -144,6 +148,20 @@ class FSettingsFeatureApiImpl(
                 val event = BusyLibUpdateEvent.Volume(model.volume)
                 fEventsFeatureApi?.onBusyLibEvent(event)
             }
+            .toCResult()
+    }
+
+    override suspend fun getTelemetry(): CResult<BsbTelemetry> {
+        return rpcFeatureApi.fRpcSettingsApi
+            .getTelemetry(ignoreCache = true)
+            .map(TelemetryInfo::toBsbTelemetry)
+            .toCResult()
+    }
+
+    override suspend fun setTelemetry(telemetry: BsbTelemetry): CResult<Unit> {
+        return rpcFeatureApi.fRpcSettingsApi
+            .setTelemetry(telemetry.toTelemetryInfo())
+            .map { }
             .toCResult()
     }
 
