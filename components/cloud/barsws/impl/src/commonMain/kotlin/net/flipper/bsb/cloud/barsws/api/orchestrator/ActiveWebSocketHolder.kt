@@ -1,5 +1,7 @@
 package net.flipper.bsb.cloud.barsws.api.orchestrator
 
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withTimeout
 import net.flipper.bsb.cloud.barsws.api.model.InternalWebSocketRequest
@@ -11,6 +13,7 @@ import net.flipper.core.busylib.log.info
 import net.flipper.core.busylib.log.verbose
 import kotlin.collections.component1
 import kotlin.collections.component2
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration.Companion.seconds
 import kotlin.uuid.Uuid
 
@@ -77,15 +80,20 @@ class ActiveWebSocketHolder(private val logger: LogTagProvider) {
         request: InternalWebSocketRequest
     ): Result<Unit> {
         logger.verbose { "Send $request" }
-        @Suppress("RunCatchingInSuspendRule")
-        return runCatching { // By design ignore cancellation exception from webSocketApi.send
+        val sendResult = try {
             withTimeout(SEND_TIMEOUT) {
-                webSocketApi.send(
-                    request
-                )
+                webSocketApi.send(request)
             }
-        }.onFailure {
-            logger.error(it) { "Failed to send request $request" }
+            Result.success(Unit)
+        } catch (cancellation: CancellationException) {
+            // A send timeout is retryable; cancellation of the caller must stop subscription updates.
+            currentCoroutineContext().ensureActive()
+            Result.failure(cancellation)
+        } catch (throwable: Throwable) {
+            Result.failure(throwable)
+        }
+        return sendResult.onFailure { throwable ->
+            logger.error(throwable) { "Failed to send request $request" }
         }
     }
 }

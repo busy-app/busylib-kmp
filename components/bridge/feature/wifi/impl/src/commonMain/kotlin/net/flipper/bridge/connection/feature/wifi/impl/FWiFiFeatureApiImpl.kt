@@ -6,8 +6,9 @@ import dev.zacsweers.metro.binding
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.isActive
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeature
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
@@ -55,10 +56,10 @@ class FWiFiFeatureApiImpl(
     override val TAG = "FWiFiFeatureApi"
 
     override fun getWifiStateFlow(): WrappedFlow<ImmutableList<WiFiNetwork>> {
-        return callbackFlow {
+        return flow {
             var networks = listOf<WiFiNetwork>()
 
-            while (isActive) {
+            while (currentCoroutineContext().isActive) {
                 val networksResponse = exponentialRetry {
                     rpcFeatureApi
                         .fRpcWifiApi
@@ -80,7 +81,7 @@ class FWiFiFeatureApiImpl(
                     }
                 } + newNetworkList
 
-                send(networks.toPersistentList())
+                emit(networks.toPersistentList())
 
                 delay(POOLING_TIME)
             }
