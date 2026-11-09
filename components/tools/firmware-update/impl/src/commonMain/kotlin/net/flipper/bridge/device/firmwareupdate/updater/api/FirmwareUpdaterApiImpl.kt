@@ -35,23 +35,17 @@ import net.flipper.bridge.connection.feature.info.api.FDeviceInfoFeatureApi
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
 import net.flipper.bridge.connection.feature.provider.api.get
-import net.flipper.bridge.connection.feature.provider.api.getSync
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcUpdaterApi
 import net.flipper.bridge.connection.feature.rpc.api.model.BsbRpcError
 import net.flipper.bridge.connection.feature.rpc.api.model.ErrorResponse
 import net.flipper.bridge.connection.feature.rpc.api.model.SuccessResponse
-import net.flipper.bridge.connection.orchestrator.api.FDeviceOrchestrator
-import net.flipper.bridge.connection.orchestrator.api.model.FDeviceConnectStatus
-import net.flipper.bridge.connection.orchestrator.api.model.FDeviceTransportType
 import net.flipper.bridge.device.firmwareupdate.downloader.api.FirmwareDownloaderApi
 import net.flipper.bridge.device.firmwareupdate.downloader.api.FirmwareDownloaderApiImpl
 import net.flipper.bridge.device.firmwareupdate.status.api.UpdateStatusProvider
-import net.flipper.bridge.device.firmwareupdate.updater.check.FwUpdateCheckAwaiter
 import net.flipper.bridge.device.firmwareupdate.updater.log.FwUpdateStateLogger
 import net.flipper.bridge.device.firmwareupdate.updater.mapper.FwUpdateStatusMapper
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwInstallRequest
-import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateCheckResult
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateEvent
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateState
 import net.flipper.bridge.device.firmwareupdate.updater.model.StartUpdateResponse
@@ -90,7 +84,8 @@ class FirmwareUpdaterApiImpl(
     private val scope: CoroutineScope,
     private val updateStatusProvider: UpdateStatusProvider,
     private val fDevicePersistedStorage: FDevicePersistedStorage,
-    private val orchestrator: FDeviceOrchestrator
+    private val firmwareUpdateChecker: FirmwareUpdateChecker,
+    private val awaitingChecker: AwaitingFirmwareUpdateChecker
 ) : FirmwareUpdaterApi, LogTagProvider by TaggedLogger("UpdaterApi") {
     private val firmwareDownloaderApi: FirmwareDownloaderApi = FirmwareDownloaderApiImpl(
         httpClient = httpClient
@@ -373,24 +368,10 @@ class FirmwareUpdaterApiImpl(
         }.await()
     }
 
-    override suspend fun checkForUpdates(): CResult<Unit> {
-        return fFeatureProvider.getSync<FRpcFeatureApi>()
-            ?.fRpcUpdaterApi
-            ?.startUpdateCheck()
-            ?.map { }
-            ?.toCResult()
-            ?: CResult.failure(IllegalStateException("RPC feature is null"))
-    }
+    override suspend fun checkForUpdates(): CResult<Unit> = firmwareUpdateChecker.checkForUpdates()
 
-    override suspend fun checkForUpdatesAndAwaitResult(): FwUpdateCheckResult {
-        val connectStatus = orchestrator.getState().value
-        val isLanConnection = connectStatus is FDeviceConnectStatus.Connected &&
-            connectStatus.transportType == FDeviceTransportType.LAN
-        return FwUpdateCheckAwaiter.await(
-            state = state,
-            skipsCurrentState = !isLanConnection,
-            startCheck = ::checkForUpdates
-        ).also { result -> info { "#checkForUpdatesAndAwaitResult $result" } }
+    override suspend fun checkForUpdatesAndAwaitCompletion(): CResult<Unit> {
+        return awaitingChecker.checkForUpdates()
     }
 
     // Reset updater when connected to another device

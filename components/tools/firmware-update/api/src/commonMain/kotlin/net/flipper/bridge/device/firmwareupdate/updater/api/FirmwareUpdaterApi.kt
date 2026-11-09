@@ -1,6 +1,6 @@
 package net.flipper.bridge.device.firmwareupdate.updater.api
 
-import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateCheckResult
+import net.flipper.bridge.device.firmwareupdate.updater.model.FirmwareUpdateCheckError
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateEvent
 import net.flipper.bridge.device.firmwareupdate.updater.model.FwUpdateState
 import net.flipper.bridge.device.firmwareupdate.updater.model.StartUpdateResponse
@@ -18,13 +18,12 @@ interface FirmwareUpdaterApi {
     suspend fun stopFirmwareUpdate(): CResult<Unit>
     suspend fun startUpdateInstall(): StartUpdateResponse
 
-    /**
-     * Required for button on Firmware settings screen
-     */
+    /** @return failure with [FirmwareUpdateCheckError.RpcUnavailable] or the request error if it cannot be sent. */
     suspend fun checkForUpdates(): CResult<Unit>
 
     /**
-     * Starts an update check like [checkForUpdates] and waits for its result in [state]
+     * @return success after checking, including when no update is available;
+     * failure with [FirmwareUpdateCheckError] or the request error when checking fails.
      */
-    suspend fun checkForUpdatesAndAwaitResult(): FwUpdateCheckResult
+    suspend fun checkForUpdatesAndAwaitCompletion(): CResult<Unit>
 }
