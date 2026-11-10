@@ -16,11 +16,14 @@ fun getExponentialDelay(
     initialDelay: Duration = 1.seconds,
     maxDelay: Duration = 10.seconds,
     factor: Double = 2.0,
-    random: Random = Random.Default,
 ): Duration {
     val resultDelay = initialDelay * factor.pow(retryCount)
 
-    return resultDelay.coerceAtMost(maxDelay) * random.nextDouble(MIN_JITTER_FRACTION, 1.0)
+    return resultDelay.coerceAtMost(maxDelay)
+}
+
+fun Duration.applyJitter(random: Random = Random.Default): Duration {
+    return this * random.nextDouble(MIN_JITTER_FRACTION, 1.0)
 }
 
 suspend fun <T> exponentialRetry(
@@ -28,7 +31,6 @@ suspend fun <T> exponentialRetry(
     initialDelay: Duration = 1.seconds,
     maxDelay: Duration = 10.seconds,
     factor: Double = 2.0,
-    random: Random = Random.Default,
     block: suspend () -> Result<T>
 ): T {
     var count = 0
@@ -38,8 +40,7 @@ suspend fun <T> exponentialRetry(
                 retryCount = count++,
                 initialDelay = initialDelay,
                 maxDelay = maxDelay,
-                factor = factor,
-                random = random
+                factor = factor
             )
             delay(currentDelay)
             return@retry true

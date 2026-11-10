@@ -23,10 +23,13 @@ import net.flipper.bsb.cloud.barsws.api.CloudWebSocketApi
 import net.flipper.bsb.cloud.barsws.api.utils.wrappers.BSBWebSocketFactory
 import net.flipper.busylib.core.di.BusyLibGraph
 import net.flipper.core.busylib.ktx.common.FlipperDispatchers
+import net.flipper.core.busylib.ktx.common.applyJitter
+import net.flipper.core.busylib.ktx.common.getExponentialDelay
 import net.flipper.core.busylib.ktx.common.wrapWebsocket
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
 import net.flipper.core.busylib.log.verbose
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 private val NETWORK_DISPATCHER = FlipperDispatchers.default
@@ -58,8 +61,8 @@ class CloudWebSocketApiImpl(
     ) { isNetworkAvailable, principal, host ->
         if (isNetworkAvailable && principal is BUSYLibUserPrincipal.Token) {
             wrapWebsocket(
-                maxDelay = MAX_RECONNECT_DELAY,
-                healthyAfter = HEALTHY_CONNECTION_DURATION
+                healthyAfter = HEALTHY_CONNECTION_DURATION,
+                computeReconnectDelay = ::computeReconnectDelay
             ) {
                 channelFlow {
                     val ws = webSocketFactory.create(
@@ -90,6 +93,10 @@ class CloudWebSocketApiImpl(
             verbose { "New ws: $it" }
         }
         .shareIn(scope, SharingStarted.WhileSubscribed(stopTimeout = 30.seconds), replay = 1)
+
+    private fun computeReconnectDelay(retryCount: Int): Duration {
+        return getExponentialDelay(retryCount, maxDelay = MAX_RECONNECT_DELAY).applyJitter()
+    }
 
     override fun getWSFlow() = wsStateFlow
     override fun getWSInternalFlow() = wsStateFlow
