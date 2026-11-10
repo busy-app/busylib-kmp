@@ -11,6 +11,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
@@ -20,6 +21,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestResult
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -41,6 +43,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.minutes
 import kotlin.uuid.Uuid
 
 /**
@@ -513,6 +516,30 @@ class CloudWebSocketApiImplTest {
         )
 
         job.cancel()
+    }
+
+    @Test
+    fun GIVEN_server_closes_socket_right_after_accept_WHEN_ten_minutes_pass_THEN_reconnects_stay_bounded(): TestResult {
+        return runTest {
+            val connectionAttempts = MutableStateFlow(0)
+            val testSetup = createTestSetup(
+                isNetworkAvailable = true,
+                principal = testToken(),
+                onWebSocketCreated = { connectionAttempts.update { count -> count + 1 } }
+            )
+
+            testSetup.api.getWSInternalFlow()
+                .filterNotNull()
+                .onEach { webSocket -> webSocket.close() }
+                .launchIn(backgroundScope)
+
+            advanceTimeBy(10.minutes)
+
+            assertTrue(
+                connectionAttempts.value in 14..24,
+                "Expected 14..24 connection attempts in 10 minutes, got ${connectionAttempts.value}"
+            )
+        }
     }
 
     @Test
