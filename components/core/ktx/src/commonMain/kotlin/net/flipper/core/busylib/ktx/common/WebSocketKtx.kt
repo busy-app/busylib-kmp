@@ -13,7 +13,6 @@ import net.flipper.core.busylib.log.error
 import net.flipper.core.busylib.log.info
 import net.flipper.core.busylib.log.verbose
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeMark
 import kotlin.time.TimeSource
 
@@ -22,9 +21,9 @@ private fun TimeMark?.hasElapsedAtLeast(duration: Duration): Boolean {
 }
 
 fun <T> LogTagProvider.wrapWebsocket(
-    maxDelay: Duration = 10.seconds,
     healthyAfter: Duration = Duration.ZERO,
     timeSource: TimeSource = TimeSource.Monotonic,
+    computeReconnectDelay: (retryCount: Int) -> Duration = { retryCount -> getExponentialDelay(retryCount) },
     block: suspend () -> Flow<T>
 ) = flow<T> {
     var retryCount = 0
@@ -53,7 +52,7 @@ fun <T> LogTagProvider.wrapWebsocket(
             error(e) { "Failed request websocket" }
         }
         retryCount = if (firstEmissionMark.hasElapsedAtLeast(healthyAfter)) 0 else retryCount + 1
-        val delayTimeout = getExponentialDelay(retryCount, maxDelay = maxDelay)
+        val delayTimeout = computeReconnectDelay.invoke(retryCount)
         info { "Stop loop, wait ${delayTimeout.inWholeMilliseconds}ms" }
         delay(duration = delayTimeout)
     }
