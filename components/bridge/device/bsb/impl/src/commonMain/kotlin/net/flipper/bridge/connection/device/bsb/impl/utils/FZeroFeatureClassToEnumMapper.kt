@@ -21,6 +21,7 @@ import net.flipper.bridge.connection.feature.screenstreaming.api.FScreenStreamin
 import net.flipper.bridge.connection.feature.settings.api.FSettingsFeatureApi
 import net.flipper.bridge.connection.feature.smarthome.api.FSmartHomeFeatureApi
 import net.flipper.bridge.connection.feature.storage.api.FStorageFeatureApi
+import net.flipper.bridge.connection.feature.telemetry.api.FTelemetryFeatureApi
 import net.flipper.bridge.connection.feature.timer.api.FTimerFeatureApi
 import net.flipper.bridge.connection.feature.timezone.api.FTimeZoneFeatureApi
 import net.flipper.bridge.connection.feature.wifi.api.FWiFiFeatureApi
@@ -53,6 +54,7 @@ object FZeroFeatureClassToEnumMapper {
             FDeviceFeature.HARDWARE_ID -> FHardwareIdFeatureApi::class
             FDeviceFeature.DRAW_TOOL -> FDrawToolFeatureApi::class
             FDeviceFeature.STORAGE -> FStorageFeatureApi::class
+            FDeviceFeature.TELEMETRY -> FTelemetryFeatureApi::class
         }
     }
 

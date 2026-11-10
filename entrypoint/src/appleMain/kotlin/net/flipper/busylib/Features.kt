@@ -15,6 +15,7 @@ import net.flipper.bridge.connection.feature.provider.api.FFeatureStatus
 import net.flipper.bridge.connection.feature.screenstreaming.api.FScreenStreamingFeatureApi
 import net.flipper.bridge.connection.feature.settings.api.FSettingsFeatureApi
 import net.flipper.bridge.connection.feature.smarthome.api.FSmartHomeFeatureApi
+import net.flipper.bridge.connection.feature.telemetry.api.FTelemetryFeatureApi
 import net.flipper.bridge.connection.feature.timer.api.FTimerFeatureApi
 import net.flipper.bridge.connection.feature.timezone.api.FTimeZoneFeatureApi
 import net.flipper.bridge.connection.feature.wifi.api.FWiFiFeatureApi
@@ -145,4 +146,12 @@ fun FFeatureProvider.getDrawToolFeature(): WrappedFlow<FFeatureStatus<FDrawToolF
 
 suspend fun FFeatureProvider.getDrawToolFeatureSync(): FDrawToolFeatureApi? {
     return this.getSync(FDrawToolFeatureApi::class)
+}
+
+fun FFeatureProvider.getTelemetryFeature(): WrappedFlow<FFeatureStatus<FTelemetryFeatureApi>> {
+    return this.get(FTelemetryFeatureApi::class).wrap()
+}
+
+suspend fun FFeatureProvider.getTelemetryFeatureSync(): FTelemetryFeatureApi? {
+    return this.getSync(FTelemetryFeatureApi::class)
 }

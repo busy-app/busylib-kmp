@@ -20,5 +20,6 @@ enum class FDeviceFeature {
     TIMER,
     HARDWARE_ID,
     DRAW_TOOL,
-    STORAGE
+    STORAGE,
+    TELEMETRY
 }
