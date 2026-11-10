@@ -1,4 +1,4 @@
-package net.flipper.bridge.connection.feature.settings.model
+package net.flipper.bridge.connection.feature.telemetry.model
 
 data class BsbTelemetry(
     val enabled: Boolean,

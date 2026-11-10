@@ -1,7 +1,7 @@
-package net.flipper.bridge.connection.feature.settings.mapper
+package net.flipper.bridge.connection.feature.telemetry.mapper
 
 import net.flipper.bridge.connection.feature.rpc.api.model.TelemetryInfo
-import net.flipper.bridge.connection.feature.settings.model.BsbTelemetry
+import net.flipper.bridge.connection.feature.telemetry.model.BsbTelemetry
 
 internal fun TelemetryInfo.toBsbTelemetry(): BsbTelemetry {
     return BsbTelemetry(
