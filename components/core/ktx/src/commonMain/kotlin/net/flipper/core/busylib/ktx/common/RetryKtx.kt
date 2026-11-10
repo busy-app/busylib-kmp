@@ -5,8 +5,11 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.retry
 import kotlin.math.pow
+import kotlin.random.Random
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
+
+private const val MIN_JITTER_FRACTION = 0.5
 
 fun getExponentialDelay(
     retryCount: Int,
@@ -17,6 +20,10 @@ fun getExponentialDelay(
     val resultDelay = initialDelay * factor.pow(retryCount)
 
     return resultDelay.coerceAtMost(maxDelay)
+}
+
+fun Duration.applyJitter(random: Random = Random.Default): Duration {
+    return this * random.nextDouble(MIN_JITTER_FRACTION, 1.0)
 }
 
 suspend fun <T> exponentialRetry(
