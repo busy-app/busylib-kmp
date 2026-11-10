@@ -42,6 +42,7 @@ import no.nordicsemi.kotlin.ble.client.RemoteService
 import no.nordicsemi.kotlin.ble.client.RemoteServices
 import no.nordicsemi.kotlin.ble.client.android.CentralManager
 import no.nordicsemi.kotlin.ble.client.android.Peripheral
+import no.nordicsemi.kotlin.ble.core.Phy
 import no.nordicsemi.kotlin.ble.core.exception.BluetoothException
 import no.nordicsemi.kotlin.ble.core.exception.GattException
 import kotlin.coroutines.cancellation.CancellationException
@@ -153,6 +154,9 @@ class BLEDeviceConnectionApiImpl(
         info { "Wait for service discovered" }
         val services = discoverServices(scope, device)
         info { "Services discovered: ${services.value.map { it.uuid }}" }
+
+        info { "Request LE 2M PHY" }
+        device.setPreferredPhy(txPhy = Phy.PHY_LE_2M)
 
         val serialApi = serialApiFactory.build(
             config = config.serialConfig,
