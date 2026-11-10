@@ -84,8 +84,8 @@ class FirmwareUpdaterApiImpl(
     private val scope: CoroutineScope,
     private val updateStatusProvider: UpdateStatusProvider,
     private val fDevicePersistedStorage: FDevicePersistedStorage,
-    private val firmwareUpdateChecker: FirmwareUpdateChecker,
-    private val awaitingChecker: AwaitingFirmwareUpdateChecker
+    private val defaultFirmwareUpdateChecker: DefaultFirmwareUpdateChecker,
+    private val awaitingFirmwareUpdateChecker: AwaitingFirmwareUpdateChecker
 ) : FirmwareUpdaterApi, LogTagProvider by TaggedLogger("UpdaterApi") {
     private val firmwareDownloaderApi: FirmwareDownloaderApi = FirmwareDownloaderApiImpl(
         httpClient = httpClient
@@ -368,10 +368,10 @@ class FirmwareUpdaterApiImpl(
         }.await()
     }
 
-    override suspend fun checkForUpdates(): CResult<Unit> = firmwareUpdateChecker.checkForUpdates()
+    override suspend fun checkForUpdates(): CResult<Unit> = defaultFirmwareUpdateChecker.checkForUpdates()
 
     override suspend fun checkForUpdatesAndAwaitCompletion(): CResult<Unit> {
-        return awaitingChecker.checkForUpdates()
+        return awaitingFirmwareUpdateChecker.checkForUpdates()
     }
 
     // Reset updater when connected to another device
