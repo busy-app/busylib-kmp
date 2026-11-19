@@ -24,8 +24,8 @@ val Project.macOSEnabled: Boolean
         ?.toBoolean()
         ?: true
 
-val Project.appleX64Enabled: Boolean
-    get() = AnyPropertyValue(this, "flipper.appleX64Enabled")
+val Project.applex64Supported: Boolean
+    get() = AnyPropertyValue(this, "flipper.applex64Supported")
         .getValue()
         .getOrNull()
         ?.toBoolean()

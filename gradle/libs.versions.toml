@@ -1,24 +1,25 @@
 [versions]
-agp = "9.1.1"
+agp = "9.5.0"
 androidx-activityCompose = "1.13.0"
-androidx-core = "1.18.0"
+androidx-core = "1.19.1"
 lifecycle = "2.10.0" # https://developer.android.com/jetpack/androidx/releases/lifecycle
-google-services = "4.4.4"
-appcompat = "1.7.1" # https://developer.android.com/jetpack/androidx/releases/appcompat
-compose-plugin = "1.12.1"
+google-services = "4.5.0"
+appcompat = "1.8.0" # https://developer.android.com/jetpack/androidx/releases/appcompat
+compose-plugin = "1.12.2"
 # Compose 1.10.3 prefers 1.0.0, which is incompatible with isolated-projects
 compose-hot-reload = "1.2.0" # https://github.com/JetBrains/compose-hot-reload/releases
-# Because of SKIE https://skie.touchlab.co/intro#compatibility-with-kotlin
+# SKIE 0.10.15 supports Kotlin up to 2.4.20; update both together.
+# https://skie.touchlab.co/intro#compatibility-with-kotlin
 kotlin = "2.4.20"
 kotlin-coroutines = "1.11.0"
-kotlin-serialization-runtime = "1.11.0"
+kotlin-serialization-runtime = "1.12.0"
 kotlin-datetime = "0.8.0" # https://github.com/Kotlin/kotlinx-datetime/releases
 kotlin-immutable = "0.5.2"
 kotlin-io = "0.9.1"
-klibs-gradleplugin = "2.8.1" # https://github.com/makeevrserg/gradle-plugin
+klibs-gradleplugin = "2.10.0" # https://github.com/makeevrserg/gradle-plugin
 decompose = "3.5.0"
 # Metro 1.2.0+ Kotlin/Native runtime klibs are built with Kotlin 2.4.0 (ABI 2.4.0), so they require Kotlin 2.4+.
-metro = "1.4.5"
+metro = "1.5.0"
 settings = "1.3.0"
 ktor = "3.6.0" # https://ktor.io/
 timber = "5.0.1" # https://github.com/JakeWharton/timber/releases
@@ -27,17 +28,17 @@ encoding-hash = "0.8.0"
 jupiter = "6.1.3"
 roboelectric = "4.17" # https://github.com/robolectric/robolectric/releases
 androidx-test = "1.3.0"
-ble = "2.0.0-beta05"
+ble = "2.0.0-beta09"
 slf4j-api = "2.0.20" # https://www.slf4j.org/
 mockk = "1.14.11" # https://mockk.io/
 vaniktech = "0.37.0" #https://github.com/vanniktech/gradle-maven-publish-plugin
-buildkonfig = "6.1.1"
+buildkonfig = "6.1.2"
 skie = "0.10.15"
 kotlinx-crypto = "0.6.0"
 detekt = "2.0.0-alpha.6" # https://detekt.dev/docs/gettingstarted/gradle/
-detekt-ruleset-compose = "0.6.7" # https://github.com/mrmans0n/compose-rules/releases
+detekt-ruleset-compose = "0.6.8" # https://github.com/mrmans0n/compose-rules/releases
 detekt-ruleset-decompose = "2.0.0" # https://github.com/LionZXY/detekt-decompose-rule/releases
-wire = "7.0.4"
+wire = "7.1.2"
 rwmutex = "1.0.0"
 
 [libraries]
