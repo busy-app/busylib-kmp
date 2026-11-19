@@ -91,7 +91,7 @@ class FOnCallFeatureApiImplTest {
 
         val request = fakeAssetsApi.drawRequests.first()
         assertEquals("busy_lib_on_call", request.appId)
-        assertEquals(50, request.priority)
+        assertEquals(70, request.priority)
 
         val element = request.elements.first()
         assertEquals("busy_lib_on_call_anim", element.id)
