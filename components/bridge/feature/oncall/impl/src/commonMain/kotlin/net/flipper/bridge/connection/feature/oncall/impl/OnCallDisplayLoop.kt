@@ -67,7 +67,7 @@ class OnCallDisplayLoop(
 
     companion object {
         private const val APP_ID = "busy_lib_on_call"
-        private const val DRAW_PRIORITY = 70
+        private const val DRAW_PRIORITY = 50
         private const val ANIM_ID = "busy_lib_on_call_anim"
         private const val ANIM_PATH = "shared/on_call_72x16.anim"
         private val DISPLAY_TIMEOUT = 30.seconds
