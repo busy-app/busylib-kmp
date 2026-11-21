@@ -34,6 +34,7 @@ kotlin {
         implementation(projects.components.bridge.feature.timer.api)
         implementation(projects.components.bridge.feature.hardwareId.api)
         implementation(projects.components.bridge.feature.storage.api)
+        implementation(projects.components.bridge.feature.telemetry.api)
 
         implementation(libs.kotlin.coroutines)
         implementation(libs.kotlin.immutable)

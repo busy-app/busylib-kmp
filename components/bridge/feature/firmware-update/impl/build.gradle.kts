@@ -9,6 +9,7 @@ kotlin {
         implementation(projects.components.bridge.feature.info.api)
         implementation(projects.components.cloud.rest.api)
 
+        implementation(projects.components.core.data)
         implementation(projects.components.core.di)
         implementation(projects.components.core.ktx)
         implementation(projects.components.core.log)

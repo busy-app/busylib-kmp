@@ -6,7 +6,6 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import net.flipper.bridge.connection.feature.firmwareupdate.model.BsbUpdateVersion
 import net.flipper.bridge.connection.feature.firmwareupdate.model.FirmwareChannel
-import net.flipper.bridge.connection.feature.firmwareupdate.model.SemVer
 import net.flipper.bridge.connection.feature.info.api.FDeviceInfoFeatureApi
 import net.flipper.bridge.connection.feature.info.model.BsbStatusFirmware
 import net.flipper.bridge.connection.feature.provider.api.get
@@ -16,6 +15,7 @@ import net.flipper.bsb.cloud.rest.model.BsbFirmwareChannelId
 import net.flipper.bsb.cloud.rest.model.BsbFirmwareUpdateFileType
 import net.flipper.bsb.cloud.rest.model.BsbFirmwareUpdateTarget
 import net.flipper.busylib.core.wrapper.map
+import net.flipper.core.busylib.data.semver.util.toSemVerOrNull
 import net.flipper.core.busylib.ktx.common.exponentialRetry
 import net.flipper.core.busylib.ktx.common.runSuspendCatching
 import net.flipper.core.busylib.log.LogTagProvider
@@ -106,14 +106,14 @@ class LanUpdateVersionProvider(
 
                     FirmwareChannel.RELEASE_CANDIDATE,
                     FirmwareChannel.RELEASE -> {
-                        val bsbRawVersion = bsbVersion.version.replace("-rc", "")
-                        val bsbSemVer = SemVer.fromString(bsbRawVersion)
+                        val bsbRawVersion = bsbVersion.version
+                        val bsbSemVer = bsbRawVersion.toSemVerOrNull()
                         if (bsbSemVer == null) {
                             warn { "#get could not detect bsb SemVer: $bsbRawVersion" }
                             return@map urlVersion
                         }
-                        val urlRawVersion = urlVersion.version.replace("-rc", "")
-                        val urlSemVer = SemVer.fromString(urlRawVersion)
+                        val urlRawVersion = urlVersion.version
+                        val urlSemVer = urlRawVersion.toSemVerOrNull()
                         if (urlSemVer == null) {
                             warn { "#get could not detect url SemVer: $urlRawVersion" }
                             return@map urlVersion
