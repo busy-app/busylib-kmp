@@ -3,7 +3,6 @@ package net.flipper.tools.oncall.impl
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -228,6 +227,123 @@ class OnCallSingletonApiImplTest {
     }
 
     @Test
+    fun GIVEN_device_connected_locally_WHEN_start_THEN_only_local_route_draws() = runTest {
+        val env = Env(backgroundScope)
+        env.storage.devices.value = listOf(HYBRID_BAR)
+        env.connect(HYBRID_BAR)
+        runCurrent()
+
+        env.api.start(OnCallAnimation.DND)
+        runCurrent()
+
+        assertEquals(listOf<Call>(Call.Start(OnCallAnimation.DND)), env.feature.calls)
+        assertEquals(emptyList(), env.launcher.assetsApi(HYBRID_CLOUD_ID).drawnPaths)
+    }
+
+    @Test
+    fun GIVEN_local_on_call_WHEN_local_device_disconnects_THEN_cloud_draws_current_animation() = runTest {
+        val env = Env(backgroundScope)
+        env.storage.devices.value = listOf(HYBRID_BAR)
+        env.connect(HYBRID_BAR)
+        runCurrent()
+
+        env.api.start(OnCallAnimation.ON_CALL)
+        runCurrent()
+        env.api.start(OnCallAnimation.BOOKED)
+        runCurrent()
+        env.disconnect()
+        runCurrent()
+
+        assertEquals(listOf("shared/booked_72x16.anim"), env.launcher.assetsApi(HYBRID_CLOUD_ID).drawnPaths)
+    }
+
+    @Test
+    fun GIVEN_local_feature_retrieving_WHEN_start_THEN_cloud_waits_and_local_takes_over() = runTest {
+        val env = Env(backgroundScope)
+        env.featureProvider.status.value = FFeatureStatus.Retrieving
+        env.storage.devices.value = listOf(HYBRID_BAR)
+        env.connect(HYBRID_BAR)
+
+        env.api.start(OnCallAnimation.ON_CALL)
+        runCurrent()
+        advanceTimeBy(30.seconds)
+
+        assertEquals(emptyList(), env.launcher.assetsApi(HYBRID_CLOUD_ID).drawnPaths)
+        assertEquals(emptyList(), env.feature.calls)
+
+        env.featureProvider.status.value = FFeatureStatus.Supported(env.feature)
+        runCurrent()
+
+        assertEquals(listOf<Call>(Call.Start(OnCallAnimation.ON_CALL)), env.feature.calls)
+        assertEquals(emptyList(), env.launcher.assetsApi(HYBRID_CLOUD_ID).drawnPaths)
+    }
+
+    @Test
+    fun GIVEN_local_feature_unsupported_WHEN_start_THEN_cloud_draws() = runTest {
+        val env = Env(backgroundScope)
+        env.featureProvider.status.value = FFeatureStatus.Unsupported
+        env.storage.devices.value = listOf(HYBRID_BAR)
+        env.connect(HYBRID_BAR)
+
+        env.api.start(OnCallAnimation.MEETING)
+        runCurrent()
+
+        assertEquals(listOf("shared/meeting_72x16.anim"), env.launcher.assetsApi(HYBRID_CLOUD_ID).drawnPaths)
+        assertEquals(emptyList(), env.feature.calls)
+    }
+
+    @Test
+    fun GIVEN_local_feature_not_found_WHEN_start_THEN_cloud_draws() = runTest {
+        val env = Env(backgroundScope)
+        env.featureProvider.status.value = FFeatureStatus.NotFound
+        env.storage.devices.value = listOf(HYBRID_BAR)
+        env.connect(HYBRID_BAR)
+
+        env.api.start(OnCallAnimation.MEETING)
+        runCurrent()
+
+        assertEquals(listOf("shared/meeting_72x16.anim"), env.launcher.assetsApi(HYBRID_CLOUD_ID).drawnPaths)
+    }
+
+    @Test
+    fun GIVEN_other_device_retrieving_WHEN_start_THEN_cloud_device_draws_without_waiting() = runTest {
+        val env = Env(backgroundScope)
+        env.featureProvider.status.value = FFeatureStatus.Retrieving
+        env.storage.devices.value = listOf(LOCAL_BAR, CLOUD_BAR)
+        env.connect(LOCAL_BAR)
+
+        env.api.start(OnCallAnimation.FLOW)
+        runCurrent()
+
+        assertEquals(listOf("shared/flow_72x16.anim"), env.launcher.assetsApi(CLOUD_ID).drawnPaths)
+    }
+
+    @Test
+    fun GIVEN_cloud_on_call_WHEN_device_reconnects_THEN_cloud_draws_until_local_ready() = runTest {
+        val env = Env(backgroundScope)
+        env.storage.devices.value = listOf(HYBRID_BAR)
+
+        env.api.start(OnCallAnimation.ON_CALL)
+        runCurrent()
+        env.featureProvider.status.value = FFeatureStatus.Retrieving
+        env.connect(HYBRID_BAR)
+        runCurrent()
+        advanceTimeBy(10.seconds)
+        runCurrent()
+
+        val assetsApi = env.launcher.assetsApi(HYBRID_CLOUD_ID)
+        assertEquals(2, assetsApi.drawnPaths.size)
+        assertEquals(emptyList(), assetsApi.removedAppIds)
+
+        env.featureProvider.status.value = FFeatureStatus.Supported(env.feature)
+        runCurrent()
+        advanceTimeBy(30.seconds)
+
+        assertEquals(2, assetsApi.drawnPaths.size)
+        assertEquals(listOf<Call>(Call.Start(OnCallAnimation.ON_CALL)), env.feature.calls)
+    }
+
+    @Test
     fun GIVEN_cloud_on_call_WHEN_device_connects_locally_THEN_cloud_stops_drawing_without_remove() = runTest {
         val env = Env(backgroundScope)
         env.storage.devices.value = listOf(HYBRID_BAR)
@@ -296,9 +412,10 @@ class OnCallSingletonApiImplTest {
         val orchestrator = FakeDeviceOrchestrator()
         val storage = FakeDevicePersistedStorage()
         val launcher = FakeCloudAssetsApiLauncher()
+        val featureProvider = FakeFeatureProvider(feature)
         val api = OnCallSingletonApiImpl(
             scope = scope,
-            featureProvider = FakeFeatureProvider(feature),
+            featureProvider = featureProvider,
             devicePersistedStorage = storage,
             orchestrator = orchestrator,
             cloudAssetsApiLauncher = launcher,
@@ -367,14 +484,16 @@ private class FakeOnCallFeatureApi : FOnCallFeatureApi {
     }
 }
 
-private class FakeFeatureProvider(private val feature: FDeviceFeatureApi) : FFeatureProvider {
+private class FakeFeatureProvider(feature: FDeviceFeatureApi) : FFeatureProvider {
+    val status = MutableStateFlow<FFeatureStatus<FDeviceFeatureApi>>(FFeatureStatus.Supported(feature))
+
     override fun <T : FDeviceFeatureApi> get(clazz: KClass<T>): Flow<FFeatureStatus<T>> = error("Not used")
 
     @Suppress("UNCHECKED_CAST")
     override fun <T : FDeviceFeatureApi> getFiltered(
         status: FDeviceConnectStatus.Connected,
         clazz: KClass<T>
-    ): Flow<FFeatureStatus<T>> = flowOf(FFeatureStatus.Supported(feature as T))
+    ): Flow<FFeatureStatus<T>> = this.status as Flow<FFeatureStatus<T>>
 
     override suspend fun <T : FDeviceFeatureApi> getSync(clazz: KClass<T>): T? = error("Not used")
 }
