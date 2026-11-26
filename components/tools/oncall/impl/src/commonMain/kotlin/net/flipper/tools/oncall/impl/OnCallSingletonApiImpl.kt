@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -21,6 +22,7 @@ import kotlinx.coroutines.launch
 import net.flipper.bridge.connection.config.api.FDevicePersistedStorage
 import net.flipper.bridge.connection.config.api.model.BUSYBar
 import net.flipper.bridge.connection.feature.oncall.api.FOnCallFeatureApi
+import net.flipper.bridge.connection.feature.oncall.api.model.OnCallAnimation
 import net.flipper.bridge.connection.feature.oncall.impl.OnCallDisplayLoop
 import net.flipper.bridge.connection.feature.provider.api.FFeatureProvider
 import net.flipper.bridge.connection.feature.provider.api.getFilteredFeature
@@ -51,7 +53,7 @@ class OnCallSingletonApiImpl(
     override val TAG = "OnCallSingletonApi"
 
     private val singleJobScope = scope.asSingleJobScope()
-    private val isOnCallFlow = MutableStateFlow(false)
+    private val animationFlow = MutableStateFlow<OnCallAnimation?>(null)
 
     private val localOnCallFlow: StateFlow<LocalOnCall?> = orchestrator.getState()
         .distinctUntilChangedBy { status -> status.tryCast<FDeviceConnectStatus.Connected>()?.deviceApi }
@@ -79,11 +81,13 @@ class OnCallSingletonApiImpl(
         localOnCallFlow.collectLatest { localOnCall ->
             if (localOnCall == null) return@collectLatest
             combine(
-                flow = isOnCallFlow,
+                flow = animationFlow,
                 flow2 = devicePersistedStorage.getAllDevicesFlow(),
-                transform = { isOnCall, busyBars -> isOnCall && busyBars.isOnCallEnabled(localOnCall.uniqueId) }
-            ).distinctUntilChanged().collect { isShown ->
-                if (isShown) localOnCall.featureApi.start() else localOnCall.featureApi.stop()
+                transform = { animation, busyBars ->
+                    animation?.takeIf { busyBars.isOnCallEnabled(localOnCall.uniqueId) }
+                }
+            ).distinctUntilChanged().collect { animation ->
+                if (animation != null) localOnCall.featureApi.start(animation) else localOnCall.featureApi.stop()
             }
         }
     }
@@ -98,7 +102,9 @@ class OnCallSingletonApiImpl(
                     .distinctUntilChanged()
                     .collectLatest { isCloudRoute ->
                         isDrawing = isCloudRoute
-                        if (isCloudRoute) displayLoop.run()
+                        if (isCloudRoute) {
+                            animationFlow.filterNotNull().collectLatest { animation -> displayLoop.run(animation) }
+                        }
                     }
             } finally {
                 if (isDrawing) displayLoop.clear()
@@ -110,9 +116,11 @@ class OnCallSingletonApiImpl(
         coroutineScope {
             val sessions = mutableMapOf<CloudOnCallTarget, Job>()
             combine(
-                flow = isOnCallFlow,
+                flow = animationFlow,
                 flow2 = devicePersistedStorage.getAllDevicesFlow(),
-                transform = { isOnCall, busyBars -> if (isOnCall) busyBars.toCloudOnCallTargets() else emptySet() }
+                transform = { animation, busyBars ->
+                    if (animation != null) busyBars.toCloudOnCallTargets() else emptySet()
+                }
             ).distinctUntilChanged().collect { targets ->
                 sessions.values.removeAll(Job::isCompleted)
                 sessions.filterKeys { target -> target !in targets }.values.forEach(Job::cancel)
@@ -129,9 +137,9 @@ class OnCallSingletonApiImpl(
         }
     }
 
-    override fun start() {
-        info { "Start on-call" }
-        isOnCallFlow.value = true
+    override fun start(animation: OnCallAnimation) {
+        info { "Start on-call with $animation" }
+        animationFlow.value = animation
         singleJobScope.launch(SingleJobMode.SKIP_IF_RUNNING) {
             launch { collectLocalOnCall() }
             launch { collectCloudOnCall() }
@@ -140,7 +148,7 @@ class OnCallSingletonApiImpl(
 
     override fun stop() {
         info { "Stop on-call" }
-        isOnCallFlow.value = false
+        animationFlow.value = null
     }
 
     private data class LocalOnCall(

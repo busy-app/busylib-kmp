@@ -9,6 +9,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import net.flipper.bridge.connection.feature.oncall.api.model.OnCallAnimation
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcAssetsApi
 import net.flipper.bridge.connection.feature.rpc.api.model.DrawRequest
 import net.flipper.core.busylib.log.LogTagProvider
@@ -21,7 +22,25 @@ class OnCallDisplayLoop(
 ) : LogTagProvider {
     override val TAG: String = "OnCallDisplayLoop"
 
-    private fun createDrawRequest(): DrawRequest {
+    private fun OnCallAnimation.toStockPath(): String {
+        val name = when (this) {
+            OnCallAnimation.KEEP_OUT -> "keep_out"
+            OnCallAnimation.DND -> "dnd"
+            OnCallAnimation.MEETING -> "meeting"
+            OnCallAnimation.ON_CALL -> "on_call"
+            OnCallAnimation.LUNCH -> "lunch"
+            OnCallAnimation.BACK_SOON -> "back_soon"
+            OnCallAnimation.BOOKED -> "booked"
+            OnCallAnimation.FLOW -> "flow"
+            OnCallAnimation.CHILL_TIME -> "chill_time"
+            OnCallAnimation.ON_AIR -> "on_air"
+            OnCallAnimation.CODING -> "coding"
+            OnCallAnimation.LOW_SOCIAL_BATTERY -> "low_social_battery"
+        }
+        return "shared/${name}_72x16.anim"
+    }
+
+    private fun createDrawRequest(animation: OnCallAnimation): DrawRequest {
         return DrawRequest(
             appId = APP_ID,
             priority = DRAW_PRIORITY,
@@ -30,7 +49,7 @@ class OnCallDisplayLoop(
                     id = ANIM_ID,
                     display = DrawRequest.Display.FRONT,
                     type = DrawRequest.Element.ElementType.ANIMATION,
-                    stockPath = ANIM_PATH,
+                    stockPath = animation.toStockPath(),
                     loop = true,
                     timeoutSec = DISPLAY_TIMEOUT.inWholeSeconds.toInt()
                 )
@@ -42,10 +61,10 @@ class OnCallDisplayLoop(
         return rpcAssetsApi.removeDraw(appId = APP_ID).map { }
     }
 
-    suspend fun run() {
+    suspend fun run(animation: OnCallAnimation) {
         while (currentCoroutineContext().isActive) {
             rpcAssetsApi
-                .displayDraw(createDrawRequest())
+                .displayDraw(createDrawRequest(animation))
                 .onFailure { t -> error(t) { "Failed to display draw" } }
             delay(UPDATE_DELAY)
         }
@@ -69,7 +88,6 @@ class OnCallDisplayLoop(
         private const val APP_ID = "busy_lib_on_call"
         private const val DRAW_PRIORITY = 50
         private const val ANIM_ID = "busy_lib_on_call_anim"
-        private const val ANIM_PATH = "shared/on_call_72x16.anim"
         private val DISPLAY_TIMEOUT = 30.seconds
         private val UPDATE_DELAY = 10.seconds
         private val STOP_TIMEOUT = 3.seconds
