@@ -26,8 +26,8 @@ import net.flipper.bridge.connection.transport.common.api.serial.FStatusStreamin
 import net.flipper.core.busylib.log.LogTagProvider
 import net.flipper.core.busylib.log.info
 import no.nordicsemi.kotlin.ble.client.RemoteService
+import no.nordicsemi.kotlin.ble.client.android.BondState
 import no.nordicsemi.kotlin.ble.client.android.Peripheral
-import no.nordicsemi.kotlin.ble.core.BondState
 import no.nordicsemi.kotlin.ble.core.ConnectionState
 
 class FAndroidBleApiImpl(
@@ -65,12 +65,12 @@ class FAndroidBleApiImpl(
             transform = { state, bondState ->
                 when (state) {
                     ConnectionState.Connected -> when (bondState) {
-                        BondState.NONE,
-                        BondState.BONDING -> FInternalTransportConnectionStatus.Connecting(
+                        is BondState.None,
+                        BondState.Bonding -> FInternalTransportConnectionStatus.Connecting(
                             currentConfig.getTransportTypes()
                         )
 
-                        BondState.BONDED -> FInternalTransportConnectionStatus.Connected(
+                        BondState.Bonded -> FInternalTransportConnectionStatus.Connected(
                             scope = scope,
                             deviceApi = this@FAndroidBleApiImpl,
                             connectionType = FInternalTransportConnectionType.BLE
