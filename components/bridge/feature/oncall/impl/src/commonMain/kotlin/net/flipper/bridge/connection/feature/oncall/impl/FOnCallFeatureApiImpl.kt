@@ -14,6 +14,7 @@ import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureApi
 import net.flipper.bridge.connection.feature.common.api.FDeviceFeatureKey
 import net.flipper.bridge.connection.feature.common.api.FUnsafeDeviceFeatureApi
 import net.flipper.bridge.connection.feature.oncall.api.FOnCallFeatureApi
+import net.flipper.bridge.connection.feature.oncall.api.model.OnCallAnimation
 import net.flipper.bridge.connection.feature.rpc.api.exposed.FRpcFeatureApi
 import net.flipper.bridge.connection.transport.common.api.FConnectedDeviceApi
 import net.flipper.busylib.core.di.BusyLibGraph
@@ -29,23 +30,23 @@ class FOnCallFeatureApiImpl(
     override val TAG: String = "FOnCallFeatureApi"
 
     private val displayLoop = OnCallDisplayLoop(rpcFeatureApi.fRpcAssetsApi)
-    private val isOnCallFlow = MutableStateFlow(false)
+    private val animationFlow = MutableStateFlow<OnCallAnimation?>(null)
 
     init {
-        isOnCallFlow
-            .dropWhile { isOnCall -> !isOnCall }
-            .onLatest { isOnCall ->
-                if (isOnCall) displayLoop.run() else displayLoop.clear()
+        animationFlow
+            .dropWhile { animation -> animation == null }
+            .onLatest { animation ->
+                if (animation != null) displayLoop.run(animation) else displayLoop.clear()
             }
             .launchIn(scope)
     }
 
-    override fun start() {
-        isOnCallFlow.value = true
+    override fun start(animation: OnCallAnimation) {
+        animationFlow.value = animation
     }
 
     override fun stop() {
-        isOnCallFlow.value = false
+        animationFlow.value = null
     }
 
     @Inject
